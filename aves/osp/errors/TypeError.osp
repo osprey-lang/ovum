@@ -1,0 +1,17 @@
+namespace aves;
+
+public inheritable TypeError is Error
+{
+	public new()
+	{
+		new base("A value was of an invalid type.");
+	}
+	public new(message)
+	{
+		new base(message);
+	}
+	public new(message, innerError)
+	{
+		new base(message, innerError);
+	}
+}

@@ -1,0 +1,49 @@
+namespace aves;
+
+public inheritable Hash
+{
+	__init_type("aves_Hash_init");
+
+	public new()						__extern("aves_Hash_new");
+	public new(capacity)				__extern("aves_Hash_newCap");
+
+	public overridable get this[key] = getItem(key);
+	public overridable set this[key] { setItem(key, value); }
+
+	public get length					__extern("aves_Hash_get_length");
+
+	public get isEmpty = length == 0;
+
+	protected getItem(key)				__extern("aves_Hash_getItem");
+	protected setItem(key, value)		__extern("aves_Hash_setItem");
+
+	public overridable contains(key)	__extern("aves_Hash_contains");
+	public overridable add(key, value)
+	{
+		if contains(key):
+			throw new ArgumentError("key", "The key is already in the hash.");
+
+		this[key] = value;
+	}
+
+	overridable override getHashCode()	__extern("aves_Hash_getHashCode");
+	overridable override toString()
+	{
+		return "Hash[length = {0}]".format([length]);
+	}
+
+	iter
+	{
+		return new HashIterator(this);
+	}
+}
+
+private class HashIterator is Iterator
+{
+	public new(hash)		__extern("aves_HashIterator_new");
+
+	private hash, i, version;
+
+	override get current	__extern("aves_HashIterator_current");
+	override moveNext()		__extern("aves_HashIterator_moveNext");
+}

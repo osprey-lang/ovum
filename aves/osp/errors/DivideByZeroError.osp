@@ -1,0 +1,17 @@
+namespace aves;
+
+public inheritable DivideByZeroError is Error
+{
+	public new()
+	{
+		new base("Cannot divide by zero.");
+	}
+	public new(message)
+	{
+		new base(message);
+	}
+	public new(message, innerError)
+	{
+		new base(message, innerError);
+	}
+}

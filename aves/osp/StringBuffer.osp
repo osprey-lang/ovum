@@ -1,0 +1,36 @@
+namespace aves;
+
+public class StringBuffer
+{
+	public new()							__extern("aves_StringBuffer_new");
+	public new(capacity)					__extern("aves_StringBuffer_newCap");
+
+	public get length						__extern("aves_StringBuffer_get_length");
+	public get capacity						__extern("aves_StringBuffer_get_capacity");
+
+	public append(value)
+	{
+		appendInternal(string(value), 1);
+	}
+	public append(value, times)
+	{
+		appendInternal(string(value), int(times));
+	}
+
+	public appendLine()						__extern("aves_StringBuffer_appendLine");
+	public appendLine(value)
+	{
+		append(value);
+		appendLine();
+	}
+
+	public insert(index, value)
+	{
+		insertInternal(index, string(value));
+	}
+
+	override toString()						__extern("aves_StringBuffer_toString");
+
+	private appendInternal(string, times)	__extern("aves_StringBuffer_appendInternal");
+	private insertInternal(index, string)	__extern("aves_StringBuffer_insertInternal");
+}

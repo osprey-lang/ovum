@@ -1,0 +1,30 @@
+namespace aves;
+
+public function bool(value)
+{
+	return not not value;
+}
+
+public class Boolean __primitive
+{
+	private new();
+
+	override getHashCode()
+	{
+		return this ? 1 : 0;
+	}
+	override toString()
+	{
+		return this ? "true" : "false";
+	}
+
+	public const min = false;
+	public const max = true;
+
+	operator ==(a, b)		__extern("aves_Boolean_opEquals");
+	operator <=>(a, b)		__extern("aves_Boolean_opCompare");
+	operator +(a)
+	{
+		return a ? 1 : 0;
+	}
+}

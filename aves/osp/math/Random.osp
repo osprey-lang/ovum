@@ -1,0 +1,112 @@
+use namespace aves;
+
+namespace math;
+
+// This pseudo-random number generator uses an implementation of the Mersenne twister algorithm.
+
+public class Random
+{
+	public new()
+	{
+		init(Env.tickCount); // TODO: Default seed
+	}
+
+	public new(seed)
+	{
+		init(int(seed));
+	}
+
+	private state = new BufferView(new Buffer(listSize * 4), BufferViewKind.uint32);
+	private index = 0;
+
+	// [0 to 2**32 - 1]
+	public nextInt()
+	{
+		return sample();
+	}
+	// [0 to 2**32 - 1]
+	public nextUInt()
+	{
+		return uint(sample());
+	}
+	// [0.0 to 1.0]
+	public nextReal()
+	{
+		// 4294967295 = uint32 max
+		return sample() / 4_294_967_295.0;
+	}
+	// [false, true]
+	public nextBoolean()
+	{
+		return sample() % 2 == 0;
+	}
+
+	private init(seed)
+	{
+		state[0] = seed;
+		for i in [1 to listSize - 1]:
+			// Remember: Osprey's Ints are all 64 bits, so this multiplication will never overflow
+			state[i] = 0x6c07_8965 * (state[i - 1] ^ (state[i - 1] >> 30)) + i;
+	}
+
+	// Generates a number in the range [0, 2**32 - 1]
+	private sample()
+	{
+		if index == 0:
+			generateNumbers();
+
+		var y = state[index];
+		y ^= y >> 11;
+		y ^= (y << 7) & 0x9d2c_5680;
+		y ^= (y << 15) & 0xefc6_0000;
+		y ^= y >> 18;
+
+		index = (index + 1) % listSize;
+		return y;
+	}
+
+	private generateNumbers()
+	{
+		const int32SignBit = 0x8000_0000;
+		const int32Max     = 0x7fff_ffff;
+
+		for i in [0 to listSize - 1]
+		{
+			var y = state[i] & int32SignBit +         // Bit 31 of state[i]
+				state[(i + 1) % listSize] & int32Max; // Bits 0-30 of "next" state
+
+			state[i] = state[(i + 397) % listSize] ^ (y >> 1);
+			if y % 2 != 0: // y is odd
+				state[i] ^= 0x9908_b0df;
+		}
+	}
+
+	private const listSize = 624;
+}
+
+private static class RandomInternal
+{
+	private static _instance = new Random();
+
+	public static get instance = _instance;
+}
+
+public function randomInt()
+{
+	return RandomInternal.instance.nextInt();
+}
+
+public function randomUInt()
+{
+	return RandomInternal.instance.nextUInt();
+}
+
+public function randomReal()
+{
+	return RandomInternal.instance.nextReal();
+}
+
+public function randomBoolean()
+{
+	return RandomInternal.instance.nextBoolean();
+}

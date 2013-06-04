@@ -1,0 +1,30 @@
+namespace aves;
+
+public abstract class Enum
+{
+	protected new();
+
+	override getHashCode()			__extern("aves_Enum_getHashCode");
+	override toString()				__extern("aves_Enum_toString");
+
+	//static fromValue(type, value)	__extern("aves_Enum_fromValue");
+
+	operator ==(a, b)				__extern("aves_Enum_opEquals");
+	operator <=>(a, b)				__extern("aves_Enum_opCompare");
+	operator +(a)					__extern("aves_Enum_opPlus");
+}
+
+public abstract class EnumSet is Enum
+{
+	protected new();
+
+	public hasFlag(flag)
+	{
+		return this & flag == flag;
+	}
+
+	operator |(a, b)				__extern("aves_EnumSet_opOr");
+	operator ^(a, b)				__extern("aves_EnumSet_opXor");
+	operator &(a, b)				__extern("aves_EnumSet_opAnd");
+	operator ~(a)					__extern("aves_EnumSet_opNot");
+}

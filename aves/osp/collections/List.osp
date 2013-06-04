@@ -1,0 +1,227 @@
+namespace aves;
+
+public inheritable List
+{
+	__init_type("aves_List_init");
+
+	public new()								__extern("aves_List_new");
+	public new(capacity)						__extern("aves_List_newCap");
+
+	public overridable get this[index] = getItem(index);
+	public overridable set this[index] { setItem(index, value); }
+
+	public get length							__extern("aves_List_get_length");
+
+	public get capacity							__extern("aves_List_get_capacity");
+	public set capacity							__extern("aves_List_set_capacity");
+
+	public get isEmpty = length == 0;
+
+	// General list manipulation
+	protected getItem(index)					__extern("aves_List_getItem");
+	protected setItem(index, value)				__extern("aves_List_setItem");
+
+	public overridable add(item)				__extern("aves_List_add");
+	public overridable insert(index, item)		__extern("aves_List_insert");
+	public overridable indexOf(item)
+	{
+		for i in [0 to length - 1]:
+			if item == this[i]:
+				return i;
+
+		return -1;
+	}
+	public overridable remove(item)
+	{
+		var index = indexOf(item);
+		if index != -1
+		{
+			removeAt(index);
+			return true;
+		}
+		return false;
+	}
+	public overridable removeAt(item)			__extern("aves_List_removeAt");
+	public overridable clear()					__extern("aves_List_clear");
+	public overridable slice(start)				__extern("aves_List_slice1", locals=1);
+	public overridable slice(start, end)		__extern("aves_List_slice2", locals=1);
+	public overridable join(sep)
+	{
+		var output = new StringBuffer();
+		var append = output.append; // tiny speed optimisation
+
+		for i in [0 to this.length - 1]
+		{
+			if i > 0: append(sep);
+			append(this[i]);
+		}
+
+		return output.toString();
+	}
+	public overridable reverse()				__extern("aves_List_reverse");
+
+	// Higher-order functions
+	public overridable all(predicate)
+	{
+		for i in [0 to length - 1]:
+			if not predicate(this[i]):
+				return false;
+		return true;
+	}
+	public overridable any(predicate)
+	{
+		for i in [0 to length - 1]:
+			if predicate(this[i]):
+				return true;
+		return false;
+	}
+	public overridable filter(predicate)
+	{
+		var output = new List(this.capacity);
+		var add = output.add; // Tiny speed optimisation (esp. for big lists)
+
+		for i in [0 to length - 1]
+		{
+			var item = this[i];
+			if predicate(item):
+				add(item);
+		}
+
+		return output;
+	}
+	public overridable filterMap(predicate, mapper)
+	{
+		var output = new List(this.capacity);
+		var add = output.add;
+
+		for i in [0 to length - 1]
+		{
+			var item = this[i];
+			if predicate(item):
+				add(mapper(item));
+		}
+
+		return output;
+	}
+	public overridable first(predicate)
+	{
+		for i in [0 to length - 1]
+		{
+			var item = this[i];
+			if predicate(item):
+				return item;
+		}
+		return null;
+	}
+	public overridable fold(func)
+	{
+		if length == 0:
+			throw new Error("Cannot fold an empty list without initial value.");
+
+		return foldInternal(this[0], func, 1);
+	}
+	public overridable fold(init, func)
+	{
+		return foldInternal(init, func, 0);
+	}
+	public overridable foldr(func)
+	{
+		if length == 0:
+			throw new Error("Cannot fold an empty list without initial value.");
+
+		return foldrInternal(this[0], func, length - 2);
+	}
+	public overridable foldr(init, func)
+	{
+		return foldrInternal(init, func, length - 1);
+	}
+	public overridable indexOfFirst(predicate)
+	{
+		for i in [0 to length - 1]:
+			if predicate(this[i]):
+				return i;
+		return -1;
+	}
+	public overridable indexOfLast(predicate)
+	{
+		for i in [length - 1 to 0, -1]:
+			if predicate(this[i]):
+				return i;
+		return -1;
+	}
+	public overridable last(predicate)
+	{
+		for i in [length - 1 to 0, -1]
+		{
+			var item = this[i];
+			if predicate(item):
+				return item;
+		}
+		return null;
+	}
+	public overridable map(func)
+	{
+		return [func(this[i]) for i in [0 to length - 1]];
+	}
+
+	private foldInternal(init, func, startIndex)
+	{
+		for i in [startIndex to length - 1]:
+			init = func(init, this[i]);
+
+		return init;
+	}
+	private foldrInternal(init, func, startIndex)
+	{
+		for i in [startIndex to 0]:
+			init = func(init, this[i]);
+
+		return init;
+	}
+
+	overridable override getHashCode()
+	{
+		return base.getHashCode();
+	}
+	overridable override toString()
+	{
+		return "List[length = {0}]".format([length]);
+	}
+
+	iter
+	{
+		return new ListIterator(this);
+	}
+}
+
+private class ListIterator is Iterator
+{
+	public new(this.list)
+	{
+		version = getVersion(list);
+	}
+
+	private list;
+	private i = -1;
+	private version;
+	private cur = null;
+
+	override get current = cur;
+
+	override moveNext()
+	{
+		if getVersion(list) != version:
+			throw new Error("The list has changed since the iteration started.");
+
+		if (i < list.length - 1)
+		{
+			i += 1;
+			cur = list[i];
+			return true;
+		}
+		else
+			return false;
+	}
+
+	private static getVersion(list)		__extern("aves_ListIterator_getVersion");
+}

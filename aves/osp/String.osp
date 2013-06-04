@@ -1,0 +1,114 @@
+namespace aves;
+
+public function string(value)
+{
+	return value?.toString() ?? "";
+}
+
+public class String
+{
+	private new();
+
+	public get this[index]		__extern("aves_String_get_item");
+
+	public get length			__extern("aves_String_get_length");
+
+	public get isEmtpy = length == 0;
+
+	public getCategory(i)		__extern("aves_String_getCategory");
+	public format(values)		__extern("aves_String_format");
+
+	public toUpper()			__extern("aves_String_toUpper");
+	public toLower()			__extern("aves_String_toLower");
+
+	override getHashCode()		__extern("aves_String_getHashCode");
+	override toString()
+	{
+		return this;
+	}
+
+	public const empty = "";
+
+	operator ==(a, b)			__extern("aves_String_opEquals");
+	operator <=>(a, b)			__extern("aves_String_opCompare");
+	operator *(a, b)			__extern("aves_String_opMultiply");
+
+	iter
+	{
+		return new StringIterator(this);
+	}
+}
+
+private class StringIterator is Iterator
+{
+	public new(this.str);
+
+	private str;
+	private i = -1;
+	private cur = null;
+
+	override get current = cur;
+
+	override moveNext()
+	{
+		if i < str.length - 1
+		{
+			i += 1;
+			cur = str[i];
+			return true;
+		}
+		else
+			return false;
+	}
+}
+
+public enum set UnicodeCategory
+{
+	none				= 0x00,
+	subCategoryMask		= 0xff,
+	topCategoryMask		= ~subCategoryMask,
+
+	letter				= 0x100, // L
+	letterUppercase		= letter | 1, // Lu
+	letterLowercase		= letter | 2, // Ll
+	letterTitleCase		= letter | 3, // Lt
+	letterModifier		= letter | 4, // Lm
+	letterOther			= letter | 5, // Lo
+
+	mark				= 0x200, // M
+	markNonspacing		= mark | 1, // Mn
+	markSpacing			= mark | 2, // Mc
+	markEnclosing		= mark | 2, // Me
+
+	number				= 0x300, // N
+	numberDecimal		= number | 1, // Nd
+	numberLetter		= number | 2, // Nl
+	numberOther			= number | 3, // No
+
+	punct				= 0x400, // P
+	punctConnector		= punct | 1, // Pc
+	punctDash			= punct | 2, // Pd
+	punctOpening		= punct | 3, // Ps
+	punctClosing		= punct | 4, // Pe
+	punctInitial		= punct | 5, // Pi
+	punctFinal			= punct | 6, // Pf
+	punctOther			= punct | 7, // Po
+
+	symbol				= 0x500, // S
+	symbolMath			= symbol | 1, // Sm
+	symbolCurrency		= symbol | 2, // Sc
+	symbolModifier		= symbol | 3, // Sk
+	symbolOther			= symbol | 4, // So
+
+	separator			= 0x600, // Z
+	separatorSpace		= separator | 1, // Zs
+	separatorLine		= separator | 2, // Zl
+	separatorParagraph	= separator | 3, // Zp
+	
+	other				= 0x700, // C
+	control				= other | 1, // Cc
+	format				= other | 2, // Cf
+	surrogate			= other | 3, // Cs
+	privateUse			= other | 4, // Co
+	unassigned			= other | 5, // Cn
+}

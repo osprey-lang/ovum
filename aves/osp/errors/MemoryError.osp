@@ -1,0 +1,17 @@
+namespace aves;
+
+public inheritable MemoryError is Error
+{
+	public new()
+	{
+		new base("There was not enough memory to perform the operation.");
+	}
+	public new(message)
+	{
+		new base(message);
+	}
+	public new(message, innerError)
+	{
+		new base(message, innerError);
+	}
+}

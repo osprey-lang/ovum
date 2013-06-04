@@ -1,0 +1,17 @@
+namespace aves;
+
+public inheritable OverflowError is Error
+{
+	public new()
+	{
+		new base("An arithmetic overflow occurred.");
+	}
+	public new(message)
+	{
+		new base(message);
+	}
+	public new(message, innerError)
+	{
+		new base(message, innerError);
+	}
+}

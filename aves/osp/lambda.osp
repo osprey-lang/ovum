@@ -1,0 +1,31 @@
+namespace aves.lambda;
+
+public function λ_plus(a)          { return +a; }
+public function λ_plus(a, b)       { return a + b; }
+public function λ_minus(a)         { return -a; }
+public function λ_minus(a, b)      { return a - b; }
+public function λ_bitwiseOr(a, b)  { return a | b; }
+public function λ_bitwiseXor(a, b) { return a ^ b; }
+public function λ_multiply(a, b)   { return a * b; }
+public function λ_divide(a, b)     { return a / b; }
+public function λ_modulo(a, b)     { return a % b; }
+public function λ_bitwiseAnd(a, b) { return a & b; }
+public function λ_power(a, b)      { return a ** b; }
+public function λ_hash(a, b)       { return a # b; }
+public function λ_dollar(a, b)     { return a $ b; }
+public function λ_shiftLeft(a, b)  { return a << b; }
+public function λ_shiftRight(a, b) { return a >> b; }
+public function λ_equals(a, b)     { return a == b; }
+public function λ_notEquals(a, b)  { return a != b; }
+public function λ_compare(a, b)    { return a <=> b; }
+public function λ_less(a, b)       { return a < b; }
+public function λ_greater(a, b)    { return a > b; }
+public function λ_lessEq(a, b)     { return a <= b; }
+public function λ_greaterEq(a, b)  { return a >= b; }
+public function λ_bitwiseNot(a)    { return ~a; }
+public function λ_apply(a, b)      { return a -> b; }
+public function λ_concat(a, b)     { return a :: b; }
+public function λ_not(a)           { return not a; }
+public function λ_or(a, b)         { return a or b; }
+public function λ_xor(a, b)        { return a xor b; }
+public function λ_and(a, b)        { return a and b; }

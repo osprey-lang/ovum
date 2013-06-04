@@ -1,0 +1,119 @@
+namespace aves;
+
+public class Set
+{
+	public new()					__extern("aves_Set_new");
+	public new(cap)					__extern("aves_Set_newCap");
+
+	public get length				__extern("aves_Set_get_length");
+
+	public get isEmpty = length == 0;
+
+	public contains(item)			__extern("aves_Set_contains");
+	public add(item)				__extern("aves_Set_add");
+	public remove(item)				__extern("aves_Set_remove");
+	public toggle(item)				__extern("aves_Set_toggle");
+	public clone()					__extern("aves_Set_clone");
+
+	public intersect(other)
+	{
+		if other is not Set:
+			throw new TypeError();
+
+		var smallest = this;
+		if other.length < this.length
+		{
+			// swap the two
+			smallest = other;
+			other = this;
+		}
+
+		var output = new Set(smallest.length);
+
+		for item in smallest:
+			if other.contains(item):
+				output.add(item);
+
+		return output;
+	}
+
+	public union(other)
+	{
+		if other is not Set:
+			throw new TypeError();
+
+		var output = this.clone();
+
+		for item in other:
+			output.add(other);
+
+		return output;
+	}
+
+	public difference(other)
+	{
+		if other is not Set:
+			throw new TypeError();
+
+		var output = new Set(this.length);
+
+		for item in this:
+			if not other.contains(item):
+				output.add(item);
+
+		return output;
+	}
+
+	public symmetricDifference(other)
+	{
+		if other is not Set:
+			throw new TypeError();
+
+		var output = this.clone();
+
+		for item in other:
+			output.toggle(item);
+
+		return output;
+	}
+
+	operator &(a, b)
+	{
+		return a.intersect(b);
+	}
+
+	operator ^(a, b)
+	{
+		return a.symmetricDifference(b);
+	}
+
+	operator +(a, b)
+	{
+		return a.union(b);
+	}
+
+	operator -(a, b)
+	{
+		return a.difference(b);
+	}
+
+	operator |(a, b)
+	{
+		return a.union(b);
+	}
+
+	iter
+	{
+		return new SetIterator(this);
+	}
+}
+
+private class SetIterator is Iterator
+{
+	public new(parent)					__extern("aves_SetIterator_new");
+
+	private parent, i, version;
+
+	override get current				__extern("aves_SetIterator_get_current");
+	override moveNext()					__extern("aves_SetIterator_moveNext");
+}
