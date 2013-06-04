@@ -1,0 +1,17 @@
+namespace aves;
+
+public inheritable NullReferenceError is Error
+{
+	public new()
+	{
+		new base("Cannot dereference a null value.");
+	}
+	public new(message)
+	{
+		new base(message);
+	}
+	public new(message, innerError)
+	{
+		new base(message, innerError);
+	}
+}

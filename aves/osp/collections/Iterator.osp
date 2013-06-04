@@ -1,0 +1,169 @@
+namespace aves;
+
+public abstract class Iterator
+{
+	public new();
+
+	public abstract get current;
+	public abstract moveNext();
+
+	public all(predicate)
+	{
+		while moveNext():
+			if not predicate(current):
+				return false;
+		return true;
+	}
+
+	public any(predicate)
+	{
+		while moveNext():
+			if predicate(current):
+				return true;
+		return false;
+	}
+
+	public filter(predicate)
+	{
+		return new FilterIterator(this, predicate);
+	}
+
+	public first()
+	{
+		if moveNext():
+			return current;
+		return null;
+	}
+	public first(predicate)
+	{
+		while moveNext()
+		{
+			var value = current;
+			if predicate(value):
+				return value;
+		}
+		return null;
+	}
+
+	public fold(func)
+	{
+		if not moveNext():
+			throw new Error("Cannot fold an empty Iterator without an initial value.");
+
+		var init = current;
+		while moveNext():
+			init = func(init, current);
+
+		return init;
+	}
+	public fold(init, func)
+	{
+		while moveNext():
+			init = func(init, current);
+
+		return init;
+	}
+
+	public join(sep)
+	{
+		var output = new StringBuffer();
+		var append = output.append;
+
+		var first = true;
+		while moveNext()
+		{
+			if not first:
+				append(sep);
+			else
+				first = false;
+
+			append(current);
+		}
+
+		return output.toString();
+	}
+
+	public last()
+	{
+		var output = null;
+
+		while moveNext():
+			output = current;
+
+		return output;
+	}
+	public last(predicate)
+	{
+		var output = null;
+
+		while moveNext()
+		{
+			var value = current;
+			if predicate(value):
+				output = value;
+		}
+
+		return output;
+	}
+
+	public map(func)
+	{
+		return new MapIterator(this, func);
+	}
+
+	iter { return this; }
+}
+
+private class FilterIterator is Iterator
+{
+	public new(this.inner, this.predicate);
+
+	private inner, predicate, cur, ended = false;
+
+	override get current = cur;
+	override moveNext()
+	{
+		if not ended
+		{
+			while inner.moveNext()
+			{
+				var value = inner.current;
+				if predicate(value)
+				{
+					cur = value;
+					return true;
+				}
+			}
+
+			cur = null;
+			ended = true;
+		}
+
+		return false;
+	}
+}
+
+private class MapIterator is Iterator
+{
+	public new(this.inner, this.func);
+
+	private inner, func, cur, ended = false;
+
+	override get current = cur;
+	override moveNext()
+	{
+		if not ended
+		{
+			if inner.moveNext()
+			{
+				cur = func(inner.current);
+				return true;
+			}
+
+			cur = null;
+			ended = true;
+		}
+
+		return false;
+	}
+}

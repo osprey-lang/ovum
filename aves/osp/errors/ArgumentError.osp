@@ -1,0 +1,23 @@
+namespace aves;
+
+public inheritable ArgumentError is Error
+{
+	public new()
+	{
+		new base("An invalid argument was encountered.");
+	}
+	public new(paramName, message)
+	{
+		new base(message);
+		_paramName = string(paramName);
+	}
+	public new(paramName, message, innerError)
+	{
+		new base(message, innerError);
+		_paramName = string(paramName);
+	}
+
+	private _paramName;
+
+	public get paramName = _paramName;
+}

@@ -1,0 +1,17 @@
+namespace aves;
+
+public inheritable Error
+{
+	__init_type("aves_Error_init");
+
+	public new()						__extern("aves_Error_new");
+	public new(message)					__extern("aves_Error_new");
+	public new(message, innerError)		__extern("aves_Error_new");
+
+	public get message					__extern("aves_Error_get_message");
+	public get stackTrace				__extern("aves_Error_get_stackTrace");
+	public get innerError				__extern("aves_Error_get_innerError");
+	public get data						__extern("aves_Error_get_data");
+
+	overridable override toString()		__extern("aves_Error_toString");
+}

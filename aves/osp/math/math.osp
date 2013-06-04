@@ -1,0 +1,47 @@
+use "Random.osp";
+use namespace aves;
+
+namespace math
+{
+	/// Summary: The base of the natural logarithm.
+	public const e		= __named_const(real: e);
+	/// Summary: The ratio if a circle's circumference to its diameter.
+	public const pi		= __named_const(real: pi);
+	/// Summary: The golden ratio, equal to `(1 + sqrt(5)) / 2`.
+	public const phi	= __named_const(real: phi);
+	/// Summary: The square root of 2.
+	public const sqrt2	= __named_const(real: sqrt2);
+
+	public function abs(n)			__extern("aves_math_abs");
+	public function acos(n)			__extern("aves_math_acos");
+	public function asin(n)			__extern("aves_math_asin");
+	public function atan(n)			__extern("aves_math_atan");
+	public function atan2(y, x)		__extern("aves_math_atan2");
+	public function cbrt(n)			__extern("aves_math_cbrt");
+	public function ceil(n)			__extern("aves_math_ceil");
+	public function clamp(value, min, max)
+	{
+		return value < min ? min :
+			value > max ? max :
+			value;
+	}
+	public function cos(θ)			__extern("aves_math_cos");
+	public function cosh(α)			__extern("aves_math_cosh");
+	public function divRem(a, b)
+	{
+		return a / b, a % b;
+	}
+	public function exp(n, e)		__extern("aves_math_exp");
+	public function floor(n)		__extern("aves_math_floor");
+	public function log(n)			__extern("aves_math_logE");
+	public function log(n, logBase)	__extern("aves_math_logBase");
+	public function log10(n)		__extern("aves_math_log10");
+	public function max(a, b)		__extern("aves_math_max");
+	public function min(a, b)		__extern("aves_math_min");
+	public function sign(n)			__extern("aves_math_sign");
+	public function sin(θ)			__extern("aves_math_sin");
+	public function sinh(α)			__extern("aves_math_sinh");
+	public function sqrt(n)			__extern("aves_math_sqrt");
+	public function tan(θ)			__extern("aves_math_tan");
+	public function tanh(α)			__extern("aves_math_tanh");
+}

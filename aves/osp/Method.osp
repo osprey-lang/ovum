@@ -1,0 +1,14 @@
+namespace aves;
+
+public class Method
+{
+	__init_type("aves_Method_init");
+
+	public new(object)			__extern("aves_Method_new");
+
+	public get hasInstance		__extern("aves_Method_get_hasInstance");
+
+	public this(args...)		__extern("aves_Method_call");
+
+	public accepts(argCount)	__extern("aves_Method_accepts");
+}

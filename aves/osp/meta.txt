@@ -1,0 +1,5 @@
+author = "Adam Heurlin";
+author_url = "http://osprey-lang.net/adam";
+// This is just an example for now!
+license = "Osprey License Version 1.0";
+license_url = "http://osprey-lang.net/license";

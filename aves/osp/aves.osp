@@ -1,0 +1,31 @@
+version 0:1;
+use "Object.osp";
+use "Boolean.osp";
+use "numeric/numeric.osp";
+use "Enum.osp";
+use "String.osp";
+use "StringBuffer.osp";
+use "collections/collections.osp";
+use "Buffer.osp";
+use "math/math.osp";
+use "Env.osp";
+use "Method.osp";
+use "errors/errors.osp"; // all of the errors!
+//use "lambda.osp";
+
+namespace aves;
+
+/// Summary: Prints a value to the standard output.
+/// Param value: The value to print.
+/// Remarks: If the value is null, it is treated the same as "".
+///          If the value is any other non-string value, .toString() is called on it.
+public function print(value)			__extern("aves_print");
+
+/// Summary: Prints a formatted value.
+/// Param format: The format string. Must be of type String.
+/// Param values: The values to pass into String.format().
+public function print(format, values)	__extern("aves_printf");
+
+/// Summary: Exits the application immediately.
+/// Param code: The exit code to pass to the calling environment.
+public function exit(code)				__extern("aves_exit");
