@@ -8,3 +8,5 @@ ipch
 *.sdf
 *.suo
 aves.bat
+
+*.ovm
