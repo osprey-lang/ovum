@@ -49,7 +49,7 @@ StringHash<T>::StringHash(int32_t capacity)
 	if (capacity <= 0)
 	{
 		this->length = this->capacity = 0;
-		this->buckets = NULL;
+		this->buckets = nullptr;
 	}
 	else
 	{
@@ -77,14 +77,14 @@ StringHash<T>::~StringHash()
 		}
 
 		delete[] buckets;
-		buckets = NULL;
+		buckets = nullptr;
 	}
 }
 
 template<class T>
 bool StringHash<T>::Insert(String *key, T value, bool add)
 {
-	if (buckets == NULL)
+	if (buckets == nullptr)
 		// If you've said you're not going to put anything in the hash,
 		// you don't get to put anything in it.
 		return false;
@@ -109,7 +109,7 @@ bool StringHash<T>::Insert(String *key, T value, bool add)
 	newEntry->hashCode = hash;
 	newEntry->key = key;
 	newEntry->value = value;
-	newEntry->next = buckets[bucket]; // may be NULL
+	newEntry->next = buckets[bucket]; // may be null
 
 	// Then update the bucket. Whoo!
 	buckets[bucket] = newEntry;

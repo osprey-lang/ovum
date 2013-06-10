@@ -210,7 +210,7 @@ public:
 	inline T operator[](const uint32_t index) const
 	{
 		if (index >= count)
-			return NULL; // niet gevonden
+			return nullptr; // niet gevonden
 		return entries[index];
 	}
 
@@ -267,7 +267,7 @@ private:
 	MemberTable<Field *> fieldRefs;    // Field references
 	MemberTable<Method*> methodRefs;   // Class method references
 
-	HMODULE nativeLib; // Handle to native library (NULL if not loaded)
+	HMODULE nativeLib; // Handle to native library (null if not loaded)
 
 	void LoadNativeLibrary(String *nativeFileName, const wchar_t *path);
 

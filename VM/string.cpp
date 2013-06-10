@@ -32,10 +32,11 @@ OVUM_API bool String_Equals(const String *a, const String *b)
 {
 	if (!a || !b || a == b)
 		// At this point, either the pointers point to the same address, or
-		// at least one is NULL. If both are NULL, they compare as equal.
+		// at least one is null. If both are null, they compare as equal.
 		return a == b;
 	if (a->length != b->length ||
-		a->hashCode && b->hashCode && a->hashCode != b->hashCode)
+		(a->flags & STR_HASHED) && (b->flags & STR_HASHED) &&
+		a->hashCode != b->hashCode)
 		return false; // couldn't possibly be the same string value
 
 	// It doesn't matter which string we take the length of; 
@@ -74,7 +75,7 @@ OVUM_API bool String_Equals(const String *a, const String *b)
 
 OVUM_API bool String_EqualsIgnoreCase(const String *a, const String *b)
 {
-	// If either is NULL or both refer to the same instance, then
+	// If either is nullptr or both refer to the same instance, then
 	// they compare equal if the pointers are equal.
 	if (!a || !b || a == b)
 		return a == b;
@@ -175,7 +176,7 @@ OVUM_API int String_Compare(const String *a, const String *b)
 OVUM_API String *String_ToUpper(ThreadHandle thread, String *str)
 {
 	String *newStr;
-	GC_ConstructString(thread, str->length, NULL, &newStr);
+	GC_ConstructString(thread, str->length, nullptr, &newStr);
 
 	const uchar *a = &str->firstChar;
 	uchar *b = const_cast<uchar*>(&newStr->firstChar);
@@ -205,7 +206,7 @@ OVUM_API String *String_ToUpper(ThreadHandle thread, String *str)
 OVUM_API String *String_ToLower(ThreadHandle thread, String *str)
 {
 	String *newStr;
-	GC_ConstructString(thread, str->length, NULL, &newStr);
+	GC_ConstructString(thread, str->length, nullptr, &newStr);
 
 	const uchar *a = &str->firstChar;
 	uchar *b = const_cast<uchar*>(&newStr->firstChar);
@@ -241,7 +242,7 @@ OVUM_API String *String_Concat(ThreadHandle thread, const String *a, const Strin
 	int32_t outLength = a->length + b->length;
 
 	String *output;
-	GC_ConstructString(thread, outLength, NULL, &output);
+	GC_ConstructString(thread, outLength, nullptr, &output);
 
 	uchar *outputChar = const_cast<uchar*>(&output->firstChar);
 
@@ -265,7 +266,7 @@ OVUM_API String *String_Concat3(ThreadHandle thread, const String *a, const Stri
 	outLength += c->length;
 
 	String *output;
-	GC_ConstructString(thread, outLength, NULL, &output);
+	GC_ConstructString(thread, outLength, nullptr, &output);
 	uchar *outputChar = const_cast<uchar*>(&output->firstChar);
 
 	CopyMemoryT(outputChar, &a->firstChar, a->length);
@@ -295,7 +296,7 @@ OVUM_API String *String_ConcatRange(ThreadHandle thread, const unsigned int coun
 	}
 
 	String *output;
-	GC_ConstructString(thread, outLength, NULL, &output);
+	GC_ConstructString(thread, outLength, nullptr, &output);
 	uchar *outputChar = const_cast<uchar*>(&output->firstChar);
 
 	for (unsigned int i = 0; i < count; i++)
@@ -403,7 +404,7 @@ OVUM_API String *String_FromWString(ThreadHandle thread, const wchar_t *source)
 		}
 
 		MutableString *output;
-		GC_ConstructString(thread, outLength, NULL, (String**)&output);
+		GC_ConstructString(thread, outLength, nullptr, (String**)&output);
 
 		if (outLength)
 		{
@@ -429,5 +430,5 @@ OVUM_API String *String_FromWString(ThreadHandle thread, const wchar_t *source)
 		return (String*)output;
 	}
 	else
-		return NULL; /// not supported :(
+		return nullptr; /// not supported :(
 }

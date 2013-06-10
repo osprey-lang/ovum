@@ -26,7 +26,7 @@ public:
 	// Flags associated with the type.
 	TypeFlags flags;
 
-	// The type from which this inherits (NULL only for Object).
+	// The type from which this inherits (null only for Object).
 	Type *baseType;
 	// A type whose private and protected members this type has access to.
 	// The shared type must be in the same module as this type.
@@ -46,11 +46,11 @@ public:
 	// Members! These allow us to look up members by name.
 	StringHash<Member*> members;
 
-	// Operator implementations. If an operator implementation is NULL,
+	// Operator implementations. If an operator implementation is null,
 	// then the type does not implement that operator.
 	Method *operators[OPERATOR_COUNT];
 
-	// The reference getter for the type. Is NULL unless the type has
+	// The reference getter for the type. Is null unless the type has
 	// the flag TYPE_CUSTOMPTR, in which case the GC uses this method
 	// to obtain a list of Value references from instance of the type.
 	ReferenceGetter getReferences;
@@ -141,7 +141,7 @@ public:
 
 	inline Member(String *name, Type *declType, MemberFlags flags)
 		: name(name), declType(declType), declModule(declType->module),
-		next(NULL), flags(flags)
+		next(nullptr), flags(flags)
 	{ }
 
 	const bool IsAccessible(const Type *instType, const Type *declType, const Type *fromType) const;

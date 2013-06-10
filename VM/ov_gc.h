@@ -11,7 +11,7 @@
 // which get passed to an appropriate constructor of the type.
 OVUM_API void GC_Construct(ThreadHandle thread, TypeHandle type, const uint16_t argc, Value *output);
 
-// Constructs a string. If 'values' is NULL, the string is initialized to contain only '\0's.
+// Constructs a string. If 'values' is null, the string is initialized to contain only '\0's.
 // Note: 'length' does NOT include the terminating '\0'!
 OVUM_API void GC_ConstructString(ThreadHandle thread, const int32_t length, const uchar *values, String **result);
 

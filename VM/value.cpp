@@ -4,14 +4,14 @@ const Value NULL_VALUE = NULL_CONSTANT;
 
 OVUM_API bool IsTrue(Value value)
 {
-	return value.type != NULL &&
+	return value.type != nullptr &&
 		(!(_Tp(value.type)->flags & TYPE_PRIMITIVE) ||
 		value.integer != 0);
 }
 
 OVUM_API bool IsFalse(Value value)
 {
-	return value.type == NULL ||
+	return value.type == nullptr ||
 		(_Tp(value.type)->flags & TYPE_PRIMITIVE) && value.integer == 0;
 }
 
@@ -32,7 +32,7 @@ OVUM_API bool IsSameReference(Value a, Value b)
 	if (a.type != b.type)
 		return false;
 	// a.type == b.type at this point
-	if (a.type == NULL)
+	if (a.type == nullptr)
 		return true; // both are null
 	if (_Tp(a.type)->flags & TYPE_PRIMITIVE)
 		return a.integer == b.integer;

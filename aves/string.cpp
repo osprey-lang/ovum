@@ -10,7 +10,7 @@ AVES_API NATIVE_FUNCTION(aves_String_get_item)
 	String *str = THISV.common.string;
 	if (index < 0 || index >= str->length)
 	{
-		GC_Construct(thread, ArgumentRangeError, 0, NULL);
+		GC_Construct(thread, ArgumentRangeError, 0, nullptr);
 		VM_Throw(thread);
 	}
 
@@ -31,7 +31,7 @@ AVES_API NATIVE_FUNCTION(aves_String_getCategory)
 	String *str = THISV.common.string;
 	if (index < 0 || index > str->length)
 	{
-		GC_Construct(thread, ArgumentRangeError, 0, NULL);
+		GC_Construct(thread, ArgumentRangeError, 0, nullptr);
 		VM_Throw(thread);
 	}
 
@@ -46,7 +46,7 @@ AVES_API NATIVE_FUNCTION(aves_String_format)
 {
 	Value *values = args + 1;
 
-	String *result = NULL;
+	String *result = nullptr;
 	if (IsType(*values, GetType_List()))
 		result = string::Format(thread, THISV.common.string, values->common.list);
 	else if (IsType(*values, GetType_Hash()))
@@ -149,7 +149,7 @@ String *string::Format(ThreadHandle thread, const String *format, ListInst *list
 			if (*chp == '}' || *chp < '0' || *chp > '9')
 			{
 				VM_PushString(thread, strings::format);
-				GC_Construct(thread, ArgumentError, 1, NULL);
+				GC_Construct(thread, ArgumentError, 1, nullptr);
 				VM_Throw(thread);
 			}
 			// output everything up to (but not including) the {
@@ -185,13 +185,13 @@ String *string::Format(ThreadHandle thread, const String *format, ListInst *list
 				if (*chp != '}')
 				{
 					VM_PushString(thread, strings::format);
-					GC_Construct(thread, ArgumentError, 1, NULL);
+					GC_Construct(thread, ArgumentError, 1, nullptr);
 					VM_Throw(thread);
 				}
 				if (placeholderIndex >= list->length)
 				{
 					VM_PushString(thread, strings::format);
-					GC_Construct(thread, ArgumentError, 1, NULL);
+					GC_Construct(thread, ArgumentError, 1, nullptr);
 					VM_Throw(thread);
 				}
 
@@ -253,7 +253,7 @@ Value ScanFormatIdentifier(ThreadHandle thread, const size_t bufferSize, uchar b
 		cat != UC_NUMBER_LETTER && *ch != '_')
 	{
 		VM_PushString(thread, strings::format);
-		GC_Construct(thread, ArgumentError, 1, NULL);
+		GC_Construct(thread, ArgumentError, 1, nullptr);
 		VM_Throw(thread);
 	}
 
@@ -279,7 +279,7 @@ Value ScanFormatIdentifier(ThreadHandle thread, const size_t bufferSize, uchar b
 			cat == UC_PUNCT_CONNECTOR || cat == UC_FORMAT))
 		{
 			VM_PushString(thread, strings::format);
-			GC_Construct(thread, ArgumentError, 1, NULL);
+			GC_Construct(thread, ArgumentError, 1, nullptr);
 			VM_Throw(thread);
 		}
 	}
@@ -326,7 +326,7 @@ String *string::Format(ThreadHandle thread, const String *format, Value *hash)
 			if (*chp == '}')
 			{
 				VM_PushString(thread, strings::format);
-				GC_Construct(thread, ArgumentError, 1, NULL);
+				GC_Construct(thread, ArgumentError, 1, nullptr);
 				VM_Throw(thread);
 			}
 			// output everything up to (but not including) the {
@@ -352,7 +352,7 @@ String *string::Format(ThreadHandle thread, const String *format, Value *hash)
 				uchar chbuffer[BUFFER_SIZE];
 				uint32_t bufferLength;
 				Value phKey = ScanFormatIdentifier(thread, BUFFER_SIZE, chbuffer, index, chp, bufferLength);
-				if (phKey.type == NULL) // use the values in the buffer
+				if (phKey.type == nullptr) // use the values in the buffer
 				{
 					// Note: BUFFER_SIZE includes space for a trailing \0
 					LitString<BUFFER_SIZE - 1> keyString = { bufferLength, 0, STR_STATIC };
@@ -379,7 +379,7 @@ String *string::Format(ThreadHandle thread, const String *format, Value *hash)
 				if (*chp != '}')
 				{
 					VM_PushString(thread, strings::format);
-					GC_Construct(thread, ArgumentError, 1, NULL);
+					GC_Construct(thread, ArgumentError, 1, nullptr);
 					VM_Throw(thread);
 				}
 

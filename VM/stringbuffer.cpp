@@ -8,7 +8,7 @@ namespace buffer_errors
 	String *MemoryError = _S(_MemoryError);
 }
 
-StringBuffer::StringBuffer(Thread * const thread, const int32_t capacity) : length(0), data(NULL)
+StringBuffer::StringBuffer(Thread * const thread, const int32_t capacity) : length(0), data(nullptr)
 {
 	SetCapacity(thread, capacity);
 }
@@ -18,7 +18,7 @@ StringBuffer::~StringBuffer()
 	if (data)
 	{
 		free(data);
-		data = NULL;
+		data = nullptr;
 	}
 }
 
@@ -32,7 +32,7 @@ int32_t StringBuffer::SetCapacity(Thread * const thread, const int32_t newCapaci
 		thread->ThrowMemoryError(buffer_errors::MemoryError);
 
 	uchar *newData = reinterpret_cast<uchar*>(realloc(data, sizeof(uchar) * newCap));
-	if (newData == NULL)
+	if (newData == nullptr)
 		thread->ThrowMemoryError(buffer_errors::MemoryError);
 
 	this->data = newData;

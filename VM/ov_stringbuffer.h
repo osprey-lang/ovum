@@ -19,7 +19,7 @@ private:
 
 public:
 	inline StringBuffer(ThreadHandle thread, const int32_t capacity = StringBuffer::DefaultCapacity)
-		 : length(0), data(NULL)
+		 : length(0), data(nullptr)
 	{
 		SetCapacity(thread, capacity);
 	}
@@ -29,7 +29,7 @@ public:
 		if (data)
 		{
 			free(data);
-			data = NULL;
+			data = nullptr;
 		}
 	}
 
@@ -45,7 +45,7 @@ public:
 			VM_ThrowMemoryError(thread);
 
 		uchar *newData = reinterpret_cast<uchar*>(realloc(data, sizeof(uchar) * newCap));
-		if (newData == NULL)
+		if (newData == nullptr)
 			VM_ThrowMemoryError(thread);
 
 		this->data = newData;
@@ -145,7 +145,7 @@ public:
 		return output;
 	}
 
-	// If buf is NULL, returns only the size of the resulting string,
+	// If buf is null, returns only the size of the resulting string,
 	// including the terminating \0.
 	inline const int ToWString(wchar_t *buf)
 	{

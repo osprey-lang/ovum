@@ -17,7 +17,7 @@ AVES_API NATIVE_FUNCTION(aves_Buffer_new)
 	int64_t size64 = IntFromValue(thread, args[1]).integer;
 	if (size64 < 0 || size64 > UINT32_MAX)
 	{
-		GC_Construct(thread, ArgumentRangeError, 0, NULL);
+		GC_Construct(thread, ArgumentRangeError, 0, nullptr);
 		VM_Throw(thread);
 	}
 
@@ -40,7 +40,7 @@ unsigned int GetBufferIndex(ThreadHandle thread, Buffer *buf, Value indexValue, 
 	if (index64 < 0 || index64 >= buf->size / valueSize)
 	{
 		VM_PushString(thread, strings::index);
-		GC_Construct(thread, ArgumentRangeError, 1, NULL);
+		GC_Construct(thread, ArgumentRangeError, 1, nullptr);
 		VM_Throw(thread);
 	}
 

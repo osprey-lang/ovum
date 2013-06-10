@@ -88,7 +88,7 @@ void ParseCommandLine(int argc, wchar_t *argv[], OvumArgs &args)
 		}
 	}
 
-	if (args.startupFile == NULL)
+	if (args.startupFile == nullptr)
 		CommandParseError("Startup file is missing.");
 
 	if (!args.hasModulePath)
@@ -171,14 +171,14 @@ void PrintUsageAndExit()
 
 void GetStartupFile(const wchar_t *path, wchar_t *buf, size_t bufSize)
 {
-	GetFullPathNameW(path, bufSize, buf, NULL);
+	GetFullPathNameW(path, bufSize, buf, nullptr);
 	// And that's it, I think!
 }
 
 void GetModulePath(wchar_t *buf, size_t bufSize)
 {
 	// The default module path is relative to to Ovum.exe.
-	GetModuleFileNameW(NULL, buf, bufSize);
+	GetModuleFileNameW(nullptr, buf, bufSize);
 	PathRemoveFileSpecW(buf); // removes \Ovum.exe
 	PathAppendW(buf, L"lib"); // PathAppend automatically inserts backspace
 }

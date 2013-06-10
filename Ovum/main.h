@@ -35,7 +35,7 @@ typedef struct OvumArgs_S
 
 void ParseCommandLine(int argc, wchar_t *argv[], OvumArgs &args);
 
-void CommandParseError(const char *message, wchar_t *extra = NULL);
+void CommandParseError(const char *message, wchar_t *extra = nullptr);
 
 void PrintUsageAndExit();
 

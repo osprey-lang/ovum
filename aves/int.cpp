@@ -26,7 +26,7 @@ AVES_API NATIVE_FUNCTION(aves_Int_toStringf)
 		int64_t radix = format.integer;
 		if (radix < 2 || radix > 36)
 		{
-			GC_Construct(thread, ArgumentRangeError, 0, NULL);
+			GC_Construct(thread, ArgumentRangeError, 0, nullptr);
 			VM_Throw(thread);
 		}
 
@@ -74,7 +74,7 @@ AVES_API NATIVE_FUNCTION(aves_Int_opShiftLeft)
 
 	if (amount < 0)
 	{
-		GC_Construct(thread, ArgumentRangeError, 0, NULL);
+		GC_Construct(thread, ArgumentRangeError, 0, nullptr);
 		VM_Throw(thread);
 	}
 	if (amount > 64)
@@ -91,7 +91,7 @@ AVES_API NATIVE_FUNCTION(aves_Int_opShiftRight)
 
 	if (amount < 0)
 	{
-		GC_Construct(thread, ArgumentRangeError, 0, NULL);
+		GC_Construct(thread, ArgumentRangeError, 0, nullptr);
 		VM_Throw(thread);
 	}
 	if (amount > 64)

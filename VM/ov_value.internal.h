@@ -14,13 +14,13 @@
 
 inline void SetNull_(Value &target)
 {
-	target.type = NULL;
-	target.instance = NULL;
+	target.type = nullptr;
+	target.instance = nullptr;
 }
 inline void SetNull_(Value *target)
 {
-	target->type = NULL;
-	target->instance = NULL;
+	target->type = nullptr;
+	target->instance = nullptr;
 }
 
 inline void SetBool_(Value &target, const bool value)
@@ -83,14 +83,14 @@ inline void SetString_(Value *target, String *value)
 
 inline bool IsTrue_(Value value)
 {
-	return value.type != NULL &&
+	return value.type != nullptr &&
 		(!(_Tp(value.type)->flags & TYPE_PRIMITIVE) ||
 		value.integer != 0);
 }
 
 inline bool IsFalse_(Value value)
 {
-	return value.type == NULL ||
+	return value.type == nullptr ||
 		(_Tp(value.type)->flags & TYPE_PRIMITIVE) && value.integer == 0;
 }
 
@@ -99,7 +99,7 @@ inline bool IsSameReference_(Value a, Value b)
 	if (a.type != b.type)
 		return false;
 	// a.type == b.type at this point
-	if (a.type == NULL)
+	if (a.type == nullptr)
 		return true; // both are null
 	if (_Tp(a.type)->flags & TYPE_PRIMITIVE)
 		return a.integer == b.integer;

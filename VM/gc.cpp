@@ -18,9 +18,9 @@ void GC_Init()
 	GCState state;
 	state.isRunning = false;
 
-	state.collectBase = NULL;
-	state.processBase = NULL;
-	state.keepBase = NULL;
+	state.collectBase = nullptr;
+	state.processBase = nullptr;
+	state.keepBase = nullptr;
 
 	state.currentCollectMark = 0;
 	state.debt = 0;
@@ -144,8 +144,8 @@ OVUM_API void GC_ConstructString(ThreadHandle thread, const int32_t length, cons
 	// Note: Alloc() initializes the bytes to 0. The default values of
 	// hashCode and flags are both 0, so we don't need to set either here.
 
-	// If you pass a NULL value, you get a string with nothing but \0s.
-	if (value != NULL)
+	// If you pass a null value, you get a string with nothing but \0s.
+	if (value != nullptr)
 		// Note: this does NOT include the terminating \0, which is fine.
 		CopyMemoryT(&str->firstChar, value, length);
 
@@ -160,7 +160,7 @@ OVUM_API String *GC_ConvertString(ThreadHandle thread, const char *string)
 		_Th(thread)->ThrowOverflowError(gc_strings::CStringTooBig);
 
 	String *output;
-	GC_ConstructString(thread, length, NULL, &output);
+	GC_ConstructString(thread, length, nullptr, &output);
 
 	if (length > 0)
 	{
@@ -219,7 +219,7 @@ void GC_Collect(Thread *const thread)
 			GC_ProcessObjectAndFields(item);
 		} while (item = item->next);
 	}
-	assert(gc.processBase == NULL);
+	assert(gc.processBase == nullptr);
 	// Step 3: free all objects left in the Collect list.
 	while (gc.collectBase)
 	{
@@ -236,7 +236,7 @@ void GC_Collect(Thread *const thread)
 	// and set current Keep list to Collect.
 	gc.currentCollectMark = (gc.currentCollectMark + 2) % 3;
 	gc.collectBase = gc.keepBase;
-	gc.keepBase = NULL;
+	gc.keepBase = nullptr;
 }
 
 void GC_MarkRootSet()

@@ -7,7 +7,7 @@ AVES_API NATIVE_FUNCTION(aves_Enum_getHashCode)
 AVES_API NATIVE_FUNCTION(aves_Enum_toString)
 {
 	VM_PushInt(thread, THISV.integer);
-	VM_InvokeMember(thread, strings::toString, 0, NULL);
+	VM_InvokeMember(thread, strings::toString, 0, nullptr);
 }
 
 AVES_API NATIVE_FUNCTION(aves_Enum_opEquals)

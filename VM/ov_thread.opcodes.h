@@ -336,7 +336,7 @@ public:
 	
 	inline Value *const operator+(const StackFrame *const frame) const
 	{
-		return offset == 0 ? NULL : (Value*)((uint8_t*)frame + this->offset * sizeof(Value));
+		return offset == 0 ? nullptr : (Value*)((uint8_t*)frame + this->offset * sizeof(Value));
 	}
 };
 

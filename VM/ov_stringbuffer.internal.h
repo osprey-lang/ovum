@@ -42,7 +42,7 @@ public:
 
 	String *ToString(Thread *const thread);
 
-	// If buf is NULL, returns only the size of the resulting string,
+	// If buf is null, returns only the size of the resulting string,
 	// including the terminating \0.
 	const int ToWString(wchar_t *buf);
 
