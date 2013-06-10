@@ -19,6 +19,9 @@
 // So that all the VM functions can access this field easily.
 extern StandardTypes stdTypes; // defined in vm.cpp
 
+// Wheee, forward declarations!
+class Thread;
+
 // Used heavily throughout!
 
 // Recovers a Type from a TypeHandle.

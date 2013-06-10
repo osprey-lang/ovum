@@ -422,7 +422,7 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 					Type *const type = *reinterpret_cast<Type**>(ip);
 					ip += sizeof(Type*);
 
-					if (IsType_(*value, type))
+					if (Type::ValueIsType(*value, type))
 						ip += I32_ARG(ip);
 
 					ip += sizeof(int32_t);

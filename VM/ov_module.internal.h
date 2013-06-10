@@ -256,7 +256,7 @@ private:
 	MemberTable<Type  *> types;     // Types defined in the module
 	MemberTable<Method*> functions; // Global functions defined in the module
 	MemberTable<Value  > constants; // Constants exported by the module
-	MemberTable<Member*> fields;    // Fields, both instance and static
+	MemberTable<Field *> fields;    // Fields, both instance and static
 	MemberTable<Method*> methods;   // Class methods defined in the module
 	MemberTable<String*> strings;   // String table
 	StringHash<ModuleMember> members; // All global members defined in the module, indexed by name.
@@ -264,7 +264,7 @@ private:
 	MemberTable<Module*> moduleRefs;   // Module references
 	MemberTable<Type  *> typeRefs;     // Type references
 	MemberTable<Method*> functionRefs; // Global function references
-	MemberTable<Member*> fieldRefs;    // Field references
+	MemberTable<Field *> fieldRefs;    // Field references
 	MemberTable<Method*> methodRefs;   // Class method references
 
 	HMODULE nativeLib; // Handle to native library (NULL if not loaded)

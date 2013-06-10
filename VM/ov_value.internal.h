@@ -94,18 +94,6 @@ inline bool IsFalse_(Value value)
 		(_Tp(value.type)->flags & TYPE_PRIMITIVE) && value.integer == 0;
 }
 
-inline bool IsType_(Value value, const Type *type)
-{
-	const Type *valtype = _Tp(value.type);
-	while (valtype)
-	{
-		if (valtype == type)
-			return true;
-		valtype = valtype->baseType;
-	}
-	return false;
-}
-
 inline bool IsSameReference_(Value a, Value b)
 {
 	if (a.type != b.type)

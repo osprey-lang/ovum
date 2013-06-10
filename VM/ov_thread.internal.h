@@ -279,6 +279,7 @@ private:
 
 	friend void GC_MarkRootSet();
 	friend void GC_Construct(ThreadHandle, TypeHandle, const uint16_t, Value*);
+	friend void VM_InvokeMethod(ThreadHandle, MethodHandle, const unsigned int, Value*);
 };
 
 // Converts a ThreadHandle to a real Thread.

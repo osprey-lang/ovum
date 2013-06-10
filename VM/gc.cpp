@@ -248,7 +248,7 @@ void GC_MarkRootSet()
 	// Frames are marked top-to-bottom.
 	do
 	{
-		MethodOverload *method = frame->method;
+		Method::Overload *method = frame->method;
 		// Does the method have any locals?
 		if (method->paramCount)
 			GC_ProcessFields(method->paramCount, frame->arguments);

@@ -368,6 +368,7 @@ void Thread::Throw(bool rethrow)
 		currentError = currentFrame->Peek(0);
 		currentError.common.error->stackTrace = GetStackTrace();
 	}
+	assert(!IS_NULL(currentError));
 
 	OvumException ex(currentError);
 	throw ex;
@@ -718,9 +719,11 @@ OVUM_API void VM_InvokeMember(ThreadHandle thread, String *name, const unsigned 
 {
 	_Th(thread)->InvokeMember(name, argCount, result);
 }
-OVUM_API void VM_InvokeMethod(ThreadHandle thread, Method *method, const unsigned int argCount, Value *result)
+OVUM_API void VM_InvokeMethod(ThreadHandle thread, MethodHandle method, const unsigned int argCount, Value *result)
 {
-	_Th(thread)->InvokeMethod(method, argCount, result);
+	Thread *const th = _Th(thread);
+	StackFrame *const frame = th->currentFrame;
+	th->InvokeMethod(_Mth(method), argCount, frame->evalStack + frame->stackCount - 1 - argCount, result);
 }
 OVUM_API void VM_InvokeOperator(ThreadHandle thread, Operator op, Value *result)
 {
