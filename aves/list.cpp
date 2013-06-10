@@ -191,33 +191,6 @@ AVES_API NATIVE_FUNCTION(aves_List_slice2)
 	// Return the new list
 	VM_Push(thread, *outputValue);
 }
-AVES_API NATIVE_FUNCTION(aves_List_join)
-{
-	// Stringify separator
-	VM_Push(thread, args[1]);
-	VM_LoadMember(thread, strings::toString, NULL);
-	VM_Invoke(thread, 0, args + 1);
-
-	StringBuffer buf(thread);
-
-	ListInst *list = _L(THISV);
-	for (int32_t i = 0; i < list->length; i++)
-	{
-		if (i > 0)
-			buf.Append(thread, args[1].common.string);
-
-		if (IS_NULL(list->values[i])) // Ignore null values
-			continue;
-
-		String *stringValue;
-		VM_Push(thread, list->values[i]);
-		VM_ToString(thread, &stringValue);
-
-		buf.Append(thread, stringValue);
-	}
-
-	VM_PushString(thread, buf.ToString(thread));
-}
 AVES_API NATIVE_FUNCTION(aves_List_reverse)
 {
 	// Reverse in-place
