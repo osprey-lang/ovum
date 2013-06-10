@@ -9,19 +9,59 @@ public class String
 {
 	private new();
 
-	public get this[index]		__extern("aves_String_get_item");
+	public get this[index]			__extern("aves_String_get_item");
 
-	public get length			__extern("aves_String_get_length");
+	public get length				__extern("aves_String_get_length");
 
 	public get isEmtpy = length == 0;
 
-	public getCategory(i)		__extern("aves_String_getCategory");
-	public format(values)		__extern("aves_String_format");
+	public contains(value)			__extern("aves_String_contains");
 
-	public toUpper()			__extern("aves_String_toUpper");
-	public toLower()			__extern("aves_String_toLower");
+	public reverse()				__extern("aves_String_reverse");
+	public substr(start, count)		__extern("aves_String_substr");
+	public format(values)			__extern("aves_String_format");
+	public toUpper()				__extern("aves_String_toUpper");
+	public toLower()				__extern("aves_String_toLower");
 
-	override getHashCode()		__extern("aves_String_getHashCode");
+	public getCategory(i)			__extern("aves_String_getCategory");
+	public isControl(i)
+	{
+		return getCategory(i) == UnicodeCategory.control;
+	}
+	public isDigit(i)
+	{
+		return getCategory(i) == UnicodeCategory.numberDecimal;
+	}
+	public isLetter(i)
+	{
+		return getCategory(i) & UnicodeCategory.topCategoryMask == UnicodeCategory.letter;
+	}
+	public isLower(i)
+	{
+		return getCategory(i) == UnicodeCategory.letterLowercase;
+	}
+	public isUpper(i)
+	{
+		return getCategory(i) == UnicodeCategory.letterUppercase;
+	}
+	public isNumber(i)
+	{
+		return getCategory(i) & UnicodeCategory.topCategoryMask == UnicodeCategory.number;
+	}
+	public isPunct(i)
+	{
+		return getCategory(i) & UnicodeCategory.topCategoryMask == UnicodeCategory.punct;
+	}
+	public isSymbol(i)
+	{
+		return getCategory(i) & UnicodeCategory.topCategoryMask == UnicodeCategory.symbol;
+	}
+	public isAssigned(i)
+	{
+		return getCategory(i) != UnicodeCategory.unassigned;
+	}
+
+	override getHashCode()			__extern("aves_String_getHashCode");
 	override toString()
 	{
 		return this;
@@ -29,9 +69,9 @@ public class String
 
 	public const empty = "";
 
-	operator ==(a, b)			__extern("aves_String_opEquals");
-	operator <=>(a, b)			__extern("aves_String_opCompare");
-	operator *(a, b)			__extern("aves_String_opMultiply");
+	operator ==(a, b)				__extern("aves_String_opEquals");
+	operator <=>(a, b)				__extern("aves_String_opCompare");
+	operator *(a, b)				__extern("aves_String_opMultiply");
 
 	iter
 	{
@@ -71,7 +111,7 @@ public enum set UnicodeCategory
 	letter				= 0x100, // L
 	letterUppercase		= letter | 1, // Lu
 	letterLowercase		= letter | 2, // Ll
-	letterTitleCase		= letter | 3, // Lt
+	letterTitlecase		= letter | 3, // Lt
 	letterModifier		= letter | 4, // Lm
 	letterOther			= letter | 5, // Lo
 
