@@ -11,14 +11,13 @@ use "math/math.osp";
 use "Env.osp";
 use "Method.osp";
 use "errors/errors.osp"; // all of the errors!
-//use "lambda.osp";
 
 namespace aves;
 
-/// Summary: Prints a value to the standard output.
+/// Summary: Prints a value to the standard output, followed by a line terminator.
 /// Param value: The value to print.
-/// Remarks: If the value is null, it is treated the same as "".
-///          If the value is any other non-string value, .toString() is called on it.
+/// Remarks: If the value is null, it is treated the same as `""`.
+///          If the value is any other non-string value, `.toString()` is called on it.
 public function print(value)			__extern("aves_print");
 
 /// Summary: Prints a formatted value.
