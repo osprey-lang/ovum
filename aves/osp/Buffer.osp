@@ -52,8 +52,11 @@ public class BufferView
 	iter
 	{
 		var i = 0;
-		while i < length:
+		while i < length
+		{
 			yield this[i];
+			i += 1;
+		}
 	}
 }
 
