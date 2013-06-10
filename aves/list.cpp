@@ -23,7 +23,7 @@ int32_t GetIndex(ThreadHandle thread, ListInst *list, Value indexValue)
 	if (index < 0 || index >= list->length)
 	{
 		VM_PushString(thread, strings::index);
-		GC_Construct(thread, ArgumentRangeError, 1, NULL);
+		GC_Construct(thread, ArgumentRangeError, 1, nullptr);
 		VM_Throw(thread);
 	}
 
@@ -40,7 +40,7 @@ AVES_API NATIVE_FUNCTION(aves_List_newCap)
 	if (capacity < 0 || capacity > INT32_MAX)
 	{
 		VM_PushString(thread, strings::capacity);
-		GC_Construct(thread, ArgumentRangeError, 1, NULL);
+		GC_Construct(thread, ArgumentRangeError, 1, nullptr);
 		VM_Throw(thread);
 	}
 
@@ -62,7 +62,7 @@ AVES_API NATIVE_FUNCTION(aves_List_set_capacity)
 	if (capacity < 0 || capacity > INT32_MAX)
 	{
 		VM_PushString(thread, strings::capacity);
-		GC_Construct(thread, ArgumentRangeError, 1, NULL);
+		GC_Construct(thread, ArgumentRangeError, 1, nullptr);
 		VM_Throw(thread);
 	}
 
@@ -102,7 +102,7 @@ AVES_API NATIVE_FUNCTION(aves_List_insert)
 	if (index64 < 0 || index64 > list->length)
 	{
 		VM_PushString(thread, strings::index);
-		GC_Construct(thread, ArgumentRangeError, 1, NULL);
+		GC_Construct(thread, ArgumentRangeError, 1, nullptr);
 		VM_Throw(thread);
 	}
 
@@ -172,7 +172,7 @@ AVES_API NATIVE_FUNCTION(aves_List_slice2)
 	{
 		VM_PushNull(thread); // paramName
 		VM_PushString(thread, error_strings::EndIndexLessThanStart); // message
-		GC_Construct(thread, ArgumentRangeError, 2, NULL);
+		GC_Construct(thread, ArgumentRangeError, 2, nullptr);
 		VM_Throw(thread);
 	}
 
@@ -205,7 +205,7 @@ AVES_API void InitListInstance(ThreadHandle thread, ListInst *list, int32_t capa
 	list->length = 0;
 	list->version = 0;
 	if (capacity == 0)
-		list->values = NULL;
+		list->values = nullptr;
 	else
 		// Note: we use malloc so that we can later use realloc to resize the list
 		list->values = (Value*)malloc(capacity * sizeof(Value));
@@ -222,7 +222,7 @@ void SetListCapacity(ThreadHandle thread, ListInst *list, int32_t capacity)
 	if (capacity < list->length)
 	{
 		VM_PushString(thread, strings::capacity);
-		GC_Construct(thread, ArgumentRangeError, 1, NULL);
+		GC_Construct(thread, ArgumentRangeError, 1, nullptr);
 		VM_Throw(thread);
 	}
 

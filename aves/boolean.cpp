@@ -33,7 +33,7 @@ AVES_API NATIVE_FUNCTION(aves_Boolean_opEquals)
 AVES_API NATIVE_FUNCTION(aves_Boolean_opCompare)
 {
 	if (args[0].type != args[1].type)
-		VM_ThrowTypeError(thread, NULL);
+		VM_ThrowTypeError(thread, nullptr);
 
 	int64_t left  = args[0].integer;
 	int64_t right = args[1].integer;

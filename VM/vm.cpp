@@ -50,7 +50,7 @@ OVUM_API int VM_Start(VMStartParams params)
 	// ... run VM ...
 	int result = 0;
 	Value returnValue;
-	vmState.mainThread->Start(NULL, returnValue);
+	vmState.mainThread->Start(nullptr, returnValue);
 	// blah blah
 
 	// done!
@@ -88,11 +88,11 @@ void VM_Init(VMStartParams params)
 
 	wchar_t *startupPath = CloneWString(params.startupFile);
 	PathRemoveFileSpecW(startupPath);
-	state.startupPath = String_FromWString(NULL, startupPath);
+	state.startupPath = String_FromWString(nullptr, startupPath);
 	state.startupPath->flags = STR_STATIC; // make sure the GC doesn't touch it, even though it's technically owned by the GC
 	delete[] startupPath;
 
-	state.modulePath = String_FromWString(NULL, params.modulePath);
+	state.modulePath = String_FromWString(nullptr, params.modulePath);
 	state.modulePath->flags = STR_STATIC; // same here
 
 	state.verbose = params.verbose;
@@ -124,9 +124,9 @@ OVUM_API void VM_Print(String *str)
 	wcout << (const wchar_t*)&str->firstChar;
 #else
 	// Let's use the Windows API to convert our text to UTF-8!
-	int length = WideCharToMultiByte(CP_UTF8, 0, (LPWSTR)&str->firstChar, str->length, NULL, 0, NULL, NULL);
+	int length = WideCharToMultiByte(CP_UTF8, 0, (LPWSTR)&str->firstChar, str->length, nullptr, 0, nullptr, nullptr);
 	CHAR *output = new CHAR[length + 1];
-	length = WideCharToMultiByte(CP_UTF8, 0, (LPWSTR)&str->firstChar, str->length, output, length + 1, NULL, NULL);
+	length = WideCharToMultiByte(CP_UTF8, 0, (LPWSTR)&str->firstChar, str->length, output, length + 1, nullptr, nullptr);
 	output[length] = '\0';
 
 	cout << output;

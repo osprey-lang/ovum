@@ -48,7 +48,7 @@ void Type::InitOperators()
 			method = type->operators[op];
 		} while (!method && (type = type->baseType));
 
-		this->operators[op] = method; // NULL or an actual method.
+		this->operators[op] = method; // null or an actual method.
 	}
 
 	this->flags = _E(TypeFlags, this->flags | TYPE_OPS_INITED);
@@ -59,7 +59,7 @@ Member *Type::GetMember(String *name) const
 	Member *m;
 	if (members.Get(name, m))
 		return m;
-	return NULL;
+	return nullptr;
 }
 
 Member *Type::FindMember(String *name, const Type *fromType) const
@@ -71,7 +71,7 @@ Member *Type::FindMember(String *name, const Type *fromType) const
 			return m;
 	} while (type = type->baseType);
 
-	return NULL; // not found
+	return nullptr; // not found
 }
 
 Method *Type::GetOperator(Operator op) const
@@ -103,7 +103,7 @@ void Type::LoadTypeToken()
 //     The type that actually declares the member.
 //   fromType:
 //     The type which declares the method that is accessing the member.
-//     This is NULL for global functions.
+//     This is null for global functions.
 const bool Member::IsAccessible(const Type *instType, const Type *const declType, const Type *const fromType) const
 {
 	if (this->flags & M_PRIVATE)
@@ -160,7 +160,7 @@ Value *const Field::GetField(Thread *const thread, const Value instance) const
 
 Value *const Field::GetField(Thread *const thread, const Value *instance) const
 {
-	if (instance->type == NULL)
+	if (instance->type == nullptr)
 		thread->ThrowNullReferenceError();
 	if (!Type::ValueIsType(*instance, this->declType))
 		thread->ThrowTypeError();
@@ -176,7 +176,7 @@ Value *const Field::GetFieldFast(Thread *const thread, const Value instance) con
 
 Value *const Field::GetFieldFast(Thread *const thread, const Value *instance) const
 {
-	if (instance->type == NULL)
+	if (instance->type == nullptr)
 		thread->ThrowNullReferenceError();
 	return reinterpret_cast<Value*>(instance->instance + this->offset);
 }
@@ -270,7 +270,7 @@ OVUM_API void Type_SetReferenceGetter(TypeHandle type, ReferenceGetter getter)
 OVUM_API String *Error_GetMessage(Value error)
 {
 	if (!Type::ValueIsType(error, _Tp(stdTypes.Error)))
-		return NULL; // whoopsies!
+		return nullptr; // whoopsies!
 
 	return error.common.error->message;
 }
@@ -278,7 +278,7 @@ OVUM_API String *Error_GetMessage(Value error)
 OVUM_API String *Error_GetStackTrace(Value error)
 {
 	if (!Type::ValueIsType(error, _Tp(stdTypes.Error)))
-		return NULL; // Type mismatch!
+		return nullptr; // Type mismatch!
 
 	return error.common.error->stackTrace;
 }

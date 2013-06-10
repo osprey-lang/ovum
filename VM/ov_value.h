@@ -147,7 +147,7 @@ typedef struct MethodInst_S
 } MethodInst;
 
 
-#define NULL_CONSTANT  { NULL, 0 }
+#define NULL_CONSTANT  { nullptr, 0 }
 OVUM_API extern const Value NULL_VALUE;
 
 inline void SetNull(Value &target)
@@ -215,7 +215,7 @@ inline void SetString(Value *target, String *value)
 }
 
 
-#define IS_NULL(v)		((v).type == NULL)
+#define IS_NULL(v)		((v).type == nullptr)
 
 OVUM_API bool IsTrue(Value value);
 

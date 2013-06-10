@@ -27,7 +27,7 @@ AVES_API NATIVE_FUNCTION(aves_math_acos)
 
 	//if (value < -1 || value > 1)
 	//{
-	//	GC_Construct(thread, ArgumentRangeError, 0, NULL);
+	//	GC_Construct(thread, ArgumentRangeError, 0, nullptr);
 	//	VM_Throw(thread);
 	//}
 
@@ -40,7 +40,7 @@ AVES_API NATIVE_FUNCTION(aves_math_asin)
 
 	//if (value < -1 || value > 1)
 	//{
-	//	GC_Construct(thread, ArgumentRangeError, 0, NULL);
+	//	GC_Construct(thread, ArgumentRangeError, 0, nullptr);
 	//	VM_Throw(thread);
 	//}
 

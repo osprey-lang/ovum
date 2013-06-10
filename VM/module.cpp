@@ -43,7 +43,7 @@ String *MFileStream::ReadStringOrNull()
 	int32_t length = ReadInt32();
 
 	if (length == 0)
-		return NULL;
+		return nullptr;
 
 	MutableString *output = (MutableString*)malloc(sizeof(String) + length * sizeof(uchar));
 
@@ -81,12 +81,12 @@ const Type *Module::FindType(String *name, bool includeInternal) const
 {
 	ModuleMember member;
 	if (!members.Get(name, member))
-		return NULL;
+		return nullptr;
 
 	if (!includeInternal && (member.flags & MMEM_PROTECTION) == MMEM_INTERNAL
 		||
 		(member.flags & MMEM_KIND) != MMEM_TYPE)
-		return NULL;
+		return nullptr;
 
 	return member.type;
 }
@@ -95,12 +95,12 @@ Method *Module::FindGlobalFunction(String *name, bool includeInternal) const
 {
 	ModuleMember member;
 	if (!members.Get(name, member))
-		return NULL;
+		return nullptr;
 
 	if (!includeInternal && (member.flags & MMEM_PROTECTION) == MMEM_INTERNAL
 		||
 		(member.flags & MMEM_KIND) != MMEM_FUNCTION)
-		return NULL;
+		return nullptr;
 
 	return member.function;
 }
@@ -139,7 +139,7 @@ Method *Module::FindGlobalFunction(TokenId token) const
 	else if (token & IDMASK_FUNCTIONREF)
 		return functionRefs[TOKEN_INDEX(token)];
 
-	return NULL; // not found
+	return nullptr; // not found
 }
 
 const Type *Module::FindType(TokenId token) const
@@ -152,7 +152,7 @@ const Type *Module::FindType(TokenId token) const
 	else if (token & IDMASK_TYPEREF)
 		return typeRefs[TOKEN_INDEX(token)];
 
-	return NULL; // not found
+	return nullptr; // not found
 }
 
 Method *Module::FindMethod(TokenId token) const
@@ -165,7 +165,7 @@ Method *Module::FindMethod(TokenId token) const
 	else if (token & IDMASK_METHODREF)
 		return methodRefs[TOKEN_INDEX(token)];
 
-	return NULL; // not found
+	return nullptr; // not found
 }
 
 Field *Module::FindField(TokenId token) const
@@ -178,7 +178,7 @@ Field *Module::FindField(TokenId token) const
 	else if (token & IDMASK_FIELDREF)
 		return fieldRefs[TOKEN_INDEX(token)];
 
-	return NULL; // not found
+	return nullptr; // not found
 }
 
 String *Module::FindString(TokenId token) const
@@ -201,7 +201,7 @@ Module *Module::Find(String *name)
 			return mod;
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 
@@ -269,7 +269,7 @@ Module *Module::OpenByName(String *name)
 	if (mod = Find(name))
 		return mod;
 
-	StringBuffer moduleFileName(NULL, max(vmState.startupPath->length, vmState.modulePath->length) + name->length + 16);
+	StringBuffer moduleFileName(nullptr, max(vmState.startupPath->length, vmState.modulePath->length) + name->length + 16);
 
 	const int pathCount = 2;
 	String *paths[] = { vmState.startupPath, vmState.modulePath };
@@ -280,13 +280,13 @@ Module *Module::OpenByName(String *name)
 	{
 		moduleFileName.Clear();
 
-		moduleFileName.Append(NULL, paths[i]);
+		moduleFileName.Append(nullptr, paths[i]);
 		if (!moduleFileName.EndsWith('\\'))
-			moduleFileName.Append(NULL, (uchar)'\\');
-		moduleFileName.Append(NULL, name);
-		moduleFileName.Append(NULL, 4, ".ovm");
+			moduleFileName.Append(nullptr, (uchar)'\\');
+		moduleFileName.Append(nullptr, name);
+		moduleFileName.Append(nullptr, 4, ".ovm");
 
-		const int filePathLength = moduleFileName.ToWString(NULL);
+		const int filePathLength = moduleFileName.ToWString(nullptr);
 		filePath = new wchar_t[filePathLength];
 		moduleFileName.ToWString(filePath);
 
@@ -295,12 +295,12 @@ Module *Module::OpenByName(String *name)
 			break; // we've found our file! \o/
 
 		delete[] filePath; // Clean up~
-		filePath = NULL;
+		filePath = nullptr;
 	}
 
-	if (filePath == NULL) // not found
+	if (filePath == nullptr) // not found
 	{
-		const int moduleNameLength = String_ToWString(NULL, name);
+		const int moduleNameLength = String_ToWString(nullptr, name);
 		wchar_t *wname = new wchar_t[moduleNameLength];
 		String_ToWString(wname, name);
 		throw ModuleLoadException(wname, "Could not locate the module file.");
@@ -341,7 +341,7 @@ void Module::LoadNativeLibrary(String *nativeFileName, const wchar_t *path)
 	CopyMemoryT(pathBuf, path, pathLen);
 	PathRemoveFileSpecW(pathBuf); // get the actual path!
 
-	const int fileNameWLen = String_ToWString(NULL, nativeFileName);
+	const int fileNameWLen = String_ToWString(nullptr, nativeFileName);
 	wchar_t *fileNameW = new wchar_t[fileNameWLen];
 	String_ToWString(fileNameW, nativeFileName);
 
@@ -353,7 +353,7 @@ void Module::LoadNativeLibrary(String *nativeFileName, const wchar_t *path)
 	delete[] fileNameW; // ain't be needed no more
 	delete[] pathBuf; // also not needed anymore now
 
-	// If this->nativeLib is NULL, then the library could not be loaded.
+	// If this->nativeLib is null, then the library could not be loaded.
 	if (!this->nativeLib)
 		throw ModuleLoadException(path, "Could not load native library file.");
 }
@@ -375,7 +375,7 @@ void Module::ReadModuleMeta(MFileStream &file, ModuleMeta &target)
 	// String map (skip)
 	file.SkipCollection();
 
-	target.nativeLib = file.ReadStringOrNull(); // nativeLib (NULL if absent)
+	target.nativeLib = file.ReadStringOrNull(); // nativeLib (nullptr if absent)
 
 	target.typeCount = file.ReadInt32();     // typeCount
 	target.functionCount = file.ReadInt32(); // functionCount

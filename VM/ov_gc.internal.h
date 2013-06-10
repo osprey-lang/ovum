@@ -25,7 +25,7 @@ TYPED_ENUM(GCOFlags, uint8_t)
 #define GCO_PROCESS(ccm) ((::GCOFlags)(((ccm) + 1) % 3))
 #define GCO_KEEP(ccm)    ((::GCOFlags)(((ccm) + 2) % 3))
 
-#define GCO_CLEAR_LINKS(gco) ((gco)->next = (gco)->prev = NULL)
+#define GCO_CLEAR_LINKS(gco) ((gco)->next = (gco)->prev = nullptr)
 
 #define GCO_INSTANCE_BASE(gco) ((uint8_t*)((gco) + 1))
 #define GCO_FIELDS_BASE(gco)   ((::Value*)((gco) + 1))
@@ -98,7 +98,7 @@ void GC_Init();
 // Determines whether a particular Value should be processed.
 // A Value should be processed if:
 //   1. Its type does not have the TYPE_PRIMITIVE flag set.
-//     1a. Its type is not NULL.
+//     1a. Its type is not null.
 //     1b. It's not a string marked STR_STATIC (as they do not
 //         have an associated GCObject).
 //   2. Its GCObject* is marked GCO_COLLECT.
@@ -129,30 +129,30 @@ void GC_Collect(Thread *const thread);
 // does not automatically call this method for performance reasons.
 //
 // 'list' is the base of the list, and is only modified if gco->next
-// and gco->prev are both NULL (that is, if the object is the only
+// and gco->prev are both null (that is, if the object is the only
 // object in the list).
 //
 // NOTE: also for performance reasons, this code does NOT set gco's
-// next and prev fields to NULL. RemoveFromList will be called mostly
+// next and prev fields to null. RemoveFromList will be called mostly
 // before calling InsertIntoList, which writes to those fields.
-// If you need these fields to be NULL, you must set them yourself.
+// If you need these fields to be null, you must set them yourself.
 // Use the GCO_CLEAR_LINKS(gco) macro for this.
 inline void GC_RemoveFromList(GCObject *gco, GCObject **list)
 {
 	GCObject *prev = gco->prev;
 	GCObject *next = gco->next;
 	// This code maintains two important facts:
-	//   1. If gco->prev == NULL (that is, gco is the first object in the list),
-	//      then gco->next->prev will also be NULL.
-	//   2. If gco->next == NULL (that is, it's the last object in the list),
-	//      then gco->prev->next will also be NULL.
+	//   1. If gco->prev == nullptr (that is, gco is the first object in the list),
+	//      then gco->next->prev will also be null.
+	//   2. If gco->next == nullptr (that is, it's the last object in the list),
+	//      then gco->prev->next will also be null.
 
 	if (gco == *list)
 		*list = next;
 
 	if (!prev && !next)
 	{
-		*list = NULL;
+		*list = nullptr;
 	}
 	else
 	{
@@ -170,10 +170,10 @@ inline void GC_RemoveFromList(GCObject *gco, GCObject **list)
 inline void GC_InsertIntoList(GCObject *gco, GCObject **list)
 {
 	// Before insertion:
-	// NULL  <--  *list  <->  (*list)->next
+	// nullptr  <--  *list  <->  (*list)->next
 	// After insertion:
-	// NULL  <--  gco  <->  *list  <->  (*list)->next
-	gco->prev = NULL;  // gco is the first value, so it has nothing prior to it.
+	// nullptr  <--  gco  <->  *list  <->  (*list)->next
+	gco->prev = nullptr;  // gco is the first value, so it has nothing prior to it.
 	gco->next = *list; // The next value is the current base.
 	if (*list)
 		(*list)->prev = gco;

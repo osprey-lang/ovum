@@ -28,8 +28,8 @@ namespace thread_errors
 
 
 Thread::Thread() :
-	currentFrame(NULL), state(THREAD_CREATED),
-	currentError(NULL_VALUE), ip(NULL)
+	currentFrame(nullptr), state(THREAD_CREATED),
+	currentError(NULL_VALUE), ip(nullptr)
 {
 	InitCallStack();
 }
@@ -271,7 +271,7 @@ void Thread::LoadMember(String *member, Value *result)
 
 void Thread::LoadMemberLL(Value *instance, String *member, Value *result)
 {
-	if (instance->type == NULL)
+	if (instance->type == nullptr)
 		ThrowNullReferenceError();
 
 	const Member *m = _Tp(instance->type)->FindMember(member, currentFrame->method->declType);
@@ -309,7 +309,7 @@ void Thread::StoreMember(String *member)
 
 void Thread::StoreMemberLL(Value *instance, Value *value, String *member)
 {
-	if (instance->type == NULL)
+	if (instance->type == nullptr)
 		ThrowNullReferenceError();
 
 	Member *m = _Tp(instance->type)->FindMember(member, currentFrame->method->declType);
@@ -327,7 +327,7 @@ void Thread::StoreMemberLL(Value *instance, Value *value, String *member)
 			ThrowTypeError(thread_errors::SettingReadonlyProperty);
 
 		// Remember: the instance and value are already on the stack!
-		InvokeMethod(p->setter, 1, value, NULL);
+		InvokeMethod(p->setter, 1, value, nullptr);
 	}
 
 	currentFrame->Pop(2); // Done with the instance and the value!
@@ -346,13 +346,13 @@ void Thread::StoreIndexer(uint16_t argCount)
 
 void Thread::ToString(String **result)
 {
-	LoadMember(static_strings::toString, NULL);
-	Invoke(0, NULL);
+	LoadMember(static_strings::toString, nullptr);
+	Invoke(0, nullptr);
 
 	if (currentFrame->Peek(0).type != stdTypes.String)
 		ThrowTypeError(static_strings::errors::ToStringWrongType);
 
-	if (result != NULL)
+	if (result != nullptr)
 	{
 		*result = currentFrame->Peek(0).common.string;
 		currentFrame->stackCount--;
@@ -376,67 +376,67 @@ void Thread::Throw(bool rethrow)
 
 void Thread::ThrowError(String *message)
 {
-	if (message == NULL)
+	if (message == nullptr)
 		currentFrame->Push(NULL_VALUE);
 	else
 		currentFrame->PushString(message);
-	GC_Construct((ThreadHandle)this, stdTypes.Error, 1, NULL);
+	GC_Construct((ThreadHandle)this, stdTypes.Error, 1, nullptr);
 	Throw();
 }
 
 void Thread::ThrowTypeError(String *message)
 {
-	if (message == NULL)
+	if (message == nullptr)
 		currentFrame->Push(NULL_VALUE);
 	else
 		currentFrame->PushString(message);
-	GC_Construct((ThreadHandle)this, stdTypes.TypeError, 1, NULL);
+	GC_Construct((ThreadHandle)this, stdTypes.TypeError, 1, nullptr);
 	Throw();
 }
 
 void Thread::ThrowMemoryError(String *message)
 {
-	if (message == NULL)
+	if (message == nullptr)
 		currentFrame->Push(NULL_VALUE);
 	else
 		currentFrame->PushString(message);
-	GC_Construct((ThreadHandle)this, stdTypes.MemoryError, 1, NULL);
+	GC_Construct((ThreadHandle)this, stdTypes.MemoryError, 1, nullptr);
 	Throw();
 }
 
 void Thread::ThrowOverflowError(String *message)
 {
-	if (message == NULL)
+	if (message == nullptr)
 		currentFrame->Push(NULL_VALUE);
 	else
 		currentFrame->PushString(message);
-	GC_Construct((ThreadHandle)this, stdTypes.OverflowError, 1, NULL);
+	GC_Construct((ThreadHandle)this, stdTypes.OverflowError, 1, nullptr);
 	Throw();
 }
 
 void Thread::ThrowDivideByZeroError(String *message)
 {
-	if (message == NULL)
+	if (message == nullptr)
 		currentFrame->Push(NULL_VALUE);
 	else
 		currentFrame->PushString(message);
-	GC_Construct((ThreadHandle)this, stdTypes.DivideByZeroError, 1, NULL);
+	GC_Construct((ThreadHandle)this, stdTypes.DivideByZeroError, 1, nullptr);
 	Throw();
 }
 
 void Thread::ThrowNullReferenceError(String *message)
 {
-	if (message == NULL)
+	if (message == nullptr)
 		currentFrame->Push(NULL_VALUE);
 	else
 		currentFrame->PushString(message);
-	GC_Construct((ThreadHandle)this, stdTypes.NullReferenceError, 1, NULL);
+	GC_Construct((ThreadHandle)this, stdTypes.NullReferenceError, 1, nullptr);
 	Throw();
 }
 
 void Thread::InitCallStack()
 {
-	callStack = (unsigned char*)VirtualAlloc(NULL, CALL_STACK_SIZE, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+	callStack = (unsigned char*)VirtualAlloc(nullptr, CALL_STACK_SIZE, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
 }
 
 void Thread::DisposeCallStack()
@@ -481,7 +481,7 @@ StackFrame *Thread::PushStackFrame(const uint16_t argCount, Value *args, Method:
 
 StackFrame *Thread::PushFirstStackFrame(const uint16_t argCount, Value args[], Method::Overload *method)
 {
-	assert(currentFrame == NULL); // <-- !
+	assert(currentFrame == nullptr); // <-- !
 
 	// Copy the arguments onto the call stack
 	if (argCount)
@@ -496,8 +496,8 @@ StackFrame *Thread::PushFirstStackFrame(const uint16_t argCount, Value args[], M
 		argCount,                            // argCount
 		(Value*)newFrame - paramCount,       // arguments pointer
 		(Value*)(newFrame + 1) + localCount, // evalStack pointer
-		NULL,                                // prevInstr
-		NULL,                                // prevFrame
+		nullptr,                                // prevInstr
+		nullptr,                                // prevFrame
 		method,                              // method
 	};
 	*newFrame = newFrameValues;
@@ -631,7 +631,7 @@ String *Thread::GetStackTrace()
 void Thread::AppendArgumentType(StringBuffer &buf, Value arg)
 {
 	const Type *type = _Tp(arg.type);
-	if (type == NULL)
+	if (type == nullptr)
 		buf.Append(this, 4, "null");
 	else
 	{

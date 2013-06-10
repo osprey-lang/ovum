@@ -32,7 +32,7 @@ OVUM_API String *String_ConcatRange(ThreadHandle thread, const unsigned int coun
 //     The buffer into which to put the output. This must be large enough to
 //     contain the resulting string.
 //     To get the length of that string (in wchar_t characters, including the
-//     terminating \0), pass NULL into this parameter.
+//     terminating \0), pass null into this parameter.
 //
 //   Return value:
 //     The length of the resulting string, in number of wchar_t characters,
@@ -44,7 +44,7 @@ OVUM_API const int String_ToWString(wchar_t *dest, const String *source);
 // Converts a zero-terminated char* string to a String*.
 //   thread:
 //     A handle to the thread on which to throw errors if they occur.
-//     If this is NULL, errors will be thrown using C++ 'throw'.
+//     If this is null, errors will be thrown using C++ 'throw'.
 //
 //   source:
 //     The source string.
@@ -58,7 +58,7 @@ OVUM_API String *String_FromCString(ThreadHandle thread, const char *source);
 // Converts a zero-terminated wchar_t* string to a String*.
 //   thread:
 //     A handle to the thread on which to throw errors if they occur.
-//     If this is NULL, errors will be thrown using C++ 'throw'.
+//     If this is null, errors will be thrown using C++ 'throw'.
 //
 //   source:
 //     The source string.

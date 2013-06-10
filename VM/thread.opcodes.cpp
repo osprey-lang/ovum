@@ -366,7 +366,7 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 				{
 					Value *const value = OFF_ARG(ip) + frame;
 					ip += sizeof(LocalOffset);
-					if (value->type == NULL)
+					if (value->type == nullptr)
 						ip += I32_ARG(ip);
 					ip += sizeof(int32_t);
 
@@ -379,7 +379,7 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 				{
 					Value *const value = OFF_ARG(ip) + frame;
 					ip += sizeof(LocalOffset);
-					if (value->type != NULL)
+					if (value->type != nullptr)
 						ip += I32_ARG(ip);
 					ip += sizeof(int32_t);
 

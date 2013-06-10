@@ -54,7 +54,7 @@ AVES_API NATIVE_FUNCTION(aves_printf)
 	if (IS_NULL(args[0]))
 	{
 		VM_PushString(thread, format);
-		GC_Construct(thread, ArgumentNullError, 1, NULL);
+		GC_Construct(thread, ArgumentNullError, 1, nullptr);
 		VM_Throw(thread);
 	}
 

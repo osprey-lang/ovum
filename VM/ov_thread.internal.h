@@ -214,12 +214,12 @@ public:
 
 	// Throw helpers!
 
-	void ThrowError(String *message = NULL) throw(OvumException);
-	void ThrowTypeError(String *message = NULL) throw(OvumException);
-	void ThrowMemoryError(String *message = NULL) throw(OvumException);
-	void ThrowOverflowError(String *message = NULL) throw(OvumException);
-	void ThrowDivideByZeroError(String *message = NULL) throw(OvumException);
-	void ThrowNullReferenceError(String *message = NULL) throw(OvumException);
+	void ThrowError(String *message = nullptr) throw(OvumException);
+	void ThrowTypeError(String *message = nullptr) throw(OvumException);
+	void ThrowMemoryError(String *message = nullptr) throw(OvumException);
+	void ThrowOverflowError(String *message = nullptr) throw(OvumException);
+	void ThrowDivideByZeroError(String *message = nullptr) throw(OvumException);
+	void ThrowNullReferenceError(String *message = nullptr) throw(OvumException);
 #pragma warning(pop)
 
 private:
@@ -255,7 +255,7 @@ private:
 
 			method = method->baseMethod;
 		}
-		return NULL;
+		return nullptr;
 	}
 
 	void Evaluate(StackFrame *frame, uint8_t *entryAddress);
