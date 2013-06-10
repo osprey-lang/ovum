@@ -168,7 +168,7 @@ Method *Module::FindMethod(TokenId token) const
 	return NULL; // not found
 }
 
-Member *Module::FindField(TokenId token) const
+Field *Module::FindField(TokenId token) const
 {
 	assert((token & IDMASK_MEMBERKIND) == IDMASK_FIELDDEF ||
 		(token & IDMASK_MEMBERKIND) == IDMASK_FIELDREF);
@@ -528,7 +528,7 @@ void Module::ReadFieldRefs(MFileStream &file, Module *target)
 		if (!(member->flags & M_FIELD))
 			throw ModuleLoadException(file.fileName, "FieldRef does not refer to a field.");
 
-		target->fieldRefs.SetItem(i, member);
+		target->fieldRefs.SetItem(i, (Field*)member);
 	}
 
 	CHECKPOS_AFTER(FieldRef);
@@ -563,7 +563,7 @@ void Module::ReadMethodRefs(MFileStream &file, Module *target)
 		if (!(member->flags & M_METHOD))
 			throw ModuleLoadException(file.fileName, "MethodRef does not refer to a method.");
 
-		target->methodRefs.SetItem(i, member->method);
+		target->methodRefs.SetItem(i, (Method*)member);
 	}
 
 	CHECKPOS_AFTER(MethodRef);

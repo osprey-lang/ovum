@@ -5,8 +5,6 @@
 
 #include "ov_vm.internal.h"
 
-class Thread;
-
 class StringBuffer
 {
 private:

@@ -8,7 +8,83 @@
 
 // forward declarations
 class Module;
-class Type;
+class Member;
+class Method;
+
+// Types, once initialized, are supposed to be (more or less) immutable.
+// If you assign to any of the members in a Type, you have no one to blame but yourself.
+// That said, the VM occasionally updates the flags.
+class Type
+{
+public:
+	Type(int32_t memberCount);
+
+	Member *GetMember(String *name) const;
+	Member *FindMember(String *name, const Type *fromType) const;
+	Method *GetOperator(Operator op) const; // haha, 'const'. Liar. Potentially. Sometimes.
+
+	// Flags associated with the type.
+	TypeFlags flags;
+
+	// The type from which this inherits (NULL only for Object).
+	Type *baseType;
+	// A type whose private and protected members this type has access to.
+	// The shared type must be in the same module as this type.
+	Type *sharedType;
+
+	// The fully qualified name of the type, e.g. "aves.Object".
+	String *fullName;
+
+	// The offset (in bytes) of the first field in instances of this type.
+	uint32_t fieldsOffset;
+	// The total size (in bytes) of instances of this type.
+	// Note: this is 0 for Object, and String is variable-size.
+	size_t size;
+	// The total number of instance Value fields in the type.
+	int fieldCount;
+
+	// Members! These allow us to look up members by name.
+	StringHash<Member*> members;
+
+	// Operator implementations. If an operator implementation is NULL,
+	// then the type does not implement that operator.
+	Method *operators[OPERATOR_COUNT];
+
+	// The reference getter for the type. Is NULL unless the type has
+	// the flag TYPE_CUSTOMPTR, in which case the GC uses this method
+	// to obtain a list of Value references from instance of the type.
+	ReferenceGetter getReferences;
+	// The finalizer for the type. Only available to native-code types.
+	Finalizer finalizer;
+
+	// A handle to the module that declares the type.
+	Module *module;
+
+	// An instance of aves.Type that is bound to this type.
+	// Use GetTypeToken() to retrieve this value; this starts
+	// out as a NULL_VALUE and is only initialized on demand.
+	Value typeToken;
+
+	Value GetTypeToken() const;
+
+	static inline const bool ValueIsType(Value value, const Type *const type)
+	{
+		const Type *valtype = _Tp(value.type);
+		while (valtype)
+		{
+			if (valtype == type)
+				return true;
+			valtype = valtype->baseType;
+		}
+		return false;
+	}
+
+private:
+	void InitOperators();
+
+	void LoadTypeToken();
+};
+
 
 TYPED_ENUM(MemberFlags, uint16_t)
 {
@@ -80,43 +156,16 @@ public:
 		Value *staticValue;
 	};
 
-	inline Value *const GetField(Thread *const thread, const Value instance) const
-	{
-		if (IS_NULL(instance))
-			thread->ThrowNullReferenceError();
-		if (!IsType_(instance, this->declType))
-			thread->ThrowTypeError();
-		return reinterpret_cast<Value*>(instance.instance + this->offset);
-	}
+	Value *const GetField(Thread *const thread, const Value instance) const;
+	Value *const GetField(Thread *const thread, const Value *instance) const;
 
-	inline Value *const GetField(Thread *const thread, const Value *instance) const
-	{
-		if (instance->type == NULL)
-			thread->ThrowNullReferenceError();
-		if (!IsType_(*instance, this->declType))
-			thread->ThrowTypeError();
-		return reinterpret_cast<Value*>(instance->instance + this->offset);
-	}
-
-	inline Value *const GetFieldFast(Thread *const thread, const Value instance) const
-	{
-		if (IS_NULL(instance))
-			thread->ThrowNullReferenceError();
-		return reinterpret_cast<Value*>(instance.instance + this->offset);
-	}
-
-	inline Value *const GetFieldFast(Thread *const thread, const Value *instance) const
-	{
-		if (instance->type == NULL)
-			thread->ThrowNullReferenceError();
-		return reinterpret_cast<Value*>(instance->instance + this->offset);
-	}
+	Value *const GetFieldFast(Thread *const thread, const Value instance) const;
+	Value *const GetFieldFast(Thread *const thread, const Value *instance) const;
 
 	inline Value *const GetFieldUnchecked(Thread *const thread, const Value instance) const
 	{
 		return reinterpret_cast<Value*>(instance.instance + this->offset);
 	}
-
 	inline Value *const GetFieldUnchecked(Thread *const thread, const Value *instance) const
 	{
 		return reinterpret_cast<Value*>(instance->instance + this->offset);
@@ -229,66 +278,5 @@ public:
 };
 // Recovers a Property* from a PropertyHandle
 #define _Prop(ph)   reinterpret_cast<Property*>(ph)
-
-// Types, once initialized, are supposed to be (more or less) immutable.
-// If you assign to any of the members in a Type, you have no one to blame but yourself.
-// That said, the VM occasionally updates the flags.
-class Type
-{
-public:
-	Type(int32_t memberCount);
-
-	Member *GetMember(String *name) const;
-	Member *FindMember(String *name, const Type *fromType) const;
-	Method *GetOperator(Operator op) const; // haha, 'const'. Liar. Potentially. Sometimes.
-
-	// Flags associated with the type.
-	TypeFlags flags;
-
-	// The type from which this inherits (NULL only for Object).
-	Type *baseType;
-	// A type whose private and protected members this type has access to.
-	// The shared type must be in the same module as this type.
-	Type *sharedType;
-
-	// The fully qualified name of the type, e.g. "aves.Object".
-	String *fullName;
-
-	// The offset (in bytes) of the first field in instances of this type.
-	uint32_t fieldsOffset;
-	// The total size (in bytes) of instances of this type.
-	// Note: this is 0 for Object, and String is variable-size.
-	size_t size;
-	// The total number of instance Value fields in the type.
-	int fieldCount;
-
-	// Members! These allow us to look up members by name.
-	StringHash<Member*> members;
-
-	// Operator implementations. If an operator implementation is NULL,
-	// then the type does not implement that operator.
-	Method *operators[OPERATOR_COUNT];
-
-	// The reference getter for the type. Is NULL unless the type has
-	// the flag TYPE_CUSTOMPTR, in which case the GC uses this method
-	// to obtain a list of Value references from instance of the type.
-	ReferenceGetter getReferences;
-	// The finalizer for the type. Only available to native-code types.
-	Finalizer finalizer;
-
-	// A handle to the module that declares the type.
-	Module *module;
-
-	// An instance of aves.Type that is bound to this type.
-	// Use GetTypeToken() to retrieve this value; this starts
-	// out as a NULL_VALUE and is only initialized on demand.
-	Value typeToken;
-
-	Value GetTypeToken() const;
-private:
-	void InitOperators();
-
-	void LoadTypeToken();
-};
 
 #endif

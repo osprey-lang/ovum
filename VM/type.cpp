@@ -149,6 +149,38 @@ const bool Member::IsAccessible(const Type *instType, const Type *const declType
 	return true; // M_PUBLIC or accessible
 }
 
+Value *const Field::GetField(Thread *const thread, const Value instance) const
+{
+	if (IS_NULL(instance))
+		thread->ThrowNullReferenceError();
+	if (!Type::ValueIsType(instance, this->declType))
+		thread->ThrowTypeError();
+	return reinterpret_cast<Value*>(instance.instance + this->offset);
+}
+
+Value *const Field::GetField(Thread *const thread, const Value *instance) const
+{
+	if (instance->type == NULL)
+		thread->ThrowNullReferenceError();
+	if (!Type::ValueIsType(*instance, this->declType))
+		thread->ThrowTypeError();
+	return reinterpret_cast<Value*>(instance->instance + this->offset);
+}
+
+Value *const Field::GetFieldFast(Thread *const thread, const Value instance) const
+{
+	if (IS_NULL(instance))
+		thread->ThrowNullReferenceError();
+	return reinterpret_cast<Value*>(instance.instance + this->offset);
+}
+
+Value *const Field::GetFieldFast(Thread *const thread, const Value *instance) const
+{
+	if (instance->type == NULL)
+		thread->ThrowNullReferenceError();
+	return reinterpret_cast<Value*>(instance->instance + this->offset);
+}
+
 OVUM_API const StandardTypes &GetStandardTypes() { return stdTypes; }
 OVUM_API TypeHandle GetType_Object()             { return stdTypes.Object; }
 OVUM_API TypeHandle GetType_Boolean()            { return stdTypes.Boolean; }
@@ -237,7 +269,7 @@ OVUM_API void Type_SetReferenceGetter(TypeHandle type, ReferenceGetter getter)
 
 OVUM_API String *Error_GetMessage(Value error)
 {
-	if (!IsType_(error, _Tp(stdTypes.Error)))
+	if (!Type::ValueIsType(error, _Tp(stdTypes.Error)))
 		return NULL; // whoopsies!
 
 	return error.common.error->message;
@@ -245,7 +277,7 @@ OVUM_API String *Error_GetMessage(Value error)
 
 OVUM_API String *Error_GetStackTrace(Value error)
 {
-	if (!IsType_(error, _Tp(stdTypes.Error)))
+	if (!Type::ValueIsType(error, _Tp(stdTypes.Error)))
 		return NULL; // Type mismatch!
 
 	return error.common.error->stackTrace;
