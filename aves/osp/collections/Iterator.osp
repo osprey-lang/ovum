@@ -111,6 +111,8 @@ public abstract class Iterator
 		return new MapIterator(this, func);
 	}
 
+	public static get empty = new EmptyIterator();
+
 	iter { return this; }
 }
 
@@ -166,4 +168,10 @@ private class MapIterator is Iterator
 
 		return false;
 	}
+}
+
+private class EmptyIterator is Iterator
+{
+	override get current = null;
+	override moveNext() { return false; }
 }
