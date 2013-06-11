@@ -41,7 +41,7 @@ OVUM_API int VM_Start(VMStartParams params)
 		wcout << L"Argument count: " << params.argc << endl;
 	}
 
-	GC_Init(); // We must call this before VM_Init(), because VM_Init relies on the GC
+	GC::Init(); // We must call this before VM_Init(), because VM_Init relies on the GC
 	VM_Init(params);
 
 	if (vmState.verbose)
@@ -54,6 +54,7 @@ OVUM_API int VM_Start(VMStartParams params)
 	// blah blah
 
 	// done!
+	delete GC::gc;
 	delete vmState.mainThread;
 
 	return result;

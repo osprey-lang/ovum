@@ -176,7 +176,7 @@ OVUM_API int String_Compare(const String *a, const String *b)
 OVUM_API String *String_ToUpper(ThreadHandle thread, String *str)
 {
 	String *newStr;
-	GC_ConstructString(thread, str->length, nullptr, &newStr);
+	GC::gc->ConstructString(_Th(thread), str->length, nullptr, &newStr);
 
 	const uchar *a = &str->firstChar;
 	uchar *b = const_cast<uchar*>(&newStr->firstChar);
@@ -206,7 +206,7 @@ OVUM_API String *String_ToUpper(ThreadHandle thread, String *str)
 OVUM_API String *String_ToLower(ThreadHandle thread, String *str)
 {
 	String *newStr;
-	GC_ConstructString(thread, str->length, nullptr, &newStr);
+	GC::gc->ConstructString(_Th(thread), str->length, nullptr, &newStr);
 
 	const uchar *a = &str->firstChar;
 	uchar *b = const_cast<uchar*>(&newStr->firstChar);
@@ -242,7 +242,7 @@ OVUM_API String *String_Concat(ThreadHandle thread, const String *a, const Strin
 	int32_t outLength = a->length + b->length;
 
 	String *output;
-	GC_ConstructString(thread, outLength, nullptr, &output);
+	GC::gc->ConstructString(_Th(thread), outLength, nullptr, &output);
 
 	uchar *outputChar = const_cast<uchar*>(&output->firstChar);
 
@@ -266,7 +266,7 @@ OVUM_API String *String_Concat3(ThreadHandle thread, const String *a, const Stri
 	outLength += c->length;
 
 	String *output;
-	GC_ConstructString(thread, outLength, nullptr, &output);
+	GC::gc->ConstructString(_Th(thread), outLength, nullptr, &output);
 	uchar *outputChar = const_cast<uchar*>(&output->firstChar);
 
 	CopyMemoryT(outputChar, &a->firstChar, a->length);
@@ -296,7 +296,7 @@ OVUM_API String *String_ConcatRange(ThreadHandle thread, const unsigned int coun
 	}
 
 	String *output;
-	GC_ConstructString(thread, outLength, nullptr, &output);
+	GC::gc->ConstructString(_Th(thread), outLength, nullptr, &output);
 	uchar *outputChar = const_cast<uchar*>(&output->firstChar);
 
 	for (unsigned int i = 0; i < count; i++)
@@ -383,7 +383,7 @@ OVUM_API String *String_FromWString(ThreadHandle thread, const wchar_t *source)
 		size_t length = wcslen(source);
 
 		String *output;
-		GC_ConstructString(thread, length, (const uchar*)source, &output);
+		GC::gc->ConstructString(_Th(thread), length, (const uchar*)source, &output);
 
 		return output;
 	}
@@ -404,7 +404,7 @@ OVUM_API String *String_FromWString(ThreadHandle thread, const wchar_t *source)
 		}
 
 		MutableString *output;
-		GC_ConstructString(thread, outLength, nullptr, (String**)&output);
+		GC::gc->ConstructString(_Th(thread), outLength, nullptr, (String**)&output);
 
 		if (outLength)
 		{

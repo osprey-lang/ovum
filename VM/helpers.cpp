@@ -1,6 +1,20 @@
 #include "ov_vm.internal.h"
 #include "ov_helpers.h"
 
+namespace errors
+{
+	namespace
+	{
+		LitString<43> _toIntFailed  = LitString<43>::FromCString("The value could not be converted to an Int.");
+		LitString<43> _toUIntFailed = LitString<43>::FromCString("The value could not be converted to a UInt.");
+		LitString<43> _toRealFailed = LitString<43>::FromCString("The value could not be converted to a Real.");
+	}
+
+	String *toIntFailed  = _S(_toIntFailed);
+	String *toUIntFailed = _S(_toUIntFailed);
+	String *toRealFailed = _S(_toRealFailed);
+}
+
 
 OVUM_API Value IntFromValue(ThreadHandle thread, Value v)
 {
@@ -20,7 +34,7 @@ OVUM_API Value IntFromValue(ThreadHandle thread, Value v)
 		v.integer = (int64_t)v.real;
 	}
 	else if (v.type != stdTypes.Int)
-		_Th(thread)->ThrowTypeError();
+		_Th(thread)->ThrowTypeError(errors::toIntFailed);
 
 	return v;
 }
@@ -43,7 +57,7 @@ OVUM_API Value UIntFromValue(ThreadHandle thread, Value v)
 		v.uinteger = (uint64_t)v.real;
 	}
 	else if (v.type != stdTypes.UInt)
-		_Th(thread)->ThrowTypeError();
+		_Th(thread)->ThrowTypeError(errors::toUIntFailed);
 
 	return v;
 }
@@ -58,7 +72,7 @@ OVUM_API Value RealFromValue(ThreadHandle thread, Value v)
 	else if (v.type == stdTypes.UInt)
 		SetReal_(v, (double)v.uinteger);
 	else if (v.type != stdTypes.Real)
-		_Th(thread)->ThrowTypeError();
+		_Th(thread)->ThrowTypeError(errors::toRealFailed);
 
 	return v;
 }

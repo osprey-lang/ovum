@@ -171,7 +171,7 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 
 					uint16_t argc = U16_ARG(ip);
 
-					GC_ConstructLL(this, type, argc, args, dest);
+					GC::gc->ConstructLL(this, type, argc, args, dest);
 
 					ip += sizeof(uint16_t);
 					frame->stackCount += -argc + (opc & 1);
@@ -185,7 +185,7 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 					int32_t cap = I32_ARG(ip + sizeof(LocalOffset));
 
 					Value result; // Can't put it in dest until it's fully initialized
-					GC_Alloc(this, _Tp(stdTypes.List), sizeof(ListInst), &result);
+					GC::gc->Alloc(this, _Tp(stdTypes.List), sizeof(ListInst), &result);
 					globalFunctions.initListInstance(this, result.common.list, cap);
 
 					*dest = result;
@@ -202,7 +202,7 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 					int32_t cap = I32_ARG(ip + sizeof(LocalOffset));
 
 					Value result; // Can't put it in dest until it's fully initialized
-					GC_Alloc(this, _Tp(stdTypes.Hash), sizeof(HashInst), &result);
+					GC::gc->Alloc(this, _Tp(stdTypes.Hash), sizeof(HashInst), &result);
 					globalFunctions.initHashInstance(this, result.common.hash, cap);
 
 					*dest = result;

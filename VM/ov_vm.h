@@ -15,13 +15,6 @@
 
 #define OVUM_API	extern "C" _OVUM_API
 
-#include "targetver.h"
-
-#define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
-
-// Windows header files
-#include <windows.h>
-
 #ifndef UNICODE
 #error You are not supposed to compile Ovum without Unicode support.
 #endif
