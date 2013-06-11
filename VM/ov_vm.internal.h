@@ -14,6 +14,12 @@
 // You should probably only include this from within CPP files of the VM project,
 // or from within other internal header files.
 
+#include "targetver.h"
+
+#define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
+// Windows header files
+#include <windows.h>
+
 #include "ov_vm.h"
 
 // So that all the VM functions can access this field easily.

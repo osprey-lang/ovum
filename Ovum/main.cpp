@@ -59,10 +59,10 @@ void ParseCommandLine(int argc, wchar_t *argv[], OvumArgs &args)
 		{
 			if (wcscmp(arg + 1, L"L") == 0)
 			{
-				if (i >= argc - 1) // must be at least one more argument
-					CommandParseError("/L must be followed by the name of a directory");
 				if (args.hasModulePath)
 					CommandParseError("/L can only occur once");
+				if (i >= argc - 1) // must be at least one more argument
+					CommandParseError("/L must be followed by the name of a directory");
 				args.hasModulePath = true;
 				args.modulePath = argv[++i];
 			}

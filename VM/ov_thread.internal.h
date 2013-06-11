@@ -195,8 +195,7 @@ public:
 
 	bool Equals();
 	int Compare();
-
-	void InvokeConcat(Value *result);
+	void Concat(Value *result);
 
 	void LoadMember(String *member, Value *result);
 	void StoreMember(String *member);
@@ -273,12 +272,16 @@ private:
 	void LoadMemberLL(Value *instance, String *member, Value *result);
 	void StoreMemberLL(Value *instance, Value *value, String *member);
 
+	void LoadIndexerLL(uint16_t argc, Value *args, Value *dest);
+
+	void LoadIteratorLL(Value *inst, Value *dest);
+
 	void InvokeOperatorLL(Value *args, Operator op, Value *result);
 	bool EqualsLL(Value *args);
 	int CompareLL(Value *args);
+	void ConcatLL(Value *args, Value *result);
 
-	friend void GC_MarkRootSet();
-	friend void GC_Construct(ThreadHandle, TypeHandle, const uint16_t, Value*);
+	friend class GC;
 	friend void VM_InvokeMethod(ThreadHandle, MethodHandle, const unsigned int, Value*);
 };
 

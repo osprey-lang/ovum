@@ -224,24 +224,27 @@ int Thread::CompareLL(Value *args)
 		0;
 }
 
-
-void Thread::InvokeConcat(Value *result)
+void Thread::Concat(Value *result)
 {
-	Value b = currentFrame->Peek(0);
-	Value a = currentFrame->Peek(1);
+	ConcatLL(currentFrame->evalStack + currentFrame->stackCount - 2, result);
+}
 
-	if (a.type == stdTypes.List || b.type == stdTypes.List)
+void Thread::ConcatLL(Value *args, Value *result)
+{
+	Value *a = args;
+	Value *b = args + 1;
+	if (a->type == stdTypes.List || b->type == stdTypes.List)
 	{
 		// list concatenation
-		if (a.type != b.type)
+		if (a->type != b->type)
 			ThrowTypeError(thread_errors::ConcatTypes);
 
 		// TODO
 	}
-	else if (a.type == stdTypes.Hash || b.type == stdTypes.Hash)
+	else if (a->type == stdTypes.Hash || b->type == stdTypes.Hash)
 	{
 		// hash concatenation
-		if (a.type != b.type)
+		if (a->type != b->type)
 			ThrowTypeError(thread_errors::ConcatTypes);
 
 		// TODO
@@ -285,7 +288,7 @@ void Thread::LoadMemberLL(Value *instance, String *member, Value *result)
 	}
 	else if (m->flags & M_METHOD)
 	{
-		GC_Alloc(this, _Tp(stdTypes.Method), sizeof(MethodInst), result);
+		GC::gc->Alloc(this, _Tp(stdTypes.Method), sizeof(MethodInst), result);
 		result->common.method->instance = *instance;
 		result->common.method->method = (Method*)m;
 		currentFrame->Pop(1); // Done with the instance!
@@ -338,8 +341,19 @@ void Thread::LoadIndexer(uint16_t argCount, Value *result)
 {
 	throw L"Not implemented";
 }
+// Note: argc does NOT include the instance.
+void Thread::LoadIndexerLL(uint16_t argc, Value *args, Value *dest)
+{
+	throw L"Not implemented";
+}
+
 // Note: argCount does NOT include the instance or the value that's being stored.
 void Thread::StoreIndexer(uint16_t argCount)
+{
+	throw L"Not implemented";
+}
+
+void Thread::LoadIteratorLL(Value *inst, Value *dest)
 {
 	throw L"Not implemented";
 }
@@ -522,7 +536,7 @@ void Thread::PrepareArgs(const MethodFlags flags, const uint16_t argCount, const
 	// We cannot really make any assumptions about the List constructor,
 	// so we can't call it here. Instead, we "manually" allocate a ListInst,
 	// set its type to List, and initialize its fields.
-	GC_Alloc(this, _Tp(stdTypes.List), sizeof(ListInst), &listValue);
+	GC::gc->Alloc(this, _Tp(stdTypes.List), sizeof(ListInst), &listValue);
 	ListInst *list = listValue.common.list;
 	globalFunctions.initListInstance(this, list, count);
 
