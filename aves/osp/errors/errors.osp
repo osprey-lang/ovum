@@ -1,6 +1,7 @@
 use "Error.osp";
 // The rest are sorted alalphabeteticallolly
 use "ArgumentError.osp";
+use "ArgumentNullError.osp";
 use "DivideByZeroError.osp";
 use "MemoryError.osp";
 use "NullReferenceError.osp";

@@ -1,16 +1,39 @@
 namespace aves;
 
+/// Summary: Represents a general run-time error. The {message} property
+///          may be used to to obtain more information about the error,
+///          and the {stackTrace} property contains information about the
+///          call stack at the time when the error was thrown.
+///
+///          If a non-{Error} value was thrown, then the {data} property
+///          will contain that value.
 public inheritable Error
 {
 	__init_type("aves_Error_init");
 
+	/// Summary: Creates a new {Error} instance with the default message.
 	public new()						__extern("aves_Error_new");
+	/// Summary: Creates a new {Error} instance with the specified message.
+	/// Param message: An error message describing the error.
+	/// Remarks: If {message} is not a String, it is converted to one;
+	///          if it is null, the default message is used.
 	public new(message)					__extern("aves_Error_new");
+	/// Summary: Creates a new {Error} instance with the specified message and inner error.
+	/// Param message: An error message describing the error.
+	/// Param innerError: The error that caused this error.
+	/// Remarks: If {message} is not a String, it is converted to one;
+	///          if it is null, the default message is used.
 	public new(message, innerError)		__extern("aves_Error_new");
 
+	/// Summary: Gets the error message (String) associated with this error.
 	public get message					__extern("aves_Error_get_message");
+	/// Summary: Gets a stack trace (String) containing information about the call
+	///          stack at the time when the error was thrown. If the error has been
+	///          been constructed but not yet thrown, this property returns null.
 	public get stackTrace				__extern("aves_Error_get_stackTrace");
+	/// Summary: Gets the error that caused this error, or null if there is none.
 	public get innerError				__extern("aves_Error_get_innerError");
+	/// Summary: Gets any additional data associated with this error. 
 	public get data						__extern("aves_Error_get_data");
 
 	overridable override toString()		__extern("aves_Error_toString");

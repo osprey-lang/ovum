@@ -1,0 +1,23 @@
+namespace aves;
+
+public inheritable ArgumentNullError is ArgumentError
+{
+	public new()
+	{
+		new base(null, defaultMessage);
+	}
+	public new(paramName)
+	{
+		new base(paramName, defaultMessage);
+	}
+	public new(paramName, message)
+	{
+		new base(paramName, message ?? defaultMessage);
+	}
+	public new(paramName, message, innerError)
+	{
+		new base(paramName, message ?? defaultMessage, innerError);
+	}
+
+	private const defaultMessage = "Argument cannot be null";
+}

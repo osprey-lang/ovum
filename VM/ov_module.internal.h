@@ -65,29 +65,30 @@ TYPED_ENUM(ModuleMemberId, uint32_t)
 	IDMASK_FIELDREF     = 0x52000000u,
 	IDMASK_METHODREF    = 0x54000000u,
 };
+typedef uint32_t TokenId;
 
 
-class MFileStream
+class ModuleReader
 {
 public:
 	ifstream stream;
 	const wchar_t *fileName;
 
-	inline MFileStream(const wchar_t *fileName)
+	inline ModuleReader(const wchar_t *fileName)
 		: fileName(fileName), stream()
 	{
 		stream.exceptions(ios::failbit | ios::eofbit | ios::badbit);
 		stream.open(fileName, ios::binary | ios::in);
 	}
 
-	inline ~MFileStream()
+	inline ~ModuleReader()
 	{
 		//if (stream.is_open())
 		//	stream.close();
 	}
 
 	template<class T>
-	inline MFileStream &Read(T *dest, std::streamsize count)
+	inline ModuleReader &Read(T *dest, std::streamsize count)
 	{
 		stream.read((char*)dest, count * sizeof(T));
 		return *this;
@@ -107,6 +108,13 @@ public:
 		return target;
 	}
 
+	inline TokenId ReadToken()
+	{
+		TokenId target;
+		stream.read(reinterpret_cast<char*>(&target), 4); // assume little-endian for now
+		return target;
+	}
+
 	inline void SkipCollection()
 	{
 		uint32_t size = ReadUInt32();
@@ -119,7 +127,7 @@ public:
 };
 
 template<>
-inline MFileStream &MFileStream::Read(char *dest, std::streamsize count)
+inline ModuleReader &ModuleReader::Read(char *dest, std::streamsize count)
 {
 	stream.read(dest, count);
 	return *this;
@@ -167,33 +175,34 @@ typedef struct ModuleMeta_S
 	uint32_t methodStart;
 } ModuleMeta;
 
-typedef uint32_t TokenId;
-
 class Module; // Vorwärts declaration
 
 template<class T>
 class MemberTable
 {
 private:
-	int32_t count;
+	int32_t capacity; // The total number of slots
+	int32_t length; // The total number of entries
 	T *entries;
 
-	inline void Init(const int32_t count)
+	inline void Init(const int32_t capacity)
 	{
-		this->count = count;
-		if (count != 0)
-			this->entries = new T[count];
+		this->count = capacity;
+		if (capacity != 0)
+			this->entries = new T[capacity];
 	}
 
-	inline void SetItem(const int32_t index, const T item)
+	inline void Add(const T item)
 	{
-		entries[count] = item;
+		entries[length] = item;
+		length++;
 	}
 
 public:
-	inline MemberTable(const int32_t count)
+	inline MemberTable(const int32_t capacity)
+		: length(0)
 	{
-		Init(count);
+		Init(capacity);
 	}
 	inline MemberTable()
 	{
@@ -202,23 +211,29 @@ public:
 
 	inline ~MemberTable()
 	{
-		if (this->count != 0)
+		if (this->capacity != 0)
 			delete[] this->entries;
-		this->count = 0;
+		this->capacity = 0;
 	}
 
 	inline T operator[](const uint32_t index) const
 	{
-		if (index >= count)
+		if (index >= length)
 			return nullptr; // niet gevonden
 		return entries[index];
 	}
 
-	inline const int32_t GetCount() const { return count; }
+	inline const int32_t GetLength() const { return length; }
+	inline const int32_t GetCapacity() const { return capacity; }
 	
 	inline bool HasItem(const uint32_t index) const
 	{
-		return index < count;
+		return index < length;
+	}
+
+	inline TokenId GetNextId(TokenId mask) const
+	{
+		return (length + 1) | mask;
 	}
 
 	friend class Module;
@@ -255,7 +270,6 @@ private:
 
 	MemberTable<Type  *> types;     // Types defined in the module
 	MemberTable<Method*> functions; // Global functions defined in the module
-	MemberTable<Value  > constants; // Constants exported by the module
 	MemberTable<Field *> fields;    // Fields, both instance and static
 	MemberTable<Method*> methods;   // Class methods defined in the module
 	MemberTable<String*> strings;   // String table
@@ -267,6 +281,8 @@ private:
 	MemberTable<Field *> fieldRefs;    // Field references
 	MemberTable<Method*> methodRefs;   // Class method references
 
+	Method *mainMethod;
+
 	HMODULE nativeLib; // Handle to native library (null if not loaded)
 
 	void LoadNativeLibrary(String *nativeFileName, const wchar_t *path);
@@ -275,23 +291,27 @@ private:
 
 	//static void ThrowFileNotFound(const wchar_t *fileName);
 
-	static void VerifyMagicNumber(MFileStream &file);
+	static void VerifyMagicNumber(ModuleReader &reader);
 
-	static void ReadModuleMeta(MFileStream &file, ModuleMeta &target);
+	static void ReadModuleMeta(ModuleReader &reader, ModuleMeta &target);
 
-	static void ReadVersion(MFileStream &file, ModuleVersion &target);
+	static void ReadVersion(ModuleReader &reader, ModuleVersion &target);
 
 	// Reads the module reference table and opens all dependent modules.
 	// Also initializes the moduleRefs table (and moduleRefCount).
-	static void ReadModuleRefs(MFileStream &file, Module *target);
-	static void ReadTypeRefs(MFileStream &file, Module *target);
-	static void ReadFunctionRefs(MFileStream &file, Module *target);
-	static void ReadFieldRefs(MFileStream &file, Module *target);
-	static void ReadMethodRefs(MFileStream &file, Module *target);
+	static void ReadModuleRefs(ModuleReader &reader, Module *target);
+	static void ReadTypeRefs(ModuleReader &reader, Module *target);
+	static void ReadFunctionRefs(ModuleReader &reader, Module *target);
+	static void ReadFieldRefs(ModuleReader &reader, Module *target);
+	static void ReadMethodRefs(ModuleReader &reader, Module *target);
 
-	static void ReadStringTable(MFileStream &file, Module *target);
+	static void ReadStringTable(ModuleReader &reader, Module *target);
 
-	static void ReadTypeDefs(MFileStream &file, Module *target);
+	static void ReadTypeDefs(ModuleReader &reader, Module *target);
+	static void ReadFunctionDefs(ModuleReader &reader, Module *target);
+
+	static Type *ReadSingleType(ModuleReader &reader, Module *target, const TokenId typeId);
+	static Method *ReadSingleMethod(ModuleReader &reader, Module *target);
 };
 
 // Recover a Module pointer from a ModuleHandle.

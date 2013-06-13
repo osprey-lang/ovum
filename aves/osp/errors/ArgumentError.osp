@@ -1,23 +1,54 @@
 namespace aves;
 
+/// Summary: Represents an error that occurs when an invalid argument
+///          was passed into a parametrised member, such as a method,
+///          indexer or operator.
 public inheritable ArgumentError is Error
 {
+	/// Summary: Creates a new {ArgumentError} with the default message
+	///          and no parameter name.
 	public new()
 	{
-		new base("An invalid argument was encountered.");
+		new base(defaultMessage);
 	}
+	/// Summary: Creates a new {ArgumentError} with the specified message
+	///          and no parameter name.
+	/// Param message: An error message describing the error.
+	/// Remarks: If {message} is not a String, it is converted to one;
+	///          if it is null, the default message is used.
+	public new(message)
+	{
+		new base(message ?? defaultMessage);
+	}
+	/// Summary: Creates a new {ArgumentError} with the specified message
+	///          and parameter name.
+	/// Param message: An error message describing the error.
+	/// Param paramName: A String containing the name of the parameter that
+	///                  caused the error, or null.
+	/// Remarks: If {message} is not a String, it is converted to one;
+	///          if it is null, the default message is used.
 	public new(paramName, message)
 	{
-		new base(message);
+		new base(message ?? defaultMessage);
 		_paramName = string(paramName);
 	}
+	/// Summary: Creates a new {ArgumentError} with the specified message,
+	///          parameter name, and inner error.
+	/// Param message: An error message describing the error.
+	/// Param paramName: A String containing the name of the parameter that
+	///                  caused the error, or null.
+	/// Param innerError: The error that caused this error.
+	/// Remarks: If {message} is not a String, it is converted to one;
+	///          if it is null, the default message is used.
 	public new(paramName, message, innerError)
 	{
-		new base(message, innerError);
+		new base(message ?? defaultMessage, innerError);
 		_paramName = string(paramName);
 	}
 
 	private _paramName;
-
+	/// Summary: Gets the name of the parameter (String) that caused the error, or null.
 	public get paramName = _paramName;
+
+	private const defaultMessage = "An invalid argument was encountered.";
 }

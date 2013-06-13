@@ -43,7 +43,12 @@ int32_t StringBuffer::SetCapacity(Thread * const thread, const int32_t newCapaci
 void StringBuffer::EnsureMinCapacity(Thread *const thread, int32_t newAmount)
 {
 	if (INT32_MAX - newAmount < this->length)
-		thread->ThrowOverflowError();
+	{
+		if (thread)
+			thread->ThrowOverflowError();
+		else
+			throw exception("Could not resize string buffer: an overflow occurred.");
+	}
 
 	if (this->length + newAmount > this->capacity)
 	{
