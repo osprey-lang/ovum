@@ -213,7 +213,7 @@ private class ListIterator is Iterator
 		if getVersion(list) != version:
 			throw new Error("The list has changed since the iteration started.");
 
-		if (i < list.length - 1)
+		if i < list.length - 1
 		{
 			i += 1;
 			cur = list[i];

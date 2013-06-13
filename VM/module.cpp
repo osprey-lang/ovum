@@ -21,7 +21,7 @@ namespace module_file
 	const unsigned int dataStart = 16;
 }
 
-String *MFileStream::ReadString()
+String *ModuleReader::ReadString()
 {
 	int32_t length = ReadInt32();
 
@@ -38,7 +38,7 @@ String *MFileStream::ReadString()
 	return (String*)output;
 }
 
-String *MFileStream::ReadStringOrNull()
+String *ModuleReader::ReadStringOrNull()
 {
 	int32_t length = ReadInt32();
 
@@ -64,7 +64,6 @@ Module::Module(ModuleMeta *meta) :
 	// defs
 	functions(meta->functionCount),
 	types(meta->typeCount),
-	constants(meta->constantCount),
 	fields(meta->fieldCount),
 	methods(meta->methodCount),
 	strings(0), // for now
@@ -213,15 +212,15 @@ Module *Module::Open(const wchar_t *fileName)
 
 	Module *output;
 
-	MFileStream file(fileName); // This SHOULD not fail. but it's C++, so who knows.
+	ModuleReader reader(fileName); // This SHOULD not fail. but it's C++, so who knows.
 	try
 	{
-		VerifyMagicNumber(file);
+		VerifyMagicNumber(reader);
 
-		file.stream.seekg(module_file::dataStart, ios::beg);
+		reader.stream.seekg(module_file::dataStart, ios::beg);
 
 		ModuleMeta meta;
-		ReadModuleMeta(file, meta);
+		ReadModuleMeta(reader, meta);
 
 		// ReadModuleMeta gives us just enough information to initialize the output module
 		// and add it to the list of loaded modules.
@@ -234,29 +233,44 @@ Module *Module::Open(const wchar_t *fileName)
 			output->LoadNativeLibrary(meta.nativeLib, fileName);
 
 		// And these must be called in exactly this order!
-		ReadMethodRefs(file, output);
-		ReadFunctionRefs(file, output);
-		ReadTypeRefs(file, output);
-		ReadFieldRefs(file, output);
-		ReadMethodRefs(file, output);
+		ReadModuleRefs(reader, output);
+		ReadTypeRefs(reader, output);
+		ReadFunctionRefs(reader, output);
+		ReadFieldRefs(reader, output);
+		ReadMethodRefs(reader, output);
 
-		ReadStringTable(file, output);
+		ReadStringTable(reader, output);
 
-		// ... blah blah blah ...
+		ReadTypeDefs(reader, output);
+		ReadFunctionDefs(reader, output);
+		reader.SkipCollection(); // Skip constant defs (they're a compile-time feature)
 
-		file.stream.close();
+		TokenId mainMethodId = reader.ReadToken();
+		if ((mainMethodId & IDMASK_MEMBERKIND) != IDMASK_METHODDEF &&
+			(mainMethodId & IDMASK_MEMBERKIND) != IDMASK_FUNCTIONDEF)
+			throw ModuleLoadException(reader.fileName, "Main method token ID must be a MethodDef or FunctionDef.");
+
+		Method *mainMethod = output->FindMethod(mainMethodId);
+		if (mainMethod == nullptr)
+			throw ModuleLoadException(reader.fileName, "Unresolved main method token ID.");
+		if (mainMethod->flags & M_INSTANCE)
+			throw ModuleLoadException(reader.fileName, "Main method cannot be an instance method.");
+
+		output->mainMethod = mainMethod;
 	}
 	catch (std::ios_base::failure &ioError)
 	{
-		bool eof = file.stream.eof();
+		bool eof = reader.stream.eof();
 
-		if (file.stream.is_open())
-			file.stream.close();
+		if (reader.stream.is_open())
+			reader.stream.close();
 
 		if (eof) // unexpected EOF
 			throw ModuleLoadException(fileName, "Unexpected end of file.");
 		throw ModuleLoadException(fileName, "Unspecified module load error.");
 	}
+	if (reader.stream.is_open())
+		reader.stream.close();
 
 	throw ModuleLoadException(fileName, "Function not fully implemented yet.");
 
@@ -272,7 +286,7 @@ Module *Module::OpenByName(String *name)
 	StringBuffer moduleFileName(nullptr, max(vmState.startupPath->length, vmState.modulePath->length) + name->length + 16);
 
 	const int pathCount = 2;
-	String *paths[] = { vmState.startupPath, vmState.modulePath };
+	String *paths[pathCount] = { vmState.startupPath, vmState.modulePath };
 
 	wchar_t *filePath;
 
@@ -358,39 +372,39 @@ void Module::LoadNativeLibrary(String *nativeFileName, const wchar_t *path)
 		throw ModuleLoadException(path, "Could not load native library file.");
 }
 
-void Module::VerifyMagicNumber(MFileStream &file)
+void Module::VerifyMagicNumber(ModuleReader &reader)
 {
 	char magicNumber[4];
-	file.Read(magicNumber, 4);
+	reader.Read(magicNumber, 4);
 	for (int i = 0; i < 4; i++)
 		if (magicNumber[i] != module_file::magicNumber[i])
-			throw ModuleLoadException(file.fileName, "Invalid magic number in file.");
+			throw ModuleLoadException(reader.fileName, "Invalid magic number in reader.");
 }
 
-void Module::ReadModuleMeta(MFileStream &file, ModuleMeta &target)
+void Module::ReadModuleMeta(ModuleReader &reader, ModuleMeta &target)
 {
-	target.name = file.ReadString(); // name
-	ReadVersion(file, target.version); // version
+	target.name = reader.ReadString(); // name
+	ReadVersion(reader, target.version); // version
 
 	// String map (skip)
-	file.SkipCollection();
+	reader.SkipCollection();
 
-	target.nativeLib = file.ReadStringOrNull(); // nativeLib (nullptr if absent)
+	target.nativeLib = reader.ReadStringOrNull(); // nativeLib (nullptr if absent)
 
-	target.typeCount = file.ReadInt32();     // typeCount
-	target.functionCount = file.ReadInt32(); // functionCount
-	target.constantCount = file.ReadInt32(); // constantCount
-	target.fieldCount = file.ReadInt32();    // fieldCount
-	target.methodCount = file.ReadInt32();   // methodCount
-	target.methodStart = file.ReadUInt32();  // methodStart
+	target.typeCount     = reader.ReadInt32();  // typeCount
+	target.functionCount = reader.ReadInt32();  // functionCount
+	target.constantCount = reader.ReadInt32();  // constantCount
+	target.fieldCount    = reader.ReadInt32();  // fieldCount
+	target.methodCount   = reader.ReadInt32();  // methodCount
+	target.methodStart   = reader.ReadUInt32(); // methodStart
 }
 
-void Module::ReadVersion(MFileStream &file, ModuleVersion &target)
+void Module::ReadVersion(ModuleReader &reader, ModuleVersion &target)
 {
-	target.major    = file.ReadInt32();
-	target.minor    = file.ReadInt32();
-	target.build    = file.ReadInt32();
-	target.revision = file.ReadInt32();
+	target.major    = reader.ReadInt32();
+	target.minor    = reader.ReadInt32();
+	target.build    = reader.ReadInt32();
+	target.revision = reader.ReadInt32();
 }
 
 // Some macros to help check the position of the file stream,
@@ -399,194 +413,268 @@ void Module::ReadVersion(MFileStream &file, ModuleVersion &target)
 // the size is 0.
 // (Semicolons intentionally left out to force a "missing ';'" error if you forget it.)
 #define CHECKPOS_BEFORE() \
-	uint32_t size = file.ReadUInt32(); /* The size of the rest of the data */ \
+	uint32_t size = reader.ReadUInt32(); /* The size of the rest of the data */ \
 	if (size != 0) { \
-		ios::pos_type posBefore = file.stream.tellg()
+		ios::pos_type posBefore = reader.stream.tellg()
 
 #define CHECKPOS_AFTER_(tbl) \
-		ios::pos_type posAfter = file.stream.tellg(); \
+		ios::pos_type posAfter = reader.stream.tellg(); \
 		if (posBefore + (ios::pos_type)size != posAfter) \
-			throw ModuleLoadException(file.fileName, "The actual size of the " #tbl " table did not match the expected size."); \
+			throw ModuleLoadException(reader.fileName, "The actual size of the " #tbl " table did not match the expected size."); \
 	}
 #define CHECKPOS_AFTER(tbl) CHECKPOS_AFTER_(tbl)
 
-void Module::ReadModuleRefs(MFileStream &file, Module *target)
+void Module::ReadModuleRefs(ModuleReader &reader, Module *target)
 {
 	CHECKPOS_BEFORE();
 
-	int32_t length = file.ReadInt32();
+	int32_t length = reader.ReadInt32();
 	target->moduleRefs.Init(length);
 
 	for (int32_t i = 0; i < length; i++)
 	{
-		uint32_t id = file.ReadUInt32();
-		if (id != ((i + 1) | IDMASK_MODULEREF))
-			throw ModuleLoadException(file.fileName, "Invalid ModuleRef token ID.");
+		TokenId id = reader.ReadToken();
+		if (id != target->moduleRefs.GetNextId(IDMASK_MODULEREF))
+			throw ModuleLoadException(reader.fileName, "Invalid ModuleRef token ID.");
 		// Module reference has a name followed by a minimum version
-		String *modName = file.ReadString();
+		String *modName = reader.ReadString();
 		ModuleVersion minVer;
-		ReadVersion(file, minVer);
+		ReadVersion(reader, minVer);
 
 		Module *ref = OpenByName(modName);
 		if (!ref->fullyOpened)
-			throw ModuleLoadException(file.fileName, "Circular dependency detected.");
+			throw ModuleLoadException(reader.fileName, "Circular dependency detected.");
 		if (ModuleVersion::Compare(ref->version, minVer) < 0)
-			throw ModuleLoadException(file.fileName, "Dependent module has insufficient version.");
+			throw ModuleLoadException(reader.fileName, "Dependent module has insufficient version.");
 
-		target->moduleRefs.SetItem(i, ref);
+		target->moduleRefs.Add(ref);
 	}
 
 	CHECKPOS_AFTER(ModuleRef);
 }
 
-void Module::ReadTypeRefs(MFileStream &file, Module *target)
+void Module::ReadTypeRefs(ModuleReader &reader, Module *target)
 {
 	CHECKPOS_BEFORE();
 
-	int32_t length = file.ReadInt32();
+	int32_t length = reader.ReadInt32();
 	target->typeRefs.Init(length);
 
 	for (int32_t i = 0; i < length; i++)
 	{
-		uint32_t id = file.ReadUInt32();
-		if (id != ((i + 1) | IDMASK_TYPEREF))
-			throw ModuleLoadException(file.fileName, "Invalid TypeRef token ID.");
+		TokenId id = reader.ReadToken();
+		if (id != target->typeRefs.GetNextId(IDMASK_TYPEREF))
+			throw ModuleLoadException(reader.fileName, "Invalid TypeRef token ID.");
 		// Type reference has a name followed by a ModuleRef ID.
-		String *typeName = file.ReadString();
-		uint32_t modRef = file.ReadUInt32();
+		String *typeName = reader.ReadString();
+		TokenId modRef = reader.ReadToken();
 
 		const Module *owner = target->FindModuleRef(modRef);
 		if (!owner)
-			throw ModuleLoadException(file.fileName, "Unresolved ModuleRef token in TypeRef.");
+			throw ModuleLoadException(reader.fileName, "Unresolved ModuleRef token in TypeRef.");
 
 		const Type *type = owner->FindType(typeName, false);
 		if (!type)
-			throw ModuleLoadException(file.fileName, "Unresolved TypeRef.");
+			throw ModuleLoadException(reader.fileName, "Unresolved TypeRef.");
 
-		target->typeRefs.SetItem(i, const_cast<Type*>(type));
+		target->typeRefs.Add(const_cast<Type*>(type));
 	}
 
 	CHECKPOS_AFTER(TypeRef);
 }
 
-void Module::ReadFunctionRefs(MFileStream &file, Module *target)
+void Module::ReadFunctionRefs(ModuleReader &reader, Module *target)
 {
 	CHECKPOS_BEFORE();
 
-	int32_t length = file.ReadInt32();
+	int32_t length = reader.ReadInt32();
 	target->functionRefs.Init(length);
 
 	for (int32_t i = 0; i < length; i++)
 	{
-		uint32_t id = file.ReadUInt32();
-		if (id != ((i + 1) | IDMASK_FUNCTIONREF))
-			throw ModuleLoadException(file.fileName, "Invalid FunctionRef token ID.");
+		TokenId id = reader.ReadToken();
+		if (id != target->functionRefs.GetNextId(IDMASK_FUNCTIONREF))
+			throw ModuleLoadException(reader.fileName, "Invalid FunctionRef token ID.");
 		// Function reference has a name followed by a ModuleRef ID
-		String *funcName = file.ReadString();
-		uint32_t modRef = file.ReadUInt32();
+		String *funcName = reader.ReadString();
+		TokenId modRef = reader.ReadToken();
 
 		const Module *owner = target->FindModuleRef(modRef);
 		if (!owner)
-			throw ModuleLoadException(file.fileName, "Invalid module token ID in FunctionRef.");
+			throw ModuleLoadException(reader.fileName, "Invalid module token ID in FunctionRef.");
 
 		Method *func = owner->FindGlobalFunction(funcName, false);
 		if (!func)
-			throw ModuleLoadException(file.fileName, "Unresolved FunctionRef.");
+			throw ModuleLoadException(reader.fileName, "Unresolved FunctionRef.");
 
-		target->functionRefs.SetItem(i, func);
+		target->functionRefs.Add(func);
 	}
 
 	CHECKPOS_AFTER(FunctionRef);
 }
 
-void Module::ReadFieldRefs(MFileStream &file, Module *target)
+void Module::ReadFieldRefs(ModuleReader &reader, Module *target)
 {
 	CHECKPOS_BEFORE();
 
-	int32_t length = file.ReadInt32();
+	int32_t length = reader.ReadInt32();
 	target->fieldRefs.Init(length);
 
 	for (int32_t i = 0; i < length; i++)
 	{
-		uint32_t id = file.ReadUInt32();
-		if (id != ((i + 1) | IDMASK_FIELDREF))
-			throw ModuleLoadException(file.fileName, "Invalid FieldRef token ID.");
+		TokenId id = reader.ReadToken();
+		if (id != target->fieldRefs.GetNextId(IDMASK_FIELDREF))
+			throw ModuleLoadException(reader.fileName, "Invalid FieldRef token ID.");
 		// Field reference has a name followed by a TypeRef ID.
-		String *fieldName = file.ReadString();
-		uint32_t typeRef = file.ReadUInt32();
+		String *fieldName = reader.ReadString();
+		TokenId typeRef = reader.ReadToken();
 
 		if ((typeRef & IDMASK_MEMBERKIND) != IDMASK_TYPEREF)
-			throw ModuleLoadException(file.fileName, "FieldRef must contain a TypeRef.");
+			throw ModuleLoadException(reader.fileName, "FieldRef must contain a TypeRef.");
 
 		const Type *type = target->FindType(typeRef);
 		if (!type)
-			throw ModuleLoadException(file.fileName, "Unresolved TypeRef token in FieldRef.");
+			throw ModuleLoadException(reader.fileName, "Unresolved TypeRef token in FieldRef.");
 
 		Member *member = type->GetMember(fieldName);
 		if (!member)
-			throw ModuleLoadException(file.fileName, "Unresolved FieldRef.");
+			throw ModuleLoadException(reader.fileName, "Unresolved FieldRef.");
 		if (!(member->flags & M_FIELD))
-			throw ModuleLoadException(file.fileName, "FieldRef does not refer to a field.");
+			throw ModuleLoadException(reader.fileName, "FieldRef does not refer to a field.");
 
-		target->fieldRefs.SetItem(i, (Field*)member);
+		target->fieldRefs.Add((Field*)member);
 	}
 
 	CHECKPOS_AFTER(FieldRef);
 }
 
-void Module::ReadMethodRefs(MFileStream &file, Module *target)
+void Module::ReadMethodRefs(ModuleReader &reader, Module *target)
 {
 	CHECKPOS_BEFORE();
 
-	int32_t length = file.ReadInt32();
+	int32_t length = reader.ReadInt32();
 	target->methodRefs.Init(length);
 
 	for (int32_t i = 0; i < length; i++)
 	{
-		uint32_t id = file.ReadUInt32();
-		if (id != ((i + 1) | IDMASK_METHODREF))
-			throw ModuleLoadException(file.fileName, "Invalid MethodRef token ID.");
+		TokenId id = reader.ReadToken();
+		if (id != target->methodRefs.GetNextId(IDMASK_METHODREF))
+			throw ModuleLoadException(reader.fileName, "Invalid MethodRef token ID.");
 		// Method reference has a name followed by a TypeRef ID.
-		String *methodName = file.ReadString();
-		uint32_t typeRef = file.ReadUInt32();
+		String *methodName = reader.ReadString();
+		TokenId typeRef = reader.ReadToken();
 
 		if ((typeRef & IDMASK_MEMBERKIND) != IDMASK_TYPEREF)
-			throw ModuleLoadException(file.fileName, "MethodRef must contain a TypeRef.");
+			throw ModuleLoadException(reader.fileName, "MethodRef must contain a TypeRef.");
 
 		const Type *type = target->FindType(typeRef);
 		if (!type)
-			throw ModuleLoadException(file.fileName, "Unresolved TypeRef token in MethodRef.");
+			throw ModuleLoadException(reader.fileName, "Unresolved TypeRef token in MethodRef.");
 
 		Member *member = type->GetMember(methodName);
 		if (!member)
-			throw ModuleLoadException(file.fileName, "Unresolved MethodRef.");
+			throw ModuleLoadException(reader.fileName, "Unresolved MethodRef.");
 		if (!(member->flags & M_METHOD))
-			throw ModuleLoadException(file.fileName, "MethodRef does not refer to a method.");
+			throw ModuleLoadException(reader.fileName, "MethodRef does not refer to a method.");
 
-		target->methodRefs.SetItem(i, (Method*)member);
+		target->methodRefs.Add((Method*)member);
 	}
 
 	CHECKPOS_AFTER(MethodRef);
 }
 
-void Module::ReadStringTable(MFileStream &file, Module *target)
+void Module::ReadStringTable(ModuleReader &reader, Module *target)
 {
 	CHECKPOS_BEFORE();
 
-	int32_t length = file.ReadInt32();
+	int32_t length = reader.ReadInt32();
 	target->strings.Init(length);
 
 	for (int32_t i = 0; i < length; i++)
 	{
-		uint32_t id = file.ReadUInt32();
-		if (id != ((i + 1) | IDMASK_STRING))
-			throw ModuleLoadException(file.fileName, "Invalid String token ID.");
+		TokenId id = reader.ReadToken();
+		if (id != target->strings.GetNextId(IDMASK_STRING))
+			throw ModuleLoadException(reader.fileName, "Invalid String token ID.");
 
-		String *value = file.ReadString();
-		target->strings.SetItem(i, value);
+		String *value = reader.ReadString();
+		target->strings.Add(value);
 	}
 
 	CHECKPOS_AFTER(String);
+}
+
+void Module::ReadTypeDefs(ModuleReader &reader, Module *target)
+{
+	CHECKPOS_BEFORE();
+
+	int32_t length = reader.ReadInt32();
+	target->types.Init(length);
+
+	for (int32_t i = 0; i < length; i++)
+	{
+		TokenId id = reader.ReadToken();
+		if (id != target->types.GetNextId(IDMASK_TYPEDEF))
+			throw new ModuleLoadException(reader.fileName, "Invalid TypeDef token ID.");
+
+		Type *type = ReadSingleType(reader, target, id);
+		target->types.Add(type);
+	}
+
+	CHECKPOS_AFTER(TypeDef);
+}
+
+void Module::ReadFunctionDefs(ModuleReader &reader, Module *target)
+{
+	CHECKPOS_BEFORE();
+
+	int32_t length = reader.ReadInt32();
+	target->types.Init(length);
+
+	for (int32_t i = 0; i < length; i++)
+	{
+		TokenId id = reader.ReadToken();
+		if (id != target->functions.GetNextId(IDMASK_FUNCTIONDEF))
+			throw new ModuleLoadException(reader.fileName, "Invalid TypeDef token ID.");
+
+		Method *function = ReadSingleMethod(reader, target);
+		target->functions.Add(function);
+	}
+
+	CHECKPOS_AFTER(FunctionDef);
+}
+
+Type *Module::ReadSingleType(ModuleReader &reader, Module *target, const TokenId typeId)
+{
+	TypeFlags flags = (TypeFlags)reader.ReadUInt32();
+	String *name = reader.ReadString();
+
+	TokenId baseTypeId   = reader.ReadToken();
+	TokenId sharedTypeId = reader.ReadToken();
+
+	const Type *baseType;
+	if (baseTypeId != 0)
+	{
+		if (baseTypeId == typeId)
+			throw ModuleLoadException(reader.fileName, "A type cannot have itself as its base type.");
+		baseType = target->FindType(baseTypeId);
+		if (baseType == nullptr)
+			throw ModuleLoadException(reader.fileName, "Could not resolve base type ID.");
+	}
+
+	const Type *sharedType;
+	if (sharedTypeId != 0)
+	{
+		if ((sharedTypeId & IDMASK_MEMBERKIND) != IDMASK_TYPEDEF)
+			throw ModuleLoadException(reader.fileName, "A shared type must be a TypeDef.");
+		if (sharedTypeId == typeId)
+			throw ModuleLoadException(reader.fileName, "A type cannot have itself as its shared type.");
+		sharedType = target->FindType(sharedTypeId);
+		if (sharedType == nullptr)
+			throw ModuleLoadException(reader.fileName, "Could not resolve shared type ID.");
+	}
+
+	const int32_t memberCount = reader.ReadInt32();
+	Type *output = new Type(memberCount);
 }
 
 

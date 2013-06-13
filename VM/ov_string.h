@@ -9,6 +9,8 @@ OVUM_API int32_t String_GetHashCode(String *str);
 OVUM_API bool String_Equals(const String *a, const String *b);
 OVUM_API bool String_EqualsIgnoreCase(const String *a, const String *b);
 
+OVUM_API bool String_SubstringEquals(const String *str, const int32_t startIndex, const String *part);
+
 OVUM_API int String_Compare(const String *a, const String *b);
 
 inline bool String_StartsWith(const String *a, const uchar ch)
@@ -19,6 +21,16 @@ inline bool String_EndsWith(const String *a, const uchar ch)
 {
 	return (&a->firstChar)[a->length - 1] == ch;
 }
+
+inline bool String_ContainsChar(const String *str, const uchar ch)
+{
+	for (int32_t i = 0; i < str->length; i++)
+		if ((&str->firstChar)[i] == ch)
+			return true;
+	return false;
+}
+
+OVUM_API bool String_Contains(const String *str, const String *value);
 
 OVUM_API String *String_ToUpper(ThreadHandle thread, String *str);
 OVUM_API String *String_ToLower(ThreadHandle thread, String *str);

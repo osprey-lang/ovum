@@ -77,6 +77,14 @@ TYPED_ENUM(Operator, uint8_t)
 #define OPERATOR_COUNT 18
 
 
+// NOTE: This TypeFlags enum has exactly the same member values as
+//       those in the module format specification. Please make sure
+//       that they are synchronised!
+//       However, the following flags are implementation details:
+//         TYPE_CUSTOMPTR
+//         TYPE_OPS_INITED
+//         TYPE_INITED
+//         TYPE_STATICCTORRUN
 TYPED_ENUM(TypeFlags, uint32_t)
 {
 	TYPE_NONE          = 0x0000,

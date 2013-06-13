@@ -152,6 +152,17 @@ OVUM_API bool String_EqualsIgnoreCase(const String *a, const String *b)
 	return length <= 0;
 }
 
+OVUM_API bool String_SubstringEquals(const String *str, const int32_t startIndex, const String *part)
+{
+	assert(str != nullptr);
+	if (startIndex >= str->length)
+		return false;
+	if (part == nullptr || part->length == 0)
+		return true;
+	if (part->length > str->length - startIndex)
+		return false;
+}
+
 OVUM_API int String_Compare(const String *a, const String *b)
 {
 	int32_t alen = a->length, blen = b->length;
@@ -171,6 +182,63 @@ OVUM_API int String_Compare(const String *a, const String *b)
 	}
 
 	return alen - blen;
+}
+
+OVUM_API bool String_Contains(const String *str, const String *value)
+{
+	assert(str != nullptr);
+	if (value == nullptr || value->length == 0)
+		return true;
+	if (value->length > str->length)
+		return false; // The string cannot contain a substring longer than itself.
+	if (value->length == str->length)
+		return String_Equals(str, value);
+
+	const uchar *strp = &str->firstChar;
+	const uchar firstValChar = value->firstChar;
+	int32_t remaining = str->length - value->length;
+	while (remaining > 0)
+	{
+		if (*strp == firstValChar)
+		{
+			// The comparison algorithm below is basically lifted from String_Equals, and then slightly modified
+			int32_t length = value->length;
+
+			const uchar *strpCopy = strp;
+			const uchar *valp = &value->firstChar;
+
+			while (length > 10) // Unroll comparison loop by 10!
+			{
+				if (*(int32_t*)strp != *(int32_t*)valp) break;
+				if (*(int32_t*)(strp + 2) != *(int32_t*)(valp + 2)) break;
+				if (*(int32_t*)(strp + 4) != *(int32_t*)(valp + 4)) break;
+				if (*(int32_t*)(strp + 6) != *(int32_t*)(valp + 6)) break;
+				if (*(int32_t*)(strp + 8) != *(int32_t*)(valp + 8)) break;
+				strp += 10;
+				valp += 10;
+				length -= 10;
+			}
+
+			// Note: this depends on the fact that strings are null-terminated, and
+			// that the null character is never included in the string length.
+			while (length > 0)
+			{
+				if (*(int32_t*)strp != *(int32_t*)valp)
+					break;
+				strp += 2;
+				valp += 2;
+
+				length -= 2;
+			}
+
+			if (length <= 0)
+				return true;
+			// otherwise, advance to the next character in str
+			strp = strpCopy;
+		}
+		strp++;
+		remaining--;
+	}
 }
 
 OVUM_API String *String_ToUpper(ThreadHandle thread, String *str)
