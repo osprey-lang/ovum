@@ -1,10 +1,24 @@
 namespace aves;
 
+/// Summary: Returns a string representing the specified value.
+/// Param value: The value to get a string representation of.
+/// Returns: If {value} is null, this function returns the empty string;
+///          otherwise, the return value is the result of calling `.toString()`
+///          on {value} with no arguments.
 public function string(value)
 {
 	return value?.toString() ?? "";
 }
 
+/// Summary: Represents an ordered sequence of UTF-16 code units, commonly
+///          used for encoding text.
+/// Remarks: Osprey strings are all encoded using UTF-16 internally. As a result,
+///          "characters" in a String do not correspond directly to Unicode code
+///          points, as the string may contain surrogate pairs.
+///
+///          Additional information about UTF-16 and surrogate pairs can be found
+///          on the Unicode Consortium website. A good starting point is the FAQ
+///          page on UTF-8 and UTF-16: http://www.unicode.org/faq/utf_bom.html
 public class String
 {
 	private new();

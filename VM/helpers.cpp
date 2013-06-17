@@ -21,20 +21,20 @@ OVUM_API Value IntFromValue(ThreadHandle thread, Value v)
 	if (v.type == stdTypes.UInt)
 	{
 		if (v.uinteger > INT64_MAX)
-			_Th(thread)->ThrowOverflowError();
+			thread->ThrowOverflowError();
 		v.type = stdTypes.Int; // This is safe: v is passed by value.
 	}
 	else if (v.type == stdTypes.Real)
 	{
 		// TODO: Verify that this is safe; if not, find another way of doing this.
 		if (v.real > INT64_MAX || v.real < INT64_MIN)
-			_Th(thread)->ThrowOverflowError();
+			thread->ThrowOverflowError();
 
 		v.type = stdTypes.Int;
 		v.integer = (int64_t)v.real;
 	}
 	else if (v.type != stdTypes.Int)
-		_Th(thread)->ThrowTypeError(errors::toIntFailed);
+		thread->ThrowTypeError(errors::toIntFailed);
 
 	return v;
 }
@@ -44,20 +44,20 @@ OVUM_API Value UIntFromValue(ThreadHandle thread, Value v)
 	if (v.type == stdTypes.Int)
 	{
 		if (v.integer < 0) // simple! This is even safe if the architecture doesn't use 2's complement!
-			_Th(thread)->ThrowOverflowError();
+			thread->ThrowOverflowError();
 		v.type = stdTypes.UInt; // This is safe: v is passed by value
 	}
 	else if (v.type == stdTypes.Real)
 	{
 		// TODO: Verify that this is safe; if not, find another way of doing this.
 		if (v.real > UINT64_MAX || v.real < 0)
-			_Th(thread)->ThrowOverflowError();
+			thread->ThrowOverflowError();
 
 		v.type = stdTypes.UInt;
 		v.uinteger = (uint64_t)v.real;
 	}
 	else if (v.type != stdTypes.UInt)
-		_Th(thread)->ThrowTypeError(errors::toUIntFailed);
+		thread->ThrowTypeError(errors::toUIntFailed);
 
 	return v;
 }
@@ -72,7 +72,7 @@ OVUM_API Value RealFromValue(ThreadHandle thread, Value v)
 	else if (v.type == stdTypes.UInt)
 		SetReal_(v, (double)v.uinteger);
 	else if (v.type != stdTypes.Real)
-		_Th(thread)->ThrowTypeError(errors::toRealFailed);
+		thread->ThrowTypeError(errors::toRealFailed);
 
 	return v;
 }
@@ -81,8 +81,8 @@ OVUM_API Value StringFromValue(ThreadHandle thread, Value v)
 {
 	if (v.type != stdTypes.String)
 	{
-		_Th(thread)->Push(v);
-		_Th(thread)->InvokeMember(static_strings::toString, 0, &v);
+		thread->Push(v);
+		thread->InvokeMember(static_strings::toString, 0, &v);
 	}
 
 	return v;
@@ -103,7 +103,7 @@ OVUM_API int64_t Int_AddChecked(ThreadHandle thread, const int64_t left, const i
 		bool neg = left < 0;
 		if (neg && !(left < INT64_MIN - right) ||
 			!neg && !(INT64_MAX - left < right))
-			_Th(thread)->ThrowOverflowError();
+			thread->ThrowOverflowError();
 	}
 
 	return left + right;
@@ -118,7 +118,7 @@ OVUM_API int64_t Int_SubtractChecked(ThreadHandle thread, const int64_t left, co
 		// > If left is negative, then test  left < INT64_MAX + right
 		if (left < 0 && !(left > INT64_MAX + right) ||
 			left > 0 && !(left < INT64_MAX + right))
-			_Th(thread)->ThrowOverflowError();
+			thread->ThrowOverflowError();
 	}
 
 	return left - right;
@@ -137,10 +137,10 @@ OVUM_API int64_t Int_MultiplyChecked(ThreadHandle thread, const int64_t left, co
 	{
 		if (!(high == -1 && output < 0 ||
 			high == 0 && output == 0))
-			_Th(thread)->ThrowOverflowError();
+			thread->ThrowOverflowError();
 	}
 	else if (high == 0 && (uint64_t)output <= INT64_MAX)
-		_Th(thread)->ThrowOverflowError();
+		thread->ThrowOverflowError();
 
 	return output;
 }
@@ -184,7 +184,7 @@ OVUM_API int64_t Int_MultiplyChecked(ThreadHandle thread, const int64_t left, co
 			return (int64_t)temp;
 	}
 
-	_Th(thread)->ThrowOverflowError();
+	thread->ThrowOverflowError();
 	return 0; // compilers are not clever enough to realise that thread->ThrowOverflowError() exits the method
 }
 
@@ -193,9 +193,9 @@ OVUM_API int64_t Int_MultiplyChecked(ThreadHandle thread, const int64_t left, co
 OVUM_API int64_t Int_DivideChecked(ThreadHandle thread, const int64_t left, const int64_t right)
 {
 	if (right == 0)
-		_Th(thread)->ThrowDivideByZeroError();
+		thread->ThrowDivideByZeroError();
 	if (left == INT64_MIN && right == -1)
-		_Th(thread)->ThrowOverflowError();
+		thread->ThrowOverflowError();
 
 	return left / right;
 }
@@ -203,7 +203,7 @@ OVUM_API int64_t Int_DivideChecked(ThreadHandle thread, const int64_t left, cons
 OVUM_API int64_t Int_ModuloChecked(ThreadHandle thread, const int64_t left, const int64_t right)
 {
 	if (right == 0)
-		_Th(thread)->ThrowDivideByZeroError();
+		thread->ThrowDivideByZeroError();
 
 	// Note: modulo can never result in an overflow.
 
@@ -215,7 +215,7 @@ OVUM_API int64_t Int_ModuloChecked(ThreadHandle thread, const int64_t left, cons
 OVUM_API uint64_t UInt_AddChecked(ThreadHandle thread, const uint64_t left, const uint64_t right)
 {
 	if (UINT64_MAX - left < right)
-		_Th(thread)->ThrowOverflowError();
+		thread->ThrowOverflowError();
 
 	return left + right;
 }
@@ -223,7 +223,7 @@ OVUM_API uint64_t UInt_AddChecked(ThreadHandle thread, const uint64_t left, cons
 OVUM_API uint64_t UInt_SubtractChecked(ThreadHandle thread, const uint64_t left, const uint64_t right)
 {
 	if (right > left)
-		_Th(thread)->ThrowOverflowError();
+		thread->ThrowOverflowError();
 
 	return left - right;
 }
@@ -238,7 +238,7 @@ OVUM_API uint64_t UInt_MultiplyChecked(ThreadHandle thread, const uint64_t left,
 	uint64_t output = _mul128(left, right, &high);
 
 	if (high)
-		_Th(thread)->ThrowOverflowError();
+		thread->ThrowOverflowError();
 
 	return output;
 }
@@ -267,19 +267,19 @@ OVUM_API uint64_t UInt_MultiplyChecked(ThreadHandle thread, const uint64_t left,
 			output = (uint64_t)leftHigh * (uint64_t)rightLow;
 	}
 	else
-		_Th(thread)->ThrowOverflowError();
+		thread->ThrowOverflowError();
 
 	if (output != 0)
 	{
 		if ((uint32_t)(output >> 32) != 0)
-			_Th(thread)->ThrowOverflowError();
+			thread->ThrowOverflowError();
 
 		output <<= 32;
 		uint64_t temp = (uint64_t)leftLow * (uint64_t)rightLow;
 		output += temp;
 
 		if (output < temp)
-			_Th(thread)->ThrowOverflowError();
+			thread->ThrowOverflowError();
 	}
 	else
 		output = (uint64_t)leftLow * (uint64_t)rightLow;
@@ -292,7 +292,7 @@ OVUM_API uint64_t UInt_MultiplyChecked(ThreadHandle thread, const uint64_t left,
 OVUM_API uint64_t UInt_DivideChecked(ThreadHandle thread, const uint64_t left, const uint64_t right)
 {
 	if (right == 0)
-		_Th(thread)->ThrowDivideByZeroError();
+		thread->ThrowDivideByZeroError();
 
 	return left / right;
 }
@@ -300,7 +300,7 @@ OVUM_API uint64_t UInt_DivideChecked(ThreadHandle thread, const uint64_t left, c
 OVUM_API uint64_t UInt_ModuloChecked(ThreadHandle thread, const uint64_t left, const uint64_t right)
 {
 	if (right == 0)
-		_Th(thread)->ThrowDivideByZeroError();
+		thread->ThrowDivideByZeroError();
 
 	// Note: modulo can never result in an overflow.
 

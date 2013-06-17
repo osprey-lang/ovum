@@ -108,7 +108,7 @@ public:
 	// NOTE: This function is only called for /reachable/ Values.
 	inline bool ShouldProcess(Value val)
 	{
-		return val.type && !(_Tp(val.type)->flags & TYPE_PRIMITIVE) &&
+		return val.type && !(val.type->flags & TYPE_PRIMITIVE) &&
 			(val.type != stdTypes.String || !(val.common.string->flags & STR_STATIC)) &&
 			GCO_FROM_VALUE(val)->flags & GCO_COLLECT(currentCollectMark);
 	}
@@ -131,6 +131,14 @@ public:
 
 	void AddMemoryPressure(Thread *const thread, const size_t size);
 	void RemoveMemoryPressure(Thread *const thread, const size_t size);
+
+	Value *AddStaticReference();
+	inline Value *AddStaticReference(Value value)
+	{
+		Value *ref = AddStaticReference();
+		*ref = value;
+		return ref;
+	}
 
 	void Release(Thread *const thread, GCObject *gco);
 

@@ -161,6 +161,8 @@ OVUM_API bool String_SubstringEquals(const String *str, const int32_t startIndex
 		return true;
 	if (part->length > str->length - startIndex)
 		return false;
+
+	// TODO: String_SubstringEquals
 }
 
 OVUM_API int String_Compare(const String *a, const String *b)
@@ -239,12 +241,14 @@ OVUM_API bool String_Contains(const String *str, const String *value)
 		strp++;
 		remaining--;
 	}
+
+	return false;
 }
 
 OVUM_API String *String_ToUpper(ThreadHandle thread, String *str)
 {
 	String *newStr;
-	GC::gc->ConstructString(_Th(thread), str->length, nullptr, &newStr);
+	GC::gc->ConstructString(thread, str->length, nullptr, &newStr);
 
 	const uchar *a = &str->firstChar;
 	uchar *b = const_cast<uchar*>(&newStr->firstChar);
@@ -274,7 +278,7 @@ OVUM_API String *String_ToUpper(ThreadHandle thread, String *str)
 OVUM_API String *String_ToLower(ThreadHandle thread, String *str)
 {
 	String *newStr;
-	GC::gc->ConstructString(_Th(thread), str->length, nullptr, &newStr);
+	GC::gc->ConstructString(thread, str->length, nullptr, &newStr);
 
 	const uchar *a = &str->firstChar;
 	uchar *b = const_cast<uchar*>(&newStr->firstChar);
@@ -305,12 +309,12 @@ OVUM_API String *String_Concat(ThreadHandle thread, const String *a, const Strin
 {
 	// Make sure the target length is within range!
 	if (INT32_MAX - a->length < b->length)
-		_Th(thread)->ThrowOverflowError();
+		thread->ThrowOverflowError();
 
 	int32_t outLength = a->length + b->length;
 
 	String *output;
-	GC::gc->ConstructString(_Th(thread), outLength, nullptr, &output);
+	GC::gc->ConstructString(thread, outLength, nullptr, &output);
 
 	uchar *outputChar = const_cast<uchar*>(&output->firstChar);
 
@@ -324,17 +328,17 @@ OVUM_API String *String_Concat(ThreadHandle thread, const String *a, const Strin
 OVUM_API String *String_Concat3(ThreadHandle thread, const String *a, const String *b, const String *c)
 {
 	if (INT32_MAX - a->length < b->length)
-		_Th(thread)->ThrowOverflowError();
+		thread->ThrowOverflowError();
 
 	int32_t outLength = a->length + b->length;
 
 	if (INT32_MAX - outLength < c->length)
-		_Th(thread)->ThrowOverflowError();
+		thread->ThrowOverflowError();
 
 	outLength += c->length;
 
 	String *output;
-	GC::gc->ConstructString(_Th(thread), outLength, nullptr, &output);
+	GC::gc->ConstructString(thread, outLength, nullptr, &output);
 	uchar *outputChar = const_cast<uchar*>(&output->firstChar);
 
 	CopyMemoryT(outputChar, &a->firstChar, a->length);
@@ -358,13 +362,13 @@ OVUM_API String *String_ConcatRange(ThreadHandle thread, const unsigned int coun
 	{
 		int32_t strlen = values[i]->length;
 		if (INT32_MAX - outLength < strlen)
-			_Th(thread)->ThrowOverflowError();
+			thread->ThrowOverflowError();
 
 		outLength += strlen;
 	}
 
 	String *output;
-	GC::gc->ConstructString(_Th(thread), outLength, nullptr, &output);
+	GC::gc->ConstructString(thread, outLength, nullptr, &output);
 	uchar *outputChar = const_cast<uchar*>(&output->firstChar);
 
 	for (unsigned int i = 0; i < count; i++)
@@ -451,7 +455,7 @@ OVUM_API String *String_FromWString(ThreadHandle thread, const wchar_t *source)
 		size_t length = wcslen(source);
 
 		String *output;
-		GC::gc->ConstructString(_Th(thread), length, (const uchar*)source, &output);
+		GC::gc->ConstructString(thread, length, (const uchar*)source, &output);
 
 		return output;
 	}
@@ -472,7 +476,7 @@ OVUM_API String *String_FromWString(ThreadHandle thread, const wchar_t *source)
 		}
 
 		MutableString *output;
-		GC::gc->ConstructString(_Th(thread), outLength, nullptr, (String**)&output);
+		GC::gc->ConstructString(thread, outLength, nullptr, (String**)&output);
 
 		if (outLength)
 		{

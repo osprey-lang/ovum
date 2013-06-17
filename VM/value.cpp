@@ -5,26 +5,19 @@ const Value NULL_VALUE = NULL_CONSTANT;
 OVUM_API bool IsTrue(Value value)
 {
 	return value.type != nullptr &&
-		(!(_Tp(value.type)->flags & TYPE_PRIMITIVE) ||
+		(!(value.type->flags & TYPE_PRIMITIVE) ||
 		value.integer != 0);
 }
 
 OVUM_API bool IsFalse(Value value)
 {
 	return value.type == nullptr ||
-		(_Tp(value.type)->flags & TYPE_PRIMITIVE) && value.integer == 0;
+		(value.type->flags & TYPE_PRIMITIVE) && value.integer == 0;
 }
 
 OVUM_API bool IsType(Value value, TypeHandle type)
 {
-	const Type *valtype = _Tp(value.type);
-	while (valtype)
-	{
-		if (valtype == type)
-			return true;
-		valtype = valtype->baseType;
-	}
-	return false;
+	return Type::ValueIsType(value, value.type);
 }
 
 OVUM_API bool IsSameReference(Value a, Value b)
@@ -34,7 +27,7 @@ OVUM_API bool IsSameReference(Value a, Value b)
 	// a.type == b.type at this point
 	if (a.type == nullptr)
 		return true; // both are null
-	if (_Tp(a.type)->flags & TYPE_PRIMITIVE)
+	if (a.type->flags & TYPE_PRIMITIVE)
 		return a.integer == b.integer;
 	return a.instance == b.instance;
 }

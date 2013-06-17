@@ -53,6 +53,12 @@ OVUM_API int VM_Start(VMStartParams params)
 	vmState.mainThread->Start(nullptr, returnValue);
 	// blah blah
 
+	if (returnValue.type == stdTypes.Int ||
+		returnValue.type == stdTypes.UInt)
+		result = (int)returnValue.integer;
+	else if (returnValue.type == stdTypes.Real)
+		result = (int)returnValue.real;
+
 	// done!
 	delete GC::gc;
 	delete vmState.mainThread;
@@ -77,7 +83,7 @@ void VM_Init(VMStartParams params)
 
 		if (params.verbose)
 		{
-			cout << "Argument " << i << ": ";
+			wcout << "Argument " << i << ": ";
 			VM_PrintLn(str);
 		}
 	}
@@ -104,7 +110,7 @@ void VM_Init(VMStartParams params)
 
 	try
 	{
-		Module::OpenByName(stdModuleName);
+		Module::Open(params.startupFile);
 	}
 	catch (ModuleLoadException &e)
 	{

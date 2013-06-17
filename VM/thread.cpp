@@ -72,12 +72,12 @@ void Thread::InvokeLL(unsigned int argCount, Value *value, Value *result)
 	// If the value is a Method instance, we use that instance's details.
 	// Otherwise, we load the default invocator from the value.
 
-	const Type *type = _Tp(value->type);
+	const Type *type = value->type;
 
 	if (type == stdTypes.Method)
 	{
 		MethodInst *methodInst = value->common.method;
-		mo = ResolveOverload(_Mth(methodInst->method), argCount);
+		mo = ResolveOverload(methodInst->method, argCount);
 
 		if (mo->flags & METHOD_INSTANCE)
 			// Overwrite the Method with the instance
@@ -89,9 +89,9 @@ void Thread::InvokeLL(unsigned int argCount, Value *value, Value *result)
 	else
 	{
 		Member *member;
-		if ((member = type->FindMember(static_strings::_call, _Tp(currentFrame->method->declType))) &&
+		if ((member = type->FindMember(static_strings::_call, currentFrame->method->declType)) &&
 			(member->flags & M_METHOD))
-			mo = ResolveOverload(_Mth(member), argCount);
+			mo = ResolveOverload((Method*)member, argCount);
 		else
 			ThrowTypeError(thread_errors::NotInvokable);
 	}
@@ -107,7 +107,7 @@ void Thread::InvokeMember(String *name, unsigned int argCount, Value *result)
 	Value *value = currentFrame->evalStack + currentFrame->stackCount - argCount - 1;
 
 	Member *member;
-	if (member = _Tp(value->type)->FindMember(name, currentFrame->method->declType))
+	if (member = value->type->FindMember(name, currentFrame->method->declType))
 	{
 		if (!(member->flags & M_METHOD))
 			ThrowTypeError(thread_errors::MemberNotInvokable);
@@ -277,18 +277,18 @@ void Thread::LoadMemberLL(Value *instance, String *member, Value *result)
 	if (instance->type == nullptr)
 		ThrowNullReferenceError();
 
-	const Member *m = _Tp(instance->type)->FindMember(member, currentFrame->method->declType);
+	const Member *m = instance->type->FindMember(member, currentFrame->method->declType);
 	if (!(m->flags & M_INSTANCE))
 		ThrowTypeError(thread_errors::StaticMemberThroughInstance);
 
 	if (m->flags & M_FIELD)
 	{
-		*result = *reinterpret_cast<const Field*>(m)->GetFieldUnchecked(this, instance);
+		*result = *reinterpret_cast<const Field*>(m)->GetFieldUnchecked(instance);
 		currentFrame->Pop(1); // Done with the instance!
 	}
 	else if (m->flags & M_METHOD)
 	{
-		GC::gc->Alloc(this, _Tp(stdTypes.Method), sizeof(MethodInst), result);
+		GC::gc->Alloc(this, stdTypes.Method, sizeof(MethodInst), result);
 		result->common.method->instance = *instance;
 		result->common.method->method = (Method*)m;
 		currentFrame->Pop(1); // Done with the instance!
@@ -315,17 +315,17 @@ void Thread::StoreMemberLL(Value *instance, Value *value, String *member)
 	if (instance->type == nullptr)
 		ThrowNullReferenceError();
 
-	Member *m = _Tp(instance->type)->FindMember(member, currentFrame->method->declType);
+	Member *m = instance->type->FindMember(member, currentFrame->method->declType);
 	if (!(m->flags & M_INSTANCE))
 		ThrowTypeError(thread_errors::StaticMemberThroughInstance);
 	if (m->flags & M_METHOD)
 		ThrowTypeError(thread_errors::AssigningToMethod);
 
 	if (m->flags & M_FIELD)
-		*reinterpret_cast<Field*>(m)->GetFieldUnchecked(this, instance) = *value;
+		*reinterpret_cast<Field*>(m)->GetFieldUnchecked(instance) = *value;
 	else if (m->flags & M_PROPERTY)
 	{
-		Property *p = _Prop(m);
+		Property *p = (Property*)m;
 		if (!p->setter)
 			ThrowTypeError(thread_errors::SettingReadonlyProperty);
 
@@ -536,7 +536,7 @@ void Thread::PrepareArgs(const MethodFlags flags, const uint16_t argCount, const
 	// We cannot really make any assumptions about the List constructor,
 	// so we can't call it here. Instead, we "manually" allocate a ListInst,
 	// set its type to List, and initialize its fields.
-	GC::gc->Alloc(this, _Tp(stdTypes.List), sizeof(ListInst), &listValue);
+	GC::gc->Alloc(this, stdTypes.List, sizeof(ListInst), &listValue);
 	ListInst *list = listValue.common.list;
 	globalFunctions.initListInstance(this, list, count);
 
@@ -644,7 +644,7 @@ String *Thread::GetStackTrace()
 
 void Thread::AppendArgumentType(StringBuffer &buf, Value arg)
 {
-	const Type *type = _Tp(arg.type);
+	const Type *type = arg.type;
 	if (type == nullptr)
 		buf.Append(this, 4, "null");
 	else
@@ -659,7 +659,7 @@ void Thread::AppendArgumentType(StringBuffer &buf, Value arg)
 			AppendArgumentType(buf, method->instance);
 			buf.Append(this, 2, ", ");
 
-			Method *mgroup = _Mth(method->method);
+			Method *mgroup = method->method;
 			if (mgroup->declType)
 			{
 				buf.Append(this, mgroup->declType->fullName);
@@ -677,129 +677,128 @@ void Thread::AppendArgumentType(StringBuffer &buf, Value arg)
 
 OVUM_API void VM_Push(ThreadHandle thread, Value value)
 {
-	_Th(thread)->Push(value);
+	thread->Push(value);
 }
 
 OVUM_API void VM_PushNull(ThreadHandle thread)
 {
-	_Th(thread)->Push(NULL_VALUE);
+	thread->Push(NULL_VALUE);
 }
 
 OVUM_API void VM_PushBool(ThreadHandle thread, const bool value)
 {
-	_Th(thread)->PushBool(value);
+	thread->PushBool(value);
 }
 OVUM_API void VM_PushInt(ThreadHandle thread, const int64_t value)
 {
-	_Th(thread)->PushInt(value);
+	thread->PushInt(value);
 }
 OVUM_API void VM_PushUInt(ThreadHandle thread, const uint64_t value)
 {
-	_Th(thread)->PushUInt(value);
+	thread->PushUInt(value);
 }
 OVUM_API void VM_PushReal(ThreadHandle thread, const double value)
 {
-	_Th(thread)->PushReal(value);
+	thread->PushReal(value);
 }
 OVUM_API void VM_PushString(ThreadHandle thread, String *str)
 {
-	_Th(thread)->PushString(str);
+	thread->PushString(str);
 }
 
 OVUM_API Value VM_Pop(ThreadHandle thread)
 {
-	return _Th(thread)->Pop();
+	return thread->Pop();
 }
 OVUM_API void VM_PopN(ThreadHandle thread, const unsigned int n)
 {
-	_Th(thread)->Pop(n);
+	thread->Pop(n);
 }
 
 OVUM_API void VM_Dup(ThreadHandle thread)
 {
-	_Th(thread)->Dup();
+	thread->Dup();
 }
 
 OVUM_API Value *VM_Local(ThreadHandle thread, const unsigned int n)
 {
-	return _Th(thread)->Local(n);
+	return thread->Local(n);
 }
 
 OVUM_API void VM_Invoke(ThreadHandle thread, const unsigned int argCount, Value *result)
 {
-	_Th(thread)->Invoke(argCount, result);
+	thread->Invoke(argCount, result);
 }
 OVUM_API void VM_InvokeMember(ThreadHandle thread, String *name, const unsigned int argCount, Value *result)
 {
-	_Th(thread)->InvokeMember(name, argCount, result);
+	thread->InvokeMember(name, argCount, result);
 }
 OVUM_API void VM_InvokeMethod(ThreadHandle thread, MethodHandle method, const unsigned int argCount, Value *result)
 {
-	Thread *const th = _Th(thread);
-	StackFrame *const frame = th->currentFrame;
-	th->InvokeMethod(_Mth(method), argCount, frame->evalStack + frame->stackCount - 1 - argCount, result);
+	StackFrame *const frame = thread->currentFrame;
+	thread->InvokeMethod(method, argCount, frame->evalStack + frame->stackCount - 1 - argCount, result);
 }
 OVUM_API void VM_InvokeOperator(ThreadHandle thread, Operator op, Value *result)
 {
-	_Th(thread)->InvokeOperator(op, result);
+	thread->InvokeOperator(op, result);
 }
 OVUM_API bool VM_Equals(ThreadHandle thread)
 {
-	return _Th(thread)->Equals();
+	return thread->Equals();
 }
 OVUM_API int VM_Compare(ThreadHandle thread)
 {
-	return _Th(thread)->Compare();
+	return thread->Compare();
 }
 
 OVUM_API void VM_LoadMember(ThreadHandle thread, String *member, Value *result)
 {
-	_Th(thread)->LoadMember(member, result);
+	thread->LoadMember(member, result);
 }
 OVUM_API void VM_StoreMember(ThreadHandle thread, String *member)
 {
-	_Th(thread)->StoreMember(member);
+	thread->StoreMember(member);
 }
 
 OVUM_API void VM_LoadIndexer(ThreadHandle thread, const uint16_t argCount, Value *result)
 {
-	_Th(thread)->LoadIndexer(argCount, result);
+	thread->LoadIndexer(argCount, result);
 }
 OVUM_API void VM_StoreIndexer(ThreadHandle thread, const uint16_t argCount)
 {
-	_Th(thread)->StoreIndexer(argCount);
+	thread->StoreIndexer(argCount);
 }
 
 OVUM_API void VM_ToString(ThreadHandle thread, String **result)
 {
-	_Th(thread)->ToString(result);
+	thread->ToString(result);
 }
 
 OVUM_API void VM_Throw(ThreadHandle thread)
 {
-	_Th(thread)->Throw();
+	thread->Throw();
 }
 OVUM_API void VM_ThrowError(ThreadHandle thread, String *message)
 {
-	_Th(thread)->ThrowError(message);
+	thread->ThrowError(message);
 }
 OVUM_API void VM_ThrowTypeError(ThreadHandle thread, String *message)
 {
-	_Th(thread)->ThrowTypeError(message);
+	thread->ThrowTypeError(message);
 }
 OVUM_API void VM_ThrowMemoryError(ThreadHandle thread, String *message)
 {
-	_Th(thread)->ThrowMemoryError(message);
+	thread->ThrowMemoryError(message);
 }
 OVUM_API void VM_ThrowOverflowError(ThreadHandle thread, String *message)
 {
-	_Th(thread)->ThrowOverflowError(message);
+	thread->ThrowOverflowError(message);
 }
 OVUM_API void VM_ThrowDivideByZeroError(ThreadHandle thread, String *message)
 {
-	_Th(thread)->ThrowDivideByZeroError(message);
+	thread->ThrowDivideByZeroError(message);
 }
 OVUM_API void VM_ThrowNullReferenceError(ThreadHandle thread, String *message)
 {
-	_Th(thread)->ThrowNullReferenceError(message);
+	thread->ThrowNullReferenceError(message);
 }

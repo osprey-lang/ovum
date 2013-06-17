@@ -213,7 +213,6 @@ typedef struct StandardTypes_S
 	TypeHandle UInt;
 	TypeHandle Real;
 	TypeHandle String;
-	TypeHandle Enum;
 	TypeHandle List;
 	TypeHandle Hash;
 	TypeHandle Method;
@@ -234,7 +233,6 @@ OVUM_API TypeHandle GetType_Int();
 OVUM_API TypeHandle GetType_UInt();
 OVUM_API TypeHandle GetType_Real();
 OVUM_API TypeHandle GetType_String();
-OVUM_API TypeHandle GetType_Enum();
 OVUM_API TypeHandle GetType_List();
 OVUM_API TypeHandle GetType_Hash();
 OVUM_API TypeHandle GetType_Method();

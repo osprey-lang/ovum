@@ -56,6 +56,7 @@ StringHash<T>::StringHash(int32_t capacity)
 		this->length = 0;
 		this->capacity = capacity;
 		this->buckets = new StringHashEntry<T>*[NextPowerOfTwo(capacity)];
+		memset(this->buckets, 0, sizeof(void*) * capacity);
 	}
 }
 
@@ -91,7 +92,7 @@ bool StringHash<T>::Insert(String *key, T value, bool add)
 
 	int32_t hash = String_GetHashCode(key);
 
-	int32_t bucket = hash % capacity;
+	int32_t bucket = (hash & INT32_MAX) % capacity;
 
 	for (StringHashEntry<T> *e = buckets[bucket]; e; e = e->next)
 		if (e->hashCode == hash && String_Equals(e->key, key))

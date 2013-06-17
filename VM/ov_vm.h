@@ -19,6 +19,7 @@
 #error You are not supposed to compile Ovum without Unicode support.
 #endif
 
+#ifndef VM_EXPORTS
 // Represents a handle to a specific thread.
 typedef void *const ThreadHandle;
 // Represents a handle to a specific type.
@@ -35,6 +36,7 @@ typedef void *FieldHandle;
 // Represents a handle to a property.
 typedef void *PropertyHandle;
 // (These are defined here because they're used in a lot of places.)
+#endif
 
 // Some header files!
 #include "ov_value.h"
