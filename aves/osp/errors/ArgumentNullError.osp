@@ -1,19 +1,43 @@
 namespace aves;
 
+/// Summary: Represents an error that occurs when an argument is null
+///          when it is not allowed to be.
 public inheritable ArgumentNullError is ArgumentError
 {
+	/// Summary: Creates a new {ArgumentNullError} with the default message
+	///          and no parameter name.
 	public new()
 	{
 		new base(null, defaultMessage);
 	}
+	/// Summary: Creates a new {ArgumentNullError} with the default message
+	///          and the name of the parameter that caused the error.
+	/// Param paramName: A String containing the name of the parameter that
+	///                  caused the error, or null.
 	public new(paramName)
 	{
 		new base(paramName, defaultMessage);
 	}
+	/// Summary: Creates a new {ArgumentNullError} with the specified message
+	///          and the name of the parameter that caused the error.
+	/// Param paramName: A String containing the name of the parameter that
+	///                  caused the error, or null.
+	/// Param message: An error message describing the error.
+	/// Remarks: If {message} is not a String, it is converted to one;
+	///          if it is null, the default message is used.
 	public new(paramName, message)
 	{
 		new base(paramName, message ?? defaultMessage);
 	}
+	/// Summary: Creates a new {ArgumentNullError} with the specified message,
+	///          the name of the parameter that caused the error, and a specified
+	///          inner error.
+	/// Param paramName: A String containing the name of the parameter that
+	///                  caused the error, or null.
+	/// Param message: An error message describing the error.
+	/// Param innerError: The error that caused this error.
+	/// Remarks: If {message} is not a String, it is converted to one;
+	///          if it is null, the default message is used.
 	public new(paramName, message, innerError)
 	{
 		new base(paramName, message ?? defaultMessage, innerError);

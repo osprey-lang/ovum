@@ -97,9 +97,8 @@ void GC::Alloc(Thread *const thread, const Type *type, size_t size, GCObject **o
 
 void GC::Construct(Thread *const thread, const Type *type, const uint16_t argc, Value *output)
 {
-	Thread *const _thread = _Th(thread);
-	StackFrame *frame = _thread->currentFrame;
-	ConstructLL(_thread, _Tp(type), argc, frame->evalStack + frame->stackCount - argc, output);
+	StackFrame *frame = thread->currentFrame;
+	ConstructLL(thread, type, argc, frame->evalStack + frame->stackCount - argc, output);
 }
 
 void GC::ConstructLL(Thread *const thread, const Type *type, const uint16_t argc, Value *args, Value *output)
@@ -141,7 +140,7 @@ void GC::ConstructString(Thread *const thread, const int32_t length, const uchar
 	GCObject *gco;
 	// Note: sizeof(STRING) includes firstChar, but we need an extra character
 	// for the terminating \0 anyway. So this is fine.
-	Alloc(thread, _Tp(stdTypes.String), sizeof(String) + length*sizeof(uchar), &gco);
+	Alloc(thread, stdTypes.String, sizeof(String) + length*sizeof(uchar), &gco);
 
 	MutableString *str = reinterpret_cast<MutableString*>(GCO_INSTANCE_BASE(gco));
 	str->length = length;
@@ -343,25 +342,25 @@ void GC::ProcessHash(HashInst *hash)
 
 OVUM_API void GC_Construct(ThreadHandle thread, TypeHandle type, const uint16_t argc, Value *output)
 {
-	GC::gc->Construct(_Th(thread), _Tp(type), argc, output);
+	GC::gc->Construct(thread, type, argc, output);
 }
 
 OVUM_API void GC_ConstructString(ThreadHandle thread, const int32_t length, const uchar *values, String **result)
 {
-	GC::gc->ConstructString(_Th(thread), length, values, result);
+	GC::gc->ConstructString(thread, length, values, result);
 }
 
 OVUM_API String *GC_ConvertString(ThreadHandle thread, const char *string)
 {
-	return GC::gc->ConvertString(_Th(thread), string);
+	return GC::gc->ConvertString(thread, string);
 }
 
 OVUM_API void GC_AddMemoryPressure(ThreadHandle thread, const size_t size)
 {
-	GC::gc->AddMemoryPressure(_Th(thread), size);
+	GC::gc->AddMemoryPressure(thread, size);
 }
 
 OVUM_API void GC_RemoveMemoryPressure(ThreadHandle thread, const size_t size)
 {
-	GC::gc->RemoveMemoryPressure(_Th(thread), size);
+	GC::gc->RemoveMemoryPressure(thread, size);
 }

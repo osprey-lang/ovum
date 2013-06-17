@@ -84,14 +84,14 @@ inline void SetString_(Value *target, String *value)
 inline bool IsTrue_(Value value)
 {
 	return value.type != nullptr &&
-		(!(_Tp(value.type)->flags & TYPE_PRIMITIVE) ||
+		(!(value.type->flags & TYPE_PRIMITIVE) ||
 		value.integer != 0);
 }
 
 inline bool IsFalse_(Value value)
 {
 	return value.type == nullptr ||
-		(_Tp(value.type)->flags & TYPE_PRIMITIVE) && value.integer == 0;
+		(value.type->flags & TYPE_PRIMITIVE) && value.integer == 0;
 }
 
 inline bool IsSameReference_(Value a, Value b)
@@ -101,7 +101,7 @@ inline bool IsSameReference_(Value a, Value b)
 	// a.type == b.type at this point
 	if (a.type == nullptr)
 		return true; // both are null
-	if (_Tp(a.type)->flags & TYPE_PRIMITIVE)
+	if (a.type->flags & TYPE_PRIMITIVE)
 		return a.integer == b.integer;
 	return a.instance == b.instance;
 }

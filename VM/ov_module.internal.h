@@ -8,15 +8,16 @@
 #include <fstream>
 #include <vector>
 #include "ov_vm.internal.h"
+#include "ov_type.internal.h"
 
 using namespace std;
 
 // Forward declarations
-class Type;
-class Member;
-class Method;
-class Field;
-class Property;
+//class Type;
+//class Member;
+//class Method;
+//class Field;
+//class Property;
 
 extern String *stdModuleName;
 
@@ -26,27 +27,54 @@ TYPED_ENUM(ModuleMemberFlags, uint16_t)
 	// Mask for extracting the kind of member (type, function or constant).
 	MMEM_KIND     = 0x000f,
 
+	MMEM_NONE     = 0x0000,
+
 	MMEM_TYPE     = 0x0001,
 	MMEM_FUNCTION = 0x0002,
 	MMEM_CONSTANT = 0x0003,
 
 	MMEM_PROTECTION = 0x00f0,
-	MMEM_PUBLIC   = 0x0010,
-	MMEM_INTERNAL = 0x0020,
+	MMEM_PUBLIC     = 0x0010,
+	MMEM_INTERNAL   = 0x0020,
 };
-
-
-typedef struct ModuleMember_S
+inline ModuleMemberFlags operator|(const ModuleMemberFlags a, const ModuleMemberFlags b)
 {
-	ModuleMemberFlags flags;
+	return static_cast<ModuleMemberFlags>((uint16_t)a | (uint16_t)b);
+}
+inline ModuleMemberFlags operator^(const ModuleMemberFlags a, const ModuleMemberFlags b)
+{
+	return static_cast<ModuleMemberFlags>((uint16_t)a ^ (uint16_t)b);
+}
+inline ModuleMemberFlags operator&(const ModuleMemberFlags a, const ModuleMemberFlags b)
+{
+	return static_cast<ModuleMemberFlags>((uint16_t)a & (uint16_t)b);
+}
 
+
+class ModuleMember
+{
+public:
+	ModuleMemberFlags flags;
 	union
 	{
 		Type   *type;
 		Method *function;
 		Value   constant;
 	};
-} ModuleMember;
+
+	inline ModuleMember()
+		: constant(NULL_VALUE), flags(MMEM_NONE)
+	{ }
+	inline ModuleMember(Type *type, bool isInternal)
+		: type(type), flags(MMEM_TYPE | (isInternal ? MMEM_INTERNAL : MMEM_PUBLIC))
+	{ }
+	inline ModuleMember(Method *function, bool isInternal)
+		: function(function), flags(MMEM_FUNCTION | (isInternal ? MMEM_INTERNAL : MMEM_PUBLIC))
+	{ }
+	inline ModuleMember(Value value, bool isInternal)
+		: constant(value), flags(MMEM_CONSTANT | (isInternal ? MMEM_INTERNAL : MMEM_PUBLIC))
+	{ }
+};
 
 TYPED_ENUM(ModuleMemberId, uint32_t)
 {
@@ -57,7 +85,6 @@ TYPED_ENUM(ModuleMemberId, uint32_t)
 	IDMASK_TYPEDEF      = 0x10000000u,
 	IDMASK_FIELDDEF     = 0x12000000u,
 	IDMASK_METHODDEF    = 0x14000000u,
-	IDMASK_PROPERTYDEF  = 0x18000000u, // This may be unnecessary
 	IDMASK_STRING       = 0x20000000u,
 	IDMASK_MODULEREF    = 0x40000000u,
 	IDMASK_FUNCTIONREF  = 0x44000000u,
@@ -83,8 +110,8 @@ public:
 
 	inline ~ModuleReader()
 	{
-		//if (stream.is_open())
-		//	stream.close();
+		if (stream.is_open())
+			stream.close();
 	}
 
 	template<class T>
@@ -94,24 +121,69 @@ public:
 		return *this;
 	}
 
+	inline int8_t ReadInt8()
+	{
+		int8_t target;
+		stream.read(reinterpret_cast<char*>(&target), sizeof(int8_t));
+		return target;
+	}
+
+	inline uint8_t ReadUInt8()
+	{
+		uint8_t target;
+		stream.read(reinterpret_cast<char*>(&target), sizeof(uint8_t));
+		return target;
+	}
+
+	// All the reading functions below assume the system is little-endian.
+	// This will be changed at an unspecified later date.
+
+	inline int16_t ReadInt16()
+	{
+		int16_t target;
+		stream.read(reinterpret_cast<char*>(&target), sizeof(int16_t));
+		return target;
+	}
+
+	inline uint16_t ReadUInt16()
+	{
+		uint16_t target;
+		stream.read(reinterpret_cast<char*>(&target), sizeof(uint16_t));
+		return target;
+	}
+
 	inline int32_t ReadInt32()
 	{
 		int32_t target;
-		stream.read(reinterpret_cast<char*>(&target), 4); // assume little-endian for now
+		stream.read(reinterpret_cast<char*>(&target), sizeof(int32_t));
 		return target;
 	}
 
 	inline uint32_t ReadUInt32()
 	{
 		uint32_t target;
-		stream.read(reinterpret_cast<char*>(&target), 4); // assume little-endian for now
+		stream.read(reinterpret_cast<char*>(&target), sizeof(uint32_t));
+		return target;
+	}
+
+	inline int64_t ReadInt64()
+	{
+		int64_t target;
+		stream.read(reinterpret_cast<char*>(&target), sizeof(int64_t));
+		return target;
+	}
+
+	inline uint64_t ReadUInt64()
+	{
+		uint64_t target;
+		stream.read(reinterpret_cast<char*>(&target), sizeof(uint64_t));
 		return target;
 	}
 
 	inline TokenId ReadToken()
 	{
 		TokenId target;
-		stream.read(reinterpret_cast<char*>(&target), 4); // assume little-endian for now
+		stream.read(reinterpret_cast<char*>(&target), sizeof(TokenId));
 		return target;
 	}
 
@@ -124,6 +196,8 @@ public:
 	String *ReadString();
 
 	String *ReadStringOrNull();
+
+	char *ReadCString();
 };
 
 template<>
@@ -187,7 +261,7 @@ private:
 
 	inline void Init(const int32_t capacity)
 	{
-		this->count = capacity;
+		this->capacity = capacity;
 		if (capacity != 0)
 			this->entries = new T[capacity];
 	}
@@ -196,6 +270,18 @@ private:
 	{
 		entries[length] = item;
 		length++;
+	}
+
+	inline void DeleteEntries()
+	{
+		for (int32_t i = 0; i < length; i++)
+			delete entries[i];
+	}
+
+	inline void FreeEntries()
+	{
+		for (int32_t i = 0; i < length; i++)
+			free(entries[i]);
 	}
 
 public:
@@ -214,6 +300,7 @@ public:
 		if (this->capacity != 0)
 			delete[] this->entries;
 		this->capacity = 0;
+		this->length = 0;
 	}
 
 	inline T operator[](const uint32_t index) const
@@ -243,33 +330,118 @@ public:
 class Module
 {
 public:
-	Module(ModuleMeta *meta);
+	Module(ModuleMeta &meta);
+	~Module();
 
 	String *name;
 	ModuleVersion version;
 
 	const Type *FindType(String *name, bool includeInternal) const;
-	Method *FindGlobalFunction(String *name, bool includeInternal) const;
-	const bool FindConstant(String *name, bool includeInternal, Value &result) const;
+	Method     *FindGlobalFunction(String *name, bool includeInternal) const;
+	const bool  FindConstant(String *name, bool includeInternal, Value &result) const;
 
-	Module *FindModuleRef(TokenId token) const;
-	Method *FindGlobalFunction(TokenId token) const;
+	Module     *FindModuleRef(TokenId token) const;
+	Method     *FindGlobalFunction(TokenId token) const;
 	const Type *FindType(TokenId token) const;
-	Method *FindMethod(TokenId token) const;
-	Field *FindField(TokenId token) const;
-	String *FindString(TokenId token) const;
+	Method     *FindMethod(TokenId token) const;
+	Field      *FindField(TokenId token) const;
+	String     *FindString(TokenId token) const;
 
 	static Module *Find(String *name);
 	static Module *Open(const wchar_t *fileName);
 	static Module *OpenByName(String *name);
 
 private:
+	// Represents a T* during module loading.
+	// If the module loading fails, or if the method is left without
+	// using the value, then the destructor cleans up the memory.
+	// If UseValue() has been called on the Temp value, then the value
+	// is NOT deallocated in the destructor.
+	//
+	// If UseFree = true, then the memory is deallocated with free();
+	// otherwise, 'delete' is used.
+	template<class T, bool UseFree = false>
+	class Temp
+	{
+	private:
+		bool isValueUsed;
+		T *value;
+
+	public:
+		inline Temp()
+			: isValueUsed(false), value(nullptr)
+		{ }
+		inline Temp(T *value)
+			: isValueUsed(false), value(value)
+		{ }
+
+		inline ~Temp()
+		{
+			if (!isValueUsed && value != nullptr)
+			{
+				if (UseFree)
+					free(value);
+				else
+					delete value;
+				value = nullptr;
+			}
+		}
+
+		inline T *GetValue() const
+		{
+			return value;
+		}
+
+		inline T *UseValue()
+		{
+			isValueUsed = true;
+			return value;
+		}
+	};
+
+	template<class T>
+	class TempArr
+	{
+	private:
+		bool isValueUsed;
+		T *value;
+
+	public:
+		inline TempArr()
+			: value(nullptr), isValueUsed(false)
+		{ }
+		inline TempArr(T *value)
+			: value(value), isValueUsed(false)
+		{ }
+
+		inline ~TempArr()
+		{
+			if (!isValueUsed && value != nullptr)
+			{
+				delete[] value;
+				value = nullptr;
+			}
+		}
+
+		inline T *GetValue() const
+		{
+			return value;
+		}
+
+		inline T *UseValue()
+		{
+			isValueUsed = true;
+			return value;
+		}
+	};
+
 	bool fullyOpened; // Set to true when the module file has been fully loaded
 	                  // If a module depends on another module with this set to false,
 	                  // then there's a circular dependency issue.
 
 	MemberTable<Type  *> types;     // Types defined in the module
 	MemberTable<Method*> functions; // Global functions defined in the module
+	MemberTable<Value  > constants; // Global constants defined in the module
 	MemberTable<Field *> fields;    // Fields, both instance and static
 	MemberTable<Method*> methods;   // Class methods defined in the module
 	MemberTable<String*> strings;   // String table
@@ -281,11 +453,13 @@ private:
 	MemberTable<Field *> fieldRefs;    // Field references
 	MemberTable<Method*> methodRefs;   // Class method references
 
+	uint32_t methodStart; // The start offset of the method block in the file (set to 0 after opening)
 	Method *mainMethod;
 
 	HMODULE nativeLib; // Handle to native library (null if not loaded)
 
 	void LoadNativeLibrary(String *nativeFileName, const wchar_t *path);
+	void FreeNativeLibrary();
 
 	static std::vector<Module*> loadedModules;
 
@@ -299,23 +473,51 @@ private:
 
 	// Reads the module reference table and opens all dependent modules.
 	// Also initializes the moduleRefs table (and moduleRefCount).
-	static void ReadModuleRefs(ModuleReader &reader, Module *target);
-	static void ReadTypeRefs(ModuleReader &reader, Module *target);
-	static void ReadFunctionRefs(ModuleReader &reader, Module *target);
-	static void ReadFieldRefs(ModuleReader &reader, Module *target);
-	static void ReadMethodRefs(ModuleReader &reader, Module *target);
+	static void ReadModuleRefs(ModuleReader &reader, Temp<Module> &target);
+	static void ReadTypeRefs(ModuleReader &reader, Temp<Module> &target);
+	static void ReadFunctionRefs(ModuleReader &reader, Temp<Module> &target);
+	static void ReadFieldRefs(ModuleReader &reader, Temp<Module> &target);
+	static void ReadMethodRefs(ModuleReader &reader, Temp<Module> &target);
 
-	static void ReadStringTable(ModuleReader &reader, Module *target);
+	static void ReadStringTable(ModuleReader &reader, Temp<Module> &target);
 
-	static void ReadTypeDefs(ModuleReader &reader, Module *target);
-	static void ReadFunctionDefs(ModuleReader &reader, Module *target);
+	static void ReadTypeDefs(ModuleReader &reader, Temp<Module> &target);
+	static void ReadFunctionDefs(ModuleReader &reader, Temp<Module> &target);
+	static void ReadConstantDefs(ModuleReader &reader, Temp<Module> &target);
 
-	static Type *ReadSingleType(ModuleReader &reader, Module *target, const TokenId typeId);
-	static Method *ReadSingleMethod(ModuleReader &reader, Module *target);
+	static Type *ReadSingleType(ModuleReader &reader, Temp<Module> &target, const TokenId typeId);
+	static void ReadFields(ModuleReader &reader, Temp<Module> &targetModule, Temp<Type> &targetType);
+	static void ReadMethods(ModuleReader &reader, Temp<Module> &targetModule, Temp<Type> &targetType);
+	static void ReadProperties(ModuleReader &reader, Temp<Module> &targetModule, Temp<Type> &targetType);
+	static void ReadOperators(ModuleReader &reader, Temp<Module> &targetModule, Temp<Type> &targetType);
+
+	static Method *ReadSingleMethod(ModuleReader &reader, Temp<Module> &target);
+	static Method::TryBlock *ReadTryBlocks(ModuleReader &reader, Temp<Module> &targetModule, int32_t &tryCount);
+
+	static void TryRegisterStandardType(Type *type);
+
+	TYPED_ENUM(FileMethodFlags, uint32_t)
+	{
+		FM_PUBLIC    = 0x01,
+		FM_PRIVATE   = 0x02,
+		FM_PROTECTED = 0x04,
+		FM_INSTANCE  = 0x08,
+		FM_CTOR      = 0x10,
+		FM_IMPL      = 0x20,
+	};
+	TYPED_ENUM(OverloadFlags, uint32_t)
+	{
+		OV_VAREND      = 0x01,
+		OV_VARSTART    = 0x02,
+		OV_NATIVE      = 0x04,
+		OV_SHORTHEADER = 0x08,
+		OV_VIRTUAL     = 0x10,
+		OV_ABSTRACT    = 0x20,
+	};
 };
 
 // Recover a Module pointer from a ModuleHandle.
-#define _M(mh)	reinterpret_cast<Module*>(mh)
+//#define _M(mh)	reinterpret_cast<Module*>(mh)
 
 class ModuleLoadException : public exception
 {

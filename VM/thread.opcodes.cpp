@@ -185,7 +185,7 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 					int32_t cap = I32_ARG(ip + sizeof(LocalOffset));
 
 					Value result; // Can't put it in dest until it's fully initialized
-					GC::gc->Alloc(this, _Tp(stdTypes.List), sizeof(ListInst), &result);
+					GC::gc->Alloc(this, stdTypes.List, sizeof(ListInst), &result);
 					globalFunctions.initListInstance(this, result.common.list, cap);
 
 					*dest = result;
@@ -202,7 +202,7 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 					int32_t cap = I32_ARG(ip + sizeof(LocalOffset));
 
 					Value result; // Can't put it in dest until it's fully initialized
-					GC::gc->Alloc(this, _Tp(stdTypes.Hash), sizeof(HashInst), &result);
+					GC::gc->Alloc(this, stdTypes.Hash, sizeof(HashInst), &result);
 					globalFunctions.initHashInstance(this, result.common.hash, cap);
 
 					*dest = result;
@@ -277,7 +277,7 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 					Value *const inst = OFF_ARG(ip) + frame;
 					Value *const dest = OFF_ARG(ip + sizeof(LocalOffset)) + frame;
 
-					*dest = _Tp(inst->type)->GetTypeToken();
+					*dest = inst->type->GetTypeToken();
 
 					ip += 2 * sizeof(LocalOffset);
 					frame->stackCount += (opc & 1) - 1;

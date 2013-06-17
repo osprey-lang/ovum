@@ -20,19 +20,40 @@
 // Windows header files
 #include <windows.h>
 
+class Thread;
+class Type;
+class Module;
+class Member;
+class Method;
+class Field;
+class Property;
+
+// Represents a handle to a specific thread.
+typedef Thread *const ThreadHandle;
+// Represents a handle to a specific type.
+// Note the constness of the pointer data.
+typedef const Type *TypeHandle;
+// Represents a handle to a specific module.
+typedef Module *ModuleHandle;
+// Represents a handle to a member of a type.
+typedef Member *MemberHandle;
+// Represents a handle to a method.
+typedef Method *MethodHandle;
+// Represents a handle to a field.
+typedef Field *FieldHandle;
+// Represents a handle to a property.
+typedef Property *PropertyHandle;
+
 #include "ov_vm.h"
 
 // So that all the VM functions can access this field easily.
 extern StandardTypes stdTypes; // defined in vm.cpp
 
-// Wheee, forward declarations!
-class Thread;
-
 // Used heavily throughout!
 
 // Recovers a Type from a TypeHandle.
 // (Note: the name _Ty clashes with various things in the Windows headers. Don't use it.)
-#define _Tp(th)		reinterpret_cast<const ::Type*>(th)
+//#define _Tp(th)		reinterpret_cast<const ::Type*>(th)
 
 typedef struct GlobalFunctions_S
 {

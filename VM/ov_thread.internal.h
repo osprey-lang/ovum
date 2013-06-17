@@ -247,7 +247,7 @@ private:
 		{
 			for (int i = 0; i < method->overloadCount; i++)
 			{
-				Method::Overload *mo = method->overloads[i];
+				Method::Overload *mo = method->overloads + i;
 				if (mo->Accepts(argCount))
 					return mo;
 			}
@@ -286,7 +286,7 @@ private:
 };
 
 // Converts a ThreadHandle to a real Thread.
-#define _Th(v)	reinterpret_cast<::Thread *const>(v)
+//#define _Th(v)	reinterpret_cast<::Thread *const>(v)
 
 
 #endif // VM__THREAD_INTERNAL_H

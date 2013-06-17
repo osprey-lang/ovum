@@ -66,7 +66,7 @@ public:
 
 // Reinterpret-casts a LitString<> to a String*.
 // NOTE: do not pass a LitString<> pointer into this!
-#define _S(ls)	reinterpret_cast<String*>(&ls)
+#define _S(ls)	reinterpret_cast<::String*>(&ls)
 
 // forward declarations
 typedef struct ListInst_S ListInst;
