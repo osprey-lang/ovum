@@ -88,6 +88,8 @@ typedef struct VMState_S
 	String *modulePath;
 	// Whether the VM describes the startup process.
 	bool verbose;
+
+	Module *startupModule;
 } VMState;
 
 extern VMState vmState;

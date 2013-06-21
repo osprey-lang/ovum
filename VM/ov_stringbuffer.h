@@ -119,6 +119,31 @@ public:
 			VM_ThrowError(thread);
 	}
 
+	inline void Insert(ThreadHandle thread, const int32_t index, const int32_t length, const uchar data[])
+	{
+		if (length > 0)
+		{
+			EnsureMinCapacity(thread, length);
+
+			uchar *destp = this->data + this->length + length - 1;
+			const uchar *srcp = this->data + this->length - 1;
+
+			int32_t remaining = this->length - index;
+			while (remaining--)
+				*destp-- = *srcp--;
+
+			CopyMemoryT(this->data + index, data, length);
+		}
+	}
+	inline void Insert(ThreadHandle thread, const int32_t index, const uchar data)
+	{
+		Insert(thread, index, 1, &data);
+	}
+	inline void Insert(ThreadHandle thread, const int32_t index, String *str)
+	{
+		Insert(thread, index, str->length, &str->firstChar);
+	}
+
 	// Clears the buffer's contents without changing the capacity.
 	inline void Clear()
 	{

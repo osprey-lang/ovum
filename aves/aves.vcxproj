@@ -86,6 +86,7 @@
     <ClInclude Include="aves.h" />
     <ClInclude Include="aves_buffer.h" />
     <ClInclude Include="aves_enum.h" />
+    <ClInclude Include="aves_env.h" />
     <ClInclude Include="aves_list.h" />
     <ClInclude Include="aves_math.h" />
     <ClInclude Include="aves_ns.h" />
@@ -95,6 +96,7 @@
     <ClInclude Include="aves_real.h" />
     <ClInclude Include="aves_shared_strings.h" />
     <ClInclude Include="aves_string.h" />
+    <ClInclude Include="aves_stringbuffer.h" />
     <ClInclude Include="aves_uint.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
@@ -111,6 +113,7 @@
       </PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="enum.cpp" />
+    <ClCompile Include="env.cpp" />
     <ClCompile Include="int.cpp" />
     <ClCompile Include="list.cpp" />
     <ClCompile Include="math.cpp" />
@@ -118,6 +121,7 @@
     <ClCompile Include="real.cpp" />
     <ClCompile Include="shared_strings.cpp" />
     <ClCompile Include="string.cpp" />
+    <ClCompile Include="stringbuffer.cpp" />
     <ClCompile Include="uint.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

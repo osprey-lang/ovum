@@ -19,6 +19,8 @@ public class Buffer
 	public readUInt16(index)				__extern("aves_Buffer_readUInt16");
 	public readUInt32(index)				__extern("aves_Buffer_readUInt32");
 	public readUInt64(index)				__extern("aves_Buffer_readUInt64");
+	public readFloat32(index)				__extern("aves_Buffer_readFloat32");
+	public readFloat64(index)				__extern("aves_Buffer_readFloat64");
 
 	public writeByte(index, value)			__extern("aves_Buffer_writeByte");
 	public writeSByte(index, value)			__extern("aves_Buffer_writeSByte");
@@ -28,6 +30,8 @@ public class Buffer
 	public writeUInt16(index, value)		__extern("aves_Buffer_writeUInt16");
 	public writeUInt32(index, value)		__extern("aves_Buffer_writeUInt32");
 	public writeUInt64(index, value)		__extern("aves_Buffer_writeUInt64");
+	public writeFloat32(index, value)		__extern("aves_Buffer_writeFloat32");
+	public writeFloat64(index, value)		__extern("aves_Buffer_writeFloat64");
 
 	override toString()
 	{

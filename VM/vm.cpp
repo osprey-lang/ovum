@@ -44,24 +44,38 @@ OVUM_API int VM_Start(VMStartParams params)
 	GC::Init(); // We must call this before VM_Init(), because VM_Init relies on the GC
 	VM_Init(params);
 
-	if (vmState.verbose)
-		wcout << L"<<< Begin program output >>>" << endl;
-
-	// ... run VM ...
 	int result = 0;
-	Value returnValue;
-	vmState.mainThread->Start(nullptr, returnValue);
-	// blah blah
+	try
+	{
+		if (vmState.startupModule->GetMainMethod() == nullptr)
+		{
+			wcerr << "Startup error: Startup module does not define a main method." << endl;
+			result = -1;
+		}
+		else
+		{
+			if (vmState.verbose)
+				wcout << L"<<< Begin program output >>>" << endl;
 
-	if (returnValue.type == stdTypes.Int ||
-		returnValue.type == stdTypes.UInt)
-		result = (int)returnValue.integer;
-	else if (returnValue.type == stdTypes.Real)
-		result = (int)returnValue.real;
+			Value returnValue;
+			vmState.mainThread->Start(vmState.startupModule->GetMainMethod(), returnValue);
+
+			if (returnValue.type == stdTypes.Int ||
+				returnValue.type == stdTypes.UInt)
+				result = (int)returnValue.integer;
+			else if (returnValue.type == stdTypes.Real)
+				result = (int)returnValue.real;
+		}
+	}
+	catch (OvumException &e)
+	{
+		result = -1;
+	}
 
 	// done!
 	delete GC::gc;
 	delete vmState.mainThread;
+	Module::UnloadAll();
 
 	return result;
 }
@@ -108,17 +122,18 @@ void VM_Init(VMStartParams params)
 
 	// And NOW we can start opening modules! Hurrah!
 
+	Module::Init();
 	try
 	{
-		Module::Open(params.startupFile);
+		vmState.startupModule = Module::Open(params.startupFile);
 	}
 	catch (ModuleLoadException &e)
 	{
 		const wchar_t *fileName = e.GetFileName();
 		if (fileName)
-			wcout << "Error loading module '" << fileName << "': " << e.what() << endl;
+			wcerr << "Error loading module '" << fileName << "': " << e.what() << endl;
 		else
-			wcout << "Error loading module: " << e.what() << endl;
+			wcerr << "Error loading module: " << e.what() << endl;
 		exit(-1);
 	}
 }
@@ -126,26 +141,33 @@ void VM_Init(VMStartParams params)
 OVUM_API void VM_Print(String *str)
 {
 	using namespace std;
-#ifdef UNICODE
-	// If UNICODE, then Windows uses UTF-16 internally, so we can just cast to wchar_t*!
-	wcout << (const wchar_t*)&str->firstChar;
-#else
-	// Let's use the Windows API to convert our text to UTF-8!
-	int length = WideCharToMultiByte(CP_UTF8, 0, (LPWSTR)&str->firstChar, str->length, nullptr, 0, nullptr, nullptr);
-	CHAR *output = new CHAR[length + 1];
-	length = WideCharToMultiByte(CP_UTF8, 0, (LPWSTR)&str->firstChar, str->length, output, length + 1, nullptr, nullptr);
-	output[length] = '\0';
 
-	cout << output;
+	if (sizeof(uchar) == sizeof(wchar_t))
+	{
+		// Assume wchar_t is UTF-16, or at least USC-2, and just cast it.
+		wcout << (const wchar_t*)&str->firstChar;
+	}
+	else if (sizeof(wchar_t) == sizeof(uint32_t))
+	{
+		// Assume wchar_t is UTF-32, and use our own conversion function to convert
+		const int length = String_ToWString(nullptr, str);
+		wchar_t *buffer = new wchar_t[length];
+		String_ToWString(buffer, str);
 
-	delete[] output;
-#endif
+		wcout << buffer;
+
+		delete[] buffer;
+	}
+	else
+	{
+		throw L"Can't print! Implement a fallback, dammit.";
+	}
 }
 
 OVUM_API void VM_PrintLn(String *str)
 {
 	VM_Print(str);
-	std::cout << std::endl;
+	std::wcout << std::endl;
 }
 
 
@@ -154,12 +176,22 @@ OVUM_API int VM_GetArgCount()
 	return vmState.argCount;
 }
 
-OVUM_API int VM_GetArgs(String **dest, int destLength)
+OVUM_API int VM_GetArgs(String *dest[], const int destLength)
 {
-	int maxIndex = min(destLength, vmState.argCount);
+	const int maxIndex = min(destLength, vmState.argCount);
 
 	for (int i = 0; i < maxIndex; i++)
 		dest[i] = vmState.argValues[i];
+
+	return maxIndex;
+}
+
+OVUM_API int VM_GetArgValues(Value dest[], const int destLength)
+{
+	const int maxIndex = min(destLength, vmState.argCount);
+
+	for (int i = 0; i < maxIndex; i++)
+		SetString_(dest + i, vmState.argValues[i]);
 
 	return maxIndex;
 }

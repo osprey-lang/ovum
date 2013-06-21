@@ -3,19 +3,38 @@
 #include "ov_stringbuffer.h"
 #include "ov_unicode.h"
 
-AVES_API NATIVE_FUNCTION(aves_String_get_item)
+namespace error_strings
 {
-	int64_t index = IntFromValue(thread, args[1]).integer;
+	LitString<36> _IndexOutOfRange    = LitString<36>::FromCString("String character index out of range.");
+	LitString<55> _FormatValueType    = LitString<55>::FromCString("The argument to String.format must be a List or a Hash.");
+	LitString<62> _ReplaceEmptyString = LitString<62>::FromCString("The oldValue in a replacement cannot be the empty string (\"\").");
 
-	String *str = THISV.common.string;
+	String *IndexOutOfRange    = _S(_IndexOutOfRange);
+	String *FormatValueType    = _S(_FormatValueType);
+	String *ReplaceEmptyString = _S(_ReplaceEmptyString);
+}
+
+int32_t GetIndex(ThreadHandle thread, String *str, Value *arg)
+{
+	int64_t index = IntFromValue(thread, *arg).integer;
 	if (index < 0 || index >= str->length)
 	{
-		GC_Construct(thread, ArgumentRangeError, 0, nullptr);
+		VM_PushString(thread, error_strings::IndexOutOfRange);
+		GC_Construct(thread, ArgumentRangeError, 1, nullptr);
 		VM_Throw(thread);
 	}
 
+	return (int32_t)index;
+}
+
+AVES_API NATIVE_FUNCTION(aves_String_get_item)
+{
+	String *str = THISV.common.string;
+
+	int32_t index = GetIndex(thread, str, args + 1);
+
 	String *output;
-	GC_ConstructString(thread, 1, &str->firstChar + (int32_t)index, &output);
+	GC_ConstructString(thread, 1, &str->firstChar + index, &output);
 	VM_PushString(thread, output);
 }
 
@@ -24,23 +43,98 @@ AVES_API NATIVE_FUNCTION(aves_String_get_length)
 	VM_PushInt(thread, THISV.common.string->length);
 }
 
-AVES_API NATIVE_FUNCTION(aves_String_getCategory)
+AVES_API NATIVE_FUNCTION(aves_String_equalsIgnoreCase)
 {
-	int64_t index = IntFromValue(thread, args[1]).integer;
+	if (!IsString(args[1]))
+	{
+		VM_PushBool(thread, false);
+	}
+	else
+	{
+		bool result = String_EqualsIgnoreCase(THISV.common.string, args[1].common.string);
+		VM_PushBool(thread, result);
+	}
+}
+AVES_API NATIVE_FUNCTION(aves_String_contains)
+{
+	Value other = StringFromValue(thread, args[1]);
 
+	bool result = String_Contains(THISV.common.string, other.common.string);
+	VM_PushBool(thread, result);
+}
+
+AVES_API NATIVE_FUNCTION(aves_String_reverse)
+{
+	String *outputString;
+	GC_ConstructString(thread, THISV.common.string->length, nullptr, &outputString);
+
+	Value *output = VM_Local(thread, 0);
+	SetString(output, outputString);
+
+	const uchar *srcp = &THISV.common.string->firstChar;
+	uchar *dstp = const_cast<uchar*>(&outputString->firstChar + outputString->length - 1);
+
+	int32_t remaining = outputString->length;
+	while (remaining > 0)
+	{
+		if (UC_IsSurrogateLead(*srcp) && UC_IsSurrogateTrail(*(srcp + 1)))
+			*reinterpret_cast<uint32_t*>(--dstp) = *reinterpret_cast<const uint32_t*>(srcp++);
+		else
+			*dstp = *srcp;
+		dstp--;
+		srcp++;
+	}
+
+	VM_Push(thread, *output);
+}
+AVES_API NATIVE_FUNCTION(aves_String_substr1)
+{
+	// substr(start)
 	String *str = THISV.common.string;
-	if (index < 0 || index > str->length)
+
+	int32_t start = GetIndex(thread, str, args + 1);
+	int32_t count = str->length - start;
+
+	if (count == 0)
+	{
+		VM_PushString(thread, strings::Empty);
+		return;
+	}
+
+	String *outputString;
+	GC_ConstructString(thread, count, &str->firstChar + start, &outputString);
+
+	Value *output = VM_Local(thread, 0);
+	SetString(output, outputString);
+
+	VM_Push(thread, *output);
+}
+AVES_API NATIVE_FUNCTION(aves_String_substr2)
+{
+	// substr(start, count)
+	String *str = THISV.common.string;
+
+	int32_t start = GetIndex(thread, str, args + 1);
+	int64_t count = IntFromValue(thread, args[2]).integer;
+	if (start + count >= str->length)
 	{
 		GC_Construct(thread, ArgumentRangeError, 0, nullptr);
 		VM_Throw(thread);
 	}
 
-	UnicodeCategory cat = UC_GetCategory(&str->firstChar, (unsigned int)index);
+	if (count == 0)
+	{
+		VM_PushString(thread, strings::Empty);
+		return;
+	}
 
-	Value output;
-	output.type = UnicodeCategoryType;
-	output.integer = (int64_t)cat;
-	VM_Push(thread, output);
+	String *outputString;
+	GC_ConstructString(thread, (int32_t)count, &str->firstChar + start, &outputString);
+
+	Value *output = VM_Local(thread, 0);
+	SetString(output, outputString);
+
+	VM_Push(thread, *output);
 }
 AVES_API NATIVE_FUNCTION(aves_String_format)
 {
@@ -52,9 +146,57 @@ AVES_API NATIVE_FUNCTION(aves_String_format)
 	else if (IsType(*values, GetType_Hash()))
 		result = string::Format(thread, THISV.common.string, values);
 	else
-		VM_ThrowTypeError(thread);
+		VM_ThrowTypeError(thread, error_strings::FormatValueType);
 
 	VM_PushString(thread, result);
+}
+AVES_API NATIVE_FUNCTION(aves_String_replaceInner)
+{
+	// replaceInner(oldValue is String, newValue is String, maxTimes is Int)
+	// (Public-facing methods ensure the types are correct)
+
+	String *oldValue = args[1].common.string;
+	if (oldValue->length == 0)
+	{
+		VM_PushString(thread, error_strings::ReplaceEmptyString);
+		VM_PushString(thread, strings::oldValue);
+		GC_Construct(thread, ArgumentError, 2, nullptr);
+		VM_Throw(thread);
+	}
+
+	String *newValue = args[2].common.string;
+
+	String *result;
+	if (oldValue->length == 1 && newValue->length == 1)
+		result = string::Replace(thread, THISV.common.string, oldValue->firstChar, newValue->firstChar, args[3].integer);
+	else
+		result = string::Replace(thread, THISV.common.string, oldValue, newValue, args[3].integer);
+
+	VM_PushString(thread, result);
+}
+
+AVES_API NATIVE_FUNCTION(aves_String_toUpper)
+{
+	String *result = String_ToUpper(thread, THISV.common.string);
+	VM_PushString(thread, result);
+}
+AVES_API NATIVE_FUNCTION(aves_String_toLower)
+{
+	String *result = String_ToLower(thread, THISV.common.string);
+	VM_PushString(thread, result);
+}
+
+AVES_API NATIVE_FUNCTION(aves_String_getCategory)
+{
+	String *str = THISV.common.string;
+	int32_t index = GetIndex(thread, str, args + 1);
+
+	UnicodeCategory cat = UC_GetCategory(&str->firstChar, (unsigned int)index);
+
+	Value output;
+	output.type = UnicodeCategoryType;
+	output.integer = (int64_t)cat;
+	VM_Push(thread, output);
 }
 
 AVES_API NATIVE_FUNCTION(aves_String_getHashCode)
@@ -62,10 +204,6 @@ AVES_API NATIVE_FUNCTION(aves_String_getHashCode)
 	int32_t hashCode = String_GetHashCode(THISV.common.string);
 
 	VM_PushInt(thread, hashCode);
-}
-AVES_API NATIVE_FUNCTION(aves_String_toString)
-{
-	VM_Push(thread, THISV);
 }
 
 AVES_API NATIVE_FUNCTION(aves_String_opEquals)
@@ -159,8 +297,8 @@ String *string::Format(ThreadHandle thread, const String *format, ListInst *list
 			// Scan placeholder values!
 			// Permitted formats:
 			//   {idx}
-			//   {idx,align}
-			//   {idx,-align}
+			//   {idx<align}
+			//   {idx>align}
 			// idx and align are always decimal digits, '0'..'9'
 			{
 				index++;
@@ -169,16 +307,11 @@ String *string::Format(ThreadHandle thread, const String *format, ListInst *list
 
 				uint32_t alignment = 0;
 				bool alignRight = false;
-				if (*chp == ',') // alignment follows here, whee
+				if (*chp == '<' || *chp == '>') // alignment follows here, whee
 				{
 					index++;
+					alignRight = *chp == '>';
 					chp++;
-					if (*chp == '-') // align right
-					{
-						alignRight = true;
-						index++;
-						chp++;
-					}
 					alignment = ScanDecimalNumber(thread, chp, index);
 				}
 
@@ -195,15 +328,16 @@ String *string::Format(ThreadHandle thread, const String *format, ListInst *list
 					VM_Throw(thread);
 				}
 
-				Value value = StringFromValue(thread, list->values[placeholderIndex]);
+				Value *value = VM_Local(thread, 0);
+				*value = StringFromValue(thread, list->values[placeholderIndex]);
 
-				if (alignRight && value.common.string->length < alignment)
-					buf.Append(thread, alignment - value.common.string->length, ' ');
+				if (alignRight && value->common.string->length < alignment)
+					buf.Append(thread, alignment - value->common.string->length, ' ');
 
-				buf.Append(thread, value.common.string);
+				buf.Append(thread, value->common.string);
 
-				if (!alignRight && value.common.string->length < alignment)
-					buf.Append(thread, alignment - value.common.string->length, ' ');
+				if (!alignRight && value->common.string->length < alignment)
+					buf.Append(thread, alignment - value->common.string->length, ' ');
 			}
 
 			start = ++index;
@@ -238,9 +372,9 @@ String *string::Format(ThreadHandle thread, const String *format, ListInst *list
 }
 
 Value ScanFormatIdentifier(ThreadHandle thread, const size_t bufferSize, uchar buffer[],
-	unsigned int &index, const uchar * &ch, uint32_t &outLength)
+	unsigned int &index, const uchar * &chp, uint32_t &outLength)
 {
-	const uchar *chStart = ch;
+	const uchar *chStart = chp;
 	// Identifiers follow the following format:
 	//     [\p{L}\p{Nl}_][\p{L}\p{Nl}\p{Nd}\p{Mn}\p{Mc}\p{Pc}\p{Cf}]*
 	// Note that '_' is part of Pc, which is why it's not explicitly in the second character class.
@@ -248,9 +382,9 @@ Value ScanFormatIdentifier(ThreadHandle thread, const size_t bufferSize, uchar b
 	uint32_t length = 0;
 
 	bool surrogate;
-	UnicodeCategory cat = UC_GetCategory(ch, 0, surrogate);
+	UnicodeCategory cat = UC_GetCategory(chp, 0, surrogate);
 	if ((cat & UC_TOP_CATEGORY_MASK) != UC_LETTER &&
-		cat != UC_NUMBER_LETTER && *ch != '_')
+		cat != UC_NUMBER_LETTER && *chp != '_')
 	{
 		VM_PushString(thread, strings::format);
 		GC_Construct(thread, ArgumentError, 1, nullptr);
@@ -261,18 +395,18 @@ Value ScanFormatIdentifier(ThreadHandle thread, const size_t bufferSize, uchar b
 	{
 		if (length + surrogate + 1 < bufferSize)
 		{
-			buffer[length] = *ch;
+			buffer[length] = *chp;
 			if (surrogate)
-				buffer[length + 1] = *(ch + 1);
+				buffer[length + 1] = *(chp + 1);
 		}
-		ch     += 1 + surrogate;
+		chp    += 1 + surrogate;
 		index  += 1 + surrogate;
 		length += 1 + surrogate;
 
-		if (*ch == '}' || *ch == ',')
+		if (*chp == '}' || *chp == ',')
 			break; // done
 
-		cat = UC_GetCategory(ch, 0, surrogate);
+		cat = UC_GetCategory(chp, 0, surrogate);
 		if (!((cat & UC_TOP_CATEGORY_MASK) == UC_LETTER ||
 			cat == UC_NUMBER_LETTER || cat == UC_NUMBER_DECIMAL ||
 			cat == UC_MARK_NONSPACING || cat == UC_MARK_SPACING ||
@@ -336,8 +470,8 @@ String *string::Format(ThreadHandle thread, const String *format, Value *hash)
 			// Scan placeholder values!
 			// Permitted formats:
 			//   {name}
-			//   {name,align}
-			//   {name,-align}
+			//   {name<align}
+			//   {name>align}
 			// name is an Osprey identifier; align consists of decimal digits, '0'..'9'
 			{
 				index++;
@@ -349,30 +483,23 @@ String *string::Format(ThreadHandle thread, const String *format, Value *hash)
 				// If that method does not return NULL_VALUE, then we don't need to do anything,
 				// because the method has already GC allocated a STRING* for us.
 				const int BUFFER_SIZE = 128; // Note: BUFFER_SIZE includes space for a trailing \0
-				uchar chbuffer[BUFFER_SIZE];
+				LitString<BUFFER_SIZE - 1> buffer = { 0, 0, STR_STATIC };
 				uint32_t bufferLength;
-				Value phKey = ScanFormatIdentifier(thread, BUFFER_SIZE, chbuffer, index, chp, bufferLength);
+				Value phKey = ScanFormatIdentifier(thread, BUFFER_SIZE, buffer.chars, index, chp, bufferLength);
 				if (phKey.type == nullptr) // use the values in the buffer
 				{
-					// Note: BUFFER_SIZE includes space for a trailing \0
-					LitString<BUFFER_SIZE - 1> keyString = { bufferLength, 0, STR_STATIC };
-					CopyMemoryT(keyString.chars, chbuffer, bufferLength);
-					SetString(phKey, reinterpret_cast<String*>(&keyString));
+					*const_cast<int32_t*>(&buffer.length) = bufferLength;
+					SetString(phKey, _S(buffer));
 				}
-				// chp is now after the last digit in the placeholder name
+				// chp is now after the last character in the placeholder name
 
 				uint32_t alignment = 0;
 				bool alignRight = false;
-				if (*chp == ',') // alignment follows here, whee
+				if (*chp == '<' || *chp == '>') // alignment follows here, whee
 				{
 					index++;
+					alignRight = *chp == '>';
 					chp++;
-					if (*chp == '-') // align right
-					{
-						alignRight = true;
-						index++;
-						chp++;
-					}
 					alignment = ScanDecimalNumber(thread, chp, index);
 				}
 
@@ -383,20 +510,20 @@ String *string::Format(ThreadHandle thread, const String *format, Value *hash)
 					VM_Throw(thread);
 				}
 
-				Value value;
+				Value *value = VM_Local(thread, 0);
 				VM_Push(thread, *hash);
 				VM_Push(thread, phKey);
-				VM_LoadIndexer(thread, 1, &value);
+				VM_LoadIndexer(thread, 1, value);
 
-				value = StringFromValue(thread, value);
+				*value = StringFromValue(thread, *value);
 
-				if (alignRight && value.common.string->length < alignment)
-					buf.Append(thread, alignment - value.common.string->length, ' ');
+				if (alignRight && value->common.string->length < alignment)
+					buf.Append(thread, alignment - value->common.string->length, ' ');
 
-				buf.Append(thread, value.common.string);
+				buf.Append(thread, value->common.string);
 
-				if (!alignRight && value.common.string->length < alignment)
-					buf.Append(thread, alignment - value.common.string->length, ' ');
+				if (!alignRight && value->common.string->length < alignment)
+					buf.Append(thread, alignment - value->common.string->length, ' ');
 			}
 
 			start = ++index;
@@ -428,4 +555,67 @@ String *string::Format(ThreadHandle thread, const String *format, Value *hash)
 
 	String *output = buf.ToString(thread);
 	return output;
+}
+
+String *string::Replace(ThreadHandle thread, const String *input, const uchar oldChar, const uchar newChar, const int64_t maxTimes)
+{
+	String *output;
+	GC_ConstructString(thread, input->length, &input->firstChar, &output);
+
+	uchar *outp = const_cast<uchar*>(&output->firstChar);
+	int64_t remaining = maxTimes;
+	int32_t length = input->length;
+	while (length-- && (maxTimes < 0 || remaining))
+	{
+		if (*outp == oldChar)
+		{
+			*outp = newChar;
+			if (maxTimes > 0)
+				remaining--;
+		}
+		outp++;
+	}
+
+	return output;
+}
+
+String *string::Replace(ThreadHandle thread, const String *input, String *oldValue, String *newValue, const int64_t maxTimes)
+{
+	StringBuffer buf(thread, input->length);
+
+	const uchar *inp = &input->firstChar;
+	int32_t imax = input->length - oldValue->length;
+
+	int32_t start = 0;
+	int32_t lengthCollected = 0;
+	int64_t remaining = maxTimes;
+
+	int32_t i = 0;
+	while (i < imax && (maxTimes < 0 || remaining))
+	{
+		if (*inp == oldValue->firstChar &&
+			String_SubstringEquals(input, start + lengthCollected, oldValue))
+		{
+			if (lengthCollected > 0)
+				buf.Append(thread, lengthCollected, &input->firstChar + start);
+
+			buf.Append(thread, newValue);
+			start = start + lengthCollected + oldValue->length;
+			lengthCollected = 0;
+			i += oldValue->length;
+
+			if (maxTimes > 0)
+				remaining--;
+		}
+		else
+		{
+			lengthCollected++;
+			i++;
+		}
+	}
+
+	if (lengthCollected > 0)
+		buf.Append(thread, lengthCollected, &input->firstChar + start);
+
+	return buf.ToString(thread);
 }

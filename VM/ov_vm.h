@@ -73,6 +73,7 @@ OVUM_API void VM_Print(String *str);
 OVUM_API void VM_PrintLn(String *str);
 
 OVUM_API int VM_GetArgCount();
-OVUM_API int VM_GetArgs(String **dest, int destLength);
+OVUM_API int VM_GetArgs(String *dest[], const int destLength);
+OVUM_API int VM_GetArgValues(Value dest[], const int destLength);
 
 #endif // VM__VM_H
