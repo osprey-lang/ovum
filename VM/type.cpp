@@ -57,9 +57,21 @@ Type::Type(int32_t memberCount) :
 	memset(operators, 0, sizeof(Method*) * OPERATOR_COUNT);
 }
 
+Type::~Type()
+{
+	// If this is a standard type, unregister it
+	for (unsigned int i = 0; i < std_type_names::StandardTypeCount; i++)
+	{
+		std_type_names::StdType type = std_type_names::Types[i];
+		if (stdTypes.*(type.member) == this)
+			stdTypes.*(type.member) = nullptr;
+	}
+}
+
 void Type::InitOperators()
 {
-	for (int op = 0; op < OPERATOR_COUNT; op++) {
+	for (int op = 0; op < OPERATOR_COUNT; op++)
+	{
 		if (this->operators[op])
 			continue;
 

@@ -1,15 +1,11 @@
 #include "ov_stringbuffer.h"
 #include "aves_list.h"
 
-unsigned int ListOffset;
-
 #define _L(value)    ((value).common.list)
 
 AVES_API void aves_List_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(ListInst));
-	ListOffset = Type_GetFieldOffset(type);
-
 	Type_SetReferenceGetter(type, aves_List_getReferences);
 	Type_SetFinalizer(type, aves_List_finalize);
 }

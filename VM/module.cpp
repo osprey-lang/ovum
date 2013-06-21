@@ -10,7 +10,7 @@ namespace
 }
 String *stdModuleName = _S(_stdModuleName);
 
-vector<Module*> Module::loadedModules = vector<Module*>(0);
+vector<Module*> *Module::loadedModules = nullptr;
 
 namespace module_file
 {
@@ -93,6 +93,8 @@ Module::Module(ModuleMeta &meta) :
 
 Module::~Module()
 {
+	free(name);
+
 	types.DeleteEntries();
 	functions.DeleteEntries();
 	fields.DeleteEntries();
@@ -223,12 +225,17 @@ String *Module::FindString(TokenId token) const
 	return nullptr;
 }
 
+Method *Module::GetMainMethod() const
+{
+	return mainMethod;
+}
+
 
 Module *Module::Find(String *name)
 {
 	using namespace std;
 
-	for (vector<Module*>::iterator i = loadedModules.begin(); i != loadedModules.end(); ++i)
+	for (vector<Module*>::iterator i = loadedModules->begin(); i != loadedModules->end(); ++i)
 	{
 		Module *mod = *i;
 		if (String_Equals(mod->name, name))
@@ -262,10 +269,12 @@ Module *Module::Open(const wchar_t *fileName)
 		// It's not fully loaded yet, but we add it specifically so that we can detect
 		// circular dependencies.
 		Temp<Module> output(new Module(meta));
-		loadedModules.push_back(output.GetValue());
+		loadedModules->push_back(output.GetValue());
 
 		if (meta.nativeLib)
 			output.GetValue()->LoadNativeLibrary(meta.nativeLib, fileName);
+
+		ReadStringTable(reader, output);  // strings
 
 		// And these must be called in exactly this order!
 		ReadModuleRefs(reader, output);   // moduleRefs
@@ -273,8 +282,6 @@ Module *Module::Open(const wchar_t *fileName)
 		ReadFunctionRefs(reader, output); // functionRefs
 		ReadFieldRefs(reader, output);    // fieldRefs
 		ReadMethodRefs(reader, output);   // methodRefs
-
-		ReadStringTable(reader, output);  // strings
 
 		ReadTypeDefs(reader, output);     // types
 		ReadFunctionDefs(reader, output); // functions
@@ -371,6 +378,25 @@ Module *Module::OpenByName(String *name)
 	delete[] filePath;
 
 	return output;
+}
+
+void Module::Init()
+{
+	if (loadedModules == nullptr)
+		loadedModules = new vector<Module*>();
+}
+
+void Module::UnloadAll()
+{
+	using namespace std;
+
+	while (loadedModules->size() > 0)
+	{
+		delete *loadedModules->end();
+		loadedModules->pop_back();
+	}
+
+	delete loadedModules;
 }
 
 void Module::LoadNativeLibrary(String *nativeFileName, const wchar_t *path)
@@ -480,11 +506,13 @@ void Module::ReadModuleRefs(ModuleReader &reader, Temp<Module> &target)
 		if (id != module->moduleRefs.GetNextId(IDMASK_MODULEREF))
 			throw ModuleLoadException(reader.fileName, "Invalid ModuleRef token ID.");
 		// Module reference has a name followed by a minimum version
-		Temp<String, true> modName(reader.ReadString());
+		String *modName = module->FindString(reader.ReadToken());
+		if (modName == nullptr)
+			throw ModuleLoadException(reader.fileName, "Could not resolve string ID for ModuleRef name.");
 		ModuleVersion minVer;
 		ReadVersion(reader, minVer);
 
-		Module *ref = OpenByName(modName.GetValue());
+		Module *ref = OpenByName(modName);
 		if (!ref->fullyOpened)
 			throw ModuleLoadException(reader.fileName, "Circular dependency detected.");
 		if (ModuleVersion::Compare(ref->version, minVer) < 0)
@@ -510,14 +538,16 @@ void Module::ReadTypeRefs(ModuleReader &reader, Temp<Module> &target)
 		if (id != module->typeRefs.GetNextId(IDMASK_TYPEREF))
 			throw ModuleLoadException(reader.fileName, "Invalid TypeRef token ID.");
 		// Type reference has a name followed by a ModuleRef ID.
-		Temp<String, true> typeName(reader.ReadString());
+		String *typeName = module->FindString(reader.ReadToken());
+		if (typeName == nullptr)
+			throw ModuleLoadException(reader.fileName, "Could not resolve string ID for TypeRef name.");
 		TokenId modRef = reader.ReadToken();
 
 		const Module *owner = module->FindModuleRef(modRef);
 		if (!owner)
 			throw ModuleLoadException(reader.fileName, "Unresolved ModuleRef token in TypeRef.");
 
-		const Type *type = owner->FindType(typeName.GetValue(), false);
+		const Type *type = owner->FindType(typeName, false);
 		if (!type)
 			throw ModuleLoadException(reader.fileName, "Unresolved TypeRef.");
 
@@ -541,14 +571,16 @@ void Module::ReadFunctionRefs(ModuleReader &reader, Temp<Module> &target)
 		if (id != module->functionRefs.GetNextId(IDMASK_FUNCTIONREF))
 			throw ModuleLoadException(reader.fileName, "Invalid FunctionRef token ID.");
 		// Function reference has a name followed by a ModuleRef ID
-		Temp<String, true> funcName(reader.ReadString());
+		String *funcName = module->FindString(reader.ReadToken());
+		if (funcName == nullptr)
+			throw ModuleLoadException(reader.fileName, "Could not resolve string ID for FunctionRef name.");
 		TokenId modRef = reader.ReadToken();
 
 		const Module *owner = module->FindModuleRef(modRef);
 		if (!owner)
 			throw ModuleLoadException(reader.fileName, "Invalid module token ID in FunctionRef.");
 
-		Method *func = owner->FindGlobalFunction(funcName.GetValue(), false);
+		Method *func = owner->FindGlobalFunction(funcName, false);
 		if (!func)
 			throw ModuleLoadException(reader.fileName, "Unresolved FunctionRef.");
 
@@ -572,7 +604,9 @@ void Module::ReadFieldRefs(ModuleReader &reader, Temp<Module> &target)
 		if (id != module->fieldRefs.GetNextId(IDMASK_FIELDREF))
 			throw ModuleLoadException(reader.fileName, "Invalid FieldRef token ID.");
 		// Field reference has a name followed by a TypeRef ID.
-		Temp<String, true> fieldName(reader.ReadString());
+		String *fieldName = module->FindString(reader.ReadToken());
+		if (fieldName == nullptr)
+			throw ModuleLoadException(reader.fileName, "Could not resolve string ID for FieldRef name.");
 		TokenId typeRef = reader.ReadToken();
 
 		if ((typeRef & IDMASK_MEMBERKIND) != IDMASK_TYPEREF)
@@ -582,7 +616,7 @@ void Module::ReadFieldRefs(ModuleReader &reader, Temp<Module> &target)
 		if (!type)
 			throw ModuleLoadException(reader.fileName, "Unresolved TypeRef token in FieldRef.");
 
-		Member *member = type->GetMember(fieldName.GetValue());
+		Member *member = type->GetMember(fieldName);
 		if (!member)
 			throw ModuleLoadException(reader.fileName, "Unresolved FieldRef.");
 		if (!(member->flags & M_FIELD))
@@ -608,7 +642,9 @@ void Module::ReadMethodRefs(ModuleReader &reader, Temp<Module> &target)
 		if (id != module->methodRefs.GetNextId(IDMASK_METHODREF))
 			throw ModuleLoadException(reader.fileName, "Invalid MethodRef token ID.");
 		// Method reference has a name followed by a TypeRef ID.
-		Temp<String, true> methodName(reader.ReadString());
+		String *methodName = module->FindString(reader.ReadToken());
+		if (methodName == nullptr)
+			throw ModuleLoadException(reader.fileName, "Could not resolve string ID for MethodRef name.");
 		TokenId typeRef = reader.ReadToken();
 
 		if ((typeRef & IDMASK_MEMBERKIND) != IDMASK_TYPEREF)
@@ -618,7 +654,7 @@ void Module::ReadMethodRefs(ModuleReader &reader, Temp<Module> &target)
 		if (!type)
 			throw ModuleLoadException(reader.fileName, "Unresolved TypeRef token in MethodRef.");
 
-		Member *member = type->GetMember(methodName.GetValue());
+		Member *member = type->GetMember(methodName);
 		if (!member)
 			throw ModuleLoadException(reader.fileName, "Unresolved MethodRef.");
 		if (!(member->flags & M_METHOD))
@@ -717,7 +753,9 @@ void Module::ReadConstantDefs(ModuleReader &reader, Temp<Module> &target)
 		enum ConstantFlags { CONST_PUBLIC = 0x01, CONST_PRIVATE = 0x02 };
 		ConstantFlags flags = (ConstantFlags)reader.ReadUInt32();
 
-		Temp<String, true> name(reader.ReadString());
+		String *name = module->FindString(reader.ReadToken());
+		if (name == nullptr)
+			throw ModuleLoadException(reader.fileName, "Could not resolve string ID in ConstantDef name.");
 		TokenId typeId = reader.ReadToken();
 
 		const Type *type = module->FindType(typeId);
@@ -742,7 +780,7 @@ void Module::ReadConstantDefs(ModuleReader &reader, Temp<Module> &target)
 			constant.integer = value;
 
 		module->constants.Add(constant);
-		module->members.Add(name.UseValue(), ModuleMember(constant, (flags & CONST_PRIVATE) == CONST_PRIVATE));
+		module->members.Add(name, ModuleMember(constant, (flags & CONST_PRIVATE) == CONST_PRIVATE));
 	}
 
 	CHECKPOS_AFTER(ConstantDef);
@@ -750,8 +788,12 @@ void Module::ReadConstantDefs(ModuleReader &reader, Temp<Module> &target)
 
 Type *Module::ReadSingleType(ModuleReader &reader, Temp<Module> &target, const TokenId typeId)
 {
+	Module *module = target.GetValue();
+
 	TypeFlags flags = (TypeFlags)reader.ReadUInt32();
-	Temp<String, true> name(reader.ReadString());
+	String *name = module->FindString(reader.ReadToken());
+	if (name == nullptr)
+		throw ModuleLoadException(reader.fileName, "Could not resolve string ID in TypeDef name.");
 
 	TokenId baseTypeId   = reader.ReadToken();
 	TokenId sharedTypeId = reader.ReadToken();
@@ -761,7 +803,7 @@ Type *Module::ReadSingleType(ModuleReader &reader, Temp<Module> &target, const T
 	{
 		if (baseTypeId == typeId)
 			throw ModuleLoadException(reader.fileName, "A type cannot have itself as its base type.");
-		baseType = target.GetValue()->FindType(baseTypeId);
+		baseType = module->FindType(baseTypeId);
 		if (baseType == nullptr)
 			throw ModuleLoadException(reader.fileName, "Could not resolve base type ID.");
 	}
@@ -773,7 +815,7 @@ Type *Module::ReadSingleType(ModuleReader &reader, Temp<Module> &target, const T
 			throw ModuleLoadException(reader.fileName, "A shared type must be a TypeDef.");
 		if (sharedTypeId == typeId)
 			throw ModuleLoadException(reader.fileName, "A type cannot have itself as its shared type.");
-		sharedType = target.GetValue()->FindType(sharedTypeId);
+		sharedType = module->FindType(sharedTypeId);
 		if (sharedType == nullptr)
 			throw ModuleLoadException(reader.fileName, "Could not resolve shared type ID.");
 	}
@@ -785,8 +827,8 @@ Type *Module::ReadSingleType(ModuleReader &reader, Temp<Module> &target, const T
 	type->baseType     = baseType;
 	type->sharedType   = sharedType;
 	type->fieldsOffset = baseType ? baseType->fieldsOffset + baseType->size : 0;
-	type->fullName     = name.UseValue();
-	type->module       = target.GetValue();
+	type->fullName     = name;
+	type->module       = module;
 
 	ReadFields(reader, target, output);     // fields
 	ReadMethods(reader, target, output);    // methods
@@ -797,7 +839,7 @@ Type *Module::ReadSingleType(ModuleReader &reader, Temp<Module> &target, const T
 	if (initer.GetValue() != nullptr)
 	{
 		// Find the entry point, whoo
-		TypeInitializer func = (TypeInitializer)GetProcAddress(target.GetValue()->nativeLib, initer.GetValue());
+		TypeInitializer func = (TypeInitializer)GetProcAddress(module->nativeLib, initer.GetValue());
 		if (func == nullptr)
 			throw ModuleLoadException(reader.fileName, "Could not locate type initializer entry point.");
 		func(output.GetValue());
@@ -845,16 +887,18 @@ void Module::ReadFields(ModuleReader &reader, Temp<Module> &targetModule, Temp<T
 		if (fieldFlags & FIELD_INSTANCE)
 			flags = flags | M_INSTANCE;
 
-		Temp<String, true> name(reader.ReadString());
+		String *name = module->FindString(reader.ReadToken());
+		if (name == nullptr)
+			throw ModuleLoadException(reader.fileName, "Could not resolve string ID in FieldDef name.");
 
 		// Skip constant value, if there is one
 		if (fieldFlags & FIELD_HASVALUE)
 			reader.stream.seekg(sizeof(TokenId) + sizeof(uint64_t), ios::cur);
 
-		Temp<Field> tempField(new Field(name.UseValue(), type, flags));
+		Temp<Field> tempField(new Field(name, type, flags));
 		Field *field = tempField.GetValue();
 
-		if (!type->members.Add(field->name, field))
+		if (!type->members.Add(name, field))
 			throw ModuleLoadException(reader.fileName, "Duplicate member name in type.");
 		module->fields.Add(field);
 
@@ -912,7 +956,9 @@ void Module::ReadProperties(ModuleReader &reader, Temp<Module> &targetModule, Te
 
 	for (int32_t i = 0; i < length; i++)
 	{
-		Temp<String> name(reader.ReadString());
+		String *name = module->FindString(reader.ReadToken());
+		if (name == nullptr)
+			throw ModuleLoadException(reader.fileName, "Could not resolve string ID in property name.");
 		TokenId getterId = reader.ReadToken();
 		TokenId setterId = reader.ReadToken();
 
@@ -954,7 +1000,7 @@ void Module::ReadProperties(ModuleReader &reader, Temp<Module> &targetModule, Te
 		if (!getter && !setter)
 			throw ModuleLoadException(reader.fileName, "Property must have at least one accessor.");
 
-		Temp<Property> tempProp(new Property(name.UseValue(), type, flags));
+		Temp<Property> tempProp(new Property(name, type, flags));
 		Property *prop = tempProp.GetValue();
 		prop->getter = getter;
 		prop->setter = setter;
@@ -999,9 +1045,13 @@ void Module::ReadOperators(ModuleReader &reader, Temp<Module> &targetModule, Tem
 
 Method *Module::ReadSingleMethod(ModuleReader &reader, Temp<Module> &target)
 {
+	Module *module = target.GetValue();
+
 	FileMethodFlags methodFlags = (FileMethodFlags)reader.ReadUInt32();
 
-	Temp<String, true> name(reader.ReadString());
+	String *name = module->FindString(reader.ReadToken());
+	if (name == nullptr)
+		throw ModuleLoadException(reader.fileName, "Could not resolve string ID in MethodDef or FunctionDef name.");
 
 	const uint32_t size = reader.ReadUInt32();
 	if (size == 0)
@@ -1025,7 +1075,7 @@ Method *Module::ReadSingleMethod(ModuleReader &reader, Temp<Module> &target)
 	if (methodFlags & FM_IMPL)
 		memberFlags = memberFlags | M_IMPL;
 
-	Temp<Method> output(new Method(name.UseValue(), target.GetValue(), memberFlags));
+	Temp<Method> output(new Method(name, module, memberFlags));
 	Method *method = output.GetValue();
 
 	TempArr<Method::Overload> tempOverloads(new Method::Overload[overloadCount]);
@@ -1088,7 +1138,7 @@ Method *Module::ReadSingleMethod(ModuleReader &reader, Temp<Module> &target)
 			if (flags & OV_NATIVE)
 			{
 				TempArr<char> entryPointName(reader.ReadCString());
-				NativeMethod entryPoint = (NativeMethod)GetProcAddress(target.GetValue()->nativeLib, entryPointName.GetValue());
+				NativeMethod entryPoint = (NativeMethod)GetProcAddress(module->nativeLib, entryPointName.GetValue());
 				if (entryPoint == nullptr)
 					throw ModuleLoadException(reader.fileName, "Could not locate entry point of native method.");
 				ov->nativeEntry = entryPoint;
@@ -1101,7 +1151,7 @@ Method *Module::ReadSingleMethod(ModuleReader &reader, Temp<Module> &target)
 				const ios::pos_type posCurrent = reader.stream.tellg(); // Resumption point
 
 				// Read the method body
-				reader.stream.seekg(target.GetValue()->methodStart, ios::beg);
+				reader.stream.seekg(module->methodStart, ios::beg);
 				TempArr<uint8_t> body(new uint8_t[length]);
 				reader.Read(body.GetValue(), length);
 

@@ -30,6 +30,7 @@ class Type
 {
 public:
 	Type(int32_t memberCount);
+	~Type();
 
 	Member *GetMember(String *name) const;
 	Member *FindMember(String *name, const Type *fromType) const;

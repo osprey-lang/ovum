@@ -347,9 +347,14 @@ public:
 	Field      *FindField(TokenId token) const;
 	String     *FindString(TokenId token) const;
 
+	Method     *GetMainMethod() const;
+
 	static Module *Find(String *name);
 	static Module *Open(const wchar_t *fileName);
 	static Module *OpenByName(String *name);
+
+	static void Init();
+	static void UnloadAll();
 
 private:
 	// Represents a T* during module loading.
@@ -461,7 +466,7 @@ private:
 	void LoadNativeLibrary(String *nativeFileName, const wchar_t *path);
 	void FreeNativeLibrary();
 
-	static std::vector<Module*> loadedModules;
+	static std::vector<Module*> *loadedModules;
 
 	//static void ThrowFileNotFound(const wchar_t *fileName);
 
@@ -471,6 +476,8 @@ private:
 
 	static void ReadVersion(ModuleReader &reader, ModuleVersion &target);
 
+	static void ReadStringTable(ModuleReader &reader, Temp<Module> &target);
+
 	// Reads the module reference table and opens all dependent modules.
 	// Also initializes the moduleRefs table (and moduleRefCount).
 	static void ReadModuleRefs(ModuleReader &reader, Temp<Module> &target);
@@ -478,8 +485,6 @@ private:
 	static void ReadFunctionRefs(ModuleReader &reader, Temp<Module> &target);
 	static void ReadFieldRefs(ModuleReader &reader, Temp<Module> &target);
 	static void ReadMethodRefs(ModuleReader &reader, Temp<Module> &target);
-
-	static void ReadStringTable(ModuleReader &reader, Temp<Module> &target);
 
 	static void ReadTypeDefs(ModuleReader &reader, Temp<Module> &target);
 	static void ReadFunctionDefs(ModuleReader &reader, Temp<Module> &target);

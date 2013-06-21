@@ -358,6 +358,15 @@ void Thread::LoadIteratorLL(Value *inst, Value *dest)
 	throw L"Not implemented";
 }
 
+void Thread::LoadStaticField(Field *field, Value *result)
+{
+	throw L"Not implemented";
+}
+void Thread::StoreStaticField(Field *field)
+{
+	throw L"Not implemented";
+}
+
 void Thread::ToString(String **result)
 {
 	LoadMember(static_strings::toString, nullptr);
@@ -767,6 +776,15 @@ OVUM_API void VM_LoadIndexer(ThreadHandle thread, const uint16_t argCount, Value
 OVUM_API void VM_StoreIndexer(ThreadHandle thread, const uint16_t argCount)
 {
 	thread->StoreIndexer(argCount);
+}
+
+OVUM_API void VM_LoadStaticField(ThreadHandle thread, FieldHandle field, Value *result)
+{
+	thread->LoadStaticField(field, result);
+}
+OVUM_API void VM_StoreStaticField(ThreadHandle thread, FieldHandle field)
+{
+	thread->StoreStaticField(field);
 }
 
 OVUM_API void VM_ToString(ThreadHandle thread, String **result)

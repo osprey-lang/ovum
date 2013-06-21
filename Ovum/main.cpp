@@ -107,10 +107,10 @@ void CommandParseError(const char *message, wchar_t *extra)
 	GetConsoleScreenBufferInfo(stdOut, &cbuf);
 
 	SetConsoleTextAttribute(stdOut, CNSL_RED);
-	cout << "Could not start Ovum: " << message;
+	wcerr << "Could not start Ovum: " << message;
 	if (extra)
 		_tcout << extra;
-	cout << endl << endl;
+	wcerr << endl << endl;
 
 	SetConsoleTextAttribute(stdOut, cbuf.wAttributes);
 	PrintUsageAndExit();
@@ -123,44 +123,44 @@ void PrintUsageAndExit()
 	GetConsoleScreenBufferInfo(stdOut, &cbuf);
 
 	SetConsoleTextAttribute(stdOut, CNSL_GRAY); // Set to gray on black in case the default is something else
-	cout
+	wcout
 		<< "Usage:" << endl << endl;
 	SetConsoleTextAttribute(stdOut, CNSL_WHITE);
-	cout
+	wcout
 		<< "    Ovum.exe ";
 	SetConsoleTextAttribute(stdOut, CNSL_YELLOW);
-	cout << "[VM args...] ";
+	wcout << "[VM args...] ";
 	SetConsoleTextAttribute(stdOut, CNSL_GREEN);
-	cout << "<startup file> ";
+	wcout << "<startup file> ";
 	SetConsoleTextAttribute(stdOut, CNSL_CYAN);
-	cout << "[program args...]" << endl << endl;
+	wcout << "[program args...]" << endl << endl;
 	SetConsoleTextAttribute(stdOut, CNSL_GRAY);
-	cout
+	wcout
 		<< "The ";
 		SetConsoleTextAttribute(stdOut, CNSL_GREEN);
-		cout << "startup file";
+		wcout << "startup file";
 		SetConsoleTextAttribute(stdOut, CNSL_GRAY);
-	cout << " is the compiled Ovum program to be executed by the VM." << endl << endl
+	wcout << " is the compiled Ovum program to be executed by the VM." << endl << endl
 		<< "The ";
 		SetConsoleTextAttribute(stdOut, CNSL_CYAN);
-		cout << "program args";
+		wcout << "program args";
 		SetConsoleTextAttribute(stdOut, CNSL_GRAY);
-	cout << " are passed to the program hosted by the VM. See the program's documentation for those." << endl << endl
+	wcout << " are passed to the program hosted by the VM. See the program's documentation for those." << endl << endl
 		<< "The ";
 		SetConsoleTextAttribute(stdOut, CNSL_YELLOW);
-		cout << "VM args";
+		wcout << "VM args";
 		SetConsoleTextAttribute(stdOut, CNSL_GRAY);
-	cout << " are used by Ovum.exe. The following are available (order does not matter):" << endl;
+	wcout << " are used by Ovum.exe. The following are available (order does not matter):" << endl;
 	SetConsoleTextAttribute(stdOut, CNSL_YELLOW);
-	cout << "    /L <directory>" << endl;
+	wcout << "    /L <directory>" << endl;
 	SetConsoleTextAttribute(stdOut, CNSL_GRAY);
-	cout
+	wcout
 		<< "        Specifies the directory that modules are loaded from. Mnemonic: L for Library." << endl
 		<< "        By default, they are loaded from the 'lib' directory in Ovum.exe's containing folder." << endl;
 	SetConsoleTextAttribute(stdOut, CNSL_YELLOW);
-	cout << "    /v" << endl;
+	wcout << "    /v" << endl;
 	SetConsoleTextAttribute(stdOut, CNSL_GRAY);
-	cout
+	wcout
 		<< "        If present, the VM prints additional information during startup." << endl
 		<< "        Hosted program output begins after '<<< Begin program output >>>'." << endl
 		<< "        Mnemonic: v for verbose." << endl;

@@ -116,6 +116,27 @@ OVUM_API void VM_LoadIndexer(ThreadHandle thread, const uint16_t argCount, Value
 //     The number of arguments to invoke the indexer with, not including the instance or value.
 OVUM_API void VM_StoreIndexer(ThreadHandle thread, const uint16_t argCount);
 
+// Loads the value of the specified static field.
+//   thread:
+//     The thread on which to perform the load.
+//   field:
+//     A handle to the field to load.
+//   result:
+//     The value in the field. If null, this value is pushed onto the stack.
+// Note: If the type that the field belongs to has not had its static constructor run,
+// this method will cause the static constructor to be run, except when called from
+// within the static constructor.
+OVUM_API void VM_LoadStaticField(ThreadHandle thread, FieldHandle field, Value *result);
+// Stores the top value on the stack into the specified static field.
+//   thread:
+//     The thread on which to perform the store.
+//   field:
+//     A handle to the field to write into.
+// Note: If the type that the field belongs to has not had its static constructor run,
+// this method will cause the static constructor to be run, except when called from
+// within the static constructor.
+OVUM_API void VM_StoreStaticField(ThreadHandle thread, FieldHandle field);
+
 // Stringifies the top value on the stack, by calling .toString on it. Additionally,
 // this method makes sure that the return value is indeed a string, and throws a TypeError
 // if it is not.

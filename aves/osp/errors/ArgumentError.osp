@@ -27,7 +27,7 @@ public inheritable ArgumentError is Error
 	///                  caused the error, or null.
 	/// Remarks: If {message} is not a String, it is converted to one;
 	///          if it is null, the default message is used.
-	public new(paramName, message)
+	public new(message, paramName)
 	{
 		new base(message ?? defaultMessage);
 		_paramName = string(paramName);
@@ -40,7 +40,7 @@ public inheritable ArgumentError is Error
 	/// Param innerError: The error that caused this error.
 	/// Remarks: If {message} is not a String, it is converted to one;
 	///          if it is null, the default message is used.
-	public new(paramName, message, innerError)
+	public new(message, paramName, innerError)
 	{
 		new base(message ?? defaultMessage, innerError);
 		_paramName = string(paramName);

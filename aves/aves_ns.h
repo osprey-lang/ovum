@@ -12,6 +12,7 @@ extern TypeHandle ArgumentError;
 extern TypeHandle ArgumentNullError;
 extern TypeHandle ArgumentRangeError;
 extern TypeHandle UnicodeCategoryType;
+extern TypeHandle BufferViewKindType;
 
 AVES_API void aves_init(ModuleHandle module);
 

@@ -205,6 +205,9 @@ public:
 	// Note: argCount does NOT include the instance or the value that's being stored.
 	void StoreIndexer(uint16_t argCount);
 
+	void LoadStaticField(Field *field, Value *result);
+	void StoreStaticField(Field *field);
+
 	void ToString(String **result);
 
 #pragma warning(push)

@@ -11,6 +11,8 @@ namespace
 		'a','v','e','s','.','A','r','g','u','m','e','n','t','R','a','n','g','e','E','r','r','o','r',0 };
 	LitString<20> _UnicodeCategory_Name = { 20, 0, STR_STATIC,
 		'a','v','e','s','.','U','n','i','c','o','d','e','C','a','t','e','g','o','r','y',0 };
+	LitString<19> _BufferViewKind_Name = { 19, 0, STR_STATIC,
+		'a','v','e','s','.','B','u','f','f','e','r','V','i','e','w','K','i','n','d',0 };
 
 	LitString<6> _format = { 6, 0, STR_STATIC, 'f','o','r','m','a','t' };
 }
@@ -19,19 +21,22 @@ TypeHandle ArgumentError;
 TypeHandle ArgumentNullError;
 TypeHandle ArgumentRangeError;
 TypeHandle UnicodeCategoryType;
+TypeHandle BufferViewKindType;
 String *ArgumentError_Name      = _S(_ArgumentError_Name);
 String *ArgumentNullError_Name  = _S(_ArgumentNullError_Name);
 String *ArgumentRangeError_Name = _S(_ArgumentRangeError_Name);
 String *UnicodeCategory_Name    = _S(_UnicodeCategory_Name);
+String *BufferViewKind_Name     = _S(_BufferViewKind_Name);
 String *format = _S(_format);
 
 
 AVES_API void aves_init(ModuleHandle module)
 {
-	ArgumentError = Module_FindType(module, ArgumentError_Name, true);
-	ArgumentNullError  = Module_FindType(module, ArgumentNullError_Name,  true);
-	ArgumentRangeError = Module_FindType(module, ArgumentRangeError_Name, true);
-	UnicodeCategoryType = Module_FindType(module, UnicodeCategory_Name, true);
+	ArgumentError       = Module_FindType(module, ArgumentError_Name,      true);
+	ArgumentNullError   = Module_FindType(module, ArgumentNullError_Name,  true);
+	ArgumentRangeError  = Module_FindType(module, ArgumentRangeError_Name, true);
+	UnicodeCategoryType = Module_FindType(module, UnicodeCategory_Name,    true);
+	BufferViewKindType  = Module_FindType(module, BufferViewKind_Name,     true);
 }
 
 
