@@ -1,16 +1,15 @@
 namespace aves;
 
-/// Summary: Represents an error that occurs when an argument is null
-///          when it is not allowed to be.
-public inheritable ArgumentNullError is ArgumentError
+/// Summary: Represents an error that occurs when an argument value is out of range.
+public inheritable ArgumentRangeError is ArgumentError
 {
-	/// Summary: Creates a new {ArgumentNullError} with the default message
+	/// Summary: Creates a new {ArgumentRangeError} with the default message
 	///          and no parameter name.
 	public new()
 	{
 		new base(defaultMessage, null);
 	}
-	/// Summary: Creates a new {ArgumentNullError} with the default message
+	/// Summary: Creates a new {ArgumentRangeError} with the default message
 	///          and the name of the parameter that caused the error.
 	/// Param paramName: A String containing the name of the parameter that
 	///                  caused the error, or null.
@@ -18,7 +17,7 @@ public inheritable ArgumentNullError is ArgumentError
 	{
 		new base(defaultMessage, paramName);
 	}
-	/// Summary: Creates a new {ArgumentNullError} with the specified message
+	/// Summary: Creates a new {ArgumentRangeError} with the specified message
 	///          and the name of the parameter that caused the error.
 	/// Param paramName: A String containing the name of the parameter that
 	///                  caused the error, or null.
@@ -29,7 +28,7 @@ public inheritable ArgumentNullError is ArgumentError
 	{
 		new base(message ?? defaultMessage, paramName);
 	}
-	/// Summary: Creates a new {ArgumentNullError} with the specified message,
+	/// Summary: Creates a new {ArgumentRangeError} with the specified message,
 	///          the name of the parameter that caused the error, and a specified
 	///          inner error.
 	/// Param paramName: A String containing the name of the parameter that
@@ -43,5 +42,5 @@ public inheritable ArgumentNullError is ArgumentError
 		new base(message ?? defaultMessage, paramName, innerError);
 	}
 
-	private const defaultMessage = "Argument cannot be null";
+	private const defaultMessage = "Argument value out of range";
 }

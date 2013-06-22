@@ -1,17 +1,33 @@
 namespace aves;
 
+/// Summary: Represents an error thrown when an invalid division by zero was attempted.
+/// Remarks: This error is not thrown when dividing Real values by zero.
+///          0.0/0.0 results in NaN, while any other Real value as the numerator
+///          returns infinity.
 public inheritable DivideByZeroError is Error
 {
+	/// Summary: Creates a new {DivideByZeroError} with the default message.
 	public new()
 	{
-		new base("Cannot divide by zero.");
+		new base(defaultMessage);
 	}
+	/// Summary: Creates a new {DivideByZeroError} with the specified message.
+	/// Param message: An error message describing the error.
+	/// Remarks: If {message} is not a String, it will be converted to one;
+	///          if it is null, the default message is used.
 	public new(message)
 	{
-		new base(message);
+		new base(message ?? defaultMessage);
 	}
+	/// Summary: Creates a new {DivideByZeroError} with the specified message.
+	/// Param message: An error message describing the error.
+	/// Param innerError: The error that caused this error.
+	/// Remarks: If {message} is not a String, it will be converted to one;
+	///          if it is null, the default message is used.
 	public new(message, innerError)
 	{
-		new base(message, innerError);
+		new base(message ?? defaultMessage, innerError);
 	}
+
+	private const defaultMessage = "Cannot divide by zero.";
 }
