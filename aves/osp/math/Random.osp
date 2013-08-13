@@ -38,7 +38,7 @@ public class Random
 	// [false, true]
 	public nextBoolean()
 	{
-		return sample() % 2 == 0;
+		return sample() & 1 == 1;
 	}
 
 	private init(seed)

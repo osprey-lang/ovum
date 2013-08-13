@@ -53,6 +53,11 @@ public class BufferView
 	public get buffer						__extern("aves_BufferView_get_buffer");
 	public get kind							__extern("aves_BufferView_get_kind");
 
+	override toString()
+	{
+		return "BufferView[kind = {0}, length = {1}]".format([kind, length]);
+	}
+
 	iter
 	{
 		var i = 0;

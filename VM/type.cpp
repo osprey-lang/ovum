@@ -141,7 +141,7 @@ void Type::LoadTypeToken()
 const bool Member::IsAccessible(const Type *instType, const Type *const declType, const Type *const fromType) const
 {
 	if (this->flags & M_PRIVATE)
-		return declType == fromType || fromType && declType == fromType->sharedType;
+		return fromType && (declType == fromType || declType == fromType->sharedType);
 
 	if (this->flags & M_PROTECTED)
 	{
