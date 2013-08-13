@@ -53,7 +53,7 @@ public class String
 	public get length				__extern("aves_String_get_length");
 
 	/// Summary: Gets a Boolean indicating whether the string is empty (its length is 0).
-	public get isEmtpy = length == 0;
+	public get isEmpty = length == 0;
 
 	/// Summary: Determines whether this string equals another value.
 	/// Param value: The value to compare against.
@@ -159,6 +159,16 @@ public class String
 	///         `"x{0<5}z".format(["abc"]) // => "xabc  z"` \
 	///         `"Name: {name}, age: {age}".format({name: null, age: Real.NaN}) // => "Name: , age: NaN"`
 	public format(values)			__extern("aves_String_format", locals=1);
+	/// Summary: Returns a new string with all occurrences of {oldValue} replaced
+	///          with {newValue}
+	/// Param oldValue: The string to be replaced.
+	/// Param newValue: The string to replace {oldValue}.
+	/// Returns: A new String instance with all occurrences of {oldValue} replaced
+	///          with {newValue}.
+	/// Throws TypeError: {oldValue} is null.
+	/// Throws ArgumentError: {oldValue} is of length 0.
+	/// Remarks: If {oldValue} or {newValue} is not a String, the corresponding value
+	///          will be converted to one.
 	public replace(oldValue, newValue)
 	{
 		if oldValue is null:
@@ -183,31 +193,31 @@ public class String
 	}
 	public isDigit(i)
 	{
-		return getCategory(i) == UnicodeCategory.numberDecimal;
+		return getCategory(i) == UnicodeCategory.decimalNumber;
 	}
 	public isLetter(i)
 	{
-		return getCategory(i) & UnicodeCategory.topCategoryMask == UnicodeCategory.letter;
+		return getCategory(i) & UnicodeCategory.letter != UnicodeCategory.none;
 	}
 	public isLower(i)
 	{
-		return getCategory(i) == UnicodeCategory.letterLowercase;
+		return getCategory(i) == UnicodeCategory.lowercaseLetter;
 	}
 	public isUpper(i)
 	{
-		return getCategory(i) == UnicodeCategory.letterUppercase;
+		return getCategory(i) == UnicodeCategory.uppercaseLetter;
 	}
 	public isNumber(i)
 	{
-		return getCategory(i) & UnicodeCategory.topCategoryMask == UnicodeCategory.number;
+		return getCategory(i) & UnicodeCategory.number != UnicodeCategory.none;
 	}
 	public isPunct(i)
 	{
-		return getCategory(i) & UnicodeCategory.topCategoryMask == UnicodeCategory.punct;
+		return getCategory(i) & UnicodeCategory.punct != UnicodeCategory.none;
 	}
 	public isSymbol(i)
 	{
-		return getCategory(i) & UnicodeCategory.topCategoryMask == UnicodeCategory.symbol;
+		return getCategory(i) & UnicodeCategory.symbol != UnicodeCategory.none;
 	}
 	public isAssigned(i)
 	{
@@ -228,6 +238,8 @@ public class String
 
 	iter
 	{
+		if isEmpty:
+			return Iterator.empty;
 		return new StringIterator(this);
 	}
 }
@@ -257,51 +269,49 @@ private class StringIterator is Iterator
 
 public enum set UnicodeCategory
 {
-	none				= 0x00,
-	subCategoryMask		= 0xff,
-	topCategoryMask		= ~subCategoryMask,
+	none = 0,
 
-	letter				= 0x100, // L
-	letterUppercase		= letter | 1, // Lu
-	letterLowercase		= letter | 2, // Ll
-	letterTitlecase		= letter | 3, // Lt
-	letterModifier		= letter | 4, // Lm
-	letterOther			= letter | 5, // Lo
+	letter = uppercaseLetter | lowercaseLetter | titlecaseLetter | modifierLetter | otherLetter,
+	uppercaseLetter,
+	lowercaseLetter,
+	titlecaseLetter,
+	modifierLetter,
+	otherLetter,
 
-	mark				= 0x200, // M
-	markNonspacing		= mark | 1, // Mn
-	markSpacing			= mark | 2, // Mc
-	markEnclosing		= mark | 2, // Me
+	mark = nonspacingMark | spacingMark | enclosingMark,
+	nonspacingMark,
+	spacingMark,
+	enclosingMark,
 
-	number				= 0x300, // N
-	numberDecimal		= number | 1, // Nd
-	numberLetter		= number | 2, // Nl
-	numberOther			= number | 3, // No
+	number = decimalNumber | letterNumber | otherNumber,
+	decimalNumber,
+	letterNumber,
+	otherNumber,
 
-	punct				= 0x400, // P
-	punctConnector		= punct | 1, // Pc
-	punctDash			= punct | 2, // Pd
-	punctOpening		= punct | 3, // Ps
-	punctClosing		= punct | 4, // Pe
-	punctInitial		= punct | 5, // Pi
-	punctFinal			= punct | 6, // Pf
-	punctOther			= punct | 7, // Po
+	punct = connectorPunct | dashPunct | openingPunct | closingPunct | initialPunct | finalPunct | otherPunct,
+	connectorPunct,
+	dashPunct,
+	openingPunct,
+	closingPunct,
+	initialPunct,
+	finalPunct,
+	otherPunct,
 
-	symbol				= 0x500, // S
-	symbolMath			= symbol | 1, // Sm
-	symbolCurrency		= symbol | 2, // Sc
-	symbolModifier		= symbol | 3, // Sk
-	symbolOther			= symbol | 4, // So
+	symbol = mathSymbol | currencySymbol | modifierSymbol | otherSymbol,
+	mathSymbol,
+	currencySymbol,
+	modifierSymbol,
+	otherSymbol,
 
-	separator			= 0x600, // Z
-	separatorSpace		= separator | 1, // Zs
-	separatorLine		= separator | 2, // Zl
-	separatorParagraph	= separator | 3, // Zp
+	separator = spaceSeparator | lineSeparator | paragraphSeparator,
+	spaceSeparator,
+	lineSeparator,
+	paragraphSeparator,
 	
-	other				= 0x700, // C
-	control				= other | 1, // Cc
-	format				= other | 2, // Cf
-	surrogate			= other | 3, // Cs
-	privateUse			= other | 4, // Co
-	unassigned			= other | 5, // Cn
+	other = control | format | surrogate | privateUse | unassigned,
+	control,
+	format,
+	surrogate,
+	privateUse,
+	unassigned,
 }
