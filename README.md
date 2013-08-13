@@ -1,6 +1,6 @@
 # Ovum
 
-**NOTE:** Ovum is currently undergoing a large refactoring. It does not compile.
+**NOTE:** Ovum is currently very much in development. It does not run [Osprey][osp] programs yet, and it probably has a lot of memory issues and bugs all over the place.
 
 Ovum is the virtual machine that runs programs written in [Osprey][osp]. This is currently _not_ a pure C++ implementation, and will not compile outside Windows; there are several calls to various Windows API functions.
 
