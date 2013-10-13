@@ -1,19 +1,21 @@
 namespace aves;
 
-public inheritable NullReferenceError is Error
+public inheritable DuplicateKeyError is Error
 {
 	public new()
 	{
 		new base(defaultMessage);
 	}
+
 	public new(message)
 	{
 		new base(message ?? defaultMessage);
 	}
+
 	public new(message, innerError)
 	{
 		new base(message ?? defaultMessage, innerError);
 	}
 
-	private const defaultMessage = "Cannot dereference a null value.";
+	private const defaultMessage = "The key is already in the collection.";
 }

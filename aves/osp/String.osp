@@ -22,7 +22,7 @@ public function string(value)
 /// Summary: Represents an ordered sequence of UTF-16 code units, commonly
 ///          used for encoding text.
 /// Remarks: Osprey strings are all encoded using UTF-16 internally. As a result,
-///          "characters" in a String do not correspond directly to Unicode code
+///          “characters” in a String do not correspond directly to Unicode code
 ///          points, as the string may contain surrogate pairs.
 ///
 ///          Additional information about UTF-16 and surrogate pairs can be found
@@ -47,10 +47,10 @@ public class String
 	///          {index} is greater than or requal to the length of the string.
 	/// Remarks: If the index refers to the first code unit of a surrogate pair, then the
 	///          resulting string will only contain that one code unit, not the surrogate pair.
-	public get this[index]			__extern("aves_String_get_item");
+	public get this[index]					__extern("aves_String_get_item");
 
 	/// Summary: Gets the length of the string, in number of UTF-16 code units, as an Int.
-	public get length				__extern("aves_String_get_length");
+	public get length						__extern("aves_String_get_length");
 
 	/// Summary: Gets a Boolean indicating whether the string is empty (its length is 0).
 	public get isEmpty = length == 0;
@@ -82,20 +82,20 @@ public class String
 	///          This method does not normalize composite characters.
 	///          Hence, “a” followed by a combining acute accent (U+0301)
 	///          is equal to neither “á” nor “Á”.
-	public equalsIgnoreCase(value)	__extern("aves_String_equalsIgnoreCase");
+	public equalsIgnoreCase(value)			__extern("aves_String_equalsIgnoreCase");
 	/// Summary: Determines whether the given string occurs as a substring
 	///          within this string.
 	/// Param value: The substring to look for in this string. (String)
 	/// Returns: True if this string contains {value} as a substring; otherwise,
 	///          false.
 	/// Throws TypeError: {value} is not a String.
-	public contains(value)			__extern("aves_String_contains");
+	public contains(value)					__extern("aves_String_contains");
 
 	/// Summary: Returns a new string containing the characters of this string
 	///          in reverse order.
 	/// Remarks: This method works with Unicode characters, not UTF-16 code
 	///          units. Surrogate pairs will be treated as a single unit.
-	public reverse()				__extern("aves_String_reverse", locals=1);
+	public reverse()						__extern("aves_String_reverse", locals=1);
 	/// Summary: Returns a substring of this string starting at the specified index.
 	/// Param start: The index at which to start extracting characters. (Int, UInt or Real)
 	/// Returns: A String containing characters from this string, from index
@@ -104,7 +104,7 @@ public class String
 	/// Throws ArgumentRangeError:
 	///          {start} is negative, or greater than or equal to the length of this string.
 	/// Remarks: This method will happily split surrogate pairs in half.
-	public substr(start)			__extern("aves_String_substr1", locals=1);
+	public substr(start)					__extern("aves_String_substr1", locals=1);
 	/// Summary: Returns a substring of of the specified length, starting at
 	///          the specified index in this string.
 	/// Param start: The index at which to start extracting characters. (Int, UInt or Real)
@@ -120,24 +120,24 @@ public class String
 	///
 	///     {start} + {count} is beyond the end of this string.
 	/// Remarks: This method will happily split surrogate pairs in half.
-	public substr(start, count)		__extern("aves_String_substr2", locals=1);
+	public substr(start, count)				__extern("aves_String_substr2", locals=1);
 	/// Summary: Formats this string using the specified values.
 	/// Param values: A List or Hash containing values to replace format placeholders with.
 	/// Returns: A new String with the format placeholders replaced by values from {values}.
 	///          See the remarks section for more details about the format placeholders.
-	/// Throws TypeError: 
+	/// Throws TypeError:
 	///     {values} is not a List or a Hash.
 	///
 	///     A placeholder value could not be converted to a String.
-	/// Throws ArgumentRangeError: 
+	/// Throws ArgumentRangeError:
 	///     {values} is a List and a placeholder value is not a valid index in that list.
-	/// Throws ArgumentError: 
+	/// Throws ArgumentError:
 	///     {values} is a Hash and a placeholder value does not refer to a key in that hash.
-	/// Throws InvalidFormatError: 
+	/// Throws InvalidFormatError:
 	///     The string contains a malformed placeholder.
-	/// Throws OverflowError: 
+	/// Throws OverflowError:
 	///     Converting a placeholder or alignment value to an Int resulted in an overflow.
-	/// Remarks: 
+	/// Remarks:
 	///     The format placeholders must be in the general format `{ph}`, where `ph` is the
 	///     “name” of the placeholder. If you pass a List into {values}, `ph` must correspond
 	///     to an index in that list (negative numbers are not allowed). If {values} is a Hash,
@@ -158,7 +158,7 @@ public class String
 	///         `"x{0>5}z".format(["y"])   // => "x    yz"` \
 	///         `"x{0<5}z".format(["abc"]) // => "xabc  z"` \
 	///         `"Name: {name}, age: {age}".format({name: null, age: Real.NaN}) // => "Name: , age: NaN"`
-	public format(values)			__extern("aves_String_format", locals=1);
+	public format(values)					__extern("aves_String_format", locals=1);
 	/// Summary: Returns a new string with all occurrences of {oldValue} replaced
 	///          with {newValue}
 	/// Param oldValue: The string to be replaced.
@@ -183,10 +183,10 @@ public class String
 	}
 	private replaceInner(oldValue, newValue, maxTimes)	__extern("aves_String_replaceInner");
 
-	public toUpper()				__extern("aves_String_toUpper");
-	public toLower()				__extern("aves_String_toLower");
+	public toUpper()						__extern("aves_String_toUpper");
+	public toLower()						__extern("aves_String_toLower");
 
-	public getCategory(i)			__extern("aves_String_getCategory");
+	public getCategory(i)					__extern("aves_String_getCategory");
 	public isControl(i)
 	{
 		return getCategory(i) == UnicodeCategory.control;
@@ -224,17 +224,32 @@ public class String
 		return getCategory(i) != UnicodeCategory.unassigned;
 	}
 
-	override getHashCode()			__extern("aves_String_getHashCode");
+	override getHashCode()					__extern("aves_String_getHashCode");
 	override toString()
 	{
 		return this;
 	}
 
+	/// Summary: Constructs a new String containing the Unicode character
+	///          represented by {cp}. The code point must be in the range
+	///          0 <= {code} <= 0x10FFFF.
+	/// Param cp: The Unicode code point to convert to a string. (Int, UInt or Real)
+	/// Returns: A string containing one or two UTF-16 characters that represent
+	///          the Unicode character with the code point {cp}.
+	/// Throws TypeError:
+	///          {cp} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {cp} is less than zero, or greater than 1,114,111 (0x10FFFF).
+	/// Remarks: If {cp} refers to a surrogate code point, then the resulting
+	///          string will contain a single surrogate character with that
+	///          code point.
+	public static fromCodepoint(cp)			__extern("aves_String_fromCodepoint");
+
 	public const empty = "";
 
-	operator ==(a, b)				__extern("aves_String_opEquals");
-	operator <=>(a, b)				__extern("aves_String_opCompare");
-	operator *(a, b)				__extern("aves_String_opMultiply");
+	operator ==(a, b)						__extern("aves_String_opEquals");
+	operator <=>(a, b)						__extern("aves_String_opCompare");
+	operator *(a, b)						__extern("aves_String_opMultiply");
 
 	iter
 	{

@@ -17,13 +17,13 @@ public inheritable Error
 	/// Param message: An error message describing the error.
 	/// Remarks: If {message} is not a String, it is converted to one;
 	///          if it is null, the default message is used.
-	public new(message)					__extern("aves_Error_new");
+	public new(message)					__extern("aves_Error_new", locals=1);
 	/// Summary: Creates a new {Error} instance with the specified message and inner error.
 	/// Param message: An error message describing the error.
 	/// Param innerError: The error that caused this error.
 	/// Remarks: If {message} is not a String, it is converted to one;
 	///          if it is null, the default message is used.
-	public new(message, innerError)		__extern("aves_Error_new");
+	public new(message, innerError)		__extern("aves_Error_new", locals=1);
 
 	/// Summary: Gets the error message (String) associated with this error.
 	public get message					__extern("aves_Error_get_message");

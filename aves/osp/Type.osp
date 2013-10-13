@@ -1,0 +1,8 @@
+namespace aves;
+
+public class Type
+{
+	__init_type("aves_Type_init");
+
+	private new();
+}

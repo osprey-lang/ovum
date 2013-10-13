@@ -7,7 +7,7 @@ namespace math
 	public const e		= __named_const(real: e);
 	/// Summary: The ratio if a circle's circumference to its diameter.
 	public const pi		= __named_const(real: pi);
-	/// Summary: The golden ratio, equal to `(1 + sqrt(5)) / 2`.
+	/// Summary: The golden ratio, equal to `(1 + √(5)) / 2`.
 	public const phi	= __named_const(real: phi);
 	/// Summary: The square root of 2.
 	public const sqrt2	= __named_const(real: sqrt2);

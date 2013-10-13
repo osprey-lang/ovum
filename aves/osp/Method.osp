@@ -4,11 +4,22 @@ public class Method
 {
 	__init_type("aves_Method_init");
 
-	public new(object)			__extern("aves_Method_new");
+	private new(object)			__extern("aves_Method_new");
 
 	public get hasInstance		__extern("aves_Method_get_hasInstance");
 
-	public this(args...)		__extern("aves_Method_call");
+	public this(args...)
+	{
+		throw new Error("aves.Method's invocator is not supposed to be called directly.");
+	}
 
 	public accepts(argCount)	__extern("aves_Method_accepts");
+
+	public static fromValue(object)
+	{
+		if object is not Method:
+			object = new Method(object);
+
+		return object;
+	}
 }

@@ -1,0 +1,24 @@
+namespace aves;
+
+/// Summary: An error thrown when an object is in an invalid state, thus
+///          making the operation unsafe or unpermitted.
+///
+///          This might occur e.g. if a collection changes during enumeration,
+///          at which point the enumeration may stop with this error.
+public inheritable InvalidStateError is Error
+{
+	public new()
+	{
+		new base(defaultMessage);
+	}
+	public new(message)
+	{
+		new base(message ?? defaultMessage);
+	}
+	public new(message, innerError)
+	{
+		new base(message ?? defaultMessage, innerError);
+	}
+
+	private const defaultMessage = "The operation is not allowed because of the object's current state.";
+}

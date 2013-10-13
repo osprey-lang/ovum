@@ -4,14 +4,16 @@ public inheritable OverflowError is Error
 {
 	public new()
 	{
-		new base("An arithmetic overflow occurred.");
+		new base(defaultMessage);
 	}
 	public new(message)
 	{
-		new base(message);
+		new base(message ?? defaultMessage);
 	}
 	public new(message, innerError)
 	{
-		new base(message, innerError);
+		new base(message ?? defaultMessage, innerError);
 	}
+
+	private const defaultMessage = "An arithmetic overflow occurred.";
 }

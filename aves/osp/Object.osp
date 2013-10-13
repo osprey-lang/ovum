@@ -24,5 +24,12 @@ public inheritable Object
 	/// Summary: Compares two values for equality.
 	/// Param a: The first value to compare.
 	/// Param b: The second value to compare.
-	operator ==(a, b)	__extern("aves_Object_opEquals");
+	/// Remarks: The default implementation of `==` compares the two values
+	///          for reference equality. In other words, if `==` is not
+	///          implemented in the left operand, `a == b` is equivalent to
+	///          `a refeq b`.
+	operator ==(a, b)
+	{
+		return a refeq b;
+	}
 }

@@ -1,0 +1,87 @@
+namespace aves;
+
+public inheritable Queue
+{
+	public new();
+	public new(capacity)
+	{
+		capacity = int(capacity);
+		if capacity > 0
+		{
+			list = new List(capacity);
+			fill(list);
+		}
+	}
+
+	private list = null; // Don't allocate until necessary
+	private qlength = 0;  // Number of actual entries in the queue
+	private startIndex = 0;
+	private version = 0;
+
+	public get length = qlength;
+
+	/// Summary: Adds a value to the end of the queue.
+	/// Param value: The value to add.
+	public enqueue(value)
+	{
+		if list is null or qlength == list.length:
+			resize();
+
+		list[(startIndex + qlength) % list.length] = value;
+		startIndex += 1;
+		qlength += 1;
+		version += 1;
+	}
+
+	/// Summary: Retrieves the value at the start of the queue.
+	/// Returns: The value at the start of the queue.
+	/// Throws InvalidStateError: The queue is empty.
+	public dequeue()
+	{
+		if qlength == 0:
+			throw new InvalidStateError("There are no items in the queue.");
+
+		var value = list[startIndex];
+		list[startIndex] = null;
+
+		startIndex = (startIndex + 1) % list.length;
+		qlength -= 1;
+		version += 1;
+
+		return value;
+	}
+
+	private resize()
+	{
+		// qlength == list.length here
+		var len = qlength;
+		var newList = new List(len * 2);
+
+		for i in [0 to len - 1]:
+			newList.add(list[(startIndex + i) % len]);
+
+		fill(newList, len);
+
+		startIndex = 0;
+		list = newList;
+		version += 1;
+	}
+
+	private static fill(list, startAt = 0)
+	{
+		for i in [startAt to list.capacity - 1]:
+			list.add(i);
+	}
+
+	iter
+	{
+		var startVersion = version;
+
+		for i in [0 to list.capacity]
+		{
+			if startVersion != version:
+				throw new InvalidStateError("The queue has changed since the enumeration started.");
+			yield list[(i + startIndex) % list.length];
+		}
+	}
+}
