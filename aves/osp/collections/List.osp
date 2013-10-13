@@ -1,183 +1,519 @@
 namespace aves;
 
+/// Summary: Represents a mutable, dynamically sized sequence of values.
+///          The values in a List can be accessed by numeric index, starting
+///          at zero.
+///
+///          The List is one of the fundamental collection types
+///          in Osprey, alongside {Hash} and {Set}.
 public inheritable List
 {
 	__init_type("aves_List_init");
 
+	/// Summary: Creates a new, empty list with the default capacity.
 	public new()								__extern("aves_List_new");
+	/// Summary: Creates a new, empty list with the specified capacity.
+	/// Param capacity: The capacity of the new list. (Int, UInt or Real)
+	/// Throws TypeError: {capacity} could not be converted to an Int.
+	/// Throws ArgumentRangeError: {capacity} is less than zero, or greater
+	///          than 2,147,483,647 (0x7fffffff).
 	public new(capacity)						__extern("aves_List_newCap");
 
-	public overridable get this[index] = getItem(index);
-	public overridable set this[index] { setItem(index, value); }
+	/// Summary: Gets the item at the specified index.
+	/// Param index: The index of the item to set. If negative, the index is
+	///              relative to the end of the list, e.g. -2 is the second to
+	///              last item. (Int, UInt or Real)
+	/// Returns: The item at the specified index.
+	/// Throws TypeError: {index} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {index} is less than -{length}, or greater than or equal to {length}.
+	public get this[index]						__extern("aves_List_getItem");
+	/// Summary: Sets the item at the specified index.
+	/// Param index: The index of the item to set. If negative, the index is
+	///              relative to the end of the list, e.g. -2 is the second to
+	///              last item. (Int, UInt or Real)
+	/// Throws TypeError: {index} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {index} is less than -{length}, or greater than or requal to {length}.
+	public set this[index]						__extern("aves_List_setItem");
 
+	/// Summary: Gets the total number of items contained in the list.
+	/// Returns: The total number of items actually contained in the list,
+	///          as an Int.
 	public get length							__extern("aves_List_get_length");
 
+	/// Summary: Gets the capacity of the list; that is, the number of items
+	///          it can contain before needing to be resized.
+	/// Returns: The capacity of the list, as an Int.
 	public get capacity							__extern("aves_List_get_capacity");
+	/// Summary: Sets the capacity of the list; that is, the number of items
+	///          it can contain before needing to be resized.
+	/// Throws TypeError: The value could not be converted to an Int.
+	/// Throws ArgumentRangeError: The value is less than {length}.
 	public set capacity							__extern("aves_List_set_capacity");
 
+	private get version							__extern("aves_List_get_version");
+
+	/// Summary: Determines whether the list is empty.
+	/// Returns: True if the list has no items in it; otherwise, false.
 	public get isEmpty = length == 0;
 
-	// General list manipulation
-	protected getItem(index)					__extern("aves_List_getItem");
-	protected setItem(index, value)				__extern("aves_List_setItem");
+	private static defaultComparer = @<=>;
 
-	public overridable add(item)				__extern("aves_List_add");
-	public overridable insert(index, item)		__extern("aves_List_insert");
-	public overridable indexOf(item)
+	// General list manipulation
+	/// Summary: Adds an item to the end of the list.
+	/// Param item: The item to add.
+	/// Returns: The index at which the item was inserted.
+	public add(item)							__extern("aves_List_add");
+	/// Summary: Inserts an item at the specified index.
+	/// Param index: The index at which to insert the item. If negative,
+	///              the index is relative to the end of the list, e.g. -2
+	///              is the second to last item. (Int, UInt or Real)
+	/// Param item:  The item to insert into the list.
+	/// Throws TypeError: {index} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {index} is less than -{length}, or greater than {length}.
+	/// Remarks: If {index} is equal to {length}, then the item is inserted
+	///          at the end of the list.
+	public insert(index, item)					__extern("aves_List_insert");
+	/// Summary: Determines whether the list contains the specified item.
+	/// Param item: The item to look for.
+	/// Returns: True if the item is in the list; otherwise, false.
+	/// Remarks: Items are compared for equality using the `==` operator,
+	///          invoked on {item}.
+	public contains(item)
+	{
+		return indexOf(item) is not null;
+	}
+	/// Summary: Returns the index of the first occurrence of the
+	///          specified item within this list, or null if it could
+	///          not be found.
+	/// Param item: The item to look for.
+	/// Returns: The index of the first occurrence of the item within
+	///          the list, or null if it could not be found.
+	/// Remarks: Items are compared for equality using the `==` operator,
+	///          invoked on {item}.
+	public indexOf(item)
 	{
 		for i in [0 to length - 1]:
 			if item == this[i]:
 				return i;
 
-		return -1;
+		return null;
 	}
-	public overridable remove(item)
+	/// Summary: Removes the first occurrence of the specified item
+	///          from this list.
+	/// Param item: The item to remove.
+	/// Returns: True if the item was in the list; otherwise, false.
+	public remove(item)
 	{
 		var index = indexOf(item);
-		if index != -1
+		if index is not null
 		{
 			removeAt(index);
 			return true;
 		}
 		return false;
 	}
-	public overridable removeAt(item)			__extern("aves_List_removeAt");
-	public overridable clear()					__extern("aves_List_clear");
-	public overridable slice(start)				__extern("aves_List_slice1", locals=1);
-	public overridable slice(start, end)		__extern("aves_List_slice2", locals=1);
-	public overridable join(sep)
+	/// Summary: Removes the item at the specified index.
+	/// Param index: The index to remove an item from. If negative, the index is
+	///              relative to the end of the list, e.g. -2 is the second to
+	///              last item. (Int, UInt or Real)
+	/// Throws TypeError: {index} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {index} is less than -{length}, or greater than or equal to {length}.
+	public removeAt(index)						__extern("aves_List_removeAt");
+	/// Summary: Removes all items from the list.
+	public clear()								__extern("aves_List_clear");
+	/// Summary: Copies items from this list into a new list, starting at the
+	///          specified index, up to the end of this list.
+	/// Param start: The index at which the slice starts (inclusive). If negative,
+	///              the index is relative to the end of the list, e.g. -2 is the
+	///              second to last item. (Int, UInt or Real)
+	/// Returns: A new List instance containing items from this list, copied from
+	///          index {start} up to the end of this list.
+	/// Throws TypeError: {index} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {start} is less than -{length}, or greater than or equal to {length}.
+	public slice(start)							__extern("aves_List_slice1", locals=1);
+	/// Summary: Copies items form this list into a new list, starting at the
+	///          specified start index, up to the specified exclusive end index.
+	/// Param start: The index at which the slice starts (inclusive). If negative,
+	///              the index is relative to the end of the list, e.g. -2 is the
+	///              second to last item. (Int, UInt or Real)
+	/// Param end:   The index at which the slice ends (exclusive). If negative,
+	///              the index is relative to the end of the list, e.g. -2 is the
+	///              second to last item. (Int, UInt or Real)
+	/// Returns: A new List instance containing items from this list, copied from
+	///          index {start} up to (but not including) index {end}.
+	/// Throws TypeError:
+	///          {start} could not be converted to an Int.
+	///
+	///          {end} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {start} is less than -{length}, or greater than or equal to {length}.
+	///
+	///          {end} is less than -{length}, or greater than {length}.
+	///
+	///          {end} refers to an item before that at index {start}.
+	/// Remarks: Because the {end} index is exclusive, if {start} = {end}, the resulting
+	///          list will be empty. Additionally, passing `-1` as the end index will
+	///          cause the return value to contain items up to but not including the last.
+	///          To get all values up to the end, pass the {length} of the list into {end},
+	///          or call `slice` with one argument.
+	public slice(start, end)					__extern("aves_List_slice2", locals=1);
+	/// Summary: Joins the values of this list into a string, separated by the
+	///          specified separator.
+	/// Param sep: The separator to be put between items in the list.
+	/// Returns: A String value containing the items of this list converted to strings
+	///          and separated by the {sep} value.
+	/// Throws TypeError: {sep} could not be converted to a string.
+	/// Remarks: This method uses {aves.string} to convert each item in the list to its
+	///          string representation, and does not catch any error thrown by that function.
+	///          As a result, null values get turned into the empty string.
+	public join(sep)
 	{
+		sep = string(sep);
 		var output = new StringBuffer();
-		var append = output.append; // tiny speed optimisation
+
+		var startVersion = version;
 
 		for i in [0 to this.length - 1]
 		{
-			if i > 0: append(sep);
-			append(this[i]);
+			if startVersion != version:
+				throw new InvalidStateError(listHasChanged);
+			if i > 0:
+				output.append(sep);
+			output.append(this[i]);
 		}
 
 		return output.toString();
 	}
-	public overridable reverse()				__extern("aves_List_reverse");
+	/// Summary: Reverses the order of the items in this list in-place.
+	/// Returns: The current list.
+	public reverse()							__extern("aves_List_reverse");
+
+	/// Summary: Sorts this list in-place using the default comparison
+	///          (the `<=>` operator).
+	/// Returns: The current list.
+	/// Remarks: The default comparison uses the `<=>` operator.
+	public sort()
+	{
+		return sort(defaultComparer);
+	}
+	/// Summary: Sorts this list in-place using the specified comparison function.
+	/// Param comparer: An invokable value that accepts two arguments and returns
+	///                 an Int according to the behaviour of the `<=>` operator.
+	/// Returns: The current list.
+	/// Remarks: This function expects the return value of {comparer} to be an Int.
+	///          If `x` and `y` are the items to compare, then the return value is
+	///          zero if `x` and `y` compare as equal; greater than zero if `x` > `y`;
+	///          and less than zero if `x` < `y`.
+	///
+	///          To sort a list in reverse order, simply swap the operands of the
+	///          `<=>` operator:
+	///
+	///          `list.sort(@(x, y) = x <=> y); // normal sorting` \
+	///          `list.sort(@(x, y) = y <=> x); // reverse`
+	///
+	///          Alternatively, first sort it, then reverse it:
+	///
+	///          `list.sort().reverse()`
+	///
+	///          As this method is in-place, there is no allocation of extra memory.
+	public sort(comparer)
+	{
+		function quicksort(left, right, cmp)
+		{
+			var pivot = this[(left + right) / 2];
+			var i = left, j = right;
+
+			do
+			{
+				while cmp(this[i], pivot) < 0:
+					i += 1;
+				while cmp(pivot, this[j]) < 0:
+					j -= 1;
+
+				if i <= j
+				{
+					this[i], this[j] = this[j], this[i];
+					i += 1;
+					j -= 1;
+				}
+			} while i <= j;
+
+			if left < j:
+				quicksort(left, j, cmp);
+			if i < right:
+				quicksort(i, right, cmp);
+		}
+
+		if length > 1:
+			quicksort(0, length - 1, comparer);
+
+		return this;
+	}
 
 	// Higher-order functions
-	public overridable all(predicate)
+
+	/// Summary: Determines whether all items in the list match the given predicate.
+	/// Param predicate: An invokable value that accepts one argument and returns
+	///                  a truthy value if the item matches some condition, or a falsy
+	///                  value otherwise.
+	/// Returns: True if {predicate} returns true for all items in the list, or the list
+	///          is empty. Otherwise, false.
+	/// Remarks: The iteration stops as soon as {predicate} returns false for an item.
+	///          This method is in other words not guaranteed to run through all the
+	///          items in the list. For that, use {each}.
+	public all(predicate)
 	{
-		for i in [0 to length - 1]:
+		var startVersion = version;
+
+		for i in [0 to length - 1]
+		{
+			if startVersion != version:
+				throw new InvalidStateError(listHasChanged);
 			if not predicate(this[i]):
 				return false;
+		}
+
 		return true;
 	}
-	public overridable any(predicate)
+	/// Summary: Determines whether any items in the list match the given predicate.
+	/// Param predicate: An invokable value that accepts one argument and returns
+	///                  a truthy value if the item matches some condition, or a falsy
+	///                  value otherwise.
+	/// Returns: True if {predicate} returns true for any item in the list, unless the
+	///          list is empty. Otherwise (including if the list is empty), false.
+	/// Remarks: The iteration stops as soon as {predicate} returns true for an item.
+	///          This method is in other words not guaranteed to run through all the
+	///          items in the list. For that, use {each}.
+	public any(predicate)
 	{
-		for i in [0 to length - 1]:
+		var startVersion = version;
+
+		for i in [0 to length - 1]
+		{
+			if startVersion != version:
+				throw new InvalidStateError(listHasChanged);
 			if predicate(this[i]):
 				return true;
+		}
+
 		return false;
 	}
-	public overridable filter(predicate)
+	/// Summary: Invokes the specified value once for each value in the list.
+	/// Param func: An invokable value that takes one argument.
+	///             The return value is ignored.
+	/// Returns: The current list.
+	public each(func)
 	{
-		var output = new List(this.capacity);
-		var add = output.add; // Tiny speed optimisation (esp. for big lists)
+		var startVersion = version;
 
 		for i in [0 to length - 1]
 		{
+			if startVersion != version:
+				throw new InvalidStateError(listHasChanged);
+			func(this[i]);
+		}
+
+		return this;
+	}
+	/// Summary: Returns a new list containing items from this list that match the
+	///          specified predicate.
+	/// Param predicate: An invokable value that accepts one argument and returns
+	///                  a truthy value if the item matches some condition, or a falsy
+	///                  value otherwise.
+	/// Returns: A new List instance containing those items from this list for which
+	///          {predicate} returns true.
+	public filter(predicate)
+	{
+		var output = new List(this.capacity);
+		var startVersion = version;
+
+		for i in [0 to length - 1]
+		{
+			if startVersion != version:
+				throw new InvalidStateError(listHasChanged);
 			var item = this[i];
 			if predicate(item):
-				add(item);
+				output.add(item);
 		}
 
 		return output;
 	}
-	public overridable filterMap(predicate, mapper)
+	/// Summary: Returns a new list containing items from this list transformed by
+	///          the specified map function, if the original item matches the given
+	///          predicate.
+	///
+	///          In other words, this method is equivalent to first filtering the
+	///          list, then mapping that result.
+	/// Param predicate: An invokable value that accepts one argument and returns
+	///                  a truthy value if the item matches some condition, or a falsy
+	///                  value otherwise.
+	/// Param mapper:    An invokable value that accepts one argument and returns
+	///                  a transformed version of it. This return value is added to
+	///                  the resulting list.
+	/// Returns: A new List instance containing items from this list, transformed by
+	///          {mapper}, if {predicate} returned true for the original item.
+	/// Remarks: This method is equivalent to calling {filter} followed by {map}, as
+	///          in the following example:
+	///
+	///          `var list = [1 to 10]; // our list` \
+	///          `list.filter(@x = x % 2 == 0).map(@x = x ** 2) // get the square of each even number` \
+	///          `list.filterMap(@x = x % 2 == 0, @x = x ** 2)  // equivalent`
+	///
+	///          This method may perform better than `filter` followed by `map`, because
+	///          it avoids allocating memory for the intermediate filtered list.
+	public filterMap(predicate, mapper)
 	{
 		var output = new List(this.capacity);
-		var add = output.add;
+		var startVersion = version;
 
 		for i in [0 to length - 1]
 		{
+			if startVersion != version:
+				throw new InvalidStateError(listHasChanged);
 			var item = this[i];
 			if predicate(item):
-				add(mapper(item));
+				output.add(mapper(item));
 		}
 
 		return output;
 	}
-	public overridable first(predicate)
+	/// Summary: Returns the first item that matches the specified predicate.
+	/// Param predicate: An invokable value that accepts one argument and returns
+	///                  a truthy value if the item matches some condition, or a falsy
+	///                  value otherwise.
+	/// Returns: The first item that matches the predicate, or null if there
+	///          was no match.
+	public first(predicate)
 	{
+		var startVersion = version;
+
 		for i in [0 to length - 1]
 		{
+			if startVersion != version:
+				throw new InvalidStateError(listHasChanged);
 			var item = this[i];
 			if predicate(item):
 				return item;
 		}
+
 		return null;
 	}
-	public overridable fold(func)
+	/// Summary: Chirp.
+	/// Param func: Chirp.
+	/// Returns: Chirp.
+	public fold(func)
 	{
 		if length == 0:
 			throw new Error("Cannot fold an empty list without initial value.");
 
 		return foldInternal(this[0], func, 1);
 	}
-	public overridable fold(init, func)
+	public fold(init, func)
 	{
 		return foldInternal(init, func, 0);
 	}
-	public overridable foldr(func)
+	public foldr(func)
 	{
 		if length == 0:
 			throw new Error("Cannot fold an empty list without initial value.");
 
-		return foldrInternal(this[0], func, length - 2);
+		return foldrInternal(this[-1], func, length - 2);
 	}
-	public overridable foldr(init, func)
+	public foldr(init, func)
 	{
 		return foldrInternal(init, func, length - 1);
 	}
-	public overridable indexOfFirst(predicate)
+	public indexOfFirst(predicate)
 	{
-		for i in [0 to length - 1]:
-			if predicate(this[i]):
-				return i;
-		return -1;
-	}
-	public overridable indexOfLast(predicate)
-	{
-		for i in [length - 1 to 0, -1]:
-			if predicate(this[i]):
-				return i;
-		return -1;
-	}
-	public overridable last(predicate)
-	{
-		for i in [length - 1 to 0, -1]
+		var startVersion = version;
+
+		for i in [0 to length - 1]
 		{
-			var item = this[i];
+			if startVersion != version:
+				throw new InvalidStateError(listHasChanged);
+			if predicate(this[i]):
+				return i;
+		}
+
+		return null;
+	}
+	public indexOfLast(predicate)
+	{
+		var startVersion = version;
+
+		for i in [1 to length]
+		{
+			if startVersion != version:
+				throw new InvalidStateError(listHasChanged);
+			if predicate(this[length - i]):
+				return length - i;
+		}
+
+		return null;
+	}
+	public last(predicate)
+	{
+		var startVersion = version;
+
+		for i in [1 to length]
+		{
+			if startVersion != version:
+				throw new InvalidStateError(listHasChanged);
+			var item = this[length - i];
 			if predicate(item):
 				return item;
 		}
+
 		return null;
 	}
-	public overridable map(func)
+	public map(func)
 	{
-		return [func(this[i]) for i in [0 to length - 1]];
+		var output = new List(length);
+		var startVersion = version;
+
+		for i in [0 to length - 1]
+		{
+			if startVersion != version:
+				throw new InvalidStateError(listHasChanged);
+			output.add(func(this[i]));
+		}
+
+		return output;
 	}
 
 	private foldInternal(init, func, startIndex)
 	{
-		for i in [startIndex to length - 1]:
+		var startVersion = version;
+
+		for i in [startIndex to length - 1]
+		{
+			if startVersion != version:
+				throw new InvalidStateError(listHasChanged);
 			init = func(init, this[i]);
+		}
 
 		return init;
 	}
 	private foldrInternal(init, func, startIndex)
 	{
-		for i in [startIndex to 0]:
+		var startVersion = version;
+
+		for i in [startIndex to 0]
+		{
+			if startVersion != version:
+				throw new InvalidStateError(listHasChanged);
 			init = func(init, this[i]);
+		}
 
 		return init;
 	}
+
+	protected const listHasChanged = "The list has changed since the iteration started.";
 
 	overridable override getHashCode()
 	{
@@ -202,8 +538,8 @@ private class ListIterator is Iterator
 	}
 
 	private list;
-	private i = -1;
 	private version;
+	private i = -1;
 	private cur = null;
 
 	override get current = cur;
@@ -223,5 +559,8 @@ private class ListIterator is Iterator
 			return false;
 	}
 
-	private static getVersion(list)		__extern("aves_ListIterator_getVersion");
+	// Note: this binds to the same native method as List.version's getter.
+	// This works perfectly fine because this is a static method, so the first
+	// argument on the stack is a List.
+	private static getVersion(list)		__extern("aves_List_get_version");
 }

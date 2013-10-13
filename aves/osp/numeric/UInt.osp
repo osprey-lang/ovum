@@ -6,6 +6,10 @@ public class UInt __primitive
 {
 	private new();
 
+	public asInt()				__extern("aves_number_asInt");
+	public asUInt()				__extern("aves_number_asUInt");
+	public asReal()				__extern("aves_number_asReal");
+
 	override getHashCode()		__extern("aves_UInt_getHashCode");
 	override toString()			__extern("aves_UInt_toString");
 	public toString(format)		__extern("aves_UInt_toStringf");

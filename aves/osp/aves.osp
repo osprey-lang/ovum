@@ -10,7 +10,9 @@ use "Buffer.osp";
 use "math/math.osp";
 use "Env.osp";
 use "Method.osp";
+use "Type.osp";
 use "errors/errors.osp"; // all of the errors!
+use "helpers.osp";
 
 namespace aves;
 
@@ -23,7 +25,12 @@ public function print(value)			__extern("aves_print");
 /// Summary: Prints a formatted value.
 /// Param format: The format string. Must be of type String.
 /// Param values: The values to pass into String.format().
-public function print(format, values)	__extern("aves_printf");
+public function print(format, values)
+{
+	if format is not String:
+		throw new TypeError("The format string must be a string.");
+	print(format.format(values));
+}
 
 /// Summary: Exits the application immediately.
 /// Param code: The exit code to pass to the calling environment.

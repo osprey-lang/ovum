@@ -4,6 +4,8 @@ use "ArgumentError.osp";
 use "ArgumentNullError.osp";
 use "ArgumentRangeError.osp";
 use "DivideByZeroError.osp";
+use "DuplicateKeyError.osp";
+use "InvalidStateError.osp";
 use "MemoryError.osp";
 use "NullReferenceError.osp";
 use "OverflowError.osp";

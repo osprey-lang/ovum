@@ -1,0 +1,48 @@
+namespace aves;
+
+public inheritable Stack
+{
+	public new();
+	public new(capacity)
+	{
+		capacity = int(capacity);
+		if capacity > 0:
+			list = new List(capacity);
+	}
+
+	private version = 0;
+	private list = null; // Not initialized until it is needed
+
+	public get length = list.length;
+
+	public push(value)
+	{
+		if list is null:
+			list = [];
+
+		list.add(value);
+		version += 1;
+	}
+
+	public pop()
+	{
+		if list is null or list.isEmpty:
+			throw new InvalidStateError("There are no items left on the stack.");
+
+		var value = list[-1];
+		list.removeAt(-1);
+		version += 1;
+		return value;
+	}
+
+	iter
+	{
+		var startVersion = version;
+		for i in [1 to list.length]
+		{
+			if startVersion != version:
+				throw new InvalidStateError("The stack has changed since the enumeration started.");
+			yield list[-i];
+		}
+	}
+}

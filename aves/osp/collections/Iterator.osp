@@ -67,17 +67,16 @@ public abstract class Iterator
 	public join(sep)
 	{
 		var output = new StringBuffer();
-		var append = output.append;
 
 		var first = true;
 		while moveNext()
 		{
 			if not first:
-				append(sep);
+				output.append(sep);
 			else
 				first = false;
 
-			append(current);
+			output.append(current);
 		}
 
 		return output.toString();
