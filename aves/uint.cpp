@@ -202,14 +202,8 @@ AVES_API NATIVE_FUNCTION(aves_UInt_opPower)
 	if (!IsUInt(right))
 		right = UIntFromValue(thread, right);
 
-	double result = pow((double)args[0].uinteger, (double)right.uinteger);
-
-	// TODO: verify that this is safe
-	if (result > UINT64_MAX || result < 0 ||
-		IsNaN(result) || !IsFinite(result))
-		VM_ThrowOverflowError(thread);
-
-	VM_PushUInt(thread, (uint64_t)result);
+	uint64_t result = uinteger::Power(thread, args[0].uinteger, right.uinteger);
+	VM_PushUInt(thread, result);
 }
 AVES_API NATIVE_FUNCTION(aves_UInt_opPlus)
 {
@@ -235,8 +229,7 @@ Value uinteger::ToStringDecimal(ThreadHandle thread, const uint64_t value)
 		chars[charCount - ++length] = static_cast<uchar>('0' + temp % 10);
 	} while (temp /= 10);
 
-	String *outputString;
-	GC_ConstructString(thread, length, chars + charCount - length, &outputString);
+	String *outputString = GC_ConstructString(thread, length, chars + charCount - length);
 
 	Value outputValue;
 	SetString(outputValue, outputString);
@@ -259,8 +252,7 @@ Value uinteger::ToStringHex(ThreadHandle thread, const uint64_t value, const boo
 		chars[charCount - ++length] = static_cast<uchar>(rem >= 10 ? letterBase + rem - 10 : '0' + rem);
 	} while (temp /= 16);
 
-	String *outputString;
-	GC_ConstructString(thread, length, chars + charCount - length, &outputString);
+	String *outputString = GC_ConstructString(thread, length, chars + charCount - length);
 
 	Value outputValue;
 	SetString(outputValue, outputString);
@@ -276,7 +268,7 @@ Value uinteger::ToStringRadix(ThreadHandle thread, const uint64_t value, const u
 	const uchar letterBase = upper ? 'A' : 'a';
 
 	// The longest possible string that could be produced by ToStringRadix
-	// is uint64_t's max value. 64-bit value = 64 binary characters.
+	// is uint64_t's max value in binary. 64-bit value = 64 binary digits.
 	const int charCount = 64;
 	uchar chars[charCount];
 
@@ -287,8 +279,7 @@ Value uinteger::ToStringRadix(ThreadHandle thread, const uint64_t value, const u
 		chars[charCount - ++length] = static_cast<uchar>(rem >= 10 ? letterBase + rem - 10 : '0' + rem);
 	} while (temp /= radix);
 
-	String *outputString;
-	GC_ConstructString(thread, length, chars + charCount - length, &outputString);
+	String *outputString = GC_ConstructString(thread, length, chars + charCount - length);
 
 	Value outputValue;
 	SetString(outputValue, outputString);

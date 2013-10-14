@@ -1,7 +1,7 @@
 #include "aves_boolean.h"
 
-LitString<5> _falseString = { 5, 0, STR_STATIC, 'f','a','l','s','e',0 };
-LitString<4> _trueString  = { 4, 0, STR_STATIC, 't','r','u','e',0 };
+LitString<5> _falseString = { 5, 0, StringFlags::STATIC, 'f','a','l','s','e',0 };
+LitString<4> _trueString  = { 4, 0, StringFlags::STATIC, 't','r','u','e',0 };
 
 String *falseString = _S(falseString);
 String *trueString  = _S(trueString);

@@ -66,6 +66,24 @@
     <ClInclude Include="aves_env.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="aves_hash.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_error.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_method.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_helpers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_set.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_type.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="aves.cpp">
@@ -111,6 +129,24 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="env.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="hash.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="error.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="method.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="helpers.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="set.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="type.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

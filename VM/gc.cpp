@@ -1,6 +1,8 @@
 #include "ov_vm.internal.h"
 #include <cstdlib>
 #include <cstring>
+#include <iostream>
+#include <vector>
 
 namespace gc_strings
 {
@@ -18,37 +20,57 @@ void GC::Init()
 	GC::gc = new GC();
 }
 
+void GC::Unload()
+{
+	delete GC::gc;
+}
+
 GC::GC() :
 	isRunning(false),
 	collectBase(nullptr), processBase(nullptr), keepBase(nullptr),
-	currentCollectMark(0), debt(0), totalSize(0)
+	currentCollectMark(0), debt(0), totalSize(0),
+	strings(32), staticRefs(nullptr)
 { }
 
 GC::~GC()
 {
-	Collect(vmState.mainThread);
+	GCObject *gco = collectBase;
+	while (gco)
+	{
+		GCObject *next = gco->next;
+		Release(VM::vm->mainThread, gco);
+		gco = next;
+	}
+
+	collectBase = nullptr;
+
+	StaticRefBlock *refs = staticRefs;
+	while (refs)
+	{
+		StaticRefBlock *next = refs->next;
+		delete refs;
+		refs = next;
+	}
 }
 
 
-// Note: this method is only visible in this file.
-void *InternalAlloc(size_t size)
+void *GC::InternalAlloc(size_t size)
 {
-	assert(size >= sizeof(GCObject));
+	assert(size >= GCO_SIZE);
 	return malloc(size);
 }
 
-// Note: this method is only visible in this file.
-void InternalRelease(GCObject *gco)
+void GC::InternalRelease(GCObject *gco)
 {
 	free(gco);
 }
 
 void GC::Alloc(Thread *const thread, const Type *type, size_t size, GCObject **output)
 {
-	if (SIZE_MAX - size < sizeof(GCObject))
+	if (SIZE_MAX - size < GCO_SIZE)
 		thread->ThrowMemoryError(gc_strings::ObjectTooBig);
 
-	size += sizeof(GCObject);
+	size += GCO_SIZE;
 	GCObject *gco = (GCObject*)InternalAlloc(size);
 
 	if (!gco) // Allocation failed (we're probably out of memory)
@@ -97,21 +119,23 @@ void GC::Alloc(Thread *const thread, const Type *type, size_t size, GCObject **o
 
 void GC::Construct(Thread *const thread, const Type *type, const uint16_t argc, Value *output)
 {
+	if (type == VM::vm->types.String ||
+		(type->flags & TypeFlags::PRIMITIVE) == TypeFlags::PRIMITIVE ||
+		(type->flags & TypeFlags::ABSTRACT) == TypeFlags::ABSTRACT)
+		thread->ThrowTypeError();
+
 	StackFrame *frame = thread->currentFrame;
 	ConstructLL(thread, type, argc, frame->evalStack + frame->stackCount - argc, output);
 }
 
 void GC::ConstructLL(Thread *const thread, const Type *type, const uint16_t argc, Value *args, Value *output)
 {
-	if (type == stdTypes.String || type->flags & (TYPE_PRIMITIVE | TYPE_ABSTRACT))
-		thread->ThrowTypeError();
-
 	GCObject *gco;
 	Alloc(thread, type, type->fieldsOffset + type->size, &gco);
 
 	Value value;
 	value.type = type;
-	value.instance = GCO_INSTANCE_BASE(gco);
+	value.instance = (uint8_t*)GCO_INSTANCE_BASE(gco);
 
 	StackFrame *frame = thread->currentFrame;
 	Value *framePointer = args + argc;
@@ -135,12 +159,14 @@ void GC::ConstructLL(Thread *const thread, const Type *type, const uint16_t argc
 		frame->Push(value);
 }
 
-void GC::ConstructString(Thread *const thread, const int32_t length, const uchar value[], String **output)
+String *GC::ConstructString(Thread *const thread, const int32_t length, const uchar value[])
 {
 	GCObject *gco;
-	// Note: sizeof(STRING) includes firstChar, but we need an extra character
+	// Note: sizeof(String) includes firstChar, but we need an extra character
 	// for the terminating \0 anyway. So this is fine.
-	Alloc(thread, stdTypes.String, sizeof(String) + length*sizeof(uchar), &gco);
+	Alloc(thread, VM::vm->types.String, sizeof(String) + length*sizeof(uchar), &gco);
+	if (VM::vm->types.String == nullptr)
+		gco->flags = gco->flags | GCOFlags::EARLY_STRING;
 
 	MutableString *str = reinterpret_cast<MutableString*>(GCO_INSTANCE_BASE(gco));
 	str->length = length;
@@ -152,7 +178,7 @@ void GC::ConstructString(Thread *const thread, const int32_t length, const uchar
 		// Note: this does NOT include the terminating \0, which is fine.
 		CopyMemoryT(&str->firstChar, value, length);
 
-	*output = reinterpret_cast<String*>(str);
+	return reinterpret_cast<String*>(str);
 }
 
 String *GC::ConvertString(Thread *const thread, const char *string)
@@ -162,8 +188,7 @@ String *GC::ConvertString(Thread *const thread, const char *string)
 	if (length > INT32_MAX)
 		thread->ThrowOverflowError(gc_strings::CStringTooBig);
 
-	String *output;
-	ConstructString(thread, length, nullptr, &output);
+	String *output = ConstructString(thread, length, nullptr);
 
 	if (length > 0)
 	{
@@ -185,6 +210,16 @@ void GC::RemoveMemoryPressure(Thread *const thread, const size_t size)
 	// Not implemented yet
 }
 
+Value *GC::AddStaticReference(Value value)
+{
+	if (staticRefs == nullptr ||
+		staticRefs->count == StaticRefBlock::BLOCK_SIZE)
+		staticRefs = new StaticRefBlock(staticRefs);
+
+	Value *output = staticRefs->values + staticRefs->count++;
+	*output = value;
+	return output;
+}
 
 void GC::Release(Thread *const thread, GCObject *gco)
 {
@@ -196,6 +231,14 @@ void GC::Release(Thread *const thread, GCObject *gco)
 		if (type->finalizer)
 			type->finalizer(thread, INST_FROM_GCO(gco, type));
 		type = type->baseType;
+	}
+
+	if ((gco->flags & GCOFlags::EARLY_STRING) != GCOFlags::NONE ||
+		gco->type == VM::vm->types.String)	
+	{
+		String *str = reinterpret_cast<String*>(GCO_INSTANCE_BASE(gco));
+		if ((str->flags & StringFlags::INTERN) != StringFlags::NONE)
+			strings.RemoveIntern(str);
 	}
 
 	totalSize -= gco->size; // gco->size includes the size of the GCOBJECT
@@ -210,22 +253,33 @@ void GC::Collect(Thread *const thread)
 
 	// Step 2: examine all objects in the Process list.
 	// Using the type information in each GCOBJECT, we can figure
-	// out what an instance points to! 
+	// out what an instance points to!
 	// Note: objects are added to the beginning of the list.
 	while (processBase)
 	{
 		GCObject *item = processBase;
 		do
 		{
+			GCObject *next = item->next;
 			ProcessObjectAndFields(item);
-		} while (item = item->next);
+			item = next;
+		} while (item);
 	}
 	assert(processBase == nullptr);
+
+#ifdef PRINT_DEBUG_INFO
+	std::wcout << L"Preparing to collect #: " << LinkedListLength(collectBase) << std::endl;
+#endif
+
 	// Step 3: free all objects left in the Collect list.
+	//GCObject *collect = collectBase;
 	while (collectBase)
 	{
 		GCObject *next = collectBase->next;
-		Release(thread, collectBase);
+		if ((collectBase->flags & GCOFlags::IMMORTAL) != GCOFlags::NONE)
+			Keep(collectBase);
+		else
+			Release(thread, collectBase);
 		collectBase = next;
 	}
 	// Step 4: reset the debt.
@@ -242,15 +296,15 @@ void GC::Collect(Thread *const thread)
 
 void GC::MarkRootSet()
 {
-	Thread *const mainThread = vmState.mainThread;
+	Thread *const mainThread = VM::vm->mainThread;
 
 	// Mark stack frames first.
 	StackFrame *frame = mainThread->currentFrame;
 	// Frames are marked top-to-bottom.
-	do
+	while (frame)
 	{
 		Method::Overload *method = frame->method;
-		// Does the method have any locals?
+		// Does the method have any parameters?
 		if (method->paramCount)
 			ProcessFields(method->paramCount, frame->arguments);
 		// By design, the locals and the eval stack are adjacent in memory.
@@ -259,33 +313,49 @@ void GC::MarkRootSet()
 			ProcessFields(method->locals + frame->stackCount, LOCALS_OFFSET(frame));
 
 		frame = frame->prevFrame;
-	} while (frame = frame->prevFrame);
+	}
 
 	// We need to do this because the GC may be triggered in
 	// a finally clause, and we wouldn't want to obliterate
 	// the error if we still need to catch it later, right?
-	if (ShouldProcess(mainThread->currentError))
-		Process(GCO_FROM_VALUE(mainThread->currentError));
+	TryProcess(mainThread->currentError);
 
-	// TODO: mark static members
+	// Examine module strings! We don't want to collect these, even
+	// if there is nothing referencing them anywhere else.
+	for (int i = 0; i < Module::loadedModules->GetLength(); i++)
+	{
+		Module *m = Module::loadedModules->Get(i);
+		TryProcessString(m->name);
+
+		for (uint32_t s = 0; s < m->strings.GetLength(); s++)
+			TryProcessString(m->strings[s]);
+	}
+
+	// And then we have all the beautiful, lovely static references.
+	StaticRefBlock *staticRefs = this->staticRefs;
+	while (staticRefs)
+	{
+		ProcessFields(staticRefs->count, staticRefs->values);
+		staticRefs = staticRefs->next;
+	}
 }
 
 void GC::ProcessObjectAndFields(GCObject *gco)
 {
 	// The object is not supposed to be anything but GCO_PROCESS at this point.
-	assert(gco->flags & GCO_PROCESS(currentCollectMark));
+	assert((gco->flags & GCOFlags::MARK) == GCO_PROCESS(currentCollectMark));
 	// It's also not supposed to be a value type.
-	assert((gco->type->flags & TYPE_PRIMITIVE) == TYPE_NONE);
+	assert(!gco->type || (gco->type->flags & TypeFlags::PRIMITIVE) != TypeFlags::PRIMITIVE);
 
 	Keep(gco);
 
 	const Type *type = gco->type;
 	while (type)
 	{
-		if (type->flags & TYPE_CUSTOMPTR)
+		if ((type->flags & TypeFlags::CUSTOMPTR) != TypeFlags::NONE)
 			ProcessCustomFields(type, gco);
 		else if (type->fieldCount)
-			ProcessFields(type->fieldCount, (Value*)INST_FROM_GCO(gco,type));
+			ProcessFields(type->fieldCount, (Value*)INST_FROM_GCO(gco, type));
 
 		type = type->baseType;
 	}
@@ -293,20 +363,20 @@ void GC::ProcessObjectAndFields(GCObject *gco)
 
 void GC::ProcessCustomFields(const Type *type, GCObject *gco)
 {
-	if (type == stdTypes.Hash)
+	if (type == VM::vm->types.Hash)
 	{
-		ProcessHash((HashInst*)(gco + 1));
+		ProcessHash((HashInst*)GCO_INSTANCE_BASE(gco));
 	}
-	else if (type == stdTypes.List)
+	else if (type == VM::vm->types.List)
 	{
-		ListInst *list = (ListInst*)(gco + 1);
+		ListInst *list = (ListInst*)GCO_INSTANCE_BASE(gco);
 		ProcessFields(list->length, list->values);
 	}
-	else if (type == stdTypes.Method)
+	else if (type == VM::vm->types.Method)
 	{
-		MethodInst *minst = (MethodInst*)(gco + 1);
+		MethodInst *minst = (MethodInst*)GCO_INSTANCE_BASE(gco);
 		if (minst->instance.type)
-			ProcessFields(1, &minst->instance);
+			TryProcess(&minst->instance);
 	}
 	else
 	{
@@ -323,19 +393,15 @@ void GC::ProcessCustomFields(const Type *type, GCObject *gco)
 
 void GC::ProcessHash(HashInst *hash)
 {
-	int32_t entryCount = hash->capacity;
+	int32_t entryCount = hash->count;
 	HashEntry *entries = hash->entries;
 
 	for (int32_t i = 0; i < entryCount; i++)
-		if (entries[i].hashCode != -1)
+		if (entries[i].hashCode >= 0)
 		{
 			HashEntry *entry = entries + i;
-
-			if (ShouldProcess(entry->key))
-				Process(GCO_FROM_VALUE(entry->key));
-
-			if (ShouldProcess(entry->value))
-				Process(GCO_FROM_VALUE(entry->value));
+			TryProcess(&entry->key);
+			TryProcess(&entry->value);
 		}
 }
 
@@ -345,9 +411,9 @@ OVUM_API void GC_Construct(ThreadHandle thread, TypeHandle type, const uint16_t 
 	GC::gc->Construct(thread, type, argc, output);
 }
 
-OVUM_API void GC_ConstructString(ThreadHandle thread, const int32_t length, const uchar *values, String **result)
+OVUM_API String *GC_ConstructString(ThreadHandle thread, const int32_t length, const uchar *values)
 {
-	GC::gc->ConstructString(thread, length, values, result);
+	return GC::gc->ConstructString(thread, length, values);
 }
 
 OVUM_API String *GC_ConvertString(ThreadHandle thread, const char *string)
@@ -363,4 +429,14 @@ OVUM_API void GC_AddMemoryPressure(ThreadHandle thread, const size_t size)
 OVUM_API void GC_RemoveMemoryPressure(ThreadHandle thread, const size_t size)
 {
 	GC::gc->RemoveMemoryPressure(thread, size);
+}
+
+OVUM_API Value *GC_AddStaticReference(Value initialValue)
+{
+	return GC::gc->AddStaticReference(initialValue);
+}
+
+OVUM_API void GC_Collect(ThreadHandle thread)
+{
+	GC::gc->Collect(thread);
 }

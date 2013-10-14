@@ -9,6 +9,11 @@ AVES_API NATIVE_FUNCTION(aves_real)
 	VM_Push(thread, result);
 }
 
+AVES_API NATIVE_FUNCTION(aves_Real_get_isInfinite)
+{
+	VM_PushBool(thread, IsFinite(THISV.real));
+}
+
 AVES_API NATIVE_FUNCTION(aves_Real_getHashCode)
 {
 	// Value.integer overlaps with Value.real, and they're both 64-bits,

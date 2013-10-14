@@ -50,26 +50,26 @@ OVUM_API String *Error_GetStackTrace(Value error);
 
 // It is VITAL that these are in the same order as the opcodes.
 // See vm.opcodes.h/Opcode
-TYPED_ENUM(Operator, uint8_t)
+enum class Operator : uint8_t
 {
-	OP_ADD,    // The binary + operator.
-	OP_SUB,    // The binary - operator.
-	OP_OR,     // The | operator.
-	OP_XOR,    // The ^ operator.
-	OP_MUL,    // The * operator.
-	OP_DIV,    // The / operator.
-	OP_MOD,    // The % operator.
-	OP_AND,    // The & operator.
-	OP_POW,    // The ** operator.
-	OP_SHL,    // The << operator.
-	OP_SHR,    // The >> operator.
-	OP_HASHOP, // The # operator.
-	OP_DOLLAR, // The $ operator.
-	OP_PLUS,   // The unary + operator.
-	OP_NEG,    // The unary - operator.
-	OP_NOT,    // The ~ operator.
-	OP_EQ,     // The == operator.
-	OP_CMP,    // The <=> operator.
+	ADD,    // The binary + operator.
+	SUB,    // The binary - operator.
+	OR,     // The | operator.
+	XOR,    // The ^ operator.
+	MUL,    // The * operator.
+	DIV,    // The / operator.
+	MOD,    // The % operator.
+	AND,    // The & operator.
+	POW,    // The ** operator.
+	SHL,    // The << operator.
+	SHR,    // The >> operator.
+	HASHOP, // The # operator.
+	DOLLAR, // The $ operator.
+	PLUS,   // The unary + operator.
+	NEG,    // The unary - operator.
+	NOT,    // The ~ operator.
+	EQ,     // The == operator.
+	CMP,    // The <=> operator.
 };
 // The number of overloadable operators.
 // If you change Operator and/or Opcode without changing this,
@@ -85,39 +85,40 @@ TYPED_ENUM(Operator, uint8_t)
 //         TYPE_OPS_INITED
 //         TYPE_INITED
 //         TYPE_STATICCTORRUN
-TYPED_ENUM(TypeFlags, uint32_t)
+enum class TypeFlags : uint32_t
 {
-	TYPE_NONE          = 0x0000,
+	NONE          = 0x0000,
 
-	TYPE_PROTECTION    = 0x0003,
-	TYPE_PUBLIC        = 0x0001,
-	TYPE_PRIVATE       = 0x0002,
+	PROTECTION    = 0x0003,
+	PUBLIC        = 0x0001,
+	PRIVATE       = 0x0002,
 
-	TYPE_ABSTRACT      = 0x0004,
-	TYPE_SEALED        = 0x0008,
+	ABSTRACT      = 0x0004,
+	SEALED        = 0x0008,
 	// The type is static; that is, instances of it cannot be created.
-	TYPE_STATIC        = TYPE_ABSTRACT | TYPE_SEALED,
+	STATIC        = ABSTRACT | SEALED,
 
 	// The type is a value type; that is, it does not have an instance pointer.
 	// Value types are always implicitly sealed, hence the TYPE_SEALED flag.
 	// TYPES USING THIS FLAG WILL NOT BE ELIGIBLE FOR GARBAGE COLLECTION.
 	// If you use this flag and still store a pointer in the VALUE, you are an
 	// evil, wicked, truly malevolent person who deserves to be punished.
-	TYPE_PRIMITIVE     = 0x0010 | TYPE_SEALED,
+	PRIMITIVE     = 0x0010 | SEALED,
 	// The type does not use a standard VALUE array for its fields.
 	// This is used only by the GC during collection.
 	// If the type is NOT List or Hash, any type using this flag MUST
 	// set its Type::getReferences field to an appropriate value.
 	// Failure to do so will crash the runtime when the GC runs a cycle.
-	TYPE_CUSTOMPTR     = 0x0020,
+	CUSTOMPTR     = 0x0020,
 	// Internal use only. If absent from a type's flags, the Type_InitOperators method
 	// must be called on the type before invoking an operator on the type.
-	TYPE_OPS_INITED    = 0x0040,
+	OPS_INITED    = 0x0040,
 	// Internal use only. If set, the type has been initialised.
-	TYPE_INITED        = 0x0080,
+	INITED        = 0x0080,
 	// Internal use only. If set, the static constructor for the type has been run.
-	TYPE_STATICCTORRUN = 0x0100,
+	STATICCTORRUN = 0x0100,
 };
+ENUM_OPS(TypeFlags, uint32_t);
 
 // A ReferenceGetter produces an array of Values from a basePtr.
 // The basePtr is the base of the fields for a value of the type
@@ -184,7 +185,7 @@ typedef void (*HashInitializer)(ThreadHandle thread, HashInst *hash, int32_t cap
 // TypeHandle. The standard module must expose a method with the name
 // "InitTypeToken", with this signature, so that the VM can create type
 // tokens when they are requested.
-typedef Value (*TypeTokenInitializer)(ThreadHandle thread, TypeHandle type);
+typedef void (*TypeTokenInitializer)(ThreadHandle thread, void *basePtr, TypeHandle type);
 
 OVUM_API TypeFlags Type_GetFlags(TypeHandle type);
 OVUM_API String *Type_GetFullName(TypeHandle type);
@@ -193,7 +194,7 @@ OVUM_API MemberHandle Type_GetMember(TypeHandle type, String *name);
 OVUM_API MemberHandle Type_FindMember(TypeHandle type, String *name, TypeHandle fromType);
 
 OVUM_API MethodHandle Type_GetOperator(TypeHandle type, Operator op);
-OVUM_API Value Type_GetTypeToken(TypeHandle type);
+OVUM_API Value Type_GetTypeToken(ThreadHandle thread, TypeHandle type);
 
 OVUM_API uint32_t Type_GetFieldOffset(TypeHandle type);
 OVUM_API void Type_SetFinalizer(TypeHandle type, Finalizer finalizer);
@@ -201,7 +202,7 @@ OVUM_API void Type_SetInstanceSize(TypeHandle type, uint32_t size);
 OVUM_API void Type_SetReferenceGetter(TypeHandle type, ReferenceGetter getter);
 
 
-// Standard types are required by the VM (because the implement special
+// Standard types are required by the VM (because they implement special
 // behaviour or are needed by opcode instructions), but are implemented
 // by the standard library, which is by default represented by the module
 // aves.ovm (and its associated aves.dll).

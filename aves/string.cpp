@@ -33,8 +33,7 @@ AVES_API NATIVE_FUNCTION(aves_String_get_item)
 
 	int32_t index = GetIndex(thread, str, args + 1);
 
-	String *output;
-	GC_ConstructString(thread, 1, &str->firstChar + index, &output);
+	String *output = GC_ConstructString(thread, 1, &str->firstChar + index);
 	VM_PushString(thread, output);
 }
 
@@ -65,8 +64,7 @@ AVES_API NATIVE_FUNCTION(aves_String_contains)
 
 AVES_API NATIVE_FUNCTION(aves_String_reverse)
 {
-	String *outputString;
-	GC_ConstructString(thread, THISV.common.string->length, nullptr, &outputString);
+	String *outputString = GC_ConstructString(thread, THISV.common.string->length, nullptr);
 
 	Value *output = VM_Local(thread, 0);
 	SetString(output, outputString);
@@ -101,8 +99,7 @@ AVES_API NATIVE_FUNCTION(aves_String_substr1)
 		return;
 	}
 
-	String *outputString;
-	GC_ConstructString(thread, count, &str->firstChar + start, &outputString);
+	String *outputString = GC_ConstructString(thread, count, &str->firstChar + start);
 
 	Value *output = VM_Local(thread, 0);
 	SetString(output, outputString);
@@ -128,8 +125,7 @@ AVES_API NATIVE_FUNCTION(aves_String_substr2)
 		return;
 	}
 
-	String *outputString;
-	GC_ConstructString(thread, (int32_t)count, &str->firstChar + start, &outputString);
+	String *outputString = GC_ConstructString(thread, (int32_t)count, &str->firstChar + start);
 
 	Value *output = VM_Local(thread, 0);
 	SetString(output, outputString);
@@ -204,6 +200,30 @@ AVES_API NATIVE_FUNCTION(aves_String_getHashCode)
 	int32_t hashCode = String_GetHashCode(THISV.common.string);
 
 	VM_PushInt(thread, hashCode);
+}
+
+AVES_API NATIVE_FUNCTION(aves_String_fromCodepoint)
+{
+	int64_t cp64 = IntFromValue(thread, args[1]).integer;
+
+	if (cp64 < 0 || cp64 > 0x10FFFF)
+	{
+		VM_PushString(thread, strings::cp);
+		GC_Construct(thread, ArgumentRangeError, 1, nullptr);
+		VM_Throw(thread);
+	}
+
+	String *output;
+	if (UC_NeedsSurrogatePair((wuchar)cp64))
+	{
+		SurrogatePair pair = UC_ToSurrogatePair((wuchar)cp64);
+		output = GC_ConstructString(thread, 2, reinterpret_cast<uchar*>(&pair));
+	}
+	else
+		output = GC_ConstructString(thread, 1, reinterpret_cast<uchar*>(&cp64));
+
+	// Return value is on the stack
+	VM_PushString(thread, output);
 }
 
 AVES_API NATIVE_FUNCTION(aves_String_opEquals)
@@ -426,8 +446,7 @@ Value ScanFormatIdentifier(ThreadHandle thread, const size_t bufferSize, uchar b
 		return NULL_VALUE; // indicates that everything is in the buffffffer
 	}
 
-	String *outputString;
-	GC_ConstructString(thread, length, chStart, &outputString);
+	String *outputString = GC_ConstructString(thread, length, chStart);
 
 	Value output;
 	SetString(output, outputString);
@@ -483,7 +502,7 @@ String *string::Format(ThreadHandle thread, const String *format, Value *hash)
 				// If that method does not return NULL_VALUE, then we don't need to do anything,
 				// because the method has already GC allocated a STRING* for us.
 				const int BUFFER_SIZE = 128; // Note: BUFFER_SIZE includes space for a trailing \0
-				LitString<BUFFER_SIZE - 1> buffer = { 0, 0, STR_STATIC };
+				LitString<BUFFER_SIZE - 1> buffer = { 0, 0, StringFlags::STATIC };
 				uint32_t bufferLength;
 				Value phKey = ScanFormatIdentifier(thread, BUFFER_SIZE, buffer.chars, index, chp, bufferLength);
 				if (phKey.type == nullptr) // use the values in the buffer
@@ -559,8 +578,7 @@ String *string::Format(ThreadHandle thread, const String *format, Value *hash)
 
 String *string::Replace(ThreadHandle thread, const String *input, const uchar oldChar, const uchar newChar, const int64_t maxTimes)
 {
-	String *output;
-	GC_ConstructString(thread, input->length, &input->firstChar, &output);
+	String *output = GC_ConstructString(thread, input->length, &input->firstChar);
 
 	uchar *outp = const_cast<uchar*>(&output->firstChar);
 	int64_t remaining = maxTimes;

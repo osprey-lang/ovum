@@ -21,6 +21,8 @@ namespace strings
 	extern String *times;
 	extern String *oldValue;
 	extern String *kind;
+	extern String *key;
+	extern String *cp;
 	extern String *_args;
 
 	extern String *newline;
@@ -29,6 +31,8 @@ namespace strings
 namespace error_strings
 {
 	extern String *EndIndexLessThanStart;
+	extern String *HashKeyNotFound;
+	extern String *DontCallMethods;
 }
 
 #endif // AVES__SHARED_STRINGS_H

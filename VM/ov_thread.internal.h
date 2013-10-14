@@ -178,7 +178,7 @@ public:
 
 	inline void PushNull() { currentFrame->Push(NULL_VALUE);  }
 
-	inline Value Pop()       { return currentFrame->Pop(); }
+	inline Value Pop() { return currentFrame->Pop(); }
 	inline void Pop(unsigned int n) { currentFrame->Pop(n); }
 
 	inline void Dup() { currentFrame->Push(currentFrame->Peek()); }
@@ -283,6 +283,21 @@ private:
 	bool EqualsLL(Value *args);
 	int CompareLL(Value *args);
 	void ConcatLL(Value *args, Value *result);
+
+	typedef struct
+	{
+		enum Flags : uint8_t
+		{
+			// The slot is in use
+			IN_USE   = 1,
+			// The slot contains the 'this' argument
+			THIS_ARG = 2,
+		} flags;
+	} StackEntry;
+
+	uint8_t *InitializeMethod(Method::Overload *method);
+	uint8_t *InitializeMethodInternal(StackEntry stack[], Method::Overload *method);
+	void InitializeInstructions(instr::MethodBuilder &builder, Method::Overload *method);
 
 	friend class GC;
 	friend void VM_InvokeMethod(ThreadHandle, MethodHandle, const unsigned int, Value*);

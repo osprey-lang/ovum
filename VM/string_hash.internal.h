@@ -3,6 +3,7 @@
 #ifndef VM__STRING_HASH_INTERNAL_H
 #define VM__STRING_HASH_INTERNAL_H
 
+#include <iostream>
 #include "ov_vm.internal.h"
 #include "ov_string.h"
 
@@ -18,8 +19,9 @@ class StringHash
 {
 private:
 	int32_t capacity;
-	int32_t length;
-	StringHashEntry<T> **buckets;
+	int32_t count;
+	int32_t *buckets;
+	StringHashEntry<T> *entries;
 
 	bool Insert(String *key, T value, bool add);
 
@@ -30,6 +32,10 @@ public:
 	bool Get(String *key, T &value) const;
 	bool Add(String *key, T value);
 	bool Set(String *key, T value);
+
+	void FreeValues();
+	void DeleteValues();
+	void DeleteArrayValues();
 };
 
 template<class T>
@@ -37,9 +43,9 @@ class StringHashEntry
 {
 public:
 	int32_t hashCode;
+	int32_t next;
 	String *key;
 	T value;
-	StringHashEntry *next;
 };
 
 
@@ -48,37 +54,36 @@ StringHash<T>::StringHash(int32_t capacity)
 {
 	if (capacity <= 0)
 	{
-		this->length = this->capacity = 0;
-		this->buckets = nullptr;
+		count = this->capacity = 0;
+		buckets = nullptr;
 	}
 	else
 	{
-		this->length = 0;
-		this->capacity = capacity;
-		this->buckets = new StringHashEntry<T>*[NextPowerOfTwo(capacity)];
-		memset(this->buckets, 0, sizeof(void*) * capacity);
+		count = 0;
+		this->capacity = HashHelper_GetPrime(capacity);
+
+		buckets = new int32_t[this->capacity];
+		memset(buckets, -1, sizeof(int32_t*) * this->capacity);
+
+		entries = new StringHashEntry<T>[this->capacity];
+		memset(entries, 0, sizeof(StringHashEntry<T>) * this->capacity);
 	}
 }
 
 template<class T>
 StringHash<T>::~StringHash()
 {
-	// Note: String is a managed type. We do not need to delete the keys.
+#ifdef PRINT_DEBUG_INFO
+	std::wcout << L"Deleting string table" << std::endl;
+#endif
 	if (buckets)
 	{
-		for (int i = 0; i < capacity; i++)
-		{
-			StringHashEntry<T> *next = buckets[i];
-			while (next)
-			{
-				StringHashEntry<T> *e = next;
-				next = e->next;
-				delete e;
-			}
-		}
-
+		capacity = 0;
+		count = 0;
 		delete[] buckets;
+		delete[] entries;
 		buckets = nullptr;
+		entries = nullptr;
 	}
 }
 
@@ -90,30 +95,33 @@ bool StringHash<T>::Insert(String *key, T value, bool add)
 		// you don't get to put anything in it.
 		return false;
 
-	int32_t hash = String_GetHashCode(key);
+	int32_t hashCode = String_GetHashCode(key) & INT32_MAX;
 
-	int32_t bucket = (hash & INT32_MAX) % capacity;
+	int32_t bucket = hashCode % capacity;
 
-	for (StringHashEntry<T> *e = buckets[bucket]; e; e = e->next)
-		if (e->hashCode == hash && String_Equals(e->key, key))
+	for (int32_t i = buckets[bucket]; i >= 0; i = entries[i].next)
+		if (hashCode == entries[i].hashCode &&
+			String_Equals(key, entries[i].key))
 		{
 			if (add)
 				return false; // NOPE
-			e->value = value;
+			entries[i].value = value;
 			return true;
 		}
 
-	// Not found - let's insert a new entry!
+	// Not found, let's add it!
 
-	// First, create it.
-	StringHashEntry<T> *newEntry = new StringHashEntry<T>();
-	newEntry->hashCode = hash;
-	newEntry->key = key;
-	newEntry->value = value;
-	newEntry->next = buckets[bucket]; // may be null
+	if (count == capacity)
+		return false; // already full, sorry!
 
-	// Then update the bucket. Whoo!
-	buckets[bucket] = newEntry;
+	int32_t index = count++;
+
+	StringHashEntry<T> *e = entries + index;
+	e->hashCode = hashCode;
+	e->next = buckets[bucket];
+	e->key = key;
+	e->value = value;
+	buckets[bucket] = index;
 	return true;
 }
 
@@ -122,13 +130,14 @@ bool StringHash<T>::Get(String *key, T &value) const
 {
 	if (buckets)
 	{
-		int32_t hash = String_GetHashCode(key);
-		int32_t bucket = hash % capacity;
+		int32_t hashCode = String_GetHashCode(key) & INT32_MAX;
+		int32_t bucket = hashCode % capacity;
 
-		for (StringHashEntry<T> *e = buckets[bucket]; e; e = e->next)
-			if (e->hashCode == hash && String_Equals(e->key, key))
+		for (int32_t i = buckets[bucket]; i >= 0; i = entries[i].next)
+			if (hashCode == entries[i].hashCode &&
+				String_Equals(key, entries[i].key))
 			{
-				value = e->value;
+				value = entries[i].value;
 				return true;
 			}
 	}
@@ -145,6 +154,36 @@ template<class T>
 bool StringHash<T>::Set(String *key, T value)
 {
 	return Insert(key, value, false);
+}
+
+template<class T>
+void StringHash<T>::FreeValues()
+{
+	for (int32_t i = 0; i < count; i++)
+	{
+		free(entries[i].value);
+		entries[i].value = nullptr;
+	}
+}
+
+template<class T>
+void StringHash<T>::DeleteValues()
+{
+	for (int32_t i = 0; i < count; i++)
+	{
+		delete entries[i].value;
+		entries[i].value = nullptr;
+	}
+}
+
+template<class T>
+void StringHash<T>::DeleteArrayValues()
+{
+	for (int32_t i = 0; i < count; i++)
+	{
+		delete[] entries[i].value;
+		entries[i].value = nullptr;
+	}
 }
 
 #endif // VM__STRING_HASH_INTERNAL_H

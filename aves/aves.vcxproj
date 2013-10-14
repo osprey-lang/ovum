@@ -87,16 +87,22 @@
     <ClInclude Include="aves_buffer.h" />
     <ClInclude Include="aves_enum.h" />
     <ClInclude Include="aves_env.h" />
+    <ClInclude Include="aves_error.h" />
+    <ClInclude Include="aves_hash.h" />
+    <ClInclude Include="aves_helpers.h" />
     <ClInclude Include="aves_list.h" />
     <ClInclude Include="aves_math.h" />
+    <ClInclude Include="aves_method.h" />
     <ClInclude Include="aves_ns.h" />
     <ClInclude Include="aves_boolean.h" />
     <ClInclude Include="aves_int.h" />
     <ClInclude Include="aves_object.h" />
     <ClInclude Include="aves_real.h" />
+    <ClInclude Include="aves_set.h" />
     <ClInclude Include="aves_shared_strings.h" />
     <ClInclude Include="aves_string.h" />
     <ClInclude Include="aves_stringbuffer.h" />
+    <ClInclude Include="aves_type.h" />
     <ClInclude Include="aves_uint.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
@@ -114,14 +120,20 @@
     </ClCompile>
     <ClCompile Include="enum.cpp" />
     <ClCompile Include="env.cpp" />
+    <ClCompile Include="error.cpp" />
+    <ClCompile Include="hash.cpp" />
+    <ClCompile Include="helpers.cpp" />
     <ClCompile Include="int.cpp" />
     <ClCompile Include="list.cpp" />
     <ClCompile Include="math.cpp" />
+    <ClCompile Include="method.cpp" />
     <ClCompile Include="object.cpp" />
     <ClCompile Include="real.cpp" />
+    <ClCompile Include="set.cpp" />
     <ClCompile Include="shared_strings.cpp" />
     <ClCompile Include="string.cpp" />
     <ClCompile Include="stringbuffer.cpp" />
+    <ClCompile Include="type.cpp" />
     <ClCompile Include="uint.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

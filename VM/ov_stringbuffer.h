@@ -17,6 +17,8 @@ private:
 	int32_t length;
 	uchar *data;
 
+	static const size_t DefaultCapacity = 128;
+
 public:
 	inline StringBuffer(ThreadHandle thread, const int32_t capacity = StringBuffer::DefaultCapacity)
 		 : length(0), data(nullptr)
@@ -165,9 +167,7 @@ public:
 
 	inline String *ToString(ThreadHandle thread)
 	{
-		String *output;
-		GC_ConstructString(thread, this->length, this->data, &output);
-		return output;
+		return GC_ConstructString(thread, this->length, this->data);
 	}
 
 	// If buf is null, returns only the size of the resulting string,
@@ -249,14 +249,13 @@ private:
 
 		if (this->length + newAmount > this->capacity)
 		{
-			int32_t newLength = this->length + newAmount ;
-			int32_t remainder = newLength % CapacityIncrement;
-			SetCapacity(thread, newLength + (remainder ? CapacityIncrement - remainder : 0));
+			// Double the capacity, but make sure newAmount will actually fit too
+			int32_t newLength = this->length << 1;
+			if (newLength < this->length + newAmount)
+				newLength += newAmount;
+			SetCapacity(thread, newLength);
 		}
 	}
-
-	static const size_t DefaultCapacity = 16;
-	static const size_t CapacityIncrement = 32;
 };
 
 #endif // VM__STRINGBUFFER_H

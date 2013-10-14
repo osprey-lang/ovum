@@ -1,16 +1,13 @@
 #include <shlwapi.h>
 #include <iostream>
 #include <sstream>
+#include <memory>
 #include "ov_module.internal.h"
 #include "ov_stringbuffer.internal.h"
 
-namespace
-{
-	LitString<4> _stdModuleName = { 4, 0, STR_STATIC, 'a','v','e','s',0 };
-}
-String *stdModuleName = _S(_stdModuleName);
+using namespace std;
 
-vector<Module*> *Module::loadedModules = nullptr;
+Module::Pool *Module::loadedModules = nullptr;
 
 namespace module_file
 {
@@ -25,17 +22,10 @@ String *ModuleReader::ReadString()
 {
 	const int32_t length = ReadInt32();
 
-	MutableString *output = (MutableString*)malloc(sizeof(String) + length * sizeof(uchar));
-
-	output->length   = length;
-	output->hashCode = 0;
-	output->flags    = STR_STATIC;
-
-	// Note: the module file does NOT include a terminating \0!
-	Read(&output->firstChar, length);
-	(&output->firstChar)[length] = '\0'; // So we need to add it ourselves
-
-	return (String*)output;
+	if (length <= MaxShortStringLength)
+		return ReadShortString(length);
+	else
+		return ReadLongString(length);
 }
 
 String *ModuleReader::ReadStringOrNull()
@@ -45,17 +35,10 @@ String *ModuleReader::ReadStringOrNull()
 	if (length == 0)
 		return nullptr;
 
-	MutableString *output = (MutableString*)malloc(sizeof(String) + length * sizeof(uchar));
-
-	output->length   = length;
-	output->hashCode = 0;
-	output->flags    = STR_STATIC;
-
-	// Note: the module file does NOT include a terminating \0!
-	Read(&output->firstChar, length);
-	(&output->firstChar)[length] = '\0'; // So we need to add it ourselves
-
-	return (String*)output;
+	if (length <= MaxShortStringLength)
+		return ReadShortString(length);
+	else
+		return ReadLongString(length);
 }
 
 char *ModuleReader::ReadCString()
@@ -69,6 +52,39 @@ char *ModuleReader::ReadCString()
 	Read(output, length);
 
 	return output;
+}
+
+String *ModuleReader::ReadShortString(const int32_t length)
+{
+	LitString<MaxShortStringLength> buf = { length, 0, StringFlags::STATIC };
+	// Fill the buffer with contents from the file
+	Read(const_cast<uchar*>(buf.chars), length);
+
+	String *intern = GC::gc->GetInternedString(_S(buf));
+	if (intern == nullptr)
+	{
+		// Not interned, have to allocate!
+		intern = GC::gc->ConstructString(nullptr, length, buf.chars);
+		GC::gc->InternString(intern);
+	}
+
+	return intern;
+}
+
+String *ModuleReader::ReadLongString(const int32_t length)
+{
+	Module::TempArr<uchar> data(new uchar[length + 1]);
+
+	// Note: the module file does NOT include a terminating \0!
+	Read(data.GetValue(), length);
+
+	// If a string with this value is already interned, we get that string instead.
+	// If we have that string, GC::InternString does nothing; if we don't, we have
+	// a brand new string and interning it actually interns it.
+	String *string = GC::gc->ConstructString(nullptr, length, data.GetValue());
+	GC::gc->InternString(string);
+
+	return string;
 }
 
 Module::Module(ModuleMeta &meta) :
@@ -93,20 +109,21 @@ Module::Module(ModuleMeta &meta) :
 
 Module::~Module()
 {
-	free(name);
+#ifdef PRINT_DEBUG_INFO
+	std::wcout << L"Releasing module: ";
+	VM::PrintLn(this->name);
+#endif
+	// Note: Don't touch any of the string values.
+	// They're managed by the GC, so we let her clean it up.
 
-	types.DeleteEntries();
 	functions.DeleteEntries();
 	fields.DeleteEntries();
 	methods.DeleteEntries();
+	types.DeleteEntries();
 
-	strings.FreeEntries(); // these strings were allocated with malloc(), not new
+	//members.DeleteValues(); // Nope, these values are not pointers
 
-	moduleRefs.DeleteEntries();
-	typeRefs.DeleteEntries();
-	functionRefs.DeleteEntries();
-	fieldRefs.DeleteEntries();
-	methodRefs.DeleteEntries();
+	// Don't delete the refs here! They are in their own modules.
 
 	FreeNativeLibrary();
 }
@@ -117,9 +134,9 @@ const Type *Module::FindType(String *name, bool includeInternal) const
 	if (!members.Get(name, member))
 		return nullptr;
 
-	if (!includeInternal && (member.flags & MMEM_PROTECTION) == MMEM_INTERNAL
+	if (!includeInternal && (member.flags & ModuleMemberFlags::PROTECTION) == ModuleMemberFlags::INTERNAL
 		||
-		(member.flags & MMEM_KIND) != MMEM_TYPE)
+		(member.flags & ModuleMemberFlags::KIND) != ModuleMemberFlags::TYPE)
 		return nullptr;
 
 	return member.type;
@@ -131,9 +148,9 @@ Method *Module::FindGlobalFunction(String *name, bool includeInternal) const
 	if (!members.Get(name, member))
 		return nullptr;
 
-	if (!includeInternal && (member.flags & MMEM_PROTECTION) == MMEM_INTERNAL
+	if (!includeInternal && (member.flags & ModuleMemberFlags::PROTECTION) == ModuleMemberFlags::INTERNAL
 		||
-		(member.flags & MMEM_KIND) != MMEM_FUNCTION)
+		(member.flags & ModuleMemberFlags::KIND) != ModuleMemberFlags::FUNCTION)
 		return nullptr;
 
 	return member.function;
@@ -145,9 +162,9 @@ const bool Module::FindConstant(String *name, bool includeInternal, Value &resul
 	if (!members.Get(name, member))
 		return false;
 
-	if (!includeInternal && (member.flags & MMEM_PROTECTION) == MMEM_INTERNAL
+	if (!includeInternal && (member.flags & ModuleMemberFlags::PROTECTION) == ModuleMemberFlags::INTERNAL
 		||
-		(member.flags & MMEM_KIND) != MMEM_CONSTANT)
+		(member.flags & ModuleMemberFlags::KIND) != ModuleMemberFlags::CONSTANT)
 		return false;
 
 	result = member.constant;
@@ -163,27 +180,14 @@ Module *Module::FindModuleRef(TokenId token) const
 	return moduleRefs[TOKEN_INDEX(token)];
 }
 
-Method *Module::FindGlobalFunction(TokenId token) const
-{
-	assert((token & IDMASK_MEMBERKIND) == IDMASK_FUNCTIONDEF ||
-		(token & IDMASK_MEMBERKIND) == IDMASK_FUNCTIONREF);
-
-	if (token & IDMASK_FUNCTIONDEF)
-		return functions[TOKEN_INDEX(token)];
-	else if (token & IDMASK_FUNCTIONREF)
-		return functionRefs[TOKEN_INDEX(token)];
-
-	return nullptr; // not found
-}
-
 const Type *Module::FindType(TokenId token) const
 {
 	assert((token & IDMASK_MEMBERKIND) == IDMASK_TYPEDEF ||
 		(token & IDMASK_MEMBERKIND) == IDMASK_TYPEREF);
 
-	if (token & IDMASK_TYPEDEF)
+	if ((token & IDMASK_MEMBERKIND) == IDMASK_TYPEDEF)
 		return types[TOKEN_INDEX(token)];
-	else if (token & IDMASK_TYPEREF)
+	else if ((token & IDMASK_MEMBERKIND) == IDMASK_TYPEREF)
 		return typeRefs[TOKEN_INDEX(token)];
 
 	return nullptr; // not found
@@ -192,12 +196,20 @@ const Type *Module::FindType(TokenId token) const
 Method *Module::FindMethod(TokenId token) const
 {
 	assert((token & IDMASK_MEMBERKIND) == IDMASK_METHODDEF ||
-		(token & IDMASK_MEMBERKIND) == IDMASK_METHODREF);
+		(token & IDMASK_MEMBERKIND) == IDMASK_METHODREF ||
+		(token & IDMASK_MEMBERKIND) == IDMASK_FUNCTIONDEF ||
+		(token & IDMASK_MEMBERKIND) == IDMASK_FUNCTIONREF);
 
-	if (token & IDMASK_METHODDEF)
-		return methods[TOKEN_INDEX(token)];
-	else if (token & IDMASK_METHODREF)
-		return methodRefs[TOKEN_INDEX(token)];
+	uint32_t idx = TOKEN_INDEX(token);
+
+	if ((token & IDMASK_MEMBERKIND) == IDMASK_METHODDEF)
+		return methods[idx];
+	else if ((token & IDMASK_MEMBERKIND) == IDMASK_METHODREF)
+		return methodRefs[idx];
+	else if ((token & IDMASK_MEMBERKIND) == IDMASK_FUNCTIONDEF)
+		return functions[idx];
+	else if ((token & IDMASK_MEMBERKIND) == IDMASK_FUNCTIONREF)
+		return functionRefs[idx];
 
 	return nullptr; // not found
 }
@@ -207,9 +219,9 @@ Field *Module::FindField(TokenId token) const
 	assert((token & IDMASK_MEMBERKIND) == IDMASK_FIELDDEF ||
 		(token & IDMASK_MEMBERKIND) == IDMASK_FIELDREF);
 
-	if (token & IDMASK_FIELDDEF)
+	if ((token & IDMASK_MEMBERKIND) == IDMASK_FIELDDEF)
 		return fields[TOKEN_INDEX(token)];
-	else if (token & IDMASK_FIELDREF)
+	else if ((token & IDMASK_MEMBERKIND) == IDMASK_FIELDREF)
 		return fieldRefs[TOKEN_INDEX(token)];
 
 	return nullptr; // not found
@@ -219,7 +231,7 @@ String *Module::FindString(TokenId token) const
 {
 	assert((token & IDMASK_MEMBERKIND) == IDMASK_STRING);
 
-	if (token & IDMASK_STRING)
+	if ((token & IDMASK_MEMBERKIND) == IDMASK_STRING)
 		return strings[TOKEN_INDEX(token)];
 
 	return nullptr;
@@ -235,14 +247,7 @@ Module *Module::Find(String *name)
 {
 	using namespace std;
 
-	for (vector<Module*>::iterator i = loadedModules->begin(); i != loadedModules->end(); ++i)
-	{
-		Module *mod = *i;
-		if (String_Equals(mod->name, name))
-			return mod;
-	}
-
-	return nullptr;
+	return loadedModules->Get(name);
 }
 
 
@@ -269,7 +274,7 @@ Module *Module::Open(const wchar_t *fileName)
 		// It's not fully loaded yet, but we add it specifically so that we can detect
 		// circular dependencies.
 		Temp<Module> output(new Module(meta));
-		loadedModules->push_back(output.GetValue());
+		loadedModules->Add(output.GetValue());
 
 		if (meta.nativeLib)
 			output.GetValue()->LoadNativeLibrary(meta.nativeLib, fileName);
@@ -297,7 +302,7 @@ Module *Module::Open(const wchar_t *fileName)
 			Method *mainMethod = output.GetValue()->FindMethod(mainMethodId);
 			if (mainMethod == nullptr)
 				throw ModuleLoadException(reader.fileName, "Unresolved main method token ID.");
-			if (mainMethod->flags & M_INSTANCE)
+			if ((mainMethod->flags & MemberFlags::INSTANCE) != MemberFlags::NONE)
 				throw ModuleLoadException(reader.fileName, "Main method cannot be an instance method.");
 
 			output.GetValue()->mainMethod = mainMethod;
@@ -310,7 +315,7 @@ Module *Module::Open(const wchar_t *fileName)
 		throw ModuleLoadException(fileName, ioError.what());
 	}
 
-	throw ModuleLoadException(fileName, "Function not fully implemented yet.");
+	outputModule->fullyOpened = true;
 
 	return outputModule;
 }
@@ -321,10 +326,10 @@ Module *Module::OpenByName(String *name)
 	if (mod = Find(name))
 		return mod;
 
-	StringBuffer moduleFileName(nullptr, max(vmState.startupPath->length, vmState.modulePath->length) + name->length + 16);
+	StringBuffer moduleFileName(nullptr, max(VM::vm->startupPath->length, VM::vm->modulePath->length) + name->length + 16);
 
 	const int pathCount = 2;
-	String *paths[pathCount] = { vmState.startupPath, vmState.modulePath };
+	String *paths[pathCount] = { VM::vm->startupPath, VM::vm->modulePath };
 
 	wchar_t *filePath;
 
@@ -358,19 +363,19 @@ Module *Module::OpenByName(String *name)
 		throw ModuleLoadException(wname, "Could not locate the module file.");
 	}
 
-	if (vmState.verbose)
+	if (VM::vm->verbose)
 	{
 		wcout << L"Loading module '";
-		VM_Print(name);
+		VM::Print(name);
 		wcout << L"' from file '" << filePath << L'\'' << endl;
 	}
 
 	Module *output = Open(filePath);
 
-	if (vmState.verbose)
+	if (VM::vm->verbose)
 	{
 		wcout << L"Successfully loaded module '";
-		VM_Print(name);
+		VM::Print(name);
 		wcout << L"'." << endl;
 	}
 
@@ -383,18 +388,12 @@ Module *Module::OpenByName(String *name)
 void Module::Init()
 {
 	if (loadedModules == nullptr)
-		loadedModules = new vector<Module*>();
+		loadedModules = new Pool();
 }
 
-void Module::UnloadAll()
+void Module::Unload()
 {
 	using namespace std;
-
-	while (loadedModules->size() > 0)
-	{
-		delete *loadedModules->end();
-		loadedModules->pop_back();
-	}
 
 	delete loadedModules;
 }
@@ -448,23 +447,20 @@ void Module::VerifyMagicNumber(ModuleReader &reader)
 
 void Module::ReadModuleMeta(ModuleReader &reader, ModuleMeta &target)
 {
-	Temp<String, true> name(reader.ReadString()); // name
-	ReadVersion(reader, target.version); // version
+	target.name = reader.ReadString();
+	ReadVersion(reader, target.version);
 
 	// String map (skip)
 	reader.SkipCollection();
 
-	Temp<String, true> nativeLib(reader.ReadStringOrNull()); // nativeLib (nullptr if absent)
+	target.nativeLib = reader.ReadStringOrNull(); // null if absent
 
-	target.typeCount     = reader.ReadInt32();  // typeCount
-	target.functionCount = reader.ReadInt32();  // functionCount
-	target.constantCount = reader.ReadInt32();  // constantCount
-	target.fieldCount    = reader.ReadInt32();  // fieldCount
-	target.methodCount   = reader.ReadInt32();  // methodCount
-	target.methodStart   = reader.ReadUInt32(); // methodStart
-
-	target.name = name.UseValue();
-	target.nativeLib = nativeLib.UseValue();
+	target.typeCount     = reader.ReadInt32();
+	target.functionCount = reader.ReadInt32();
+	target.constantCount = reader.ReadInt32();
+	target.fieldCount    = reader.ReadInt32();
+	target.methodCount   = reader.ReadInt32();
+	target.methodStart   = reader.ReadUInt32() + sizeof(uint32_t); // methodStart + method block size prefix
 }
 
 void Module::ReadVersion(ModuleReader &reader, ModuleVersion &target)
@@ -619,7 +615,7 @@ void Module::ReadFieldRefs(ModuleReader &reader, Temp<Module> &target)
 		Member *member = type->GetMember(fieldName);
 		if (!member)
 			throw ModuleLoadException(reader.fileName, "Unresolved FieldRef.");
-		if (!(member->flags & M_FIELD))
+		if ((member->flags & MemberFlags::FIELD) == MemberFlags::NONE)
 			throw ModuleLoadException(reader.fileName, "FieldRef does not refer to a field.");
 
 		module->fieldRefs.Add((Field*)member);
@@ -657,7 +653,7 @@ void Module::ReadMethodRefs(ModuleReader &reader, Temp<Module> &target)
 		Member *member = type->GetMember(methodName);
 		if (!member)
 			throw ModuleLoadException(reader.fileName, "Unresolved MethodRef.");
-		if (!(member->flags & M_METHOD))
+		if ((member->flags & MemberFlags::METHOD) == MemberFlags::NONE)
 			throw ModuleLoadException(reader.fileName, "MethodRef does not refer to a method.");
 
 		module->methodRefs.Add((Method*)member);
@@ -703,7 +699,7 @@ void Module::ReadTypeDefs(ModuleReader &reader, Temp<Module> &target)
 
 		Type *type = ReadSingleType(reader, target, id);
 		module->types.Add(type);
-		module->members.Add(type->fullName, ModuleMember(type, (type->flags & TYPE_PRIVATE) == TYPE_PRIVATE));
+		module->members.Add(type->fullName, ModuleMember(type, (type->flags & TypeFlags::PRIVATE) == TypeFlags::PRIVATE));
 	}
 
 	CHECKPOS_AFTER(TypeDef);
@@ -725,8 +721,9 @@ void Module::ReadFunctionDefs(ModuleReader &reader, Temp<Module> &target)
 
 		Temp<Method> tempFunction(ReadSingleMethod(reader, target));
 		Method *function = tempFunction.GetValue();
+		function->SetDeclType(nullptr);
 
-		if (!module->members.Add(function->name, ModuleMember(function, (function->flags & M_PRIVATE) == M_PRIVATE)))
+		if (!module->members.Add(function->name, ModuleMember(function, (function->flags & MemberFlags::PRIVATE) == MemberFlags::PRIVATE)))
 			throw ModuleLoadException(reader.fileName, "Duplicate global member name.");
 		module->functions.Add(function);
 
@@ -761,7 +758,7 @@ void Module::ReadConstantDefs(ModuleReader &reader, Temp<Module> &target)
 		const Type *type = module->FindType(typeId);
 		if (type == nullptr)
 			throw ModuleLoadException(reader.fileName, "Unresolved TypeRef or TypeDef token ID in ConstantDef.");
-		if (type != stdTypes.String && !(type->flags & TYPE_PRIMITIVE))
+		if (type != VM::vm->types.String && (type->flags & TypeFlags::PRIMITIVE) != TypeFlags::PRIMITIVE)
 			throw ModuleLoadException(reader.fileName, "ConstantDef type must be primitive or aves.String.");
 
 		int64_t value = reader.ReadInt64();
@@ -769,7 +766,7 @@ void Module::ReadConstantDefs(ModuleReader &reader, Temp<Module> &target)
 		Value constant;
 		constant.type = type;
 
-		if (type == stdTypes.String)
+		if (type == VM::vm->types.String)
 		{
 			String *str = module->FindString((TokenId)value);
 			if (str == nullptr)
@@ -846,7 +843,7 @@ Type *Module::ReadSingleType(ModuleReader &reader, Temp<Module> &target, const T
 	}
 
 	output.UseValue();
-	TryRegisterStandardType(type);
+	TryRegisterStandardType(type, target, reader);
 	return type;
 }
 
@@ -875,17 +872,17 @@ void Module::ReadFields(ModuleReader &reader, Temp<Module> &targetModule, Temp<T
 		FieldFlags fieldFlags = (FieldFlags)reader.ReadInt32();
 		if ((fieldFlags & FIELD_HASVALUE) && (fieldFlags & FIELD_INSTANCE))
 			throw ModuleLoadException(reader.fileName, "The field flags hasValue and instance cannot be used together.");
-		MemberFlags flags = (MemberFlags)0;
+		MemberFlags flags = MemberFlags::NONE;
 
 		if (fieldFlags & FIELD_PUBLIC)
-			flags = flags | M_PUBLIC;
+			flags = flags | MemberFlags::PUBLIC;
 		else if (fieldFlags & FIELD_PRIVATE)
-			flags = flags | M_PRIVATE;
+			flags = flags | MemberFlags::PRIVATE;
 		else if (fieldFlags & FIELD_PROTECTED)
-			flags = flags | M_PROTECTED;
+			flags = flags | MemberFlags::PROTECTED;
 
 		if (fieldFlags & FIELD_INSTANCE)
-			flags = flags | M_INSTANCE;
+			flags = flags | MemberFlags::INSTANCE;
 
 		String *name = module->FindString(reader.ReadToken());
 		if (name == nullptr)
@@ -908,9 +905,8 @@ void Module::ReadFields(ModuleReader &reader, Temp<Module> &targetModule, Temp<T
 			type->fieldCount++;
 			type->size += sizeof(Value);
 		}
-		// If the field is static, we do not allocate any storage for it until
-		// the parent type's static constructor is about to be run, as that will
-		// be the first time the field is referred to.
+		else
+			field->staticValue = nullptr; // initialized only on demand
 
 		tempField.UseValue();
 	}
@@ -938,7 +934,7 @@ void Module::ReadMethods(ModuleReader &reader, Temp<Module> &targetModule, Temp<
 		if (!type->members.Add(method->name, method))
 			throw ModuleLoadException(reader.fileName, "Duplicate member name in type.");
 		module->methods.Add(method);
-		method->declType = type;
+		method->SetDeclType(type);
 
 		tempMethod.UseValue();
 	}
@@ -962,7 +958,7 @@ void Module::ReadProperties(ModuleReader &reader, Temp<Module> &targetModule, Te
 		TokenId getterId = reader.ReadToken();
 		TokenId setterId = reader.ReadToken();
 
-		MemberFlags flags = (MemberFlags)0;
+		MemberFlags flags = MemberFlags::NONE;
 		Method *getter = nullptr;
 		if (getterId != 0)
 		{
@@ -974,7 +970,7 @@ void Module::ReadProperties(ModuleReader &reader, Temp<Module> &targetModule, Te
 			if (getter->declType != type)
 				throw ModuleLoadException(reader.fileName, "Property getter must refer to a method in the same type as the property.");
 
-			flags = getter->flags & ~M_IMPL;
+			flags = getter->flags & ~MemberFlags::IMPL;
 		}
 
 		Method *setter = nullptr;
@@ -988,8 +984,8 @@ void Module::ReadProperties(ModuleReader &reader, Temp<Module> &targetModule, Te
 			if (setter->declType != type)
 				throw ModuleLoadException(reader.fileName, "Property setter must refer to a method in the same type as the property.");
 
-			MemberFlags setterFlags = setter->flags & ~M_IMPL;
-			if (flags && setterFlags != flags)
+			MemberFlags setterFlags = setter->flags & ~MemberFlags::IMPL;
+			if (flags != MemberFlags::NONE && setterFlags != flags)
 				throw ModuleLoadException(reader.fileName, "Property getter and setter must have the same accessibility, and matching abstract, virtual, sealed and instance flags.");
 
 			// We've just determined that either the flags the same, or 'flags' is empty,
@@ -1034,10 +1030,10 @@ void Module::ReadOperators(ModuleReader &reader, Temp<Module> &targetModule, Tem
 			throw ModuleLoadException(reader.fileName, "Unresolved MethodDef token ID in operator.");
 		if (method->declType != type)
 			throw ModuleLoadException(reader.fileName, "Operator method must be in the same type as the property.");
-		if (type->operators[op] != nullptr)
+		if (type->operators[(int)op] != nullptr)
 			throw ModuleLoadException(reader.fileName, "Duplicate operator declaration.");
 
-		type->operators[op] = method;
+		type->operators[(int)op] = method;
 	}
 
 	CHECKPOS_AFTER(OperatorDef);
@@ -1063,17 +1059,17 @@ Method *Module::ReadSingleMethod(ModuleReader &reader, Temp<Module> &target)
 	if (overloadCount == 0)
 		throw ModuleLoadException(reader.fileName, "Method found without overloads.");
 
-	MemberFlags memberFlags = M_NONE;
+	MemberFlags memberFlags = MemberFlags::NONE;
 	if (methodFlags & FM_PUBLIC)
-		memberFlags = memberFlags | M_PUBLIC;
+		memberFlags = memberFlags | MemberFlags::PUBLIC;
 	else if (methodFlags & FM_PRIVATE)
-		memberFlags = memberFlags | M_PRIVATE;
+		memberFlags = memberFlags | MemberFlags::PRIVATE;
 	else if (methodFlags & FM_PROTECTED)
-		memberFlags = memberFlags | M_PROTECTED;
+		memberFlags = memberFlags | MemberFlags::PROTECTED;
 	if (methodFlags & FM_INSTANCE)
-		memberFlags = memberFlags | M_INSTANCE;
+		memberFlags = memberFlags | MemberFlags::INSTANCE;
 	if (methodFlags & FM_IMPL)
-		memberFlags = memberFlags | M_IMPL;
+		memberFlags = memberFlags | MemberFlags::IMPL;
 
 	Temp<Method> output(new Method(name, module, memberFlags));
 	Method *method = output.GetValue();
@@ -1091,46 +1087,45 @@ Method *Module::ReadSingleMethod(ModuleReader &reader, Temp<Module> &target)
 		// Parameter count
 		uint16_t paramCount = reader.ReadUInt16();
 		// Skip parameter names (not needed)
-		for (int32_t k = 0; k < paramCount; k++)
-		{
-			int32_t nameLength = reader.ReadInt32();
-			reader.stream.seekg(nameLength * sizeof(uchar), ios::cur);
-		}
+		// Note: all parameter names are string IDs
+		reader.stream.seekg(paramCount * sizeof(int32_t), ios::cur);
 		ov->paramCount = paramCount;
 
 		// Flags
 		ov->flags = (MethodFlags)0;
 		if (methodFlags & FM_CTOR)
-			ov->flags = ov->flags | METHOD_CTOR;
+			ov->flags = ov->flags | MethodFlags::CTOR;
 		if (methodFlags & FM_INSTANCE)
-			ov->flags = ov->flags | METHOD_INSTANCE;
+			ov->flags = ov->flags | MethodFlags::INSTANCE;
 		if (flags & OV_VAREND)
-			ov->flags = ov->flags | METHOD_VAR_END;
+			ov->flags = ov->flags | MethodFlags::VAR_END;
 		if (flags & OV_VARSTART)
-			ov->flags = ov->flags | METHOD_VAR_START;
+			ov->flags = ov->flags | MethodFlags::VAR_START;
 		if (flags & OV_VIRTUAL)
-			ov->flags = ov->flags | METHOD_VIRTUAL;
+			ov->flags = ov->flags | MethodFlags::VIRTUAL;
 		if (flags & OV_ABSTRACT)
-			ov->flags = ov->flags | METHOD_ABSTRACT;
+			ov->flags = ov->flags | MethodFlags::ABSTRACT;
 
 		// Header
-		int32_t tryCount = 0;
-		TempArr<Method::TryBlock> tries(nullptr);
-		if (flags & OV_SHORTHEADER)
 		{
-			ov->optionalParamCount = ov->locals = 0;
-			ov->maxStack = 8;
-		}
-		else
-		{
-			ov->optionalParamCount = reader.ReadUInt16();
-			ov->locals = reader.ReadUInt16();
-			ov->maxStack = reader.ReadUInt16();
-			tries = TempArr<Method::TryBlock>(ReadTryBlocks(reader, target, tryCount));
-		}
+			int32_t tryCount = 0;
+			TempArr<Method::TryBlock> tries(nullptr);
+			if (flags & OV_SHORTHEADER)
+			{
+				ov->optionalParamCount = ov->locals = 0;
+				ov->maxStack = 8;
+			}
+			else
+			{
+				ov->optionalParamCount = reader.ReadUInt16();
+				ov->locals = reader.ReadUInt16();
+				ov->maxStack = reader.ReadUInt16();
+				tries = TempArr<Method::TryBlock>(ReadTryBlocks(reader, target, tryCount));
+			}
 
-		ov->tryBlockCount = tryCount;
-		ov->tryBlocks = tries.UseValue();
+			ov->tryBlockCount = tryCount;
+			ov->tryBlocks = tries.UseValue();
+		}
 
 		// Body
 		if (!(flags & OV_ABSTRACT))
@@ -1151,7 +1146,7 @@ Method *Module::ReadSingleMethod(ModuleReader &reader, Temp<Module> &target)
 				const ios::pos_type posCurrent = reader.stream.tellg(); // Resumption point
 
 				// Read the method body
-				reader.stream.seekg(module->methodStart, ios::beg);
+				reader.stream.seekg(module->methodStart + offset, ios::beg);
 				TempArr<uint8_t> body(new uint8_t[length]);
 				reader.Read(body.GetValue(), length);
 
@@ -1166,7 +1161,7 @@ Method *Module::ReadSingleMethod(ModuleReader &reader, Temp<Module> &target)
 
 	const ios::pos_type posAfter = reader.stream.tellg();
 	if (posBefore + (ios::pos_type)size != posAfter)
-			throw ModuleLoadException(reader.fileName, "The actual size of the overloads table did not match the expected size.");
+		throw ModuleLoadException(reader.fileName, "The actual size of the overloads table did not match the expected size.");
 
 	method->overloadCount = overloadCount;
 	method->overloads = tempOverloads.UseValue();
@@ -1195,12 +1190,12 @@ Method::TryBlock *Module::ReadTryBlocks(ModuleReader &reader, Temp<Module> &targ
 		Method::TryBlock *curTry = tries + i;
 		*curTry = Method::TryBlock(kind, tryStart, tryEnd);
 
-		if (kind == Method::TryBlock::FINALLY)
+		if (kind == Method::TryBlock::TryKind::FINALLY)
 		{
 			curTry->finallyBlock.finallyStart = reader.ReadUInt32();
 			curTry->finallyBlock.finallyEnd = reader.ReadUInt32();
 		}
-		else if (kind == Method::TryBlock::CATCH)
+		else if (kind == Method::TryBlock::TryKind::CATCH)
 		{
 			uint32_t catchSize = reader.ReadUInt32();
 			if (catchSize != 0)
@@ -1235,15 +1230,33 @@ Method::TryBlock *Module::ReadTryBlocks(ModuleReader &reader, Temp<Module> &targ
 	return output.UseValue();
 }
 
-void Module::TryRegisterStandardType(Type *type)
+void Module::TryRegisterStandardType(Type *type, Temp<Module> &fromModule, ModuleReader &reader)
 {
 	for (unsigned int i = 0; i < std_type_names::StandardTypeCount; i++)
 	{
 		std_type_names::StdType stdType = std_type_names::Types[i];
 		if (String_Equals(type->fullName, stdType.name))
 		{
-			if (stdTypes.*(stdType.member) == nullptr)
-				stdTypes.*(stdType.member) = type;
+			if (VM::vm->types.*(stdType.member) == nullptr)
+			{
+				VM::vm->types.*(stdType.member) = type;
+				if (stdType.initerFunction)
+				{
+					void *func = GetProcAddress(fromModule.GetValue()->nativeLib, stdType.initerFunction);
+					if (!func)
+						throw ModuleLoadException(reader.fileName, "Missing instance initializer for standard type in native library.");
+
+					// Can't really switch here :(
+					// Also because all initializer functions are of different types,
+					// we can't really store a VM::IniterFunctions member in stdType.
+					if (type == VM::vm->types.List)
+						VM::vm->functions.initListInstance = (ListInitializer)func;
+					else if (type == VM::vm->types.Hash)
+						VM::vm->functions.initHashInstance = (HashInitializer)func;
+					else if (type == VM::vm->types.Type)
+						VM::vm->functions.initTypeToken = (TypeTokenInitializer)func;
+				}
+			}
 			break;
 		}
 	}

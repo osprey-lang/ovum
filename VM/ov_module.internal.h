@@ -6,11 +6,9 @@
 #include <cstdio>
 #include <iosfwd>
 #include <fstream>
-#include <vector>
+//#include <vector>
 #include "ov_vm.internal.h"
 #include "ov_type.internal.h"
-
-using namespace std;
 
 // Forward declarations
 //class Type;
@@ -19,36 +17,23 @@ using namespace std;
 //class Field;
 //class Property;
 
-extern String *stdModuleName;
 
-
-TYPED_ENUM(ModuleMemberFlags, uint16_t)
+enum class ModuleMemberFlags : uint16_t
 {
 	// Mask for extracting the kind of member (type, function or constant).
-	MMEM_KIND     = 0x000f,
+	KIND     = 0x000f,
 
-	MMEM_NONE     = 0x0000,
+	NONE     = 0x0000,
 
-	MMEM_TYPE     = 0x0001,
-	MMEM_FUNCTION = 0x0002,
-	MMEM_CONSTANT = 0x0003,
+	TYPE     = 0x0001,
+	FUNCTION = 0x0002,
+	CONSTANT = 0x0003,
 
-	MMEM_PROTECTION = 0x00f0,
-	MMEM_PUBLIC     = 0x0010,
-	MMEM_INTERNAL   = 0x0020,
+	PROTECTION = 0x00f0,
+	PUBLIC     = 0x0010,
+	INTERNAL   = 0x0020,
 };
-inline ModuleMemberFlags operator|(const ModuleMemberFlags a, const ModuleMemberFlags b)
-{
-	return static_cast<ModuleMemberFlags>((uint16_t)a | (uint16_t)b);
-}
-inline ModuleMemberFlags operator^(const ModuleMemberFlags a, const ModuleMemberFlags b)
-{
-	return static_cast<ModuleMemberFlags>((uint16_t)a ^ (uint16_t)b);
-}
-inline ModuleMemberFlags operator&(const ModuleMemberFlags a, const ModuleMemberFlags b)
-{
-	return static_cast<ModuleMemberFlags>((uint16_t)a & (uint16_t)b);
-}
+ENUM_OPS(ModuleMemberFlags, uint16_t);
 
 
 class ModuleMember
@@ -63,20 +48,20 @@ public:
 	};
 
 	inline ModuleMember()
-		: constant(NULL_VALUE), flags(MMEM_NONE)
+		: constant(NULL_VALUE), flags(ModuleMemberFlags::NONE)
 	{ }
 	inline ModuleMember(Type *type, bool isInternal)
-		: type(type), flags(MMEM_TYPE | (isInternal ? MMEM_INTERNAL : MMEM_PUBLIC))
+		: type(type), flags(ModuleMemberFlags::TYPE | (isInternal ? ModuleMemberFlags::INTERNAL : ModuleMemberFlags::PUBLIC))
 	{ }
 	inline ModuleMember(Method *function, bool isInternal)
-		: function(function), flags(MMEM_FUNCTION | (isInternal ? MMEM_INTERNAL : MMEM_PUBLIC))
+		: function(function), flags(ModuleMemberFlags::FUNCTION | (isInternal ? ModuleMemberFlags::INTERNAL : ModuleMemberFlags::PUBLIC))
 	{ }
 	inline ModuleMember(Value value, bool isInternal)
-		: constant(value), flags(MMEM_CONSTANT | (isInternal ? MMEM_INTERNAL : MMEM_PUBLIC))
+		: constant(value), flags(ModuleMemberFlags::CONSTANT | (isInternal ? ModuleMemberFlags::INTERNAL : ModuleMemberFlags::PUBLIC))
 	{ }
 };
 
-TYPED_ENUM(ModuleMemberId, uint32_t)
+enum ModuleMemberId : uint32_t
 {
 	IDMASK_MEMBERKIND   = 0xff000000u,
 	IDMASK_MEMBERINDEX  = 0x00ffffffu,
@@ -98,12 +83,13 @@ typedef uint32_t TokenId;
 class ModuleReader
 {
 public:
-	ifstream stream;
+	std::ifstream stream;
 	const wchar_t *fileName;
 
 	inline ModuleReader(const wchar_t *fileName)
 		: fileName(fileName), stream()
 	{
+		using namespace std;
 		stream.exceptions(ios::failbit | ios::eofbit | ios::badbit);
 		stream.open(fileName, ios::binary | ios::in);
 	}
@@ -189,6 +175,7 @@ public:
 
 	inline void SkipCollection()
 	{
+		using namespace std;
 		uint32_t size = ReadUInt32();
 		stream.seekg(size, ios::cur);
 	}
@@ -198,6 +185,13 @@ public:
 	String *ReadStringOrNull();
 
 	char *ReadCString();
+
+private:
+	String *ReadShortString(const int32_t length);
+
+	String *ReadLongString(const int32_t length);
+
+	static const int MaxShortStringLength = 128;
 };
 
 template<>
@@ -297,10 +291,14 @@ public:
 
 	inline ~MemberTable()
 	{
-		if (this->capacity != 0)
+#ifdef PRINT_DEBUG_INFO
+		std::wcout << L"Destroying member table" << std::endl;
+#endif
+		if (this->entries)
 			delete[] this->entries;
-		this->capacity = 0;
-		this->length = 0;
+#ifdef PRINT_DEBUG_INFO
+		std::wcout << L"Finished destroying member table" << std::endl;
+#endif
 	}
 
 	inline T operator[](const uint32_t index) const
@@ -341,7 +339,6 @@ public:
 	const bool  FindConstant(String *name, bool includeInternal, Value &result) const;
 
 	Module     *FindModuleRef(TokenId token) const;
-	Method     *FindGlobalFunction(TokenId token) const;
 	const Type *FindType(TokenId token) const;
 	Method     *FindMethod(TokenId token) const;
 	Field      *FindField(TokenId token) const;
@@ -354,7 +351,80 @@ public:
 	static Module *OpenByName(String *name);
 
 	static void Init();
-	static void UnloadAll();
+	static void Unload();
+
+	class Pool
+	{
+	private:
+		int capacity;
+		int length;
+		Module **data;
+
+		void Init(int capacity)
+		{
+			capacity = max(capacity, 4);
+			data = new Module*[capacity];
+#if !NDEBUG
+			memset(data, 0, sizeof(Module*) * capacity);
+#endif
+			this->capacity = capacity;
+		}
+
+		void Resize()
+		{
+			int newCap = capacity * 2;
+
+			Module **newData = new Module*[newCap];
+			CopyMemoryT(newData, data, capacity);
+
+			capacity = newCap;
+			delete[] data;
+			data = newData;
+		}
+
+	public:
+		inline Pool() : length(0)
+		{
+			Init(0);
+		}
+		inline Pool(int capacity) : length(0)
+		{
+			Init(capacity);
+		}
+		inline ~Pool()
+		{
+			for (int i = 0; i < length; i++)
+				delete data[i];
+			delete[] data;
+		}
+
+		inline int GetLength() { return length; }
+
+		inline Module *Get(int index)
+		{
+			return data[index];
+		}
+		inline Module *Get(String *name)
+		{
+			for (int i = 0; i < length; i++)
+				if (String_Equals(data[i]->name, name))
+					return data[i];
+			return nullptr;
+		}
+
+		inline void Set(int index, Module *value)
+		{
+			data[index] = value;
+		}
+
+		inline int Add(Module *value)
+		{
+			if (length == capacity)
+				Resize();
+			data[length++] = value;
+			return length;
+		}
+	};
 
 private:
 	// Represents a T* during module loading.
@@ -466,8 +536,9 @@ private:
 	void LoadNativeLibrary(String *nativeFileName, const wchar_t *path);
 	void FreeNativeLibrary();
 
-	static std::vector<Module*> *loadedModules;
+	static Pool *loadedModules;
 
+private:
 	//static void ThrowFileNotFound(const wchar_t *fileName);
 
 	static void VerifyMagicNumber(ModuleReader &reader);
@@ -499,9 +570,9 @@ private:
 	static Method *ReadSingleMethod(ModuleReader &reader, Temp<Module> &target);
 	static Method::TryBlock *ReadTryBlocks(ModuleReader &reader, Temp<Module> &targetModule, int32_t &tryCount);
 
-	static void TryRegisterStandardType(Type *type);
+	static void TryRegisterStandardType(Type *type, Temp<Module> &fromModule, ModuleReader &reader);
 
-	TYPED_ENUM(FileMethodFlags, uint32_t)
+	enum FileMethodFlags : uint32_t
 	{
 		FM_PUBLIC    = 0x01,
 		FM_PRIVATE   = 0x02,
@@ -510,7 +581,7 @@ private:
 		FM_CTOR      = 0x10,
 		FM_IMPL      = 0x20,
 	};
-	TYPED_ENUM(OverloadFlags, uint32_t)
+	enum OverloadFlags : uint32_t
 	{
 		OV_VAREND      = 0x01,
 		OV_VARSTART    = 0x02,
@@ -519,12 +590,15 @@ private:
 		OV_VIRTUAL     = 0x10,
 		OV_ABSTRACT    = 0x20,
 	};
+
+	friend class ModuleReader;
+	friend class GC;
 };
 
 // Recover a Module pointer from a ModuleHandle.
 //#define _M(mh)	reinterpret_cast<Module*>(mh)
 
-class ModuleLoadException : public exception
+class ModuleLoadException : public std::exception
 {
 private:
 	const wchar_t *fileName;

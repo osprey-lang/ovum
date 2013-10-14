@@ -1,5 +1,6 @@
 #include "ov_vm.internal.h"
 #include "ov_string.h"
+#include <iostream>
 
 namespace std_type_names
 {
@@ -9,62 +10,69 @@ namespace std_type_names
 
 	// This macro is a horrible, evil thing. But it works.
 	#define AVES	'a','v','e','s','.'
+	#define SFS     ::StringFlags::STATIC
 
-	LitString<11> _Object             = { 11, 0, STR_STATIC, AVES,'O','b','j','e','c','t',0 };
-	LitString<12> _Boolean            = { 12, 0, STR_STATIC, AVES,'B','o','o','l','e','a','n',0 };
-	LitString<8>  _Int                = {  8, 0, STR_STATIC, AVES,'I','n','t',0 };
-	LitString<9>  _UInt               = {  9, 0, STR_STATIC, AVES,'U','I','n','t',0 };
-	LitString<9>  _Real               = {  9, 0, STR_STATIC, AVES,'R','e','a','l',0 };
-	LitString<11> _String             = { 11, 0, STR_STATIC, AVES,'S','t','r','i','n','g',0 };
-	LitString<9>  _Enum               = {  9, 0, STR_STATIC, AVES,'E','n','u','m',0 };
-	LitString<9>  _List               = {  9, 0, STR_STATIC, AVES,'L','i','s','t',0 };
-	LitString<9>  _Hash               = {  9, 0, STR_STATIC, AVES,'H','a','s','h',0 };
-	LitString<11> _Method             = { 11, 0, STR_STATIC, AVES,'M','e','t','h','o','d',0 };
-	LitString<13> _Iterator           = { 13, 0, STR_STATIC, AVES,'I','t','e','r','a','t','o','r',0 };
-	LitString<9>  _Type               = {  9, 0, STR_STATIC, AVES,'T','y','p','e',0 };
-	LitString<10> _Error              = { 10, 0, STR_STATIC, AVES,'E','r','r','o','r',0 };
-	LitString<14> _TypeError          = { 14, 0, STR_STATIC, AVES,'T','y','p','e','E','r','r','o','r',0 };
-	LitString<16> _MemoryError        = { 16, 0, STR_STATIC, AVES,'M','e','m','o','r','y','E','r','r','o','r',0 };
-	LitString<18> _OverflowError      = { 18, 0, STR_STATIC, AVES,'O','v','e','r','f','l','o','w','E','r','r','o','r',0 };
-	LitString<22> _DivideByZeroError  = { 22, 0, STR_STATIC, AVES,'D','i','v','i','d','e','B','y','Z','e','r','o','E','r','r','o','r',0 };
-	LitString<23> _NullReferenceError = { 23, 0, STR_STATIC, AVES,'N','u','l','l','R','e','f','e','r','e','n','c','e','E','r','r','o','r',0 };
+	LitString<11> _Object             = { 11, 0, SFS, AVES,'O','b','j','e','c','t',0 };
+	LitString<12> _Boolean            = { 12, 0, SFS, AVES,'B','o','o','l','e','a','n',0 };
+	LitString<8>  _Int                = {  8, 0, SFS, AVES,'I','n','t',0 };
+	LitString<9>  _UInt               = {  9, 0, SFS, AVES,'U','I','n','t',0 };
+	LitString<9>  _Real               = {  9, 0, SFS, AVES,'R','e','a','l',0 };
+	LitString<11> _String             = { 11, 0, SFS, AVES,'S','t','r','i','n','g',0 };
+	LitString<9>  _Enum               = {  9, 0, SFS, AVES,'E','n','u','m',0 };
+	LitString<9>  _List               = {  9, 0, SFS, AVES,'L','i','s','t',0 };
+	LitString<9>  _Hash               = {  9, 0, SFS, AVES,'H','a','s','h',0 };
+	LitString<11> _Method             = { 11, 0, SFS, AVES,'M','e','t','h','o','d',0 };
+	LitString<13> _Iterator           = { 13, 0, SFS, AVES,'I','t','e','r','a','t','o','r',0 };
+	LitString<9>  _Type               = {  9, 0, SFS, AVES,'T','y','p','e',0 };
+	LitString<10> _Error              = { 10, 0, SFS, AVES,'E','r','r','o','r',0 };
+	LitString<14> _TypeError          = { 14, 0, SFS, AVES,'T','y','p','e','E','r','r','o','r',0 };
+	LitString<16> _MemoryError        = { 16, 0, SFS, AVES,'M','e','m','o','r','y','E','r','r','o','r',0 };
+	LitString<18> _OverflowError      = { 18, 0, SFS, AVES,'O','v','e','r','f','l','o','w','E','r','r','o','r',0 };
+	LitString<22> _DivideByZeroError  = { 22, 0, SFS, AVES,'D','i','v','i','d','e','B','y','Z','e','r','o','E','r','r','o','r',0 };
+	LitString<23> _NullReferenceError = { 23, 0, SFS, AVES,'N','u','l','l','R','e','f','e','r','e','n','c','e','E','r','r','o','r',0 };
 
 	const unsigned int StandardTypeCount = 17;
 	const StdType Types[] = {
-		{_S(_Object),	          &StandardTypes::Object            },
-		{_S(_Boolean),	          &StandardTypes::Boolean           },
-		{_S(_Int),		          &StandardTypes::Int               },
-		{_S(_UInt),		          &StandardTypes::UInt              },
-		{_S(_Real),		          &StandardTypes::Real              },
-		{_S(_String),	          &StandardTypes::String            },
-		{_S(_List),		          &StandardTypes::List              },
-		{_S(_Hash),		          &StandardTypes::Hash              },
-		{_S(_Method),	          &StandardTypes::Method            },
-		{_S(_Iterator),	          &StandardTypes::Iterator          },
-		{_S(_Type),		          &StandardTypes::Type              },
-		{_S(_Error),	          &StandardTypes::Error             },
-		{_S(_TypeError),          &StandardTypes::TypeError         },
-		{_S(_MemoryError),		  &StandardTypes::MemoryError       },
-		{_S(_OverflowError),	  &StandardTypes::OverflowError     },
-		{_S(_DivideByZeroError),  &StandardTypes::DivideByZeroError },
-		{_S(_NullReferenceError), &StandardTypes::NullReferenceError},
+		{_S(_Object),	          &StandardTypes::Object,             nullptr},
+		{_S(_Boolean),	          &StandardTypes::Boolean,            nullptr},
+		{_S(_Int),		          &StandardTypes::Int,                nullptr},
+		{_S(_UInt),		          &StandardTypes::UInt,               nullptr},
+		{_S(_Real),		          &StandardTypes::Real,               nullptr},
+		{_S(_String),	          &StandardTypes::String,             nullptr},
+		{_S(_List),		          &StandardTypes::List,               "InitListInstance"},
+		{_S(_Hash),		          &StandardTypes::Hash,               "InitHashInstance"},
+		{_S(_Method),	          &StandardTypes::Method,             nullptr},
+		{_S(_Iterator),	          &StandardTypes::Iterator,           nullptr},
+		{_S(_Type),		          &StandardTypes::Type,               "InitTypeToken"},
+		{_S(_Error),	          &StandardTypes::Error,              nullptr},
+		{_S(_TypeError),          &StandardTypes::TypeError,          nullptr},
+		{_S(_MemoryError),		  &StandardTypes::MemoryError,        nullptr},
+		{_S(_OverflowError),	  &StandardTypes::OverflowError,      nullptr},
+		{_S(_DivideByZeroError),  &StandardTypes::DivideByZeroError,  nullptr},
+		{_S(_NullReferenceError), &StandardTypes::NullReferenceError, nullptr},
 	};
 }
 
 Type::Type(int32_t memberCount) :
-	members(memberCount)
+	members(memberCount), typeToken(NULL_VALUE),
+	size(0), fieldCount(0)
 {
 	memset(operators, 0, sizeof(Method*) * OPERATOR_COUNT);
 }
 
 Type::~Type()
 {
+#ifdef PRINT_DEBUG_INFO
+	std::wcout << L"Releasing type: ";
+	VM::PrintLn(this->fullName);
+#endif
+
 	// If this is a standard type, unregister it
 	for (unsigned int i = 0; i < std_type_names::StandardTypeCount; i++)
 	{
 		std_type_names::StdType type = std_type_names::Types[i];
-		if (stdTypes.*(type.member) == this)
-			stdTypes.*(type.member) = nullptr;
+		if (VM::vm->types.*(type.member) == this)
+			VM::vm->types.*(type.member) = nullptr;
 	}
 }
 
@@ -85,7 +93,7 @@ void Type::InitOperators()
 		this->operators[op] = method; // null or an actual method.
 	}
 
-	this->flags = this->flags | TYPE_OPS_INITED;
+	this->flags = this->flags | TypeFlags::OPS_INITED;
 }
 
 Member *Type::GetMember(String *name) const
@@ -110,24 +118,34 @@ Member *Type::FindMember(String *name, const Type *fromType) const
 
 Method *Type::GetOperator(Operator op) const
 {
-	if (!(this->flags & TYPE_OPS_INITED))
+	if ((this->flags & TypeFlags::OPS_INITED) == TypeFlags::NONE)
 		// I'm probably a bad person for doing this. I don't care. <3
 		const_cast<Type*>(this)->InitOperators();
 
-	return this->operators[op];
+	return this->operators[(int)op];
 }
 
-Value Type::GetTypeToken() const
+Value Type::GetTypeToken(Thread *const thread) const
 {
 	if (IS_NULL(typeToken))
-		const_cast<Type*>(this)->LoadTypeToken();
+		const_cast<Type*>(this)->LoadTypeToken(thread);
 
 	return typeToken;
 }
 
-void Type::LoadTypeToken()
+void Type::LoadTypeToken(Thread *const thread)
 {
-	throw L"Not implemented";
+	// Type tokens can never be destroyed, so let's create a static
+	// reference to it.
+	Value *typeTkn = GC::gc->AddStaticReference(NULL_VALUE);
+
+	// Note: use GC::Alloc because the aves.Type type may not have
+	// a public constructor. GC::Construct would fail if it didn't.
+	GC::gc->Alloc(thread, VM::vm->types.Type, VM::vm->types.Type->size, typeTkn);
+
+	// Call the type token initializer with this type and the brand
+	// new allocated instance data thing. Hurrah.
+	VM::vm->functions.initTypeToken(thread, typeTkn->instance, this);
 }
 
 // Determines whether a member is accessible from a given type.
@@ -140,10 +158,10 @@ void Type::LoadTypeToken()
 //     This is null for global functions.
 const bool Member::IsAccessible(const Type *instType, const Type *const declType, const Type *const fromType) const
 {
-	if (this->flags & M_PRIVATE)
+	if ((this->flags & MemberFlags::PRIVATE) != MemberFlags::NONE)
 		return fromType && (declType == fromType || declType == fromType->sharedType);
 
-	if (this->flags & M_PROTECTED)
+	if ((this->flags & MemberFlags::PROTECTED) != MemberFlags::NONE)
 	{
 		if (!fromType)
 			return false;
@@ -215,29 +233,33 @@ Value *const Field::GetFieldFast(Thread *const thread, const Value *instance) co
 	return reinterpret_cast<Value*>(instance->instance + this->offset);
 }
 
-OVUM_API const StandardTypes &GetStandardTypes() { return stdTypes; }
-OVUM_API TypeHandle GetType_Object()             { return stdTypes.Object; }
-OVUM_API TypeHandle GetType_Boolean()            { return stdTypes.Boolean; }
-OVUM_API TypeHandle GetType_Int()                { return stdTypes.Int; }
-OVUM_API TypeHandle GetType_UInt()               { return stdTypes.UInt; }
-OVUM_API TypeHandle GetType_Real()               { return stdTypes.Real; }
-OVUM_API TypeHandle GetType_String()             { return stdTypes.String; }
-OVUM_API TypeHandle GetType_List()               { return stdTypes.List; }
-OVUM_API TypeHandle GetType_Hash()               { return stdTypes.Hash; }
-OVUM_API TypeHandle GetType_Method()             { return stdTypes.Method; }
-OVUM_API TypeHandle GetType_Iterator()           { return stdTypes.Iterator; }
-OVUM_API TypeHandle GetType_Type()               { return stdTypes.Type; }
-OVUM_API TypeHandle GetType_Error()              { return stdTypes.Error; }
-OVUM_API TypeHandle GetType_TypeError()          { return stdTypes.TypeError; }
-OVUM_API TypeHandle GetType_MemoryError()        { return stdTypes.MemoryError; }
-OVUM_API TypeHandle GetType_OverflowError()      { return stdTypes.OverflowError; }
-OVUM_API TypeHandle GetType_DivideByZeroError()  { return stdTypes.DivideByZeroError; }
-OVUM_API TypeHandle GetType_NullReferenceError() { return stdTypes.NullReferenceError; }
+OVUM_API const StandardTypes &GetStandardTypes() { return VM::vm->types; }
+OVUM_API TypeHandle GetType_Object()             { return VM::vm->types.Object; }
+OVUM_API TypeHandle GetType_Boolean()            { return VM::vm->types.Boolean; }
+OVUM_API TypeHandle GetType_Int()                { return VM::vm->types.Int; }
+OVUM_API TypeHandle GetType_UInt()               { return VM::vm->types.UInt; }
+OVUM_API TypeHandle GetType_Real()               { return VM::vm->types.Real; }
+OVUM_API TypeHandle GetType_String()             { return VM::vm->types.String; }
+OVUM_API TypeHandle GetType_List()               { return VM::vm->types.List; }
+OVUM_API TypeHandle GetType_Hash()               { return VM::vm->types.Hash; }
+OVUM_API TypeHandle GetType_Method()             { return VM::vm->types.Method; }
+OVUM_API TypeHandle GetType_Iterator()           { return VM::vm->types.Iterator; }
+OVUM_API TypeHandle GetType_Type()               { return VM::vm->types.Type; }
+OVUM_API TypeHandle GetType_Error()              { return VM::vm->types.Error; }
+OVUM_API TypeHandle GetType_TypeError()          { return VM::vm->types.TypeError; }
+OVUM_API TypeHandle GetType_MemoryError()        { return VM::vm->types.MemoryError; }
+OVUM_API TypeHandle GetType_OverflowError()      { return VM::vm->types.OverflowError; }
+OVUM_API TypeHandle GetType_DivideByZeroError()  { return VM::vm->types.DivideByZeroError; }
+OVUM_API TypeHandle GetType_NullReferenceError() { return VM::vm->types.NullReferenceError; }
 
+OVUM_API bool Method_Accepts(const MethodHandle m, int argc)
+{
+	return m->Accepts(argc);
+}
 
 OVUM_API bool Member_IsAccessible(const MemberHandle member, TypeHandle instType, TypeHandle declType, TypeHandle fromType)
 {
-	return ((Member*)member)->IsAccessible(instType, declType, fromType);
+	return member->IsAccessible(instType, declType, fromType);
 }
 
 
@@ -266,9 +288,9 @@ OVUM_API MethodHandle Type_GetOperator(TypeHandle type, Operator op)
 	return type->GetOperator(op);
 }
 
-OVUM_API Value Type_GetTypeToken(TypeHandle type)
+OVUM_API Value Type_GetTypeToken(ThreadHandle thread, TypeHandle type)
 {
-	return type->GetTypeToken();
+	return type->GetTypeToken(thread);
 }
 
 OVUM_API uint32_t Type_GetFieldOffset(TypeHandle type)
@@ -279,30 +301,31 @@ OVUM_API uint32_t Type_GetFieldOffset(TypeHandle type)
 OVUM_API void Type_SetFinalizer(TypeHandle type, Finalizer finalizer)
 {
 	Type *realType = const_cast<Type*>(type);
-	if ((realType->flags & TYPE_INITED) == TYPE_NONE)
+	if ((realType->flags & TypeFlags::INITED) == TypeFlags::NONE)
 		realType->finalizer = finalizer;
 }
 
 OVUM_API void Type_SetInstanceSize(TypeHandle type, uint32_t size)
 {
 	Type *realType = const_cast<Type*>(type);
-	if ((realType->flags & TYPE_INITED) == TYPE_NONE)
+	if ((realType->flags & TypeFlags::INITED) == TypeFlags::NONE)
 	{
-		realType->size = size;
-		realType->flags = realType->flags | TYPE_CUSTOMPTR;
+		// Ensure the effective size is a multiple of 8
+		realType->size = ALIGN_TO(size, 8);
+		realType->flags = realType->flags | TypeFlags::CUSTOMPTR;
 	}
 }
 
 OVUM_API void Type_SetReferenceGetter(TypeHandle type, ReferenceGetter getter)
 {
 	Type *realType = const_cast<Type*>(type);
-	if ((realType->flags & TYPE_INITED) == TYPE_NONE)
+	if ((realType->flags & TypeFlags::INITED) == TypeFlags::NONE)
 		realType->getReferences = getter;
 }
 
 OVUM_API String *Error_GetMessage(Value error)
 {
-	if (!Type::ValueIsType(error, stdTypes.Error))
+	if (!Type::ValueIsType(error, VM::vm->types.Error))
 		return nullptr; // whoopsies!
 
 	return error.common.error->message;
@@ -310,7 +333,7 @@ OVUM_API String *Error_GetMessage(Value error)
 
 OVUM_API String *Error_GetStackTrace(Value error)
 {
-	if (!Type::ValueIsType(error, stdTypes.Error))
+	if (!Type::ValueIsType(error, VM::vm->types.Error))
 		return nullptr; // Type mismatch!
 
 	return error.common.error->stackTrace;

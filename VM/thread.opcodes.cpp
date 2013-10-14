@@ -9,6 +9,11 @@
 #define U64_ARG(ip)  *reinterpret_cast<uint64_t*>(ip)
 #define OFF_ARG(ip)  *reinterpret_cast<LocalOffset*>(ip)
 
+namespace instr
+{
+	const StackChange StackChange::empty = StackChange(0, 0);
+}
+
 void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 {
 #if NDEBUG
@@ -68,19 +73,12 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 				break;
 			case OPI_LDFALSE_L:
 			case OPI_LDFALSE_S:
-				// ldfalse: LocalOffset dest
-				{
-					SetBool_(OFF_ARG(ip) + frame, false);
-					frame->stackCount += opc & 1;
-
-					ip += sizeof(LocalOffset);
-				}
-				break;
 			case OPI_LDTRUE_L:
 			case OPI_LDTRUE_S:
+				// ldfalse: LocalOffset dest
 				// ldtrue: LocalOffset dest
 				{
-					SetBool_(OFF_ARG(ip) + frame, true);
+					SetBool_(OFF_ARG(ip) + frame, (opc & 4) >> 2);
 					frame->stackCount += opc & 1;
 
 					ip += sizeof(LocalOffset);
@@ -185,8 +183,8 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 					int32_t cap = I32_ARG(ip + sizeof(LocalOffset));
 
 					Value result; // Can't put it in dest until it's fully initialized
-					GC::gc->Alloc(this, stdTypes.List, sizeof(ListInst), &result);
-					globalFunctions.initListInstance(this, result.common.list, cap);
+					GC::gc->Alloc(this, VM::vm->types.List, sizeof(ListInst), &result);
+					VM::vm->functions.initListInstance(this, result.common.list, cap);
 
 					*dest = result;
 
@@ -202,8 +200,8 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 					int32_t cap = I32_ARG(ip + sizeof(LocalOffset));
 
 					Value result; // Can't put it in dest until it's fully initialized
-					GC::gc->Alloc(this, stdTypes.Hash, sizeof(HashInst), &result);
-					globalFunctions.initHashInstance(this, result.common.hash, cap);
+					GC::gc->Alloc(this, VM::vm->types.Hash, sizeof(HashInst), &result);
+					VM::vm->functions.initHashInstance(this, result.common.hash, cap);
 
 					*dest = result;
 
@@ -229,13 +227,15 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 				break;
 			case OPI_LDSFLD_L:
 			case OPI_LDSFLD_S:
-				// ldsfld: LocalOffset dest, Value *field
+				// ldsfld: LocalOffset dest, Field *field
 				{
 					Value *const dest = OFF_ARG(ip) + frame;
 					ip += sizeof(LocalOffset);
 
-					*dest = *VAL_ARG(ip);
-					ip += sizeof(Value*);
+					Field *const field = *reinterpret_cast<Field**>(ip);
+					ip += sizeof(Field*);
+
+					*dest = *field->staticValue;
 
 					frame->stackCount += opc & 1;
 				}
@@ -277,7 +277,10 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 					Value *const inst = OFF_ARG(ip) + frame;
 					Value *const dest = OFF_ARG(ip + sizeof(LocalOffset)) + frame;
 
-					*dest = inst->type->GetTypeToken();
+					if (inst->type)
+						*dest = inst->type->GetTypeToken(this);
+					else
+						*dest = NULL_VALUE;
 
 					ip += 2 * sizeof(LocalOffset);
 					frame->stackCount += (opc & 1) - 1;
@@ -311,6 +314,8 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 					ip += sizeof(Method*);
 
 					// TODO: Load static function thing
+					GC::gc->Alloc(this, VM::vm->types.Method, sizeof(MethodInst), dest);
+					dest->common.method->method = method;
 
 					frame->stackCount += opc & 1;
 				}
@@ -324,7 +329,7 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 
 					Type *const type = *reinterpret_cast<Type**>(ip);
 
-					*dest = type->GetTypeToken();
+					*dest = type->GetTypeToken(this);
 						
 					ip += sizeof(Type*);
 					frame->stackCount += opc & 1;
@@ -437,12 +442,12 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 					Value *const value = OFF_ARG(ip) + frame;
 					ip += sizeof(LocalOffset);
 
-					if (value->type != stdTypes.Int)
+					if (value->type != VM::vm->types.Int)
 						ThrowTypeError();
 
 					uint16_t count = U16_ARG(ip);
 					if (value->integer >= 0 || value->integer < count)
-						ip += I32_ARG(ip + (int32_t)value->integer);
+						ip += *((int32_t*)ip + (int32_t)value->integer);
 
 					ip += count * sizeof(int32_t);
 
@@ -450,25 +455,13 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 				}
 				break;
 			case OPI_BRREF:
-				// brref: LocalOffset (a, b), int32_t offset
-				{
-					Value *const args = OFF_ARG(ip) + frame;
-					ip += sizeof(LocalOffset);
-
-					if (IsSameReference_(args[0], args[1]))
-						ip += I32_ARG(ip);
-					ip += sizeof(int32_t);
-
-					frame->stackCount -= 2;
-				}
-				break;
 			case OPI_BRNREF:
 				// brnref: LocalOffset (a, b), int32_t offset
 				{
 					Value *const args = OFF_ARG(ip) + frame;
 					ip += sizeof(LocalOffset);
 
-					if (!IsSameReference_(args[0], args[1]))
+					if (IsSameReference_(args[0], args[1]) ^ (opc & 1))
 						ip += I32_ARG(ip);
 					ip += sizeof(int32_t);
 
@@ -525,7 +518,7 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 					Value *const dest = OFF_ARG(ip + sizeof(LocalOffset)) + frame;
 					ip += 2 * sizeof(LocalOffset);
 
-					SetInt_(dest, CompareLL(args) < 0);
+					SetBool_(dest, CompareLL(args) < 0);
 
 					// CompareLL pops arguments off the stack
 					frame->stackCount += opc & 1;
@@ -538,7 +531,7 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 					Value *const dest = OFF_ARG(ip + sizeof(LocalOffset)) + frame;
 					ip += 2 * sizeof(LocalOffset);
 
-					SetInt_(dest, CompareLL(args) > 0);
+					SetBool_(dest, CompareLL(args) > 0);
 
 					// CompareLL pops arguments off the stack
 					frame->stackCount += opc & 1;
@@ -551,7 +544,7 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 					Value *const dest = OFF_ARG(ip + sizeof(LocalOffset)) + frame;
 					ip += 2 * sizeof(LocalOffset);
 
-					SetInt_(dest, CompareLL(args) <= 0);
+					SetBool_(dest, CompareLL(args) <= 0);
 
 					// CompareLL pops arguments off the stack
 					frame->stackCount += opc & 1;
@@ -564,7 +557,7 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 					Value *const dest = OFF_ARG(ip + sizeof(LocalOffset)) + frame;
 					ip += 2 * sizeof(LocalOffset);
 
-					SetInt_(dest, CompareLL(args) >= 0);
+					SetBool_(dest, CompareLL(args) >= 0);
 
 					// CompareLL pops arguments off the stack
 					frame->stackCount += opc & 1;
@@ -586,7 +579,7 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 				break;
 			case OPI_STSFLD_L:
 			case OPI_STSFLD_S:
-				// stsfld: LocalOffset value, Member *field
+				// stsfld: LocalOffset value, Field *field
 				{
 					Value *const value = OFF_ARG(ip) + frame;
 					Field *const field = *reinterpret_cast<Field**>(ip + sizeof(LocalOffset));
@@ -598,7 +591,7 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 				}
 				break;
 			case OPI_STFLD:
-				// stfld: LocalOffset (instance, value), Member *field
+				// stfld: LocalOffset (instance, value), Field *field
 				{
 					Value *const values = OFF_ARG(ip) + frame;
 					Field *const field = *reinterpret_cast<Field**>(ip + sizeof(LocalOffset));
@@ -627,11 +620,9 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 					;
 				}
 				break;
-			case OPI_THROW:
-				Throw(/*rethrow:*/ false);
-				break;
-			case OPI_RETHROW:
-				Throw(/*rethrow:*/ true);
+			case OPI_THROW: // odd
+			case OPI_RETHROW: // even
+				Throw(/*rethrow:*/ (opc & 1) == 0);
 				break;
 			case OPI_ENDFINALLY:
 				{

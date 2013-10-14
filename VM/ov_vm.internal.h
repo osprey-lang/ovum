@@ -3,6 +3,8 @@
 #ifndef VM__VM_INTERNAL_H
 #define VM__VM_INTERNAL_H
 
+//#define PRINT_DEBUG_INFO
+
 #ifndef VM_EXPORTS
 #error You're not supposed to include this file from outside the VM project!
 #endif
@@ -19,6 +21,7 @@
 #define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
 // Windows header files
 #include <windows.h>
+#include <iosfwd>
 
 class Thread;
 class Type;
@@ -46,42 +49,24 @@ typedef Property *PropertyHandle;
 
 #include "ov_vm.h"
 
-// So that all the VM functions can access this field easily.
-extern StandardTypes stdTypes; // defined in vm.cpp
-
-// Used heavily throughout!
-
-// Recovers a Type from a TypeHandle.
-// (Note: the name _Ty clashes with various things in the Windows headers. Don't use it.)
-//#define _Tp(th)		reinterpret_cast<const ::Type*>(th)
-
-typedef struct GlobalFunctions_S
+class VM
 {
-	ListInitializer initListInstance;
-	HashInitializer initHashInstance;
-	TypeTokenInitializer initTypeToken;
-} GlobalFunctions;
-extern GlobalFunctions globalFunctions; // defined in vm.cpp
+public:
+	typedef struct IniterFunctions_S
+	{
+		ListInitializer initListInstance;
+		HashInitializer initHashInstance;
+		TypeTokenInitializer initTypeToken;
+	} IniterFunctions;
 
-#include "string_hash.internal.h"
-#include "ov_static_strings.internal.h"
-#include "ov_value.internal.h"
-#include "ov_type.internal.h"
-#include "ov_thread.internal.h"
-#include "ov_thread.opcodes.h"
-#include "ov_gc.internal.h"
-#include "ov_module.internal.h"
-
-typedef struct VMState_S
-{
+private:
 	// The main thread on which the VM is running.
-	// NOTE: this is not declared Thread*const because we need to be able
-	// to assign to it when initialising the VM.
 	Thread *mainThread;
+
 	// Number of command-line arguments.
 	int argCount;
 	// Command-line argument values.
-	String **argValues;
+	Value **argValues;
 	// The path (sans file name) of the startup file.
 	String *startupPath;
 	// The directory from which modules are loaded.
@@ -90,10 +75,46 @@ typedef struct VMState_S
 	bool verbose;
 
 	Module *startupModule;
-} VMState;
 
-extern VMState vmState;
+	void LoadModules(VMStartParams &params);
+	void InitArgs(int argCount, const wchar_t *args[]);
 
-void VM_Init(VMStartParams params);
+	static void PrintInternal(std::wostream &stream, String *str);
+
+public:
+	StandardTypes types;
+	IniterFunctions functions;
+
+	VM(VMStartParams &params);
+	~VM();
+
+	static int Run(VMStartParams &params);
+
+	static void Init(VMStartParams &params);
+	static void Unload();
+
+	static void Print(String *str);
+	static void PrintLn(String *str);
+	static void PrintErr(String *str);
+	static void PrintErrLn(String *str);
+
+	inline int GetArgCount() { return argCount; }
+	int GetArgs(const int destLength, String *dest[]);
+	int GetArgValues(const int destLength, Value dest[]);
+
+	static VM *vm;
+
+	friend class GC;
+	friend class Module;
+};
+
+#include "string_hash.internal.h"
+#include "ov_static_strings.internal.h"
+#include "ov_value.internal.h"
+#include "ov_type.internal.h"
+#include "ov_thread.opcodes.h"
+#include "ov_thread.internal.h"
+#include "ov_gc.internal.h"
+#include "ov_module.internal.h"
 
 #endif // VM__VM_INTERNAL

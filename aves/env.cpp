@@ -1,24 +1,26 @@
 #include "aves_env.h"
 
-FieldHandle EnvArgsField;
+Value *EnvArgsField;
 
-AVES_API void aves_Env_init(TypeHandle type)
+//AVES_API void aves_Env_init(TypeHandle type)
+//{
+//
+//}
+
+AVES_API NATIVE_FUNCTION(aves_Env_get_args)
 {
-	EnvArgsField = (FieldHandle)Type_GetMember(type, strings::_args);
-}
+	if (EnvArgsField == nullptr)
+	{
+		const int argCount = VM_GetArgCount();
 
-AVES_API NATIVE_FUNCTION(aves_Env_snew)
-{
-	const int argCount = VM_GetArgCount();
+		EnvArgsField = GC_AddStaticReference(NULL_VALUE);
+		VM_PushInt(thread, argCount); // list capacity
+		GC_Construct(thread, GetType_List(), 1, EnvArgsField);
 
-	Value *argsList = VM_Local(thread, 0);
-	VM_PushInt(thread, argCount); // list capacity
-	GC_Construct(thread, GetType_List(), 1, argsList);
+		VM_GetArgValues(argCount, EnvArgsField->common.list->values);
+	}
 
-	VM_GetArgValues(argsList->common.list->values, argCount);
-
-	VM_Push(thread, *argsList);
-	VM_StoreStaticField(thread, EnvArgsField);
+	VM_Push(thread, *EnvArgsField);
 }
 
 AVES_API NATIVE_FUNCTION(aves_Env_get_newline)

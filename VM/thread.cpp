@@ -1,4 +1,5 @@
 #include "ov_vm.internal.h"
+#include <comdef.h>
 
 namespace thread_errors
 {
@@ -37,7 +38,7 @@ Thread::Thread() :
 Thread::~Thread()
 {
 	// You really should not dispose of a thread that is still running, so:
-	assert(state == THREAD_STOPPED);
+	assert(state == THREAD_CREATED || state == THREAD_STOPPED);
 
 	DisposeCallStack();
 }
@@ -74,12 +75,12 @@ void Thread::InvokeLL(unsigned int argCount, Value *value, Value *result)
 
 	const Type *type = value->type;
 
-	if (type == stdTypes.Method)
+	if (type == VM::vm->types.Method)
 	{
 		MethodInst *methodInst = value->common.method;
 		mo = ResolveOverload(methodInst->method, argCount);
 
-		if (mo->flags & METHOD_INSTANCE)
+		if ((mo->flags & MethodFlags::INSTANCE) != MethodFlags::NONE)
 			// Overwrite the Method with the instance
 			*value = methodInst->instance;
 		else
@@ -90,7 +91,7 @@ void Thread::InvokeLL(unsigned int argCount, Value *value, Value *result)
 	{
 		Member *member;
 		if ((member = type->FindMember(static_strings::_call, currentFrame->method->declType)) &&
-			(member->flags & M_METHOD))
+			(member->flags & MemberFlags::METHOD) != MemberFlags::NONE)
 			mo = ResolveOverload((Method*)member, argCount);
 		else
 			ThrowTypeError(thread_errors::NotInvokable);
@@ -109,7 +110,7 @@ void Thread::InvokeMember(String *name, unsigned int argCount, Value *result)
 	Member *member;
 	if (member = value->type->FindMember(name, currentFrame->method->declType))
 	{
-		if (!(member->flags & M_METHOD))
+		if ((member->flags & MemberFlags::METHOD) == MemberFlags::NONE)
 			ThrowTypeError(thread_errors::MemberNotInvokable);
 
 		InvokeMethod((Method*)member, argCount, value + 1, result);
@@ -129,19 +130,19 @@ void Thread::InvokeMethodOverload(Method::Overload *mo, unsigned int argCount, V
 	MethodFlags flags = mo->flags; // used several times below!
 	uint16_t finalArgCount = argCount;
 
-	if (flags & METHOD_VARIADIC)
+	if ((flags & MethodFlags::VARIADIC) != MethodFlags::NONE)
 	{
 		PrepareArgs(flags, argCount, mo->paramCount, currentFrame);
 		finalArgCount = mo->paramCount;
 	}
 
-	finalArgCount += (flags & METHOD_INSTANCE) >> 3;
+	finalArgCount += (int)(flags & MethodFlags::INSTANCE) >> 3;
 
 	// And now we can push the new stack frame!
 	// Note: this updates currentFrame and maybe the ip
 	StackFrame *frame = PushStackFrame(finalArgCount, args, mo);
 
-	if (flags & METHOD_NATIVE)
+	if ((flags & MethodFlags::NATIVE) != MethodFlags::NONE)
 	{
 		mo->nativeEntry((ThreadHandle)this, finalArgCount, frame->arguments);
 		// Native methods are not required to return with one value on the stack, but if
@@ -200,7 +201,7 @@ bool Thread::Equals()
 bool Thread::EqualsLL(Value *args)
 {
 	Value result;
-	InvokeOperatorLL(args, OP_EQ, &result);
+	InvokeOperatorLL(args, Operator::EQ, &result);
 	return IsTrue_(result);
 }
 
@@ -213,9 +214,9 @@ int Thread::Compare()
 int Thread::CompareLL(Value *args)
 {
 	Value result;
-	InvokeOperatorLL(args, OP_CMP, &result);
+	InvokeOperatorLL(args, Operator::CMP, &result);
 
-	if (result.type != stdTypes.Int)
+	if (result.type != VM::vm->types.Int)
 		ThrowTypeError(thread_errors::CompareType);
 
 	int64_t cmpValue = result.integer;
@@ -233,7 +234,7 @@ void Thread::ConcatLL(Value *args, Value *result)
 {
 	Value *a = args;
 	Value *b = args + 1;
-	if (a->type == stdTypes.List || b->type == stdTypes.List)
+	if (a->type == VM::vm->types.List || b->type == VM::vm->types.List)
 	{
 		// list concatenation
 		if (a->type != b->type)
@@ -241,7 +242,7 @@ void Thread::ConcatLL(Value *args, Value *result)
 
 		// TODO
 	}
-	else if (a->type == stdTypes.Hash || b->type == stdTypes.Hash)
+	else if (a->type == VM::vm->types.Hash || b->type == VM::vm->types.Hash)
 	{
 		// hash concatenation
 		if (a->type != b->type)
@@ -278,22 +279,22 @@ void Thread::LoadMemberLL(Value *instance, String *member, Value *result)
 		ThrowNullReferenceError();
 
 	const Member *m = instance->type->FindMember(member, currentFrame->method->declType);
-	if (!(m->flags & M_INSTANCE))
+	if ((m->flags & MemberFlags::INSTANCE) == MemberFlags::NONE)
 		ThrowTypeError(thread_errors::StaticMemberThroughInstance);
 
-	if (m->flags & M_FIELD)
+	if ((m->flags & MemberFlags::FIELD) != MemberFlags::NONE)
 	{
 		*result = *reinterpret_cast<const Field*>(m)->GetFieldUnchecked(instance);
 		currentFrame->Pop(1); // Done with the instance!
 	}
-	else if (m->flags & M_METHOD)
+	else if ((m->flags & MemberFlags::METHOD) != MemberFlags::NONE)
 	{
-		GC::gc->Alloc(this, stdTypes.Method, sizeof(MethodInst), result);
+		GC::gc->Alloc(this, VM::vm->types.Method, sizeof(MethodInst), result);
 		result->common.method->instance = *instance;
 		result->common.method->method = (Method*)m;
 		currentFrame->Pop(1); // Done with the instance!
 	}
-	else // M_PROPERTY
+	else // MemberFlags::PROPERTY
 	{
 		const Property *p = (Property*)m;
 		if (!p->getter)
@@ -316,14 +317,14 @@ void Thread::StoreMemberLL(Value *instance, Value *value, String *member)
 		ThrowNullReferenceError();
 
 	Member *m = instance->type->FindMember(member, currentFrame->method->declType);
-	if (!(m->flags & M_INSTANCE))
+	if ((m->flags & MemberFlags::INSTANCE) == MemberFlags::NONE)
 		ThrowTypeError(thread_errors::StaticMemberThroughInstance);
-	if (m->flags & M_METHOD)
+	if ((m->flags & MemberFlags::METHOD) != MemberFlags::NONE)
 		ThrowTypeError(thread_errors::AssigningToMethod);
 
-	if (m->flags & M_FIELD)
+	if ((m->flags & MemberFlags::FIELD) != MemberFlags::NONE)
 		*reinterpret_cast<Field*>(m)->GetFieldUnchecked(instance) = *value;
-	else if (m->flags & M_PROPERTY)
+	else // MemberFlags::PROPERTY
 	{
 		Property *p = (Property*)m;
 		if (!p->setter)
@@ -372,7 +373,7 @@ void Thread::ToString(String **result)
 	LoadMember(static_strings::toString, nullptr);
 	Invoke(0, nullptr);
 
-	if (currentFrame->Peek(0).type != stdTypes.String)
+	if (currentFrame->Peek(0).type != VM::vm->types.String)
 		ThrowTypeError(static_strings::errors::ToStringWrongType);
 
 	if (result != nullptr)
@@ -403,7 +404,7 @@ void Thread::ThrowError(String *message)
 		currentFrame->Push(NULL_VALUE);
 	else
 		currentFrame->PushString(message);
-	GC_Construct((ThreadHandle)this, stdTypes.Error, 1, nullptr);
+	GC::gc->Construct(this, VM::vm->types.Error, 1, nullptr);
 	Throw();
 }
 
@@ -413,7 +414,7 @@ void Thread::ThrowTypeError(String *message)
 		currentFrame->Push(NULL_VALUE);
 	else
 		currentFrame->PushString(message);
-	GC_Construct((ThreadHandle)this, stdTypes.TypeError, 1, nullptr);
+	GC::gc->Construct(this, VM::vm->types.TypeError, 1, nullptr);
 	Throw();
 }
 
@@ -423,7 +424,7 @@ void Thread::ThrowMemoryError(String *message)
 		currentFrame->Push(NULL_VALUE);
 	else
 		currentFrame->PushString(message);
-	GC_Construct((ThreadHandle)this, stdTypes.MemoryError, 1, nullptr);
+	GC::gc->Construct(this, VM::vm->types.MemoryError, 1, nullptr);
 	Throw();
 }
 
@@ -433,7 +434,7 @@ void Thread::ThrowOverflowError(String *message)
 		currentFrame->Push(NULL_VALUE);
 	else
 		currentFrame->PushString(message);
-	GC_Construct((ThreadHandle)this, stdTypes.OverflowError, 1, nullptr);
+	GC::gc->Construct(this, VM::vm->types.OverflowError, 1, nullptr);
 	Throw();
 }
 
@@ -443,7 +444,7 @@ void Thread::ThrowDivideByZeroError(String *message)
 		currentFrame->Push(NULL_VALUE);
 	else
 		currentFrame->PushString(message);
-	GC_Construct((ThreadHandle)this, stdTypes.DivideByZeroError, 1, nullptr);
+	GC::gc->Construct(this, VM::vm->types.DivideByZeroError, 1, nullptr);
 	Throw();
 }
 
@@ -453,13 +454,24 @@ void Thread::ThrowNullReferenceError(String *message)
 		currentFrame->Push(NULL_VALUE);
 	else
 		currentFrame->PushString(message);
-	GC_Construct((ThreadHandle)this, stdTypes.NullReferenceError, 1, nullptr);
+	GC::gc->Construct(this, VM::vm->types.NullReferenceError, 1, nullptr);
 	Throw();
 }
 
 void Thread::InitCallStack()
 {
-	callStack = (unsigned char*)VirtualAlloc(nullptr, CALL_STACK_SIZE, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+	callStack = (unsigned char*)VirtualAlloc(nullptr,
+		CALL_STACK_SIZE + 256,
+		MEM_RESERVE | MEM_COMMIT,
+		PAGE_READWRITE);
+
+	// Make sure the page following the call stack will cause an instant segfault,
+	// as a very dirty way of signalling a stack overflow.
+	DWORD ignore;
+	VirtualProtect(callStack + CALL_STACK_SIZE, 256, PAGE_NOACCESS, &ignore);
+
+	// The call stack should never be swapped out.
+	VirtualLock(callStack, CALL_STACK_SIZE);
 }
 
 void Thread::DisposeCallStack()
@@ -545,14 +557,14 @@ void Thread::PrepareArgs(const MethodFlags flags, const uint16_t argCount, const
 	// We cannot really make any assumptions about the List constructor,
 	// so we can't call it here. Instead, we "manually" allocate a ListInst,
 	// set its type to List, and initialize its fields.
-	GC::gc->Alloc(this, stdTypes.List, sizeof(ListInst), &listValue);
+	GC::gc->Alloc(this, VM::vm->types.List, sizeof(ListInst), &listValue);
 	ListInst *list = listValue.common.list;
-	globalFunctions.initListInstance(this, list, count);
+	VM::vm->functions.initListInstance(this, list, count);
 
 	if (count) // There are items to pack into a list
 	{
 		Value *valueBase;
-		if (flags & METHOD_VAR_END) // Copy from end
+		if ((flags & MethodFlags::VAR_END) != MethodFlags::NONE) // Copy from end
 		{
 			valueBase = frame->evalStack + frame->stackCount - count; // the first list item
 			CopyMemoryT(list->values, valueBase, count); // copy values to list
@@ -583,7 +595,7 @@ void Thread::PrepareArgs(const MethodFlags flags, const uint16_t argCount, const
 	else // Let's push an empty list!
 	{
 		// Note: if argCount == 0, then push is equivalent to unshift.
-		if ((flags & METHOD_VAR_END) || argCount == 0)
+		if ((flags & MethodFlags::VAR_END) != MethodFlags::NONE || argCount == 0)
 			// Push list value onto the end
 			frame->evalStack[frame->stackCount] = listValue;
 		else
@@ -660,7 +672,7 @@ void Thread::AppendArgumentType(StringBuffer &buf, Value arg)
 	{
 		buf.Append(this, type->fullName);
 
-		if (type == stdTypes.Method)
+		if (type == VM::vm->types.Method)
 		{
 			// Append some information about the instance and method group, too.
 			MethodInst *method = arg.common.method;

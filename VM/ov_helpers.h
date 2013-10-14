@@ -32,5 +32,11 @@ OVUM_API uint64_t UInt_MultiplyChecked(ThreadHandle thread, const uint64_t left,
 OVUM_API uint64_t UInt_DivideChecked(ThreadHandle thread, const uint64_t left, const uint64_t right);
 OVUM_API uint64_t UInt_ModuloChecked(ThreadHandle thread, const uint64_t left, const uint64_t right);
 
+// HASH HELPERS
+
+// Gets the next prime number greater than or equal to the given value.
+// The prime number is suitable for use as the size of a hash table.
+OVUM_API int32_t HashHelper_GetPrime(const int32_t min);
+
 
 #endif // VM__HELPERS_H

@@ -4,13 +4,13 @@ namespace static_strings
 {
 	namespace
 	{
-		LitString<0> _empty = { 0, 0, STR_STATIC, 0 };
+		LitString<0> _empty = { 0, 0, StringFlags::STATIC, 0 };
 
-		LitString<4> __new  = { 4, 0, STR_STATIC, '.','n','e','w',0 };
-		LitString<5> __iter = { 5, 0, STR_STATIC, '.','i','t','e','r',0 };
-		LitString<5> __call = { 5, 0, STR_STATIC, '.','c','a','l','l',0 };
+		LitString<4> __new  = { 4, 0, StringFlags::STATIC, '.','n','e','w',0 };
+		LitString<5> __iter = { 5, 0, StringFlags::STATIC, '.','i','t','e','r',0 };
+		LitString<5> __call = { 5, 0, StringFlags::STATIC, '.','c','a','l','l',0 };
 
-		LitString<8> _toString = { 8, 0, STR_STATIC, 't','o','S','t','r','i','n','g',0 };
+		LitString<8> _toString = { 8, 0, StringFlags::STATIC, 't','o','S','t','r','i','n','g',0 };
 	}
 
 	String *empty = _S(_empty);
