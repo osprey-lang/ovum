@@ -25,56 +25,56 @@ inline void SetNull_(Value *target)
 
 inline void SetBool_(Value &target, const bool value)
 {
-	target.type = stdTypes.Boolean;
+	target.type = VM::vm->types.Boolean;
 	target.integer = value;
 }
 inline void SetBool_(Value *target, const bool value)
 {
-	target->type = stdTypes.Boolean;
+	target->type = VM::vm->types.Boolean;
 	target->integer = value;
 }
 
 inline void SetInt_(Value &target, const int64_t value)
 {
-	target.type = stdTypes.Int;
+	target.type = VM::vm->types.Int;
 	target.integer = value;
 }
 inline void SetInt_(Value *target, const int64_t value)
 {
-	target->type = stdTypes.Int;
+	target->type = VM::vm->types.Int;
 	target->integer = value;
 }
 
 inline void SetUInt_(Value &target, const uint64_t value)
 {
-	target.type = stdTypes.UInt;
+	target.type = VM::vm->types.UInt;
 	target.uinteger = value;
 }
 inline void SetUInt_(Value *target, const uint64_t value)
 {
-	target->type = stdTypes.UInt;
+	target->type = VM::vm->types.UInt;
 	target->uinteger = value;
 }
 
 inline void SetReal_(Value &target, const double value)
 {
-	target.type = stdTypes.Real;
+	target.type = VM::vm->types.Real;
 	target.real = value;
 }
 inline void SetReal_(Value *target, const double value)
 {
-	target->type = stdTypes.Real;
+	target->type = VM::vm->types.Real;
 	target->real = value;
 }
 
 inline void SetString_(Value &target, String *value)
 {
-	target.type = stdTypes.String;
+	target.type = VM::vm->types.String;
 	target.common.string = value;
 }
 inline void SetString_(Value *target, String *value)
 {
-	target->type = stdTypes.String;
+	target->type = VM::vm->types.String;
 	target->common.string = value;
 }
 
@@ -84,14 +84,15 @@ inline void SetString_(Value *target, String *value)
 inline bool IsTrue_(Value value)
 {
 	return value.type != nullptr &&
-		(!(value.type->flags & TYPE_PRIMITIVE) ||
+		((value.type->flags & TypeFlags::PRIMITIVE) != TypeFlags::PRIMITIVE ||
 		value.integer != 0);
 }
 
 inline bool IsFalse_(Value value)
 {
 	return value.type == nullptr ||
-		(value.type->flags & TYPE_PRIMITIVE) && value.integer == 0;
+		(value.type->flags & TypeFlags::PRIMITIVE) == TypeFlags::PRIMITIVE &&
+		value.integer == 0;
 }
 
 inline bool IsSameReference_(Value a, Value b)
@@ -101,7 +102,7 @@ inline bool IsSameReference_(Value a, Value b)
 	// a.type == b.type at this point
 	if (a.type == nullptr)
 		return true; // both are null
-	if (a.type->flags & TYPE_PRIMITIVE)
+	if ((a.type->flags & TypeFlags::PRIMITIVE) == TypeFlags::PRIMITIVE)
 		return a.integer == b.integer;
 	return a.instance == b.instance;
 }

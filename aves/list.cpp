@@ -65,6 +65,12 @@ AVES_API NATIVE_FUNCTION(aves_List_set_capacity)
 	SetListCapacity(thread, _L(THISV), (int32_t)capacity);
 }
 
+AVES_API NATIVE_FUNCTION(aves_List_get_version)
+{
+	ListInst *inst = _L(THISV);
+	VM_PushInt(thread, inst->version);
+}
+
 AVES_API NATIVE_FUNCTION(aves_List_getItem)
 {
 	ListInst *list = _L(THISV);
@@ -195,7 +201,7 @@ AVES_API NATIVE_FUNCTION(aves_List_reverse)
 	list->version++;
 }
 
-AVES_API void InitListInstance(ThreadHandle thread, ListInst *list, int32_t capacity)
+AVES_API void InitListInstance(ThreadHandle thread, ListInst *list, const int32_t capacity)
 {
 	list->capacity = capacity;
 	list->length = 0;
@@ -207,13 +213,13 @@ AVES_API void InitListInstance(ThreadHandle thread, ListInst *list, int32_t capa
 		list->values = (Value*)malloc(capacity * sizeof(Value));
 }
 
-void EnsureMinCapacity(ThreadHandle thread, ListInst *list, int32_t capacity)
+void EnsureMinCapacity(ThreadHandle thread, ListInst *list, const int32_t capacity)
 {
 	if (list->capacity < capacity)
 		SetListCapacity(thread, list, capacity);
 }
 
-void SetListCapacity(ThreadHandle thread, ListInst *list, int32_t capacity)
+void SetListCapacity(ThreadHandle thread, ListInst *list, const int32_t capacity)
 {
 	if (capacity < list->length)
 	{
@@ -240,7 +246,7 @@ void aves_List_finalize(ThreadHandle thread, void *basePtr)
 	ListInst *list = reinterpret_cast<ListInst*>(basePtr);
 
 	delete[] list->values;
-	list->length = 0;
+	list->length   = 0;
 	list->capacity = 0;
-	list->version = -1;
+	list->version  = -1;
 }

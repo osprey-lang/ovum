@@ -4,24 +4,12 @@
 #define VM__TYPE_INTERNAL_H
 
 #include "ov_vm.internal.h"
+#include <iostream>
 
 // forward declarations
 class Module;
 class Member;
 class Method;
-
-inline TypeFlags operator|(const TypeFlags a, const TypeFlags b)
-{
-	return static_cast<TypeFlags>((uint32_t)a | (uint32_t)b);
-}
-inline TypeFlags operator^(const TypeFlags a, const TypeFlags b)
-{
-	return static_cast<TypeFlags>((uint32_t)a ^ (uint32_t)b);
-}
-inline TypeFlags operator&(const TypeFlags a, const TypeFlags b)
-{
-	return static_cast<TypeFlags>((uint32_t)a & (uint32_t)b);
-}
 
 // Types, once initialized, are supposed to be (more or less) immutable.
 // If you assign to any of the members in a Type, you have no one to blame but yourself.
@@ -78,7 +66,7 @@ public:
 	// out as a NULL_VALUE and is only initialized on demand.
 	Value typeToken;
 
-	Value GetTypeToken() const;
+	Value GetTypeToken(Thread *const thread) const;
 
 	static inline const bool ValueIsType(Value value, const Type *const type)
 	{
@@ -95,64 +83,49 @@ public:
 private:
 	void InitOperators();
 
-	void LoadTypeToken();
+	void LoadTypeToken(Thread *const thread);
 };
 
 
-TYPED_ENUM(MemberFlags, uint16_t)
+enum class MemberFlags : uint16_t
 {
 	// The member has no flags.
-	M_NONE      = 0x0000,
+	NONE      = 0x0000,
 	// The member is a field.
-	M_FIELD     = 0x0001,
+	FIELD     = 0x0001,
 	// The member is a method.
-	M_METHOD    = 0x0002,
+	METHOD    = 0x0002,
 	// The member is a property.
-	M_PROPERTY  = 0x0004,
+	PROPERTY  = 0x0004,
 
 	// The member is public.
-	M_PUBLIC    = 0x0008,
+	PUBLIC    = 0x0008,
 	// The member is protected.
-	M_PROTECTED = 0x0010,
+	PROTECTED = 0x0010,
 	// The member is private.
-	M_PRIVATE   = 0x0020,
+	PRIVATE   = 0x0020,
 
 	//// The member is abstract.
-	//M_ABSTRACT  = 0x0080,
+	//ABSTRACT  = 0x0080,
 	//// The member is virtual (overridable in Osprey).
-	//M_VIRTUAL   = 0x0100,
+	//VIRTUAL   = 0x0100,
 	//// The member is sealed (no direct equivalent in Osprey).
-	//M_SEALED    = 0x0200,
+	//SEALED    = 0x0200,
 
 	// The member is an instance member.
-	M_INSTANCE  = 0x0400,
+	INSTANCE  = 0x0400,
 
 	// The member is used internally to implement some behaviour.
 	// Primarily used by getters, setters, iterator accessors and
 	// operator overloads.
-	M_IMPL      = 0x0800,
+	IMPL      = 0x0800,
 
 	// A mask for extracting the access level of a member.
-	M_ACCESS_LEVEL = M_PUBLIC | M_PROTECTED | M_PRIVATE,
+	ACCESS_LEVEL = PUBLIC | PROTECTED | PRIVATE,
 	// A mask for extracting the kind of a member.
-	M_KIND = M_FIELD | M_METHOD | M_PROPERTY,
+	KIND = FIELD | METHOD | PROPERTY,
 };
-inline MemberFlags operator|(const MemberFlags a, const MemberFlags b)
-{
-	return static_cast<MemberFlags>((uint16_t)a | (uint16_t)b);
-}
-inline MemberFlags operator^(const MemberFlags a, const MemberFlags b)
-{
-	return static_cast<MemberFlags>((uint16_t)a ^ (uint16_t)b);
-}
-inline MemberFlags operator&(const MemberFlags a, const MemberFlags b)
-{
-	return static_cast<MemberFlags>((uint16_t)a & (uint16_t)b);
-}
-inline MemberFlags operator~(const MemberFlags a)
-{
-	return static_cast<MemberFlags>(~(uint16_t)a);
-}
+ENUM_OPS(MemberFlags, uint16_t);
 
 class Member
 {
@@ -160,31 +133,40 @@ public:
 	MemberFlags flags;
 
 	String *name;
-	Member *next;
+	//Member *next;
 	Type *declType;
 	Module *declModule;
 
-	inline Member(String *name, Type *declType, MemberFlags flags)
-		: name(name), declType(declType), declModule(declType->module),
-		next(nullptr), flags(flags)
+	inline Member(String *name, Type *declType, MemberFlags flags) :
+		name(name), declType(declType),
+		declModule(declType->module), flags(flags)
 	{ }
-	inline Member(String *name, Module *declModule, MemberFlags flags)
-		: name(name), declType(nullptr), declModule(declModule),
-		next(nullptr), flags(flags)
+	inline Member(String *name, Module *declModule, MemberFlags flags) :
+		name(name), declType(nullptr),
+		declModule(declModule), flags(flags)
 	{ }
 
 	inline ~Member()
 	{
-		if (name)
+#ifdef PRINT_DEBUG_INFO
+		if ((flags & MemberFlags::FIELD) == MemberFlags::FIELD)
+			std::wcout << "Releasing field: ";
+		else if ((flags & MemberFlags::METHOD) == MemberFlags::METHOD)
+			std::wcout << "Releasing method: ";
+		else
+			std::wcout << "Releasing property: ";
+		if (declType)
 		{
-			free(name);
-			name = nullptr;
+			VM::Print(declType->fullName);
+			std::wcout << ".";
 		}
+		VM::PrintLn(this->name);
+#endif
 	}
 
 	inline bool IsStatic() const
 	{
-		return (flags & M_INSTANCE) == 0;
+		return (flags & MemberFlags::INSTANCE) == MemberFlags::NONE;
 	}
 
 	const bool IsAccessible(const Type *instType, const Type *declType, const Type *fromType) const;
@@ -199,8 +181,8 @@ public:
 		Value *staticValue;
 	};
 
-	inline Field(String *name, Type *declType, MemberFlags flags)
-		: Member(name, declType, flags | M_FIELD)
+	inline Field(String *name, Type *declType, MemberFlags flags) :
+		Member(name, declType, flags | MemberFlags::FIELD)
 	{ }
 
 	Value *const GetField(Thread *const thread, const Value instance) const;
@@ -222,49 +204,38 @@ public:
 //#define _Fld(fh)   reinterpret_cast<Field*>(fh)
 
 
-TYPED_ENUM(MethodFlags, uint16_t)
+enum class MethodFlags : int16_t
 {
 	// No method flags.
-	METHOD_NONE      = 0x0000,
+	NONE      = 0x0000,
 	// The method has a variadic parameter at the end.
-	METHOD_VAR_END   = 0x0001,
+	VAR_END   = 0x0001,
 	// The method has a variadic parameter at the start.
-	METHOD_VAR_START = 0x0002,
+	VAR_START = 0x0002,
 
 	// The method has a native-code implementation.
-	METHOD_NATIVE    = 0x0004,
+	NATIVE    = 0x0004,
 
 	// The method is an instance method. Without this flag,
 	// methods are static.
-	METHOD_INSTANCE  = 0x0008,
+	INSTANCE  = 0x0008,
 
 	// The method is virtual (overridable in Osprey).
-	METHOD_VIRTUAL   = 0x0010,
+	VIRTUAL   = 0x0010,
 	// The method is abstract (it has no implementation).
-	METHOD_ABSTRACT  = 0x0020,
+	ABSTRACT  = 0x0020,
 
 	// The method is a constructor.
-	METHOD_CTOR      = 0x0040,
+	CTOR      = 0x0040,
 
 	// The method has been initialized. Used for bytecode methods only,
 	// to indicate that the bytecode initializer has processed the method.
-	METHOD_INITED    = 0x0080,
+	INITED    = 0x0080,
 
 	// A mask for extracting the variadic flags of a method.
-	METHOD_VARIADIC = METHOD_VAR_END | METHOD_VAR_START,
+	VARIADIC = VAR_END | VAR_START,
 };
-inline MethodFlags operator|(const MethodFlags a, const MethodFlags b)
-{
-	return static_cast<MethodFlags>((uint16_t)a | (uint16_t)b);
-}
-inline MethodFlags operator^(const MethodFlags a, const MethodFlags b)
-{
-	return static_cast<MethodFlags>((uint16_t)a ^ (uint16_t)b);
-}
-inline MethodFlags operator&(const MethodFlags a, const MethodFlags b)
-{
-	return static_cast<MethodFlags>((uint16_t)a & (uint16_t)b);
-}
+ENUM_OPS(MethodFlags, int16_t);
 
 class Method : public Member
 {
@@ -281,7 +252,7 @@ public:
 	{
 	public:
 		// NOTE: These values must match those used in the module spec!
-		TYPED_ENUM(TryKind, uint8_t)
+		enum class TryKind : uint8_t
 		{
 			CATCH   = 0x01,
 			FINALLY = 0x02,
@@ -314,7 +285,7 @@ public:
 
 		inline ~TryBlock()
 		{
-			if (kind == CATCH && catches.blocks)
+			if (kind == TryKind::CATCH && catches.blocks)
 			{
 				delete[] catches.blocks;
 				catches.blocks = nullptr;
@@ -359,7 +330,7 @@ public:
 
 		inline const bool Accepts(const uint16_t argc) const
 		{
-			if (flags & METHOD_VARIADIC)
+			if ((flags & MethodFlags::VARIADIC) != MethodFlags::NONE)
 				return argc >= paramCount - 1;
 			else
 				return argc >= paramCount - optionalParamCount &&
@@ -386,9 +357,14 @@ public:
 	// to that method, plus some rules about accessibility.
 	Method *baseMethod;
 
-	inline Method(String *name, Module *declModule, MemberFlags flags)
-		: Member(name, declModule, flags | M_METHOD)
+	inline Method(String *name, Module *declModule, MemberFlags flags) :
+		Member(name, declModule, flags | MemberFlags::METHOD)
 	{ }
+
+	inline ~Method()
+	{
+		delete[] overloads;
+	}
 
 	inline const bool Accepts(const uint16_t argc) const
 	{
@@ -401,6 +377,13 @@ public:
 		} while (m = m->baseMethod);
 		return false;
 	}
+
+	inline void SetDeclType(Type *type)
+	{
+		this->declType = type;
+		for (int i = 0; i < overloadCount; i++)
+			this->overloads[i].declType = type;
+	}
 };
 // Recovers a Method* from a MethodHandle.
 //#define _Mth(mh)    reinterpret_cast<Method*>(mh)
@@ -412,8 +395,8 @@ public:
 	Method *getter;
 	Method *setter;
 
-	inline Property(String *name, Type *declType, MemberFlags flags)
-		: Member(name, declType, flags | M_PROPERTY)
+	inline Property(String *name, Type *declType, MemberFlags flags) :
+		Member(name, declType, flags | MemberFlags::PROPERTY)
 	{ }
 };
 // Recovers a Property* from a PropertyHandle
@@ -425,6 +408,7 @@ namespace std_type_names
 	{
 		String *name;
 		TypeHandle StandardTypes::*member;
+		const char *const initerFunction;
 	} StdType;
 
 	extern const unsigned int StandardTypeCount;

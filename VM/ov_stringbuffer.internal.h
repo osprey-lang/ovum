@@ -49,8 +49,7 @@ public:
 private:
 	void EnsureMinCapacity(Thread *const thread, int32_t newAmount);
 
-	static const size_t DefaultCapacity = 16;
-	static const size_t CapacityIncrement = 32;
+	static const size_t DefaultCapacity = 128;
 };
 
 #endif // VM__STRINGBUFFER_INTERNAL_H

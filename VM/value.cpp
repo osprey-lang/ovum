@@ -4,15 +4,12 @@ const Value NULL_VALUE = NULL_CONSTANT;
 
 OVUM_API bool IsTrue(Value value)
 {
-	return value.type != nullptr &&
-		(!(value.type->flags & TYPE_PRIMITIVE) ||
-		value.integer != 0);
+	return IsTrue_(value);
 }
 
 OVUM_API bool IsFalse(Value value)
 {
-	return value.type == nullptr ||
-		(value.type->flags & TYPE_PRIMITIVE) && value.integer == 0;
+	return IsFalse_(value);
 }
 
 OVUM_API bool IsType(Value value, TypeHandle type)
@@ -22,38 +19,31 @@ OVUM_API bool IsType(Value value, TypeHandle type)
 
 OVUM_API bool IsSameReference(Value a, Value b)
 {
-	if (a.type != b.type)
-		return false;
-	// a.type == b.type at this point
-	if (a.type == nullptr)
-		return true; // both are null
-	if (a.type->flags & TYPE_PRIMITIVE)
-		return a.integer == b.integer;
-	return a.instance == b.instance;
+	return IsSameReference_(a, b);
 }
 
 
 OVUM_API bool IsBoolean(Value value)
 {
-	return value.type == stdTypes.Boolean;
+	return value.type == VM::vm->types.Boolean;
 }
 
 OVUM_API bool IsInt(Value value)
 {
-	return value.type == stdTypes.Int;
+	return value.type == VM::vm->types.Int;
 }
 
 OVUM_API bool IsUInt(Value value)
 {
-	return value.type == stdTypes.UInt;
+	return value.type == VM::vm->types.UInt;
 }
 
 OVUM_API bool IsReal(Value value)
 {
-	return value.type == stdTypes.Real;
+	return value.type == VM::vm->types.Real;
 }
 
 OVUM_API bool IsString(Value value)
 {
-	return value.type == stdTypes.String;
+	return value.type == VM::vm->types.String;
 }

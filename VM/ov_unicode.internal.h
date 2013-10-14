@@ -6,33 +6,27 @@
 #include "ov_vm.internal.h"
 #include "ov_unicode.h"
 
-typedef struct UnicodeRange_S
+inline CaseMap operator+(const CaseMap map, const int32_t codepoint)
 {
-	const uint16_t category;
-	const uchar start, end;
-	const uint16_t offset;
-} UnicodeRange;
-typedef struct WUnicodeRange_S
+	const CaseMap output = { map.upper + codepoint, map.lower + codepoint };
+	return output;
+}
+
+inline CaseMap operator+(const int32_t codepoint, const CaseMap map)
 {
-	const uint32_t category;
-	const wuchar start, end;
-	const uint32_t offset;
-} WUnicodeRange;
+	return map + codepoint;
+}
 
-// NB: these #defines are produced by unitables.pl
-// If you run unitables.pl, don't forget to update these!
+extern const UnicodeCategory CategoryChunks[];
+extern const uint16_t IndexMap1[];
+extern const uint8_t IndexMap2[];
+extern const uint8_t PrimaryMap[];
 
-#define UNI_RANGE_COUNT    150
-#define UNI_CASEMAP_COUNT  2010
-#define UNI_WRANGE_COUNT   128
-#define UNI_WCASEMAP_COUNT 80
+const UnicodeCategory UC_GetCategoryInternal(const int32_t codepoint);
+const CaseMap UC_GetCaseMapInternal(const int32_t codepoint);
 
-extern const UnicodeCategory CharCategories[];
-extern const uint16_t Ranges[];
-extern const uchar CaseMaps[];
-
-extern const UnicodeCategory WCharCategories[];
-extern const uint32_t WRanges[];
-extern const wuchar WCaseMaps[];
+extern const int32_t CaseMaps[];
+extern const uint8_t CaseIndexMap[];
+extern const uint8_t PrimaryCaseMap[];
 
 #endif // VM__UNICODE_INTERNAL_H

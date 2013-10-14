@@ -5,10 +5,11 @@
 
 #include <cassert>
 #include "ov_vm.internal.h"
+#include "string_table.internal.h"
 
-TYPED_ENUM(GCOFlags, uint8_t)
+enum class GCOFlags : uint8_t
 {
-	GCO_NONE  = 0x00,
+	NONE  = 0x00,
 	// The mark occupies the lowest two bits.
 	// Collectible objects are marked with currentCollectMark,
 	// which changes each cycle.
@@ -16,19 +17,29 @@ TYPED_ENUM(GCOFlags, uint8_t)
 	//   GCO_COLLECT(currentCollectMark)
 	//   GCO_PROCESS(currentCollectMark)
 	//   GCO_KEEP(currentCollectMark)
-	GCO_MARK  = 0x03, // Mask for extracting the mark.
+	MARK  = 0x03, // Mask for extracting the mark.
+	// The GCObject represents a string allocated before the
+	// standard String type was loaded.
+	EARLY_STRING = 0x04,
+	// The GCObject is never collected. Until the program ends.
+	// Use with caution.
+	IMMORTAL = 0x08,
 };
+ENUM_OPS(GCOFlags, uint8_t);
 
-#define MARK_GCO(gco,mk) ((gco)->flags = (::GCOFlags)((mk) | ((gco)->flags & ~GCO_MARK)))
+#define GCO_SIZE    ALIGN_TO(sizeof(::GCObject),8)
 
-#define GCO_COLLECT(ccm) ((::GCOFlags)(ccm))
-#define GCO_PROCESS(ccm) ((::GCOFlags)(((ccm) + 1) % 3))
-#define GCO_KEEP(ccm)    ((::GCOFlags)(((ccm) + 2) % 3))
+#define MARK_GCO(gco,mk) ((gco)->flags = (::GCOFlags)((mk) | ((gco)->flags & ~::GCOFlags::MARK)))
+
+// These GCO flags are always in the range 1–3
+#define GCO_COLLECT(ccm) ((::GCOFlags)((ccm) + 1))
+#define GCO_PROCESS(ccm) ((::GCOFlags)(((ccm) + 1) % 3 + 1))
+#define GCO_KEEP(ccm)    ((::GCOFlags)(((ccm) + 2) % 3 + 1))
 
 #define GCO_CLEAR_LINKS(gco) ((gco)->next = (gco)->prev = nullptr)
 
-#define GCO_INSTANCE_BASE(gco) ((uint8_t*)((gco) + 1))
-#define GCO_FIELDS_BASE(gco)   ((::Value*)((gco) + 1))
+#define GCO_INSTANCE_BASE(gco) ((char*)(gco) + GCO_SIZE)
+#define GCO_FIELDS_BASE(gco)   ((::Value*)((char*)(gco) + GCO_SIZE))
 
 // The maximum amount of data that can be allocated before the GC kicks in.
 // Objects larger than GC_LARGE_OBJECT_SIZE only contribute GC_LARGE_OBJECT_SIZE bytes
@@ -67,12 +78,25 @@ typedef struct MutableString_S
 } MutableString;
 
 // Recovers a GCObject* from an instance pointer.
-#define GCO_FROM_INST(inst)  (reinterpret_cast<::GCObject*>(inst) - 1)
+#define GCO_FROM_INST(inst)  (reinterpret_cast<::GCObject*>((char*)(inst) - GCO_SIZE))
 // Recovers a GCObject* from a Value.
 #define GCO_FROM_VALUE(val)  GCO_FROM_INST((val).instance)
 // Gets an instance pointer from a GCObject*, for a particular type.
-#define INST_FROM_GCO(gco,t) ((uint8_t*)((gco) + 1) + (t)->fieldsOffset)
+#define INST_FROM_GCO(gco,t) ((char*)(gco) + GCO_SIZE + (t)->fieldsOffset)
 
+class StaticRefBlock;
+class StaticRefBlock
+{
+public:
+	StaticRefBlock *next;
+	unsigned int count;
+
+	static const size_t BLOCK_SIZE = 64;
+	Value values[BLOCK_SIZE];
+
+	inline StaticRefBlock() : next(nullptr), count(0) { }
+	inline StaticRefBlock(StaticRefBlock *next) : next(next), count(0) { }
+};
 
 class GC
 {
@@ -91,26 +115,54 @@ private:
 	// The total number of allocated bytes the GC knows about.
 	size_t totalSize;
 
+	StringTable strings;
+	StaticRefBlock *staticRefs;
+
+	inline void MakeImmortal(GCObject *gco)
+	{
+		gco->flags = gco->flags | GCOFlags::IMMORTAL;
+	}
+
+	void *InternalAlloc(size_t size);
+	void InternalRelease(GCObject *gco);
+
 public:
 	// Initializes the garbage collector.
 	static void Init();
+	// Unloads the garbage collector.
+	static void Unload();
 
 	GC();
 	~GC();
 
 	// Determines whether a particular Value should be processed.
 	// A Value should be processed if:
-	//   1. Its type does not have the TYPE_PRIMITIVE flag set.
-	//     1a. Its type is not null.
-	//     1b. It's not a string marked STR_STATIC (as they do not
-	//         have an associated GCObject).
-	//   2. Its GCObject* is marked GCO_COLLECT.
+	//   1. Its type is not null.
+	//   2. Its type is not PRIMITIVE.
+	//   3. It is not a string with the flag STATIC (no associated GCObject).
+	//   4. Its GCObject* is marked GCO_COLLECT.
 	// NOTE: This function is only called for /reachable/ Values.
 	inline bool ShouldProcess(Value val)
 	{
-		return val.type && !(val.type->flags & TYPE_PRIMITIVE) &&
-			(val.type != stdTypes.String || !(val.common.string->flags & STR_STATIC)) &&
-			GCO_FROM_VALUE(val)->flags & GCO_COLLECT(currentCollectMark);
+		if (!val.type || (val.type->flags & TypeFlags::PRIMITIVE) == TypeFlags::PRIMITIVE)
+			return false;
+
+		if (val.type == VM::vm->types.String &&
+			(val.common.string->flags & StringFlags::STATIC) == StringFlags::STATIC)
+			return false;
+
+		return (GCO_FROM_VALUE(val)->flags & GCOFlags::MARK) == GCO_COLLECT(currentCollectMark);
+	}
+	inline bool ShouldProcess(Value *val)
+	{
+		if (!val->type || (val->type->flags & TypeFlags::PRIMITIVE) == TypeFlags::PRIMITIVE)
+			return false;
+
+		if (val->type == VM::vm->types.String &&
+			(val->common.string->flags & StringFlags::STATIC) == StringFlags::STATIC)
+			return false;
+
+		return (GCO_FROM_VALUE(*val)->flags & GCOFlags::MARK) == GCO_COLLECT(currentCollectMark);
 	}
 
 	void Alloc(Thread *const thread, const Type *type, size_t size, GCObject **output);
@@ -119,12 +171,25 @@ public:
 		GCObject *gco;
 		Alloc(thread, type, size, &gco);
 		output->type = type;
-		output->instance = GCO_INSTANCE_BASE(gco);
+		output->instance = (uint8_t*)GCO_INSTANCE_BASE(gco);
 	}
 
 
-	void ConstructString(Thread *const thread, const int32_t length, const uchar value[], String **output);
+	String *ConstructString(Thread *const thread, const int32_t length, const uchar value[]);
 	String *ConvertString(Thread *const thread, const char *string);
+
+	inline String *GetInternedString(String *value)
+	{
+		return strings.GetInterned(value);
+	}
+	inline bool HasInternedString(String *value)
+	{
+		return strings.HasInterned(value);
+	}
+	inline String *InternString(String *value)
+	{
+		return strings.Intern(value);
+	}
 
 	void Construct(Thread *const thread, const Type *type, const uint16_t argc, Value *output);
 	void ConstructLL(Thread *const thread, const Type *type, const uint16_t argc, Value *args, Value *output);
@@ -132,13 +197,7 @@ public:
 	void AddMemoryPressure(Thread *const thread, const size_t size);
 	void RemoveMemoryPressure(Thread *const thread, const size_t size);
 
-	Value *AddStaticReference();
-	inline Value *AddStaticReference(Value value)
-	{
-		Value *ref = AddStaticReference();
-		*ref = value;
-		return ref;
-	}
+	Value *AddStaticReference(Value value);
 
 	void Release(Thread *const thread, GCObject *gco);
 
@@ -157,7 +216,7 @@ public:
 	// before calling InsertIntoList, which writes to those fields.
 	// If you need these fields to be null, you must set them yourself.
 	// Use the GCO_CLEAR_LINKS(gco) macro for this.
-	inline void RemoveFromList(GCObject *gco, GCObject **list)
+	static inline void RemoveFromList(GCObject *gco, GCObject **list)
 	{
 		GCObject *prev = gco->prev;
 		GCObject *next = gco->next;
@@ -184,10 +243,9 @@ public:
 			if (next) next->prev = prev;
 		}
 	}
-
 	// Inserts a GCObject into a linked list.
 	// The parameter 'list' points to the first object in the list.
-	inline void InsertIntoList(GCObject *gco, GCObject **list)
+	static inline void InsertIntoList(GCObject *gco, GCObject **list)
 	{
 		// Before insertion:
 		// nullptr  <--  *list  <->  (*list)->next
@@ -200,29 +258,66 @@ public:
 		*list = gco;       // And then we update the base of the list!
 	}
 
+	static inline unsigned int LinkedListLength(GCObject *first)
+	{
+		unsigned int count = 0;
+
+		while (first)
+		{
+			count++;
+			first = first->next;
+		}
+
+		return count;
+	}
+
 	inline void Process(GCObject *gco)
 	{
 		// Must move from collect to process.
-		assert(gco->flags & GCO_COLLECT(currentCollectMark));
+		assert((gco->flags & GCOFlags::MARK) == GCO_COLLECT(currentCollectMark));
 
 		RemoveFromList(gco, &collectBase);
-		InsertIntoList(gco, &processBase);
-		MARK_GCO(gco, GCO_PROCESS(currentCollectMark));
+		if ((gco->flags & GCOFlags::EARLY_STRING) == GCOFlags::NONE &&
+			gco->type->fieldsOffset > 0) // may have fields
+		{
+			InsertIntoList(gco, &processBase);
+			MARK_GCO(gco, GCO_PROCESS(currentCollectMark));
+		}
+		else // no chance of instance fields, so nothing to process
+		{
+			InsertIntoList(gco, &keepBase);
+			MARK_GCO(gco, GCO_KEEP(currentCollectMark));
+		}
 	}
-
 	inline void Keep(GCObject *gco)
 	{
-		// Must move from process to keep.
-		assert(gco->flags & GCO_PROCESS(currentCollectMark));
+		// Must move from process to keep, or keep an immortal object.
+		assert((gco->flags & GCOFlags::MARK) == GCO_PROCESS(currentCollectMark) ||
+			(gco->flags & GCOFlags::IMMORTAL) == GCOFlags::IMMORTAL);
 
 		RemoveFromList(gco, &processBase);
 		InsertIntoList(gco, &keepBase);
 		MARK_GCO(gco, GCO_KEEP(currentCollectMark));
 	}
 
-
 	void MarkRootSet();
 
+	inline void TryProcess(Value value)
+	{
+		if (ShouldProcess(value))
+			Process(GCO_FROM_VALUE(value));
+	}
+	inline void TryProcess(Value *value)
+	{
+		if (ShouldProcess(value))
+			Process(GCO_FROM_VALUE(*value));
+	}
+	inline void TryProcessString(String *str)
+	{
+		if ((str->flags & StringFlags::STATIC) == StringFlags::NONE &&
+			(GCO_FROM_INST(str)->flags & GCOFlags::MARK) == GCO_COLLECT(currentCollectMark))
+			Process(GCO_FROM_INST(str));
+	}
 
 	void ProcessObjectAndFields(GCObject *gco);
 	void ProcessCustomFields(const Type *type, GCObject *gco);
@@ -230,17 +325,15 @@ public:
 	inline void ProcessFields(unsigned int fieldCount, Value fields[])
 	{
 		for (unsigned int i = 0; i < fieldCount; i++)
-		{
-			Value field = fields[i];
 			// If the object is marked GCO_KEEP, we're done processing it.
 			// If it's marked GCO_PROCESS, it'll be processed eventually.
 			// Otherwise, mark it for processing!
-			if (ShouldProcess(field))
-				Process(GCO_FROM_VALUE(field));
-		}
+			TryProcess(fields + i);
 	}
 
 	static GC *gc;
+
+	friend class VM;
 };
 
 #endif // VM__GC_INTERNAL_H

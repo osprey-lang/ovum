@@ -1,25 +1,11 @@
-#include <wchar.h>
+﻿#include <wchar.h>
+#include <fcntl.h>
+#include <io.h>
 #include <iostream>
 #include <Shlwapi.h>
 #include "ov_vm.internal.h"
 
-VMState vmState;
-StandardTypes stdTypes;
-GlobalFunctions globalFunctions;
-
-void CopyString(String *dest, const wchar_t *source)
-{
-	MutableString *mdest = reinterpret_cast<MutableString*>(dest);
-	uchar *dp = &mdest->firstChar;
-	const wchar_t *sp = source;
-
-	int32_t len = 0;
-	while (*dp++ = *sp++)
-		len++;
-
-	mdest->length = len;
-	mdest->flags = STR_STATIC;
-}
+VM *VM::vm;
 
 wchar_t *CloneWString(const wchar_t *source)
 {
@@ -32,100 +18,114 @@ wchar_t *CloneWString(const wchar_t *source)
 
 OVUM_API int VM_Start(VMStartParams params)
 {
+	return VM::Run(params);
+}
+
+VM::VM(VMStartParams &params) :
+	argCount(params.argc), verbose(params.verbose),
+	types(), functions(), mainThread(new Thread())
+{ }
+
+VM::~VM()
+{
+	delete mainThread;
+	delete[] argValues;
+}
+
+int VM::Run(VMStartParams &params)
+{
 	using namespace std;
+
+	_setmode(_fileno(stdout), _O_U16TEXT);
 
 	if (params.verbose)
 	{
-		wcout << L"Module path:  " << params.modulePath << endl;
-		wcout << L"Startup file: " << params.startupFile << endl;
-		wcout << L"Argument count: " << params.argc << endl;
+		wcout << L"Module path:    " << params.modulePath  << endl;
+		wcout << L"Startup file:   " << params.startupFile << endl;
+		wcout << L"Argument count: " << params.argc        << endl;
 	}
 
-	GC::Init(); // We must call this before VM_Init(), because VM_Init relies on the GC
-	VM_Init(params);
+	GC::Init(); // We must call this before VM::Init(), because VM::Init relies on the GC
+	Module::Init();
+	VM::Init(params);
 
 	int result = 0;
-	try
+
+	for (int32_t i = 0; i < vm->argCount; i++)
 	{
-		if (vmState.startupModule->GetMainMethod() == nullptr)
+		String *arg = vm->argValues[i]->common.string;
+		PrintLn(arg);
+
+		PrintLn(String_ToUpper(nullptr, arg));
+		PrintLn(String_ToLower(nullptr, arg));
+	}
+
+	GC::gc->Collect(nullptr);
+	/*try
+	{
+		Method *main = vm->startupModule->GetMainMethod();
+		if (main == nullptr)
 		{
-			wcerr << "Startup error: Startup module does not define a main method." << endl;
+			wcerr << L"Startup error: Startup module does not define a main method." << endl;
 			result = -1;
 		}
 		else
 		{
-			if (vmState.verbose)
+			if (vm->verbose)
 				wcout << L"<<< Begin program output >>>" << endl;
 
 			Value returnValue;
-			vmState.mainThread->Start(vmState.startupModule->GetMainMethod(), returnValue);
+			vm->mainThread->Start(main, returnValue);
 
 			if (returnValue.type == stdTypes.Int ||
 				returnValue.type == stdTypes.UInt)
 				result = (int)returnValue.integer;
 			else if (returnValue.type == stdTypes.Real)
 				result = (int)returnValue.real;
+
+			if (vm->verbose)
+				wcout << L"<<< End program output >>>" << endl;
 		}
 	}
 	catch (OvumException &e)
 	{
 		result = -1;
-	}
+	}*/
 
 	// done!
-	delete GC::gc;
-	delete vmState.mainThread;
-	Module::UnloadAll();
+	// Note: unload the GC first, as it may use the main thread.
+	GC::Unload();
+	Module::Unload();
+	VM::Unload();
 
 	return result;
 }
 
-void VM_Init(VMStartParams params)
+void VM::Init(VMStartParams &params)
+{
+	vm = new VM(params);
+	vm->LoadModules(params);
+	vm->InitArgs(params.argc, params.argv);
+}
+
+void VM::LoadModules(VMStartParams &params)
 {
 	using namespace std;
 
-	VMState state;
-
-	// Convert command-line arguments to String*s.
-	String **args = new String*[params.argc];
-	for (int i = 0; i < params.argc; i++)
-	{
-		const wchar_t *arg = params.argv[i];
-		String *str = (String*)malloc(sizeof(String) + sizeof(uchar) * wcslen(arg));
-		CopyString(str, arg);
-		args[i] = str;
-
-		if (params.verbose)
-		{
-			wcout << "Argument " << i << ": ";
-			VM_PrintLn(str);
-		}
-	}
-
-	state.argCount = params.argc;
-	state.argValues = args;
-
-	state.mainThread = new Thread();
-
+	// Set up some stuff first
 	wchar_t *startupPath = CloneWString(params.startupFile);
 	PathRemoveFileSpecW(startupPath);
-	state.startupPath = String_FromWString(nullptr, startupPath);
-	state.startupPath->flags = STR_STATIC; // make sure the GC doesn't touch it, even though it's technically owned by the GC
+	this->startupPath = String_FromWString(nullptr, startupPath);
+	GC::gc->MakeImmortal(GCO_FROM_INST(this->startupPath));
 	delete[] startupPath;
 
-	state.modulePath = String_FromWString(nullptr, params.modulePath);
-	state.modulePath->flags = STR_STATIC; // same here
+	this->modulePath = String_FromWString(nullptr, params.modulePath);
+	GC::gc->MakeImmortal(GCO_FROM_INST(this->modulePath));
 
-	state.verbose = params.verbose;
-
-	vmState = state;
-
-	// And NOW we can start opening modules! Hurrah!
-
-	Module::Init();
+	// And now we can start opening modules! Hurrah!
 	try
 	{
-		vmState.startupModule = Module::Open(params.startupFile);
+		this->startupModule = Module::Open(params.startupFile);
 	}
 	catch (ModuleLoadException &e)
 	{
@@ -134,29 +134,76 @@ void VM_Init(VMStartParams params)
 			wcerr << "Error loading module '" << fileName << "': " << e.what() << endl;
 		else
 			wcerr << "Error loading module: " << e.what() << endl;
-		exit(-1);
+		exit(EXIT_FAILURE);
+	}
+
+	for (unsigned int i = 0; i < std_type_names::StandardTypeCount; i++)
+	{
+		std_type_names::StdType type = std_type_names::Types[i];
+		if (this->types.*(type.member) == nullptr)	
+		{
+			wcerr << "Startup error: standard type not loaded: ";
+			PrintErrLn(type.name);
+			exit(EXIT_FAILURE);
+		}
 	}
 }
 
-OVUM_API void VM_Print(String *str)
+void VM::InitArgs(int argCount, const wchar_t *args[])
 {
 	using namespace std;
 
+	// Convert command-line arguments to String*s.
+	Value **argValues = new Value*[argCount];
+	for (int i = 0; i < argCount; i++)
+	{
+		const wchar_t *arg = args[i];
+		Value argValue;
+		SetString_(argValue, String_FromWString(nullptr, args[i]));
+		argValues[i] = GC::gc->AddStaticReference(argValue);
+
+		if (this->verbose)
+		{
+			wcout << "Argument " << i << ": ";
+			PrintLn(argValue.common.string);
+		}
+	}
+
+	this->argValues = argValues;
+}
+
+void VM::Unload()
+{
+	delete VM::vm;
+}
+
+void VM::PrintInternal(std::wostream &stream, String *str)
+{
 	if (sizeof(uchar) == sizeof(wchar_t))
 	{
 		// Assume wchar_t is UTF-16, or at least USC-2, and just cast it.
-		wcout << (const wchar_t*)&str->firstChar;
+		stream << (const wchar_t*)&str->firstChar;
 	}
 	else if (sizeof(wchar_t) == sizeof(uint32_t))
 	{
 		// Assume wchar_t is UTF-32, and use our own conversion function to convert
 		const int length = String_ToWString(nullptr, str);
-		wchar_t *buffer = new wchar_t[length];
-		String_ToWString(buffer, str);
 
-		wcout << buffer;
+		if (length <= 128)
+		{
+			wchar_t buffer[128];
+			String_ToWString(buffer, str);
+			stream << buffer;
+		}
+		else
+		{
+			wchar_t *buffer = new wchar_t[length];
+			String_ToWString(buffer, str);
 
-		delete[] buffer;
+			stream << buffer;
+
+			delete[] buffer;
+		}
 	}
 	else
 	{
@@ -164,34 +211,64 @@ OVUM_API void VM_Print(String *str)
 	}
 }
 
-OVUM_API void VM_PrintLn(String *str)
+void VM::Print(String *str)
 {
-	VM_Print(str);
+	PrintInternal(std::wcout, str);
+}
+void VM::PrintLn(String *str)
+{
+	PrintInternal(std::wcout, str);	
 	std::wcout << std::endl;
 }
 
+void VM::PrintErr(String *str)
+{
+	PrintInternal(std::wcerr, str);
+}
+void VM::PrintErrLn(String *str)
+{
+	PrintInternal(std::wcerr, str);
+	std::wcerr << std::endl;
+}
+
+int VM::GetArgs(const int destLength, String *dest[])
+{
+	const int maxIndex = min(destLength, argCount);
+
+	for (int i = 0; i < maxIndex; i++)
+		dest[i] = argValues[i]->common.string;
+
+	return maxIndex;
+}
+int VM::GetArgValues(const int destLength, Value dest[])
+{
+	const int maxIndex = min(destLength, argCount);
+
+	for (int i = 0; i < maxIndex; i++)
+		dest[i] = *argValues[i];
+
+	return maxIndex;
+}
+
+
+OVUM_API void VM_Print(String *str)
+{
+	VM::Print(str);
+}
+OVUM_API void VM_PrintLn(String *str)
+{
+	VM::PrintLn(str);
+}
 
 OVUM_API int VM_GetArgCount()
 {
-	return vmState.argCount;
+	return VM::vm->GetArgCount();
 }
-
-OVUM_API int VM_GetArgs(String *dest[], const int destLength)
+OVUM_API int VM_GetArgs(const int destLength, String *dest[])
 {
-	const int maxIndex = min(destLength, vmState.argCount);
-
-	for (int i = 0; i < maxIndex; i++)
-		dest[i] = vmState.argValues[i];
-
-	return maxIndex;
+	return VM::vm->GetArgs(destLength, dest);
 }
-
-OVUM_API int VM_GetArgValues(Value dest[], const int destLength)
+OVUM_API int VM_GetArgValues(const int destLength, Value dest[])
 {
-	const int maxIndex = min(destLength, vmState.argCount);
-
-	for (int i = 0; i < maxIndex; i++)
-		SetString_(dest + i, vmState.argValues[i]);
-
-	return maxIndex;
+	return VM::vm->GetArgValues(destLength, dest);
 }

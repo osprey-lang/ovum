@@ -13,7 +13,7 @@ OVUM_API void GC_Construct(ThreadHandle thread, TypeHandle type, const uint16_t 
 
 // Constructs a string. If 'values' is null, the string is initialized to contain only '\0's.
 // Note: 'length' does NOT include the terminating '\0'!
-OVUM_API void GC_ConstructString(ThreadHandle thread, const int32_t length, const uchar *values, String **result);
+OVUM_API String *GC_ConstructString(ThreadHandle thread, const int32_t length, const uchar *values);
 
 // Converts a C string to an Ovum string. The return value of this method should probably be cached
 // in a managed field of some kind, to avoid allocating memory every time the string is needed.
@@ -31,5 +31,9 @@ OVUM_API void GC_AddMemoryPressure(ThreadHandle thread, const size_t size);
 // NOTE: Consumers of this method MUST take care to remove EXACTLY as much memory
 // pressure as they add, or the GC will experience performance problems.
 OVUM_API void GC_RemoveMemoryPressure(ThreadHandle thread, const size_t size);
+
+OVUM_API Value *GC_AddStaticReference(Value initialValue);
+
+OVUM_API void GC_Collect(ThreadHandle thread);
 
 #endif // VM__GC_H

@@ -2,30 +2,20 @@
 #include "ov_unicode.h"
 #include "ov_string.h"
 
+inline const bool IsHashed(const String *const str)
+{
+	return (str->flags & StringFlags::HASHED) != StringFlags::NONE;
+}
+
 OVUM_API int32_t String_GetHashCode(String *str)
 {
-	if (str->flags & STR_HASHED)
+	if (IsHashed(str))
 		return str->hashCode;
 
-	int32_t hash1 = (5381 << 16) + 5381;
-	int32_t hash2 = hash1;
+	str->hashCode = String_GetHashCode(str->length, &str->firstChar);
+	str->flags = str->flags | StringFlags::HASHED;
 
-    int32_t c;
-	const uchar *s = &str->firstChar;
-    while (c = s[0])
-	{
-        hash1 = ((hash1 << 5) + hash1) ^ c;
-
-        c = s[1];
-        if (c == 0)
-            break;
-
-        hash2 = ((hash2 << 5) + hash2) ^ c; 
-        s += 2; 
-    }
-
-	str->flags = _E(StringFlags, str->flags | STR_HASHED);
-	return str->hashCode = hash1 + (hash2 * 1566083941);
+	return str->hashCode;
 }
 
 OVUM_API bool String_Equals(const String *a, const String *b)
@@ -35,7 +25,7 @@ OVUM_API bool String_Equals(const String *a, const String *b)
 		// at least one is null. If both are null, they compare as equal.
 		return a == b;
 	if (a->length != b->length ||
-		(a->flags & STR_HASHED) && (b->flags & STR_HASHED) &&
+		IsHashed(a) && IsHashed(b) &&
 		a->hashCode != b->hashCode)
 		return false; // couldn't possibly be the same string value
 
@@ -46,20 +36,19 @@ OVUM_API bool String_Equals(const String *a, const String *b)
 	const uchar *ap = &a->firstChar;
 	const uchar *bp = &b->firstChar;
 
-	while (length > 10) // check 5 dwords per iteration
+	// Unroll the loop by 10 characters
+	while (length > 10)
 	{
-		if (*(int32_t*)ap != *(int32_t*)bp) break;
-		if (*(int32_t*)(ap + 2) != *(int32_t*)(bp + 2)) break;
-		if (*(int32_t*)(ap + 4) != *(int32_t*)(bp + 4)) break;
-		if (*(int32_t*)(ap + 6) != *(int32_t*)(bp + 6)) break;
-		if (*(int32_t*)(ap + 8) != *(int32_t*)(bp + 8)) break;
+		if (*(int32_t*)ap != *(int32_t*)bp ||
+			*(int32_t*)(ap + 2) != *(int32_t*)(bp + 2) ||
+			*(int32_t*)(ap + 4) != *(int32_t*)(bp + 4) ||
+			*(int32_t*)(ap + 6) != *(int32_t*)(bp + 6) ||
+			*(int32_t*)(ap + 8) != *(int32_t*)(bp + 8)) break;
 		ap += 10;
 		bp += 10;
 		length -= 10;
 	}
 
-	// Note: this depends on the fact that strings are null-terminated, and
-	// that the null character is never included in the string length.
 	while (length > 0)
 	{
 		if (*(int32_t*)ap != *(int32_t*)bp)
@@ -162,7 +151,38 @@ OVUM_API bool String_SubstringEquals(const String *str, const int32_t startIndex
 	if (part->length > str->length - startIndex)
 		return false;
 
-	// TODO: String_SubstringEquals
+	// (The rest is basically a slightly modified copy of String_Equals)
+
+	int32_t length = part->length;
+
+	const uchar *ap = &str->firstChar + startIndex;
+	const uchar *bp = &part->firstChar;
+
+	while (length > 10) // check 5 dwords per iteration
+	{
+		if (*(int32_t*)ap != *(int32_t*)bp) break;
+		if (*(int32_t*)(ap + 2) != *(int32_t*)(bp + 2)) break;
+		if (*(int32_t*)(ap + 4) != *(int32_t*)(bp + 4)) break;
+		if (*(int32_t*)(ap + 6) != *(int32_t*)(bp + 6)) break;
+		if (*(int32_t*)(ap + 8) != *(int32_t*)(bp + 8)) break;
+		ap += 10;
+		bp += 10;
+		length -= 10;
+	}
+
+	// Note: this depends on the fact that strings are null-terminated, and
+	// that the null character is never included in the string length.
+	while (length > 0)
+	{
+		if (*(int32_t*)ap != *(int32_t*)bp)
+			break;
+		ap += 2;
+		bp += 2;
+
+		length -= 2;
+	}
+
+	return length <= 0;
 }
 
 OVUM_API int String_Compare(const String *a, const String *b)
@@ -247,8 +267,7 @@ OVUM_API bool String_Contains(const String *str, const String *value)
 
 OVUM_API String *String_ToUpper(ThreadHandle thread, String *str)
 {
-	String *newStr;
-	GC::gc->ConstructString(thread, str->length, nullptr, &newStr);
+	String *newStr = GC::gc->ConstructString(thread, str->length, nullptr);
 
 	const uchar *a = &str->firstChar;
 	uchar *b = const_cast<uchar*>(&newStr->firstChar);
@@ -277,8 +296,7 @@ OVUM_API String *String_ToUpper(ThreadHandle thread, String *str)
 
 OVUM_API String *String_ToLower(ThreadHandle thread, String *str)
 {
-	String *newStr;
-	GC::gc->ConstructString(thread, str->length, nullptr, &newStr);
+	String *newStr = GC::gc->ConstructString(thread, str->length, nullptr);
 
 	const uchar *a = &str->firstChar;
 	uchar *b = const_cast<uchar*>(&newStr->firstChar);
@@ -313,8 +331,7 @@ OVUM_API String *String_Concat(ThreadHandle thread, const String *a, const Strin
 
 	int32_t outLength = a->length + b->length;
 
-	String *output;
-	GC::gc->ConstructString(thread, outLength, nullptr, &output);
+	String *output = GC::gc->ConstructString(thread, outLength, nullptr);
 
 	uchar *outputChar = const_cast<uchar*>(&output->firstChar);
 
@@ -337,8 +354,7 @@ OVUM_API String *String_Concat3(ThreadHandle thread, const String *a, const Stri
 
 	outLength += c->length;
 
-	String *output;
-	GC::gc->ConstructString(thread, outLength, nullptr, &output);
+	String *output = GC::gc->ConstructString(thread, outLength, nullptr);
 	uchar *outputChar = const_cast<uchar*>(&output->firstChar);
 
 	CopyMemoryT(outputChar, &a->firstChar, a->length);
@@ -367,8 +383,7 @@ OVUM_API String *String_ConcatRange(ThreadHandle thread, const unsigned int coun
 		outLength += strlen;
 	}
 
-	String *output;
-	GC::gc->ConstructString(thread, outLength, nullptr, &output);
+	String *output = GC::gc->ConstructString(thread, outLength, nullptr);
 	uchar *outputChar = const_cast<uchar*>(&output->firstChar);
 
 	for (unsigned int i = 0; i < count; i++)
@@ -454,8 +469,7 @@ OVUM_API String *String_FromWString(ThreadHandle thread, const wchar_t *source)
 		// assume wchar_t is UTF-16 (or at least UCS-2)
 		size_t length = wcslen(source);
 
-		String *output;
-		GC::gc->ConstructString(thread, length, (const uchar*)source, &output);
+		String *output = GC::gc->ConstructString(thread, length, (const uchar*)source);
 
 		return output;
 	}
@@ -463,7 +477,6 @@ OVUM_API String *String_FromWString(ThreadHandle thread, const wchar_t *source)
 	{
 		// assume wchar_t is UTF-32
 		int32_t outLength = 0;
-		size_t sourceLength = wcslen(source);
 
 		const wchar_t *strp = source;
 		while (*strp)
@@ -475,31 +488,31 @@ OVUM_API String *String_FromWString(ThreadHandle thread, const wchar_t *source)
 			strp++;
 		}
 
-		MutableString *output;
-		GC::gc->ConstructString(thread, outLength, nullptr, (String**)&output);
+		uchar *buffer = new uchar[outLength];
 
-		if (outLength)
+		strp = source;
+		uchar *outp = buffer;
+		while (*strp)
 		{
-			const wchar_t *strp = source;
-			uchar *outp = &output->firstChar;
-			while (*strp)
+			const wuchar ch = (const wuchar)*strp;
+			if (UC_NeedsSurrogatePair(ch))
 			{
-				const wuchar ch = (const wuchar)*strp;
-				if (UC_NeedsSurrogatePair(ch))
-				{
-					const SurrogatePair surr = UC_ToSurrogatePair(ch);
-					*outp = surr.lead;
-					outp++;
-					*outp = surr.trail;
-				}
-				else
-					*outp = (uchar)ch;
-
+				const SurrogatePair surr = UC_ToSurrogatePair(ch);
+				*outp = surr.lead;
 				outp++;
+				*outp = surr.trail;
 			}
+			else
+				*outp = (uchar)ch;
+
+			outp++;
 		}
 
-		return (String*)output;
+		String *output = GC::gc->ConstructString(thread, outLength, buffer);
+
+		delete[] buffer;
+
+		return output;
 	}
 	else
 		return nullptr; /// not supported :(

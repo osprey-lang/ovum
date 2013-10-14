@@ -22,15 +22,3 @@ AVES_API NATIVE_FUNCTION(aves_Object_toString)
 {
 	VM_PushString(thread, Type_GetFullName(THISV.type));
 }
-
-AVES_API NATIVE_FUNCTION(aves_Object_opEquals)
-{
-	Value a = args[0], b = args[1];
-
-	if (a.type != b.type)
-		VM_PushBool(thread, false);
-	else if (Type_GetFlags(a.type) & TYPE_PRIMITIVE)
-		VM_PushBool(thread, a.integer == b.integer);
-	else
-		VM_PushBool(thread, a.instance == b.instance);
-}

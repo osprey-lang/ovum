@@ -171,7 +171,9 @@ void PrintUsageAndExit()
 
 void GetStartupFile(const wchar_t *path, wchar_t *buf, size_t bufSize)
 {
-	GetFullPathNameW(path, bufSize, buf, nullptr);
+	wchar_t tempBuf[MAX_PATH] = { }; // initialize to zero, bwaha
+	PathSearchAndQualifyW(path, tempBuf, MAX_PATH);
+	GetFullPathNameW(tempBuf, bufSize, buf, nullptr);
 	// And that's it, I think!
 }
 

@@ -90,6 +90,7 @@
     <ClInclude Include="ov_string.h" />
     <ClInclude Include="ov_stringbuffer.h" />
     <ClInclude Include="ov_stringbuffer.internal.h" />
+    <ClInclude Include="string_table.internal.h" />
     <ClInclude Include="ov_thread.h" />
     <ClInclude Include="ov_thread.internal.h" />
     <ClInclude Include="ov_type.internal.h" />
@@ -119,7 +120,9 @@
     <ClCompile Include="static_strings.cpp" />
     <ClCompile Include="string.cpp" />
     <ClCompile Include="stringbuffer.cpp" />
+    <ClCompile Include="string_table.cpp" />
     <ClCompile Include="thread.cpp" />
+    <ClCompile Include="thread.method_initializer.cpp" />
     <ClCompile Include="thread.opcodes.cpp" />
     <ClCompile Include="type.cpp" />
     <ClCompile Include="unicode.cpp" />

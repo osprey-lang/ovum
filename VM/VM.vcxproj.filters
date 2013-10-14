@@ -90,6 +90,9 @@
     <ClInclude Include="ov_stringbuffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="string_table.internal.h">
+      <Filter>Header Files\Internal</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -132,6 +135,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="helpers.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="string_table.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="thread.method_initializer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -6,7 +6,7 @@
 #include <cassert>
 #include "ov_vm.h"
 
-TYPED_ENUM(UnicodeCategory, uint8_t)
+enum UnicodeCategory : uint8_t
 {
 	UC_TOP_CATEGORY_MASK = 0xF0,
 	UC_SUB_CATEGORY_MASK = 0x0F,
@@ -66,15 +66,14 @@ typedef uint32_t wuchar;
 
 typedef struct CaseMap_S
 {
-	uchar codepoint, upper, lower;
+	const wuchar upper;
+	const wuchar lower;
 } CaseMap;
-typedef struct WCaseMap_S
-{
-	wuchar codepoint, upper, lower;
-} WCaseMap;
+
 typedef struct SurrogatePair_S
 {
-	const uchar lead, trail;
+	uchar lead;
+	uchar trail;
 } SurrogatePair;
 
 #define assert_valid_wuchar(ch)  assert((ch) >= 0x10000 && (ch) <= 0x10FFFF)
@@ -123,10 +122,10 @@ inline UnicodeCategory UC_GetCategory(const uchar chars[], const unsigned int in
 
 
 OVUM_API CaseMap UC_GetCaseMap(const uchar ch);
-OVUM_API WCaseMap UC_GetCaseMapW(const wuchar ch);
+OVUM_API CaseMap UC_GetCaseMapW(const wuchar ch);
 
 
-inline const SurrogatePair UC_ToSurrogatePair(const wuchar ch)
+inline SurrogatePair UC_ToSurrogatePair(const wuchar ch)
 {
 	assert_valid_wuchar(ch);
 	wuchar ch2 = ch - 0x10000;
@@ -153,11 +152,11 @@ inline bool UC_IsLower(const uchar ch)
 
 inline uchar UC_ToUpper(const uchar ch)
 {
-	return UC_GetCaseMap(ch).upper;
+	return (uchar)UC_GetCaseMap(ch).upper;
 }
 inline uchar UC_ToLower(const uchar ch)
 {
-	return UC_GetCaseMap(ch).lower;
+	return (uchar)UC_GetCaseMap(ch).lower;
 }
 
 inline bool UC_IsCategory(const wuchar ch, const UnicodeCategory cat)

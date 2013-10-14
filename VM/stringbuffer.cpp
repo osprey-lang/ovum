@@ -22,7 +22,7 @@ StringBuffer::~StringBuffer()
 	}
 }
 
-int32_t StringBuffer::SetCapacity(Thread * const thread, const int32_t newCapacity)
+int32_t StringBuffer::SetCapacity(Thread *const thread, const int32_t newCapacity)
 {
 	int32_t newCap = newCapacity;
 	if (newCap < this->length)
@@ -47,14 +47,16 @@ void StringBuffer::EnsureMinCapacity(Thread *const thread, int32_t newAmount)
 		if (thread)
 			thread->ThrowOverflowError();
 		else
-			throw exception("Could not resize string buffer: an overflow occurred.");
+			throw std::exception("Could not resize string buffer: an overflow occurred.");
 	}
 
 	if (this->length + newAmount > this->capacity)
 	{
-		int32_t newLength = this->length + newAmount ;
-		int32_t remainder = newLength % CapacityIncrement;
-		SetCapacity(thread, newLength + (remainder ? CapacityIncrement - remainder : 0));
+		// Double the capacity, but make sure newAmount will actually fit too
+		int32_t newLength = this->length << 1;
+			if (newLength < this->length + newAmount)
+				newLength += newAmount;
+		SetCapacity(thread, newLength);
 	}
 }
 
@@ -141,9 +143,7 @@ void StringBuffer::Clear()
 
 String *StringBuffer::ToString(Thread * const thread)
 {
-	String *output;
-	GC_ConstructString(thread, this->length, this->data, &output);
-	return output;
+	return GC::gc->ConstructString(thread, this->length, this->data);
 }
 
 const int StringBuffer::ToWString(wchar_t *buf)

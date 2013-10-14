@@ -10,32 +10,11 @@
 #include <cfloat>
 #include <cmath>
 
-// NOTE: if your compiler supports enums with specific underlying types, e.g.
-//     enum SOMETHING : long { };
-// then #define _TYPED_ENUMS
-//
-// Microsoft's C++ compiler fully supports this feature, hence _MSC_VER.
-//
-// If, however, your compiler supports enums with specific underlying types
-// of the form
-//     enum SOMETHING : class long { };
-// then #define _TYPED_CLASS_ENUMS
-//
-// Otherwise, a fallback will be used.
-
-#if defined(_MSC_VER) || defined(_TYPED_ENUMS)
-
-#define TYPED_ENUM(name,type) enum name : type
-
-#elif define(_TYPED_CLASS_ENUMS)
-
-#define TYPED_ENUM(name,type) enum name : class type
-
-#else
-
-#define TYPED_ENUM(name,type) typedef type name; enum _E_##name
-
-#endif
+#define ENUM_OPS(enumType,underlyingType) \
+	inline enumType operator&(const enumType a, const enumType b){return static_cast<enumType>((underlyingType)a&(underlyingType)b);}\
+	inline enumType operator|(const enumType a, const enumType b){return static_cast<enumType>((underlyingType)a|(underlyingType)b);}\
+	inline enumType operator^(const enumType a, const enumType b){return static_cast<enumType>((underlyingType)a^(underlyingType)b);}\
+	inline enumType operator~(const enumType a){return static_cast<enumType>(~(underlyingType)a);}
 
 // For checked multiplication only
 // (uses the _mul128 function if available)
@@ -45,14 +24,6 @@
 #else
 #define USE_INTRINSICS 0
 #endif
-
-// This is not so much for compatibility as it is for convenience,
-// because C++ enums have really dumb semantics.
-// It is meant to be used with bitwise enum operations, e.g.:
-//    _E(MemberFlags, M_STATIC | M_PUBLIC)
-// but because it's just a static_cast, it could be used anywhere
-// where a static cast is usable. Not sure I'd recommend that, though.
-#define _E(type,expr)  static_cast<type>(expr)
 
 
 template<class T>
@@ -163,5 +134,10 @@ inline int32_t NextPowerOfTwo(int32_t n)
 	n |= n >> 16;
 	return n + 1;
 }
+
+// This macro is effectively equivalent to ceil(size / alignment) * alignment,
+// but for integer types, and if size and alignment are both constant values, it
+// can be fully evaluated at compile-time.
+#define ALIGN_TO(size,alignment)  ((size + (alignment) - 1) / (alignment) * (alignment))
 
 #endif // VM__COMPAT_H

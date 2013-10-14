@@ -202,14 +202,8 @@ AVES_API NATIVE_FUNCTION(aves_Int_opPower)
 	if (!IsInt(right))
 		right = IntFromValue(thread, right);
 
-	double result = pow((double)args[0].integer, (double)right.integer);
-
-	// TODO: verify that this is safe
-	if (result > INT64_MAX || result < INT64_MIN ||
-		IsNaN(result) || !IsFinite(result))
-		VM_ThrowOverflowError(thread);
-
-	VM_PushInt(thread, (int64_t)result);
+	int64_t result = integer::Power(thread, args[0].integer, right.integer);
+	VM_PushInt(thread, result);
 }
 AVES_API NATIVE_FUNCTION(aves_Int_opPlus)
 {
@@ -231,8 +225,8 @@ AVES_API NATIVE_FUNCTION(aves_Int_opNot)
 
 namespace integer
 {
-	LitString<20> MinDec = { 20, 0, STR_STATIC, '-','9','2','2','3','3','7','2','0','3','6','8','5','4','7','7','5','8','0','8',0 };
-	LitString<17> MinHex = { 17, 0, STR_STATIC, '-','8','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0',0 };
+	LitString<20> MinDec = { 20, 0, StringFlags::STATIC, '-','9','2','2','3','3','7','2','0','3','6','8','5','4','7','7','5','8','0','8',0 };
+	LitString<17> MinHex = { 17, 0, StringFlags::STATIC, '-','8','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0',0 };
 }
 
 Value integer::ToStringDecimal(ThreadHandle thread, const int64_t value)
@@ -265,8 +259,7 @@ Value integer::ToStringDecimal(ThreadHandle thread, const int64_t value)
 	if (neg)
 		chars[charCount - ++length] = '-';
 
-	String *outputString;
-	GC_ConstructString(thread, length, chars + charCount - length, &outputString);
+	String *outputString = GC_ConstructString(thread, length, chars + charCount - length);
 
 	Value outputValue;
 	SetString(outputValue, outputString);
@@ -304,8 +297,7 @@ Value integer::ToStringHex(ThreadHandle thread, const int64_t value, const bool 
 	if (neg)
 		chars[charCount - ++length] = '-';
 
-	String *outputString;
-	GC_ConstructString(thread, length, chars + charCount - length, &outputString);
+	String *outputString = GC_ConstructString(thread, length, chars + charCount - length);
 
 	Value outputValue;
 	SetString(outputValue, outputString);
@@ -340,8 +332,7 @@ Value integer::ToStringRadix(ThreadHandle thread, const int64_t value, const uns
 	if (sign < 0)
 		chars[charCount - ++length] = '-';
 
-	String *outputString;
-	GC_ConstructString(thread, length, chars + charCount - length, &outputString);
+	String *outputString = GC_ConstructString(thread, length, chars + charCount - length);
 
 	Value outputValue;
 	SetString(outputValue, outputString);
