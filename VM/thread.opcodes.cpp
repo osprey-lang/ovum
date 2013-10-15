@@ -20,14 +20,14 @@ namespace instr
 			delete i->instr;
 	}
 
-	void MethodBuilder::Append(uint32_t originalOffset, Instruction *instr)
+	void MethodBuilder::Append(const uint32_t originalOffset, Instruction *instr)
 	{
 		instructions.push_back(InstrDesc(originalOffset, instr));
 		instr->offset = lastOffset;
 		lastOffset += instr->GetSize();
 	}
 
-	int32_t MethodBuilder::FindOffset(int32_t index, Instruction *relativeTo)
+	int32_t MethodBuilder::FindOffset(const int32_t index, const Instruction *relativeTo) const
 	{
 		return instructions[index].instr->offset - relativeTo->offset + relativeTo->GetSize();
 	}
@@ -97,7 +97,7 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 				// ldfalse: LocalOffset dest
 				// ldtrue: LocalOffset dest
 				{
-					SetBool_(OFF_ARG(ip) + frame, (opc & 4) >> 2);
+					SetBool_(OFF_ARG(ip) + frame, (opc >> 2) & 1);
 					frame->stackCount += opc & 1;
 
 					ip += sizeof(LocalOffset);

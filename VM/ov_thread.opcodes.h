@@ -380,9 +380,9 @@ namespace instr
 			return (int32_t)instructions.size();
 		}
 
-		void Append(uint32_t originalOffset, Instruction *instr);
+		void Append(const uint32_t originalOffset, Instruction *instr);
 
-		inline int32_t FindIndex(uint32_t originalOffset)
+		inline int32_t FindIndex(const uint32_t originalOffset)
 		{
 			int32_t index = 0;
 			for (instr_iter i = instructions.begin(); i != instructions.end(); i++, index++)
@@ -392,7 +392,7 @@ namespace instr
 			return -1;
 		}
 
-		int32_t FindOffset(int32_t index, Instruction *relativeTo);
+		int32_t FindOffset(const int32_t index, const Instruction *relativeTo) const;
 	};
 
 	enum class InstrFlags : uint8_t
@@ -1046,6 +1046,44 @@ namespace instr
 		}
 	};
 
+	class LoadType : public Instruction
+	{
+	public:
+		LocalOffset source; // on stack
+		LocalOffset target;
+
+		inline LoadType() :
+			Instruction(InstrFlags::HAS_INOUT | InstrFlags::INPUT_ON_STACK, OPI_LDTYPE_S),
+			source(0), target(0)
+		{ }
+
+		inline virtual unsigned int GetArgSize() const
+		{
+			return 2 * sizeof(LocalOffset);
+		}
+
+		inline virtual StackChange GetStackChange() const { return StackChange(1, opcode & 1); }
+
+		inline virtual void UpdateInput(const LocalOffset offset, const bool isOnStack)
+		{
+			assert(isOnStack);
+			source = offset;
+		}
+		inline virtual void UpdateOutput(const LocalOffset offset, const bool isOnStack)
+		{
+			target = offset;
+			opcode = (IntermediateOpcode)(isOnStack ? opcode | 1 : opcode & ~1);
+		}
+
+	protected:
+		inline virtual void WriteArguments(char *buffer, MethodBuilder &builder) const
+		{
+			*(LocalOffset*)buffer = source;
+			buffer += sizeof(LocalOffset);
+			*(LocalOffset*)buffer = target;
+		}
+	};
+
 	class LoadIndexer : public Instruction
 	{
 	public:
@@ -1348,7 +1386,7 @@ namespace instr
 	protected:
 		inline virtual void WriteArguments(char *buffer, MethodBuilder &builder) const
 		{
-			*(int32_t*)buffer = builder.FindOffset(target);
+			*(int32_t*)buffer = builder.FindOffset(target, this);
 		}
 
 		inline Branch(const int32_t target, const InstrFlags flags, const IntermediateOpcode opcode) :
@@ -1391,7 +1429,7 @@ namespace instr
 		{
 			*(LocalOffset*)buffer = value;
 			buffer += sizeof(LocalOffset);
-			*(int32_t*)buffer = builder.FindOffset(target);
+			*(int32_t*)buffer = builder.FindOffset(target, this);
 		}
 	};
 
@@ -1417,7 +1455,7 @@ namespace instr
 			buffer += sizeof(LocalOffset);
 			*(const Type**)buffer = type;
 			buffer += sizeof(Type*);
-			*(int32_t*)buffer = builder.FindOffset(target);
+			*(int32_t*)buffer = builder.FindOffset(target, this);
 		}
 	};
 
@@ -1461,7 +1499,7 @@ namespace instr
 
 			for (uint16_t i = 0; i < targetCount; i++)
 			{
-				*(int32_t*)buffer = builder.FindOffset(targets[i]);
+				*(int32_t*)buffer = builder.FindOffset(targets[i], this);
 				buffer += sizeof(int32_t);
 			}
 		}
@@ -1495,7 +1533,7 @@ namespace instr
 		{
 			*(LocalOffset*)buffer = args;
 			buffer += sizeof(LocalOffset);
-			*(int32_t*)buffer = builder.FindOffset(target);
+			*(int32_t*)buffer = builder.FindOffset(target, this);
 		}
 	};
 
