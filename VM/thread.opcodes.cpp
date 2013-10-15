@@ -1,4 +1,5 @@
 #include "ov_vm.internal.h"
+#include "ov_thread.opcodes.h"
 
 #define VAL_ARG(ip)  *reinterpret_cast<Value  **>(ip)
 #define I16_ARG(ip)  *reinterpret_cast<int16_t *>(ip)
@@ -12,6 +13,24 @@
 namespace instr
 {
 	const StackChange StackChange::empty = StackChange(0, 0);
+
+	MethodBuilder::~MethodBuilder()
+	{
+		for (instr_iter i = instructions.begin(); i != instructions.end(); i++)
+			delete i->instr;
+	}
+
+	void MethodBuilder::Append(uint32_t originalOffset, Instruction *instr)
+	{
+		instructions.push_back(InstrDesc(originalOffset, instr));
+		instr->offset = lastOffset;
+		lastOffset += instr->GetSize();
+	}
+
+	int32_t MethodBuilder::FindOffset(int32_t index, Instruction *relativeTo)
+	{
+		return instructions[index].instr->offset - relativeTo->offset + relativeTo->GetSize();
+	}
 }
 
 void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
