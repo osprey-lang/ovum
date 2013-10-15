@@ -8,6 +8,10 @@
 #include "ov_stringbuffer.internal.h"
 
 class StringBuffer;
+namespace instr
+{
+	class MethodBuilder;
+}
 
 // The total size of a call stack.
 #define CALL_STACK_SIZE    1024*1024

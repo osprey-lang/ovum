@@ -1,4 +1,5 @@
 #include "ov_vm.internal.h"
+#include "ov_thread.opcodes.h"
 #include <vector>
 #include <memory>
 

@@ -369,24 +369,18 @@ namespace instr
 		typedef std::vector<InstrDesc>::iterator instr_iter;
 
 		std::vector<InstrDesc> instructions;
+		int32_t lastOffset;
 
 	public:
-		inline MethodBuilder() { }
-		inline ~MethodBuilder()
-		{
-			for (instr_iter i = instructions.begin(); i != instructions.end(); i++)
-				delete i->instr;
-		}
+		inline MethodBuilder() : lastOffset(0) { }
+		~MethodBuilder();
 
 		inline int32_t GetLength()
 		{
 			return (int32_t)instructions.size();
 		}
 
-		inline void Append(uint32_t originalOffset, Instruction *instr)
-		{
-			instructions.push_back(InstrDesc(originalOffset, instr));
-		}
+		void Append(uint32_t originalOffset, Instruction *instr);
 
 		inline int32_t FindIndex(uint32_t originalOffset)
 		{
@@ -397,6 +391,8 @@ namespace instr
 
 			return -1;
 		}
+
+		int32_t FindOffset(int32_t index, Instruction *relativeTo);
 	};
 
 	enum class InstrFlags : uint8_t
@@ -439,12 +435,15 @@ namespace instr
 	{
 	public:
 		InstrFlags flags;
+		int32_t offset;
 		IntermediateOpcode opcode;
 
 		inline Instruction(const InstrFlags flags, const IntermediateOpcode opcode) :
 			flags(flags), opcode(opcode)
 		{ }
 		inline virtual ~Instruction() { }
+
+		unsigned int GetSize() const { return sizeof(IntermediateOpcode) + GetArgsSize(); }
 
 		virtual unsigned int GetArgsSize() const { return 0; }
 
@@ -496,7 +495,10 @@ namespace instr
 		LocalOffset source;
 		LocalOffset target;
 
-		inline MoveLocal() : Instruction(InstrFlags::HAS_INOUT, OPI_MVLOC_LL), source(0), target(0) { }
+		inline MoveLocal() :
+			Instruction(InstrFlags::HAS_INOUT, OPI_MVLOC_SS),
+			source(0), target(0)
+		{ }
 
 		inline virtual unsigned int GetArgsSize() const
 		{
@@ -685,7 +687,7 @@ namespace instr
 		inline virtual void WriteArguments(char *buffer, MethodBuilder &builder) const
 		{
 			WriteTarget(buffer);
-			*(Type**)buffer = type;
+			*(const Type**)buffer = type;
 			buffer += sizeof(Type*);
 			*(int64_t*)buffer = value;
 		}
@@ -729,7 +731,7 @@ namespace instr
 			buffer += sizeof(LocalOffset);
 			*(LocalOffset*)buffer = target;
 			buffer += sizeof(LocalOffset);
-			*(Type**)buffer = type;
+			*(const Type**)buffer = type;
 			buffer += sizeof(Type*);
 			*(uint16_t*)buffer = argCount;
 		}
@@ -803,7 +805,7 @@ namespace instr
 		inline virtual void WriteArguments(char *buffer, MethodBuilder &builder) const
 		{
 			WriteTarget(buffer);
-			*(Type**)buffer = type;
+			*(const Type**)buffer = type;
 		}
 	};
 
@@ -1413,7 +1415,7 @@ namespace instr
 		{
 			*(LocalOffset*)buffer = value;
 			buffer += sizeof(LocalOffset);
-			*(Type**)buffer = type;
+			*(const Type**)buffer = type;
 			buffer += sizeof(Type*);
 			*(int32_t*)buffer = builder.FindOffset(target);
 		}

@@ -112,7 +112,6 @@ public:
 #include "ov_static_strings.internal.h"
 #include "ov_value.internal.h"
 #include "ov_type.internal.h"
-#include "ov_thread.opcodes.h"
 #include "ov_thread.internal.h"
 #include "ov_gc.internal.h"
 #include "ov_module.internal.h"
