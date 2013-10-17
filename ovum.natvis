@@ -1,0 +1,82 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+	<Type Name="Value_S">
+		<DisplayString Condition="type == 0">&lt;null&gt;</DisplayString>
+		<DisplayString Condition="(type->flags &amp; TypeFlags::PRIMITIVE) == TypeFlags::PRIMITIVE">{{type={&amp;type->fullName->firstChar,sub} int={integer} uint={uinteger} real={real}}}</DisplayString>
+		<DisplayString>{{type={&amp;type->fullName->firstChar,sub} instance={(void*)instance,p}}}</DisplayString>
+	</Type>
+	<Type Name="String_S">
+		<DisplayString>{&amp;firstChar,su}</DisplayString>
+		<StringView>&amp;firstChar,su</StringView>
+	</Type>
+	<Type Name="StringTable">
+		<DisplayString>{{size={count - freeCount}}}</DisplayString>
+		<Expand>
+			<Item Name="[size]">count - freeCount</Item>
+			<Item Name="[capacity]">capacity</Item>
+			<ArrayItems>
+				<Size>capacity</Size>
+				<ValuePointer>entries</ValuePointer>
+			</ArrayItems>
+		</Expand>
+	</Type>
+	<Type Name="StringTable::Entry">
+		<DisplayString>{{{value}}}</DisplayString>
+	</Type>
+	<Type Name="StringHash&lt;*&gt;">
+		<DisplayString>{{size={count}, type={"$T1",s8b}}}</DisplayString>
+		<Expand>
+			<Item Name="[size]">count</Item>
+			<Item Name="[capacity]">capacity</Item>
+			<ArrayItems>
+				<Size>count</Size>
+				<ValuePointer>entries</ValuePointer>
+			</ArrayItems>
+		</Expand>
+	</Type>
+	<Type Name="StringHashEntry&lt;*&gt;">
+		<DisplayString>[{&amp;key->firstChar,su} : {value}]</DisplayString>
+		<Expand>
+			<Item Name="[key]">key</Item>
+			<Item Name="[value]">value</Item>
+		</Expand>
+	</Type>
+	<Type Name="Member">
+		<DisplayString Condition="(flags &amp; MemberFlags::KIND) == MemberFlags::METHOD">[Method: {&amp;name->firstChar,sub}]</DisplayString>
+		<DisplayString Condition="(flags &amp; MemberFlags::KIND) == MemberFlags::FIELD">[Field: {&amp;name->firstChar,sub}]</DisplayString>
+		<DisplayString Condition="(flags &amp; MemberFlags::KIND) == MemberFlags::PROPERTY">[Property: {&amp;name->firstChar,sub}]</DisplayString>
+		<DisplayString>[???: {&amp;name->firstChar,sub}]</DisplayString>
+	</Type>
+	<Type Name="Type">
+		<DisplayString Condition="baseType == 0">{{name={&amp;fullName->firstChar,sub} members={members.count} module={module}}}</DisplayString>
+		<DisplayString>{{name={&amp;fullName->firstChar,sub} baseType={&amp;baseType->fullName->firstChar,sub} members={members.count} module={module}}}</DisplayString>
+	</Type>
+	<Type Name="Module">
+		<DisplayString>[{&amp;name->firstChar,sub}, {version.major}.{version.minor}.{version.build}.{version.revision}]</DisplayString>
+	</Type>
+	<Type Name="ModuleVersion_S">
+		<DisplayString>[{major}.{minor}.{build}.{revision}]</DisplayString>
+	</Type>
+	<Type Name="ModuleMember">
+		<DisplayString Condition="(flags &amp; ModuleMemberFlags::KIND) == ModuleMemberFlags::TYPE">[Type: {&amp;type->fullName->firstChar,sub}]</DisplayString>
+		<DisplayString Condition="(flags &amp; ModuleMemberFlags::KIND) == ModuleMemberFlags::FUNCTION">[Function: {&amp;function->name->firstChar,sub}]</DisplayString>
+		<DisplayString Condition="(flags &amp; ModuleMemberFlags::KIND) == ModuleMemberFlags::CONSTANT">[Constant: {constant}]</DisplayString>
+		<DisplayString>[???]</DisplayString>
+		<Expand>
+			<ExpandedItem Condition="(flags &amp; ModuleMemberFlags::KIND) == ModuleMemberFlags::TYPE">type</ExpandedItem>
+			<ExpandedItem Condition="(flags &amp; ModuleMemberFlags::KIND) == ModuleMemberFlags::FUNCTION">function</ExpandedItem>
+			<ExpandedItem Condition="(flags &amp; ModuleMemberFlags::KIND) == ModuleMemberFlags::CONSTANT">constant</ExpandedItem>
+		</Expand>
+	</Type>
+	<Type Name="MemberTable&lt;*&gt;">
+		<DisplayString>{{size={length} type={"$T1",s8b}}}</DisplayString>
+		<Expand>
+			<Item Name="[size]">length</Item>
+			<Item Name="[capacity]">capacity</Item>
+			<ArrayItems>
+				<Size>length</Size>
+				<ValuePointer>entries</ValuePointer>
+			</ArrayItems>
+		</Expand>
+	</Type>
+</AutoVisualizer>
