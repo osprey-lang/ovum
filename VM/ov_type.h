@@ -87,36 +87,36 @@ enum class Operator : uint8_t
 //         TYPE_STATICCTORRUN
 enum class TypeFlags : uint32_t
 {
-	NONE          = 0x0000,
+	NONE            = 0x0000,
 
-	PROTECTION    = 0x0003,
-	PUBLIC        = 0x0001,
-	PRIVATE       = 0x0002,
+	PROTECTION      = 0x0003,
+	PUBLIC          = 0x0001,
+	PRIVATE         = 0x0002,
 
-	ABSTRACT      = 0x0004,
-	SEALED        = 0x0008,
+	ABSTRACT        = 0x0004,
+	SEALED          = 0x0008,
 	// The type is static; that is, instances of it cannot be created.
-	STATIC        = ABSTRACT | SEALED,
+	STATIC          = ABSTRACT | SEALED,
 
 	// The type is a value type; that is, it does not have an instance pointer.
 	// Value types are always implicitly sealed, hence the TYPE_SEALED flag.
 	// TYPES USING THIS FLAG WILL NOT BE ELIGIBLE FOR GARBAGE COLLECTION.
 	// If you use this flag and still store a pointer in the VALUE, you are an
 	// evil, wicked, truly malevolent person who deserves to be punished.
-	PRIMITIVE     = 0x0010 | SEALED,
+	PRIMITIVE       = 0x0010 | SEALED,
 	// The type does not use a standard VALUE array for its fields.
 	// This is used only by the GC during collection.
 	// If the type is NOT List or Hash, any type using this flag MUST
 	// set its Type::getReferences field to an appropriate value.
 	// Failure to do so will crash the runtime when the GC runs a cycle.
-	CUSTOMPTR     = 0x0020,
+	CUSTOMPTR       = 0x0020,
 	// Internal use only. If absent from a type's flags, the Type_InitOperators method
 	// must be called on the type before invoking an operator on the type.
-	OPS_INITED    = 0x0040,
+	OPS_INITED      = 0x0040,
 	// Internal use only. If set, the type has been initialised.
-	INITED        = 0x0080,
+	INITED          = 0x0080,
 	// Internal use only. If set, the static constructor for the type has been run.
-	STATICCTORRUN = 0x0100,
+	STATIC_CTOR_RUN = 0x0100,
 };
 ENUM_OPS(TypeFlags, uint32_t);
 
