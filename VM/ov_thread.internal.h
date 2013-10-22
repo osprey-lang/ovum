@@ -120,10 +120,9 @@ typedef struct StackFrame_S
 	}
 } StackFrame;
 
+#define STACK_FRAME_SIZE     ALIGN_TO(sizeof(::StackFrame), sizeof(::Value))
 // The base of the locals array, relative to a stack frame base pointer.
-#define LOCALS_OFFSET(sf)    reinterpret_cast<::Value*>((sf) + 1)
-// Gets the total size of a specific stack frame. This is NOT equivalent to sizeof(StackFrame)!
-#define STACK_FRAME_SIZE(sf) (sizeof(::StackFrame) + ((sf)->stackCount + (sf)->method->locals) * sizeof(::Value))
+#define LOCALS_OFFSET(sf)    reinterpret_cast<::Value*>((char*)(sf) + STACK_FRAME_SIZE)
 
 
 enum ThreadState
@@ -138,6 +137,7 @@ enum ThreadState
 	THREAD_STOPPED   = 0x03,
 };
 
+class StackManager; // used by the method initializer
 
 class Thread
 {
@@ -288,23 +288,15 @@ private:
 	int CompareLL(Value *args);
 	void ConcatLL(Value *args, Value *result);
 
-	typedef struct
-	{
-		enum Flags : uint8_t
-		{
-			// The slot is in use
-			IN_USE   = 1,
-			// The slot contains the 'this' argument
-			THIS_ARG = 2,
-		} flags;
-	} StackEntry;
-
-	uint8_t *InitializeMethod(Method::Overload *method);
-	uint8_t *InitializeMethodInternal(StackEntry stack[], Method::Overload *method);
+	void InitializeMethod(Method::Overload *method);
 	void InitializeInstructions(instr::MethodBuilder &builder, Method::Overload *method);
+	void InitializeBranchOffsets(instr::MethodBuilder &builder, Method::Overload *method);
+	void CalculateStackHeights(instr::MethodBuilder &builder, Method::Overload *method, StackManager &stack);
+	void CallStaticConstructors(instr::MethodBuilder &builder);
 
 	friend class GC;
 	friend void VM_InvokeMethod(ThreadHandle, MethodHandle, const unsigned int, Value*);
+	friend class VM; // temp
 };
 
 // Converts a ThreadHandle to a real Thread.

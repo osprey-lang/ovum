@@ -73,15 +73,15 @@ String *ModuleReader::ReadShortString(const int32_t length)
 
 String *ModuleReader::ReadLongString(const int32_t length)
 {
-	Module::TempArr<uchar> data(new uchar[length + 1]);
+	unique_ptr<uchar[]> data(new uchar[length + 1]);
 
 	// Note: the module file does NOT include a terminating \0!
-	Read(data.GetValue(), length);
+	Read(data.get(), length);
 
 	// If a string with this value is already interned, we get that string instead.
 	// If we have that string, GC::InternString does nothing; if we don't, we have
 	// a brand new string and interning it actually interns it.
-	String *string = GC::gc->ConstructString(nullptr, length, data.GetValue());
+	String *string = GC::gc->ConstructString(nullptr, length, data.get());
 	GC::gc->InternString(string);
 
 	return string;
@@ -273,24 +273,24 @@ Module *Module::Open(const wchar_t *fileName)
 		// and add it to the list of loaded modules.
 		// It's not fully loaded yet, but we add it specifically so that we can detect
 		// circular dependencies.
-		Temp<Module> output(new Module(meta));
-		loadedModules->Add(output.GetValue());
+		unique_ptr<Module> output(new Module(meta));
+		loadedModules->Add(output.get());
 
 		if (meta.nativeLib)
-			output.GetValue()->LoadNativeLibrary(meta.nativeLib, fileName);
+			output->LoadNativeLibrary(meta.nativeLib, fileName);
 
-		ReadStringTable(reader, output);  // strings
+		ReadStringTable(reader, output.get());  // strings
 
 		// And these must be called in exactly this order!
-		ReadModuleRefs(reader, output);   // moduleRefs
-		ReadTypeRefs(reader, output);     // typeRefs
-		ReadFunctionRefs(reader, output); // functionRefs
-		ReadFieldRefs(reader, output);    // fieldRefs
-		ReadMethodRefs(reader, output);   // methodRefs
+		ReadModuleRefs(reader, output.get());   // moduleRefs
+		ReadTypeRefs(reader, output.get());     // typeRefs
+		ReadFunctionRefs(reader, output.get()); // functionRefs
+		ReadFieldRefs(reader, output.get());    // fieldRefs
+		ReadMethodRefs(reader, output.get());   // methodRefs
 
-		ReadTypeDefs(reader, output);     // types
-		ReadFunctionDefs(reader, output); // functions
-		ReadConstantDefs(reader, output); // constants		
+		ReadTypeDefs(reader, output.get());     // types
+		ReadFunctionDefs(reader, output.get()); // functions
+		ReadConstantDefs(reader, output.get()); // constants		
 
 		TokenId mainMethodId = reader.ReadToken();
 		if (mainMethodId != 0)
@@ -299,20 +299,20 @@ Module *Module::Open(const wchar_t *fileName)
 				(mainMethodId & IDMASK_MEMBERKIND) != IDMASK_FUNCTIONDEF)
 				throw ModuleLoadException(reader.fileName, "Main method token ID must be a MethodDef or FunctionDef.");
 
-			Method *mainMethod = output.GetValue()->FindMethod(mainMethodId);
+			Method *mainMethod = output->FindMethod(mainMethodId);
 			if (mainMethod == nullptr)
 				throw ModuleLoadException(reader.fileName, "Unresolved main method token ID.");
 			if ((mainMethod->flags & MemberFlags::INSTANCE) != MemberFlags::NONE)
 				throw ModuleLoadException(reader.fileName, "Main method cannot be an instance method.");
 
-			output.GetValue()->mainMethod = mainMethod;
+			output->mainMethod = mainMethod;
 		}
 
-		outputModule = output.UseValue();
+		outputModule = output.release();
 	}
 	catch (std::ios_base::failure &ioError)
 	{
-		throw ModuleLoadException(fileName, ioError.what());
+		throw ModuleLoadException(wstring(fileName), ioError.what());
 	}
 
 	outputModule->fullyOpened = true;
@@ -331,7 +331,7 @@ Module *Module::OpenByName(String *name)
 	const int pathCount = 2;
 	String *paths[pathCount] = { VM::vm->startupPath, VM::vm->modulePath };
 
-	wchar_t *filePath;
+	unique_ptr<wchar_t[]> filePath;
 
 	for (int i = 0; i < pathCount; i++)
 	{
@@ -344,23 +344,22 @@ Module *Module::OpenByName(String *name)
 		moduleFileName.Append(nullptr, 4, ".ovm");
 
 		const int filePathLength = moduleFileName.ToWString(nullptr);
-		filePath = new wchar_t[filePathLength];
-		moduleFileName.ToWString(filePath);
+		filePath = unique_ptr<wchar_t[]>(new wchar_t[filePathLength]);
+		moduleFileName.ToWString(filePath.get());
 
-		DWORD attrs = GetFileAttributesW(filePath);
+		DWORD attrs = GetFileAttributesW(filePath.get());
 		if (attrs != INVALID_FILE_ATTRIBUTES && !(attrs & FILE_ATTRIBUTE_DIRECTORY))
 			break; // we've found our file! \o/
 
-		delete[] filePath; // Clean up~
-		filePath = nullptr;
+		filePath.reset();
 	}
 
-	if (filePath == nullptr) // not found
+	if (filePath.get() == nullptr) // not found
 	{
 		const int moduleNameLength = String_ToWString(nullptr, name);
-		wchar_t *wname = new wchar_t[moduleNameLength];
-		String_ToWString(wname, name);
-		throw ModuleLoadException(wname, "Could not locate the module file.");
+		unique_ptr<wchar_t[]> wname(new wchar_t[moduleNameLength]);
+		String_ToWString(wname.get(), name);
+		throw ModuleLoadException(wstring(wname.get()), "Could not locate the module file.");
 	}
 
 	if (VM::vm->verbose)
@@ -370,7 +369,7 @@ Module *Module::OpenByName(String *name)
 		wcout << L"' from file '" << filePath << L'\'' << endl;
 	}
 
-	Module *output = Open(filePath);
+	Module *output = Open(filePath.get());
 
 	if (VM::vm->verbose)
 	{
@@ -378,9 +377,6 @@ Module *Module::OpenByName(String *name)
 		VM::Print(name);
 		wcout << L"'." << endl;
 	}
-
-	// Mustn't forget to clean up after ourselves!
-	delete[] filePath;
 
 	return output;
 }
@@ -405,18 +401,18 @@ void Module::LoadNativeLibrary(String *nativeFileName, const wchar_t *path)
 	// path and file name of the module file, so we strip the module
 	// file name and append nativeFileName! Simple!
 	size_t pathLen = wcslen(path);
-	TempArr<wchar_t> pathBufTemp(new wchar_t[max(MAX_PATH, pathLen) + 1]);
-	wchar_t *pathBuf = pathBufTemp.GetValue();
+	unique_ptr<wchar_t[]> pathBufTemp(new wchar_t[max(MAX_PATH, pathLen) + 1]);
+	wchar_t *pathBuf = pathBufTemp.get();
 	pathBuf[pathLen] = L'\0';
 	CopyMemoryT(pathBuf, path, pathLen);
 	PathRemoveFileSpecW(pathBuf); // get the actual path!
 
 	{
 		const int fileNameWLen = String_ToWString(nullptr, nativeFileName);
-		TempArr<wchar_t> fileNameW(new wchar_t[fileNameWLen]);
-		String_ToWString(fileNameW.GetValue(), nativeFileName);
+		unique_ptr<wchar_t[]> fileNameW(new wchar_t[fileNameWLen]);
+		String_ToWString(fileNameW.get(), nativeFileName);
 
-		PathAppendW(pathBuf, PathFindFileNameW(fileNameW.GetValue()));
+		PathAppendW(pathBuf, PathFindFileNameW(fileNameW.get()));
 	}
 
 	// pathBuf should now contain a full path to the native module
@@ -424,7 +420,7 @@ void Module::LoadNativeLibrary(String *nativeFileName, const wchar_t *path)
 
 	// If this->nativeLib is null, then the library could not be loaded.
 	if (!this->nativeLib)
-		throw ModuleLoadException(path, "Could not load native library file.");
+		throw ModuleLoadException(wstring(path), "Could not load native library file.");
 }
 
 void Module::FreeNativeLibrary()
@@ -488,12 +484,11 @@ void Module::ReadVersion(ModuleReader &reader, ModuleVersion &target)
 	}
 #define CHECKPOS_AFTER(tbl) CHECKPOS_AFTER_(tbl)
 
-void Module::ReadModuleRefs(ModuleReader &reader, Temp<Module> &target)
+void Module::ReadModuleRefs(ModuleReader &reader, Module *module)
 {
 	CHECKPOS_BEFORE();
 
 	const int32_t length = reader.ReadInt32();
-	Module *module = target.GetValue();
 	module->moduleRefs.Init(length);
 
 	for (int32_t i = 0; i < length; i++)
@@ -520,12 +515,11 @@ void Module::ReadModuleRefs(ModuleReader &reader, Temp<Module> &target)
 	CHECKPOS_AFTER(ModuleRef);
 }
 
-void Module::ReadTypeRefs(ModuleReader &reader, Temp<Module> &target)
+void Module::ReadTypeRefs(ModuleReader &reader, Module *module)
 {
 	CHECKPOS_BEFORE();
 
 	const int32_t length = reader.ReadInt32();
-	Module *module = target.GetValue();
 	module->typeRefs.Init(length);
 
 	for (int32_t i = 0; i < length; i++)
@@ -553,12 +547,11 @@ void Module::ReadTypeRefs(ModuleReader &reader, Temp<Module> &target)
 	CHECKPOS_AFTER(TypeRef);
 }
 
-void Module::ReadFunctionRefs(ModuleReader &reader, Temp<Module> &target)
+void Module::ReadFunctionRefs(ModuleReader &reader, Module *module)
 {
 	CHECKPOS_BEFORE();
 
 	const int32_t length = reader.ReadInt32();
-	Module *module = target.GetValue();
 	module->functionRefs.Init(length);
 
 	for (int32_t i = 0; i < length; i++)
@@ -586,12 +579,11 @@ void Module::ReadFunctionRefs(ModuleReader &reader, Temp<Module> &target)
 	CHECKPOS_AFTER(FunctionRef);
 }
 
-void Module::ReadFieldRefs(ModuleReader &reader, Temp<Module> &target)
+void Module::ReadFieldRefs(ModuleReader &reader, Module *module)
 {
 	CHECKPOS_BEFORE();
 
 	const int32_t length = reader.ReadInt32();
-	Module *module = target.GetValue();
 	module->fieldRefs.Init(length);
 
 	for (int32_t i = 0; i < length; i++)
@@ -624,12 +616,11 @@ void Module::ReadFieldRefs(ModuleReader &reader, Temp<Module> &target)
 	CHECKPOS_AFTER(FieldRef);
 }
 
-void Module::ReadMethodRefs(ModuleReader &reader, Temp<Module> &target)
+void Module::ReadMethodRefs(ModuleReader &reader, Module *module)
 {
 	CHECKPOS_BEFORE();
 
 	const int32_t length = reader.ReadInt32();
-	Module *module = target.GetValue();
 	module->methodRefs.Init(length);
 
 	for (int32_t i = 0; i < length; i++)
@@ -662,12 +653,11 @@ void Module::ReadMethodRefs(ModuleReader &reader, Temp<Module> &target)
 	CHECKPOS_AFTER(MethodRef);
 }
 
-void Module::ReadStringTable(ModuleReader &reader, Temp<Module> &target)
+void Module::ReadStringTable(ModuleReader &reader, Module *module)
 {
 	CHECKPOS_BEFORE();
 
 	int32_t length = reader.ReadInt32();
-	Module *module = target.GetValue();
 	module->strings.Init(length);
 
 	for (int32_t i = 0; i < length; i++)
@@ -676,19 +666,18 @@ void Module::ReadStringTable(ModuleReader &reader, Temp<Module> &target)
 		if (id != module->strings.GetNextId(IDMASK_STRING))
 			throw ModuleLoadException(reader.fileName, "Invalid String token ID.");
 
-		Temp<String, true> value(reader.ReadString());
-		module->strings.Add(value.UseValue());
+		String *value = reader.ReadString(); // GC-managed
+		module->strings.Add(value);
 	}
 
 	CHECKPOS_AFTER(String);
 }
 
-void Module::ReadTypeDefs(ModuleReader &reader, Temp<Module> &target)
+void Module::ReadTypeDefs(ModuleReader &reader, Module *module)
 {
 	CHECKPOS_BEFORE();
 
 	int32_t length = reader.ReadInt32();
-	Module *module = target.GetValue();
 	module->types.Init(length);
 
 	for (int32_t i = 0; i < length; i++)
@@ -697,7 +686,7 @@ void Module::ReadTypeDefs(ModuleReader &reader, Temp<Module> &target)
 		if (id != module->types.GetNextId(IDMASK_TYPEDEF))
 			throw ModuleLoadException(reader.fileName, "Invalid TypeDef token ID.");
 
-		Type *type = ReadSingleType(reader, target, id);
+		Type *type = ReadSingleType(reader, module, id);
 		module->types.Add(type);
 		module->members.Add(type->fullName, ModuleMember(type, (type->flags & TypeFlags::PRIVATE) == TypeFlags::PRIVATE));
 	}
@@ -705,12 +694,11 @@ void Module::ReadTypeDefs(ModuleReader &reader, Temp<Module> &target)
 	CHECKPOS_AFTER(TypeDef);
 }
 
-void Module::ReadFunctionDefs(ModuleReader &reader, Temp<Module> &target)
+void Module::ReadFunctionDefs(ModuleReader &reader, Module *module)
 {
 	CHECKPOS_BEFORE();
 
 	int32_t length = reader.ReadInt32();
-	Module *module = target.GetValue();
 	module->functions.Init(length);
 
 	for (int32_t i = 0; i < length; i++)
@@ -719,26 +707,25 @@ void Module::ReadFunctionDefs(ModuleReader &reader, Temp<Module> &target)
 		if (id != module->functions.GetNextId(IDMASK_FUNCTIONDEF))
 			throw ModuleLoadException(reader.fileName, "Invalid FunctionDef token ID.");
 
-		Temp<Method> tempFunction(ReadSingleMethod(reader, target));
-		Method *function = tempFunction.GetValue();
+		unique_ptr<Method> function(ReadSingleMethod(reader, module));
 		function->SetDeclType(nullptr);
 
-		if (!module->members.Add(function->name, ModuleMember(function, (function->flags & MemberFlags::PRIVATE) == MemberFlags::PRIVATE)))
+		if (!module->members.Add(function->name, ModuleMember(function.get(),
+			(function->flags & MemberFlags::PRIVATE) == MemberFlags::PRIVATE)))
 			throw ModuleLoadException(reader.fileName, "Duplicate global member name.");
-		module->functions.Add(function);
+		module->functions.Add(function.get());
 
-		tempFunction.UseValue();
+		function.release();
 	}
 
 	CHECKPOS_AFTER(FunctionDef);
 }
 
-void Module::ReadConstantDefs(ModuleReader &reader, Temp<Module> &target)
+void Module::ReadConstantDefs(ModuleReader &reader, Module *module)
 {
 	CHECKPOS_BEFORE();
 
 	int32_t length = reader.ReadInt32();
-	Module *module = target.GetValue();
 	module->constants.Init(length);
 
 	for (int32_t i = 0; i < length; i++)
@@ -783,10 +770,8 @@ void Module::ReadConstantDefs(ModuleReader &reader, Temp<Module> &target)
 	CHECKPOS_AFTER(ConstantDef);
 }
 
-Type *Module::ReadSingleType(ModuleReader &reader, Temp<Module> &target, const TokenId typeId)
+Type *Module::ReadSingleType(ModuleReader &reader, Module *module, const TokenId typeId)
 {
-	Module *module = target.GetValue();
-
 	TypeFlags flags = (TypeFlags)reader.ReadUInt32();
 	String *name = module->FindString(reader.ReadToken());
 	if (name == nullptr)
@@ -818,8 +803,7 @@ Type *Module::ReadSingleType(ModuleReader &reader, Temp<Module> &target, const T
 	}
 
 	const int32_t memberCount = reader.ReadInt32(); // memberCount
-	Temp<Type> output(new Type(memberCount));
-	Type *type = output.GetValue();
+	unique_ptr<Type> type(new Type(memberCount));
 	type->flags        = flags;
 	type->baseType     = baseType;
 	type->sharedType   = sharedType;
@@ -827,33 +811,32 @@ Type *Module::ReadSingleType(ModuleReader &reader, Temp<Module> &target, const T
 	type->fullName     = name;
 	type->module       = module;
 
-	ReadFields(reader, target, output);     // fields
-	ReadMethods(reader, target, output);    // methods
-	ReadProperties(reader, target, output); // properties
-	ReadOperators(reader, target, output);  // operators
+	ReadFields(reader, module, type.get());     // fields
+	ReadMethods(reader, module, type.get());    // methods
+	ReadProperties(reader, module, type.get()); // properties
+	ReadOperators(reader, module, type.get());  // operators
 
-	TempArr<char> initer(reader.ReadCString());
-	if (initer.GetValue() != nullptr)
 	{
-		// Find the entry point, whoo
-		TypeInitializer func = (TypeInitializer)GetProcAddress(module->nativeLib, initer.GetValue());
-		if (func == nullptr)
-			throw ModuleLoadException(reader.fileName, "Could not locate type initializer entry point.");
-		func(output.GetValue());
+		unique_ptr<char[]> initer(reader.ReadCString());
+		if (initer.get() != nullptr)
+		{
+			// Find the entry point, whoo
+			TypeInitializer func = (TypeInitializer)GetProcAddress(module->nativeLib, initer.get());
+			if (func == nullptr)
+				throw ModuleLoadException(reader.fileName, "Could not locate type initializer entry point.");
+			func(type.get());
+		}
 	}
 
-	output.UseValue();
-	TryRegisterStandardType(type, target, reader);
-	return type;
+	TryRegisterStandardType(type.get(), module, reader);
+	return type.release();
 }
 
-void Module::ReadFields(ModuleReader &reader, Temp<Module> &targetModule, Temp<Type> &targetType)
+void Module::ReadFields(ModuleReader &reader, Module *module, Type *type)
 {
 	CHECKPOS_BEFORE();
 
 	const int32_t length = reader.ReadInt32();
-	Module *module = targetModule.GetValue();
-	Type *type = targetType.GetValue();
 
 	for (int32_t i = 0; i < length; i++)
 	{
@@ -892,12 +875,11 @@ void Module::ReadFields(ModuleReader &reader, Temp<Module> &targetModule, Temp<T
 		if (fieldFlags & FIELD_HASVALUE)
 			reader.stream.seekg(sizeof(TokenId) + sizeof(uint64_t), ios::cur);
 
-		Temp<Field> tempField(new Field(name, type, flags));
-		Field *field = tempField.GetValue();
+		unique_ptr<Field> field(new Field(name, type, flags));
 
-		if (!type->members.Add(name, field))
+		if (!type->members.Add(name, field.get()))
 			throw ModuleLoadException(reader.fileName, "Duplicate member name in type.");
-		module->fields.Add(field);
+		module->fields.Add(field.get());
 
 		if (!field->IsStatic())
 		{
@@ -908,19 +890,17 @@ void Module::ReadFields(ModuleReader &reader, Temp<Module> &targetModule, Temp<T
 		else
 			field->staticValue = nullptr; // initialized only on demand
 
-		tempField.UseValue();
+		field.release();
 	}
 
 	CHECKPOS_AFTER(FieldDef);
 }
 
-void Module::ReadMethods(ModuleReader &reader, Temp<Module> &targetModule, Temp<Type> &targetType)
+void Module::ReadMethods(ModuleReader &reader, Module *module, Type *type)
 {
 	CHECKPOS_BEFORE();
 
 	const int32_t length = reader.ReadInt32();
-	Module *module = targetModule.GetValue();
-	Type *type = targetType.GetValue();
 
 	for (int32_t i = 0; i < length; i++)
 	{
@@ -928,27 +908,24 @@ void Module::ReadMethods(ModuleReader &reader, Temp<Module> &targetModule, Temp<
 		if (id != module->methods.GetNextId(IDMASK_METHODDEF))
 			throw ModuleLoadException(reader.fileName, "Invalid MethodDef token ID.");
 
-		Temp<Method> tempMethod(ReadSingleMethod(reader, targetModule));
-		Method *method = tempMethod.GetValue();
+		unique_ptr<Method> method(ReadSingleMethod(reader, module));
 
-		if (!type->members.Add(method->name, method))
+		if (!type->members.Add(method->name, method.get()))
 			throw ModuleLoadException(reader.fileName, "Duplicate member name in type.");
-		module->methods.Add(method);
+		module->methods.Add(method.get());
 		method->SetDeclType(type);
 
-		tempMethod.UseValue();
+		method.release();
 	}
 
 	CHECKPOS_AFTER(MethodDef);
 }
 
-void Module::ReadProperties(ModuleReader &reader, Temp<Module> &targetModule, Temp<Type> &targetType)
+void Module::ReadProperties(ModuleReader &reader, Module *module, Type *type)
 {
 	CHECKPOS_BEFORE();
 
 	const int32_t length = reader.ReadInt32();
-	Module *module = targetModule.GetValue();
-	Type *type = targetType.GetValue();
 
 	for (int32_t i = 0; i < length; i++)
 	{
@@ -970,7 +947,7 @@ void Module::ReadProperties(ModuleReader &reader, Temp<Module> &targetModule, Te
 			if (getter->declType != type)
 				throw ModuleLoadException(reader.fileName, "Property getter must refer to a method in the same type as the property.");
 
-			flags = getter->flags & ~MemberFlags::IMPL;
+			flags = getter->flags & ~(MemberFlags::IMPL | MemberFlags::KIND);
 		}
 
 		Method *setter = nullptr;
@@ -984,7 +961,7 @@ void Module::ReadProperties(ModuleReader &reader, Temp<Module> &targetModule, Te
 			if (setter->declType != type)
 				throw ModuleLoadException(reader.fileName, "Property setter must refer to a method in the same type as the property.");
 
-			MemberFlags setterFlags = setter->flags & ~MemberFlags::IMPL;
+			MemberFlags setterFlags = setter->flags & ~(MemberFlags::IMPL | MemberFlags::KIND);
 			if (flags != MemberFlags::NONE && setterFlags != flags)
 				throw ModuleLoadException(reader.fileName, "Property getter and setter must have the same accessibility, and matching abstract, virtual, sealed and instance flags.");
 
@@ -996,27 +973,24 @@ void Module::ReadProperties(ModuleReader &reader, Temp<Module> &targetModule, Te
 		if (!getter && !setter)
 			throw ModuleLoadException(reader.fileName, "Property must have at least one accessor.");
 
-		Temp<Property> tempProp(new Property(name, type, flags));
-		Property *prop = tempProp.GetValue();
+		unique_ptr<Property> prop(new Property(name, type, flags));
 		prop->getter = getter;
 		prop->setter = setter;
 
-		if (!type->members.Add(prop->name, prop))
+		if (!type->members.Add(prop->name, prop.get()))
 			throw ModuleLoadException(reader.fileName, "Duplicate member name in type.");
 
-		tempProp.UseValue();
+		prop.release();
 	}
 
 	CHECKPOS_AFTER(PropertyDef);
 }
 
-void Module::ReadOperators(ModuleReader &reader, Temp<Module> &targetModule, Temp<Type> &targetType)
+void Module::ReadOperators(ModuleReader &reader, Module *module, Type *type)
 {
 	CHECKPOS_BEFORE();
 
 	const int32_t length = reader.ReadInt32();
-	Module *module = targetModule.GetValue();
-	Type *type = targetType.GetValue();
 
 	for (int32_t i = 0; i < length; i++)
 	{
@@ -1039,10 +1013,8 @@ void Module::ReadOperators(ModuleReader &reader, Temp<Module> &targetModule, Tem
 	CHECKPOS_AFTER(OperatorDef);
 }
 
-Method *Module::ReadSingleMethod(ModuleReader &reader, Temp<Module> &target)
+Method *Module::ReadSingleMethod(ModuleReader &reader, Module *module)
 {
-	Module *module = target.GetValue();
-
 	FileMethodFlags methodFlags = (FileMethodFlags)reader.ReadUInt32();
 
 	String *name = module->FindString(reader.ReadToken());
@@ -1071,18 +1043,16 @@ Method *Module::ReadSingleMethod(ModuleReader &reader, Temp<Module> &target)
 	if (methodFlags & FM_IMPL)
 		memberFlags = memberFlags | MemberFlags::IMPL;
 
-	Temp<Method> output(new Method(name, module, memberFlags));
-	Method *method = output.GetValue();
+	unique_ptr<Method> method(new Method(name, module, memberFlags));
 
-	TempArr<Method::Overload> tempOverloads(new Method::Overload[overloadCount]);
-	Method::Overload *overloads = tempOverloads.GetValue();
+	unique_ptr<Method::Overload[]> overloads(new Method::Overload[overloadCount]);
 
 	for (int32_t i = 0; i < overloadCount; i++)
 	{
 		OverloadFlags flags = (OverloadFlags)reader.ReadUInt32();
 
-		Method::Overload *ov = overloads + i;
-		ov->group = method;
+		Method::Overload *ov = overloads.get() + i;
+		ov->group = method.get();
 
 		// Parameter count
 		uint16_t paramCount = reader.ReadUInt16();
@@ -1109,7 +1079,7 @@ Method *Module::ReadSingleMethod(ModuleReader &reader, Temp<Module> &target)
 		// Header
 		{
 			int32_t tryCount = 0;
-			TempArr<Method::TryBlock> tries(nullptr);
+			unique_ptr<Method::TryBlock[]> tries(nullptr);
 			if (flags & OV_SHORTHEADER)
 			{
 				ov->optionalParamCount = ov->locals = 0;
@@ -1120,11 +1090,11 @@ Method *Module::ReadSingleMethod(ModuleReader &reader, Temp<Module> &target)
 				ov->optionalParamCount = reader.ReadUInt16();
 				ov->locals = reader.ReadUInt16();
 				ov->maxStack = reader.ReadUInt16();
-				tries = TempArr<Method::TryBlock>(ReadTryBlocks(reader, target, tryCount));
+				tries = unique_ptr<Method::TryBlock[]>(ReadTryBlocks(reader, module, tryCount));
 			}
 
 			ov->tryBlockCount = tryCount;
-			ov->tryBlocks = tries.UseValue();
+			ov->tryBlocks = tries.release();
 		}
 
 		// Body
@@ -1132,11 +1102,12 @@ Method *Module::ReadSingleMethod(ModuleReader &reader, Temp<Module> &target)
 		{
 			if (flags & OV_NATIVE)
 			{
-				TempArr<char> entryPointName(reader.ReadCString());
-				NativeMethod entryPoint = (NativeMethod)GetProcAddress(module->nativeLib, entryPointName.GetValue());
+				unique_ptr<char[]> entryPointName(reader.ReadCString());
+				NativeMethod entryPoint = (NativeMethod)GetProcAddress(module->nativeLib, entryPointName.get());
 				if (entryPoint == nullptr)
 					throw ModuleLoadException(reader.fileName, "Could not locate entry point of native method.");
 				ov->nativeEntry = entryPoint;
+				ov->flags = ov->flags | MethodFlags::NATIVE;
 			}
 			else
 			{
@@ -1147,14 +1118,14 @@ Method *Module::ReadSingleMethod(ModuleReader &reader, Temp<Module> &target)
 
 				// Read the method body
 				reader.stream.seekg(module->methodStart + offset, ios::beg);
-				TempArr<uint8_t> body(new uint8_t[length]);
-				reader.Read(body.GetValue(), length);
+				unique_ptr<uint8_t[]> body(new uint8_t[length]);
+				reader.Read(body.get(), length);
 
 				// Return to previous position
 				reader.stream.seekg(posCurrent, ios::beg);
 
 				ov->length = length;
-				ov->entry = body.UseValue();
+				ov->entry = body.release();
 			}
 		}
 	}
@@ -1164,22 +1135,21 @@ Method *Module::ReadSingleMethod(ModuleReader &reader, Temp<Module> &target)
 		throw ModuleLoadException(reader.fileName, "The actual size of the overloads table did not match the expected size.");
 
 	method->overloadCount = overloadCount;
-	method->overloads = tempOverloads.UseValue();
+	method->overloads = overloads.release();
 
-	return output.UseValue();
+	return method.release();
 }
 
-Method::TryBlock *Module::ReadTryBlocks(ModuleReader &reader, Temp<Module> &targetModule, int32_t &tryCount)
+Method::TryBlock *Module::ReadTryBlocks(ModuleReader &reader, Module *module, int32_t &tryCount)
 {
-	TempArr<Method::TryBlock> output(nullptr);
+	unique_ptr<Method::TryBlock[]> output(nullptr);
 
 	CHECKPOS_BEFORE();
 
 	const int32_t length = reader.ReadInt32();
-	Module *module = targetModule.GetValue();
 
-	output = TempArr<Method::TryBlock>(new Method::TryBlock[length]);
-	Method::TryBlock *tries = output.GetValue();
+	output = unique_ptr<Method::TryBlock[]>(new Method::TryBlock[length]);
+	Method::TryBlock *tries = output.get();
 
 	for (int32_t i = 0; i < length; i++)
 	{
@@ -1201,11 +1171,11 @@ Method::TryBlock *Module::ReadTryBlocks(ModuleReader &reader, Temp<Module> &targ
 			if (catchSize != 0)
 			{
 				int32_t catchLength = reader.ReadInt32();
-				TempArr<Method::CatchBlock> catches(new Method::CatchBlock[catchLength]);
+				unique_ptr<Method::CatchBlock[]> catches(new Method::CatchBlock[catchLength]);
 
 				for (int32_t i = 0; i < catchLength; i++)
 				{
-					Method::CatchBlock *curCatch = catches.GetValue() + i;
+					Method::CatchBlock *curCatch = catches.get() + i;
 
 					curCatch->caughtTypeId = reader.ReadToken();
 					// Try to resolve the type right away. If it fails, do it when the method
@@ -1218,7 +1188,7 @@ Method::TryBlock *Module::ReadTryBlocks(ModuleReader &reader, Temp<Module> &targ
 				}
 
 				curTry->catches.count = catchLength;
-				curTry->catches.blocks = catches.UseValue();
+				curTry->catches.blocks = catches.release();
 			}
 		}
 	}
@@ -1227,10 +1197,10 @@ Method::TryBlock *Module::ReadTryBlocks(ModuleReader &reader, Temp<Module> &targ
 
 	CHECKPOS_AFTER(tries);
 
-	return output.UseValue();
+	return output.release();
 }
 
-void Module::TryRegisterStandardType(Type *type, Temp<Module> &fromModule, ModuleReader &reader)
+void Module::TryRegisterStandardType(Type *type, Module *fromModule, ModuleReader &reader)
 {
 	for (unsigned int i = 0; i < std_type_names::StandardTypeCount; i++)
 	{
@@ -1242,7 +1212,7 @@ void Module::TryRegisterStandardType(Type *type, Temp<Module> &fromModule, Modul
 				VM::vm->types.*(stdType.member) = type;
 				if (stdType.initerFunction)
 				{
-					void *func = GetProcAddress(fromModule.GetValue()->nativeLib, stdType.initerFunction);
+					void *func = GetProcAddress(fromModule->nativeLib, stdType.initerFunction);
 					if (!func)
 						throw ModuleLoadException(reader.fileName, "Missing instance initializer for standard type in native library.");
 

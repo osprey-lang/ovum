@@ -332,23 +332,6 @@ enum IntermediateOpcode : uint8_t
 	OPI_STFLDFAST   = 0x64,
 };
 
-// Represents a local offset, that is, an offset that is relative
-// to the base of the stack frame. This is negative for arguments.
-// Use the overloaded + operator together with a StackFrame to get
-// the local that it actually refers to.
-class LocalOffset
-{
-public:
-	int16_t offset;
-
-	inline LocalOffset(const uint16_t offset) : offset(offset) { }
-	
-	inline Value *const operator+(const StackFrame *const frame) const
-	{
-		return offset == 0 ? nullptr : (Value*)((uint8_t*)frame + this->offset * sizeof(Value));
-	}
-};
-
 namespace instr
 {
 	class Instruction;
@@ -360,39 +343,103 @@ namespace instr
 		{
 		public:
 			uint32_t originalOffset;
+			uint32_t originalSize;
+			int32_t stackHeight;
 			Instruction *instr;
 
-			inline InstrDesc(uint32_t originalOffset, Instruction *instr) :
-				originalOffset(originalOffset), instr(instr)
+			inline InstrDesc(const uint32_t originalOffset, const uint32_t originalSize, Instruction *instr) :
+				originalOffset(originalOffset), originalSize(originalSize), stackHeight(-1), instr(instr)
 			{ }
 		};
 		typedef std::vector<InstrDesc>::iterator instr_iter;
+		typedef std::vector<Type*>::iterator type_iter;
 
-		std::vector<InstrDesc> instructions;
 		int32_t lastOffset;
+		bool hasBranches;
+		std::vector<InstrDesc> instructions;
+		std::vector<Type*> typesToInitialize;
 
 	public:
-		inline MethodBuilder() : lastOffset(0) { }
+		inline MethodBuilder() : lastOffset(0), hasBranches(false) { }
 		~MethodBuilder();
 
-		inline int32_t GetLength()
+		inline int32_t GetLength() const
 		{
 			return (int32_t)instructions.size();
 		}
+		inline int32_t GetByteSize() const
+		{
+			return lastOffset;
+		}
 
-		void Append(const uint32_t originalOffset, Instruction *instr);
+		inline bool HasBranches() const
+		{
+			return hasBranches;
+		}
+
+		void Append(const uint32_t originalOffset, const uint32_t originalSize, Instruction *instr);
 
 		inline int32_t FindIndex(const uint32_t originalOffset)
 		{
 			int32_t index = 0;
-			for (instr_iter i = instructions.begin(); i != instructions.end(); i++, index++)
+			for (instr_iter i = instructions.begin(); i != instructions.end(); i++)
+			{
 				if (i->originalOffset == originalOffset)
 					return index;
+				index++;
+			}
 
 			return -1;
 		}
 
-		int32_t FindOffset(const int32_t index, const Instruction *relativeTo) const;
+		uint32_t GetOriginalOffset(const int32_t index) const
+		{
+			return instructions[index].originalOffset;
+		}
+		uint32_t GetOriginalSize(const int32_t index) const
+		{
+			return instructions[index].originalSize;
+		}
+		int32_t GetNewOffset(const int32_t index, const Instruction *relativeTo) const;
+
+		inline int32_t GetStackHeight(const int32_t index) const
+		{
+			return instructions[index].stackHeight;
+		}
+
+		inline bool SetStackHeight(const int32_t index, const uint16_t stackHeight)
+		{
+			InstrDesc &instrDesc = instructions[index];
+			if (instrDesc.stackHeight >= 0 && stackHeight != instrDesc.stackHeight)
+				return false; // Uh-oh!
+
+			instrDesc.stackHeight = stackHeight;
+			return true; // phew :D
+		}
+
+		void MarkForRemoval(const int32_t index);
+		void PerformRemovals(Method::Overload *method);
+
+		Instruction *operator[](int32_t index) const
+		{
+			return instructions[index].instr;
+		}
+
+
+		int32_t GetTypeCount() const
+		{
+			return (int32_t)typesToInitialize.size();
+		}
+
+		void AddTypeToInitialize(Type *type);
+
+		Type *GetType(int32_t index) const
+		{
+			return typesToInitialize[index];
+		}
+
+	private:
+		void PerformRemovalsInternal(int32_t newIndices[], Method::Overload *method);
 	};
 
 	enum class InstrFlags : uint8_t
@@ -414,6 +461,10 @@ namespace instr
 		BRANCH = 0x10,
 		// The instruction inherits from Switch
 		SWITCH = 0x20,
+		// The instruction is a LoadLocal
+		LOAD_LOCAL = 0x40,
+		// The instruction is a StoreLocal
+		STORE_LOCAL = 0x80,
 	};
 	ENUM_OPS(InstrFlags, uint8_t);
 
@@ -449,8 +500,14 @@ namespace instr
 
 		virtual StackChange GetStackChange() const = 0;
 
-		const bool HasInput() const { return (flags & InstrFlags::HAS_INPUT) == InstrFlags::HAS_INPUT; }
-		const bool HasOutput() const { return (flags & InstrFlags::HAS_OUTPUT) == InstrFlags::HAS_OUTPUT; }
+		bool HasInput() const           { return (flags & InstrFlags::HAS_INPUT)      == InstrFlags::HAS_INPUT; }
+		bool HasOutput() const          { return (flags & InstrFlags::HAS_OUTPUT)     == InstrFlags::HAS_OUTPUT; }
+		bool IsBranch() const           { return (flags & InstrFlags::BRANCH)         == InstrFlags::BRANCH; }
+		bool IsSwitch() const           { return (flags & InstrFlags::SWITCH)         == InstrFlags::SWITCH; }
+		bool IsLoadLocal() const        { return (flags & InstrFlags::LOAD_LOCAL)     == InstrFlags::LOAD_LOCAL; }
+		bool IsStoreLocal() const       { return (flags & InstrFlags::STORE_LOCAL)    == InstrFlags::STORE_LOCAL; }
+		bool HasBranches() const        { return (flags & InstrFlags::HAS_BRANCHES)   == InstrFlags::HAS_BRANCHES; }
+		bool RequiresStackInput() const { return (flags & InstrFlags::INPUT_ON_STACK) == InstrFlags::INPUT_ON_STACK; }
 
 		void AddBranch() { flags = flags | InstrFlags::HAS_BRANCHES; }
 
@@ -461,7 +518,7 @@ namespace instr
 		inline virtual void WriteArguments(char *buffer, MethodBuilder &builder) const { }
 
 	public:
-		inline void WriteBytes(char *buffer, MethodBuilder &builder)
+		inline void WriteBytes(char *buffer, MethodBuilder &builder) const
 		{
 			*buffer = opcode;
 			WriteArguments(buffer + 1, builder);
@@ -499,6 +556,10 @@ namespace instr
 			Instruction(InstrFlags::HAS_INOUT, OPI_MVLOC_SS),
 			source(0), target(0)
 		{ }
+		inline MoveLocal(InstrFlags flags) :
+			Instruction(flags, OPI_MVLOC_SS),
+			source(0), target(0)
+		{ }
 
 		inline virtual unsigned int GetArgsSize() const
 		{
@@ -534,6 +595,35 @@ namespace instr
 			*(LocalOffset*)buffer = source;
 			buffer += sizeof(LocalOffset);
 			*(LocalOffset*)buffer = target;
+		}
+	};
+
+	class LoadLocal : public MoveLocal
+	{
+	public:
+		inline LoadLocal(LocalOffset localSource) :
+			MoveLocal(InstrFlags::HAS_OUTPUT | InstrFlags::LOAD_LOCAL)
+		{
+			this->UpdateInput(localSource, false);
+		}
+	};
+
+	class StoreLocal : public MoveLocal
+	{
+	public:
+		inline StoreLocal(LocalOffset localTarget) :
+			MoveLocal(InstrFlags::HAS_INPUT | InstrFlags::STORE_LOCAL)
+		{
+			this->UpdateOutput(localTarget, false);
+		}
+	};
+
+	class DupInstr : public MoveLocal
+	{
+	public:
+		inline DupInstr()
+		{
+			this->UpdateOutput(LocalOffset(0), false);
 		}
 	};
 
@@ -826,7 +916,7 @@ namespace instr
 			return 2 * sizeof(LocalOffset) + sizeof(String*);
 		}
 
-		inline virtual StackChange GetStackChange() const { return StackChange(2, opcode & 1); }
+		inline virtual StackChange GetStackChange() const { return StackChange(1, opcode & 1); }
 
 		inline virtual void UpdateInput(const LocalOffset offset, const bool isOnStack)
 		{
@@ -1383,10 +1473,12 @@ namespace instr
 
 		inline virtual StackChange GetStackChange() const { return StackChange::empty; }
 
+		inline virtual bool IsConditional() const { return false; }
+
 	protected:
 		inline virtual void WriteArguments(char *buffer, MethodBuilder &builder) const
 		{
-			*(int32_t*)buffer = builder.FindOffset(target, this);
+			*(int32_t*)buffer = builder.GetNewOffset(target, this);
 		}
 
 		inline Branch(const int32_t target, const InstrFlags flags, const IntermediateOpcode opcode) :
@@ -1418,6 +1510,8 @@ namespace instr
 
 		inline virtual StackChange GetStackChange() const { return StackChange(opcode & 1, 0); }
 
+		inline virtual bool IsConditional() const { return true; }
+
 		inline virtual void UpdateInput(const LocalOffset offset, const bool isOnStack)
 		{
 			value = offset;
@@ -1429,7 +1523,7 @@ namespace instr
 		{
 			*(LocalOffset*)buffer = value;
 			buffer += sizeof(LocalOffset);
-			*(int32_t*)buffer = builder.FindOffset(target, this);
+			*(int32_t*)buffer = builder.GetNewOffset(target, this);
 		}
 	};
 
@@ -1455,7 +1549,7 @@ namespace instr
 			buffer += sizeof(LocalOffset);
 			*(const Type**)buffer = type;
 			buffer += sizeof(Type*);
-			*(int32_t*)buffer = builder.FindOffset(target, this);
+			*(int32_t*)buffer = builder.GetNewOffset(target, this);
 		}
 	};
 
@@ -1499,7 +1593,7 @@ namespace instr
 
 			for (uint16_t i = 0; i < targetCount; i++)
 			{
-				*(int32_t*)buffer = builder.FindOffset(targets[i], this);
+				*(int32_t*)buffer = builder.GetNewOffset(targets[i], this);
 				buffer += sizeof(int32_t);
 			}
 		}
@@ -1533,7 +1627,7 @@ namespace instr
 		{
 			*(LocalOffset*)buffer = args;
 			buffer += sizeof(LocalOffset);
-			*(int32_t*)buffer = builder.FindOffset(target, this);
+			*(int32_t*)buffer = builder.GetNewOffset(target, this);
 		}
 	};
 

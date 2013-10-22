@@ -84,7 +84,7 @@ class ModuleReader
 {
 public:
 	std::ifstream stream;
-	const wchar_t *fileName;
+	std::wstring fileName;
 
 	inline ModuleReader(const wchar_t *fileName)
 		: fileName(fileName), stream()
@@ -427,89 +427,6 @@ public:
 	};
 
 private:
-	// Represents a T* during module loading.
-	// If the module loading fails, or if the method is left without
-	// using the value, then the destructor cleans up the memory.
-	// If UseValue() has been called on the Temp value, then the value
-	// is NOT deallocated in the destructor.
-	//
-	// If UseFree = true, then the memory is deallocated with free();
-	// otherwise, 'delete' is used.
-	template<class T, bool UseFree = false>
-	class Temp
-	{
-	private:
-		bool isValueUsed;
-		T *value;
-
-	public:
-		inline Temp()
-			: isValueUsed(false), value(nullptr)
-		{ }
-		inline Temp(T *value)
-			: isValueUsed(false), value(value)
-		{ }
-
-		inline ~Temp()
-		{
-			if (!isValueUsed && value != nullptr)
-			{
-				if (UseFree)
-					free(value);
-				else
-					delete value;
-				value = nullptr;
-			}
-		}
-
-		inline T *GetValue() const
-		{
-			return value;
-		}
-
-		inline T *UseValue()
-		{
-			isValueUsed = true;
-			return value;
-		}
-	};
-
-	template<class T>
-	class TempArr
-	{
-	private:
-		bool isValueUsed;
-		T *value;
-
-	public:
-		inline TempArr()
-			: value(nullptr), isValueUsed(false)
-		{ }
-		inline TempArr(T *value)
-			: value(value), isValueUsed(false)
-		{ }
-
-		inline ~TempArr()
-		{
-			if (!isValueUsed && value != nullptr)
-			{
-				delete[] value;
-				value = nullptr;
-			}
-		}
-
-		inline T *GetValue() const
-		{
-			return value;
-		}
-
-		inline T *UseValue()
-		{
-			isValueUsed = true;
-			return value;
-		}
-	};
-
 	bool fullyOpened; // Set to true when the module file has been fully loaded
 	                  // If a module depends on another module with this set to false,
 	                  // then there's a circular dependency issue.
@@ -547,30 +464,30 @@ private:
 
 	static void ReadVersion(ModuleReader &reader, ModuleVersion &target);
 
-	static void ReadStringTable(ModuleReader &reader, Temp<Module> &target);
+	static void ReadStringTable(ModuleReader &reader, Module *module);
 
 	// Reads the module reference table and opens all dependent modules.
 	// Also initializes the moduleRefs table (and moduleRefCount).
-	static void ReadModuleRefs(ModuleReader &reader, Temp<Module> &target);
-	static void ReadTypeRefs(ModuleReader &reader, Temp<Module> &target);
-	static void ReadFunctionRefs(ModuleReader &reader, Temp<Module> &target);
-	static void ReadFieldRefs(ModuleReader &reader, Temp<Module> &target);
-	static void ReadMethodRefs(ModuleReader &reader, Temp<Module> &target);
+	static void ReadModuleRefs(ModuleReader &reader, Module *module);
+	static void ReadTypeRefs(ModuleReader &reader, Module *module);
+	static void ReadFunctionRefs(ModuleReader &reader, Module *module);
+	static void ReadFieldRefs(ModuleReader &reader, Module *module);
+	static void ReadMethodRefs(ModuleReader &reader, Module *module);
 
-	static void ReadTypeDefs(ModuleReader &reader, Temp<Module> &target);
-	static void ReadFunctionDefs(ModuleReader &reader, Temp<Module> &target);
-	static void ReadConstantDefs(ModuleReader &reader, Temp<Module> &target);
+	static void ReadTypeDefs(ModuleReader &reader, Module *module);
+	static void ReadFunctionDefs(ModuleReader &reader, Module *module);
+	static void ReadConstantDefs(ModuleReader &reader, Module *module);
 
-	static Type *ReadSingleType(ModuleReader &reader, Temp<Module> &target, const TokenId typeId);
-	static void ReadFields(ModuleReader &reader, Temp<Module> &targetModule, Temp<Type> &targetType);
-	static void ReadMethods(ModuleReader &reader, Temp<Module> &targetModule, Temp<Type> &targetType);
-	static void ReadProperties(ModuleReader &reader, Temp<Module> &targetModule, Temp<Type> &targetType);
-	static void ReadOperators(ModuleReader &reader, Temp<Module> &targetModule, Temp<Type> &targetType);
+	static Type *ReadSingleType(ModuleReader &reader, Module *module, const TokenId typeId);
+	static void ReadFields(ModuleReader &reader, Module *targetModule, Type *targetType);
+	static void ReadMethods(ModuleReader &reader, Module *targetModule, Type *targetType);
+	static void ReadProperties(ModuleReader &reader, Module *targetModule, Type *targetType);
+	static void ReadOperators(ModuleReader &reader, Module *targetModule, Type *targetType);
 
-	static Method *ReadSingleMethod(ModuleReader &reader, Temp<Module> &target);
-	static Method::TryBlock *ReadTryBlocks(ModuleReader &reader, Temp<Module> &targetModule, int32_t &tryCount);
+	static Method *ReadSingleMethod(ModuleReader &reader, Module *module);
+	static Method::TryBlock *ReadTryBlocks(ModuleReader &reader, Module *targetModule, int32_t &tryCount);
 
-	static void TryRegisterStandardType(Type *type, Temp<Module> &fromModule, ModuleReader &reader);
+	static void TryRegisterStandardType(Type *type, Module *fromModule, ModuleReader &reader);
 
 	enum FileMethodFlags : uint32_t
 	{
@@ -601,17 +518,17 @@ private:
 class ModuleLoadException : public std::exception
 {
 private:
-	const wchar_t *fileName;
+	std::wstring fileName;
 
 public:
-	inline ModuleLoadException(const wchar_t *fileName)
+	inline ModuleLoadException(std::wstring &fileName)
 		: fileName(fileName), exception("Module could not be loaded")
 	{ }
-	inline ModuleLoadException(const wchar_t *fileName, const char *message)
+	inline ModuleLoadException(std::wstring &fileName, const char *message)
 		: fileName(fileName), exception(message)
 	{ }
 
-	inline const wchar_t *GetFileName() const throw()
+	inline const std::wstring &GetFileName() const throw()
 	{
 		return this->fileName;
 	}

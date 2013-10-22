@@ -51,7 +51,7 @@ int VM::Run(VMStartParams &params)
 
 	int result = 0;
 
-	for (int32_t i = 0; i < vm->argCount; i++)
+	/*for (int32_t i = 0; i < vm->argCount; i++)
 	{
 		String *arg = vm->argValues[i]->common.string;
 		PrintLn(arg);
@@ -60,7 +60,8 @@ int VM::Run(VMStartParams &params)
 		PrintLn(String_ToLower(nullptr, arg));
 	}
 
-	GC::gc->Collect(nullptr);
+	GC::gc->Collect(nullptr);*/
+	VM::vm->mainThread->InitializeMethod(vm->startupModule->GetMainMethod()->overloads);
 	/*try
 	{
 		Method *main = vm->startupModule->GetMainMethod();
@@ -129,9 +130,9 @@ void VM::LoadModules(VMStartParams &params)
 	}
 	catch (ModuleLoadException &e)
 	{
-		const wchar_t *fileName = e.GetFileName();
-		if (fileName)
-			wcerr << "Error loading module '" << fileName << "': " << e.what() << endl;
+		const wstring &fileName = e.GetFileName();
+		if (!fileName.empty())
+			wcerr << "Error loading module '" << fileName.c_str() << "': " << e.what() << endl;
 		else
 			wcerr << "Error loading module: " << e.what() << endl;
 		exit(EXIT_FAILURE);

@@ -65,7 +65,7 @@ void Thread::Invoke(unsigned int argCount, Value *result)
 #pragma warning(push)
 #pragma warning(disable: 4703) // Potentially uninitialized local variable 'method'
                                // The compiler can't figure out that ThrowTypeError always throws.
-// Note: argCount does NOT include the arguments
+// Note: argCount does NOT include the instance
 void Thread::InvokeLL(unsigned int argCount, Value *value, Value *result)
 {
 	Method::Overload *mo;
@@ -127,6 +127,9 @@ void Thread::InvokeMethod(Method *method, unsigned int argCount, Value *args, Va
 
 void Thread::InvokeMethodOverload(Method::Overload *mo, unsigned int argCount, Value *args, Value *result)
 {
+	if (!mo->IsInitialized())
+		InitializeMethod(mo);
+
 	MethodFlags flags = mo->flags; // used several times below!
 	uint16_t finalArgCount = argCount;
 
@@ -144,16 +147,13 @@ void Thread::InvokeMethodOverload(Method::Overload *mo, unsigned int argCount, V
 
 	if ((flags & MethodFlags::NATIVE) != MethodFlags::NONE)
 	{
-		mo->nativeEntry((ThreadHandle)this, finalArgCount, frame->arguments);
+		mo->nativeEntry(this, finalArgCount, frame->arguments);
 		// Native methods are not required to return with one value on the stack, but if
 		// they have more than one, only the lowest one is used.
-		if (result)
-		{
-			if (frame->stackCount)
-				*result = frame->evalStack[0];
-			else
-				*result = NULL_VALUE;
-		}
+		if (frame->stackCount)
+			*result = frame->evalStack[0];
+		else
+			*result = NULL_VALUE;
 	}
 	else
 	{
@@ -161,8 +161,7 @@ void Thread::InvokeMethodOverload(Method::Overload *mo, unsigned int argCount, V
 		// It should not be possible to return from a method with
 		// anything other than exactly one value on the stack!
 		assert(frame->stackCount == 1);
-		if (result)
-			*result = frame->evalStack[0];
+		*result = frame->evalStack[0];
 	}
 
 	// restore previous stack frame
@@ -179,7 +178,7 @@ void Thread::InvokeOperator(Operator op, Value *result)
 
 void Thread::InvokeOperatorLL(Value *args, Operator op, Value *result)
 {
-	;
+	throw L"Not implemented";
 }
 
 void Thread::InvokeApply(Value *result)
@@ -240,7 +239,20 @@ void Thread::ConcatLL(Value *args, Value *result)
 		if (a->type != b->type)
 			ThrowTypeError(thread_errors::ConcatTypes);
 
-		// TODO
+		ListInst *aList = a->common.list;
+		ListInst *bList = b->common.list;
+		Value output;
+		GC::gc->Alloc(this, VM::vm->types.List, sizeof(ListInst), &output);
+
+		int32_t length = aList->length + bList->length;
+		VM::vm->functions.initListInstance(this, output.common.list, length);
+		if (length > 0)
+		{
+			CopyMemoryT(output.common.list->values, aList->values, aList->length);
+			CopyMemoryT(output.common.list->values + aList->length, bList->values, bList->length);
+		}
+
+		*result = output;
 	}
 	else if (a->type == VM::vm->types.Hash || b->type == VM::vm->types.Hash)
 	{
@@ -252,11 +264,14 @@ void Thread::ConcatLL(Value *args, Value *result)
 	}
 	else
 	{
-		;
 		// string concatenation
-	}
+		*a = StringFromValue(this, *a);
+		*b = StringFromValue(this, *b);
 
-	throw L"Not implemented";
+		Value output;
+		SetString_(output, String_Concat(this, a->common.string, b->common.string));
+		*result = output;
+	}
 }
 
 

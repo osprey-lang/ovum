@@ -237,6 +237,24 @@ enum class MethodFlags : int16_t
 };
 ENUM_OPS(MethodFlags, int16_t);
 
+typedef struct StackFrame_S StackFrame;
+// Represents a local offset, that is, an offset that is relative
+// to the base of the stack frame. This is negative for arguments.
+// Use the overloaded + operator together with a StackFrame to get
+// the local that it actually refers to.
+class LocalOffset
+{
+public:
+	int16_t offset;
+
+	inline LocalOffset(const int16_t offset) : offset(offset) { }
+	
+	inline Value *const operator+(const StackFrame *const frame) const
+	{
+		return (Value*)((char*)frame + offset * sizeof(Value));
+	}
+};
+
 class Method : public Member
 {
 public:
@@ -281,7 +299,10 @@ public:
 		{ }
 		inline TryBlock(TryKind kind, uint32_t tryStart, uint32_t tryEnd)
 			: kind(kind), tryStart(tryStart), tryEnd(tryEnd)
-		{ }
+		{
+			if (kind == TryKind::CATCH)
+				catches.blocks = nullptr;
+		}
 
 		inline ~TryBlock()
 		{
@@ -337,8 +358,23 @@ public:
 					argc <= paramCount;
 		}
 
+		inline bool IsInitialized() const
+		{
+			return (flags & MethodFlags::INITED) == MethodFlags::INITED;
+		}
+
+		inline LocalOffset GetArgumentOffset(uint16_t arg) const
+		{
+			return LocalOffset((int16_t)(arg - paramCount));
+		}
+		LocalOffset GetLocalOffset(uint16_t local) const;
+		LocalOffset GetStackOffset(uint16_t stackSlot) const;
+
 		inline ~Overload()
 		{
+			if ((flags & (MethodFlags::NATIVE | MethodFlags::ABSTRACT)) == MethodFlags::NONE)
+				delete[] entry;
+
 			if (tryBlockCount > 0)
 			{
 				delete[] tryBlocks;
