@@ -1,4 +1,5 @@
 #include "aves_hash.h"
+#include <memory>
 
 #define _H(value)           ((value).common.hash)
 #define U64_TO_HASH(value)  ((int32_t)(value) ^ (int32_t)((value) >> 32))
@@ -20,20 +21,23 @@ void InitializeBuckets(ThreadHandle thread, HashInst *inst, const int32_t capaci
 	inst->entries = new HashEntry[size];
 	memset(inst->entries, 0, size * sizeof(HashEntry));
 
+	inst->capacity = size;
 	inst->freeList = -1;
 }
 
 void ResizeHash(ThreadHandle thread, HashInst *inst)
 {
+	using namespace std;
+
 	int32_t newSize = HashHelper_GetPrime(inst->count * 2);
 
-	int32_t *newBuckets = new int32_t[newSize];
-	memset(newBuckets, -1, newSize * sizeof(int32_t));
+	unique_ptr<int32_t[]> newBuckets(new int32_t[newSize]);
+	memset(newBuckets.get(), -1, newSize * sizeof(int32_t));
 
-	HashEntry *newEntries = new HashEntry[newSize];
-	CopyMemoryT(newEntries, inst->entries, inst->count);
+	unique_ptr<HashEntry[]> newEntries(new HashEntry[newSize]);
+	CopyMemoryT(newEntries.get(), inst->entries, inst->count);
 
-	HashEntry *e = newEntries;
+	HashEntry *e = newEntries.get();
 	for (int32_t i = 0; i < inst->count; i++, e++)
 	{
 		int32_t bucket = e->hashCode % newSize;
@@ -45,8 +49,8 @@ void ResizeHash(ThreadHandle thread, HashInst *inst)
 	delete[] inst->entries;
 
 	inst->capacity = newSize;
-	inst->buckets = newBuckets;
-	inst->entries = newEntries;
+	inst->buckets = newBuckets.release();
+	inst->entries = newEntries.release();
 }
 
 int32_t FindEntry(ThreadHandle thread, HashInst *inst, Value *key, const int32_t hashCode)

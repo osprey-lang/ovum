@@ -34,8 +34,7 @@ class Property;
 // Represents a handle to a specific thread.
 typedef Thread *const ThreadHandle;
 // Represents a handle to a specific type.
-// Note the constness of the pointer data.
-typedef const Type *TypeHandle;
+typedef Type *TypeHandle;
 // Represents a handle to a specific module.
 typedef Module *ModuleHandle;
 // Represents a handle to a member of a type.

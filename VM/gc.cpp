@@ -65,7 +65,7 @@ void GC::InternalRelease(GCObject *gco)
 	free(gco);
 }
 
-void GC::Alloc(Thread *const thread, const Type *type, size_t size, GCObject **output)
+void GC::Alloc(Thread *const thread, Type *type, size_t size, GCObject **output)
 {
 	if (SIZE_MAX - size < GCO_SIZE)
 		thread->ThrowMemoryError(gc_strings::ObjectTooBig);
@@ -117,7 +117,7 @@ void GC::Alloc(Thread *const thread, const Type *type, size_t size, GCObject **o
 	}
 }
 
-void GC::Construct(Thread *const thread, const Type *type, const uint16_t argc, Value *output)
+void GC::Construct(Thread *const thread, Type *type, const uint16_t argc, Value *output)
 {
 	if (type == VM::vm->types.String ||
 		(type->flags & TypeFlags::PRIMITIVE) == TypeFlags::PRIMITIVE ||
@@ -128,7 +128,7 @@ void GC::Construct(Thread *const thread, const Type *type, const uint16_t argc, 
 	ConstructLL(thread, type, argc, frame->evalStack + frame->stackCount - argc, output);
 }
 
-void GC::ConstructLL(Thread *const thread, const Type *type, const uint16_t argc, Value *args, Value *output)
+void GC::ConstructLL(Thread *const thread, Type *type, const uint16_t argc, Value *args, Value *output)
 {
 	GCObject *gco;
 	Alloc(thread, type, type->fieldsOffset + type->size, &gco);
@@ -225,7 +225,7 @@ void GC::Release(Thread *const thread, GCObject *gco)
 {
 	assert((gco->flags & GCO_COLLECT(currentCollectMark)) == GCO_COLLECT(currentCollectMark));
 
-	const Type *type = gco->type;
+	Type *type = gco->type;
 	while (type)
 	{
 		if (type->finalizer)
@@ -305,8 +305,9 @@ void GC::MarkRootSet()
 	{
 		Method::Overload *method = frame->method;
 		// Does the method have any parameters?
-		if (method->paramCount)
-			ProcessFields(method->paramCount, frame->arguments);
+		unsigned int paramCount = method->GetEffectiveParamCount();
+		if (paramCount)
+			ProcessFields(paramCount, (Value*)frame - paramCount);
 		// By design, the locals and the eval stack are adjacent in memory.
 		// Hence, the following is safe:
 		if (method->locals || frame->stackCount)
@@ -349,7 +350,7 @@ void GC::ProcessObjectAndFields(GCObject *gco)
 
 	Keep(gco);
 
-	const Type *type = gco->type;
+	Type *type = gco->type;
 	while (type)
 	{
 		if ((type->flags & TypeFlags::CUSTOMPTR) != TypeFlags::NONE)
@@ -361,7 +362,7 @@ void GC::ProcessObjectAndFields(GCObject *gco)
 	}
 }
 
-void GC::ProcessCustomFields(const Type *type, GCObject *gco)
+void GC::ProcessCustomFields(Type *type, GCObject *gco)
 {
 	if (type == VM::vm->types.Hash)
 	{

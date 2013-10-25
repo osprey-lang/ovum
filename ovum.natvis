@@ -79,4 +79,52 @@
 			</ArrayItems>
 		</Expand>
 	</Type>
+	<Type Name="StackFrame_S">
+		<DisplayString>{{stackCount={stackCount} argc={argc} method={method}}}</DisplayString>
+		<Expand>
+			<Synthetic Name="[eval stack]" Condition="stackCount == 0">
+				<DisplayString>(empty)</DisplayString>
+			</Synthetic>
+			<Synthetic Name="[eval stack]" Condition="stackCount &gt; 0">
+				<DisplayString>{{height={stackCount}}}</DisplayString>
+				<Expand>
+					<ArrayItems>
+						<Size>stackCount</Size>
+						<ValuePointer>evalStack</ValuePointer>
+					</ArrayItems>
+				</Expand>
+			</Synthetic>
+			<Synthetic Name="[arguments]">
+				<DisplayString>{{count={argc}}}</DisplayString>
+				<Expand>
+					<ArrayItems>
+						<Size>argc</Size>
+						<ValuePointer>reinterpret_cast&lt;::Value_S*&gt;(&amp;stackCount) - method->paramCount - ((int)(method->flags &amp; MethodFlags::INSTANCE) >> 3)</ValuePointer>
+					</ArrayItems>
+				</Expand>
+			</Synthetic>
+			<Synthetic Name="[locals]" Condition="method->locals &gt; 0">
+				<DisplayString>{{count={method->locals}}}</DisplayString>
+				<Expand>
+					<ArrayItems>
+						<Size>method->locals</Size>
+						<ValuePointer>evalStack - method->locals</ValuePointer>
+					</ArrayItems>
+				</Expand>
+			</Synthetic>
+			<Synthetic Name="[method]" Condition="method->declType == 0">
+				<DisplayString>{&amp;method->group->name->firstChar,sub}</DisplayString>
+				<Expand>
+					<ExpandedItem>method</ExpandedItem>
+				</Expand>
+			</Synthetic>
+			<Synthetic Name="[method]" Condition="method->declType != 0">
+				<DisplayString>{&amp;method->group->name->firstChar,sub} in {&amp;method->declType->fullName->firstChar,sub}</DisplayString>
+				<Expand>
+					<ExpandedItem>method</ExpandedItem>
+				</Expand>
+			</Synthetic>
+			<Item Name="[type]" Condition="method->declType != 0">method->declType</Item>
+		</Expand>
+	</Type>
 </AutoVisualizer>

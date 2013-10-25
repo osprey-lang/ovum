@@ -119,8 +119,8 @@ OVUM_API int64_t Int_AddChecked(ThreadHandle thread, const int64_t left, const i
 		// > If both are negative, then test  left < INT64_MIN - right
 		// NOTE: if both operands are 0, this is evaluated too.
 		bool neg = left < 0;
-		if (neg && !(left < INT64_MIN - right) ||
-			!neg && !(INT64_MAX - left < right))
+		if (neg && (left < INT64_MIN - right) ||
+			!neg && (INT64_MAX - left < right))
 			thread->ThrowOverflowError();
 	}
 

@@ -8,6 +8,7 @@
 using namespace std;
 
 Module::Pool *Module::loadedModules = nullptr;
+const char *const Module::NativeModuleIniterName = "OvumModuleMain";
 
 namespace module_file
 {
@@ -128,7 +129,7 @@ Module::~Module()
 	FreeNativeLibrary();
 }
 
-const Type *Module::FindType(String *name, bool includeInternal) const
+Type *Module::FindType(String *name, bool includeInternal) const
 {
 	ModuleMember member;
 	if (!members.Get(name, member))
@@ -180,7 +181,7 @@ Module *Module::FindModuleRef(TokenId token) const
 	return moduleRefs[TOKEN_INDEX(token)];
 }
 
-const Type *Module::FindType(TokenId token) const
+Type *Module::FindType(TokenId token) const
 {
 	assert((token & IDMASK_MEMBERKIND) == IDMASK_TYPEDEF ||
 		(token & IDMASK_MEMBERKIND) == IDMASK_TYPEREF);
@@ -308,6 +309,13 @@ Module *Module::Open(const wchar_t *fileName)
 			output->mainMethod = mainMethod;
 		}
 
+		if (output->nativeLib)
+		{
+			NativeModuleMain nativeMain = (NativeModuleMain)output->FindNativeEntryPoint(Module::NativeModuleIniterName);
+			if (nativeMain)
+				nativeMain(output.get());
+		}
+
 		outputModule = output.release();
 	}
 	catch (std::ios_base::failure &ioError)
@@ -366,7 +374,7 @@ Module *Module::OpenByName(String *name)
 	{
 		wcout << L"Loading module '";
 		VM::Print(name);
-		wcout << L"' from file '" << filePath << L'\'' << endl;
+		wcout << L"' from file '" << filePath.get() << L'\'' << endl;
 	}
 
 	Module *output = Open(filePath.get());
@@ -423,12 +431,17 @@ void Module::LoadNativeLibrary(String *nativeFileName, const wchar_t *path)
 		throw ModuleLoadException(wstring(path), "Could not load native library file.");
 }
 
+void *Module::FindNativeEntryPoint(const char *name)
+{
+	return GetProcAddress(this->nativeLib, name);
+}
+
 void Module::FreeNativeLibrary()
 {
 	if (nativeLib)
 	{
-		FreeLibrary(nativeLib);
-		nativeLib = nullptr;
+		FreeLibrary(this->nativeLib);
+		this->nativeLib = nullptr;
 	}
 }
 
@@ -537,7 +550,7 @@ void Module::ReadTypeRefs(ModuleReader &reader, Module *module)
 		if (!owner)
 			throw ModuleLoadException(reader.fileName, "Unresolved ModuleRef token in TypeRef.");
 
-		const Type *type = owner->FindType(typeName, false);
+		Type *type = owner->FindType(typeName, false);
 		if (!type)
 			throw ModuleLoadException(reader.fileName, "Unresolved TypeRef.");
 
@@ -600,7 +613,7 @@ void Module::ReadFieldRefs(ModuleReader &reader, Module *module)
 		if ((typeRef & IDMASK_MEMBERKIND) != IDMASK_TYPEREF)
 			throw ModuleLoadException(reader.fileName, "FieldRef must contain a TypeRef.");
 
-		const Type *type = module->FindType(typeRef);
+		Type *type = module->FindType(typeRef);
 		if (!type)
 			throw ModuleLoadException(reader.fileName, "Unresolved TypeRef token in FieldRef.");
 
@@ -637,7 +650,7 @@ void Module::ReadMethodRefs(ModuleReader &reader, Module *module)
 		if ((typeRef & IDMASK_MEMBERKIND) != IDMASK_TYPEREF)
 			throw ModuleLoadException(reader.fileName, "MethodRef must contain a TypeRef.");
 
-		const Type *type = module->FindType(typeRef);
+		Type *type = module->FindType(typeRef);
 		if (!type)
 			throw ModuleLoadException(reader.fileName, "Unresolved TypeRef token in MethodRef.");
 
@@ -742,7 +755,7 @@ void Module::ReadConstantDefs(ModuleReader &reader, Module *module)
 			throw ModuleLoadException(reader.fileName, "Could not resolve string ID in ConstantDef name.");
 		TokenId typeId = reader.ReadToken();
 
-		const Type *type = module->FindType(typeId);
+		Type *type = module->FindType(typeId);
 		if (type == nullptr)
 			throw ModuleLoadException(reader.fileName, "Unresolved TypeRef or TypeDef token ID in ConstantDef.");
 		if (type != VM::vm->types.String && (type->flags & TypeFlags::PRIMITIVE) != TypeFlags::PRIMITIVE)
@@ -780,7 +793,7 @@ Type *Module::ReadSingleType(ModuleReader &reader, Module *module, const TokenId
 	TokenId baseTypeId   = reader.ReadToken();
 	TokenId sharedTypeId = reader.ReadToken();
 
-	const Type *baseType = nullptr;
+	Type *baseType = nullptr;
 	if (baseTypeId != 0)
 	{
 		if (baseTypeId == typeId)
@@ -790,7 +803,7 @@ Type *Module::ReadSingleType(ModuleReader &reader, Module *module, const TokenId
 			throw ModuleLoadException(reader.fileName, "Could not resolve base type ID.");
 	}
 
-	const Type *sharedType = nullptr;
+	Type *sharedType = nullptr;
 	if (sharedTypeId != 0)
 	{
 		if ((sharedTypeId & IDMASK_MEMBERKIND) != IDMASK_TYPEDEF)
@@ -821,7 +834,7 @@ Type *Module::ReadSingleType(ModuleReader &reader, Module *module, const TokenId
 		if (initer.get() != nullptr)
 		{
 			// Find the entry point, whoo
-			TypeInitializer func = (TypeInitializer)GetProcAddress(module->nativeLib, initer.get());
+			TypeInitializer func = (TypeInitializer)module->FindNativeEntryPoint(initer.get());
 			if (func == nullptr)
 				throw ModuleLoadException(reader.fileName, "Could not locate type initializer entry point.");
 			func(type.get());
@@ -1103,7 +1116,7 @@ Method *Module::ReadSingleMethod(ModuleReader &reader, Module *module)
 			if (flags & OV_NATIVE)
 			{
 				unique_ptr<char[]> entryPointName(reader.ReadCString());
-				NativeMethod entryPoint = (NativeMethod)GetProcAddress(module->nativeLib, entryPointName.get());
+				NativeMethod entryPoint = (NativeMethod)module->FindNativeEntryPoint(entryPointName.get());
 				if (entryPoint == nullptr)
 					throw ModuleLoadException(reader.fileName, "Could not locate entry point of native method.");
 				ov->nativeEntry = entryPoint;
@@ -1212,7 +1225,7 @@ void Module::TryRegisterStandardType(Type *type, Module *fromModule, ModuleReade
 				VM::vm->types.*(stdType.member) = type;
 				if (stdType.initerFunction)
 				{
-					void *func = GetProcAddress(fromModule->nativeLib, stdType.initerFunction);
+					void *func = fromModule->FindNativeEntryPoint(stdType.initerFunction);
 					if (!func)
 						throw ModuleLoadException(reader.fileName, "Missing instance initializer for standard type in native library.");
 

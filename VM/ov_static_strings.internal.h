@@ -17,6 +17,7 @@ namespace static_strings
 	extern String *_iter;   // ".iter"
 	extern String *_call;   // ".call"
 	extern String *_init;	// ".init"
+	extern String *_item;   // ".item"
 
 	extern String *toString; // "toString"
 

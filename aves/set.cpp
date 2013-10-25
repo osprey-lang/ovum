@@ -1,4 +1,5 @@
 #include "aves_set.h"
+#include <memory>
 
 #define _S(value)           reinterpret_cast<::SetInst*>((value).instance)
 #define U64_TO_HASH(value)  ((int32_t)(value) ^ (int32_t)((value) >> 32))
@@ -30,18 +31,20 @@ void InitializeBuckets(SetInst *set, const int32_t capacity)
 
 void ResizeSet(ThreadHandle thread, SetInst *set)
 {
+	using namespace std;
+
 	int32_t newSize = HashHelper_GetPrime(set->count * 2);
 
-	int32_t *newBuckets = new int32_t[newSize];
-	memset(newBuckets, -1, newSize * sizeof(int32_t));
+	unique_ptr<int32_t[]> newBuckets(new int32_t[newSize]);
+	memset(newBuckets.get(), -1, newSize * sizeof(int32_t));
 
-	SetEntry *newEntries = new SetEntry[newSize];
-	CopyMemoryT(newEntries, set->entries, set->count);
+	unique_ptr<SetEntry[]> newEntries(new SetEntry[newSize]);
+	CopyMemoryT(newEntries.get(), set->entries, set->count);
 
-	Value *newValues = new Value[newSize];
-	CopyMemoryT(newValues, set->values, set->count);
+	unique_ptr<Value[]> newValues(new Value[newSize]);
+	CopyMemoryT(newValues.get(), set->values, set->count);
 
-	SetEntry *e = newEntries;
+	SetEntry *e = newEntries.get();
 	for (int32_t i = 0; i < set->count; i++, e++)
 	{
 		int32_t bucket = e->hashCode % newSize;
@@ -53,9 +56,9 @@ void ResizeSet(ThreadHandle thread, SetInst *set)
 	delete[] set->entries;
 	delete[] set->values;
 
-	set->buckets = newBuckets;
-	set->entries = newEntries;
-	set->values = newValues;
+	set->buckets = newBuckets.release();
+	set->entries = newEntries.release();
+	set->values = newValues.release();
 }
 
 AVES_API NATIVE_FUNCTION(aves_Set_new)

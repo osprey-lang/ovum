@@ -334,12 +334,12 @@ public:
 	String *name;
 	ModuleVersion version;
 
-	const Type *FindType(String *name, bool includeInternal) const;
+	Type *FindType(String *name, bool includeInternal) const;
 	Method     *FindGlobalFunction(String *name, bool includeInternal) const;
 	const bool  FindConstant(String *name, bool includeInternal, Value &result) const;
 
 	Module     *FindModuleRef(TokenId token) const;
-	const Type *FindType(TokenId token) const;
+	Type       *FindType(TokenId token) const;
 	Method     *FindMethod(TokenId token) const;
 	Field      *FindField(TokenId token) const;
 	String     *FindString(TokenId token) const;
@@ -451,9 +451,12 @@ private:
 	HMODULE nativeLib; // Handle to native library (null if not loaded)
 
 	void LoadNativeLibrary(String *nativeFileName, const wchar_t *path);
+	void *FindNativeEntryPoint(const char *name);
 	void FreeNativeLibrary();
 
 	static Pool *loadedModules;
+	typedef void (*NativeModuleMain)(ModuleHandle module);
+	static const char *const NativeModuleIniterName;
 
 private:
 	//static void ThrowFileNotFound(const wchar_t *fileName);
@@ -511,9 +514,6 @@ private:
 	friend class ModuleReader;
 	friend class GC;
 };
-
-// Recover a Module pointer from a ModuleHandle.
-//#define _M(mh)	reinterpret_cast<Module*>(mh)
 
 class ModuleLoadException : public std::exception
 {

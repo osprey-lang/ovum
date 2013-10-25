@@ -7,6 +7,7 @@ use "DivideByZeroError.osp";
 use "DuplicateKeyError.osp";
 use "InvalidStateError.osp";
 use "MemoryError.osp";
+use "NoOverloadError.osp";
 use "NullReferenceError.osp";
 use "OverflowError.osp";
 use "TypeError.osp";

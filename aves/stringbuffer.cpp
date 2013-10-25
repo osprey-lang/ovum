@@ -10,13 +10,13 @@ AVES_API void aves_StringBuffer_init(TypeHandle type)
 
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_new)
 {
-	*((StringBuffer*)THISV.instance) = StringBuffer(thread);
+	((StringBuffer*)THISV.instance)->StringBuffer::StringBuffer(thread);
 }
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_newCap)
 {
 	int64_t capacity = IntFromValue(thread, args[1]).integer;
 
-	*((StringBuffer*)THISV.instance) = StringBuffer(thread, capacity);
+	((StringBuffer*)THISV.instance)->StringBuffer::StringBuffer(thread, capacity);
 }
 
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_get_length)

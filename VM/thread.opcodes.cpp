@@ -33,11 +33,12 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 				frame->stackCount--;
 				break;
 			case OPI_RET:
-				assert(frame->stackCount == 0);
+				assert(frame->stackCount == 1);
 				goto done;
 			case OPI_RETNULL:
 				assert(frame->stackCount == 0);
 				frame->evalStack[0] = NULL_VALUE;
+				frame->stackCount++;
 				goto done;
 			case OPI_MVLOC_LL:
 			case OPI_MVLOC_SL:
@@ -169,7 +170,8 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 					GC::gc->ConstructLL(this, type, argc, args, dest);
 
 					ip += sizeof(uint16_t);
-					frame->stackCount += -argc + (opc & 1);
+					// ConstructLL pops the arguments
+					frame->stackCount += opc & 1;
 				}
 				break;
 			case OPI_LIST_L:
@@ -250,7 +252,7 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 
 					ip += sizeof(String*);
 					// LoadMemberLL pops the instance
-					frame->stackCount += (opc & 1) - 1;
+					frame->stackCount += opc & 1;
 				}
 				break;
 			case OPI_LDITER_L:
@@ -260,9 +262,9 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 					Value *const inst = OFF_ARG(ip) + frame;
 					Value *const dest = OFF_ARG(ip + sizeof(LocalOffset)) + frame;
 
-					LoadIteratorLL(inst, dest);
+					InvokeMemberLL(static_strings::_iter, 0, inst, dest);
 
-					// LoadIteratorLL pops the instance
+					// InvokeMemberLL pops the instance and all 0 of the arguments
 					ip += 2 * sizeof(LocalOffset);
 					frame->stackCount += opc & 1;
 				}
@@ -334,22 +336,64 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 				break;
 			case OPI_CALL_L:
 			case OPI_CALL_S:
+				// call: LocalOffset args, LocalOffset output, uint16_t argc
 				{
+					Value *const args   = OFF_ARG(ip) + frame;
+					Value *const output = OFF_ARG(ip + sizeof(LocalOffset)) + frame;
+					ip += 2 * sizeof(LocalOffset);
+
+					const uint16_t argCount = U16_ARG(ip);
+
+					InvokeLL(argCount, args, output);
+
+					ip += sizeof(uint16_t);
+					// InvokeLL pops the arguments
+					frame->stackCount += opc & 1;
 				}
 				break;
 			case OPI_SCALL_L:
 			case OPI_SCALL_S:
+				// scall: LocalOffset args, LocalOffset output, uint16_t argc, Method *method
 				{
+					Value *const args   = OFF_ARG(ip) + frame;
+					Value *const output = OFF_ARG(ip + sizeof(LocalOffset)) + frame;
+					ip += 2 * sizeof(LocalOffset);
+
+					const uint16_t argCount = U16_ARG(ip);
+					ip += sizeof(uint16_t);
+
+					Method *const method = *reinterpret_cast<Method**>(ip);
+					InvokeMethod(method, argCount, args, output);
+
+					ip += sizeof(Method*);
+					frame->stackCount += opc & 1;
 				}
 				break;
 			case OPI_APPLY_L:
 			case OPI_APPLY_S:
+				// apply: LocalOffset args, LocalOffset output
 				{
+					Value *const args   = OFF_ARG(ip) + frame;
+					Value *const output = OFF_ARG(ip + sizeof(LocalOffset)) + frame;
+					ip += 2 * sizeof(LocalOffset);
+
+					InvokeApplyLL(args, output);
+					frame->stackCount += opc & 1;
 				}
 				break;
 			case OPI_SAPPLY_L:
 			case OPI_SAPPLY_S:
+				// sapply: LocalOffset args, LocalOffset output, Method *method
 				{
+					Value *const args   = OFF_ARG(ip) + frame;
+					Value *const output = OFF_ARG(ip + sizeof(LocalOffset)) + frame;
+					ip += 2 * sizeof(LocalOffset);
+
+					Method *const method = *reinterpret_cast<Method**>(ip);
+					InvokeApplyMethodLL(method, args, output);
+
+					ip += sizeof(Method*);
+					frame->stackCount += opc & 1;
 				}
 				break;
 			case OPI_BR:
@@ -358,8 +402,12 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 				ip += sizeof(int32_t);
 				break;
 			case OPI_LEAVE:
+				// leave: int32_t offset
 				{
-					// TODO: OPI_LEAVE
+					const int32_t offset = I32_ARG(ip);
+					ip += sizeof(int32_t);
+					EvaluateLeave(frame, ip, offset);
+					ip += offset;
 				}
 				break;
 			case OPI_BRNULL_L:
@@ -502,7 +550,8 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 					Value *const dest = OFF_ARG(ip + sizeof(LocalOffset)) + frame;
 					ip += 2 * sizeof(LocalOffset);
 
-					SetInt_(dest, CompareLL(args));
+					int result = CompareLL(args);
+					SetInt_(dest, result);
 
 					// CompareLL pops arguments off the stack
 					frame->stackCount += opc & 1;
@@ -515,7 +564,8 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 					Value *const dest = OFF_ARG(ip + sizeof(LocalOffset)) + frame;
 					ip += 2 * sizeof(LocalOffset);
 
-					SetBool_(dest, CompareLL(args) < 0);
+					bool result = CompareLL(args) < 0;
+					SetBool_(dest, result);
 
 					// CompareLL pops arguments off the stack
 					frame->stackCount += opc & 1;
@@ -528,7 +578,8 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 					Value *const dest = OFF_ARG(ip + sizeof(LocalOffset)) + frame;
 					ip += 2 * sizeof(LocalOffset);
 
-					SetBool_(dest, CompareLL(args) > 0);
+					bool result = CompareLL(args) > 0;
+					SetBool_(dest, result);
 
 					// CompareLL pops arguments off the stack
 					frame->stackCount += opc & 1;
@@ -541,7 +592,8 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 					Value *const dest = OFF_ARG(ip + sizeof(LocalOffset)) + frame;
 					ip += 2 * sizeof(LocalOffset);
 
-					SetBool_(dest, CompareLL(args) <= 0);
+					bool result = CompareLL(args) <= 0;
+					SetBool_(dest, result);
 
 					// CompareLL pops arguments off the stack
 					frame->stackCount += opc & 1;
@@ -554,7 +606,8 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 					Value *const dest = OFF_ARG(ip + sizeof(LocalOffset)) + frame;
 					ip += 2 * sizeof(LocalOffset);
 
-					SetBool_(dest, CompareLL(args) >= 0);
+					bool result = CompareLL(args) >= 0;
+					SetBool_(dest, result);
 
 					// CompareLL pops arguments off the stack
 					frame->stackCount += opc & 1;
@@ -574,6 +627,25 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 					frame->stackCount += opc & 1;
 				}
 				break;
+			case OPI_CALLMEM_L:
+			case OPI_CALLMEM_S:
+				// callmem: LocalOffset args, LocalOffset dest, String *member, uint16_t argCount
+				{
+					Value *const args = OFF_ARG(ip) + frame;
+					Value *const dest = OFF_ARG(ip + sizeof(LocalOffset)) + frame;
+					ip += 2 * sizeof(LocalOffset);
+
+					String *member = *reinterpret_cast<String**>(ip);
+					ip += sizeof(String*);
+
+					uint16_t argCount = U16_ARG(ip);
+
+					InvokeMemberLL(member, argCount, args, dest);
+
+					ip += sizeof(uint16_t);
+					frame->stackCount += opc & 1;
+				}
+				break;
 			case OPI_STSFLD_L:
 			case OPI_STSFLD_S:
 				// stsfld: LocalOffset value, Field *field
@@ -583,7 +655,7 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 
 					*field->staticValue = *value;
 
-					ip += sizeof(LocalOffset) + sizeof(Member*);
+					ip += sizeof(LocalOffset) + sizeof(Field*);
 					frame->stackCount -= opc & 1;
 				}
 				break;
@@ -595,7 +667,7 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 
 					*field->GetField(this, values) = values[1];
 
-					ip += sizeof(LocalOffset) + sizeof(Member*);
+					ip += sizeof(LocalOffset) + sizeof(Field*);
 					frame->stackCount -= 2;
 				}
 				break;
@@ -613,8 +685,15 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 				}
 				break;
 			case OPI_STIDX:
+				// stidx: LocalOffset args, uint16_t argCount
 				{
-					;
+					Value *args = OFF_ARG(ip) + frame;
+					uint16_t argCount = U16_ARG(ip + sizeof(LocalOffset));
+
+					// StoreIndexerLL performs a null check
+					StoreIndexerLL(argCount, args);
+
+					ip += sizeof(LocalOffset) + sizeof(uint16_t);
 				}
 				break;
 			case OPI_THROW: // odd
@@ -622,9 +701,10 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 				Throw(/*rethrow:*/ (opc & 1) == 0);
 				break;
 			case OPI_ENDFINALLY:
-				{
-				}
-				break;
+				// This Evaluate call was reached through FindErrorHandlers,
+				// so we return here and let the thing continue with its search
+				// for more error handlers.
+				return;
 			case OPI_LDFLDFAST_L:
 			case OPI_LDFLDFAST_S:
 				// ldfldfast: LocalOffset instance, LocalOffset dest, Field *field
@@ -637,7 +717,7 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 					Field *const field = *reinterpret_cast<Field**>(ip);
 
 					*dest = *field->GetFieldFast(this, inst);
-						
+
 					ip += sizeof(Field*);
 					frame->stackCount += (opc & 1) - 1;
 				}
@@ -659,12 +739,88 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 		}
 		catch (OvumException &ex)
 		{
-			// TODO: Evaluate - catch; find appropriate handlers.
-
-			throw;
+			if (!FindErrorHandler(frame, ip))
+			{
+#if !NDEBUG
+				this->ip = frame->prevInstr;
+#endif
+				this->currentFrame = frame->prevFrame;
+				throw;
+			}
 		}
 	}
 
 	done: assert(frame->stackCount == 1);
 	// And then we just fall through and return!
+}
+
+bool Thread::FindErrorHandler(StackFrame *frame, uint8_t * &ip)
+{
+	typedef Method::TryBlock::TryKind TryKind;
+
+	Method::Overload *method = frame->method;
+	uint32_t offset = (uint32_t)(ip - method->entry);
+	for (int32_t t = 0; t < method->tryBlockCount; t++)
+	{
+		Method::TryBlock &tryBlock = method->tryBlocks[t];
+		if (offset >= tryBlock.tryStart && offset <= tryBlock.tryEnd)
+		{
+			// The ip is inside a try block! Let's find a catch or finally.
+			if (tryBlock.kind == TryKind::CATCH)
+			{
+				for (int32_t c = 0; c < tryBlock.catches.count; c++)
+				{
+					Method::CatchBlock &catchBlock = tryBlock.catches.blocks[c];
+					if (Type::ValueIsType(currentError, catchBlock.caughtType))
+					{
+						frame->stackCount = 0;
+						frame->Push(currentError);
+						ip = method->entry + catchBlock.catchStart;
+						return true;
+					}
+				}
+			}
+			else if (tryBlock.kind == TryKind::FINALLY)
+			{
+				frame->stackCount = 0;
+				// Continue evaluation inside the finally block. When the inner
+				// Evaluate returns, we continue searching through the try blocks,
+				// until we've exhausted all of them.
+#if !NDEBUG
+				uint8_t *const prevIp = ip;
+#endif
+				Evaluate(frame, method->entry + tryBlock.finallyBlock.finallyStart);
+#if !NDEBUG
+				this->ip = prevIp;
+#endif
+			}
+			// We can't stop enumerating the blocks just yet.
+			// There may be another try block that actually handles the error.
+		}
+	}
+	return false;
+}
+
+void Thread::EvaluateLeave(StackFrame *frame, uint8_t *ip, const int32_t target)
+{
+	typedef Method::TryBlock::TryKind TryKind;
+
+	Method::Overload *method = frame->method;
+	const uint32_t ipOffset = (uint32_t)(ip - method->entry);
+	const uint32_t tOffset  = ipOffset + target;
+	for (int32_t t = 0; t < method->tryBlockCount; t++)
+	{
+		Method::TryBlock &tryBlock = method->tryBlocks[t];
+		if (tryBlock.kind == TryKind::FINALLY &&
+			ipOffset >= tryBlock.tryStart && ipOffset <= tryBlock.tryEnd &&
+			(tOffset < tryBlock.tryStart || tOffset >= tryBlock.tryEnd) &&
+			(tOffset < tryBlock.finallyBlock.finallyStart || tOffset >= tryBlock.finallyBlock.finallyEnd))
+		{
+			// Evaluate the finally!
+			Evaluate(frame, method->entry + tryBlock.finallyBlock.finallyStart);
+#if !NDEBUG
+			this->ip = ip;
+#endif
+		}
+	}
 }

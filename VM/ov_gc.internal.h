@@ -27,7 +27,7 @@ enum class GCOFlags : uint8_t
 };
 ENUM_OPS(GCOFlags, uint8_t);
 
-#define GCO_SIZE    ALIGN_TO(sizeof(::GCObject),8)
+#define GCO_SIZE    ALIGN_TO(sizeof(::GCObject),sizeof(::Value))
 
 #define MARK_GCO(gco,mk) ((gco)->flags = (::GCOFlags)((mk) | ((gco)->flags & ~::GCOFlags::MARK)))
 
@@ -56,7 +56,7 @@ typedef struct GCObject_S
 	GCObject *prev; // Pointer to the previous GC object in the object's list (collect, process or keep).
 	GCObject *next; // Pointer to the next GC object in the object's list.
 
-	const Type *type;
+	Type *type;
 
 	// The first field of the Value immediately follows the type;
 	// this is the base of the Value's fields/custom pointer.
@@ -165,8 +165,8 @@ public:
 		return (GCO_FROM_VALUE(*val)->flags & GCOFlags::MARK) == GCO_COLLECT(currentCollectMark);
 	}
 
-	void Alloc(Thread *const thread, const Type *type, size_t size, GCObject **output);
-	inline void Alloc(Thread *const thread, const Type *type, size_t size, Value *output)
+	void Alloc(Thread *const thread, Type *type, size_t size, GCObject **output);
+	inline void Alloc(Thread *const thread, Type *type, size_t size, Value *output)
 	{
 		GCObject *gco;
 		Alloc(thread, type, size, &gco);
@@ -191,8 +191,8 @@ public:
 		return strings.Intern(value);
 	}
 
-	void Construct(Thread *const thread, const Type *type, const uint16_t argc, Value *output);
-	void ConstructLL(Thread *const thread, const Type *type, const uint16_t argc, Value *args, Value *output);
+	void Construct(Thread *const thread, Type *type, const uint16_t argc, Value *output);
+	void ConstructLL(Thread *const thread, Type *type, const uint16_t argc, Value *args, Value *output);
 
 	void AddMemoryPressure(Thread *const thread, const size_t size);
 	void RemoveMemoryPressure(Thread *const thread, const size_t size);
@@ -320,7 +320,7 @@ public:
 	}
 
 	void ProcessObjectAndFields(GCObject *gco);
-	void ProcessCustomFields(const Type *type, GCObject *gco);
+	void ProcessCustomFields(Type *type, GCObject *gco);
 	void ProcessHash(HashInst *hash);
 	inline void ProcessFields(unsigned int fieldCount, Value fields[])
 	{

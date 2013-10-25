@@ -116,7 +116,7 @@ namespace instr
 
 	int32_t MethodBuilder::GetNewOffset(const int32_t index, const Instruction *relativeTo) const
 	{
-		return instructions[index].instr->offset - relativeTo->offset + relativeTo->GetSize();
+		return instructions[index].instr->offset - relativeTo->offset - (int)relativeTo->GetSize();
 	}
 
 	void MethodBuilder::AddTypeToInitialize(Type *type)
@@ -368,20 +368,8 @@ void Thread::InitializeMethod(Method::Overload *method)
 		CalculateStackHeights(builder, method, stack);
 	}
 
-	// Let's allocate a buffer for the output, yay!
-	std::unique_ptr<uint8_t[]> buffer(new uint8_t[builder.GetByteSize()]);
-	char *pbuffer = (char*)buffer.get();
-	for (int32_t i = 0; i < builder.GetLength(); i++)
-	{
-		Instruction *instr = builder[i];
-		instr->WriteBytes(pbuffer, builder);
-		pbuffer += instr->GetSize();
-	}
+	WriteInitializedBody(builder, method);
 
-	delete[] method->entry;
-	method->entry  = buffer.release();
-	method->length = builder.GetByteSize();
-	method->flags  = method->flags | MethodFlags::INITED;
 
 	if (builder.GetTypeCount() > 0)
 		CallStaticConstructors(builder);
@@ -482,7 +470,7 @@ void Thread::CalculateStackHeights(instr::MethodBuilder &builder, Method::Overlo
 					// If:
 					//   1. there is a previous instruction
 					//   2. prev has an output
-					//   3. prev added exactly one value to the stack
+					//   3. prev added exactly one value to the stack, or is dup
 					//   4. instr has no incoming branches
 					//   5. instr is a StoreLocal
 					// then we can update prev to point directly to the local variable,
@@ -491,7 +479,7 @@ void Thread::CalculateStackHeights(instr::MethodBuilder &builder, Method::Overlo
 					// prev's output to discard the result.
 					bool canUpdatePrev = prev != nullptr &&
 						prev->HasOutput() &&
-						prev->GetStackChange().added == 1 &&
+						(prev->GetStackChange().added == 1 || prev->IsDup()) &&
 						!instr->HasBranches();
 
 					if (canUpdatePrev && instr->IsStoreLocal())
@@ -516,8 +504,10 @@ void Thread::CalculateStackHeights(instr::MethodBuilder &builder, Method::Overlo
 						//   5. neither prev nor instr has incoming branches
 						// then we can update instr to take the input directly from prev's local,
 						// and remove prev.
+						// Note: we don't have to test sc.removed == 1 here, because RequiresStackInput()
+						// always returns true if the instruction uses more than one value.
 						if (prev != nullptr && prev->IsLoadLocal() && !prev->HasBranches() &&
-							!instr->RequiresStackInput() && !instr->HasBranches())
+							instr->HasInput() && !instr->RequiresStackInput() && !instr->HasBranches())
 						{
 							instr->UpdateInput(static_cast<LoadLocal*>(prev)->source, false);
 							// prev should be nulled after branching, even unconditionally,
@@ -572,6 +562,50 @@ void Thread::CalculateStackHeights(instr::MethodBuilder &builder, Method::Overlo
 	builder.PerformRemovals(method);
 }
 
+void Thread::WriteInitializedBody(instr::MethodBuilder &builder, Method::Overload *method)
+{
+	using namespace instr;
+	typedef Method::TryBlock::TryKind TryKind;
+
+	// Let's allocate a buffer for the output, yay!
+	std::unique_ptr<uint8_t[]> buffer(new uint8_t[builder.GetByteSize()]);
+	char *pbuffer = (char*)buffer.get();
+	for (int32_t i = 0; i < builder.GetLength(); i++)
+	{
+		Instruction *instr = builder[i];
+		instr->WriteBytes(pbuffer, builder);
+		pbuffer += instr->GetSize();
+	}
+
+	for (int32_t t = 0; t < method->tryBlockCount; t++)
+	{
+		Method::TryBlock &tryBlock = method->tryBlocks[t];
+		
+		tryBlock.tryStart = builder[tryBlock.tryStart]->offset;
+		tryBlock.tryEnd = builder[tryBlock.tryEnd]->offset;
+
+		if (tryBlock.kind == TryKind::CATCH)
+		{
+			for (int32_t c = 0; c < tryBlock.catches.count; c++)
+			{
+				Method::CatchBlock &catchBlock = tryBlock.catches.blocks[c];
+				catchBlock.catchStart = builder[catchBlock.catchStart]->offset;
+				catchBlock.catchEnd = builder[catchBlock.catchEnd]->offset;
+			}
+		}
+		else if (tryBlock.kind == TryKind::FINALLY)
+		{
+			tryBlock.finallyBlock.finallyStart = builder[tryBlock.finallyBlock.finallyStart]->offset;
+			tryBlock.finallyBlock.finallyEnd = builder[tryBlock.finallyBlock.finallyEnd]->offset;
+		}
+	}
+
+	delete[] method->entry;
+	method->entry  = buffer.release();
+	method->length = builder.GetByteSize();
+	method->flags  = method->flags | MethodFlags::INITED;
+}
+
 void Thread::CallStaticConstructors(instr::MethodBuilder &builder)
 {
 	for (int32_t i = 0; i < builder.GetTypeCount(); i++)
@@ -582,6 +616,7 @@ void Thread::CallStaticConstructors(instr::MethodBuilder &builder)
 		if ((type->flags & TypeFlags::STATIC_CTOR_RUN) == TypeFlags::NONE)
 		{
 			type->flags = type->flags | TypeFlags::STATIC_CTOR_RUN; // prevent infinite recursion
+			type->InitStaticFields(); // Get some storage locations for the static fields
 			Member *member = type->GetMember(static_strings::_init);
 			if (member)
 			{

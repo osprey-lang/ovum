@@ -40,7 +40,7 @@ typedef struct StackFrame_S
 	// Note that the GC uses this to examine the arguments passed to the
 	// method. Also note that the parameter count is not necessarily the
 	// same as the argument count.
-	Value *arguments;
+	//Value *arguments;
 	// The address at which the evaluation stack begins.
 	Value *evalStack;
 	// The previous IP.
@@ -54,12 +54,12 @@ typedef struct StackFrame_S
 	Method::Overload *method;
 
 	inline void Init(uint16_t stackCount, uint16_t argc,
-		Value *arguments, Value *evalStack, uint8_t *prevInstr,
+		/*Value *arguments,*/ Value *evalStack, uint8_t *prevInstr,
 		StackFrame *prevFrame, Method::Overload *method)
 	{
 		this->stackCount = stackCount;
 		this->argc       = argc;
-		this->arguments  = arguments;
+		//this->arguments  = arguments;
 		this->evalStack  = evalStack;
 		this->prevInstr  = prevInstr;
 		this->prevFrame  = prevFrame;
@@ -125,16 +125,16 @@ typedef struct StackFrame_S
 #define LOCALS_OFFSET(sf)    reinterpret_cast<::Value*>((char*)(sf) + STACK_FRAME_SIZE)
 
 
-enum ThreadState
+enum class ThreadState
 {
 	// The thread has been created but not started.
-	THREAD_CREATED   = 0x00,
+	CREATED   = 0x00,
 	// The thread is running.
-	THREAD_RUNNING   = 0x01,
+	RUNNING   = 0x01,
 	// The thread is suspended.
-	THREAD_SUSPENDED = 0x02,
+	SUSPENDED = 0x02,
 	// The thread has stopped, either from having its main method return, or from being killed.
-	THREAD_STOPPED   = 0x03,
+	STOPPED   = 0x03,
 };
 
 class StackManager; // used by the method initializer
@@ -226,6 +226,7 @@ public:
 	void ThrowOverflowError(String *message = nullptr) throw(OvumException);
 	void ThrowDivideByZeroError(String *message = nullptr) throw(OvumException);
 	void ThrowNullReferenceError(String *message = nullptr) throw(OvumException);
+	void ThrowNoOverloadError(const uint32_t argCount, String *message = nullptr) throw(OvumException);
 #pragma warning(pop)
 
 private:
@@ -243,7 +244,7 @@ private:
 	// Pushes the very first stack frame onto the call stack.
 	StackFrame *PushFirstStackFrame(const uint16_t argCount, Value args[], Method::Overload *method);
 
-	void PrepareArgs(const MethodFlags flags, const uint16_t argCount, const uint16_t paramCount, StackFrame *frame);
+	void PrepareVariadicArgs(const MethodFlags flags, const uint16_t argCount, const uint16_t paramCount, StackFrame *frame);
 
 	// Resolves a method to an overload that accepts the specified number of arguments.
 	//   argCount:
@@ -265,23 +266,31 @@ private:
 	}
 
 	void Evaluate(StackFrame *frame, uint8_t *entryAddress);
+	bool FindErrorHandler(StackFrame *frame, uint8_t * &ip);
+	void EvaluateLeave(StackFrame *frame, uint8_t *ip, const int32_t target);
 
 	String *GetStackTrace();
 	void AppendArgumentType(StringBuffer &buf, Value arg);
 
-	// argCount DOES NOT include the instance.
-	void InvokeLL(unsigned int argCount, Value *args, Value *result);
+	// argCount DOES NOT include the value to be invoked, but value does.
+	void InvokeLL(unsigned int argCount, Value *value, Value *result);
 	// argCount and args DO NOT include the instance.
 	void InvokeMethod(Method *method, unsigned int argCount, Value *args, Value *result);
-	// argCount and args DO include the instance
-	void InvokeMethodOverload(Method::Overload *mo, unsigned int argCount, Value *args, Value *result);
+	// args DOES include the instance, argCount DOES NOT
+	void InvokeMethodOverload(Method::Overload *mo, unsigned int argCount, Value *args, Value *result, const bool ignoreVariadic = false);
+
+	void InvokeApplyLL(Value *args, Value *result);
+	void InvokeApplyMethodLL(Method *method, Value *args, Value *result);
+
+	void InvokeMemberLL(String *name, uint16_t argCount, Value *value, Value *result);
 
 	void LoadMemberLL(Value *instance, String *member, Value *result);
 	void StoreMemberLL(Value *instance, Value *value, String *member);
 
-	void LoadIndexerLL(uint16_t argc, Value *args, Value *dest);
-
-	void LoadIteratorLL(Value *inst, Value *dest);
+	// argCount DOES NOT include the instance, but args DOES
+	void LoadIndexerLL(uint16_t argCount, Value *args, Value *dest);
+	// argCount DOES NOT include the instance or the value being assigned, but args DOES
+	void StoreIndexerLL(uint16_t argCount, Value *args);
 
 	void InvokeOperatorLL(Value *args, Operator op, Value *result);
 	bool EqualsLL(Value *args);
@@ -292,6 +301,7 @@ private:
 	void InitializeInstructions(instr::MethodBuilder &builder, Method::Overload *method);
 	void InitializeBranchOffsets(instr::MethodBuilder &builder, Method::Overload *method);
 	void CalculateStackHeights(instr::MethodBuilder &builder, Method::Overload *method, StackManager &stack);
+	void WriteInitializedBody(instr::MethodBuilder &builder, Method::Overload *method);
 	void CallStaticConstructors(instr::MethodBuilder &builder);
 
 	friend class GC;

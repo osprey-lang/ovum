@@ -16,8 +16,6 @@ extern TypeHandle UnicodeCategoryType;
 extern TypeHandle BufferViewKindType;
 extern TypeHandle HashEntryType;
 
-AVES_API void aves_init(ModuleHandle module);
-
 AVES_API NATIVE_FUNCTION(aves_print);
 
 AVES_API NATIVE_FUNCTION(aves_exit);

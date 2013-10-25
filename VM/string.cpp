@@ -170,16 +170,14 @@ OVUM_API bool String_SubstringEquals(const String *str, const int32_t startIndex
 		length -= 10;
 	}
 
-	// Note: this depends on the fact that strings are null-terminated, and
-	// that the null character is never included in the string length.
+	// Note: unlike String_Equals, we cannot test 4 bytes at a time
+	// here, in case the substring has an odd length.
 	while (length > 0)
 	{
-		if (*(int32_t*)ap != *(int32_t*)bp)
+		if (*ap++ != *bp++)
 			break;
-		ap += 2;
-		bp += 2;
 
-		length -= 2;
+		length--;
 	}
 
 	return length <= 0;

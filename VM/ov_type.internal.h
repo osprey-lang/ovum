@@ -21,17 +21,17 @@ public:
 	~Type();
 
 	Member *GetMember(String *name) const;
-	Member *FindMember(String *name, const Type *fromType) const;
-	Method *GetOperator(Operator op) const; // haha, 'const'. Liar. Potentially. Sometimes.
+	Member *FindMember(String *name, Type *fromType) const;
+	Method *GetOperator(Operator op);
 
 	// Flags associated with the type.
 	TypeFlags flags;
 
 	// The type from which this inherits (null only for Object).
-	const Type *baseType;
+	Type *baseType;
 	// A type whose private and protected members this type has access to.
 	// The shared type must be in the same module as this type.
-	const Type *sharedType;
+	Type *sharedType;
 
 	// The fully qualified name of the type, e.g. "aves.Object".
 	String *fullName;
@@ -66,11 +66,13 @@ public:
 	// out as a NULL_VALUE and is only initialized on demand.
 	Value typeToken;
 
-	Value GetTypeToken(Thread *const thread) const;
+	Value GetTypeToken(Thread *const thread);
 
-	static inline const bool ValueIsType(Value value, const Type *const type)
+	void InitStaticFields();
+
+	static inline const bool ValueIsType(Value value, Type *const type)
 	{
-		const Type *valtype = value.type;
+		Type *valtype = value.type;
 		while (valtype)
 		{
 			if (valtype == type)
@@ -260,7 +262,7 @@ class Method : public Member
 public:
 	typedef struct
 	{
-		const Type *caughtType;
+		Type *caughtType;
 		uint32_t caughtTypeId;
 		uint32_t catchStart;
 		uint32_t catchEnd;
@@ -358,6 +360,12 @@ public:
 					argc <= paramCount;
 		}
 
+		// Gets the effective parameter count, which is paramCount + instance (if any).
+		inline unsigned int GetEffectiveParamCount() const
+		{
+			return paramCount + ((unsigned int)(flags & MethodFlags::INSTANCE) >> 3);
+		}
+
 		inline bool IsInitialized() const
 		{
 			return (flags & MethodFlags::INITED) == MethodFlags::INITED;
@@ -365,7 +373,7 @@ public:
 
 		inline LocalOffset GetArgumentOffset(uint16_t arg) const
 		{
-			return LocalOffset((int16_t)(arg - paramCount));
+			return LocalOffset((int16_t)(arg - GetEffectiveParamCount()));
 		}
 		LocalOffset GetLocalOffset(uint16_t local) const;
 		LocalOffset GetStackOffset(uint16_t stackSlot) const;

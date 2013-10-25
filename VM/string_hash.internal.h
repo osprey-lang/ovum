@@ -36,6 +36,8 @@ public:
 	void FreeValues();
 	void DeleteValues();
 	void DeleteArrayValues();
+
+	friend class Type;
 };
 
 template<class T>
