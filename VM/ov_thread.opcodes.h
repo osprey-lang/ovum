@@ -442,29 +442,30 @@ namespace instr
 		void PerformRemovalsInternal(int32_t newIndices[], Method::Overload *method);
 	};
 
-	enum class InstrFlags : uint8_t
+	enum class InstrFlags : uint16_t
 	{
-		NONE           = 0x00,
+		NONE           = 0x0000,
 		// The instruction has incoming branches
-		HAS_BRANCHES   = 0x01,
+		HAS_BRANCHES   = 0x0001,
 
 		// The instruction has a LocalOffset input
-		HAS_INPUT      = 0x02,
+		HAS_INPUT      = 0x0002,
 		// The instruction has a LocalOffset output
-		HAS_OUTPUT     = 0x04,
+		HAS_OUTPUT     = 0x0004,
 		HAS_INOUT      = HAS_INPUT | HAS_OUTPUT,
 
 		// The instruction requires the input to be on the stack
-		INPUT_ON_STACK = 0x08,
+		INPUT_ON_STACK = 0x0008,
 
 		// The instruction inherits from Branch
-		BRANCH = 0x10,
+		BRANCH = 0x0010,
 		// The instruction inherits from Switch
-		SWITCH = 0x20,
+		SWITCH = 0x0020,
 		// The instruction is a LoadLocal
-		LOAD_LOCAL = 0x40,
+		LOAD_LOCAL = 0x0040,
 		// The instruction is a StoreLocal
-		STORE_LOCAL = 0x80,
+		STORE_LOCAL = 0x0080,
+		DUP = 0x0100,
 	};
 	ENUM_OPS(InstrFlags, uint8_t);
 
@@ -506,6 +507,7 @@ namespace instr
 		bool IsSwitch() const           { return (flags & InstrFlags::SWITCH)         == InstrFlags::SWITCH; }
 		bool IsLoadLocal() const        { return (flags & InstrFlags::LOAD_LOCAL)     == InstrFlags::LOAD_LOCAL; }
 		bool IsStoreLocal() const       { return (flags & InstrFlags::STORE_LOCAL)    == InstrFlags::STORE_LOCAL; }
+		bool IsDup() const              { return (flags & InstrFlags::DUP)            == InstrFlags::DUP; }
 		bool HasBranches() const        { return (flags & InstrFlags::HAS_BRANCHES)   == InstrFlags::HAS_BRANCHES; }
 		bool RequiresStackInput() const { return (flags & InstrFlags::INPUT_ON_STACK) == InstrFlags::INPUT_ON_STACK; }
 
@@ -575,18 +577,15 @@ namespace instr
 
 		inline virtual void UpdateInput(const LocalOffset offset, const bool isOnStack)
 		{
-			this->source = offset;
+			source = offset;
 			// Set or clear lowest bit to indicate removal from stack (or lack thereof)
 			opcode = (IntermediateOpcode)(isOnStack ? opcode | 1 : opcode & ~1);
 		}
 		inline virtual void UpdateOutput(const LocalOffset offset, const bool isOnStack)
 		{
-			this->target = offset;
+			target = offset;
 			// Set or clear second lowest bit to indicate addition to stack (or lack thereof)
-			if (isOnStack)
-				opcode = (IntermediateOpcode)(opcode | 2);
-			else
-				opcode = (IntermediateOpcode)(opcode & ~2);
+			opcode = (IntermediateOpcode)(isOnStack ? opcode | 2 : opcode & ~2);
 		}
 
 	protected:
@@ -618,12 +617,55 @@ namespace instr
 		}
 	};
 
-	class DupInstr : public MoveLocal
+	class DupInstr : public Instruction
 	{
 	public:
-		inline DupInstr()
+		LocalOffset source;
+		LocalOffset target;
+
+		inline DupInstr() :
+			Instruction(InstrFlags::HAS_INOUT | InstrFlags::INPUT_ON_STACK | InstrFlags::DUP, OPI_MVLOC_LS),
+			source(0), target(0)
+		{ }
+
+		inline virtual unsigned int GetArgsSize() const
 		{
-			this->UpdateOutput(LocalOffset(0), false);
+			return 2 * sizeof(LocalOffset);
+		}
+
+		inline virtual StackChange GetStackChange() const
+		{
+			return StackChange(1, 1 + ((opcode & 2) >> 1));
+		}
+
+		inline virtual void UpdateInput(const LocalOffset offset, const bool isOnStack)
+		{
+			assert(isOnStack);
+			source = offset;
+		}
+		inline virtual void UpdateOutput(const LocalOffset offset, const bool isOnStack)
+		{
+			if (isOnStack)
+			{
+				// dup claims to add two values, but we're only interested in the second argument
+				target = LocalOffset(offset.offset + 1);
+				opcode = (IntermediateOpcode)(opcode | 2);
+			}
+			else
+			{
+				// ... except if we're storing the value in a local. dup is kind of special like that.
+				// "special".
+				target = offset;
+				opcode = (IntermediateOpcode)(opcode & ~2);
+			}
+		}
+
+	protected:
+		inline virtual void WriteArguments(char *buffer, MethodBuilder &builder) const
+		{
+			*(LocalOffset*)buffer = source;
+			buffer += sizeof(LocalOffset);
+			*(LocalOffset*)buffer = target;
 		}
 	};
 
@@ -765,10 +807,10 @@ namespace instr
 	class LoadEnumValue : public LoadValue<sizeof(Type*) + sizeof(int64_t)>
 	{
 	public:
-		const Type *type;
+		Type *type;
 		int64_t value;
 
-		inline LoadEnumValue(const Type *type, const int64_t value) :
+		inline LoadEnumValue(Type *type, const int64_t value) :
 			LoadValue(OPI_LDENUM_S),
 			type(type), value(value)
 		{ }
@@ -788,10 +830,10 @@ namespace instr
 	public:
 		LocalOffset args;
 		LocalOffset target;
-		const Type *type;
+		Type *type;
 		uint16_t argCount;
 
-		inline NewObject(const Type *type, const uint16_t argCount) :
+		inline NewObject(Type *type, const uint16_t argCount) :
 			Instruction(InstrFlags::HAS_INOUT | InstrFlags::INPUT_ON_STACK, OPI_NEWOBJ_S),
 			type(type), argCount(argCount), args(0), target(0)
 		{ }
@@ -884,9 +926,9 @@ namespace instr
 	class LoadTypeToken : public LoadValue<sizeof(const Type*)>
 	{
 	public:
-		const Type *type;
+		Type *type;
 
-		inline LoadTypeToken(const Type *type) :
+		inline LoadTypeToken(Type *type) :
 			LoadValue(OPI_LDTYPETKN_S),
 			type(type)
 		{ }
@@ -1281,6 +1323,7 @@ namespace instr
 	protected:
 		inline virtual void WriteArguments(char *buffer, MethodBuilder &builder) const
 		{
+			// The final instruction DOES include the value to be invoked
 			*(LocalOffset*)buffer = args;
 			buffer += sizeof(LocalOffset);
 			*(LocalOffset*)buffer = output;
@@ -1367,11 +1410,14 @@ namespace instr
 	protected:
 		inline virtual void WriteArguments(char *buffer, MethodBuilder &builder) const
 		{
-			*(LocalOffset*)buffer = args;
+			// The scall instruction does NOT include the instance
+			// in its argCount or args pointer.
+			int instOffset = (int)(method->flags & MemberFlags::INSTANCE) >> 10;
+			*(LocalOffset*)buffer = LocalOffset(args.offset + instOffset);
 			buffer += sizeof(LocalOffset);
 			*(LocalOffset*)buffer = output;
 			buffer += sizeof(LocalOffset);
-			*(uint16_t*)buffer = argCount;
+			*(uint16_t*)buffer = argCount - instOffset;
 			buffer += sizeof(uint16_t);
 			*(Method**)buffer = method;
 		}
@@ -1530,9 +1576,9 @@ namespace instr
 	class BranchIfType : public ConditionalBranch
 	{
 	public:
-		const Type *type;
+		Type *type;
 
-		inline BranchIfType(const int32_t target, const Type *type) :
+		inline BranchIfType(const int32_t target, Type *type) :
 			ConditionalBranch(target, IF_TYPE),
 			type(type)
 		{ }
@@ -1664,6 +1710,8 @@ namespace instr
 
 		inline virtual unsigned int GetArgsSize() const
 		{
+			if ((uint8_t)op == 0xff || op == Operator::EQ || op == Operator::CMP)
+				return 2 * sizeof(LocalOffset);
 			return 2 * sizeof(LocalOffset) + sizeof(Operator);
 		}
 
@@ -1691,7 +1739,7 @@ namespace instr
 			// is one of: <  <=  >  >=  ::
 			// (Because there are specialised opcodes for those)
 			// Similarly, there are specialised opcodes for == and <=>
-			if ((int8_t)op > 0 && op != Operator::EQ && op != Operator::CMP)
+			if ((uint8_t)op != 0xff && op != Operator::EQ && op != Operator::CMP)
 			{
 				buffer += sizeof(LocalOffset);
 				*(Operator*)buffer = op;

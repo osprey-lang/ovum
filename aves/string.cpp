@@ -620,6 +620,7 @@ String *string::Replace(ThreadHandle thread, const String *input, String *oldVal
 			buf.Append(thread, newValue);
 			start = start + lengthCollected + oldValue->length;
 			lengthCollected = 0;
+			inp += oldValue->length;
 			i += oldValue->length;
 
 			if (maxTimes > 0)
@@ -628,12 +629,13 @@ String *string::Replace(ThreadHandle thread, const String *input, String *oldVal
 		else
 		{
 			lengthCollected++;
+			inp++;
 			i++;
 		}
 	}
 
-	if (lengthCollected > 0)
-		buf.Append(thread, lengthCollected, &input->firstChar + start);
+	if (lengthCollected + oldValue->length > 0)
+		buf.Append(thread, lengthCollected + oldValue->length, &input->firstChar + start);
 
 	return buf.ToString(thread);
 }

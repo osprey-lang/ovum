@@ -75,6 +75,34 @@ enum class Operator : uint8_t
 // If you change Operator and/or Opcode without changing this,
 // you have no one to blame but yourself.
 #define OPERATOR_COUNT 18
+inline unsigned int Arity(Operator op)
+{
+	switch (op)
+	{
+		case Operator::ADD:
+		case Operator::SUB:
+		case Operator::OR:
+		case Operator::XOR:
+		case Operator::MUL:
+		case Operator::DIV:
+		case Operator::MOD:
+		case Operator::AND:
+		case Operator::POW:
+		case Operator::SHL:
+		case Operator::SHR:
+		case Operator::HASHOP:
+		case Operator::DOLLAR:
+		case Operator::EQ:
+		case Operator::CMP:
+			return 2;
+		case Operator::PLUS:
+		case Operator::NEG:
+		case Operator::NOT:
+			return 1;
+		default:
+			return 0;
+	}
+}
 
 
 // NOTE: This TypeFlags enum has exactly the same member values as
@@ -223,6 +251,7 @@ typedef struct StandardTypes_S
 	TypeHandle TypeError;
 	TypeHandle MemoryError;
 	TypeHandle OverflowError;
+	TypeHandle NoOverloadError;
 	TypeHandle DivideByZeroError;
 	TypeHandle NullReferenceError;
 } StandardTypes;
@@ -243,6 +272,7 @@ OVUM_API TypeHandle GetType_Error();
 OVUM_API TypeHandle GetType_TypeError();
 OVUM_API TypeHandle GetType_MemoryError();
 OVUM_API TypeHandle GetType_OverflowError();
+OVUM_API TypeHandle GetType_NoOverloadError();
 OVUM_API TypeHandle GetType_DivideByZeroError();
 OVUM_API TypeHandle GetType_NullReferenceError();
 

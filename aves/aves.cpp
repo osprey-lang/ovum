@@ -28,7 +28,8 @@ TypeHandle HashEntryType;
 String *format = _S(_format);
 
 
-AVES_API void aves_init(ModuleHandle module)
+// Note: This is not declared in any header file. Only in this source file.
+AVES_API void OvumModuleMain(ModuleHandle module)
 {
 	ArgumentError       = Module_FindType(module, _S(_ArgumentError_Name),      true);
 	ArgumentNullError   = Module_FindType(module, _S(_ArgumentNullError_Name),  true);

@@ -28,10 +28,11 @@ namespace std_type_names
 	LitString<14> _TypeError          = { 14, 0, SFS, AVES,'T','y','p','e','E','r','r','o','r',0 };
 	LitString<16> _MemoryError        = { 16, 0, SFS, AVES,'M','e','m','o','r','y','E','r','r','o','r',0 };
 	LitString<18> _OverflowError      = { 18, 0, SFS, AVES,'O','v','e','r','f','l','o','w','E','r','r','o','r',0 };
+	LitString<20> _NoOverloadError    = { 20, 0, SFS, AVES,'N','o','O','v','e','r','l','o','a','d','E','r','r','o','r',0 };
 	LitString<22> _DivideByZeroError  = { 22, 0, SFS, AVES,'D','i','v','i','d','e','B','y','Z','e','r','o','E','r','r','o','r',0 };
 	LitString<23> _NullReferenceError = { 23, 0, SFS, AVES,'N','u','l','l','R','e','f','e','r','e','n','c','e','E','r','r','o','r',0 };
 
-	const unsigned int StandardTypeCount = 17;
+	const unsigned int StandardTypeCount = 18;
 	const StdType Types[] = {
 		{_S(_Object),	          &StandardTypes::Object,             nullptr},
 		{_S(_Boolean),	          &StandardTypes::Boolean,            nullptr},
@@ -48,6 +49,7 @@ namespace std_type_names
 		{_S(_TypeError),          &StandardTypes::TypeError,          nullptr},
 		{_S(_MemoryError),		  &StandardTypes::MemoryError,        nullptr},
 		{_S(_OverflowError),	  &StandardTypes::OverflowError,      nullptr},
+		{_S(_NoOverloadError),    &StandardTypes::NoOverloadError,    nullptr},
 		{_S(_DivideByZeroError),  &StandardTypes::DivideByZeroError,  nullptr},
 		{_S(_NullReferenceError), &StandardTypes::NullReferenceError, nullptr},
 	};
@@ -92,7 +94,7 @@ void Type::InitOperators()
 		if (this->operators[op])
 			continue;
 
-		const Type *type = this;
+		Type *type = this;
 
 		Method *method;
 		do {
@@ -113,31 +115,30 @@ Member *Type::GetMember(String *name) const
 	return nullptr;
 }
 
-Member *Type::FindMember(String *name, const Type *fromType) const
+Member *Type::FindMember(String *name, Type *fromType) const
 {
 	const Type *type = this;
 	do {
 		Member *m;
-		if (members.Get(name, m) && m->IsAccessible(this, type, fromType))
+		if (type->members.Get(name, m) && m->IsAccessible(this, type, fromType))
 			return m;
 	} while (type = type->baseType);
 
 	return nullptr; // not found
 }
 
-Method *Type::GetOperator(Operator op) const
+Method *Type::GetOperator(Operator op)
 {
 	if ((this->flags & TypeFlags::OPS_INITED) == TypeFlags::NONE)
-		// I'm probably a bad person for doing this. I don't care. <3
-		const_cast<Type*>(this)->InitOperators();
+		this->InitOperators();
 
 	return this->operators[(int)op];
 }
 
-Value Type::GetTypeToken(Thread *const thread) const
+Value Type::GetTypeToken(Thread *const thread)
 {
 	if (IS_NULL(typeToken))
-		const_cast<Type*>(this)->LoadTypeToken(thread);
+		this->LoadTypeToken(thread);
 
 	return typeToken;
 }
@@ -155,6 +156,19 @@ void Type::LoadTypeToken(Thread *const thread)
 	// Call the type token initializer with this type and the brand
 	// new allocated instance data thing. Hurrah.
 	VM::vm->functions.initTypeToken(thread, typeTkn->instance, this);
+}
+
+void Type::InitStaticFields()
+{
+	for (int32_t i = 0; i < members.count; i++)
+	{
+		Member *m = members.entries[i].value;
+		if ((m->flags & MemberFlags::FIELD) == MemberFlags::FIELD &&
+			(m->flags & MemberFlags::INSTANCE) == MemberFlags::NONE)
+		{
+			static_cast<Field*>(m)->staticValue = GC::gc->AddStaticReference(NULL_VALUE);
+		}
+	}
 }
 
 // Determines whether a member is accessible from a given type.
@@ -184,7 +198,7 @@ const bool Member::IsAccessible(const Type *instType, const Type *const declType
 
 		if (!tempType)
 		{
-			const Type *sharedType = fromType->sharedType;
+			Type *sharedType = fromType->sharedType;
 			while (instType && instType != sharedType)
 				instType = instType->baseType;
 
@@ -198,7 +212,7 @@ const bool Member::IsAccessible(const Type *instType, const Type *const declType
 
 		if (!tempType)
 		{
-			const Type *sharedType = fromType->sharedType;
+			Type *sharedType = fromType->sharedType;
 			while (sharedType && sharedType != declType)
 				sharedType = sharedType->baseType;
 
@@ -258,6 +272,7 @@ OVUM_API TypeHandle GetType_Error()              { return VM::vm->types.Error; }
 OVUM_API TypeHandle GetType_TypeError()          { return VM::vm->types.TypeError; }
 OVUM_API TypeHandle GetType_MemoryError()        { return VM::vm->types.MemoryError; }
 OVUM_API TypeHandle GetType_OverflowError()      { return VM::vm->types.OverflowError; }
+OVUM_API TypeHandle GetType_NoOverloadError()    { return VM::vm->types.NoOverloadError; }
 OVUM_API TypeHandle GetType_DivideByZeroError()  { return VM::vm->types.DivideByZeroError; }
 OVUM_API TypeHandle GetType_NullReferenceError() { return VM::vm->types.NullReferenceError; }
 

@@ -51,18 +51,8 @@ int VM::Run(VMStartParams &params)
 
 	int result = 0;
 
-	/*for (int32_t i = 0; i < vm->argCount; i++)
-	{
-		String *arg = vm->argValues[i]->common.string;
-		PrintLn(arg);
-
-		PrintLn(String_ToUpper(nullptr, arg));
-		PrintLn(String_ToLower(nullptr, arg));
-	}
-
-	GC::gc->Collect(nullptr);*/
-	VM::vm->mainThread->InitializeMethod(vm->startupModule->GetMainMethod()->overloads);
-	/*try
+	//VM::vm->mainThread->InitializeMethod(vm->startupModule->GetMainMethod()->overloads);
+	try
 	{
 		Method *main = vm->startupModule->GetMainMethod();
 		if (main == nullptr)
@@ -78,10 +68,10 @@ int VM::Run(VMStartParams &params)
 			Value returnValue;
 			vm->mainThread->Start(main, returnValue);
 
-			if (returnValue.type == stdTypes.Int ||
-				returnValue.type == stdTypes.UInt)
+			if (returnValue.type == VM::vm->types.Int ||
+				returnValue.type == VM::vm->types.UInt)
 				result = (int)returnValue.integer;
-			else if (returnValue.type == stdTypes.Real)
+			else if (returnValue.type == VM::vm->types.Real)
 				result = (int)returnValue.real;
 
 			if (vm->verbose)
@@ -90,8 +80,15 @@ int VM::Run(VMStartParams &params)
 	}
 	catch (OvumException &e)
 	{
+		wcerr << L"Unhandled error: ";
+		Value error = e.GetError();
+		PrintErr(error.type->fullName);
+		wcerr << L": ";
+		PrintErrLn(error.common.error->message);
+		PrintErrLn(error.common.error->stackTrace);
+
 		result = -1;
-	}*/
+	}
 
 	// done!
 	// Note: unload the GC first, as it may use the main thread.
