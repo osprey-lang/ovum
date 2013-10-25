@@ -1,0 +1,29 @@
+namespace aves;
+
+/// Summary: Thrown when a method does group does not contain an overload
+///          that accepts a certain number of arguments.
+public inheritable NoOverloadError is Error
+{
+	public new(argCount)
+	{
+		new base(defaultMessage);
+		_argCount = int(argCount);
+	}
+	public new(argCount, message)
+	{
+		new base(message ?? defaultMessage);
+		_argCount = int(argCount);
+	}
+	public new(argCount, message, innerError)
+	{
+		new base(message ?? defaultMessage, innerError);
+		_argCount = int(argCount);
+	}
+	
+	private _argCount;
+	/// Summary: Gets the number of arguments (not including the instance, if any)
+	///          that the method was attempted to be invoked with.
+	public get argCount = _argCount;
+
+	private const defaultMessage = "Could not find an overload.";
+}
