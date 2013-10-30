@@ -5,7 +5,7 @@ public abstract class Enum
 	protected new();
 
 	override getHashCode()			__extern("aves_Enum_getHashCode");
-	override toString()				__extern("aves_Enum_toString");
+	overridable override toString()	__extern("aves_Enum_toString");
 
 	//static fromValue(type, value)	__extern("aves_Enum_fromValue");
 
@@ -22,6 +22,7 @@ public abstract class EnumSet is Enum
 	{
 		return this & flag == flag;
 	}
+	override toString()				__extern("aves_EnumSet_toString");
 
 	operator |(a, b)				__extern("aves_EnumSet_opOr");
 	operator ^(a, b)				__extern("aves_EnumSet_opXor");

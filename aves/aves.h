@@ -27,9 +27,8 @@
 
 // Project headers
 #include "aves_ns.h"
-#include "aves_object.h"
-#include "aves_boolean.h"
 #include "aves_int.h"
+#include "aves_uint.h"
 #include "aves_shared_strings.h"
 
 #endif // AVES__AVES_H

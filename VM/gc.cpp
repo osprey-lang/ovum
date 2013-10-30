@@ -29,7 +29,7 @@ GC::GC() :
 	isRunning(false),
 	collectBase(nullptr), processBase(nullptr), keepBase(nullptr),
 	currentCollectMark(0), debt(0), totalSize(0),
-	strings(32), staticRefs(nullptr)
+	collectCount(0), strings(32), staticRefs(nullptr)
 { }
 
 GC::~GC()
@@ -113,6 +113,7 @@ void GC::Alloc(Thread *const thread, Type *type, size_t size, GCObject **output)
 	{
 		RemoveFromList(gco, &collectBase);
 		InsertIntoList(gco, &keepBase);
+		MARK_GCO(gco, GCO_KEEP(currentCollectMark));
 		Collect(thread);
 	}
 }
@@ -166,7 +167,7 @@ String *GC::ConstructString(Thread *const thread, const int32_t length, const uc
 	// for the terminating \0 anyway. So this is fine.
 	Alloc(thread, VM::vm->types.String, sizeof(String) + length*sizeof(uchar), &gco);
 	if (VM::vm->types.String == nullptr)
-		gco->flags = gco->flags | GCOFlags::EARLY_STRING;
+		gco->flags |= GCOFlags::EARLY_STRING;
 
 	MutableString *str = reinterpret_cast<MutableString*>(GCO_INSTANCE_BASE(gco));
 	str->length = length;
@@ -223,7 +224,7 @@ Value *GC::AddStaticReference(Value value)
 
 void GC::Release(Thread *const thread, GCObject *gco)
 {
-	assert((gco->flags & GCO_COLLECT(currentCollectMark)) == GCO_COLLECT(currentCollectMark));
+	assert((gco->flags & GCOFlags::MARK) == GCO_COLLECT(currentCollectMark));
 
 	Type *type = gco->type;
 	while (type)
@@ -247,6 +248,7 @@ void GC::Release(Thread *const thread, GCObject *gco)
 
 void GC::Collect(Thread *const thread)
 {
+	collectCount++;
 	// Upon entering this method, all objects are in collectBase.
 	// Step 1: move all the root objects to the Process list.
 	MarkRootSet();
@@ -328,7 +330,7 @@ void GC::MarkRootSet()
 		Module *m = Module::loadedModules->Get(i);
 		TryProcessString(m->name);
 
-		for (uint32_t s = 0; s < m->strings.GetLength(); s++)
+		for (int32_t s = 0; s < m->strings.GetLength(); s++)
 			TryProcessString(m->strings[s]);
 	}
 
@@ -379,7 +381,7 @@ void GC::ProcessCustomFields(Type *type, GCObject *gco)
 		if (minst->instance.type)
 			TryProcess(&minst->instance);
 	}
-	else
+	else if (type->getReferences) // If the type has no reference getter, assume it has no managed references
 	{
 		unsigned int fieldCount;
 		Value *fields;

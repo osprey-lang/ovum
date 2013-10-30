@@ -17,6 +17,15 @@ extern TypeHandle BufferViewKindType;
 extern TypeHandle HashEntryType;
 
 AVES_API NATIVE_FUNCTION(aves_print);
+AVES_API NATIVE_FUNCTION(aves_printErr);
+AVES_API NATIVE_FUNCTION(aves_writeOut);
+AVES_API NATIVE_FUNCTION(aves_writeErr);
+
+AVES_API NATIVE_FUNCTION(aves_readKey);
+AVES_API NATIVE_FUNCTION(aves_readChar);
+AVES_API NATIVE_FUNCTION(aves_readLine);
+
+AVES_API NATIVE_FUNCTION(aves_clearConsole);
 
 AVES_API NATIVE_FUNCTION(aves_exit);
 

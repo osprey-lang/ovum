@@ -1382,9 +1382,9 @@ namespace instr
 		LocalOffset args; // must be on stack
 		LocalOffset output;
 		uint16_t argCount;
-		Method *method;
+		Method::Overload *method;
 
-		inline StaticCall(const uint16_t argCount, Method *method) :
+		inline StaticCall(const uint16_t argCount, Method::Overload *method) :
 			Instruction(InstrFlags::HAS_INOUT | InstrFlags::INPUT_ON_STACK, OPI_SCALL_S),
 			args(0), output(0), argCount(argCount), method(method)
 		{ }
@@ -1394,7 +1394,7 @@ namespace instr
 			return 2 * sizeof(LocalOffset) + sizeof(uint16_t) + sizeof(Method*);
 		}
 
-		inline virtual StackChange GetStackChange() const { return StackChange(argCount, opcode & 1); }
+		inline virtual StackChange GetStackChange() const { return StackChange(argCount + method->InstanceOffset(), opcode & 1); }
 
 		inline virtual void UpdateInput(const LocalOffset offset, const bool isOnStack)
 		{
@@ -1410,16 +1410,14 @@ namespace instr
 	protected:
 		inline virtual void WriteArguments(char *buffer, MethodBuilder &builder) const
 		{
-			// The scall instruction does NOT include the instance
-			// in its argCount or args pointer.
-			int instOffset = (int)(method->flags & MemberFlags::INSTANCE) >> 10;
-			*(LocalOffset*)buffer = LocalOffset(args.offset + instOffset);
+			// The scall instruction does NOT include the instance in its argCount.
+			*(LocalOffset*)buffer = args;
 			buffer += sizeof(LocalOffset);
 			*(LocalOffset*)buffer = output;
 			buffer += sizeof(LocalOffset);
-			*(uint16_t*)buffer = argCount - instOffset;
+			*(uint16_t*)buffer = argCount;
 			buffer += sizeof(uint16_t);
-			*(Method**)buffer = method;
+			*(Method::Overload**)buffer = method;
 		}
 	};
 
@@ -1588,6 +1586,8 @@ namespace instr
 			return ConditionalBranch::GetArgsSize() + sizeof(Type*);
 		}
 
+		inline virtual bool IsConditional() const { return true; }
+
 	protected:
 		inline virtual void WriteArguments(char *buffer, MethodBuilder &builder) const
 		{
@@ -1661,6 +1661,8 @@ namespace instr
 		}
 
 		inline virtual StackChange GetStackChange() const { return StackChange(2, 0); }
+
+		inline virtual bool IsConditional() const { return true; }
 
 		inline virtual void UpdateInput(const LocalOffset offset, const bool isOnStack)
 		{

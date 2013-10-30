@@ -6,7 +6,7 @@
 #include <cstdio>
 #include <iosfwd>
 #include <fstream>
-//#include <vector>
+#include <vector>
 #include "ov_vm.internal.h"
 #include "ov_type.internal.h"
 
@@ -122,7 +122,7 @@ public:
 	}
 
 	// All the reading functions below assume the system is little-endian.
-	// This will be changed at an unspecified later date.
+	// This will be fixed at an unspecified later date.
 
 	inline int16_t ReadInt16()
 	{
@@ -301,9 +301,9 @@ public:
 #endif
 	}
 
-	inline T operator[](const uint32_t index) const
+	inline T operator[](const int32_t index) const
 	{
-		if (index >= length)
+		if (index < 0 || index >= length)
 			return nullptr; // niet gevonden
 		return entries[index];
 	}
@@ -311,9 +311,9 @@ public:
 	inline const int32_t GetLength() const { return length; }
 	inline const int32_t GetCapacity() const { return capacity; }
 	
-	inline bool HasItem(const uint32_t index) const
+	inline bool HasItem(const int32_t index) const
 	{
-		return index < length;
+		return index >= 0 && index < length;
 	}
 
 	inline TokenId GetNextId(TokenId mask) const
@@ -353,6 +353,7 @@ public:
 	static void Init();
 	static void Unload();
 
+private:
 	class Pool
 	{
 	private:
@@ -426,7 +427,18 @@ public:
 		}
 	};
 
-private:
+	class FieldConstData
+	{
+	public:
+		Field *field;
+		TokenId typeId;
+		int64_t value;
+
+		inline FieldConstData(Field *field, TokenId typeId, int64_t value) :
+			field(field), typeId(typeId), value(value)
+		{ }
+	};
+
 	bool fullyOpened; // Set to true when the module file has been fully loaded
 	                  // If a module depends on another module with this set to false,
 	                  // then there's a circular dependency issue.
@@ -481,11 +493,13 @@ private:
 	static void ReadFunctionDefs(ModuleReader &reader, Module *module);
 	static void ReadConstantDefs(ModuleReader &reader, Module *module);
 
-	static Type *ReadSingleType(ModuleReader &reader, Module *module, const TokenId typeId);
-	static void ReadFields(ModuleReader &reader, Module *targetModule, Type *targetType);
+	static Type *ReadSingleType(ModuleReader &reader, Module *module, const TokenId typeId, std::vector<FieldConstData> &unresolvedConstants);
+	static void ReadFields(ModuleReader &reader, Module *targetModule, Type *targetType, std::vector<FieldConstData> &unresolvedConstants);
 	static void ReadMethods(ModuleReader &reader, Module *targetModule, Type *targetType);
 	static void ReadProperties(ModuleReader &reader, Module *targetModule, Type *targetType);
 	static void ReadOperators(ModuleReader &reader, Module *targetModule, Type *targetType);
+
+	static void SetConstantFieldValue(ModuleReader &reader, Module *module, Field *field, Type *constantType, const int64_t value);
 
 	static Method *ReadSingleMethod(ModuleReader &reader, Module *module);
 	static Method::TryBlock *ReadTryBlocks(ModuleReader &reader, Module *targetModule, int32_t &tryCount);

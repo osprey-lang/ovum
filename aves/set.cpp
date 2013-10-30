@@ -1,7 +1,7 @@
 #include "aves_set.h"
 #include <memory>
 
-#define _S(value)           reinterpret_cast<::SetInst*>((value).instance)
+#define _Set(value)           reinterpret_cast<::SetInst*>((value).instance)
 #define U64_TO_HASH(value)  ((int32_t)(value) ^ (int32_t)((value) >> 32))
 
 AVES_API void aves_Set_init(TypeHandle type)
@@ -63,7 +63,7 @@ void ResizeSet(ThreadHandle thread, SetInst *set)
 
 AVES_API NATIVE_FUNCTION(aves_Set_new)
 {
-	SetInst *set = _S(THISV);
+	SetInst *set = _Set(THISV);
 	int64_t capacity = args[1].integer;
 	if (capacity < 0 || capacity > INT32_MAX)
 	{
@@ -78,7 +78,7 @@ AVES_API NATIVE_FUNCTION(aves_Set_new)
 
 AVES_API NATIVE_FUNCTION(aves_Set_get_length)
 {
-	SetInst *set = _S(THISV);
+	SetInst *set = _Set(THISV);
 	VM_PushInt(thread, set->count - set->freeCount);
 }
 
@@ -86,7 +86,7 @@ AVES_API NATIVE_FUNCTION(aves_Set_clone);
 AVES_API NATIVE_FUNCTION(aves_Set_containsInternal)
 {
 	// Arguments: (item, hash is Int|UInt)
-	SetInst *set = _S(THISV);
+	SetInst *set = _Set(THISV);
 
 	if (set->buckets != nullptr)
 	{
@@ -113,7 +113,7 @@ AVES_API NATIVE_FUNCTION(aves_Set_containsInternal)
 AVES_API NATIVE_FUNCTION(aves_Set_addInternal)
 {
 	// Arguments: (item, hash is Int|UInt)
-	SetInst *set = _S(THISV);
+	SetInst *set = _Set(THISV);
 	if (set->buckets == nullptr)
 		InitializeBuckets(set, 0);
 
@@ -163,7 +163,7 @@ AVES_API NATIVE_FUNCTION(aves_Set_addInternal)
 AVES_API NATIVE_FUNCTION(aves_Set_removeInternal)
 {
 	// Arguments: (item, hash is Int|UInt)
-	SetInst *set = _S(THISV);
+	SetInst *set = _Set(THISV);
 
 	if (set->buckets != nullptr)
 	{
@@ -205,23 +205,23 @@ AVES_API NATIVE_FUNCTION(aves_Set_removeInternal)
 
 AVES_API NATIVE_FUNCTION(aves_Set_get_version)
 {
-	SetInst *set = _S(THISV);
+	SetInst *set = _Set(THISV);
 	VM_PushInt(thread, set->version);
 }
 AVES_API NATIVE_FUNCTION(aves_Set_get_entryCount)
 {
-	SetInst *set = _S(THISV);
+	SetInst *set = _Set(THISV);
 	VM_PushInt(thread, set->count);
 }
 AVES_API NATIVE_FUNCTION(aves_Set_hasEntryAt)
 {
-	SetInst *set = _S(THISV);
+	SetInst *set = _Set(THISV);
 	int32_t index = (int32_t)args[1].integer;
 	VM_PushBool(thread, set->entries[index].hashCode >= 0);
 }
 AVES_API NATIVE_FUNCTION(aves_Set_getEntryAt)
 {
-	SetInst *set = _S(THISV);
+	SetInst *set = _Set(THISV);
 	int32_t index = (int32_t)args[1].integer;
 	VM_Push(thread, set->values[index]);
 }

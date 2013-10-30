@@ -13,7 +13,8 @@ public inheritable Stack
 	private version = 0;
 	private list = null; // Not initialized until it is needed
 
-	public get length = list.length;
+	public get length = list is null ? 0 : list.length;
+	public get isEmpty = list is null or list.isEmpty;
 
 	public push(value)
 	{
@@ -27,12 +28,19 @@ public inheritable Stack
 	public pop()
 	{
 		if list is null or list.isEmpty:
-			throw new InvalidStateError("There are no items left on the stack.");
+			throw new InvalidStateError("There are no items on the stack.");
 
 		var value = list[-1];
 		list.removeAt(-1);
 		version += 1;
 		return value;
+	}
+
+	public peek()
+	{
+		if list is null or list.isEmpty:
+			throw new InvalidStateError("There are no items on the stack.");
+		return list[-1];
 	}
 
 	iter

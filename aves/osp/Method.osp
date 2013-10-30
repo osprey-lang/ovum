@@ -22,4 +22,6 @@ public class Method
 
 		return object;
 	}
+
+	operator ==(a, b)			__extern("aves_Method_opEquals");
 }

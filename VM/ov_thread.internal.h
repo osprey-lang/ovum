@@ -36,11 +36,6 @@ typedef struct StackFrame_S
 	// the instance if the method is an instance method.
 	// This is required by the ldargc instruction.
 	uint16_t argc;
-	// The address of the first argument.
-	// Note that the GC uses this to examine the arguments passed to the
-	// method. Also note that the parameter count is not necessarily the
-	// same as the argument count.
-	//Value *arguments;
 	// The address at which the evaluation stack begins.
 	Value *evalStack;
 	// The previous IP.
@@ -54,12 +49,11 @@ typedef struct StackFrame_S
 	Method::Overload *method;
 
 	inline void Init(uint16_t stackCount, uint16_t argc,
-		/*Value *arguments,*/ Value *evalStack, uint8_t *prevInstr,
+		Value *evalStack, uint8_t *prevInstr,
 		StackFrame *prevFrame, Method::Overload *method)
 	{
 		this->stackCount = stackCount;
 		this->argc       = argc;
-		//this->arguments  = arguments;
 		this->evalStack  = evalStack;
 		this->prevInstr  = prevInstr;
 		this->prevFrame  = prevFrame;
@@ -139,6 +133,78 @@ enum class ThreadState
 
 class StackManager; // used by the method initializer
 
+class MethodInitException : public std::exception
+{
+public:
+	enum FailureKind
+	{
+		GENERAL = 0, // no extra information
+		INCONSISTENT_STACK_HEIGHT,
+		INVALID_BRANCH_OFFSET,
+		INSUFFICIENT_STACK_HEIGHT,
+		INACCESSIBLE_MEMBER,
+		FIELD_STATIC_MISMATCH,
+		UNRESOLVED_TOKEN_ID,
+		NO_MATCHING_OVERLOAD,
+		INACCESSIBLE_TYPE,
+	};
+
+private:
+	FailureKind kind;
+	Method::Overload *method;
+
+	union {
+		int32_t instrIndex;
+		Member *member;
+		Type *type;
+		uint32_t tokenId;
+		struct {
+			Method *methodGroup;
+			uint16_t argCount;
+		} noOverload;
+	};
+
+public:
+	inline MethodInitException(const char *const message, Method::Overload *method) :
+		exception(message), method(method), kind(GENERAL)
+	{ }
+
+	inline MethodInitException(const char *const message, Method::Overload *method, int32_t instrIndex, FailureKind kind) :
+		exception(message), method(method), kind(kind), instrIndex(instrIndex)
+	{ }
+
+	inline MethodInitException(const char *const message, Method::Overload *method, Member *member, FailureKind kind) :
+		exception(message), method(method), kind(kind), member(member)
+	{ }
+
+	inline MethodInitException(const char *const message, Method::Overload *method, Type *type, FailureKind kind) :
+		exception(message), method(method), kind(kind), type(type)
+	{ }
+
+	inline MethodInitException(const char *const message, Method::Overload *method, uint32_t tokenId, FailureKind kind) :
+		exception(message), method(method), kind(kind), tokenId(tokenId)
+	{ }
+
+	inline MethodInitException(const char *const message, Method::Overload *method,
+		Method *methodGroup, uint16_t argCount, FailureKind kind) :
+		exception(message), method(method), kind(kind)
+	{
+		noOverload.methodGroup = methodGroup;
+		noOverload.argCount = argCount;
+	}
+
+	inline FailureKind GetFailureKind() const { return kind; }
+
+	inline Method::Overload *GetMethod() const { return method; }
+
+	inline int32_t GetInstructionIndex() const { return instrIndex; }
+	inline Member *GetMember() const { return member; }
+	inline Type *GetType() const { return type; }
+	inline uint32_t GetTokenId() const { return tokenId; }
+	inline Method *GetMethodGroup() const { return noOverload.methodGroup; }
+	inline uint16_t GetArgumentCount() const { return noOverload.argCount; }
+};
+
 class Thread
 {
 public:
@@ -191,6 +257,8 @@ public:
 
 	// argCount does NOT include the instance.
 	void Invoke(unsigned int argCount, Value *result);
+	// argCount DOES NOT include the instance.
+	void InvokeMethod(Method *method, unsigned int argCount, Value *result);
 	// argCount does NOT include the instance.
 	void InvokeMember(String *name, unsigned int argCount, Value *result);
 	void InvokeOperator(Operator op, Value *result);
@@ -246,25 +314,6 @@ private:
 
 	void PrepareVariadicArgs(const MethodFlags flags, const uint16_t argCount, const uint16_t paramCount, StackFrame *frame);
 
-	// Resolves a method to an overload that accepts the specified number of arguments.
-	//   argCount:
-	//     The number of arguments that are being passed to the method, NOT including the instance.
-	static inline Method::Overload *ResolveOverload(Method *method, const uint16_t argCount)
-	{
-		while (method)
-		{
-			for (int i = 0; i < method->overloadCount; i++)
-			{
-				Method::Overload *mo = method->overloads + i;
-				if (mo->Accepts(argCount))
-					return mo;
-			}
-
-			method = method->baseMethod;
-		}
-		return nullptr;
-	}
-
 	void Evaluate(StackFrame *frame, uint8_t *entryAddress);
 	bool FindErrorHandler(StackFrame *frame, uint8_t * &ip);
 	void EvaluateLeave(StackFrame *frame, uint8_t *ip, const int32_t target);
@@ -274,8 +323,6 @@ private:
 
 	// argCount DOES NOT include the value to be invoked, but value does.
 	void InvokeLL(unsigned int argCount, Value *value, Value *result);
-	// argCount and args DO NOT include the instance.
-	void InvokeMethod(Method *method, unsigned int argCount, Value *args, Value *result);
 	// args DOES include the instance, argCount DOES NOT
 	void InvokeMethodOverload(Method::Overload *mo, unsigned int argCount, Value *args, Value *result, const bool ignoreVariadic = false);
 
@@ -285,7 +332,7 @@ private:
 	void InvokeMemberLL(String *name, uint16_t argCount, Value *value, Value *result);
 
 	void LoadMemberLL(Value *instance, String *member, Value *result);
-	void StoreMemberLL(Value *instance, Value *value, String *member);
+	void StoreMemberLL(Value *instance, String *member);
 
 	// argCount DOES NOT include the instance, but args DOES
 	void LoadIndexerLL(uint16_t argCount, Value *args, Value *dest);
@@ -299,18 +346,21 @@ private:
 
 	void InitializeMethod(Method::Overload *method);
 	void InitializeInstructions(instr::MethodBuilder &builder, Method::Overload *method);
-	void InitializeBranchOffsets(instr::MethodBuilder &builder, Method::Overload *method);
-	void CalculateStackHeights(instr::MethodBuilder &builder, Method::Overload *method, StackManager &stack);
-	void WriteInitializedBody(instr::MethodBuilder &builder, Method::Overload *method);
+	static void InitializeBranchOffsets(instr::MethodBuilder &builder, Method::Overload *method);
+	static void CalculateStackHeights(instr::MethodBuilder &builder, Method::Overload *method, StackManager &stack);
+	static void WriteInitializedBody(instr::MethodBuilder &builder, Method::Overload *method);
 	void CallStaticConstructors(instr::MethodBuilder &builder);
+
+	// These are used by the initializer
+	static Type *TypeFromToken(Method::Overload *fromMethod, uint32_t token);
+	static String *StringFromToken(Method::Overload *fromMethod, uint32_t token);
+	static Method *MethodFromToken(Method::Overload *fromMethod, uint32_t token);
+	static Method::Overload *MethodOverloadFromToken(Method::Overload *fromMethod, uint32_t token, uint16_t argCount);
+	static Field *FieldFromToken(Method::Overload *fromMethod, uint32_t token, bool shouldBeStatic);
 
 	friend class GC;
 	friend void VM_InvokeMethod(ThreadHandle, MethodHandle, const unsigned int, Value*);
 	friend class VM; // temp
 };
-
-// Converts a ThreadHandle to a real Thread.
-//#define _Th(v)	reinterpret_cast<::Thread *const>(v)
-
 
 #endif // VM__THREAD_INTERNAL_H

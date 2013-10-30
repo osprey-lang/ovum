@@ -353,7 +353,7 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 				break;
 			case OPI_SCALL_L:
 			case OPI_SCALL_S:
-				// scall: LocalOffset args, LocalOffset output, uint16_t argc, Method *method
+				// scall: LocalOffset args, LocalOffset output, uint16_t argc, Method::Overload *method
 				{
 					Value *const args   = OFF_ARG(ip) + frame;
 					Value *const output = OFF_ARG(ip + sizeof(LocalOffset)) + frame;
@@ -362,10 +362,10 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 					const uint16_t argCount = U16_ARG(ip);
 					ip += sizeof(uint16_t);
 
-					Method *const method = *reinterpret_cast<Method**>(ip);
-					InvokeMethod(method, argCount, args, output);
+					Method::Overload *const method = *reinterpret_cast<Method::Overload**>(ip);
+					InvokeMethodOverload(method, argCount, args, output);
 
-					ip += sizeof(Method*);
+					ip += sizeof(Method::Overload*);
 					frame->stackCount += opc & 1;
 				}
 				break;
@@ -485,14 +485,15 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 				// switch: LocalOffset value, uint16_t count, int32_t offsets[count]
 				{
 					Value *const value = OFF_ARG(ip) + frame;
-					ip += sizeof(LocalOffset);
 
 					if (value->type != VM::vm->types.Int)
 						ThrowTypeError();
 
-					uint16_t count = U16_ARG(ip);
-					if (value->integer >= 0 || value->integer < count)
-						ip += *((int32_t*)ip + (int32_t)value->integer);
+					uint16_t count = U16_ARG(ip + sizeof(LocalOffset));
+					ip += sizeof(LocalOffset) + sizeof(uint16_t);
+
+					if (value->integer >= 0 && value->integer < count)
+						ip += *(reinterpret_cast<int32_t*>(ip) + (int32_t)value->integer);
 
 					ip += count * sizeof(int32_t);
 
@@ -678,7 +679,7 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 					String *name = *reinterpret_cast<String**>(ip + sizeof(LocalOffset));
 
 					// StoreMemberLL performs a null check
-					StoreMemberLL(values, values + 1, name);
+					StoreMemberLL(values, name);
 
 					// It also pops the things off the stack
 					ip += sizeof(LocalOffset) + sizeof(String*);
@@ -737,7 +738,7 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 				break;
 			}
 		}
-		catch (OvumException &ex)
+		catch (OvumException&)
 		{
 			if (!FindErrorHandler(frame, ip))
 			{

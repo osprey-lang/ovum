@@ -5,6 +5,7 @@
 
 #include "ov_vm.internal.h"
 #include <iostream>
+#include <cassert>
 
 // forward declarations
 class Module;
@@ -171,7 +172,28 @@ public:
 		return (flags & MemberFlags::INSTANCE) == MemberFlags::NONE;
 	}
 
-	const bool IsAccessible(const Type *instType, const Type *declType, const Type *fromType) const;
+	// Determines whether a member is accessible from a given type.
+	//   instType:
+	//     The type of the instance that the member is being loaded from.
+	//   fromType:
+	//     The type which declares the method that is accessing the member.
+	//     This is null for global functions.
+	bool IsAccessible(const Type *instType, const Type *fromType) const;
+
+private:
+	// Gets the type that originally declared the member.
+	// For virtual (overridable) protected methods, this is
+	// the type that introduced the method. E.g.:
+	//    class A {
+	//        protected overridable f(); // introduces f
+	//    }
+	//    class B is A {
+	//        override f(); // overrides A.f; originating type = A
+	//    }
+	Type *GetOriginatingType() const;
+
+	bool IsAccessibleProtected(const Type *instType, const Type *fromType) const;
+	bool IsAccessibleProtectedWithSharedType(const Type *instType, const Type *fromType) const;
 };
 
 class Field : public Member
@@ -202,8 +224,6 @@ public:
 		return reinterpret_cast<Value*>(instance->instance + this->offset);
 	}
 };
-// Recovers a Field* from a FieldHandle
-//#define _Fld(fh)   reinterpret_cast<Field*>(fh)
 
 
 enum class MethodFlags : int16_t
@@ -253,6 +273,9 @@ public:
 	
 	inline Value *const operator+(const StackFrame *const frame) const
 	{
+		// Offsets 0 and 1 point directly into the stack frame;
+		// they are never supposed to be reached.
+		assert(offset != 0 && offset != 1);
 		return (Value*)((char*)frame + offset * sizeof(Value));
 	}
 };
@@ -360,10 +383,20 @@ public:
 					argc <= paramCount;
 		}
 
+		inline int InstanceOffset() const
+		{
+			return ((int)(flags & MethodFlags::INSTANCE) >> 3);
+		}
+
 		// Gets the effective parameter count, which is paramCount + instance (if any).
 		inline unsigned int GetEffectiveParamCount() const
 		{
-			return paramCount + ((unsigned int)(flags & MethodFlags::INSTANCE) >> 3);
+			return paramCount + InstanceOffset();
+		}
+
+		inline bool IsInstanceMethod() const
+		{
+			return (flags & MethodFlags::INSTANCE) == MethodFlags::INSTANCE;
 		}
 
 		inline bool IsInitialized() const
@@ -410,16 +443,31 @@ public:
 		delete[] overloads;
 	}
 
-	inline const bool Accepts(const uint16_t argc) const
+	inline const bool Accepts(const uint16_t argCount) const
 	{
 		const Method *m = this;
 		do
 		{
 			for (int i = 0; i < m->overloadCount; i++)
-				if (m->overloads[i].Accepts(argc))
+				if (m->overloads[i].Accepts(argCount))
 					return true;
 		} while (m = m->baseMethod);
 		return false;
+	}
+
+	inline Overload *ResolveOverload(const uint16_t argCount) const
+	{
+		const Method *method = this;
+		do
+		{
+			for (int i = 0; i < method->overloadCount; i++)
+			{
+				Method::Overload *mo = method->overloads + i;
+				if (mo->Accepts(argCount))
+					return mo;
+			}
+		} while (method = method->baseMethod);
+		return nullptr;
 	}
 
 	inline void SetDeclType(Type *type)
@@ -429,9 +477,6 @@ public:
 			this->overloads[i].declType = type;
 	}
 };
-// Recovers a Method* from a MethodHandle.
-//#define _Mth(mh)    reinterpret_cast<Method*>(mh)
-
 
 class Property : public Member
 {
@@ -443,8 +488,7 @@ public:
 		Member(name, declType, flags | MemberFlags::PROPERTY)
 	{ }
 };
-// Recovers a Property* from a PropertyHandle
-//#define _Prop(ph)   reinterpret_cast<Property*>(ph)
+
 
 namespace std_type_names
 {

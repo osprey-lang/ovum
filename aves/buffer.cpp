@@ -23,7 +23,10 @@ AVES_API NATIVE_FUNCTION(aves_Buffer_new)
 
 	buf->size = (uint32_t)size64;
 	if (buf->size > 0)
+	{
 		buf->bytes = new uint8_t[buf->size];
+		memset(buf->bytes, 0, buf->size);
+	}
 }
 
 AVES_API NATIVE_FUNCTION(aves_Buffer_get_size)

@@ -2,7 +2,10 @@
 #include <fcntl.h>
 #include <io.h>
 #include <iostream>
+#include <iomanip>
+#include <memory>
 #include <Shlwapi.h>
+#include <csignal>
 #include "ov_vm.internal.h"
 
 VM *VM::vm;
@@ -10,10 +13,10 @@ VM *VM::vm;
 wchar_t *CloneWString(const wchar_t *source)
 {
 	size_t outputLength = wcslen(source);
-	wchar_t *output = new wchar_t[outputLength + 1]; // +1 for the \0
-	memcpy(output, source, outputLength * sizeof(wchar_t));
+	std::unique_ptr<wchar_t[]> output(new wchar_t[outputLength + 1]); // +1 for the \0
+	memcpy(output.get(), source, outputLength * sizeof(wchar_t));
 	output[outputLength] = L'\0';
-	return output;
+	return output.release();
 }
 
 OVUM_API int VM_Start(VMStartParams params)
@@ -36,7 +39,8 @@ int VM::Run(VMStartParams &params)
 {
 	using namespace std;
 
-	_setmode(_fileno(stdout), _O_U16TEXT);
+	_setmode(_fileno(stdout), _O_WTEXT);
+	_setmode(_fileno(stderr), _O_WTEXT);
 
 	if (params.verbose)
 	{
@@ -58,7 +62,7 @@ int VM::Run(VMStartParams &params)
 		if (main == nullptr)
 		{
 			wcerr << L"Startup error: Startup module does not define a main method." << endl;
-			result = -1;
+			result = EXIT_FAILURE;
 		}
 		else
 		{
@@ -80,14 +84,13 @@ int VM::Run(VMStartParams &params)
 	}
 	catch (OvumException &e)
 	{
-		wcerr << L"Unhandled error: ";
-		Value error = e.GetError();
-		PrintErr(error.type->fullName);
-		wcerr << L": ";
-		PrintErrLn(error.common.error->message);
-		PrintErrLn(error.common.error->stackTrace);
-
-		result = -1;
+		PrintOvumException(e);
+		result = EXIT_FAILURE;
+	}
+	catch (MethodInitException &e)
+	{
+		PrintMethodInitException(e);
+		result = EXIT_FAILURE;
 	}
 
 	// done!
@@ -177,6 +180,8 @@ void VM::Unload()
 
 void VM::PrintInternal(std::wostream &stream, String *str)
 {
+	using namespace std;
+
 	if (sizeof(uchar) == sizeof(wchar_t))
 	{
 		// Assume wchar_t is UTF-16, or at least USC-2, and just cast it.
@@ -195,12 +200,10 @@ void VM::PrintInternal(std::wostream &stream, String *str)
 		}
 		else
 		{
-			wchar_t *buffer = new wchar_t[length];
-			String_ToWString(buffer, str);
+			unique_ptr<wchar_t[]> buffer(new wchar_t[length]);
+			String_ToWString(buffer.get(), str);
 
 			stream << buffer;
-
-			delete[] buffer;
 		}
 	}
 	else
@@ -227,6 +230,79 @@ void VM::PrintErrLn(String *str)
 {
 	PrintInternal(std::wcerr, str);
 	std::wcerr << std::endl;
+}
+
+void VM::PrintOvumException(OvumException &e)
+{
+	using namespace std;
+
+	wcerr << L"Unhandled error: ";
+	Value error = e.GetError();
+	PrintErr(error.type->fullName);
+	wcerr << L": ";
+	PrintErrLn(error.common.error->message);
+	PrintErrLn(error.common.error->stackTrace);
+}
+void VM::PrintMethodInitException(MethodInitException &e)
+{
+	using namespace std;
+
+	wcerr << "An error occurred while initializing the method '";
+	Method::Overload *method = e.GetMethod();
+	if (method->declType)
+	{
+		PrintErr(method->declType->fullName);
+		wcerr << L'.';
+	}
+	PrintErr(method->group->name);
+	wcerr << "' from module ";
+	PrintErr(method->group->declModule->name);
+
+	wcerr << ": " << e.what() << endl;
+	switch (e.GetFailureKind())
+	{
+	case MethodInitException::INCONSISTENT_STACK_HEIGHT:
+	case MethodInitException::INVALID_BRANCH_OFFSET:
+	case MethodInitException::INSUFFICIENT_STACK_HEIGHT:
+		wcerr << "Instruction index: " << e.GetInstructionIndex() << endl;
+		break;
+	case MethodInitException::INACCESSIBLE_MEMBER:
+	case MethodInitException::FIELD_STATIC_MISMATCH:
+		wcerr << "Member: ";
+		{
+			Member *member = e.GetMember();
+			if (member->declType)
+			{
+				PrintErr(member->declType->fullName);
+				wcerr << L'.';
+			}
+			PrintErr(member->name);
+			wcerr << endl;
+		}
+		break;
+	case MethodInitException::UNRESOLVED_TOKEN_ID:
+		wcerr << "Token ID: " << setfill(L'0') << hex << setw(8) << e.GetTokenId() << endl;
+		break;
+	case MethodInitException::NO_MATCHING_OVERLOAD:
+		wcerr << "Method: '";
+		if (e.GetMethodGroup()->declType)
+		{
+			PrintErr(e.GetMethodGroup()->declType->fullName);
+			wcerr << L'.';
+		}
+		PrintErr(e.GetMethodGroup()->name);
+		wcerr << "' from module ";
+		PrintErrLn(e.GetMethodGroup()->declModule->name);
+
+		wcerr << endl << "Argument count: " << e.GetArgumentCount() << endl;
+		break;
+	case MethodInitException::INACCESSIBLE_TYPE:
+		wcerr << "Type: '";
+		PrintErr(e.GetType()->fullName);
+		wcerr << "' from module ";
+		PrintErrLn(e.GetType()->module->name);
+		break;
+	}
 }
 
 int VM::GetArgs(const int destLength, String *dest[])
@@ -256,6 +332,15 @@ OVUM_API void VM_Print(String *str)
 OVUM_API void VM_PrintLn(String *str)
 {
 	VM::PrintLn(str);
+}
+
+OVUM_API void VM_PrintErr(String *str)
+{
+	VM::PrintErr(str);
+}
+OVUM_API void VM_PrintErrLn(String *str)
+{
+	VM::PrintErrLn(str);
 }
 
 OVUM_API int VM_GetArgCount()
