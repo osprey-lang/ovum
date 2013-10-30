@@ -41,7 +41,10 @@ namespace integer
 	inline const int64_t Power(ThreadHandle thread, const int64_t base, const int64_t exponent)
 	{
 		if (exponent < 0)
-			VM_ThrowError(thread);
+		{
+			GC_Construct(thread, ArgumentRangeError, 0, nullptr);
+			VM_Throw(thread);
+		}
 
 		int64_t a = base;
 		int64_t b = exponent;

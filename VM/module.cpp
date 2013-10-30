@@ -2,6 +2,7 @@
 #include <iostream>
 #include <sstream>
 #include <memory>
+#include <vector>
 #include "ov_module.internal.h"
 #include "ov_stringbuffer.internal.h"
 
@@ -49,10 +50,10 @@ char *ModuleReader::ReadCString()
 	if (length == 0)
 		return nullptr;
 
-	char *output = new char[length];
-	Read(output, length);
+	unique_ptr<char[]> output(new char[length]);
+	Read(output.get(), length);
 
-	return output;
+	return output.release();
 }
 
 String *ModuleReader::ReadShortString(const int32_t length)
@@ -291,7 +292,7 @@ Module *Module::Open(const wchar_t *fileName)
 
 		ReadTypeDefs(reader, output.get());     // types
 		ReadFunctionDefs(reader, output.get()); // functions
-		ReadConstantDefs(reader, output.get()); // constants		
+		ReadConstantDefs(reader, output.get()); // constants
 
 		TokenId mainMethodId = reader.ReadToken();
 		if (mainMethodId != 0)
@@ -451,7 +452,7 @@ void Module::VerifyMagicNumber(ModuleReader &reader)
 	reader.Read(magicNumber, 4);
 	for (int i = 0; i < 4; i++)
 		if (magicNumber[i] != module_file::magicNumber[i])
-			throw ModuleLoadException(reader.fileName, "Invalid magic number in reader.");
+			throw ModuleLoadException(reader.fileName, "Invalid magic number in file.");
 }
 
 void Module::ReadModuleMeta(ModuleReader &reader, ModuleMeta &target)
@@ -693,15 +694,25 @@ void Module::ReadTypeDefs(ModuleReader &reader, Module *module)
 	int32_t length = reader.ReadInt32();
 	module->types.Init(length);
 
+	vector<FieldConstData> unresolvedConstants;
+
 	for (int32_t i = 0; i < length; i++)
 	{
 		TokenId id = reader.ReadToken();
 		if (id != module->types.GetNextId(IDMASK_TYPEDEF))
 			throw ModuleLoadException(reader.fileName, "Invalid TypeDef token ID.");
 
-		Type *type = ReadSingleType(reader, module, id);
+		Type *type = ReadSingleType(reader, module, id, unresolvedConstants);
 		module->types.Add(type);
 		module->members.Add(type->fullName, ModuleMember(type, (type->flags & TypeFlags::PRIVATE) == TypeFlags::PRIVATE));
+	}
+
+	for (auto i = unresolvedConstants.begin(); i != unresolvedConstants.end(); i++)
+	{
+		Type *constantType = module->FindType(i->typeId);
+		if (constantType == nullptr)
+			throw ModuleLoadException(reader.fileName, "Unresolved TypeRef or TypeDef token ID in constant FieldDef.");
+		SetConstantFieldValue(reader, module, i->field, constantType, i->value);
 	}
 
 	CHECKPOS_AFTER(TypeDef);
@@ -783,7 +794,7 @@ void Module::ReadConstantDefs(ModuleReader &reader, Module *module)
 	CHECKPOS_AFTER(ConstantDef);
 }
 
-Type *Module::ReadSingleType(ModuleReader &reader, Module *module, const TokenId typeId)
+Type *Module::ReadSingleType(ModuleReader &reader, Module *module, const TokenId typeId, vector<FieldConstData> &unresolvedConstants)
 {
 	TypeFlags flags = (TypeFlags)reader.ReadUInt32();
 	String *name = module->FindString(reader.ReadToken());
@@ -824,10 +835,10 @@ Type *Module::ReadSingleType(ModuleReader &reader, Module *module, const TokenId
 	type->fullName     = name;
 	type->module       = module;
 
-	ReadFields(reader, module, type.get());     // fields
-	ReadMethods(reader, module, type.get());    // methods
-	ReadProperties(reader, module, type.get()); // properties
-	ReadOperators(reader, module, type.get());  // operators
+	ReadFields(reader, module, type.get(), unresolvedConstants);
+	ReadMethods(reader, module, type.get());
+	ReadProperties(reader, module, type.get());
+	ReadOperators(reader, module, type.get());
 
 	{
 		unique_ptr<char[]> initer(reader.ReadCString());
@@ -845,7 +856,7 @@ Type *Module::ReadSingleType(ModuleReader &reader, Module *module, const TokenId
 	return type.release();
 }
 
-void Module::ReadFields(ModuleReader &reader, Module *module, Type *type)
+void Module::ReadFields(ModuleReader &reader, Module *module, Type *type, vector<FieldConstData> &unresolvedConstants)
 {
 	CHECKPOS_BEFORE();
 
@@ -871,24 +882,33 @@ void Module::ReadFields(ModuleReader &reader, Module *module, Type *type)
 		MemberFlags flags = MemberFlags::NONE;
 
 		if (fieldFlags & FIELD_PUBLIC)
-			flags = flags | MemberFlags::PUBLIC;
+			flags |= MemberFlags::PUBLIC;
 		else if (fieldFlags & FIELD_PRIVATE)
-			flags = flags | MemberFlags::PRIVATE;
+			flags |= MemberFlags::PRIVATE;
 		else if (fieldFlags & FIELD_PROTECTED)
-			flags = flags | MemberFlags::PROTECTED;
+			flags |= MemberFlags::PROTECTED;
 
 		if (fieldFlags & FIELD_INSTANCE)
-			flags = flags | MemberFlags::INSTANCE;
+			flags |= MemberFlags::INSTANCE;
 
 		String *name = module->FindString(reader.ReadToken());
 		if (name == nullptr)
 			throw ModuleLoadException(reader.fileName, "Could not resolve string ID in FieldDef name.");
 
-		// Skip constant value, if there is one
-		if (fieldFlags & FIELD_HASVALUE)
-			reader.stream.seekg(sizeof(TokenId) + sizeof(uint64_t), ios::cur);
-
 		unique_ptr<Field> field(new Field(name, type, flags));
+
+		if (fieldFlags & FIELD_HASVALUE)
+		{
+			// The field has a constant value, gasp!
+			TokenId typeId = reader.ReadToken();
+			int64_t value = reader.ReadInt64();
+
+			Type *constantType = module->FindType(typeId);
+			if (!constantType)
+				unresolvedConstants.push_back(FieldConstData(field.get(), typeId, value));
+			else
+				SetConstantFieldValue(reader, module, field.get(), constantType, value);
+		}
 
 		if (!type->members.Add(name, field.get()))
 			throw ModuleLoadException(reader.fileName, "Duplicate member name in type.");
@@ -927,6 +947,38 @@ void Module::ReadMethods(ModuleReader &reader, Module *module, Type *type)
 			throw ModuleLoadException(reader.fileName, "Duplicate member name in type.");
 		module->methods.Add(method.get());
 		method->SetDeclType(type);
+
+		// If this method is not private and the base type is not null,
+		// see if any base type declares a public or protected method
+		// with the same name, and if so, update this method's baseMethod
+		// to that value.
+		// Oh, and, we don't run this step if the name is one of '.new',
+		// '.iter' or '.init'. Other dot-methods (including '.call') are
+		// insufficiently special to be excluded.
+		if (type->baseType != nullptr &&
+			(method->flags & MemberFlags::ACCESS_LEVEL) != MemberFlags::PRIVATE &&
+			!String_Equals(method->name, static_strings::_new) &&
+			!String_Equals(method->name, static_strings::_iter) &&
+			!String_Equals(method->name, static_strings::_init))
+		{
+			Type *t = type->baseType;
+			do
+			{
+				Member *m;
+				if (m = t->GetMember(method->name))
+				{
+					// The two members are considered matching if:
+					//   1. they have the same accessibility
+					//   2. they are both either static or instance methods
+					//   3. they are both methods
+					const MemberFlags matchingFlags = MemberFlags::KIND |
+						MemberFlags::ACCESS_LEVEL | MemberFlags::INSTANCE;
+					if ((m->flags & matchingFlags) == (method->flags & matchingFlags))
+						method->baseMethod = static_cast<Method*>(m);
+					break;
+				}
+			} while (t = t->baseType);
+		}
 
 		method.release();
 	}
@@ -1026,6 +1078,27 @@ void Module::ReadOperators(ModuleReader &reader, Module *module, Type *type)
 	CHECKPOS_AFTER(OperatorDef);
 }
 
+void Module::SetConstantFieldValue(ModuleReader &reader, Module *module, Field *field, Type *constantType, const int64_t value)
+{
+	if (constantType != VM::vm->types.String && (constantType->flags & TypeFlags::PRIMITIVE) == TypeFlags::NONE)
+		throw ModuleLoadException(reader.fileName, "Constant type in FieldDef must be primitive or aves.String.");
+				
+	Value constantValue;
+	constantValue.type = constantType;
+
+	if (constantType == VM::vm->types.String)
+	{
+		String *str = module->FindString((TokenId)value);
+		if (!str)
+			throw ModuleLoadException(reader.fileName, "Unresolved String token ID in constant FieldDef.");
+		constantValue.common.string = str;
+	}
+	else
+		constantValue.integer = value;
+
+	field->staticValue = GC::gc->AddStaticReference(constantValue);
+}
+
 Method *Module::ReadSingleMethod(ModuleReader &reader, Module *module)
 {
 	FileMethodFlags methodFlags = (FileMethodFlags)reader.ReadUInt32();
@@ -1046,15 +1119,15 @@ Method *Module::ReadSingleMethod(ModuleReader &reader, Module *module)
 
 	MemberFlags memberFlags = MemberFlags::NONE;
 	if (methodFlags & FM_PUBLIC)
-		memberFlags = memberFlags | MemberFlags::PUBLIC;
+		memberFlags |= MemberFlags::PUBLIC;
 	else if (methodFlags & FM_PRIVATE)
-		memberFlags = memberFlags | MemberFlags::PRIVATE;
+		memberFlags |= MemberFlags::PRIVATE;
 	else if (methodFlags & FM_PROTECTED)
-		memberFlags = memberFlags | MemberFlags::PROTECTED;
+		memberFlags |= MemberFlags::PROTECTED;
 	if (methodFlags & FM_INSTANCE)
-		memberFlags = memberFlags | MemberFlags::INSTANCE;
+		memberFlags |= MemberFlags::INSTANCE;
 	if (methodFlags & FM_IMPL)
-		memberFlags = memberFlags | MemberFlags::IMPL;
+		memberFlags |= MemberFlags::IMPL;
 
 	unique_ptr<Method> method(new Method(name, module, memberFlags));
 
@@ -1077,17 +1150,17 @@ Method *Module::ReadSingleMethod(ModuleReader &reader, Module *module)
 		// Flags
 		ov->flags = (MethodFlags)0;
 		if (methodFlags & FM_CTOR)
-			ov->flags = ov->flags | MethodFlags::CTOR;
+			ov->flags |= MethodFlags::CTOR;
 		if (methodFlags & FM_INSTANCE)
-			ov->flags = ov->flags | MethodFlags::INSTANCE;
+			ov->flags |= MethodFlags::INSTANCE;
 		if (flags & OV_VAREND)
-			ov->flags = ov->flags | MethodFlags::VAR_END;
+			ov->flags |= MethodFlags::VAR_END;
 		if (flags & OV_VARSTART)
-			ov->flags = ov->flags | MethodFlags::VAR_START;
+			ov->flags |= MethodFlags::VAR_START;
 		if (flags & OV_VIRTUAL)
-			ov->flags = ov->flags | MethodFlags::VIRTUAL;
+			ov->flags |= MethodFlags::VIRTUAL;
 		if (flags & OV_ABSTRACT)
-			ov->flags = ov->flags | MethodFlags::ABSTRACT;
+			ov->flags |= MethodFlags::ABSTRACT;
 
 		// Header
 		{
@@ -1120,7 +1193,7 @@ Method *Module::ReadSingleMethod(ModuleReader &reader, Module *module)
 				if (entryPoint == nullptr)
 					throw ModuleLoadException(reader.fileName, "Could not locate entry point of native method.");
 				ov->nativeEntry = entryPoint;
-				ov->flags = ov->flags | MethodFlags::NATIVE;
+				ov->flags |= MethodFlags::NATIVE;
 			}
 			else
 			{
@@ -1195,6 +1268,8 @@ Method::TryBlock *Module::ReadTryBlocks(ModuleReader &reader, Module *module, in
 					// is initialized instead.
 					if (module->FindType(curCatch->caughtTypeId))
 						curCatch->caughtType = module->FindType(curCatch->caughtTypeId);
+					else
+						curCatch->caughtType = nullptr;
 
 					curCatch->catchStart   = reader.ReadUInt32();
 					curCatch->catchEnd     = reader.ReadUInt32();

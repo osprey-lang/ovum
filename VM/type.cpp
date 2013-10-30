@@ -104,7 +104,7 @@ void Type::InitOperators()
 		this->operators[op] = method; // null or an actual method.
 	}
 
-	this->flags = this->flags | TypeFlags::OPS_INITED;
+	this->flags |= TypeFlags::OPS_INITED;
 }
 
 Member *Type::GetMember(String *name) const
@@ -120,7 +120,7 @@ Member *Type::FindMember(String *name, Type *fromType) const
 	const Type *type = this;
 	do {
 		Member *m;
-		if (type->members.Get(name, m) && m->IsAccessible(this, type, fromType))
+		if (type->members.Get(name, m) && m->IsAccessible(this, fromType))
 			return m;
 	} while (type = type->baseType);
 
@@ -164,7 +164,8 @@ void Type::InitStaticFields()
 	{
 		Member *m = members.entries[i].value;
 		if ((m->flags & MemberFlags::FIELD) == MemberFlags::FIELD &&
-			(m->flags & MemberFlags::INSTANCE) == MemberFlags::NONE)
+			(m->flags & MemberFlags::INSTANCE) == MemberFlags::NONE &&
+			static_cast<Field*>(m)->staticValue == nullptr)
 		{
 			static_cast<Field*>(m)->staticValue = GC::gc->AddStaticReference(NULL_VALUE);
 		}
@@ -173,13 +174,11 @@ void Type::InitStaticFields()
 
 // Determines whether a member is accessible from a given type.
 //   instType:
-//     The type of the instance that the member belongs to.
-//   declType:
-//     The type that actually declares the member.
+//     The type of the instance that the member is being loaded from.
 //   fromType:
 //     The type which declares the method that is accessing the member.
 //     This is null for global functions.
-const bool Member::IsAccessible(const Type *instType, const Type *const declType, const Type *const fromType) const
+bool Member::IsAccessible(const Type *instType, const Type *fromType) const
 {
 	if ((this->flags & MemberFlags::PRIVATE) != MemberFlags::NONE)
 		return fromType && (declType == fromType || declType == fromType->sharedType);
@@ -189,39 +188,77 @@ const bool Member::IsAccessible(const Type *instType, const Type *const declType
 		if (!fromType)
 			return false;
 
-		// WARNING: THIS ALGORITHM IS BROKEN
-		// TODO: Member::IsAccessible
-
-		const Type *tempType = instType;
-		while (tempType && tempType != fromType)
-			tempType = tempType->baseType;
-
-		if (!tempType)
-		{
-			Type *sharedType = fromType->sharedType;
-			while (instType && instType != sharedType)
-				instType = instType->baseType;
-
-			if (!instType)
-				return false; // instType does not inherit from fromType or fromType->sharedType
-		}
-
-		tempType = fromType;
-		while (tempType && tempType != declType)
-			tempType = tempType->baseType;
-
-		if (!tempType)
-		{
-			Type *sharedType = fromType->sharedType;
-			while (sharedType && sharedType != declType)
-				sharedType = sharedType->baseType;
-
-			if (!sharedType)
-				return false; // neither fromType nor fromType->sharedType inherits from declType
-		}
+		return fromType->sharedType ?
+			IsAccessibleProtectedWithSharedType(instType, fromType) :
+			IsAccessibleProtected(instType, fromType);
 	}
 
-	return true; // M_PUBLIC or accessible
+	return true; // MemberFlags::PUBLIC or accessible
+}
+
+bool Member::IsAccessibleProtected(const Type *instType, const Type *fromType) const
+{
+	while (instType && instType != fromType)
+		instType = instType->baseType;
+
+	if (!instType)
+		return false; // instType does not inherit from fromType
+
+	Type *originatingType = GetOriginatingType();
+	while (fromType && fromType != originatingType)
+		fromType = fromType->baseType;
+
+	if (!fromType)
+		return false; // fromType does not inherit from originatingType
+
+	return true; // yay
+}
+
+bool Member::IsAccessibleProtectedWithSharedType(const Type *instType, const Type *fromType) const
+{
+	const Type *tempType = instType;
+	while (tempType && tempType != fromType)
+		tempType = tempType->baseType;
+
+	if (!tempType)
+	{
+		const Type *sharedType = fromType->sharedType;
+		while (instType && instType != sharedType)
+			instType = instType->baseType;
+
+		if (!instType)
+			return false; // instType does not inherit from fromType or fromType->sharedType
+	}
+
+	Type *originatingType = GetOriginatingType();
+	tempType = fromType;
+	while (tempType && tempType != originatingType)
+		tempType = tempType->baseType;
+
+	if (!tempType)
+	{
+		const Type *sharedType = fromType->sharedType;
+		while (sharedType && sharedType != originatingType)
+			sharedType = sharedType->baseType;
+
+		if (!sharedType)
+			return false; // neither fromType nor fromType->sharedType inherits from originatingType
+	}
+
+	return true;
+}
+
+Type *Member::GetOriginatingType() const
+{
+	assert((flags & MemberFlags::ACCESS_LEVEL) == MemberFlags::PROTECTED);
+	if ((flags & MemberFlags::KIND) == MemberFlags::METHOD)
+	{
+		const Method *method = static_cast<const Method*>(this);
+		while (method->baseMethod)
+			method = method->baseMethod;
+		return method->declType;
+	}
+	return declType;
 }
 
 Value *const Field::GetField(Thread *const thread, const Value instance) const
@@ -276,14 +313,79 @@ OVUM_API TypeHandle GetType_NoOverloadError()    { return VM::vm->types.NoOverlo
 OVUM_API TypeHandle GetType_DivideByZeroError()  { return VM::vm->types.DivideByZeroError; }
 OVUM_API TypeHandle GetType_NullReferenceError() { return VM::vm->types.NullReferenceError; }
 
+OVUM_API bool Member_IsAccessible(const MemberHandle member, TypeHandle instType, TypeHandle fromType)
+{
+	return member->IsAccessible(instType, fromType);
+}
+
+OVUM_API String *Member_GetName(const MemberHandle member)
+{
+	return member->name;
+}
+
+OVUM_API MemberKind Member_GetKind(const MemberHandle member)
+{
+	switch (member->flags & MemberFlags::KIND)
+	{
+		case MemberFlags::METHOD:   return MemberKind::METHOD;
+		case MemberFlags::FIELD:    return MemberKind::FIELD;
+		case MemberFlags::PROPERTY: return MemberKind::PROPERTY;
+		default:                    return MemberKind::INVALID;
+	}
+}
+
+OVUM_API MethodHandle Member_ToMethod(const MemberHandle member)
+{
+	if ((member->flags & MemberFlags::METHOD) == MemberFlags::METHOD)
+		return (MethodHandle)member;
+	return nullptr;
+}
+OVUM_API FieldHandle Member_ToField(const MemberHandle member)
+{
+	if ((member->flags & MemberFlags::FIELD) == MemberFlags::FIELD)
+		return (FieldHandle)member;
+	return nullptr;
+}
+OVUM_API PropertyHandle Member_ToProperty(const MemberHandle member)
+{
+	if ((member->flags & MemberFlags::PROPERTY) == MemberFlags::PROPERTY)
+		return (PropertyHandle)member;
+	return nullptr;
+}
+
+OVUM_API TypeHandle Member_GetDeclType(const MemberHandle member)
+{
+	return member->declType;
+}
+
+
 OVUM_API bool Method_Accepts(const MethodHandle m, int argc)
 {
 	return m->Accepts(argc);
 }
 
-OVUM_API bool Member_IsAccessible(const MemberHandle member, TypeHandle instType, TypeHandle declType, TypeHandle fromType)
+
+OVUM_API uint32_t Field_GetOffset(const FieldHandle field)
 {
-	return member->IsAccessible(instType, declType, fromType);
+	return field->offset;
+}
+
+OVUM_API bool Field_GetStaticValue(const FieldHandle field, Value &result)
+{
+	if (field->staticValue)
+		result = *field->staticValue;
+	return field->staticValue != nullptr;
+}
+
+
+OVUM_API MethodHandle Property_GetGetter(const PropertyHandle prop)
+{
+	return prop->getter;
+}
+
+OVUM_API MethodHandle Property_GetSetter(const PropertyHandle prop)
+{
+	return prop->setter;
 }
 
 
@@ -301,17 +403,27 @@ OVUM_API MemberHandle Type_GetMember(TypeHandle type, String *name)
 {
 	return type->GetMember(name);
 }
-
 OVUM_API MemberHandle Type_FindMember(TypeHandle type, String *name, TypeHandle fromType)
 {
 	return type->FindMember(name, fromType);
+}
+
+OVUM_API int32_t Type_GetMemberCount(TypeHandle type)
+{
+	return type->members.GetCount();
+}
+OVUM_API MemberHandle Type_GetMemberByIndex(TypeHandle type, const int32_t index)
+{
+	Member *result;
+	if (type->members.GetByIndex(index, result))
+		return result;
+	return nullptr;
 }
 
 OVUM_API MethodHandle Type_GetOperator(TypeHandle type, Operator op)
 {
 	return type->GetOperator(op);
 }
-
 OVUM_API Value Type_GetTypeToken(ThreadHandle thread, TypeHandle type)
 {
 	return type->GetTypeToken(thread);
@@ -324,27 +436,22 @@ OVUM_API uint32_t Type_GetFieldOffset(TypeHandle type)
 
 OVUM_API void Type_SetFinalizer(TypeHandle type, Finalizer finalizer)
 {
-	Type *realType = const_cast<Type*>(type);
-	if ((realType->flags & TypeFlags::INITED) == TypeFlags::NONE)
-		realType->finalizer = finalizer;
+	if ((type->flags & TypeFlags::INITED) == TypeFlags::NONE)
+		type->finalizer = finalizer;
 }
-
 OVUM_API void Type_SetInstanceSize(TypeHandle type, uint32_t size)
 {
-	Type *realType = const_cast<Type*>(type);
-	if ((realType->flags & TypeFlags::INITED) == TypeFlags::NONE)
+	if ((type->flags & TypeFlags::INITED) == TypeFlags::NONE)
 	{
 		// Ensure the effective size is a multiple of 8
-		realType->size = ALIGN_TO(size, 8);
-		realType->flags = realType->flags | TypeFlags::CUSTOMPTR;
+		type->size = ALIGN_TO(size, 8);
+		type->flags |= TypeFlags::CUSTOMPTR;
 	}
 }
-
 OVUM_API void Type_SetReferenceGetter(TypeHandle type, ReferenceGetter getter)
 {
-	Type *realType = const_cast<Type*>(type);
-	if ((realType->flags & TypeFlags::INITED) == TypeFlags::NONE)
-		realType->getReferences = getter;
+	if ((type->flags & TypeFlags::INITED) == TypeFlags::NONE)
+		type->getReferences = getter;
 }
 
 OVUM_API String *Error_GetMessage(Value error)
@@ -354,7 +461,6 @@ OVUM_API String *Error_GetMessage(Value error)
 
 	return error.common.error->message;
 }
-
 OVUM_API String *Error_GetStackTrace(Value error)
 {
 	if (!Type::ValueIsType(error, VM::vm->types.Error))

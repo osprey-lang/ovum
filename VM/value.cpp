@@ -14,7 +14,7 @@ OVUM_API bool IsFalse(Value value)
 
 OVUM_API bool IsType(Value value, TypeHandle type)
 {
-	return Type::ValueIsType(value, value.type);
+	return Type::ValueIsType(value, type);
 }
 
 OVUM_API bool IsSameReference(Value a, Value b)

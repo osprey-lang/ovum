@@ -110,6 +110,16 @@ public abstract class Iterator
 		return new MapIterator(this, func);
 	}
 
+	public toList()
+	{
+		var output = [];
+
+		while moveNext():
+			output.add(current);
+
+		return output;
+	}
+
 	public static get empty = new EmptyIterator();
 
 	iter { return this; }

@@ -19,7 +19,7 @@ public inheritable Object
 	public overridable getHashCode()	__extern("aves_Object_getHashCode");
 
 	/// Summary: Returns a string representation of the value.
-	public overridable toString()		__extern("aves_Object_toString");
+	public overridable toString()		__extern("aves_Object_toString", locals=1);
 
 	/// Summary: Compares two values for equality.
 	/// Param a: The first value to compare.

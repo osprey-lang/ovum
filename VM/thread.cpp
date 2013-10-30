@@ -50,7 +50,7 @@ void Thread::Start(Method *method, Value &result)
 	assert((method->flags & MemberFlags::INSTANCE) == MemberFlags::NONE);
 
 	state = ThreadState::RUNNING;
-	Method::Overload *mo = ResolveOverload(method, 0);
+	Method::Overload *mo = method->ResolveOverload(0);
 	assert(mo != nullptr);
 	assert((mo->flags & MethodFlags::VARIADIC) == MethodFlags::NONE);
 
@@ -95,23 +95,21 @@ void Thread::Invoke(unsigned int argCount, Value *result)
 	}
 }
 
-#pragma warning(push)
-#pragma warning(disable: 4703) // Potentially uninitialized local variable 'mo'
-                               // The compiler can't figure out that ThrowTypeError always throws.
 // Note: argCount does NOT include the instance, but value does
 void Thread::InvokeLL(unsigned int argCount, Value *value, Value *result)
 {
-	Method::Overload *mo;
+	if (IS_NULL(*value))
+		ThrowNullReferenceError();
+
+	Method::Overload *mo = nullptr;
 
 	// If the value is a Method instance, we use that instance's details.
 	// Otherwise, we load the default invocator from the value.
 
-	Type *type = value->type;
-
-	if (type == VM::vm->types.Method)
+	if (value->type == VM::vm->types.Method)
 	{
 		MethodInst *methodInst = value->common.method;
-		if (mo = ResolveOverload(methodInst->method, argCount))
+		if (mo = methodInst->method->ResolveOverload(argCount))
 		{
 			if ((mo->flags & MethodFlags::INSTANCE) != MethodFlags::NONE)
 				// Overwrite the Method with the instance
@@ -124,9 +122,9 @@ void Thread::InvokeLL(unsigned int argCount, Value *value, Value *result)
 	else
 	{
 		Member *member;
-		if ((member = type->FindMember(static_strings::_call, currentFrame->method->declType)) &&
+		if ((member = value->type->FindMember(static_strings::_call, currentFrame->method->declType)) &&
 			(member->flags & MemberFlags::METHOD) != MemberFlags::NONE)
-			mo = ResolveOverload((Method*)member, argCount);
+			mo = ((Method*)member)->ResolveOverload(argCount);
 		else
 			ThrowTypeError(thread_errors::NotInvokable);
 	}
@@ -138,7 +136,23 @@ void Thread::InvokeLL(unsigned int argCount, Value *value, Value *result)
 	// So let's just pass it into InvokeMethodOverload.
 	InvokeMethodOverload(mo, argCount, value, result);
 }
-#pragma warning(pop)
+
+void Thread::InvokeMethod(Method *method, unsigned int argCount, Value *result)
+{
+	Method::Overload *mo = method->ResolveOverload(argCount);
+	if (mo == nullptr)
+		ThrowNoOverloadError(argCount);
+
+	Value *args = currentFrame->evalStack + currentFrame->stackCount - argCount - mo->InstanceOffset();
+	if (result)
+		InvokeMethodOverload(mo, argCount, args, result);
+	else
+	{
+		Value output;
+		InvokeMethodOverload(mo, argCount, args, &output);
+		currentFrame->Push(output);
+	}
+}
 
 void Thread::InvokeMember(String *name, unsigned int argCount, Value *result)
 {
@@ -174,11 +188,14 @@ void Thread::InvokeMemberLL(String *name, uint16_t argCount, Value *value, Value
 			{
 				if (((Property*)member)->getter == nullptr)
 					ThrowTypeError(thread_errors::GettingWriteonlyProperty);
+
+				Method::Overload *mo = ((Property*)member)->getter->ResolveOverload(0);
+				if (!mo) ThrowNoOverloadError(0);
 				// Call the property getter!
 				// We do need to copy the instance, because the property getter
 				// would otherwise overwrite the arguments already on the stack.
 				currentFrame->Push(*value);
-				InvokeMethod(((Property*)member)->getter, 0,
+				InvokeMethodOverload(mo, 0,
 					currentFrame->evalStack + currentFrame->stackCount - 1,
 					value);
 				// And then invoke the result of that call (which is in 'value')
@@ -186,20 +203,16 @@ void Thread::InvokeMemberLL(String *name, uint16_t argCount, Value *value, Value
 			}
 			break;
 		default: // method
-			InvokeMethod((Method*)member, argCount, value + 1, result);
+			{
+				Method::Overload *mo = ((Method*)member)->ResolveOverload(argCount);
+				if (!mo) ThrowNoOverloadError(argCount);
+				InvokeMethodOverload(mo, argCount, value, result);
+			}
 			break;
 		}
 	}
 	else
 		ThrowTypeError(thread_errors::MemberNotFound);
-}
-
-void Thread::InvokeMethod(Method *method, unsigned int argCount, Value *args, Value *result)
-{
-	Method::Overload *mo = ResolveOverload(method, argCount);
-	if (!mo)
-		ThrowNoOverloadError(argCount);
-	InvokeMethodOverload(mo, argCount, args - ((int)(mo->flags & MethodFlags::INSTANCE) >> 3), result);
 }
 
 void Thread::InvokeMethodOverload(Method::Overload *mo, unsigned int argCount,
@@ -266,9 +279,8 @@ void Thread::InvokeOperatorLL(Value *args, Operator op, Value *result)
 		ThrowTypeError();
 
 	uint16_t argCount = Arity(op);
-	Method::Overload *mo = ResolveOverload(method, argCount);
-	if (!mo)
-		ThrowNoOverloadError(argCount);
+	Method::Overload *mo = method->ResolveOverload(argCount);
+	if (!mo) ThrowNoOverloadError(argCount);
 	InvokeMethodOverload(mo, argCount, args, result);
 }
 
@@ -326,7 +338,7 @@ void Thread::InvokeApplyMethodLL(Method *method, Value *args, Value *result)
 	// Then, find an appropriate overload!
 	Method::Overload *mo = nullptr;
 	if (args->common.list->length <= UINT16_MAX)
-		mo = ResolveOverload(method, argsList->length);
+		mo = method->ResolveOverload(argsList->length);
 	if (mo == nullptr)
 		ThrowNoOverloadError(argsList->length);
 
@@ -361,7 +373,7 @@ bool Thread::EqualsLL(Value *args)
 	// because Object supports ==.
 	assert(method != nullptr); // okay, fine, but only when debugging
 
-	Method::Overload *mo = ResolveOverload(method, 2);
+	Method::Overload *mo = method->ResolveOverload(2);
 	Value result;
 	InvokeMethodOverload(mo, 2, args, &result);
 
@@ -468,9 +480,11 @@ void Thread::LoadMemberLL(Value *instance, String *member, Value *result)
 	}
 	else if ((m->flags & MemberFlags::METHOD) != MemberFlags::NONE)
 	{
-		GC::gc->Alloc(this, VM::vm->types.Method, sizeof(MethodInst), result);
-		result->common.method->instance = *instance;
-		result->common.method->method = (Method*)m;
+		Value output;
+		GC::gc->Alloc(this, VM::vm->types.Method, sizeof(MethodInst), &output);
+		output.common.method->instance = *instance;
+		output.common.method->method = (Method*)m;
+		*result = output;
 		currentFrame->Pop(1); // Done with the instance!
 	}
 	else // MemberFlags::PROPERTY
@@ -479,18 +493,21 @@ void Thread::LoadMemberLL(Value *instance, String *member, Value *result)
 		if (!p->getter)
 			ThrowTypeError(thread_errors::GettingWriteonlyProperty);
 
+		Method::Overload *mo = p->getter->ResolveOverload(0);
+		if (!mo) ThrowNoOverloadError(0);
+
 		// Remember: the instance is already on the stack!
-		InvokeMethod(p->getter, 0, instance + 1, result);
+		InvokeMethodOverload(mo, 0, instance, result);
 	}
 }
 
 void Thread::StoreMember(String *member)
 {
 	Value *args = currentFrame->evalStack + currentFrame->stackCount - 2;
-	StoreMemberLL(args, args + 1, member);
+	StoreMemberLL(args, member);
 }
 
-void Thread::StoreMemberLL(Value *instance, Value *value, String *member)
+void Thread::StoreMemberLL(Value *instance, String *member)
 {
 	if (IS_NULL(*instance))
 		ThrowNullReferenceError();
@@ -502,15 +519,18 @@ void Thread::StoreMemberLL(Value *instance, Value *value, String *member)
 		ThrowTypeError(thread_errors::AssigningToMethod);
 
 	if ((m->flags & MemberFlags::FIELD) != MemberFlags::NONE)
-		*reinterpret_cast<Field*>(m)->GetFieldUnchecked(instance) = *value;
+		*reinterpret_cast<Field*>(m)->GetFieldUnchecked(instance) = *(instance + 1);
 	else // MemberFlags::PROPERTY
 	{
 		Property *p = (Property*)m;
 		if (!p->setter)
 			ThrowTypeError(thread_errors::SettingReadonlyProperty);
 
+		Method::Overload *mo = p->getter->ResolveOverload(1);
+		if (!mo) ThrowNoOverloadError(1);
+
 		// Remember: the instance and value are already on the stack!
-		InvokeMethod(p->setter, 1, value, nullptr);
+		InvokeMethodOverload(mo, 1, instance, nullptr);
 	}
 
 	currentFrame->Pop(2); // Done with the instance and the value!
@@ -546,7 +566,7 @@ void Thread::LoadIndexerLL(uint16_t argCount, Value *args, Value *result)
 	if (((Property*)member)->getter == nullptr)
 		ThrowTypeError(thread_errors::GettingWriteonlyProperty);
 
-	Method::Overload *method = ResolveOverload(((Property*)member)->getter, argCount);
+	Method::Overload *method = ((Property*)member)->getter->ResolveOverload(argCount);
 	if (!method)
 		ThrowNoOverloadError(argCount);
 	InvokeMethodOverload(method, argCount, args, result);
@@ -576,7 +596,7 @@ void Thread::StoreIndexerLL(uint16_t argCount, Value *args)
 	if (((Property*)member)->setter == nullptr)
 		ThrowTypeError(thread_errors::SettingReadonlyProperty);
 
-	Method::Overload *method = ResolveOverload(((Property*)member)->setter, argCount + 1);
+	Method::Overload *method = ((Property*)member)->setter->ResolveOverload(argCount + 1);
 	if (!method)
 		ThrowNoOverloadError(argCount + 1);
 	Value ignore;
@@ -733,7 +753,6 @@ StackFrame *Thread::PushStackFrame(const uint16_t argCount, Value *args, Method:
 	newFrame->Init(
 		0,                                   // stackCount
 		argCount,                            // argCount
-		//(Value*)newFrame - paramCount,     // arguments pointer
 		(Value*)((char*)newFrame + STACK_FRAME_SIZE) + localCount, // evalStack pointer
 		ip,                                  // prevInstr
 		current,                             // prevFrame
@@ -789,7 +808,7 @@ StackFrame *Thread::PushFirstStackFrame(const uint16_t argCount, Value args[], M
 
 void Thread::PrepareVariadicArgs(const MethodFlags flags, const uint16_t argCount, const uint16_t paramCount, StackFrame *frame)
 {
-	int32_t count = argCount >= paramCount ? argCount - paramCount : 0;
+	int32_t count = argCount >= paramCount - 1 ? argCount - paramCount + 1 : 0;
 
 	Value listValue;
 	// Construct the list!
@@ -888,11 +907,14 @@ String *Thread::GetStackTrace()
 		buf.Append(this, group->name);
 		buf.Append(this, '(');
 
-		uint16_t paramCount = frame->method->paramCount;
+		uint16_t paramCount = frame->method->GetEffectiveParamCount();
+
 		for (int i = 0; i < paramCount; i++)
 		{
 			if (i > 0)
 				buf.Append(this, 2, ", ");
+			else if (i == 0 && frame->method->IsInstanceMethod())
+				buf.Append(this, 6, "this: ");
 			AppendArgumentType(buf, ((Value*)frame - paramCount)[i]);
 		}
 
@@ -998,8 +1020,7 @@ OVUM_API void VM_InvokeMember(ThreadHandle thread, String *name, const unsigned 
 }
 OVUM_API void VM_InvokeMethod(ThreadHandle thread, MethodHandle method, const unsigned int argCount, Value *result)
 {
-	StackFrame *const frame = thread->currentFrame;
-	thread->InvokeMethod(method, argCount, frame->evalStack + frame->stackCount - argCount, result);
+	thread->InvokeMethod(method, argCount, result);
 }
 OVUM_API void VM_InvokeOperator(ThreadHandle thread, Operator op, Value *result)
 {

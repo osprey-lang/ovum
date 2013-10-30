@@ -96,6 +96,12 @@ OVUM_API Value StringFromValue(ThreadHandle thread, Value v)
 {
 	if (v.type != VM::vm->types.String)
 	{
+		if (v.type == nullptr)
+		{
+			SetString_(v, static_strings::empty);
+			return v;
+		}
+
 		thread->Push(v);
 		thread->InvokeMember(static_strings::toString, 0, &v);
 

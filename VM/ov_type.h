@@ -14,14 +14,38 @@ typedef void (__cdecl *NativeMethod)(ThreadHandle thread, const int argc, Value 
 #define THISV	(args[0])
 
 
+OVUM_API bool Member_IsAccessible(const MemberHandle member, TypeHandle instType, TypeHandle fromType);
+
+OVUM_API String *Member_GetName(const MemberHandle member);
+
+enum class MemberKind
+{
+	INVALID  = 0,
+	METHOD   = 1,
+	FIELD    = 2,
+	PROPERTY = 3,
+};
+OVUM_API MemberKind Member_GetKind(const MemberHandle member);
+
+OVUM_API MethodHandle Member_ToMethod(const MemberHandle member);
+OVUM_API FieldHandle Member_ToField(const MemberHandle member);
+OVUM_API PropertyHandle Member_ToProperty(const MemberHandle member);
+
+OVUM_API TypeHandle Member_GetDeclType(const MemberHandle member);
+
+
 // Determines whether any overload in the method accepts the given number of arguments.
 // For instance methods, this does NOT include the instance.
 OVUM_API bool Method_Accepts(const MethodHandle m, int argc);
 
-OVUM_API bool Member_IsAccessible(const MemberHandle member, TypeHandle instType, TypeHandle declType, TypeHandle fromType);
+
+OVUM_API uint32_t Field_GetOffset(const FieldHandle field);
+OVUM_API bool Field_GetStaticValue(const FieldHandle field, Value &result);
 
 
-//typedef void *ErrorHandle; // I cannot remember what I was planning on using this for.
+OVUM_API MethodHandle Property_GetGetter(const PropertyHandle prop);
+OVUM_API MethodHandle Property_GetSetter(const PropertyHandle prop);
+
 
 class OvumException: public std::exception
 {
@@ -30,17 +54,18 @@ private:
 
 public:
 	inline OvumException(Value value) :
+		exception("A managed error was thrown. Use GetManagedMessage to retrieve the full error message."),
 		errorValue(value)
 	{ }
 
-	inline Value GetError()
+	inline Value GetError() const
 	{
 		return errorValue;
 	}
 
-	inline virtual const char *what() const throw()
+	inline String *GetManagedMessage() const
 	{
-		return "An error occurred. Use Error_GetMessage to get the full error message.";
+		return errorValue.common.error->message;
 	}
 };
 
@@ -221,6 +246,9 @@ OVUM_API String *Type_GetFullName(TypeHandle type);
 OVUM_API MemberHandle Type_GetMember(TypeHandle type, String *name);
 OVUM_API MemberHandle Type_FindMember(TypeHandle type, String *name, TypeHandle fromType);
 
+OVUM_API int32_t Type_GetMemberCount(TypeHandle type);
+OVUM_API MemberHandle Type_GetMemberByIndex(TypeHandle type, const int32_t index);
+
 OVUM_API MethodHandle Type_GetOperator(TypeHandle type, Operator op);
 OVUM_API Value Type_GetTypeToken(ThreadHandle thread, TypeHandle type);
 
@@ -275,5 +303,32 @@ OVUM_API TypeHandle GetType_OverflowError();
 OVUM_API TypeHandle GetType_NoOverloadError();
 OVUM_API TypeHandle GetType_DivideByZeroError();
 OVUM_API TypeHandle GetType_NullReferenceError();
+
+class TypeMemberIterator
+{
+private:
+	TypeHandle type;
+	int32_t index;
+
+public:
+	inline TypeMemberIterator(TypeHandle type) :
+		type(type), index(-1)
+	{ }
+
+	inline bool MoveNext()
+	{
+		if (index < Type_GetMemberCount(type) - 1)
+		{
+			index++;
+			return true;
+		}
+		return false;
+	}
+
+	inline MemberHandle Current()
+	{
+		return Type_GetMemberByIndex(type, index);
+	}
+};
 
 #endif // VM__TYPE_H

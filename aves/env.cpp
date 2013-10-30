@@ -18,6 +18,7 @@ AVES_API NATIVE_FUNCTION(aves_Env_get_args)
 		GC_Construct(thread, GetType_List(), 1, EnvArgsField);
 
 		VM_GetArgValues(argCount, EnvArgsField->common.list->values);
+		EnvArgsField->common.list->length = argCount;
 	}
 
 	VM_Push(thread, *EnvArgsField);

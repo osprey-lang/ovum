@@ -33,6 +33,9 @@ public:
 	bool Add(String *key, T value);
 	bool Set(String *key, T value);
 
+	int32_t GetCount() const;
+	bool GetByIndex(int32_t index, T &result) const;
+
 	void FreeValues();
 	void DeleteValues();
 	void DeleteArrayValues();
@@ -156,6 +159,21 @@ template<class T>
 bool StringHash<T>::Set(String *key, T value)
 {
 	return Insert(key, value, false);
+}
+
+template<class T>
+int32_t StringHash<T>::GetCount() const
+{
+	return count;
+}
+
+template<class T>
+bool StringHash<T>::GetByIndex(int32_t index, T &result) const
+{
+	if (index < 0 || index >= count)
+		return false;
+	result = entries[index].value;
+	return true;
 }
 
 template<class T>

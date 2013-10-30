@@ -31,6 +31,9 @@ class Method;
 class Field;
 class Property;
 
+class OvumException;
+class MethodInitException;
+
 // Represents a handle to a specific thread.
 typedef Thread *const ThreadHandle;
 // Represents a handle to a specific type.
@@ -100,6 +103,9 @@ public:
 	inline int GetArgCount() { return argCount; }
 	int GetArgs(const int destLength, String *dest[]);
 	int GetArgValues(const int destLength, Value dest[]);
+
+	static void PrintOvumException(OvumException &e);
+	static void PrintMethodInitException(MethodInitException &e);
 
 	static VM *vm;
 

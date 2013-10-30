@@ -11,7 +11,7 @@ AVES_API NATIVE_FUNCTION(aves_real)
 
 AVES_API NATIVE_FUNCTION(aves_Real_get_isInfinite)
 {
-	VM_PushBool(thread, IsFinite(THISV.real));
+	VM_PushBool(thread, !IsFinite(THISV.real));
 }
 
 AVES_API NATIVE_FUNCTION(aves_Real_getHashCode)

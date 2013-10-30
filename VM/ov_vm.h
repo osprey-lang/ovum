@@ -72,6 +72,9 @@ OVUM_API int VM_Start(VMStartParams params);
 OVUM_API void VM_Print(String *str);
 OVUM_API void VM_PrintLn(String *str);
 
+OVUM_API void VM_PrintErr(String *str);
+OVUM_API void VM_PrintErrLn(String *str);
+
 OVUM_API int VM_GetArgCount();
 OVUM_API int VM_GetArgs(const int destLength, String *dest[]);
 OVUM_API int VM_GetArgValues(const int destLength, Value dest[]);

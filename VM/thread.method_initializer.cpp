@@ -3,6 +3,7 @@
 #include <vector>
 #include <queue>
 #include <memory>
+#include <string>
 
 #define I16_ARG(ip)  *reinterpret_cast<int16_t *>(ip)
 #define I32_ARG(ip)  *reinterpret_cast<int32_t *>(ip)
@@ -32,7 +33,14 @@ namespace instr
 	void MethodBuilder::MarkForRemoval(const int32_t index)
 	{
 		assert(!instructions[index].instr->HasBranches());
-		instructions[index].instr = nullptr;
+		// Mark the instruction for removal by setting the known stack height
+		// to a negative value. This will mark it as unreachable, and all such
+		// instructions are removed, as they are unnecessary.
+		// We use -2 rather than -1 as a way of distinguishing between unvisited
+		// and explicitly removed. Particularly, if you try to set the stack
+		// height of an explicitly removed instruction in debug mode, you will
+		// get a failed assertion.
+		instructions[index].stackHeight = -2;
 	}
 
 	void MethodBuilder::PerformRemovals(Method::Overload *method)
@@ -59,12 +67,13 @@ namespace instr
 		int32_t oldIndex = 0, newIndex = 0;
 		for (instr_iter i = instructions.begin(); i != instructions.end(); oldIndex++)
 		{
-			if (i->instr == nullptr)
+			if (i->stackHeight < 0)
 			{
 				// This instruction may have been the first instruction in a protected region,
 				// in which case the next following instruction becomes the first in that block.
 				// Hence:
 				newIndices[oldIndex] = newIndex;
+				delete i->instr;
 				i = instructions.erase(i);
 			}
 			else
@@ -388,6 +397,9 @@ void Thread::InitializeBranchOffsets(instr::MethodBuilder &builder, Method::Over
 			{
 				Branch *br = static_cast<Branch*>(instruction);
 				br->target = builder.FindIndex(builder.GetOriginalOffset(i) + builder.GetOriginalSize(i) + br->target);
+				if (br->target == -1)
+					throw MethodInitException("Invalid branch offset.", method, i,
+						MethodInitException::INVALID_BRANCH_OFFSET);
 				builder[br->target]->AddBranch();
 			}
 			else if (instruction->IsSwitch())
@@ -395,8 +407,12 @@ void Thread::InitializeBranchOffsets(instr::MethodBuilder &builder, Method::Over
 				Switch *sw = static_cast<Switch*>(instruction);
 				for (int32_t t = 0; t < sw->targetCount; t++)
 				{
-					sw->targets[t] = builder.FindIndex(builder.GetOriginalOffset(i) + builder.GetOriginalSize(i) + sw->targets[t]);
-					builder[sw->targets[t]]->AddBranch();
+					int32_t *target = sw->targets + t;
+					*target = builder.FindIndex(builder.GetOriginalOffset(i) + builder.GetOriginalSize(i) + *target);
+					if (*target == -1)
+						throw MethodInitException("Invalid branch offset.", method, i,
+							MethodInitException::INVALID_BRANCH_OFFSET);
+					builder[*target]->AddBranch();
 				}
 			}
 		}
@@ -412,6 +428,8 @@ void Thread::InitializeBranchOffsets(instr::MethodBuilder &builder, Method::Over
 				for (int32_t c = 0; c < tryBlock->catches.count; c++)
 				{
 					Method::CatchBlock *catchBlock = tryBlock->catches.blocks + c;
+					if (catchBlock->caughtType == nullptr)
+						catchBlock->caughtType = TypeFromToken(method, catchBlock->caughtTypeId);
 					catchBlock->catchStart = builder.FindIndex(catchBlock->catchStart);
 					catchBlock->catchEnd = builder.FindIndex(catchBlock->catchEnd);
 				}
@@ -454,16 +472,17 @@ void Thread::CalculateStackHeights(instr::MethodBuilder &builder, Method::Overlo
 		while (true)
 		{
 			Instruction *instr = builder[index];
-			if (builder.GetStackHeight(index) > 0)
+			if (builder.GetStackHeight(index) >= 0)
 			{
 				if (builder.GetStackHeight(index) != stack.GetStackHeight())
-					throw L"Instruction reached with different stack heights.";
+					throw MethodInitException("Instruction reached with different stack heights.",
+						method, index, MethodInitException::INCONSISTENT_STACK_HEIGHT);
 				break; // This branch has already been visited!
 			}
 			else
 				builder.SetStackHeight(index, stack.GetStackHeight());
 
-			{
+			{ // Update input/output
 				StackChange sc = instr->GetStackChange();
 				if (sc.removed > 0 || instr->HasInput())
 				{
@@ -525,8 +544,9 @@ void Thread::CalculateStackHeights(instr::MethodBuilder &builder, Method::Overlo
 				}
 
 				if (!stack.ApplyStackChange(sc))
-					throw L"Not enough values on stack";
-			}
+					throw MethodInitException("There are not enough values on the stack.",
+						method, index, MethodInitException::INSUFFICIENT_STACK_HEIGHT);
+			} // End update input/output
 
 			if (instr->IsBranch())
 			{
@@ -549,9 +569,7 @@ void Thread::CalculateStackHeights(instr::MethodBuilder &builder, Method::Overlo
 			else if (instr->opcode == OPI_RET || instr->opcode == OPI_RETNULL ||
 				instr->opcode == OPI_THROW || instr->opcode == OPI_RETHROW ||
 				instr->opcode == OPI_ENDFINALLY)
-			{
 				break; // This branch has terminated.
-			}
 
 			prev = instr;
 			index++;
@@ -615,7 +633,7 @@ void Thread::CallStaticConstructors(instr::MethodBuilder &builder)
 		// so we must test the flag again
 		if ((type->flags & TypeFlags::STATIC_CTOR_RUN) == TypeFlags::NONE)
 		{
-			type->flags = type->flags | TypeFlags::STATIC_CTOR_RUN; // prevent infinite recursion
+			type->flags |= TypeFlags::STATIC_CTOR_RUN; // prevent infinite recursion
 			type->InitStaticFields(); // Get some storage locations for the static fields
 			Member *member = type->GetMember(static_strings::_init);
 			if (member)
@@ -623,8 +641,11 @@ void Thread::CallStaticConstructors(instr::MethodBuilder &builder)
 				// If there is a member '.init', it must be a method!
 				assert((member->flags & MemberFlags::METHOD) == MemberFlags::METHOD);
 
+				Method::Overload *mo = ((Method*)member)->ResolveOverload(0);
+				if (!mo) ThrowNoOverloadError(0);
+
 				Value ignore;
-				InvokeMethod(static_cast<Method*>(member), 0,
+				InvokeMethodOverload(mo, 0,
 					currentFrame->evalStack + currentFrame->stackCount,
 					&ignore);
 			}
@@ -761,10 +782,10 @@ void Thread::InitializeInstructions(instr::MethodBuilder &builder, Method::Overl
 			break;
 		case OPC_LDSTR: // u4:str
 			{
-				TokenId stringId = U32_ARG(ip);
+				String *str = StringFromToken(method, U32_ARG(ip));
 				ip += sizeof(uint32_t);
 
-				instr = new LoadString(module->FindString(stringId));
+				instr = new LoadString(str);
 			}
 			break;
 		case OPC_LDARGC:
@@ -772,38 +793,40 @@ void Thread::InitializeInstructions(instr::MethodBuilder &builder, Method::Overl
 			break;
 		case OPC_LDENUM_S: // u4:type  i4:value
 			{
-				TokenId typeId = U32_ARG(ip);
+				Type *type = TypeFromToken(method, U32_ARG(ip));
 				ip += sizeof(uint32_t);
+
 				int32_t value = I32_ARG(ip);
 				ip += sizeof(int32_t);
-				instr = new LoadEnumValue(module->FindType(typeId), value);
+				instr = new LoadEnumValue(type, value);
 			}
 			break;
 		case OPC_LDENUM: // u4:type  i8:value
 			{
-				TokenId typeId = U32_ARG(ip);
+				Type *type = TypeFromToken(method, U32_ARG(ip));
 				ip += sizeof(uint32_t);
+
 				int64_t value = I64_ARG(ip);
 				ip += sizeof(int64_t);
-				instr = new LoadEnumValue(module->FindType(typeId), value);
+				instr = new LoadEnumValue(type, value);
 			}
 			break;
 		case OPC_NEWOBJ_S: // u4:type, ub:argc
 			{
-				TokenId typeId = U32_ARG(ip);
+				Type *type = TypeFromToken(method, U32_ARG(ip));
 				ip += sizeof(uint32_t);
 				uint16_t argCount = *ip;
 				ip++;
-				instr = new NewObject(module->FindType(typeId), argCount);
+				instr = new NewObject(type, argCount);
 			}
 			break;
 		case OPC_NEWOBJ: // u4:type, u2:argc
 			{
-				TokenId typeId = U32_ARG(ip);
+				Type *type = TypeFromToken(method, U32_ARG(ip));
 				ip += sizeof(uint32_t);
 				uint16_t argCount = U16_ARG(ip);
 				ip += sizeof(uint16_t);
-				instr = new NewObject(module->FindType(typeId), argCount);
+				instr = new NewObject(type, argCount);
 			}
 			break;
 		// Invocation
@@ -827,16 +850,23 @@ void Thread::InitializeInstructions(instr::MethodBuilder &builder, Method::Overl
 			{
 				TokenId funcId = U32_ARG(ip);
 				ip += sizeof(uint32_t);
-				instr = new StaticCall(*ip++, module->FindMethod(funcId));
+				
+				uint16_t argCount = *ip++;
+
+				Method::Overload *mo = MethodOverloadFromToken(method, funcId, argCount);
+				instr = new StaticCall(argCount - mo->InstanceOffset(), mo);
 			}
 			break;
 		case OPC_SCALL: // u4:func  u2:argc
 			{
 				TokenId funcId = U32_ARG(ip);
 				ip += sizeof(uint32_t);
+
 				uint16_t argCount = U16_ARG(ip);
 				ip += sizeof(uint16_t);
-				instr = new StaticCall(argCount, module->FindMethod(funcId));
+
+				Method::Overload *mo = MethodOverloadFromToken(method, funcId, argCount);
+				instr = new StaticCall(argCount - mo->InstanceOffset(), mo);
 			}
 			break;
 		case OPC_APPLY:
@@ -844,9 +874,9 @@ void Thread::InitializeInstructions(instr::MethodBuilder &builder, Method::Overl
 			break;
 		case OPC_SAPPLY: // u4:func
 			{
-				TokenId funcId = U32_ARG(ip);
+				Method *func = MethodFromToken(method, U32_ARG(ip));
 				ip += sizeof(uint32_t);
-				instr = new StaticApply(module->FindMethod(funcId));
+				instr = new StaticApply(func);
 			}
 			break;
 		// Control flow
@@ -877,13 +907,17 @@ void Thread::InitializeInstructions(instr::MethodBuilder &builder, Method::Overl
 			break;
 		case OPC_BRTYPE_S: // u4:type  sb:trg
 			{
-				TokenId typeId = U32_ARG(ip);
+				Type *type = TypeFromToken(method, U32_ARG(ip));
 				ip += sizeof(uint32_t);
-				instr = new BranchIfType(*(int8_t*)ip++, module->FindType(typeId));
+				instr = new BranchIfType(*(int8_t*)ip++, type);
 			}
 			break;
 		case OPC_BR: // i4:trg
-			instr = new Branch(*(int8_t*)ip++, /*isLeave:*/ false);
+			{
+				int32_t target = I32_ARG(ip);
+				ip += sizeof(int32_t);
+				instr = new Branch(target, /*isLeave:*/ false);
+			}
 			break;
 		case OPC_BRNULL: // i4:trg
 			{
@@ -923,30 +957,30 @@ void Thread::InitializeInstructions(instr::MethodBuilder &builder, Method::Overl
 			break;
 		case OPC_BRTYPE: // u4:type  i4:trg
 			{
-				TokenId typeId = U32_ARG(ip);
+				Type *type = TypeFromToken(method, U32_ARG(ip));
 				ip += sizeof(uint32_t);
 				int32_t target = I32_ARG(ip);
 				ip += sizeof(int32_t);
-				instr = new BranchIfType(target, module->FindType(typeId));
+				instr = new BranchIfType(target, type);
 			}
 			break;
 		case OPC_SWITCH_S: // u2:n  sb:targets...
 			{
 				uint16_t count = U16_ARG(ip);
 				ip += sizeof(uint16_t);
-				int32_t *targets = new int32_t[count];
+				std::unique_ptr<int32_t[]> targets(new int32_t[count]);
 				for (int i = 0; i < count; i++)
 					targets[i] = *(int8_t*)ip++;
-				instr = new Switch(count, targets);
+				instr = new Switch(count, targets.release());
 			}
 			break;
 		case OPC_SWITCH: // u2:n  i4:targets...
 			{
 				uint16_t count = U16_ARG(ip);
 				ip += sizeof(uint16_t);
-				int32_t *targets = new int32_t[count];
-				CopyMemoryT(targets, (int32_t*)ip, count);
-				instr = new Switch(count, targets);
+				std::unique_ptr<int32_t[]> targets(new int32_t[count]);
+				CopyMemoryT(targets.get(), (int32_t*)ip, count);
+				instr = new Switch(count, targets.release());
 			}
 			break;
 		// Operators
@@ -1017,23 +1051,22 @@ void Thread::InitializeInstructions(instr::MethodBuilder &builder, Method::Overl
 		// Fields
 		case OPC_LDFLD: // u4:fld
 			{
-				TokenId fieldId = U32_ARG(ip);
+				Field *field = FieldFromToken(method, U32_ARG(ip), false);
 				ip += sizeof(uint32_t);
-				instr = new LoadField(module->FindField(fieldId));
+				instr = new LoadField(field);
 			}
 			break;
 		case OPC_STFLD: // u4:fld
 			{
-				TokenId fieldId = U32_ARG(ip);
+				Field *field = FieldFromToken(method, U32_ARG(ip), false);
 				ip += sizeof(uint32_t);
-				instr = new StoreField(module->FindField(fieldId));
+				instr = new StoreField(field);
 			}
 			break;
 		case OPC_LDSFLD: // u4:fld
 			{
-				TokenId fieldId = U32_ARG(ip);
+				Field *field = FieldFromToken(method, U32_ARG(ip), true);
 				ip += sizeof(uint32_t);
-				Field *field = module->FindField(fieldId);
 				instr = new instr::LoadStaticField(field);
 
 				builder.AddTypeToInitialize(field->declType);
@@ -1041,9 +1074,8 @@ void Thread::InitializeInstructions(instr::MethodBuilder &builder, Method::Overl
 			break;
 		case OPC_STSFLD: // u4:fld
 			{
-				TokenId fieldId = U32_ARG(ip);
+				Field *field = FieldFromToken(method, U32_ARG(ip), true);
 				ip += sizeof(uint32_t);
-				Field *field = module->FindField(fieldId);
 				instr = new instr::StoreStaticField(field);
 
 				builder.AddTypeToInitialize(field->declType);
@@ -1052,16 +1084,16 @@ void Thread::InitializeInstructions(instr::MethodBuilder &builder, Method::Overl
 		// Named member access
 		case OPC_LDMEM: // u4:name
 			{
-				TokenId nameId = U32_ARG(ip);
+				String *name = StringFromToken(method, U32_ARG(ip));
 				ip += sizeof(uint32_t);
-				instr = new instr::LoadMember(module->FindString(nameId));
+				instr = new instr::LoadMember(name);
 			}
 			break;
 		case OPC_STMEM: // u4:name
 			{
-				TokenId nameId = U32_ARG(ip);
+				String *name = StringFromToken(method, U32_ARG(ip));
 				ip += sizeof(uint32_t);
-				instr = new instr::StoreMember(module->FindString(nameId));
+				instr = new instr::StoreMember(name);
 			}
 			break;
 		// Indexers
@@ -1088,17 +1120,17 @@ void Thread::InitializeInstructions(instr::MethodBuilder &builder, Method::Overl
 		// Global/static functions
 		case OPC_LDSFN: // u4:func
 			{
-				TokenId funcId = U32_ARG(ip);
+				Method *func = MethodFromToken(method, U32_ARG(ip));
 				ip += sizeof(uint32_t);
-				instr = new LoadStaticFunction(module->FindMethod(funcId));
+				instr = new LoadStaticFunction(func);
 			}
 			break;
 		// Type tokens
 		case OPC_LDTYPETKN: // u4:type
 			{
-				TokenId typeId = U32_ARG(ip);
+				Type *type = TypeFromToken(method, U32_ARG(ip));
 				ip += sizeof(uint32_t);
-				instr = new LoadTypeToken(module->FindType(typeId));
+				instr = new LoadTypeToken(type);
 			}
 			break;
 		// Exception handling
@@ -1125,21 +1157,98 @@ void Thread::InitializeInstructions(instr::MethodBuilder &builder, Method::Overl
 		// Call member
 		case OPC_CALLMEM_S: // u4:name  ub:argc
 			{
-				TokenId nameId = U32_ARG(ip);
+				String *name = StringFromToken(method, U32_ARG(ip));
 				ip += sizeof(uint32_t);
-				instr = new CallMember(module->FindString(nameId), *ip);
+				instr = new CallMember(name, *ip);
 				ip++;
 			}
 			break;
 		case OPC_CALLMEM: // u4:name  u2:argc
 			{
-				TokenId nameId = U32_ARG(ip);
+				String *name = StringFromToken(method, U32_ARG(ip));
 				ip += sizeof(uint32_t);
-				instr = new CallMember(module->FindString(nameId), U16_ARG(ip));
+				instr = new CallMember(name, U16_ARG(ip));
 				ip += sizeof(uint16_t);
 			}
 			break;
+		default:
+			throw L"Invalid opcode encountered";
 		}
 		builder.Append((uint32_t)((char*)opc - (char*)method->entry), (uint32_t)((char*)ip - (char*)opc), instr);
 	}
+}
+
+Type *Thread::TypeFromToken(Method::Overload *fromMethod, uint32_t token)
+{
+	Type *result = fromMethod->group->declModule->FindType(token);
+	if (!result)
+		throw MethodInitException("Unresolved TypeDef or TypeRef token ID.",
+			fromMethod, token, MethodInitException::UNRESOLVED_TOKEN_ID);
+
+	if ((result->flags & TypeFlags::PROTECTION) == TypeFlags::PRIVATE &&
+		result->module != fromMethod->group->declModule)
+		throw MethodInitException("The type is not accessible from other modules.",
+			fromMethod, result, MethodInitException::INACCESSIBLE_TYPE);
+
+	return result;
+}
+
+String *Thread::StringFromToken(Method::Overload *fromMethod, uint32_t token)
+{
+	String *result = fromMethod->group->declModule->FindString(token);
+	if (!result)
+		throw MethodInitException("Unresolved String token ID.",
+			fromMethod, token, MethodInitException::UNRESOLVED_TOKEN_ID);
+
+	return result;
+}
+
+Method *Thread::MethodFromToken(Method::Overload *fromMethod, uint32_t token)
+{
+	Method *result = fromMethod->group->declModule->FindMethod(token);
+	if (!result)
+		throw MethodInitException("Unresolved MethodDef, MethodRef, FunctionDef or FunctionRef token ID.",
+			fromMethod, token, MethodInitException::UNRESOLVED_TOKEN_ID);
+
+	if (result->IsStatic())
+		if (result->declType ?
+			!result->IsAccessible(nullptr, fromMethod->declType) :
+			(result->flags & MemberFlags::ACCESS_LEVEL) == MemberFlags::PRIVATE &&
+			result->declModule != fromMethod->group->declModule)
+			throw MethodInitException("The method is inaccessible from this location.",
+				fromMethod, result, MethodInitException::INACCESSIBLE_MEMBER);
+
+	return result;
+}
+
+Method::Overload *Thread::MethodOverloadFromToken(Method::Overload *fromMethod, uint32_t token, uint16_t argCount)
+{
+	Method *method = MethodFromToken(fromMethod, token);
+
+	argCount -= (int)(method->flags & MemberFlags::INSTANCE) >> 10;
+
+	Method::Overload *overload = method->ResolveOverload(argCount);
+	if (!overload)
+		throw MethodInitException("Could not find a overload that takes the specified number of arguments.",
+			fromMethod, method, argCount, MethodInitException::NO_MATCHING_OVERLOAD);
+
+	return overload;
+}
+
+Field *Thread::FieldFromToken(Method::Overload *fromMethod, uint32_t token, bool shouldBeStatic)
+{
+	Field *field = fromMethod->group->declModule->FindField(token);
+	if (!field)
+		throw MethodInitException("Unresolved FieldDef or FieldRef token ID.",
+			fromMethod, token, MethodInitException::UNRESOLVED_TOKEN_ID);
+
+	if (field->IsStatic() && !field->IsAccessible(nullptr, fromMethod->declType))
+		throw MethodInitException("The field is inaccessible from this location.",
+			fromMethod, field, MethodInitException::INACCESSIBLE_MEMBER);
+
+	if (shouldBeStatic != field->IsStatic())
+		throw MethodInitException(shouldBeStatic ? "The field must be static." : "The field must be an instance field.",
+			fromMethod, field, MethodInitException::FIELD_STATIC_MISMATCH);
+
+	return field;
 }

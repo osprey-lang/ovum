@@ -14,6 +14,49 @@ public class UInt __primitive
 	override toString()			__extern("aves_UInt_toString");
 	public toString(format)		__extern("aves_UInt_toStringf");
 
+	public static parse(str)
+	{
+		str = string(str);
+		var strLength = str.length;
+
+		var result = 0u, neg = false;
+
+		var i = 0;
+		while i < strLength and str.isWhiteSpace(i):
+			i += 1;
+
+		var cp;
+		if i < strLength and (cp = str.getCodepoint(i)) == 0x2B /*+*/:
+			i += 1;
+
+		do {
+			if i == strLength or (cp = str.getCodepoint(i)) < 0x30 /*0*/ or cp > 0x39 /*9*/:
+				break; // next character must be a digit!
+			try
+			{
+				do
+				{
+					result = 10u*result + cp - 0x30;
+					i += 1;
+				} while i < strLength and (cp = str.getCodepoint(i)) >= 0x30 /*0*/ and cp <= 0x39 /*9*/;
+			}
+			catch OverflowError
+			{
+				break;
+			}
+
+			while i < strLength and str.isWhiteSpace(i):
+				i += 1;
+
+			if i != strLength:
+				break;
+			
+			return result;
+		};
+
+		return null;
+	}
+
 	public const min = 0u;
 	public const max = __named_const(uint: max);
 

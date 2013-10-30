@@ -56,9 +56,28 @@ AVES_API NATIVE_FUNCTION(aves_String_equalsIgnoreCase)
 }
 AVES_API NATIVE_FUNCTION(aves_String_contains)
 {
-	Value other = StringFromValue(thread, args[1]);
+	if (!IsString(args[1]))
+		VM_ThrowTypeError(thread);
 
-	bool result = String_Contains(THISV.common.string, other.common.string);
+	bool result = String_Contains(THISV.common.string, args[1].common.string);
+	VM_PushBool(thread, result);
+}
+AVES_API NATIVE_FUNCTION(aves_String_startsWith)
+{
+	if (!IsString(args[1]))
+		VM_ThrowTypeError(thread);
+
+	bool result = String_SubstringEquals(THISV.common.string, 0, args[1].common.string);
+	VM_PushBool(thread, result);
+}
+AVES_API NATIVE_FUNCTION(aves_String_endsWith)
+{
+	if (!IsString(args[1]))
+		VM_ThrowTypeError(thread);
+
+	String *other = args[1].common.string;
+	bool result = String_SubstringEquals(THISV.common.string,
+		THISV.common.string->length - other->length, other);
 	VM_PushBool(thread, result);
 }
 
@@ -182,6 +201,22 @@ AVES_API NATIVE_FUNCTION(aves_String_toLower)
 	VM_PushString(thread, result);
 }
 
+AVES_API NATIVE_FUNCTION(aves_String_getCodepoint)
+{
+	String *str = THISV.common.string;
+	int32_t index = GetIndex(thread, str, args + 1);
+
+	const uchar *chp = &str->firstChar + index;
+
+	uint32_t result;
+	if (UC_IsSurrogateLead(chp[0]) && UC_IsSurrogateTrail(chp[1]))
+		result = UC_ToWide(chp[0], chp[1]);
+	else
+		result = *chp;
+
+	VM_PushInt(thread, result);
+}
+
 AVES_API NATIVE_FUNCTION(aves_String_getCategory)
 {
 	String *str = THISV.common.string;
@@ -189,10 +224,56 @@ AVES_API NATIVE_FUNCTION(aves_String_getCategory)
 
 	UnicodeCategory cat = UC_GetCategory(&str->firstChar, (unsigned int)index);
 
+	// The values of native type UnicodeCategory are not the same as
+	// the values of the Osprey type, so we need to convert!
+	uint32_t catValue;
+	switch (cat)
+	{
+		case UC_LETTER_UPPERCASE:    catValue = 1 <<  0; break;
+		case UC_LETTER_LOWERCASE:    catValue = 1 <<  1; break;
+		case UC_LETTER_TITLECASE:    catValue = 1 <<  2; break;
+		case UC_LETTER_MODIFIER:     catValue = 1 <<  3; break;
+		case UC_LETTER_OTHER:        catValue = 1 <<  4; break;
+		case UC_MARK_NONSPACING:     catValue = 1 <<  5; break;
+		case UC_MARK_SPACING:        catValue = 1 <<  6; break;
+		case UC_MARK_ENCLOSING:      catValue = 1 <<  7; break;
+		case UC_NUMBER_DECIMAL:      catValue = 1 <<  8; break;
+		case UC_NUMBER_LETTER:       catValue = 1 <<  9; break;
+		case UC_NUMBER_OTHER:        catValue = 1 << 10; break;
+		case UC_PUNCT_CONNECTOR:     catValue = 1 << 11; break;
+		case UC_PUNCT_DASH:          catValue = 1 << 12; break;
+		case UC_PUNCT_OPEN:          catValue = 1 << 13; break;
+		case UC_PUNCT_CLOSE:         catValue = 1 << 14; break;
+		case UC_PUNCT_INITIAL:       catValue = 1 << 15; break;
+		case UC_PUNCT_FINAL:         catValue = 1 << 16; break;
+		case UC_PUNCT_OTHER:         catValue = 1 << 17; break;
+		case UC_SYMBOL_MATH:         catValue = 1 << 18; break;
+		case UC_SYMBOL_CURRENCY:     catValue = 1 << 19; break;
+		case UC_SYMBOL_MODIFIER:     catValue = 1 << 20; break;
+		case UC_SYMBOL_OTHER:        catValue = 1 << 21; break;
+		case UC_SEPARATOR_SPACE:     catValue = 1 << 22; break;
+		case UC_SEPARATOR_LINE:      catValue = 1 << 23; break;
+		case UC_SEPARATOR_PARAGRAPH: catValue = 1 << 24; break;
+		case UC_CONTROL:             catValue = 1 << 25; break;
+		case UC_FORMAT:              catValue = 1 << 26; break;
+		case UC_SURROGATE:           catValue = 1 << 27; break;
+		case UC_PRIVATE_USE:         catValue = 1 << 28; break;
+		case UC_UNASSIGNED:          catValue = 1 << 29; break;
+		default: catValue = 0; break;
+	}
+
 	Value output;
 	output.type = UnicodeCategoryType;
-	output.integer = (int64_t)cat;
+	output.integer = catValue;
 	VM_Push(thread, output);
+}
+AVES_API NATIVE_FUNCTION(aves_String_isSurrogatePair)
+{
+	String *str = THISV.common.string;
+	int32_t index = GetIndex(thread, str, args + 1);
+
+	VM_PushBool(thread, UC_IsSurrogateLead((&str->firstChar)[index]) &&
+		UC_IsSurrogateTrail((&str->firstChar)[index + 1]));
 }
 
 AVES_API NATIVE_FUNCTION(aves_String_getHashCode)
@@ -204,7 +285,7 @@ AVES_API NATIVE_FUNCTION(aves_String_getHashCode)
 
 AVES_API NATIVE_FUNCTION(aves_String_fromCodepoint)
 {
-	int64_t cp64 = IntFromValue(thread, args[1]).integer;
+	int64_t cp64 = IntFromValue(thread, args[0]).integer;
 
 	if (cp64 < 0 || cp64 > 0x10FFFF)
 	{
@@ -261,6 +342,43 @@ AVES_API NATIVE_FUNCTION(aves_String_opMultiply)
 	VM_PushString(thread, result);
 }
 
+enum class FormatAlignment : signed char
+{
+	LEFT   = 0,
+	CENTER = 1,
+	RIGHT  = 2,
+};
+
+inline void AppendAlignedFormatString(ThreadHandle thread, StringBuffer &buf, String *value,
+									  FormatAlignment alignment, uint32_t alignmentWidth)
+{
+	uint32_t valueLength = (uint32_t)value->length;
+	switch (alignment)
+	{
+	case FormatAlignment::LEFT:
+		buf.Append(thread, value);
+
+		if (valueLength < alignmentWidth)
+			buf.Append(thread, alignmentWidth - valueLength, ' ');
+		break;
+	case FormatAlignment::CENTER:
+		if (valueLength < alignmentWidth)
+			buf.Append(thread, (alignmentWidth - valueLength) / 2, ' ');
+
+		buf.Append(thread, value);
+
+		if (valueLength < alignmentWidth)
+			buf.Append(thread, (alignmentWidth - valueLength + 1) / 2, ' ');
+		break;
+	case FormatAlignment::RIGHT:
+		if (valueLength < alignmentWidth)
+			buf.Append(thread, alignmentWidth - valueLength, ' ');
+
+		buf.Append(thread, value);
+		break;
+	}
+}
+
 uint32_t ScanDecimalNumber(ThreadHandle thread, const uchar * &chp, unsigned int &index)
 {
 	uint32_t result = 0;
@@ -306,8 +424,9 @@ String *string::Format(ThreadHandle thread, const String *format, ListInst *list
 			// {} is not allowed, and { must be followed by at least one digit
 			if (*chp == '}' || *chp < '0' || *chp > '9')
 			{
+				VM_PushNull(thread);
 				VM_PushString(thread, strings::format);
-				GC_Construct(thread, ArgumentError, 1, nullptr);
+				GC_Construct(thread, ArgumentError, 2, nullptr);
 				VM_Throw(thread);
 			}
 			// output everything up to (but not including) the {
@@ -317,47 +436,46 @@ String *string::Format(ThreadHandle thread, const String *format, ListInst *list
 			// Scan placeholder values!
 			// Permitted formats:
 			//   {idx}
-			//   {idx<align}
-			//   {idx>align}
+			//   {idx<align}  -- left align
+			//   {idx>align}  -- right align
+			//   {idx=align}  -- center
 			// idx and align are always decimal digits, '0'..'9'
 			{
 				index++;
 				uint32_t placeholderIndex = ScanDecimalNumber(thread, chp, index);
 				// chp is now after the last digit in the placeholder index
 
-				uint32_t alignment = 0;
-				bool alignRight = false;
-				if (*chp == '<' || *chp == '>') // alignment follows here, whee
+				uint32_t alignmentWidth = 0;
+				FormatAlignment alignment = FormatAlignment::LEFT;
+				if (*chp == '<' || *chp == '>' || *chp == '=') // alignment follows here, whee
 				{
 					index++;
-					alignRight = *chp == '>';
+					alignment = *chp == '=' ? FormatAlignment::CENTER :
+						*chp == '>' ? FormatAlignment::RIGHT :
+						FormatAlignment::LEFT;
 					chp++;
-					alignment = ScanDecimalNumber(thread, chp, index);
+					alignmentWidth = ScanDecimalNumber(thread, chp, index);
 				}
 
 				if (*chp != '}')
 				{
+					VM_PushNull(thread);
 					VM_PushString(thread, strings::format);
-					GC_Construct(thread, ArgumentError, 1, nullptr);
+					GC_Construct(thread, ArgumentError, 2, nullptr);
 					VM_Throw(thread);
 				}
-				if (placeholderIndex >= list->length)
+				if (placeholderIndex >= (uint32_t)list->length)
 				{
+					VM_PushNull(thread);
 					VM_PushString(thread, strings::format);
-					GC_Construct(thread, ArgumentError, 1, nullptr);
+					GC_Construct(thread, ArgumentError, 2, nullptr);
 					VM_Throw(thread);
 				}
 
 				Value *value = VM_Local(thread, 0);
 				*value = StringFromValue(thread, list->values[placeholderIndex]);
 
-				if (alignRight && value->common.string->length < alignment)
-					buf.Append(thread, alignment - value->common.string->length, ' ');
-
-				buf.Append(thread, value->common.string);
-
-				if (!alignRight && value->common.string->length < alignment)
-					buf.Append(thread, alignment - value->common.string->length, ' ');
+				AppendAlignedFormatString(thread, buf, value->common.string, alignment, alignmentWidth);
 			}
 
 			start = ++index;
@@ -406,8 +524,9 @@ Value ScanFormatIdentifier(ThreadHandle thread, const size_t bufferSize, uchar b
 	if ((cat & UC_TOP_CATEGORY_MASK) != UC_LETTER &&
 		cat != UC_NUMBER_LETTER && *chp != '_')
 	{
+		VM_PushNull(thread);
 		VM_PushString(thread, strings::format);
-		GC_Construct(thread, ArgumentError, 1, nullptr);
+		GC_Construct(thread, ArgumentError, 2, nullptr);
 		VM_Throw(thread);
 	}
 
@@ -423,7 +542,7 @@ Value ScanFormatIdentifier(ThreadHandle thread, const size_t bufferSize, uchar b
 		index  += 1 + surrogate;
 		length += 1 + surrogate;
 
-		if (*chp == '}' || *chp == ',')
+		if (*chp == '}' || *chp == '<' || *chp == '>' || *chp == '=')
 			break; // done
 
 		cat = UC_GetCategory(chp, 0, surrogate);
@@ -432,8 +551,9 @@ Value ScanFormatIdentifier(ThreadHandle thread, const size_t bufferSize, uchar b
 			cat == UC_MARK_NONSPACING || cat == UC_MARK_SPACING ||
 			cat == UC_PUNCT_CONNECTOR || cat == UC_FORMAT))
 		{
+			VM_PushNull(thread);
 			VM_PushString(thread, strings::format);
-			GC_Construct(thread, ArgumentError, 1, nullptr);
+			GC_Construct(thread, ArgumentError, 2, nullptr);
 			VM_Throw(thread);
 		}
 	}
@@ -478,8 +598,9 @@ String *string::Format(ThreadHandle thread, const String *format, Value *hash)
 			// {} is not allowed
 			if (*chp == '}')
 			{
+				VM_PushNull(thread);
 				VM_PushString(thread, strings::format);
-				GC_Construct(thread, ArgumentError, 1, nullptr);
+				GC_Construct(thread, ArgumentError, 2, nullptr);
 				VM_Throw(thread);
 			}
 			// output everything up to (but not including) the {
@@ -495,13 +616,13 @@ String *string::Format(ThreadHandle thread, const String *format, Value *hash)
 			{
 				index++;
 				// Most placeholder names are likely to be very short, certainly shorter
-				// than 127 characters. Therefore, we have a buffer of 128 uchars, with
+				// than 63 characters. Therefore, we have a buffer of 64 uchars, with
 				// space reserved for one \0 at the end, which is filled up when reading
 				// characters from the string. If only the buffer was used, then ScanFormatIdentifier
 				// returns NULL_VALUE, and so we construct a STRING* from the buffer data.
 				// If that method does not return NULL_VALUE, then we don't need to do anything,
 				// because the method has already GC allocated a STRING* for us.
-				const int BUFFER_SIZE = 128; // Note: BUFFER_SIZE includes space for a trailing \0
+				const int BUFFER_SIZE = 64; // Note: BUFFER_SIZE includes space for a trailing \0
 				LitString<BUFFER_SIZE - 1> buffer = { 0, 0, StringFlags::STATIC };
 				uint32_t bufferLength;
 				Value phKey = ScanFormatIdentifier(thread, BUFFER_SIZE, buffer.chars, index, chp, bufferLength);
@@ -512,20 +633,23 @@ String *string::Format(ThreadHandle thread, const String *format, Value *hash)
 				}
 				// chp is now after the last character in the placeholder name
 
-				uint32_t alignment = 0;
-				bool alignRight = false;
-				if (*chp == '<' || *chp == '>') // alignment follows here, whee
+				uint32_t alignmentWidth = 0;
+				FormatAlignment alignment = FormatAlignment::LEFT;
+				if (*chp == '<' || *chp == '>' || *chp == '=') // alignment follows here, whee
 				{
 					index++;
-					alignRight = *chp == '>';
+					alignment = *chp == '=' ? FormatAlignment::CENTER :
+						*chp == '>' ? FormatAlignment::RIGHT :
+						FormatAlignment::LEFT;
 					chp++;
-					alignment = ScanDecimalNumber(thread, chp, index);
+					alignmentWidth = ScanDecimalNumber(thread, chp, index);
 				}
 
 				if (*chp != '}')
 				{
+					VM_PushNull(thread);
 					VM_PushString(thread, strings::format);
-					GC_Construct(thread, ArgumentError, 1, nullptr);
+					GC_Construct(thread, ArgumentError, 2, nullptr);
 					VM_Throw(thread);
 				}
 
@@ -536,13 +660,7 @@ String *string::Format(ThreadHandle thread, const String *format, Value *hash)
 
 				*value = StringFromValue(thread, *value);
 
-				if (alignRight && value->common.string->length < alignment)
-					buf.Append(thread, alignment - value->common.string->length, ' ');
-
-				buf.Append(thread, value->common.string);
-
-				if (!alignRight && value->common.string->length < alignment)
-					buf.Append(thread, alignment - value->common.string->length, ' ');
+				AppendAlignedFormatString(thread, buf, value->common.string, alignment, alignmentWidth);
 			}
 
 			start = ++index;

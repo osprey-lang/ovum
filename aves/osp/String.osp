@@ -62,10 +62,7 @@ public class String
 	///          same sequence of characters as this string.
 	///
 	///          This comparison is case-sensitive.
-	public equals(value)
-	{
-		return this == value;
-	}
+	public equals(value)					__extern("aves_String_opEquals");
 	/// Summary: Determines whether this string equals another value, by
 	///          performing a case-insensitive comparison.
 	/// Param value: The value to compare against.
@@ -90,6 +87,18 @@ public class String
 	///          false.
 	/// Throws TypeError: {value} is not a String.
 	public contains(value)					__extern("aves_String_contains");
+	/// Summary: Determines whether the current string starts with the specified
+	///          string.
+	/// Param value: The value to test against.
+	/// Returns: True if this string starts with {value}; otherwise, false.
+	/// Throws TypeError: {value} is not a String.
+	public startsWith(value)				__extern("aves_String_startsWith");
+	/// Summary: Determines whether the current string ends with the specified
+	///          string.
+	/// Param value: The value to test against.
+	/// Returns: True if this string starts with {value}; otherwise, false.
+	/// Throws TypeError: {value} is not a String.
+	public endsWith(value)					__extern("aves_String_endsWith");
 
 	/// Summary: Returns a new string containing the characters of this string
 	///          in reverse order.
@@ -149,14 +158,16 @@ public class String
 	///     call does not return a String, this method throws a TypeError.
 	///
 	///     Additionally, you can align placeholder values to specific widths:
-	///         `{ph>n}` aligns the value `n` characters to the right, and
-	///         `{ph<n}` aligns the value `n` characters to the left.
+	///         `{ph>n}` aligns the value `n` characters to the right;
+	///         `{ph<n}` aligns the value `n` characters to the left; and
+	///         `{ph=n}` centers the value in a space `n` characters wide.
 	///     `n` must be a decimal integer, and the value is always padded with spaces.
 	///
 	///     Examples:
 	///
 	///         `"x{0>5}z".format(["y"])   // => "x    yz"` \
 	///         `"x{0<5}z".format(["abc"]) // => "xabc  z"` \
+	///         `"[{0=6}]".format(["hi"])  // => "[  hi  ]"` \
 	///         `"Name: {name}, age: {age}".format({name: null, age: Real.NaN}) // => "Name: , age: NaN"`
 	public format(values)					__extern("aves_String_format", locals=1);
 	/// Summary: Returns a new string with all occurrences of {oldValue} replaced
@@ -183,10 +194,48 @@ public class String
 	}
 	private replaceInner(oldValue, newValue, maxTimes)	__extern("aves_String_replaceInner");
 
+	public trim()
+	{
+		var start = 0;
+		while start < length and isWhiteSpace(start):
+			start += 1;
+
+		var end = length - 1;
+		while end >= 0 and isWhiteSpace(end):
+			end -= 1;
+
+		if start > end:
+			return "";
+		return substr(start, end - start + 1);
+	}
+	public trimStart()
+	{
+		var start = 0;
+		while start < length and isWhiteSpace(start):
+			start += 1;
+
+		if start == length:
+			return "";
+		return substr(start);
+	}
+	public trimEnd()
+	{
+		var end = length - 1;
+		while end >= 0 and isWhiteSpace(end):
+			end -= 1;
+
+		if end == -1:
+			return "";
+		return substr(0, end + 1);
+	}
+
 	public toUpper()						__extern("aves_String_toUpper");
 	public toLower()						__extern("aves_String_toLower");
 
+	public getCodepoint(i)					__extern("aves_String_getCodepoint");
+
 	public getCategory(i)					__extern("aves_String_getCategory");
+	public isSurrogatePair(i)				__extern("aves_String_isSurrogatePair");
 	public isControl(i)
 	{
 		return getCategory(i) == UnicodeCategory.control;
@@ -222,6 +271,20 @@ public class String
 	public isAssigned(i)
 	{
 		return getCategory(i) != UnicodeCategory.unassigned;
+	}
+	public isWhiteSpace(i)
+	{
+		var cp = getCodepoint(i);
+		// The following code points are considered white space,
+		// even though they are categorised as control characters:
+		//   U+0009  Character Tabulation (\t)
+		//   U+000A  Line Feed (\n)
+		//   U+000B  Line Tabulation
+		//   U+000C  Form Feed
+		//   U+000D  Carriage Return (\r)
+		//   U+0085  Next Line
+		return cp >= 0x09 and cp <= 0x000D or cp == 0x0085 or
+			getCategory(i) & UnicodeCategory.separator != UnicodeCategory.none;
 	}
 
 	override getHashCode()					__extern("aves_String_getHashCode");
@@ -286,47 +349,51 @@ public enum set UnicodeCategory
 {
 	none = 0,
 
+	// The various values are specified explicitly here
+	// in order to ensure they don't change for any reason,
+	// as they are also used in native code.
+
 	letter = uppercaseLetter | lowercaseLetter | titlecaseLetter | modifierLetter | otherLetter,
-	uppercaseLetter,
-	lowercaseLetter,
-	titlecaseLetter,
-	modifierLetter,
-	otherLetter,
+	uppercaseLetter    = 1 << 0,
+	lowercaseLetter    = 1 << 1,
+	titlecaseLetter    = 1 << 2,
+	modifierLetter     = 1 << 3,
+	otherLetter        = 1 << 4,
 
 	mark = nonspacingMark | spacingMark | enclosingMark,
-	nonspacingMark,
-	spacingMark,
-	enclosingMark,
+	nonspacingMark     = 1 << 5,
+	spacingMark        = 1 << 6,
+	enclosingMark      = 1 << 7,
 
 	number = decimalNumber | letterNumber | otherNumber,
-	decimalNumber,
-	letterNumber,
-	otherNumber,
+	decimalNumber      = 1 << 8,
+	letterNumber       = 1 << 9,
+	otherNumber        = 1 << 10,
 
 	punct = connectorPunct | dashPunct | openingPunct | closingPunct | initialPunct | finalPunct | otherPunct,
-	connectorPunct,
-	dashPunct,
-	openingPunct,
-	closingPunct,
-	initialPunct,
-	finalPunct,
-	otherPunct,
+	connectorPunct     = 1 << 11,
+	dashPunct          = 1 << 12,
+	openingPunct       = 1 << 13,
+	closingPunct       = 1 << 14,
+	initialPunct       = 1 << 15,
+	finalPunct         = 1 << 16,
+	otherPunct         = 1 << 17,
 
 	symbol = mathSymbol | currencySymbol | modifierSymbol | otherSymbol,
-	mathSymbol,
-	currencySymbol,
-	modifierSymbol,
-	otherSymbol,
+	mathSymbol         = 1 << 18,
+	currencySymbol     = 1 << 19,
+	modifierSymbol     = 1 << 20,
+	otherSymbol        = 1 << 21,
 
 	separator = spaceSeparator | lineSeparator | paragraphSeparator,
-	spaceSeparator,
-	lineSeparator,
-	paragraphSeparator,
-	
+	spaceSeparator     = 1 << 22,
+	lineSeparator      = 1 << 23,
+	paragraphSeparator = 1 << 24,
+
 	other = control | format | surrogate | privateUse | unassigned,
-	control,
-	format,
-	surrogate,
-	privateUse,
-	unassigned,
+	control            = 1 << 25,
+	format             = 1 << 26,
+	surrogate          = 1 << 27,
+	privateUse         = 1 << 28,
+	unassigned         = 1 << 29,
 }

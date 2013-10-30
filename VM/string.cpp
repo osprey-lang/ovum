@@ -13,7 +13,7 @@ OVUM_API int32_t String_GetHashCode(String *str)
 		return str->hashCode;
 
 	str->hashCode = String_GetHashCode(str->length, &str->firstChar);
-	str->flags = str->flags | StringFlags::HASHED;
+	str->flags |= StringFlags::HASHED;
 
 	return str->hashCode;
 }

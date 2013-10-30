@@ -1,4 +1,5 @@
 #include "aves_object.h"
+#include "ov_stringbuffer.h"
 
 AVES_API NATIVE_FUNCTION(aves_Object_new)
 {
@@ -20,5 +21,23 @@ AVES_API NATIVE_FUNCTION(aves_Object_getHashCode)
 
 AVES_API NATIVE_FUNCTION(aves_Object_toString)
 {
-	VM_PushString(thread, Type_GetFullName(THISV.type));
+	StringBuffer buf(thread, Type_GetFullName(THISV.type)->length + 16);
+
+	buf.Append(thread, '<');
+	buf.Append(thread, Type_GetFullName(THISV.type));
+	buf.Append(thread, 2, ": ");
+
+	Value *valueString = VM_Local(thread, 0);
+	if ((Type_GetFlags(THISV.type) & TypeFlags::PRIMITIVE) == TypeFlags::PRIMITIVE)
+		*valueString = integer::ToStringDecimal(thread, THISV.integer);
+	else
+	{
+		buf.Append(thread, 2, "0x");
+		*valueString = uinteger::ToStringHex(thread, (uint64_t)THISV.instance, false);
+	}
+	buf.Append(thread, valueString->common.string);
+
+	buf.Append(thread, '>');
+
+	VM_PushString(thread, buf.ToString(thread));
 }

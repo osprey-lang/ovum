@@ -19,6 +19,7 @@ public inheritable Queue
 	private version = 0;
 
 	public get length = qlength;
+	public get isEmpty = qlength == 0;
 
 	/// Summary: Adds a value to the end of the queue.
 	/// Param value: The value to add.
@@ -28,7 +29,6 @@ public inheritable Queue
 			resize();
 
 		list[(startIndex + qlength) % list.length] = value;
-		startIndex += 1;
 		qlength += 1;
 		version += 1;
 	}
@@ -77,7 +77,7 @@ public inheritable Queue
 	{
 		var startVersion = version;
 
-		for i in [0 to list.capacity]
+		for i in [0 to qlength]
 		{
 			if startVersion != version:
 				throw new InvalidStateError("The queue has changed since the enumeration started.");

@@ -31,6 +31,15 @@ AVES_API NATIVE_FUNCTION(aves_Method_accepts)
 		VM_PushBool(thread, Method_Accepts(method->method, (int32_t)argCount));
 }
 
+AVES_API NATIVE_FUNCTION(aves_Method_opEquals)
+{
+	MethodInst *a = _M(args[0]);
+	MethodInst *b = _M(args[1]);
+
+	VM_PushBool(thread, a->method == b->method &&
+		IsSameReference(a->instance, b->instance));
+}
+
 bool aves_Method_getReferences(void *basePtr, unsigned int &valc, Value **target)
 {
 	MethodInst *method = reinterpret_cast<MethodInst*>(basePtr);

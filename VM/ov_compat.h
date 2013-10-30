@@ -10,11 +10,14 @@
 #include <cfloat>
 #include <cmath>
 
-#define ENUM_OPS(enumType,underlyingType) \
-	inline enumType operator&(const enumType a, const enumType b){return static_cast<enumType>((underlyingType)a&(underlyingType)b);}\
-	inline enumType operator|(const enumType a, const enumType b){return static_cast<enumType>((underlyingType)a|(underlyingType)b);}\
-	inline enumType operator^(const enumType a, const enumType b){return static_cast<enumType>((underlyingType)a^(underlyingType)b);}\
-	inline enumType operator~(const enumType a){return static_cast<enumType>(~(underlyingType)a);}
+#define ENUM_OPS(TEnum,TInt) \
+	inline TEnum operator&(const TEnum a, const TEnum b) { return static_cast<TEnum>((TInt)a & (TInt)b); }\
+	inline TEnum operator|(const TEnum a, const TEnum b) { return static_cast<TEnum>((TInt)a | (TInt)b); }\
+	inline TEnum operator^(const TEnum a, const TEnum b) { return static_cast<TEnum>((TInt)a ^ (TInt)b); }\
+	inline TEnum &operator&=(TEnum &a, const TEnum b) { a = a & b; return a; } \
+	inline TEnum &operator|=(TEnum &a, const TEnum b) { a = a | b; return a; } \
+	inline TEnum &operator^=(TEnum &a, const TEnum b) { a = a ^ b; return a; } \
+	inline TEnum operator~(const TEnum a) { return static_cast<TEnum>(~(TInt)a); }
 
 // For checked multiplication only
 // (uses the _mul128 function if available)
@@ -48,7 +51,7 @@ inline long Clamp(const long value)
 		value;
 }
 template<long long min, long long max>
-inline long Clamp(const long long value)
+inline long long Clamp(const long long value)
 {
 	return value < min ? min :
 		value > max ? max :

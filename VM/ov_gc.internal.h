@@ -44,8 +44,8 @@ ENUM_OPS(GCOFlags, uint8_t);
 // The maximum amount of data that can be allocated before the GC kicks in.
 // Objects larger than GC_LARGE_OBJECT_SIZE only contribute GC_LARGE_OBJECT_SIZE bytes
 // to the debt, because they are unlikely to be short-lived objects.
-#define GC_MAX_DEBT           524288 // = 512 kB
-#define GC_LARGE_OBJECT_SIZE  87040  // = 85 kB
+#define GC_MAX_DEBT           1048576 // = 1 MB
+#define GC_LARGE_OBJECT_SIZE  87040   // = 85 kB
 
 typedef struct GCObject_S GCObject;
 typedef struct GCObject_S
@@ -115,12 +115,14 @@ private:
 	// The total number of allocated bytes the GC knows about.
 	size_t totalSize;
 
+	uint32_t collectCount;
+
 	StringTable strings;
 	StaticRefBlock *staticRefs;
 
 	inline void MakeImmortal(GCObject *gco)
 	{
-		gco->flags = gco->flags | GCOFlags::IMMORTAL;
+		gco->flags |= GCOFlags::IMMORTAL;
 	}
 
 	void *InternalAlloc(size_t size);
@@ -278,7 +280,7 @@ public:
 
 		RemoveFromList(gco, &collectBase);
 		if ((gco->flags & GCOFlags::EARLY_STRING) == GCOFlags::NONE &&
-			gco->type->fieldsOffset > 0) // may have fields
+			gco->type->size > 0 /*|| gco->type->fieldsOffset > 0*/) // may have fields
 		{
 			InsertIntoList(gco, &processBase);
 			MARK_GCO(gco, GCO_PROCESS(currentCollectMark));

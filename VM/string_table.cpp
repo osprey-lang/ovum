@@ -57,7 +57,7 @@ String *StringTable::GetValue(String *value, const bool add)
 		e->hashCode = hashCode;
 		e->value    = value;
 		buckets[bucket] = index;
-		value->flags = value->flags | StringFlags::INTERN;
+		value->flags |= StringFlags::INTERN;
 		return value; // We just interned it! yay!
 	}
 
@@ -92,7 +92,7 @@ bool StringTable::RemoveIntern(String *value)
 			freeCount++;
 			// Do we need this? This method isn't supposed to be called
 			// outside of the GC's collection cycle.
-			value->flags = value->flags & ~StringFlags::INTERN;
+			value->flags &= ~StringFlags::INTERN;
 			return true;
 		}
 		lastEntry = e;

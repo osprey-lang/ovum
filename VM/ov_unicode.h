@@ -66,8 +66,8 @@ typedef uint32_t wuchar;
 
 typedef struct CaseMap_S
 {
-	const wuchar upper;
-	const wuchar lower;
+	wuchar upper;
+	wuchar lower;
 } CaseMap;
 
 typedef struct SurrogatePair_S
