@@ -126,7 +126,7 @@ AVES_API NATIVE_FUNCTION(aves_Hash_getItemInternal)
 	// ArgumentError(message, paramName)
 	VM_PushString(thread, error_strings::HashKeyNotFound);
 	VM_PushString(thread, strings::key);
-	GC_Construct(thread, DuplicateKeyError, 2, nullptr);
+	GC_Construct(thread, Types::ArgumentError, 2, nullptr);
 	VM_Throw(thread);
 }
 AVES_API NATIVE_FUNCTION(aves_Hash_getEntry)
@@ -139,7 +139,7 @@ AVES_API NATIVE_FUNCTION(aves_Hash_getEntry)
 	if (entryPointer->hashCode >= 0)
 	{
 		Value entry;
-		entry.type = HashEntryType;
+		entry.type = Types::HashEntry;
 		entry.instance = reinterpret_cast<uint8_t*>(entryPointer);
 
 		VM_Push(thread, entry); // yay
@@ -171,7 +171,7 @@ AVES_API NATIVE_FUNCTION(aves_Hash_insert)
 			{
 				if (add)
 				{
-					GC_Construct(thread, DuplicateKeyError, 0, nullptr);
+					GC_Construct(thread, Types::DuplicateKeyError, 0, nullptr);
 					VM_Throw(thread);
 				}
 

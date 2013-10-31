@@ -20,7 +20,7 @@ int32_t GetIndex(ThreadHandle thread, String *str, Value *arg)
 	if (index < 0 || index >= str->length)
 	{
 		VM_PushString(thread, error_strings::IndexOutOfRange);
-		GC_Construct(thread, ArgumentRangeError, 1, nullptr);
+		GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr);
 		VM_Throw(thread);
 	}
 
@@ -134,7 +134,7 @@ AVES_API NATIVE_FUNCTION(aves_String_substr2)
 	int64_t count = IntFromValue(thread, args[2]).integer;
 	if (start + count >= str->length)
 	{
-		GC_Construct(thread, ArgumentRangeError, 0, nullptr);
+		GC_Construct(thread, Types::ArgumentRangeError, 0, nullptr);
 		VM_Throw(thread);
 	}
 
@@ -175,7 +175,7 @@ AVES_API NATIVE_FUNCTION(aves_String_replaceInner)
 	{
 		VM_PushString(thread, error_strings::ReplaceEmptyString);
 		VM_PushString(thread, strings::oldValue);
-		GC_Construct(thread, ArgumentError, 2, nullptr);
+		GC_Construct(thread, Types::ArgumentError, 2, nullptr);
 		VM_Throw(thread);
 	}
 
@@ -263,7 +263,7 @@ AVES_API NATIVE_FUNCTION(aves_String_getCategory)
 	}
 
 	Value output;
-	output.type = UnicodeCategoryType;
+	output.type = Types::UnicodeCategory;
 	output.integer = catValue;
 	VM_Push(thread, output);
 }
@@ -290,7 +290,7 @@ AVES_API NATIVE_FUNCTION(aves_String_fromCodepoint)
 	if (cp64 < 0 || cp64 > 0x10FFFF)
 	{
 		VM_PushString(thread, strings::cp);
-		GC_Construct(thread, ArgumentRangeError, 1, nullptr);
+		GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr);
 		VM_Throw(thread);
 	}
 
@@ -426,7 +426,7 @@ String *string::Format(ThreadHandle thread, const String *format, ListInst *list
 			{
 				VM_PushNull(thread);
 				VM_PushString(thread, strings::format);
-				GC_Construct(thread, ArgumentError, 2, nullptr);
+				GC_Construct(thread, Types::ArgumentError, 2, nullptr);
 				VM_Throw(thread);
 			}
 			// output everything up to (but not including) the {
@@ -461,14 +461,14 @@ String *string::Format(ThreadHandle thread, const String *format, ListInst *list
 				{
 					VM_PushNull(thread);
 					VM_PushString(thread, strings::format);
-					GC_Construct(thread, ArgumentError, 2, nullptr);
+					GC_Construct(thread, Types::ArgumentError, 2, nullptr);
 					VM_Throw(thread);
 				}
 				if (placeholderIndex >= (uint32_t)list->length)
 				{
 					VM_PushNull(thread);
 					VM_PushString(thread, strings::format);
-					GC_Construct(thread, ArgumentError, 2, nullptr);
+					GC_Construct(thread, Types::ArgumentError, 2, nullptr);
 					VM_Throw(thread);
 				}
 
@@ -526,7 +526,7 @@ Value ScanFormatIdentifier(ThreadHandle thread, const size_t bufferSize, uchar b
 	{
 		VM_PushNull(thread);
 		VM_PushString(thread, strings::format);
-		GC_Construct(thread, ArgumentError, 2, nullptr);
+		GC_Construct(thread, Types::ArgumentError, 2, nullptr);
 		VM_Throw(thread);
 	}
 
@@ -553,7 +553,7 @@ Value ScanFormatIdentifier(ThreadHandle thread, const size_t bufferSize, uchar b
 		{
 			VM_PushNull(thread);
 			VM_PushString(thread, strings::format);
-			GC_Construct(thread, ArgumentError, 2, nullptr);
+			GC_Construct(thread, Types::ArgumentError, 2, nullptr);
 			VM_Throw(thread);
 		}
 	}
@@ -600,7 +600,7 @@ String *string::Format(ThreadHandle thread, const String *format, Value *hash)
 			{
 				VM_PushNull(thread);
 				VM_PushString(thread, strings::format);
-				GC_Construct(thread, ArgumentError, 2, nullptr);
+				GC_Construct(thread, Types::ArgumentError, 2, nullptr);
 				VM_Throw(thread);
 			}
 			// output everything up to (but not including) the {
@@ -649,7 +649,7 @@ String *string::Format(ThreadHandle thread, const String *format, Value *hash)
 				{
 					VM_PushNull(thread);
 					VM_PushString(thread, strings::format);
-					GC_Construct(thread, ArgumentError, 2, nullptr);
+					GC_Construct(thread, Types::ArgumentError, 2, nullptr);
 					VM_Throw(thread);
 				}
 

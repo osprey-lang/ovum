@@ -3,9 +3,13 @@
 #include "aves.h"
 #include "ov_string.h"
 
-LitString<18> _ArgumentError_Name  = { 18, 0, StringFlags::STATIC,
+LitString<8> _Int_Name =  { 8, 0, StringFlags::STATIC, 'a','v','e','s','.','I','n','t',0 };
+LitString<9> _UInt_Name = { 9, 0, StringFlags::STATIC, 'a','v','e','s','.','U','I','n','t',0 };
+LitString<9> _Real_Name = { 9, 0, StringFlags::STATIC, 'a','v','e','s','.','R','e','a','l',0 };
+
+LitString<18> _ArgumentError_Name = { 18, 0, StringFlags::STATIC,
 	'a','v','e','s','.','A','r','g','u','m','e','n','t','E','r','r','o','r',0 };
-LitString<22> _ArgumentNullError_Name  = { 22, 0, StringFlags::STATIC,
+LitString<22> _ArgumentNullError_Name = { 22, 0, StringFlags::STATIC,
 	'a','v','e','s','.','A','r','g','u','m','e','n','t','N','u','l','l','E','r','r','o','r',0 };
 LitString<23> _ArgumentRangeError_Name = { 23, 0, StringFlags::STATIC,
 	'a','v','e','s','.','A','r','g','u','m','e','n','t','R','a','n','g','e','E','r','r','o','r',0 };
@@ -24,30 +28,36 @@ LitString<19> _ConsoleKeyCode_Name = { 19, 0, StringFlags::STATIC,
 
 LitString<6> _format = { 6, 0, StringFlags::STATIC, 'f','o','r','m','a','t' };
 
-TypeHandle ArgumentError;
-TypeHandle ArgumentNullError;
-TypeHandle ArgumentRangeError;
-TypeHandle DuplicateKeyError;
-TypeHandle UnicodeCategoryType;
-TypeHandle BufferViewKindType;
-TypeHandle HashEntryType;
-TypeHandle ConsoleKeyType;
-TypeHandle ConsoleKeyCodeType;
+TypeHandle Types::Int;
+TypeHandle Types::UInt;
+TypeHandle Types::Real;
+TypeHandle Types::ArgumentError;
+TypeHandle Types::ArgumentNullError;
+TypeHandle Types::ArgumentRangeError;
+TypeHandle Types::DuplicateKeyError;
+TypeHandle Types::UnicodeCategory;
+TypeHandle Types::BufferViewKind;
+TypeHandle Types::HashEntry;
+TypeHandle Types::ConsoleKey;
+TypeHandle Types::ConsoleKeyCode;
 String *format = _S(_format);
 
 
 // Note: This is not declared in any header file. Only in this source file.
 AVES_API void OvumModuleMain(ModuleHandle module)
 {
-	ArgumentError       = Module_FindType(module, _S(_ArgumentError_Name),      true);
-	ArgumentNullError   = Module_FindType(module, _S(_ArgumentNullError_Name),  true);
-	ArgumentRangeError  = Module_FindType(module, _S(_ArgumentRangeError_Name), true);
-	DuplicateKeyError   = Module_FindType(module, _S(_DuplicateKeyError_Name),  true);
-	UnicodeCategoryType = Module_FindType(module, _S(_UnicodeCategory_Name),    true);
-	BufferViewKindType  = Module_FindType(module, _S(_BufferViewKind_Name),     true);
-	HashEntryType       = Module_FindType(module, _S(_HashEntry_Name),          true);
-	ConsoleKeyType      = Module_FindType(module, _S(_ConsoleKey_Name),         true);
-	ConsoleKeyCodeType  = Module_FindType(module, _S(_ConsoleKeyCode_Name),     true);
+	Types::Int                = Module_FindType(module, _S(_Int_Name),                true);
+	Types::UInt               = Module_FindType(module, _S(_UInt_Name),               true);
+	Types::Real               = Module_FindType(module, _S(_Real_Name),               true);
+	Types::ArgumentError      = Module_FindType(module, _S(_ArgumentError_Name),      true);
+	Types::ArgumentNullError  = Module_FindType(module, _S(_ArgumentNullError_Name),  true);
+	Types::ArgumentRangeError = Module_FindType(module, _S(_ArgumentRangeError_Name), true);
+	Types::DuplicateKeyError  = Module_FindType(module, _S(_DuplicateKeyError_Name),  true);
+	Types::UnicodeCategory    = Module_FindType(module, _S(_UnicodeCategory_Name),    true);
+	Types::BufferViewKind     = Module_FindType(module, _S(_BufferViewKind_Name),     true);
+	Types::HashEntry          = Module_FindType(module, _S(_HashEntry_Name),          true);
+	Types::ConsoleKey         = Module_FindType(module, _S(_ConsoleKey_Name),         true);
+	Types::ConsoleKeyCode     = Module_FindType(module, _S(_ConsoleKeyCode_Name),     true);
 }
 
 
@@ -163,7 +173,7 @@ AVES_API NATIVE_FUNCTION(aves_readKey)
 
 	{
 		Value keyCodeValue;
-		keyCodeValue.type = ConsoleKeyCodeType;
+		keyCodeValue.type = Types::ConsoleKeyCode;
 		keyCodeValue.integer = ir.Event.KeyEvent.wVirtualKeyCode;
 
 		DWORD state = ir.Event.KeyEvent.dwControlKeyState;
@@ -174,7 +184,7 @@ AVES_API NATIVE_FUNCTION(aves_readKey)
 		VM_PushBool(thread, (state & SHIFT_PRESSED) != 0);
 		VM_PushBool(thread, (state & (LEFT_ALT_PRESSED | RIGHT_ALT_PRESSED)) != 0);
 		VM_PushBool(thread, (state & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED)) != 0);
-		GC_Construct(thread, ConsoleKeyType, 5, nullptr);
+		GC_Construct(thread, Types::ConsoleKey, 5, nullptr);
 
 		if (argc == 0 || IsFalse(args[0]))
 		{

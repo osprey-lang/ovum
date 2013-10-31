@@ -8,13 +8,22 @@
 
 #include "aves.h"
 
-extern TypeHandle ArgumentError;
-extern TypeHandle ArgumentNullError;
-extern TypeHandle ArgumentRangeError;
-extern TypeHandle DuplicateKeyError;
-extern TypeHandle UnicodeCategoryType;
-extern TypeHandle BufferViewKindType;
-extern TypeHandle HashEntryType;
+class Types
+{
+public:
+	static TypeHandle Int;
+	static TypeHandle UInt;
+	static TypeHandle Real;
+	static TypeHandle ArgumentError;
+	static TypeHandle ArgumentNullError;
+	static TypeHandle ArgumentRangeError;
+	static TypeHandle DuplicateKeyError;
+	static TypeHandle UnicodeCategory;
+	static TypeHandle BufferViewKind;
+	static TypeHandle HashEntry;
+	static TypeHandle ConsoleKey;
+	static TypeHandle ConsoleKeyCode;
+};
 
 AVES_API NATIVE_FUNCTION(aves_print);
 AVES_API NATIVE_FUNCTION(aves_printErr);
