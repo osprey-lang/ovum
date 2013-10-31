@@ -42,7 +42,7 @@ namespace integer
 	{
 		if (exponent < 0)
 		{
-			GC_Construct(thread, ArgumentRangeError, 0, nullptr);
+			GC_Construct(thread, Types::ArgumentRangeError, 0, nullptr);
 			VM_Throw(thread);
 		}
 

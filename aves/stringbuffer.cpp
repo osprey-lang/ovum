@@ -46,7 +46,7 @@ AVES_API NATIVE_FUNCTION(aves_StringBuffer_appendInternal)
 	if (times < 0 || times > INT32_MAX)
 	{
 		VM_PushString(thread, strings::times);
-		GC_Construct(thread, ArgumentRangeError, 1, nullptr);
+		GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr);
 		VM_Throw(thread);
 	}
 
@@ -68,7 +68,7 @@ AVES_API NATIVE_FUNCTION(aves_StringBuffer_insertInternal)
 	if (index < 0 || index > buf->GetLength())
 	{
 		VM_PushString(thread, strings::index);
-		GC_Construct(thread, ArgumentRangeError, 1, nullptr);
+		GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr);
 		VM_Throw(thread);
 	}
 

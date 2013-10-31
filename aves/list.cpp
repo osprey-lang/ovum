@@ -19,7 +19,7 @@ int32_t GetIndex(ThreadHandle thread, ListInst *list, Value indexValue)
 	if (index < 0 || index >= list->length)
 	{
 		VM_PushString(thread, strings::index);
-		GC_Construct(thread, ArgumentRangeError, 1, nullptr);
+		GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr);
 		VM_Throw(thread);
 	}
 
@@ -36,7 +36,7 @@ AVES_API NATIVE_FUNCTION(aves_List_newCap)
 	if (capacity < 0 || capacity > INT32_MAX)
 	{
 		VM_PushString(thread, strings::capacity);
-		GC_Construct(thread, ArgumentRangeError, 1, nullptr);
+		GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr);
 		VM_Throw(thread);
 	}
 
@@ -58,7 +58,7 @@ AVES_API NATIVE_FUNCTION(aves_List_set_capacity)
 	if (capacity < 0 || capacity > INT32_MAX)
 	{
 		VM_PushString(thread, strings::capacity);
-		GC_Construct(thread, ArgumentRangeError, 1, nullptr);
+		GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr);
 		VM_Throw(thread);
 	}
 
@@ -104,7 +104,7 @@ AVES_API NATIVE_FUNCTION(aves_List_insert)
 	if (index64 < 0 || index64 > list->length)
 	{
 		VM_PushString(thread, strings::index);
-		GC_Construct(thread, ArgumentRangeError, 1, nullptr);
+		GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr);
 		VM_Throw(thread);
 	}
 
@@ -174,7 +174,7 @@ AVES_API NATIVE_FUNCTION(aves_List_slice2)
 	{
 		VM_PushNull(thread); // paramName
 		VM_PushString(thread, error_strings::EndIndexLessThanStart); // message
-		GC_Construct(thread, ArgumentRangeError, 2, nullptr);
+		GC_Construct(thread, Types::ArgumentRangeError, 2, nullptr);
 		VM_Throw(thread);
 	}
 
@@ -224,7 +224,7 @@ void SetListCapacity(ThreadHandle thread, ListInst *list, const int32_t capacity
 	if (capacity < list->length)
 	{
 		VM_PushString(thread, strings::capacity);
-		GC_Construct(thread, ArgumentRangeError, 1, nullptr);
+		GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr);
 		VM_Throw(thread);
 	}
 

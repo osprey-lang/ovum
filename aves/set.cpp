@@ -1,7 +1,7 @@
 #include "aves_set.h"
 #include <memory>
 
-#define _Set(value)           reinterpret_cast<::SetInst*>((value).instance)
+#define _Set(value)         reinterpret_cast<::SetInst*>((value).instance)
 #define U64_TO_HASH(value)  ((int32_t)(value) ^ (int32_t)((value) >> 32))
 
 AVES_API void aves_Set_init(TypeHandle type)
@@ -68,7 +68,7 @@ AVES_API NATIVE_FUNCTION(aves_Set_new)
 	if (capacity < 0 || capacity > INT32_MAX)
 	{
 		VM_PushString(thread, strings::capacity);
-		GC_Construct(thread, ArgumentRangeError, 1, nullptr);
+		GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr);
 		VM_Throw(thread);
 	}
 
