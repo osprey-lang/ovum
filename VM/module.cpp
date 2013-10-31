@@ -1057,22 +1057,36 @@ void Module::ReadOperators(ModuleReader &reader, Module *module, Type *type)
 
 	const int32_t length = reader.ReadInt32();
 
-	for (int32_t i = 0; i < length; i++)
+	if (length > 0)
 	{
-		Operator op = (Operator)reader.ReadUInt8();
-		TokenId methodId = reader.ReadToken();
+		for (int32_t i = 0; i < length; i++)
+		{
+			Operator op = (Operator)reader.ReadUInt8();
+			TokenId methodId = reader.ReadToken();
 
-		if ((methodId & IDMASK_MEMBERKIND) != IDMASK_METHODDEF)
-			throw ModuleLoadException(reader.fileName, "Operator method must be a MethodDef.");
-		Method *method = module->FindMethod(methodId);
-		if (!method)
-			throw ModuleLoadException(reader.fileName, "Unresolved MethodDef token ID in operator.");
-		if (method->declType != type)
-			throw ModuleLoadException(reader.fileName, "Operator method must be in the same type as the property.");
-		if (type->operators[(int)op] != nullptr)
-			throw ModuleLoadException(reader.fileName, "Duplicate operator declaration.");
+			if ((methodId & IDMASK_MEMBERKIND) != IDMASK_METHODDEF)
+				throw ModuleLoadException(reader.fileName, "Operator method must be a MethodDef.");
+			Method *method = module->FindMethod(methodId);
+			if (!method)
+				throw ModuleLoadException(reader.fileName, "Unresolved MethodDef token ID in operator.");
+			if (method->declType != type)
+				throw ModuleLoadException(reader.fileName, "Operator method must be in the same type as the property.");
+			if (type->operators[(int)op] != nullptr)
+				throw ModuleLoadException(reader.fileName, "Duplicate operator declaration.");
+			Method::Overload *mo = method->ResolveOverload(Arity(op));
+			if (!mo)
+				throw ModuleLoadException(reader.fileName, "Operator method must have an overload for the operator.");
 
-		type->operators[(int)op] = method;
+			type->operators[(int)op] = mo;
+		}
+		type->InitOperators();
+	}
+	else if (type->baseType)
+	{
+		Type *baseType = type->baseType;
+		for (int i = 0; i < OPERATOR_COUNT; i++)
+			type->operators[i] = baseType->operators[i];
+		type->flags |= TypeFlags::OPS_INITED;
 	}
 
 	CHECKPOS_AFTER(OperatorDef);

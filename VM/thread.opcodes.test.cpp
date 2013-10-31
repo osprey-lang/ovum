@@ -1,3 +1,12 @@
+// ================================
+//  THIS FILE IS NOT PART OF OVUM.
+//  DO NOT COMPILE IT.
+// ================================
+// This was a test, where I had an additional ArgumentSizes array for skipping the
+// arguments of certain opcodes. It turned out to be very slightly detrimental to
+// performance, so the changes were reverted. I have kept it here in case I should
+// choose to revisit this idea, in which case I won't have to rewrite /quite/ as
+// much of the code.
 #include "ov_vm.internal.h"
 #include "ov_thread.opcodes.h"
 #include <memory>
@@ -19,11 +28,15 @@
 // are performed by one of the methods that invoke stuff, as PushStackFrame decrements the
 // stack height by argCount.
 int8_t StackChanges[];
+// Similarly, this is a list of the size of instructions minus sizeof(IntermediateOpcode).
+// In other words, it's a list of the size of their arguments. We use this to increment the
+// instruction pointer after each instruction.
+int8_t ArgumentSizes[];
 
 void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 {
 #if NDEBUG
-	register uint8_t *ip = this->ip = entryAddress;
+	uint8_t *ip = this->ip = entryAddress;
 #else
 	ip = entryAddress;
 #endif
@@ -32,7 +45,9 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 	{
 		try
 		{
-			register IntermediateOpcode opc = *reinterpret_cast<IntermediateOpcode*>(ip++); // skip opcode, always
+			IntermediateOpcode opc = *reinterpret_cast<IntermediateOpcode*>(ip);
+			ip++; // skip opcode, always
+
 			switch (opc)
 			{
 			case OPI_NOP: break; // Really, do nothing!
@@ -54,14 +69,14 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 				// mvloc: LocalOffset source, LocalOffset destination
 				{
 					*OFF_ARG(ip + LOSZ, frame) = *OFF_ARG(ip, frame);
+
+					//ip += 2*LOSZ;
 					// (Copied from ov_thread.opcodes.h)
 					// mvloc encodes the stack change in its lowest two bits:
 					// 0000 001ar
 					//         a  = if set, one value was added
 					//          r = if set, one value was removed
 					//frame->stackCount += ((opc & 2) >> 1) - (opc & 1);
-
-					ip += 2*LOSZ;
 				}
 				break;
 			case OPI_LDNULL_L:
@@ -69,9 +84,9 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 				// ldnull: LocalOffset dest
 				{
 					*OFF_ARG(ip, frame) = NULL_VALUE;
-					//frame->stackCount += opc & 1;
 
-					ip += LOSZ;
+					//ip += LOSZ;
+					//frame->stackCount += opc & 1;
 				}
 				break;
 			case OPI_LDFALSE_L:
@@ -82,9 +97,9 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 				// ldtrue: LocalOffset dest
 				{
 					SetBool_(OFF_ARG(ip, frame), (opc >> 2) & 1);
-					//frame->stackCount += opc & 1;
 
-					ip += LOSZ;
+					//ip += LOSZ;
+					//frame->stackCount += opc & 1;
 				}
 				break;
 			case OPI_LDC_I_L:
@@ -92,9 +107,9 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 				// ldc.i: LocalOffset dest, int64_t value
 				{
 					SetInt_(OFF_ARG(ip, frame), I64_ARG(ip + LOSZ));
-					//frame->stackCount += opc & 1;
 
-					ip += LOSZ + sizeof(int64_t);
+					//ip += LOSZ + sizeof(int64_t);
+					//frame->stackCount += opc & 1;
 				}
 				break;
 			case OPI_LDC_U_L:
@@ -102,9 +117,9 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 				// ldc.u: LocalOffset dest, uint64_t value
 				{
 					SetUInt_(OFF_ARG(ip, frame), U64_ARG(ip + LOSZ));
-					//frame->stackCount += opc & 1;
 
-					ip += LOSZ + sizeof(int64_t);
+					//ip += LOSZ + sizeof(int64_t);
+					//frame->stackCount += opc & 1;
 				}
 				break;
 			case OPI_LDC_R_L:
@@ -112,9 +127,9 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 				// ldc.r: LocalOffset dest, double value
 				{
 					SetReal_(OFF_ARG(ip, frame), T_ARG(ip + LOSZ, double));
-					//frame->stackCount += opc & 1;
 
-					ip += LOSZ + sizeof(int64_t);
+					//ip += LOSZ + sizeof(int64_t);
+					//frame->stackCount += opc & 1;
 				}
 				break;
 			case OPI_LDSTR_L:
@@ -122,9 +137,9 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 				// ldstr: LocalOffset dest, String *value
 				{
 					SetString_(OFF_ARG(ip, frame), T_ARG(ip + LOSZ, String*));
-					//frame->stackCount += opc & 1;
 
-					ip += LOSZ + sizeof(String*);
+					//ip += LOSZ + sizeof(String*);
+					//frame->stackCount += opc & 1;
 				}
 				break;
 			case OPI_LDARGC_L:
@@ -132,9 +147,9 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 				// ldargc: LocalOffset dest
 				{
 					SetInt_(OFF_ARG(ip, frame), frame->argc);
-					//frame->stackCount += opc & 1;
 
-					ip += LOSZ;
+					//ip += LOSZ;
+					//frame->stackCount += opc & 1;
 				}
 				break;
 			case OPI_LDENUM_L:
@@ -142,11 +157,10 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 				// ldenum: LocalOffset dest, Type *type, int64_t value
 				{
 					Value *const dest = OFF_ARG(ip, frame);
-					ip += LOSZ;
 
-					dest->type = T_ARG(ip, Type*);
-					dest->integer = I64_ARG(ip + sizeof(Type*));
-					ip += sizeof(Type*) + sizeof(int64_t);
+					dest->type = T_ARG(ip + LOSZ, Type*);
+					dest->integer = I64_ARG(ip + LOSZ + sizeof(Type*));
+					//ip += LOSZ + sizeof(Type*) + sizeof(int64_t);
 
 					//frame->stackCount += opc & 1;
 				}
@@ -155,18 +169,13 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 			case OPI_NEWOBJ_S:
 				// newobj: LocalOffset args, LocalOffset dest, Type *type, uint16_t argc
 				{
-					Value *const args = OFF_ARG(ip, frame);
-					Value *const dest = OFF_ARG(ip + LOSZ, frame);
-					ip += 2*LOSZ;
+					GC::gc->ConstructLL(this,
+						T_ARG(ip + 2*LOSZ, Type*), // type
+						U16_ARG(ip + 2*LOSZ + sizeof(Type*)), // argCount
+						OFF_ARG(ip, frame), // args
+						OFF_ARG(ip + LOSZ, frame)); // dest
 
-					Type *const type = T_ARG(ip, Type*);
-					ip += sizeof(Type*);
-
-					uint16_t argc = U16_ARG(ip);
-
-					GC::gc->ConstructLL(this, type, argc, args, dest);
-
-					ip += sizeof(uint16_t);
+					ip += 2*LOSZ + sizeof(Type*) + sizeof(uint16_t);
 					// ConstructLL pops the arguments
 					//frame->stackCount += opc & 1;
 				}
@@ -175,16 +184,13 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 			case OPI_LIST_S:
 				// list: LocalOffset dest, int32_t capacity
 				{
-					Value *const dest = OFF_ARG(ip, frame);
-					int32_t cap = I32_ARG(ip + LOSZ);
-
 					Value result; // Can't put it in dest until it's fully initialized
 					GC::gc->Alloc(this, VM::vm->types.List, sizeof(ListInst), &result);
-					VM::vm->functions.initListInstance(this, result.common.list, cap);
+					VM::vm->functions.initListInstance(this, result.common.list, I32_ARG(ip + LOSZ));
 
-					*dest = result;
+					*OFF_ARG(ip, frame) = result;
 
-					ip += LOSZ + sizeof(int32_t);
+					//ip += LOSZ + sizeof(int32_t);
 					//frame->stackCount += opc & 1;
 				}
 				break;
@@ -192,30 +198,23 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 			case OPI_HASH_S:
 				// hash: LocalOffset dest, int32_t capacity
 				{
-					Value *const dest = OFF_ARG(ip, frame);
-					int32_t cap = I32_ARG(ip + LOSZ);
-
 					Value result; // Can't put it in dest until it's fully initialized
 					GC::gc->Alloc(this, VM::vm->types.Hash, sizeof(HashInst), &result);
-					VM::vm->functions.initHashInstance(this, result.common.hash, cap);
+					VM::vm->functions.initHashInstance(this, result.common.hash, I32_ARG(ip + LOSZ));
 
-					*dest = result;
+					*OFF_ARG(ip, frame) = result;
 
-					ip += LOSZ + sizeof(int32_t);
+					//ip += LOSZ + sizeof(int32_t);
 					//frame->stackCount += opc & 1;
 				}
 				break;
 			case OPI_LDFLD_L:
 			case OPI_LDFLD_S:
-				// ldfld: LocalOffset instance, LocalOffset dest, Member *field
+				// ldfld: LocalOffset instance, LocalOffset dest, Field *field
 				{
-					Value *const inst = OFF_ARG(ip, frame);
-					Value *const dest = OFF_ARG(ip + LOSZ, frame);
-					ip += 2*LOSZ;
-											
-					*dest = *T_ARG(ip, Field*)->GetField(this, inst);
+					*OFF_ARG(ip + LOSZ, frame) = *T_ARG(ip + 2*LOSZ, Field*)->GetField(this, OFF_ARG(ip, frame));
 						
-					ip += sizeof(Field*);
+					//ip += 2*LOSZ + sizeof(Field*);
 					//frame->stackCount += (opc & 1) - 1;
 				}
 				break;
@@ -225,7 +224,7 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 				{
 					*OFF_ARG(ip, frame) = *T_ARG(ip + LOSZ, Field*)->staticValue;
 
-					ip += LOSZ + sizeof(Field*);
+					//ip += LOSZ + sizeof(Field*);
 					//frame->stackCount += opc & 1;
 				}
 				break;
@@ -237,7 +236,7 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 						T_ARG(ip + 2*LOSZ, String*), // name
 						OFF_ARG(ip + LOSZ, frame)); // dest
 
-					ip += 2*LOSZ + sizeof(String*);
+					//ip += 2*LOSZ + sizeof(String*);
 					// LoadMemberLL pops the instance
 					//frame->stackCount += opc & 1;
 				}
@@ -251,7 +250,7 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 						OFF_ARG(ip + LOSZ, frame)); // result
 
 					// InvokeMemberLL pops the instance and all 0 of the arguments
-					ip += 2*LOSZ;
+					//ip += 2*LOSZ;
 					//frame->stackCount += opc & 1;
 				}
 				break;
@@ -267,7 +266,7 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 					else
 						*dest = NULL_VALUE;
 
-					ip += 2*LOSZ;
+					//ip += 2*LOSZ;
 					//frame->stackCount += (opc & 1) - 1;
 				}
 				break;
@@ -276,15 +275,12 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 				// ldidx: LocalOffset args, LocalOffset dest, uint16_t argc
 				// Note: argc does not include the instance
 				{
-					Value *const args = OFF_ARG(ip, frame);
-					Value *const dest = OFF_ARG(ip + LOSZ, frame);
-					ip += 2*LOSZ;
-					uint16_t argc = U16_ARG(ip);
-
-					LoadIndexerLL(argc, args, dest);
+					LoadIndexerLL(U16_ARG(ip + 2*LOSZ), // argCount
+						OFF_ARG(ip, frame), // args
+						OFF_ARG(ip + LOSZ, frame)); // dest
 
 					// LoadIndexerLL decrements the stack height by the argument count + instance
-					ip += sizeof(uint16_t);
+					//ip += 2*LOSZ + sizeof(uint16_t);
 					//frame->stackCount += opc & 1;
 				}
 				break;
@@ -294,10 +290,9 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 				{
 					Value *const dest = OFF_ARG(ip, frame);
 					GC::gc->Alloc(this, VM::vm->types.Method, sizeof(MethodInst), dest);
-					ip += LOSZ;
 
-					dest->common.method->method = T_ARG(ip, Method*);
-					ip += sizeof(Method*);
+					dest->common.method->method = T_ARG(ip + LOSZ, Method*);
+					//ip += LOSZ + sizeof(Method*);
 
 					//frame->stackCount += opc & 1;
 				}
@@ -308,7 +303,7 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 				{
 					*OFF_ARG(ip, frame) = T_ARG(ip + LOSZ, Type*)->GetTypeToken(this);
 						
-					ip += LOSZ + sizeof(Type*);
+					//ip += LOSZ + sizeof(Type*);
 					//frame->stackCount += opc & 1;
 				}
 				break;
@@ -316,15 +311,11 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 			case OPI_CALL_S:
 				// call: LocalOffset args, LocalOffset output, uint16_t argc
 				{
-					Value *const args   = OFF_ARG(ip, frame);
-					Value *const output = OFF_ARG(ip + LOSZ, frame);
-					ip += 2*LOSZ;
+					InvokeLL(U16_ARG(ip + 2*LOSZ), // argCount
+						OFF_ARG(ip, frame), // args
+						OFF_ARG(ip + LOSZ, frame)); // output
 
-					const uint16_t argCount = U16_ARG(ip);
-
-					InvokeLL(argCount, args, output);
-
-					ip += sizeof(uint16_t);
+					//ip += 2*LOSZ + sizeof(uint16_t);
 					// InvokeLL pops the arguments
 					//frame->stackCount += opc & 1;
 				}
@@ -333,17 +324,12 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 			case OPI_SCALL_S:
 				// scall: LocalOffset args, LocalOffset output, uint16_t argc, Method::Overload *method
 				{
-					Value *const args   = OFF_ARG(ip, frame);
-					Value *const output = OFF_ARG(ip + LOSZ, frame);
-					ip += 2*LOSZ;
+					InvokeMethodOverload(T_ARG(ip + 2*LOSZ + sizeof(uint16_t), Method::Overload*),
+						U16_ARG(ip + 2*LOSZ), // argCount
+						OFF_ARG(ip, frame), // args
+						OFF_ARG(ip + LOSZ, frame)); // output
 
-					const uint16_t argCount = U16_ARG(ip);
-					ip += sizeof(uint16_t);
-
-					Method::Overload *const method = T_ARG(ip, Method::Overload*);
-					InvokeMethodOverload(method, argCount, args, output);
-
-					ip += sizeof(Method::Overload*);
+					//ip += 2*LOSZ + sizeof(uint16_t) + sizeof(Method::Overload*);
 					//frame->stackCount += opc & 1;
 				}
 				break;
@@ -354,7 +340,7 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 					InvokeApplyLL(OFF_ARG(ip, frame), // args
 						OFF_ARG(ip + LOSZ, frame)); // output
 
-					ip += 2*LOSZ;
+					//ip += 2*LOSZ;
 					//frame->stackCount += opc & 1;
 				}
 				break;
@@ -366,21 +352,21 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 						OFF_ARG(ip, frame), // args
 						OFF_ARG(ip + LOSZ, frame)); // output
 
-					ip += 2*LOSZ + sizeof(Method*);
+					//ip += 2*LOSZ + sizeof(Method*);
 					//frame->stackCount += opc & 1;
 				}
 				break;
 			case OPI_BR:
 				// br: int32_t offset
 				ip += I32_ARG(ip);
-				ip += sizeof(int32_t);
+				//ip += sizeof(int32_t);
 				break;
 			case OPI_LEAVE:
 				// leave: int32_t offset
 				{
 					const int32_t offset = I32_ARG(ip);
 					EvaluateLeave(frame, ip, offset);
-					ip += sizeof(int32_t) + offset;
+					ip += /*sizeof(int32_t)*/ + offset;
 				}
 				break;
 			case OPI_BRNULL_L:
@@ -389,7 +375,7 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 				{
 					if (OFF_ARG(ip, frame)->type == nullptr)
 						ip += I32_ARG(ip + LOSZ);
-					ip += LOSZ + sizeof(int32_t);
+					//ip += LOSZ + sizeof(int32_t);
 
 					//frame->stackCount -= opc & 1;
 				}
@@ -400,7 +386,7 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 				{
 					if (OFF_ARG(ip, frame)->type != nullptr)
 						ip += I32_ARG(ip + LOSZ);
-					ip += LOSZ + sizeof(int32_t);
+					//ip += LOSZ + sizeof(int32_t);
 
 					//frame->stackCount -= opc & 1;
 				}
@@ -411,7 +397,7 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 				{
 					if (IsFalse_(OFF_ARG(ip, frame)))
 						ip += I32_ARG(ip + LOSZ);
-					ip += LOSZ + sizeof(int32_t);
+					//ip += LOSZ + sizeof(int32_t);
 
 					//frame->stackCount -= opc & 1;
 				}
@@ -422,7 +408,7 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 				{
 					if (IsTrue_(OFF_ARG(ip, frame)))
 						ip += I32_ARG(ip + LOSZ);
-					ip += LOSZ + sizeof(int32_t);
+					//ip += LOSZ + sizeof(int32_t);
 
 					//frame->stackCount -= opc & 1;
 				}
@@ -431,15 +417,10 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 			case OPI_BRTYPE_S:
 				// brtype: LocalOffset value, Type *type, int32_t offset
 				{
-					Value *const value = OFF_ARG(ip, frame);
-					ip += LOSZ;
+					if (Type::ValueIsType(*OFF_ARG(ip, frame), T_ARG(ip + LOSZ, Type*)))
+						ip += I32_ARG(ip + LOSZ + sizeof(Type*));
 
-					Type *const type = T_ARG(ip, Type*);
-					ip += sizeof(Type*);
-
-					if (Type::ValueIsType(*value, type))
-						ip += I32_ARG(ip);
-
+					//ip += LOSZ + sizeof(Type*);
 					ip += sizeof(int32_t);
 
 					//frame->stackCount -= opc & 1;
@@ -455,11 +436,13 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 						ThrowTypeError();
 
 					uint16_t count = U16_ARG(ip + LOSZ);
-					ip += LOSZ + sizeof(uint16_t);
+					//ip += LOSZ + sizeof(uint16_t);
 
 					if (value->integer >= 0 && value->integer < count)
-						ip += *(reinterpret_cast<int32_t*>(ip) + (int32_t)value->integer);
+						ip += *(reinterpret_cast<int32_t*>(ip + LOSZ + sizeof(uint16_t)) + (int32_t)value->integer);
 
+					// Note: we have to skip the jump table, because its size
+					// depends on 'count'.
 					ip += count * sizeof(int32_t);
 
 					//frame->stackCount -= opc & 1;
@@ -470,11 +453,11 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 				// brnref: LocalOffset (a, b), int32_t offset
 				{
 					Value *const args = OFF_ARG(ip, frame);
-					ip += LOSZ;
+					//ip += LOSZ;
 
 					if (IsSameReference_(args[0], args[1]) ^ (opc & 1))
-						ip += I32_ARG(ip);
-					ip += sizeof(int32_t);
+						ip += I32_ARG(ip + LOSZ);
+					//ip += sizeof(int32_t);
 
 					//frame->stackCount -= 2;
 				}
@@ -485,10 +468,10 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 				{
 					Value *const args = OFF_ARG(ip, frame);
 					Value *const dest = OFF_ARG(ip + LOSZ, frame);
-					ip += 2*LOSZ;
+					//ip += 2*LOSZ;
 
-					InvokeOperatorLL(args, *reinterpret_cast<Operator*>(ip), dest);
-					ip += sizeof(Operator);
+					InvokeOperatorLL(args, T_ARG(ip + 2*LOSZ, Operator), dest);
+					//ip += sizeof(Operator);
 
 					// InvokeOperatorLL pops arguments off the stack
 					//frame->stackCount += opc & 1;
@@ -501,7 +484,7 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 					SetBool_(OFF_ARG(ip + LOSZ, frame),
 						EqualsLL(OFF_ARG(ip, frame)));
 
-					ip += 2*LOSZ;
+					//ip += 2*LOSZ;
 					// EqualsLL pops arguments off the stack
 					//frame->stackCount += opc & 1;
 				}
@@ -513,7 +496,7 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 					int result = CompareLL(OFF_ARG(ip, frame));
 					SetInt_(OFF_ARG(ip + LOSZ, frame), result);
 
-					ip += 2*LOSZ;
+					//ip += 2*LOSZ;
 					// CompareLL pops arguments off the stack
 					//frame->stackCount += opc & 1;
 				}
@@ -525,7 +508,7 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 					bool result = CompareLL(OFF_ARG(ip, frame)) < 0;
 					SetBool_(OFF_ARG(ip + LOSZ, frame), result);
 
-					ip += 2*LOSZ;
+					//ip += 2*LOSZ;
 					// CompareLL pops arguments off the stack
 					//frame->stackCount += opc & 1;
 				}
@@ -537,7 +520,7 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 					bool result = CompareLL(OFF_ARG(ip, frame)) > 0;
 					SetBool_(OFF_ARG(ip + LOSZ, frame), result);
 
-					ip += 2*LOSZ;
+					//ip += 2*LOSZ;
 					// CompareLL pops arguments off the stack
 					//frame->stackCount += opc & 1;
 				}
@@ -549,7 +532,7 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 					bool result = CompareLL(OFF_ARG(ip, frame)) <= 0;
 					SetBool_(OFF_ARG(ip + LOSZ, frame), result);
 
-					ip += 2*LOSZ;
+					//ip += 2*LOSZ;
 					// CompareLL pops arguments off the stack
 					//frame->stackCount += opc & 1;
 				}
@@ -561,7 +544,7 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 					bool result = CompareLL(OFF_ARG(ip, frame)) >= 0;
 					SetBool_(OFF_ARG(ip + LOSZ, frame), result);
 
-					ip += 2*LOSZ;
+					//ip += 2*LOSZ;
 					// CompareLL pops arguments off the stack
 					//frame->stackCount += opc & 1;
 				}
@@ -572,7 +555,7 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 				{
 					ConcatLL(OFF_ARG(ip, frame), OFF_ARG(ip + LOSZ, frame));
 
-					ip += 2*LOSZ;
+					//ip += 2*LOSZ;
 					// ConcatLL pops arguments off stack
 					//frame->stackCount += opc & 1;
 				}
@@ -583,16 +566,16 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 				{
 					Value *const args = OFF_ARG(ip, frame);
 					Value *const dest = OFF_ARG(ip + LOSZ, frame);
-					ip += 2*LOSZ;
+					//ip += 2*LOSZ;
 
-					String *member = T_ARG(ip, String*);
-					ip += sizeof(String*);
+					String *member = T_ARG(ip + 2*LOSZ, String*);
+					//ip += sizeof(String*);
 
-					uint16_t argCount = U16_ARG(ip);
+					uint16_t argCount = U16_ARG(ip + 2*LOSZ + sizeof(String*));
 
 					InvokeMemberLL(member, argCount, args, dest);
 
-					ip += sizeof(uint16_t);
+					//ip += sizeof(uint16_t);
 					//frame->stackCount += opc & 1;
 				}
 				break;
@@ -602,7 +585,7 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 				{
 					*T_ARG(ip + LOSZ, Field*)->staticValue = *OFF_ARG(ip, frame);
 
-					ip += LOSZ + sizeof(Field*);
+					//ip += LOSZ + sizeof(Field*);
 					//frame->stackCount -= opc & 1;
 				}
 				break;
@@ -612,7 +595,7 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 					Value *const values = OFF_ARG(ip, frame);
 					*T_ARG(ip + LOSZ, Field*)->GetField(this, values) = values[1];
 
-					ip += LOSZ + sizeof(Field*);
+					//ip += LOSZ + sizeof(Field*);
 					//frame->stackCount -= 2;
 				}
 				break;
@@ -623,7 +606,7 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 					StoreMemberLL(OFF_ARG(ip, frame), T_ARG(ip + LOSZ, String*));
 
 					// It also pops the things off the stack
-					ip += LOSZ + sizeof(String*);
+					//ip += LOSZ + sizeof(String*);
 				}
 				break;
 			case OPI_STIDX:
@@ -633,7 +616,7 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 					StoreIndexerLL(U16_ARG(ip + LOSZ), // argCount
 						OFF_ARG(ip, frame)); // args
 
-					ip += LOSZ + sizeof(uint16_t);
+					//ip += LOSZ + sizeof(uint16_t);
 				}
 				break;
 			case OPI_THROW: // odd
@@ -644,7 +627,7 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 				// This Evaluate call was reached through FindErrorHandlers,
 				// so we return here and let the thing continue with its search
 				// for more error handlers.
-				goto endfinally;
+				return;
 			case OPI_LDFLDFAST_L:
 			case OPI_LDFLDFAST_S:
 				// ldfldfast: LocalOffset instance, LocalOffset dest, Field *field
@@ -653,7 +636,7 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 					*OFF_ARG(ip + LOSZ, frame) = *T_ARG(ip + 2*LOSZ, Field*)
 						->GetFieldFast(this, OFF_ARG(ip, frame));
 
-					ip += 2*LOSZ + sizeof(Field*);
+					//ip += 2*LOSZ + sizeof(Field*);
 					//frame->stackCount += (opc & 1) - 1;
 				}
 				break;
@@ -662,15 +645,15 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 				// This is identical to stfld except that it does not perform a type check.
 				{
 					Value *const values = OFF_ARG(ip, frame);
-
 					*T_ARG(ip + LOSZ, Field*)->GetFieldFast(this, values) = values[1];
 
-					ip += LOSZ + sizeof(Member*);
+					//ip += LOSZ + sizeof(Member*);
 					//frame->stackCount -= 2;
 				}
 				break;
 			}
 			frame->stackCount += StackChanges[opc];
+			ip += ArgumentSizes[opc];
 		}
 		catch (OvumException&)
 		{
@@ -687,7 +670,6 @@ void Thread::Evaluate(StackFrame *frame, uint8_t *entryAddress)
 
 	done: assert(frame->stackCount == 1);
 	// And then we just fall through and return!
-	endfinally: ;
 }
 
 bool Thread::FindErrorHandler(StackFrame *frame, uint8_t * &ip)
@@ -764,7 +746,7 @@ void Thread::EvaluateLeave(StackFrame *frame, uint8_t *ip, const int32_t target)
 int8_t StackChanges[] = {
 	// Note: it is vital here that there are no gap.
 	// In the unlikely case that there should arise non-contiguous
-	// opcodes, you must pad the gaps with zeroes!
+	// opcodes, you must pad the gaps with something!
 	/* OPI_NOP         0x00 */ 0,
 	/* OPI_POP         0x01 */ -1,
 	/* OPI_RET         0x02 */ 0,
@@ -866,4 +848,111 @@ int8_t StackChanges[] = {
 	/* OPI_LDFLDFAST_L 0x62 */ 0,
 	/* OPI_LDFLDFAST_S 0x63 */ 1,
 	/* OPI_STFLDFAST   0x64 */ -2,
+};
+
+int8_t ArgumentSizes[] = {
+	// Note: it is vital here that there are no gap.
+	// In the unlikely case that there should arise non-contiguous
+	// opcodes, you must pad the gaps with something!
+	/* OPI_NOP         0x00 */ 0,
+	/* OPI_POP         0x01 */ 0,
+	/* OPI_RET         0x02 */ 0,
+	/* OPI_RETNULL     0x03 */ 0,
+	/* OPI_MVLOC_LL    0x04 */ 2*LOSZ,                    // mvloc: LocalOffset source, LocalOffset dest
+	/* OPI_MVLOC_SL    0x05 */ 2*LOSZ,
+	/* OPI_MVLOC_LS    0x06 */ 2*LOSZ,
+	/* OPI_MVLOC_SS    0x07 */ 2*LOSZ,
+	/* OPI_LDNULL_L    0x08 */ LOSZ,                      // ldnull: LocalOffset dest
+	/* OPI_LDNULL_S    0x09 */ LOSZ,
+	/* OPI_LDFALSE_L   0x0a */ LOSZ,                      // ldfalse: LocalOffset dest
+	/* OPI_LDFALSE_S   0x0b */ LOSZ,
+	/* OPI_LDTRUE_L    0x0c */ LOSZ,                      // ldtrue: LocalOffset
+	/* OPI_LDTRUE_S    0x0d */ LOSZ,
+	/* OPI_LDC_I_L     0x0e */ LOSZ + sizeof(int64_t),    // ldc.i: LocalOffset dest, int64_t value
+	/* OPI_LDC_I_S     0x0f */ LOSZ + sizeof(int64_t),
+	/* OPI_LDC_U_L     0x10 */ LOSZ + sizeof(uint64_t),   // ldc.u: LocalOffest dest, uint64_t value
+	/* OPI_LDC_U_S     0x11 */ LOSZ + sizeof(uint64_t),
+	/* OPI_LDC_R_L     0x12 */ LOSZ + sizeof(double),     // ldc.r: LocalOffset dest, double value
+	/* OPI_LDC_R_S     0x13 */ LOSZ + sizeof(double),
+	/* OPI_LDSTR_L     0x14 */ LOSZ + sizeof(String*),    // ldstr: LocalOffset dest, String *value
+	/* OPI_LDSTR_S     0x15 */ LOSZ + sizeof(String*),
+	/* OPI_LDARGC_L    0x16 */ LOSZ,                      // ldargc: LocalOffest dest
+	/* OPI_LDARGC_S    0x17 */ LOSZ,
+	/* OPI_LDENUM_L    0x18 */ LOSZ + sizeof(Type*) + sizeof(int64_t), // ldenum: LocalOffset dest, Type *type, int64_t value
+	/* OPI_LDENUM_S    0x19 */ LOSZ + sizeof(Type*) + sizeof(int64_t),
+	/* OPI_NEWOBJ_L    0x1a */ 2*LOSZ + sizeof(Type*) + sizeof(uint16_t), // newobj: LocalOffset args, LocalOffset dest, Type *type, uint16_t argc
+	/* OPI_NEWOBJ_S    0x1b */ 2*LOSZ + sizeof(Type*) + sizeof(uint16_t),
+	/* OPI_LIST_L      0x1c */ LOSZ + sizeof(int32_t),    // list: LocalOffset dest, int32_t capacity
+	/* OPI_LIST_S      0x1d */ LOSZ + sizeof(int32_t),
+	/* OPI_HASH_L      0x1e */ LOSZ + sizeof(int32_t),    // hash: LocalOffset dest, int32_t capacity
+	/* OPI_HASH_S      0x1f */ LOSZ + sizeof(int32_t),
+	/* OPI_LDFLD_L     0x20 */ 2*LOSZ + sizeof(Field*),   // ldfld: LocalOffset inst, LocalOffset dest, Field *field
+	/* OPI_LDFLD_S     0x21 */ 2*LOSZ + sizeof(Field*),
+	/* OPI_LDSFLD_L    0x22 */ LOSZ + sizeof(Field*),     // ldsfld: LocalOffset dest, Field *field
+	/* OPI_LDSFLD_S    0x23 */ LOSZ + sizeof(Field*),
+	/* OPI_LDMEM_L     0x24 */ 2*LOSZ + sizeof(String*),  // ldmem: LocalOffset inst, LocalOffset dest, String *member
+	/* OPI_LDMEM_S     0x25 */ 2*LOSZ + sizeof(String*),
+	/* OPI_LDITER_L    0x26 */ 2*LOSZ,                    // lditer: LocalOffset inst, LocalOffset dest
+	/* OPI_LDITER_S    0x27 */ 2*LOSZ,
+	/* OPI_LDTYPE_L    0x28 */ 2*LOSZ,                    // lditer: LocalOffset inst, LocalOffset dest
+	/* OPI_LDTYPE_S    0x29 */ 2*LOSZ,
+	/* OPI_LDIDX_L     0x2a */ 2*LOSZ + sizeof(uint16_t), // ldidx: LocalOffset inst, LocalOffset dest, uint16_t argc
+	/* OPI_LDIDX_S     0x2b */ 2*LOSZ + sizeof(uint16_t),
+	/* OPI_LDSFN_L     0x2c */ LOSZ + sizeof(Method*),    // ldsfn: LocalOffest dest, Method *method
+	/* OPI_LDSFN_S     0x2d */ LOSZ + sizeof(Method*),
+	/* OPI_LDTYPETKN_L 0x2e */ LOSZ + sizeof(Type*),      // ldtypetkn: LocalOffest dest, Type *type
+	/* OPI_LDTYPETKN_S 0x2f */ LOSZ + sizeof(Type*),
+	/* OPI_CALL_L      0x30 */ 2*LOSZ + sizeof(uint16_t), // call: LocalOffset args, LocalOffset dest, uint16_t argc
+	/* OPI_CALL_S      0x31 */ 2*LOSZ + sizeof(uint16_t),
+	/* OPI_SCALL_L     0x32 */ 2*LOSZ + sizeof(uint16_t) + sizeof(Method::Overload*), // scall: LocalOffset args, LocalOffest dest, uint16_t argc, Method::Overload *method
+	/* OPI_SCALL_S     0x33 */ 2*LOSZ + sizeof(uint16_t) + sizeof(Method::Overload*),
+	/* OPI_APPLY_L     0x34 */ 2*LOSZ,                    // apply: LocalOffset args, LocalOffset dest
+	/* OPI_APPLY_S     0x35 */ 2*LOSZ,
+	/* OPI_SAPPLY_L    0x36 */ 2*LOSZ + sizeof(Method*),  // sapply: LocalOffset args, LocalOffset dest, Method *method
+	/* OPI_SAPPLY_S    0x37 */ 2*LOSZ + sizeof(Method*), 
+	/* OPI_BR          0x38 */ sizeof(int32_t),           // br: int32_t offset
+	/* OPI_LEAVE       0x39 */ sizeof(int32_t),           // leave: int32_t offset
+	/* OPI_BRNULL_L    0x3a */ LOSZ + sizeof(int32_t),    // brnull: LocalOffset value, int32_t offset
+	/* OPI_BRNULL_S    0x3b */ LOSZ + sizeof(int32_t),
+	/* OPI_BRINST_L    0x3c */ LOSZ + sizeof(int32_t),    // brinst: LocalOffset value, int32_t offset
+	/* OPI_BRINST_S    0x3d */ LOSZ + sizeof(int32_t),
+	/* OPI_BRFALSE_L   0x3e */ LOSZ + sizeof(int32_t),    // brfalse: LocalOffset value, int32_t offset
+	/* OPI_BRFALSE_S   0x3f */ LOSZ + sizeof(int32_t),
+	/* OPI_BRTRUE_L    0x40 */ LOSZ + sizeof(int32_t),    // brtrue: LocalOffset value, int32_t offset
+	/* OPI_BRTRUE_S    0x41 */ LOSZ + sizeof(int32_t),
+	/* OPI_BRTYPE_L    0x42 */ LOSZ + sizeof(Type*) + sizeof(int32_t), // brtype: LocalOffset value, Type *type, int32_t offset
+	/* OPI_BRTYPE_S    0x43 */ LOSZ + sizeof(Type*) + sizeof(int32_t),
+	/* OPI_SWITCH_L    0x44 */ LOSZ + sizeof(uint16_t),   // switch: LocalOffset value, uint16_t offc, int32_t offset[offc]
+	/* OPI_SWITCH_S    0x45 */ LOSZ + sizeof(uint16_t),   // (Since the size depends on the offset array, we skip it in the instruction)
+	/* OPI_BRREF       0x46 */ LOSZ + sizeof(int32_t),    // brref: LocalOffset (a, b), int32_t offset
+	/* OPI_BRNREF      0x47 */ LOSZ + sizeof(int32_t),    // brnref: LocalOffset (a, b), int32_t offset
+	/* OPI_OPERATOR_L  0x48 */ 2*LOSZ + sizeof(Operator), // operator: LocalOffset args, LocalOffset dest, Operator op
+	/* OPI_OPERATOR_S  0x49 */ 2*LOSZ + sizeof(Operator),
+	/* OPI_EQ_L        0x4a */ 2*LOSZ,                    // eq: LocalOffset args, LocalOffset dest
+	/* OPI_EQ_S        0x4b */ 2*LOSZ,
+	/* OPI_CMP_L       0x4c */ 2*LOSZ,                    // cmp: LocalOffset args, LocalOffset dest
+	/* OPI_CMP_S       0x4d */ 2*LOSZ,
+	/* OPI_LT_L        0x4e */ 2*LOSZ,                    // lt: LocalOffset args, LocalOffset dest
+	/* OPI_LT_S        0x4f */ 2*LOSZ,
+	/* OPI_GT_L        0x50 */ 2*LOSZ,                    // gt: LocalOffset args, LocalOffset dest
+	/* OPI_GT_S        0x51 */ 2*LOSZ,
+	/* OPI_LTE_L       0x52 */ 2*LOSZ,                    // lte: LocalOffset args, LocalOffset dest
+	/* OPI_LTE_S       0x53 */ 2*LOSZ,
+	/* OPI_GTE_L       0x54 */ 2*LOSZ,                    // gte: LocalOffset args, LocalOffset dest
+	/* OPI_GTE_S       0x55 */ 2*LOSZ,
+	/* OPI_CONCAT_L    0x56 */ 2*LOSZ,                    // concat: LocalOffset args, LocalOffset dest
+	/* OPI_CONCAT_S    0x57 */ 2*LOSZ,
+	/* OPI_CALLMEM_L   0x58 */ 2*LOSZ + sizeof(String*) + sizeof(uint16_t), // callmem: LocalOffset args, LocalOffset dest, String *member, uint16_t argCount
+	/* OPI_CALLMEM_S   0x59 */ 2*LOSZ + sizeof(String*) + sizeof(uint16_t),
+	/* OPI_STSFLD_L    0x5a */ LOSZ + sizeof(Field*),     // stsfld: LocalOffset value, Field *field
+	/* OPI_STSFLD_S    0x5b */ LOSZ + sizeof(Field*),
+	/* OPI_STFLD       0x5c */ LOSZ + sizeof(Field*),     // stfld: LocalOffset (inst, value), Field *field
+	/* OPI_STMEM       0x5d */ LOSZ + sizeof(String*),    // stmem: LocalOffset (inst, value), String *member
+	/* OPI_STIDX       0x5e */ LOSZ + sizeof(uint16_t),   // stidx: LocalOffset args, uint16_t argCount
+	/* OPI_THROW       0x5f */ 0,
+	/* OPI_RETHROW     0x60 */ 0,
+	/* OPI_ENDFINALLY  0x61 */ 0,
+	/* OPI_LDFLDFAST_L 0x62 */ 2*LOSZ + sizeof(Field*),   // ldfldfast: LocalOffset inst, LocalOffset dest, Field *field
+	/* OPI_LDFLDFAST_S 0x63 */ 2*LOSZ + sizeof(Field*),
+	/* OPI_STFLDFAST   0x64 */ LOSZ + sizeof(Field*),     // stfldfast: LocalOffset (inst, value), Field *field
 };

@@ -274,14 +274,11 @@ void Thread::InvokeOperatorLL(Value *args, Operator op, Value *result)
 	if (IS_NULL(args[0]))
 		ThrowNullReferenceError();
 
-	Method *method = args[0].type->GetOperator(op);
+	Method::Overload *method = args[0].type->operators[(int)op];
 	if (method == nullptr)
 		ThrowTypeError();
 
-	uint16_t argCount = Arity(op);
-	Method::Overload *mo = method->ResolveOverload(argCount);
-	if (!mo) ThrowNoOverloadError(argCount);
-	InvokeMethodOverload(mo, argCount, args, result);
+	InvokeMethodOverload(method, Arity(op), args, result);
 }
 
 void Thread::InvokeApply(Value *result)
@@ -368,14 +365,13 @@ bool Thread::EqualsLL(Value *args)
 	// Some code here is duplicated from InvokeOperatorLL, which we
 	// don't call directly; we want to avoid the null check.
 
-	Method *method = args[0].type->GetOperator(Operator::EQ);
+	Method::Overload *method = args[0].type->operators[(int)Operator::EQ];
 	// Don't need to test method for nullness: every type supports ==,
 	// because Object supports ==.
 	assert(method != nullptr); // okay, fine, but only when debugging
 
-	Method::Overload *mo = method->ResolveOverload(2);
 	Value result;
-	InvokeMethodOverload(mo, 2, args, &result);
+	InvokeMethodOverload(method, 2, args, &result);
 
 	return IsTrue_(result);
 }
@@ -741,35 +737,35 @@ void Thread::DisposeCallStack()
 // Note: argCount and args DO include the instance here!
 StackFrame *Thread::PushStackFrame(const uint16_t argCount, Value *args, Method::Overload *method)
 {
-	StackFrame *current = currentFrame;
+	assert(currentFrame->stackCount >= argCount);
 
-	assert(current->stackCount >= argCount);
+	currentFrame->stackCount -= argCount; // pop the arguments (including the instance) off the current frame
 
-	uint16_t paramCount = method->paramCount;
+	uint16_t paramCount = method->GetEffectiveParamCount();
 	uint16_t localCount = method->locals;
-	StackFrame *newFrame = reinterpret_cast<StackFrame*>(args +
-		method->GetEffectiveParamCount()); // The instance is also an argument!
+	StackFrame *newFrame = reinterpret_cast<StackFrame*>(args + paramCount); // The instance is also an argument!
 
 	newFrame->Init(
 		0,                                   // stackCount
 		argCount,                            // argCount
 		(Value*)((char*)newFrame + STACK_FRAME_SIZE) + localCount, // evalStack pointer
 		ip,                                  // prevInstr
-		current,                             // prevFrame
+		currentFrame,                        // prevFrame
 		method                               // method
 	);
 
 	// initialize missing arguments to zeroes
-	if (argCount < paramCount)
-		memset((Value*)newFrame - paramCount + argCount, 0, (paramCount - argCount) * sizeof(Value));
+	if (argCount != paramCount)
+	{
+		uint16_t diff = paramCount - argCount;
+		memset((Value*)newFrame - diff, 0, diff * sizeof(Value));
+	}
 
 	// Also initialize all locals to 0.
 	if (localCount)
 		memset(LOCALS_OFFSET(newFrame), 0, localCount * sizeof(Value));
 
-	currentFrame = newFrame;
-	current->stackCount -= argCount; // pop the arguments (including the instance) off the current frame
-	return newFrame;
+	return currentFrame = newFrame;
 }
 
 StackFrame *Thread::PushFirstStackFrame(const uint16_t argCount, Value args[], Method::Overload *method)

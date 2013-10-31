@@ -87,12 +87,24 @@ inline bool IsTrue_(Value value)
 		((value.type->flags & TypeFlags::PRIMITIVE) != TypeFlags::PRIMITIVE ||
 		value.integer != 0);
 }
+inline bool IsTrue_(Value *value)
+{
+	return value->type != nullptr &&
+		((value->type->flags & TypeFlags::PRIMITIVE) != TypeFlags::PRIMITIVE ||
+		value->integer != 0);
+}
 
 inline bool IsFalse_(Value value)
 {
 	return value.type == nullptr ||
 		(value.type->flags & TypeFlags::PRIMITIVE) == TypeFlags::PRIMITIVE &&
 		value.integer == 0;
+}
+inline bool IsFalse_(Value *value)
+{
+	return value->type == nullptr ||
+		(value->type->flags & TypeFlags::PRIMITIVE) == TypeFlags::PRIMITIVE &&
+		value->integer == 0;
 }
 
 inline bool IsSameReference_(Value a, Value b)

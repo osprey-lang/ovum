@@ -104,28 +104,12 @@ inline unsigned int Arity(Operator op)
 {
 	switch (op)
 	{
-		case Operator::ADD:
-		case Operator::SUB:
-		case Operator::OR:
-		case Operator::XOR:
-		case Operator::MUL:
-		case Operator::DIV:
-		case Operator::MOD:
-		case Operator::AND:
-		case Operator::POW:
-		case Operator::SHL:
-		case Operator::SHR:
-		case Operator::HASHOP:
-		case Operator::DOLLAR:
-		case Operator::EQ:
-		case Operator::CMP:
-			return 2;
 		case Operator::PLUS:
 		case Operator::NEG:
 		case Operator::NOT:
 			return 1;
 		default:
-			return 0;
+			return 2;
 	}
 }
 
