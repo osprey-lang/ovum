@@ -259,7 +259,7 @@ OVUM_API uint64_t UInt_SubtractChecked(ThreadHandle thread, const uint64_t left,
 OVUM_API uint64_t UInt_MultiplyChecked(ThreadHandle thread, const uint64_t left, const uint64_t right)
 {
 	uint64_t high;
-	uint64_t output = _mul128(left, right, &high);
+	uint64_t output = _umul128(left, right, &high);
 
 	if (high)
 		thread->ThrowOverflowError();

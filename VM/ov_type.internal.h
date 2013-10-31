@@ -12,84 +12,6 @@ class Module;
 class Member;
 class Method;
 
-// Types, once initialized, are supposed to be (more or less) immutable.
-// If you assign to any of the members in a Type, you have no one to blame but yourself.
-// That said, the VM occasionally updates the flags.
-class Type
-{
-public:
-	Type(int32_t memberCount);
-	~Type();
-
-	Member *GetMember(String *name) const;
-	Member *FindMember(String *name, Type *fromType) const;
-	Method *GetOperator(Operator op);
-
-	// Flags associated with the type.
-	TypeFlags flags;
-
-	// The type from which this inherits (null only for Object).
-	Type *baseType;
-	// A type whose private and protected members this type has access to.
-	// The shared type must be in the same module as this type.
-	Type *sharedType;
-
-	// The fully qualified name of the type, e.g. "aves.Object".
-	String *fullName;
-
-	// The offset (in bytes) of the first field in instances of this type.
-	uint32_t fieldsOffset;
-	// The total size (in bytes) of instances of this type.
-	// Note: this is 0 for Object, and String is variable-size.
-	size_t size;
-	// The total number of instance Value fields in the type.
-	int fieldCount;
-
-	// Members! These allow us to look up members by name.
-	StringHash<Member*> members;
-
-	// Operator implementations. If an operator implementation is null,
-	// then the type does not implement that operator.
-	Method *operators[OPERATOR_COUNT];
-
-	// The reference getter for the type. Is null unless the type has
-	// the flag TYPE_CUSTOMPTR, in which case the GC uses this method
-	// to obtain a list of Value references from instance of the type.
-	ReferenceGetter getReferences;
-	// The finalizer for the type. Only available to native-code types.
-	Finalizer finalizer;
-
-	// A handle to the module that declares the type.
-	Module *module;
-
-	// An instance of aves.Type that is bound to this type.
-	// Use GetTypeToken() to retrieve this value; this starts
-	// out as a NULL_VALUE and is only initialized on demand.
-	Value typeToken;
-
-	Value GetTypeToken(Thread *const thread);
-
-	void InitStaticFields();
-
-	static inline const bool ValueIsType(Value value, Type *const type)
-	{
-		Type *valtype = value.type;
-		while (valtype)
-		{
-			if (valtype == type)
-				return true;
-			valtype = valtype->baseType;
-		}
-		return false;
-	}
-
-private:
-	void InitOperators();
-
-	void LoadTypeToken(Thread *const thread);
-};
-
-
 enum class MemberFlags : uint16_t
 {
 	// The member has no flags.
@@ -140,10 +62,7 @@ public:
 	Type *declType;
 	Module *declModule;
 
-	inline Member(String *name, Type *declType, MemberFlags flags) :
-		name(name), declType(declType),
-		declModule(declType->module), flags(flags)
-	{ }
+	Member(String *name, Type *declType, MemberFlags flags);
 	inline Member(String *name, Module *declModule, MemberFlags flags) :
 		name(name), declType(nullptr),
 		declModule(declModule), flags(flags)
@@ -488,6 +407,87 @@ public:
 		Member(name, declType, flags | MemberFlags::PROPERTY)
 	{ }
 };
+
+// Types, once initialized, are supposed to be (more or less) immutable.
+// If you assign to any of the members in a Type, you have no one to blame but yourself.
+// That said, the VM occasionally updates the flags.
+class Type
+{
+public:
+	Type(int32_t memberCount);
+	~Type();
+
+	Member *GetMember(String *name) const;
+	Member *FindMember(String *name, Type *fromType) const;
+	//Method::Overload *GetOperator(Operator op);
+
+	// Flags associated with the type.
+	TypeFlags flags;
+
+	// The type from which this inherits (null only for Object).
+	Type *baseType;
+	// A type whose private and protected members this type has access to.
+	// The shared type must be in the same module as this type.
+	Type *sharedType;
+
+	// The fully qualified name of the type, e.g. "aves.Object".
+	String *fullName;
+
+	// The offset (in bytes) of the first field in instances of this type.
+	uint32_t fieldsOffset;
+	// The total size (in bytes) of instances of this type.
+	// Note: this is 0 for Object, and String is variable-size.
+	size_t size;
+	// The total number of instance Value fields in the type.
+	int fieldCount;
+
+	// Members! These allow us to look up members by name.
+	StringHash<Member*> members;
+
+	// Operator implementations. If an operator implementation is null,
+	// then the type does not implement that operator.
+	Method::Overload *operators[OPERATOR_COUNT];
+
+	// The reference getter for the type. Is null unless the type has
+	// the flag TYPE_CUSTOMPTR, in which case the GC uses this method
+	// to obtain a list of Value references from instance of the type.
+	ReferenceGetter getReferences;
+	// The finalizer for the type. Only available to native-code types.
+	Finalizer finalizer;
+
+	// A handle to the module that declares the type.
+	Module *module;
+
+	// An instance of aves.Type that is bound to this type.
+	// Use GetTypeToken() to retrieve this value; this starts
+	// out as a NULL_VALUE and is only initialized on demand.
+	Value typeToken;
+
+	Value GetTypeToken(Thread *const thread);
+
+	void InitOperators();
+	void InitStaticFields();
+
+	static inline const bool ValueIsType(Value value, Type *const type)
+	{
+		Type *valtype = value.type;
+		while (valtype)
+		{
+			if (valtype == type)
+				return true;
+			valtype = valtype->baseType;
+		}
+		return false;
+	}
+
+private:
+	void LoadTypeToken(Thread *const thread);
+};
+
+inline Member::Member(String *name, Type *declType, MemberFlags flags) :
+	name(name), declType(declType),
+	declModule(declType->module), flags(flags)
+{ }
 
 
 namespace std_type_names

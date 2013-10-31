@@ -51,7 +51,7 @@ int VM::Run(VMStartParams &params)
 
 	GC::Init(); // We must call this before VM::Init(), because VM::Init relies on the GC
 	Module::Init();
-	VM::Init(params);
+	VM::Init(params); // Also takes care of loading modules
 
 	int result = 0;
 

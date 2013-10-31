@@ -68,7 +68,7 @@ Type::Type(int32_t memberCount) :
 	members(memberCount), typeToken(NULL_VALUE),
 	size(0), fieldCount(0)
 {
-	memset(operators, 0, sizeof(Method*) * OPERATOR_COUNT);
+	memset(operators, 0, sizeof(Method::Overload*) * OPERATOR_COUNT);
 }
 
 Type::~Type()
@@ -89,22 +89,25 @@ Type::~Type()
 
 void Type::InitOperators()
 {
+	this->flags |= TypeFlags::OPS_INITED;
+	if (!baseType)
+		return;
+
+	assert((baseType->flags & TypeFlags::OPS_INITED) == TypeFlags::OPS_INITED);
 	for (int op = 0; op < OPERATOR_COUNT; op++)
 	{
-		if (this->operators[op])
-			continue;
+		if (!this->operators[op])
+			this->operators[op] = baseType->operators[op];
 
-		Type *type = this;
+		//Type *type = this;
 
-		Method *method;
-		do {
-			method = type->operators[op];
-		} while (!method && (type = type->baseType));
+		//Method::Overload *method;
+		//do {
+		//	method = type->operators[op];
+		//} while (!method && (type = type->baseType));
 
-		this->operators[op] = method; // null or an actual method.
+		//this->operators[op] = method; // null or an actual method.
 	}
-
-	this->flags |= TypeFlags::OPS_INITED;
 }
 
 Member *Type::GetMember(String *name) const
@@ -127,13 +130,11 @@ Member *Type::FindMember(String *name, Type *fromType) const
 	return nullptr; // not found
 }
 
-Method *Type::GetOperator(Operator op)
-{
-	if ((this->flags & TypeFlags::OPS_INITED) == TypeFlags::NONE)
-		this->InitOperators();
-
-	return this->operators[(int)op];
-}
+//Method::Overload *Type::GetOperator(Operator op)
+//{
+//	assert((this->flags & TypeFlags::OPS_INITED) == TypeFlags::OPS_INITED);
+//	return this->operators[(int)op];
+//}
 
 Value Type::GetTypeToken(Thread *const thread)
 {
@@ -422,7 +423,7 @@ OVUM_API MemberHandle Type_GetMemberByIndex(TypeHandle type, const int32_t index
 
 OVUM_API MethodHandle Type_GetOperator(TypeHandle type, Operator op)
 {
-	return type->GetOperator(op);
+	return type->operators[(int)op]->group;
 }
 OVUM_API Value Type_GetTypeToken(ThreadHandle thread, TypeHandle type)
 {

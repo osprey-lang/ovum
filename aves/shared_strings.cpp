@@ -40,7 +40,7 @@ namespace strings
 	// TODO: Make this platform-sensitive; \r\n is really just for Windows, you know?
 	LitString<2> _newline  = { 2, 0, StringFlags::STATIC, '\r','\n',0 };
 
-	String *newline  = _S(newline);
+	String *newline  = _S(_newline);
 }
 
 namespace error_strings
