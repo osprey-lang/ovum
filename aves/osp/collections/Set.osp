@@ -110,6 +110,11 @@ public inheritable Set
 		return h;
 	}
 
+	override toString()
+	{
+		return "Set[length = {0}]".format([length]);
+	}
+
 	operator &(a, b)
 	{
 		return a.intersect(b);

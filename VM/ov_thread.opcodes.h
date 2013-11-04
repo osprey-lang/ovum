@@ -330,6 +330,18 @@ enum IntermediateOpcode : uint8_t
 	OPI_LDFLDFAST_L = 0x62,
 	OPI_LDFLDFAST_S = 0x63,
 	OPI_STFLDFAST   = 0x64,
+
+	// Conditional comparison branches
+	OPI_BREQ        = 0x65, // ==
+	OPI_BRNEQ       = 0x66, // !=
+	OPI_BRLT        = 0x67, // <
+	OPI_BRGT        = 0x68, // >
+	OPI_BRLTE       = 0x69, // <=
+	OPI_BRGTE       = 0x6a, // >=
+	OPI_BRNLT       = OPI_BRGTE,
+	OPI_BRNGT       = OPI_BRLTE,
+	OPI_BRNLTE      = OPI_BRGT,
+	OPI_BRNGTE      = OPI_BRLT
 };
 
 namespace instr
@@ -424,6 +436,7 @@ namespace instr
 		{
 			return instructions[index].instr;
 		}
+		void SetInstruction(int32_t index, Instruction *newInstr, bool deletePrev);
 
 
 		int32_t GetTypeCount() const
@@ -465,6 +478,7 @@ namespace instr
 		LOAD_LOCAL = 0x0040,
 		// The instruction is a StoreLocal
 		STORE_LOCAL = 0x0080,
+		// The instruction is a DupInstr.
 		DUP = 0x0100,
 	};
 	ENUM_OPS(InstrFlags, uint8_t);
@@ -648,7 +662,7 @@ namespace instr
 			if (isOnStack)
 			{
 				// dup claims to add two values, but we're only interested in the second argument
-				target = LocalOffset(offset.offset + 1);
+				target = LocalOffset(offset.GetOffset() + 1);
 				opcode = (IntermediateOpcode)(opcode | 2);
 			}
 			else
@@ -1253,7 +1267,7 @@ namespace instr
 			buffer += sizeof(LocalOffset);
 			*(LocalOffset*)buffer = output;
 			buffer += sizeof(LocalOffset);
-			*(LocalOffset*)buffer = argCount;
+			*(uint16_t*)buffer = argCount;
 		}
 	};
 
@@ -1653,6 +1667,40 @@ namespace instr
 		inline BranchIfReference(const int32_t target, const bool branchIfSame) :
 			Branch(target, InstrFlags::HAS_INPUT | InstrFlags::INPUT_ON_STACK, branchIfSame ? OPI_BRREF : OPI_BRNREF),
 			args(0)
+		{ }
+
+		inline virtual unsigned int GetArgsSize() const
+		{
+			return sizeof(LocalOffset) + sizeof(int32_t);
+		}
+
+		inline virtual StackChange GetStackChange() const { return StackChange(2, 0); }
+
+		inline virtual bool IsConditional() const { return true; }
+
+		inline virtual void UpdateInput(const LocalOffset offset, const bool isOnStack)
+		{
+			assert(isOnStack);
+			args = offset;
+		}
+
+	protected:
+		inline virtual void WriteArguments(char *buffer, MethodBuilder &builder) const
+		{
+			*(LocalOffset*)buffer = args;
+			buffer += sizeof(LocalOffset);
+			*(int32_t*)buffer = builder.GetNewOffset(target, this);
+		}
+	};
+
+	class BranchComparison : public Branch
+	{
+	public:
+		LocalOffset args;
+
+		inline BranchComparison(LocalOffset args, int32_t target, IntermediateOpcode opcode) :
+			Branch(target, InstrFlags::HAS_INPUT | InstrFlags::INPUT_ON_STACK, opcode),
+			args(args)
 		{ }
 
 		inline virtual unsigned int GetArgsSize() const

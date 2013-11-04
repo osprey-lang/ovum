@@ -21,7 +21,6 @@
 #define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
 // Windows header files
 #include <windows.h>
-#include <iosfwd>
 
 class Thread;
 class Type;
@@ -50,6 +49,7 @@ typedef Field *FieldHandle;
 typedef Property *PropertyHandle;
 
 #include "ov_vm.h"
+#include <cstdio>
 
 class VM
 {
@@ -81,7 +81,7 @@ private:
 	void LoadModules(VMStartParams &params);
 	void InitArgs(int argCount, const wchar_t *args[]);
 
-	static void PrintInternal(std::wostream &stream, String *str);
+	static void PrintInternal(FILE *file, const wchar_t *format, String *str);
 
 public:
 	StandardTypes types;
@@ -96,8 +96,11 @@ public:
 	static void Unload();
 
 	static void Print(String *str);
+	static void Printf(const wchar_t *format, String *str);
 	static void PrintLn(String *str);
+
 	static void PrintErr(String *str);
+	static void PrintfErr(const wchar_t *format, String *str);
 	static void PrintErrLn(String *str);
 
 	inline int GetArgCount() { return argCount; }

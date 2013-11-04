@@ -1,6 +1,8 @@
 #include "ov_vm.internal.h"
 #include "ov_string.h"
-#include <iostream>
+#ifdef PRINT_DEBUG_INFO
+#include <cstdio>
+#endif
 
 namespace std_type_names
 {
@@ -66,7 +68,7 @@ LocalOffset Method::Overload::GetStackOffset(uint16_t stackSlot) const
 
 Type::Type(int32_t memberCount) :
 	members(memberCount), typeToken(NULL_VALUE),
-	size(0), fieldCount(0)
+	size(0), fieldCount(0), getReferences(nullptr), finalizer(nullptr)
 {
 	memset(operators, 0, sizeof(Method::Overload*) * OPERATOR_COUNT);
 }
@@ -74,8 +76,7 @@ Type::Type(int32_t memberCount) :
 Type::~Type()
 {
 #ifdef PRINT_DEBUG_INFO
-	std::wcout << L"Releasing type: ";
-	VM::PrintLn(this->fullName);
+	VM::Printf(L"Releasing type: %ls\n", this->fullName);
 #endif
 
 	// If this is a standard type, unregister it
@@ -129,12 +130,6 @@ Member *Type::FindMember(String *name, Type *fromType) const
 
 	return nullptr; // not found
 }
-
-//Method::Overload *Type::GetOperator(Operator op)
-//{
-//	assert((this->flags & TypeFlags::OPS_INITED) == TypeFlags::OPS_INITED);
-//	return this->operators[(int)op];
-//}
 
 Value Type::GetTypeToken(Thread *const thread)
 {

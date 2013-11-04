@@ -3,7 +3,9 @@
 #ifndef VM__STRING_HASH_INTERNAL_H
 #define VM__STRING_HASH_INTERNAL_H
 
-#include <iostream>
+#ifdef PRINT_DEBUG_INFO
+#include <cstdio>
+#endif
 #include "ov_vm.internal.h"
 #include "ov_string.h"
 
@@ -79,7 +81,7 @@ template<class T>
 StringHash<T>::~StringHash()
 {
 #ifdef PRINT_DEBUG_INFO
-	std::wcout << L"Deleting string table" << std::endl;
+	wprintf(L"Deleting string table\n");
 #endif
 	if (buckets)
 	{

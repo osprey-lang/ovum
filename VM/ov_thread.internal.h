@@ -7,6 +7,12 @@
 #include "ov_vm.internal.h"
 #include "ov_stringbuffer.internal.h"
 
+#ifdef THREADED_EVALUATION
+#ifndef __GNUC__
+#error You must compile with gcc for threaded evaluation
+#endif
+#endif
+
 class StringBuffer;
 namespace instr
 {
@@ -31,11 +37,11 @@ typedef struct StackFrame_S
 	// This is the first field because it is the most frequently accessed;
 	// therefore, no offset needs to be added to the stack frame pointer
 	// to obtain the value of this field.
-	uint16_t stackCount;
+	uint32_t stackCount;
 	// The number of arguments that were passed to the method, INCLUDING
 	// the instance if the method is an instance method.
 	// This is required by the ldargc instruction.
-	uint16_t argc;
+	uint32_t argc;
 	// The address at which the evaluation stack begins.
 	Value *evalStack;
 	// The previous IP.
@@ -48,7 +54,7 @@ typedef struct StackFrame_S
 	// to obtain the name of the method.
 	Method::Overload *method;
 
-	inline void Init(uint16_t stackCount, uint16_t argc,
+	inline void Init(uint32_t stackCount, uint32_t argc,
 		Value *evalStack, uint8_t *prevInstr,
 		StackFrame *prevFrame, Method::Overload *method)
 	{
@@ -160,7 +166,7 @@ private:
 		uint32_t tokenId;
 		struct {
 			Method *methodGroup;
-			uint16_t argCount;
+			uint32_t argCount;
 		} noOverload;
 	};
 
@@ -186,7 +192,7 @@ public:
 	{ }
 
 	inline MethodInitException(const char *const message, Method::Overload *method,
-		Method *methodGroup, uint16_t argCount, FailureKind kind) :
+		Method *methodGroup, uint32_t argCount, FailureKind kind) :
 		exception(message), method(method), kind(kind)
 	{
 		noOverload.methodGroup = methodGroup;
@@ -202,7 +208,7 @@ public:
 	inline Type *GetType() const { return type; }
 	inline uint32_t GetTokenId() const { return tokenId; }
 	inline Method *GetMethodGroup() const { return noOverload.methodGroup; }
-	inline uint16_t GetArgumentCount() const { return noOverload.argCount; }
+	inline uint32_t GetArgumentCount() const { return noOverload.argCount; }
 };
 
 class Thread
@@ -256,11 +262,11 @@ public:
 	inline Value *Local(const unsigned int n) { return LOCALS_OFFSET(currentFrame) + n; }
 
 	// argCount does NOT include the instance.
-	void Invoke(unsigned int argCount, Value *result);
+	void Invoke(uint32_t argCount, Value *result);
 	// argCount DOES NOT include the instance.
-	void InvokeMethod(Method *method, unsigned int argCount, Value *result);
+	void InvokeMethod(Method *method, uint32_t argCount, Value *result);
 	// argCount does NOT include the instance.
-	void InvokeMember(String *name, unsigned int argCount, Value *result);
+	void InvokeMember(String *name, uint32_t argCount, Value *result);
 	void InvokeOperator(Operator op, Value *result);
 	void InvokeApply(Value *result);
 	void InvokeApplyMethod(Method *method, Value *result);
@@ -273,9 +279,9 @@ public:
 	void StoreMember(String *member);
 
 	// Note: argCount does NOT include the instance.
-	void LoadIndexer(uint16_t argCount, Value *result);
+	void LoadIndexer(uint32_t argCount, Value *result);
 	// Note: argCount does NOT include the instance or the value that's being stored.
-	void StoreIndexer(uint16_t argCount);
+	void StoreIndexer(uint32_t argCount);
 
 	void LoadStaticField(Field *field, Value *result);
 	void StoreStaticField(Field *field);
@@ -307,16 +313,14 @@ private:
 	//     The number of arguments passed to the method, INCLUDING the instance.
 	//   method:
 	//     The overload that is being invoked in the stack frame.
-	StackFrame *PushStackFrame(const uint16_t argCount, Value *args, Method::Overload *method);
+	template<bool First>
+	StackFrame *PushStackFrame(const uint32_t argCount, Value *args, Method::Overload *method);
 
-	// Pushes the very first stack frame onto the call stack.
-	StackFrame *PushFirstStackFrame(const uint16_t argCount, Value args[], Method::Overload *method);
+	void PrepareVariadicArgs(const MethodFlags flags, const uint32_t argCount, const uint32_t paramCount, StackFrame *frame);
 
-	void PrepareVariadicArgs(const MethodFlags flags, const uint16_t argCount, const uint16_t paramCount, StackFrame *frame);
-
-	void Evaluate(StackFrame *frame, uint8_t *entryAddress);
-	bool FindErrorHandler(StackFrame *frame, uint8_t * &ip);
-	void EvaluateLeave(StackFrame *frame, uint8_t *ip, const int32_t target);
+	void Evaluate(StackFrame *frame);
+	bool FindErrorHandler(StackFrame *frame);
+	void EvaluateLeave(StackFrame *frame, const int32_t target);
 
 	String *GetStackTrace();
 	void AppendArgumentType(StringBuffer &buf, Value arg);
@@ -329,15 +333,15 @@ private:
 	void InvokeApplyLL(Value *args, Value *result);
 	void InvokeApplyMethodLL(Method *method, Value *args, Value *result);
 
-	void InvokeMemberLL(String *name, uint16_t argCount, Value *value, Value *result);
+	void InvokeMemberLL(String *name, uint32_t argCount, Value *value, Value *result);
 
 	void LoadMemberLL(Value *instance, String *member, Value *result);
 	void StoreMemberLL(Value *instance, String *member);
 
 	// argCount DOES NOT include the instance, but args DOES
-	void LoadIndexerLL(uint16_t argCount, Value *args, Value *dest);
+	void LoadIndexerLL(uint32_t argCount, Value *args, Value *dest);
 	// argCount DOES NOT include the instance or the value being assigned, but args DOES
-	void StoreIndexerLL(uint16_t argCount, Value *args);
+	void StoreIndexerLL(uint32_t argCount, Value *args);
 
 	void InvokeOperatorLL(Value *args, Operator op, Value *result);
 	bool EqualsLL(Value *args);
@@ -355,11 +359,11 @@ private:
 	static Type *TypeFromToken(Method::Overload *fromMethod, uint32_t token);
 	static String *StringFromToken(Method::Overload *fromMethod, uint32_t token);
 	static Method *MethodFromToken(Method::Overload *fromMethod, uint32_t token);
-	static Method::Overload *MethodOverloadFromToken(Method::Overload *fromMethod, uint32_t token, uint16_t argCount);
+	static Method::Overload *MethodOverloadFromToken(Method::Overload *fromMethod, uint32_t token, uint32_t argCount);
 	static Field *FieldFromToken(Method::Overload *fromMethod, uint32_t token, bool shouldBeStatic);
 
 	friend class GC;
-	friend void VM_InvokeMethod(ThreadHandle, MethodHandle, const unsigned int, Value*);
+	friend void VM_InvokeMethod(ThreadHandle, MethodHandle, const uint32_t, Value*);
 	friend class VM; // temp
 };
 

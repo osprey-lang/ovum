@@ -80,9 +80,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <Text Include="ReadMe.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="aves.h" />
     <ClInclude Include="aves_buffer.h" />
     <ClInclude Include="aves_enum.h" />
@@ -104,6 +101,7 @@
     <ClInclude Include="aves_stringbuffer.h" />
     <ClInclude Include="aves_type.h" />
     <ClInclude Include="aves_uint.h" />
+    <ClInclude Include="dtoa.config.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
@@ -118,6 +116,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
       </PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="dtoa.c" />
     <ClCompile Include="enum.cpp" />
     <ClCompile Include="env.cpp" />
     <ClCompile Include="error.cpp" />

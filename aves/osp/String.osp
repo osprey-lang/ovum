@@ -150,8 +150,8 @@ public class String
 	///     The format placeholders must be in the general format `{ph}`, where `ph` is the
 	///     “name” of the placeholder. If you pass a List into {values}, `ph` must correspond
 	///     to an index in that list (negative numbers are not allowed). If {values} is a Hash,
-	///     then `ph` must be a key in that Hash. Additionally, `ph` must be a valid Osprey
-	///     identifier or keyword.
+	///     then `ph` must be a key in that Hash; additionally, `ph` must be a valid Osprey
+	///     identifier or keyword (e.g. `{feathers?}` is not a valid placeholder).
 	///
 	///     If the placeholder value is null, an empty string is inserted. Otherwise, if the
 	///     value is not a String, `.toString()` is called on it with no arguments. If that

@@ -146,7 +146,7 @@ public:
 	// NOTE: This function is only called for /reachable/ Values.
 	inline bool ShouldProcess(Value val)
 	{
-		if (!val.type || (val.type->flags & TypeFlags::PRIMITIVE) == TypeFlags::PRIMITIVE)
+		if (val.type == nullptr || (val.type->flags & TypeFlags::PRIMITIVE) == TypeFlags::PRIMITIVE)
 			return false;
 
 		if (val.type == VM::vm->types.String &&
@@ -157,7 +157,7 @@ public:
 	}
 	inline bool ShouldProcess(Value *val)
 	{
-		if (!val->type || (val->type->flags & TypeFlags::PRIMITIVE) == TypeFlags::PRIMITIVE)
+		if (val->type == nullptr || (val->type->flags & TypeFlags::PRIMITIVE) == TypeFlags::PRIMITIVE)
 			return false;
 
 		if (val->type == VM::vm->types.String &&

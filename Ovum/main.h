@@ -11,12 +11,6 @@
 #include <stdio.h>
 #include <Shlwapi.h>
 
-#ifdef UNICODE
-#define _tcout   wcout
-#else
-#define _tcout   cout
-#endif
-
 #include "ov_vm.h"
 
 // Arguments parsed by the command line parser. Whee!

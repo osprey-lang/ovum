@@ -1,11 +1,9 @@
 ﻿#include <wchar.h>
 #include <fcntl.h>
 #include <io.h>
-#include <iostream>
-#include <iomanip>
+#include <cstdio>
 #include <memory>
 #include <Shlwapi.h>
-#include <csignal>
 #include "ov_vm.internal.h"
 
 VM *VM::vm;
@@ -41,12 +39,13 @@ int VM::Run(VMStartParams &params)
 
 	_setmode(_fileno(stdout), _O_WTEXT);
 	_setmode(_fileno(stderr), _O_WTEXT);
+	_setmode(_fileno(stdin),  _O_WTEXT);
 
 	if (params.verbose)
 	{
-		wcout << L"Module path:    " << params.modulePath  << endl;
-		wcout << L"Startup file:   " << params.startupFile << endl;
-		wcout << L"Argument count: " << params.argc        << endl;
+		wprintf(L"Module path:    %ls\n", params.modulePath);
+		wprintf(L"Startup file:   %ls\n", params.startupFile);
+		wprintf(L"Argument count: %ls\n", params.argc);
 	}
 
 	GC::Init(); // We must call this before VM::Init(), because VM::Init relies on the GC
@@ -55,19 +54,18 @@ int VM::Run(VMStartParams &params)
 
 	int result = 0;
 
-	//VM::vm->mainThread->InitializeMethod(vm->startupModule->GetMainMethod()->overloads);
 	try
 	{
 		Method *main = vm->startupModule->GetMainMethod();
 		if (main == nullptr)
 		{
-			wcerr << L"Startup error: Startup module does not define a main method." << endl;
+			wprintf(L"Startup error: Startup module does not define a main method.\n");
 			result = EXIT_FAILURE;
 		}
 		else
 		{
 			if (vm->verbose)
-				wcout << L"<<< Begin program output >>>" << endl;
+				wprintf(L"<<< Begin program output >>>\n");
 
 			Value returnValue;
 			vm->mainThread->Start(main, returnValue);
@@ -79,7 +77,7 @@ int VM::Run(VMStartParams &params)
 				result = (int)returnValue.real;
 
 			if (vm->verbose)
-				wcout << L"<<< End program output >>>" << endl;
+				wprintf(L"<<< End program output >>>\n");
 		}
 	}
 	catch (OvumException &e)
@@ -111,8 +109,6 @@ void VM::Init(VMStartParams &params)
 
 void VM::LoadModules(VMStartParams &params)
 {
-	using namespace std;
-
 	// Set up some stuff first
 	wchar_t *startupPath = CloneWString(params.startupFile);
 	PathRemoveFileSpecW(startupPath);
@@ -130,11 +126,11 @@ void VM::LoadModules(VMStartParams &params)
 	}
 	catch (ModuleLoadException &e)
 	{
-		const wstring &fileName = e.GetFileName();
+		const std::wstring &fileName = e.GetFileName();
 		if (!fileName.empty())
-			wcerr << "Error loading module '" << fileName.c_str() << "': " << e.what() << endl;
+			fwprintf(stderr, L"Error loading module '%ls': %s\n", fileName.c_str(), e.what());
 		else
-			wcerr << "Error loading module: " << e.what() << endl;
+			fwprintf(stderr, L"Error loading module: %s\n", e.what());
 		exit(EXIT_FAILURE);
 	}
 
@@ -143,8 +139,7 @@ void VM::LoadModules(VMStartParams &params)
 		std_type_names::StdType type = std_type_names::Types[i];
 		if (this->types.*(type.member) == nullptr)	
 		{
-			wcerr << "Startup error: standard type not loaded: ";
-			PrintErrLn(type.name);
+			PrintInternal(stderr, L"Startup error: standard type not loaded: %ls\n", type.name);
 			exit(EXIT_FAILURE);
 		}
 	}
@@ -152,8 +147,6 @@ void VM::LoadModules(VMStartParams &params)
 
 void VM::InitArgs(int argCount, const wchar_t *args[])
 {
-	using namespace std;
-
 	// Convert command-line arguments to String*s.
 	Value **argValues = new Value*[argCount];
 	for (int i = 0; i < argCount; i++)
@@ -165,7 +158,7 @@ void VM::InitArgs(int argCount, const wchar_t *args[])
 
 		if (this->verbose)
 		{
-			wcout << "Argument " << i << ": ";
+			wprintf(L"Argument %d: ", i);
 			PrintLn(argValue.common.string);
 		}
 	}
@@ -178,14 +171,14 @@ void VM::Unload()
 	delete VM::vm;
 }
 
-void VM::PrintInternal(std::wostream &stream, String *str)
+void VM::PrintInternal(FILE *f, const wchar_t *format, String *str)
 {
 	using namespace std;
 
 	if (sizeof(uchar) == sizeof(wchar_t))
 	{
 		// Assume wchar_t is UTF-16, or at least USC-2, and just cast it.
-		stream << (const wchar_t*)&str->firstChar;
+		fwprintf(f, format, (const wchar_t*)&str->firstChar);
 	}
 	else if (sizeof(wchar_t) == sizeof(uint32_t))
 	{
@@ -196,14 +189,13 @@ void VM::PrintInternal(std::wostream &stream, String *str)
 		{
 			wchar_t buffer[128];
 			String_ToWString(buffer, str);
-			stream << buffer;
+			fwprintf(f, format, buffer);
 		}
 		else
 		{
 			unique_ptr<wchar_t[]> buffer(new wchar_t[length]);
 			String_ToWString(buffer.get(), str);
-
-			stream << buffer;
+			fwprintf(f, format, buffer.get());
 		}
 	}
 	else
@@ -214,32 +206,36 @@ void VM::PrintInternal(std::wostream &stream, String *str)
 
 void VM::Print(String *str)
 {
-	PrintInternal(std::wcout, str);
+	PrintInternal(stdout, L"%ls", str);
+}
+void VM::Printf(const wchar_t *format, String *str)
+{
+	PrintInternal(stdout, format, str);
 }
 void VM::PrintLn(String *str)
 {
-	PrintInternal(std::wcout, str);	
-	std::wcout << std::endl;
+	PrintInternal(stdout, L"%ls\n", str);
 }
 
 void VM::PrintErr(String *str)
 {
-	PrintInternal(std::wcerr, str);
+	PrintInternal(stderr, L"%ls", str);
+}
+void VM::PrintfErr(const wchar_t *format, String *str)
+{
+	PrintInternal(stderr, format, str);
 }
 void VM::PrintErrLn(String *str)
 {
-	PrintInternal(std::wcerr, str);
-	std::wcerr << std::endl;
+	PrintInternal(stderr, L"%ls\n", str);
 }
 
 void VM::PrintOvumException(OvumException &e)
 {
 	using namespace std;
 
-	wcerr << L"Unhandled error: ";
 	Value error = e.GetError();
-	PrintErr(error.type->fullName);
-	wcerr << L": ";
+	PrintInternal(stderr, L"Unhandled error: %ls: ", error.type->fullName);
 	PrintErrLn(error.common.error->message);
 	PrintErrLn(error.common.error->stackTrace);
 }
@@ -247,60 +243,50 @@ void VM::PrintMethodInitException(MethodInitException &e)
 {
 	using namespace std;
 
-	wcerr << "An error occurred while initializing the method '";
+	FILE *err = stderr;
+
+	fwprintf(err, L"An error occurred while initializing the method '");
+
 	Method::Overload *method = e.GetMethod();
 	if (method->declType)
-	{
-		PrintErr(method->declType->fullName);
-		wcerr << L'.';
-	}
+		PrintInternal(err, L"%ls.", method->declType->fullName);
 	PrintErr(method->group->name);
-	wcerr << "' from module ";
-	PrintErr(method->group->declModule->name);
 
-	wcerr << ": " << e.what() << endl;
+	PrintInternal(err, L"' from module %ls: ", method->group->declModule->name);
+	fwprintf(err, L"%s\n", e.what());
+
 	switch (e.GetFailureKind())
 	{
 	case MethodInitException::INCONSISTENT_STACK_HEIGHT:
 	case MethodInitException::INVALID_BRANCH_OFFSET:
 	case MethodInitException::INSUFFICIENT_STACK_HEIGHT:
-		wcerr << "Instruction index: " << e.GetInstructionIndex() << endl;
+		fwprintf(err, L"Instruction index: %d\n", e.GetInstructionIndex());
 		break;
 	case MethodInitException::INACCESSIBLE_MEMBER:
 	case MethodInitException::FIELD_STATIC_MISMATCH:
-		wcerr << "Member: ";
+		fwprintf(err, L"Member: ");
 		{
 			Member *member = e.GetMember();
 			if (member->declType)
-			{
-				PrintErr(member->declType->fullName);
-				wcerr << L'.';
-			}
-			PrintErr(member->name);
-			wcerr << endl;
+				PrintInternal(err, L"%ls.", member->declType->fullName);
+			PrintInternal(err, L"%ls\n", member->name);
 		}
 		break;
 	case MethodInitException::UNRESOLVED_TOKEN_ID:
-		wcerr << "Token ID: " << setfill(L'0') << hex << setw(8) << e.GetTokenId() << endl;
+		fwprintf(err, L"Token ID: %08X\n", e.GetTokenId());
 		break;
 	case MethodInitException::NO_MATCHING_OVERLOAD:
-		wcerr << "Method: '";
+		fwprintf(err, L"Method: '");
 		if (e.GetMethodGroup()->declType)
-		{
-			PrintErr(e.GetMethodGroup()->declType->fullName);
-			wcerr << L'.';
-		}
+			PrintInternal(err, L"%ls.", e.GetMethodGroup()->declType->fullName);
 		PrintErr(e.GetMethodGroup()->name);
-		wcerr << "' from module ";
-		PrintErrLn(e.GetMethodGroup()->declModule->name);
+		PrintInternal(err, L"' from module %ls\n", e.GetMethodGroup()->declModule->name);
 
-		wcerr << endl << "Argument count: " << e.GetArgumentCount() << endl;
+		fwprintf(err, L"Argument count: %u\n", e.GetArgumentCount());
 		break;
 	case MethodInitException::INACCESSIBLE_TYPE:
-		wcerr << "Type: '";
-		PrintErr(e.GetType()->fullName);
-		wcerr << "' from module ";
-		PrintErrLn(e.GetType()->module->name);
+		PrintInternal(err, L"Type: '%ls' ", e.GetType()->fullName);
+		PrintInternal(err, L"from module %ls\n", e.GetType()->module->name);
 		break;
 	}
 }

@@ -15,12 +15,10 @@
 inline void SetNull_(Value &target)
 {
 	target.type = nullptr;
-	target.instance = nullptr;
 }
 inline void SetNull_(Value *target)
 {
 	target->type = nullptr;
-	target->instance = nullptr;
 }
 
 inline void SetBool_(Value &target, const bool value)
@@ -117,6 +115,18 @@ inline bool IsSameReference_(Value a, Value b)
 	if ((a.type->flags & TypeFlags::PRIMITIVE) == TypeFlags::PRIMITIVE)
 		return a.integer == b.integer;
 	return a.instance == b.instance;
+}
+
+inline bool IsSameReference_(Value *a, Value *b)
+{
+	if (a->type != b->type)
+		return false;
+	// a->type == b->type at this point
+	if (a->type == nullptr)
+		return true;
+	if ((a->type->flags & TypeFlags::PRIMITIVE) == TypeFlags::PRIMITIVE)
+		return a->integer == b->integer;
+	return a->instance == b->instance;
 }
 
 #endif // VM__VALUE_INTERNAL_H
