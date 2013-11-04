@@ -4,7 +4,9 @@
 #define VM__TYPE_INTERNAL_H
 
 #include "ov_vm.internal.h"
-#include <iostream>
+#ifdef PRINT_DEBUG_INFO
+#include <cstdio>
+#endif
 #include <cassert>
 
 // forward declarations
@@ -72,15 +74,15 @@ public:
 	{
 #ifdef PRINT_DEBUG_INFO
 		if ((flags & MemberFlags::FIELD) == MemberFlags::FIELD)
-			std::wcout << "Releasing field: ";
+			wprintf(L"Releasing field: ");
 		else if ((flags & MemberFlags::METHOD) == MemberFlags::METHOD)
-			std::wcout << "Releasing method: ";
+			wprintf(L"Releasing method: ");
 		else
-			std::wcout << "Releasing property: ";
+			wprintf(L"Releasing property: ");
 		if (declType)
 		{
 			VM::Print(declType->fullName);
-			std::wcout << ".";
+			wprintf(L".");
 		}
 		VM::PrintLn(this->name);
 #endif
@@ -185,17 +187,20 @@ typedef struct StackFrame_S StackFrame;
 // the local that it actually refers to.
 class LocalOffset
 {
-public:
-	int16_t offset;
+private:
+	int32_t offset;
 
-	inline LocalOffset(const int16_t offset) : offset(offset) { }
-	
+public:
+	inline LocalOffset(const int32_t offset) : offset(offset * sizeof(Value)) { }
+
+	inline int32_t GetOffset() const { return offset / sizeof(Value); }
+
 	inline Value *const operator+(const StackFrame *const frame) const
 	{
 		// Offsets 0 and 1 point directly into the stack frame;
 		// they are never supposed to be reached.
 		assert(offset != 0 && offset != 1);
-		return (Value*)((char*)frame + offset * sizeof(Value));
+		return (Value*)((char*)frame + offset);
 	}
 };
 
@@ -354,7 +359,8 @@ public:
 	Method *baseMethod;
 
 	inline Method(String *name, Module *declModule, MemberFlags flags) :
-		Member(name, declModule, flags | MemberFlags::METHOD)
+		Member(name, declModule, flags | MemberFlags::METHOD),
+		overloadCount(0), overloads(nullptr)
 	{ }
 
 	inline ~Method()

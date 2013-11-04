@@ -1,5 +1,5 @@
-#include <iostream>
 #include <string>
+#include <memory>
 #include "aves.h"
 #include "ov_string.h"
 
@@ -42,6 +42,8 @@ TypeHandle Types::ConsoleKey;
 TypeHandle Types::ConsoleKeyCode;
 String *format = _S(_format);
 
+static bool ConsoleInputEOF;
+
 
 // Note: This is not declared in any header file. Only in this source file.
 AVES_API void OvumModuleMain(ModuleHandle module)
@@ -58,17 +60,15 @@ AVES_API void OvumModuleMain(ModuleHandle module)
 	Types::HashEntry          = Module_FindType(module, _S(_HashEntry_Name),          true);
 	Types::ConsoleKey         = Module_FindType(module, _S(_ConsoleKey_Name),         true);
 	Types::ConsoleKeyCode     = Module_FindType(module, _S(_ConsoleKeyCode_Name),     true);
+	ConsoleInputEOF = false;
 }
 
 
 AVES_API NATIVE_FUNCTION(aves_print)
 {
 	if (IS_NULL(*args))
-	{
-		std::wcout << std::endl; // null prints like empty string
-		return;
-	}
-	if (!IsString(*args))
+		SetString(args, strings::Empty); // null prints like empty string
+	else if (!IsString(*args))
 		*args = StringFromValue(thread, *args);
 
 	VM_PrintLn(args->common.string);
@@ -76,11 +76,8 @@ AVES_API NATIVE_FUNCTION(aves_print)
 AVES_API NATIVE_FUNCTION(aves_printErr)
 {
 	if (IS_NULL(*args))
-	{
-		std::wcout << std::endl; // null prints like empty string
-		return;
-	}
-	if (!IsString(*args))
+		SetString(args, strings::Empty); // null prints like empty string
+	else if (!IsString(*args))
 		*args = StringFromValue(thread, *args);
 
 	VM_PrintErrLn(args->common.string);
@@ -200,17 +197,82 @@ AVES_API NATIVE_FUNCTION(aves_readChar)
 }
 AVES_API NATIVE_FUNCTION(aves_readLine)
 {
-	std::wstring line;
-	if (std::getline(std::wcin, line))
-	{
-		Value *result = VM_Local(thread, 0);
-		SetString(result, String_FromWString(thread, line.data()));
-		VM_Push(thread, *result);
-	}
-	else
+	if (ConsoleInputEOF)
 	{
 		VM_PushNull(thread);
+		return;
 	}
+
+	const int StackBufferSize = 512;
+	using namespace std;
+
+	int bufferSize = StackBufferSize;
+	int length = 0;
+	wchar_t *heapBuffer = nullptr; // Only allocated when needed
+	wchar_t buffer[StackBufferSize];
+	wchar_t *bufp = buffer;
+
+	// Note: this implementation does NOT append the newline to the result
+
+	DWORD charsRead;
+	wchar_t ch;
+	while (ReadConsoleW(GetStdHandle(STD_INPUT_HANDLE),
+		&ch, 1, &charsRead, nullptr) && charsRead != 0)
+	{
+		// Control+Z (\x1A) at the beginning of the line marks the end of the input
+		// Break the loop and update the flags below
+		if (ch == 0x1A && length == 0 || ch == '\n')
+			break;
+		if (ch != '\r') // Ignore \r, because it only really occurs in \r\n
+		{
+			*bufp++ = ch;
+			length++;
+		}
+
+		if (length == bufferSize)
+		{
+			// Oops - we've filled up the buffer!
+			// Time to allocate a bigger buffer.
+			bufferSize *= 2; // Double the buffer size
+			if (heapBuffer)
+			{
+				wchar_t *newHeapBuffer = (wchar_t*)realloc(heapBuffer, bufferSize * sizeof(wchar_t));
+				if (!newHeapBuffer)
+				{
+					free(heapBuffer);
+					VM_ThrowMemoryError(thread);
+				}
+				heapBuffer = newHeapBuffer;
+			}
+			else
+			{
+				// Move from the stack buffer to the heap buffer
+				heapBuffer = (wchar_t*)malloc(bufferSize * sizeof(wchar_t));
+				if (!heapBuffer)
+					VM_ThrowMemoryError(thread);
+				CopyMemoryT(heapBuffer, buffer, StackBufferSize);
+			}
+			bufp = heapBuffer + length;
+		}
+	}
+	// length < bufferSize here, so this does not
+	// overflow either of the buffers:
+	*bufp = 0; // Always terminate
+
+	if (length == 0 && ch == 0x1A)
+	{
+		// Reached end-of-file before reading any characters,
+		// update EOF flag and return null.
+		ConsoleInputEOF = true;
+		VM_PushNull(thread);
+		return;
+	}
+
+	// Convert input to a string, woohoo!
+	String *str = String_FromWString(thread, heapBuffer ? heapBuffer : buffer);
+	if (heapBuffer)
+		free(heapBuffer);
+	VM_PushString(thread, str);
 }
 
 AVES_API NATIVE_FUNCTION(aves_clearConsole)
@@ -247,11 +309,11 @@ AVES_API NATIVE_FUNCTION(aves_clearConsole)
 AVES_API NATIVE_FUNCTION(aves_exit)
 {
 	int exitCode;
-	if (args[0].type == GetType_Int())
+	if (args[0].type == Types::Int)
 		exitCode = (int)args[0].integer;
-	else if (args[0].type == GetType_UInt())
+	else if (args[0].type == Types::UInt)
 		exitCode = (int)args[0].uinteger;
-	else if (args[0].type == GetType_Real())
+	else if (args[0].type == Types::Real)
 		exitCode = (int)args[0].real;
 	else
 		exitCode = 0;

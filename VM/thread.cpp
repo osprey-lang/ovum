@@ -31,6 +31,9 @@ namespace thread_errors
 	String *NoIndexerFound              = _S(_NoIndexerFound);
 }
 
+#ifdef THREADED_EVALUATION
+bool Thread::EvalBranchTableInitialized = false;
+#endif
 
 Thread::Thread() :
 	currentFrame(nullptr), state(ThreadState::CREATED),
@@ -54,27 +57,36 @@ void Thread::Start(Method *method, Value &result)
 	assert(mo != nullptr);
 	assert((mo->flags & MethodFlags::VARIADIC) == MethodFlags::NONE);
 
-	StackFrame *frame = PushFirstStackFrame(0, nullptr, mo);
+	StackFrame *frame = PushStackFrame<true>(0, nullptr, mo);
 
 	if ((mo->flags & MethodFlags::NATIVE) == MethodFlags::NATIVE)
 	{
 		mo->nativeEntry(this, 0, (Value*)frame);
-		if (frame->stackCount)
-			result = frame->evalStack[0];
-		else
-			result = NULL_VALUE;
+		if (frame->stackCount == 0)
+			frame->evalStack[0].type = nullptr;
 	}
 	else
 	{
 		if (!mo->IsInitialized())
 			InitializeMethod(mo);
-		Evaluate(frame, mo->entry);
+		this->ip = mo->entry;
+		entry:
+		try
+		{
+			Evaluate(frame);
+		}
+		catch (OvumException&)
+		{
+			if (FindErrorHandler(frame))
+				goto entry;
+			throw;
+		}
 		assert(frame->stackCount == 1);
-		result = frame->evalStack[0];
 	}
 
-	currentFrame = frame->prevFrame;
-	ip = frame->prevInstr;
+	result = frame->evalStack[0];
+	currentFrame = nullptr;
+	ip = nullptr;
 
 	state = ThreadState::STOPPED;
 
@@ -167,7 +179,7 @@ void Thread::InvokeMember(String *name, unsigned int argCount, Value *result)
 	}
 }
 
-void Thread::InvokeMemberLL(String *name, uint16_t argCount, Value *value, Value *result)
+void Thread::InvokeMemberLL(String *name, uint32_t argCount, Value *value, Value *result)
 {
 	if (IS_NULL(*value))
 		ThrowNullReferenceError();
@@ -218,8 +230,8 @@ void Thread::InvokeMemberLL(String *name, uint16_t argCount, Value *value, Value
 void Thread::InvokeMethodOverload(Method::Overload *mo, unsigned int argCount,
 								  Value *args, Value *result, const bool ignoreVariadic)
 {
-	MethodFlags flags = mo->flags; // used several times below!
-	uint16_t finalArgCount = argCount;
+	register MethodFlags flags = mo->flags; // used several times below!
+	uint32_t finalArgCount = argCount;
 
 	if (!ignoreVariadic && (flags & MethodFlags::VARIADIC) != MethodFlags::NONE)
 	{
@@ -230,36 +242,66 @@ void Thread::InvokeMethodOverload(Method::Overload *mo, unsigned int argCount,
 	finalArgCount += (int)(flags & MethodFlags::INSTANCE) >> 3;
 
 	// And now we can push the new stack frame!
-	// Note: this updates currentFrame and maybe the ip
-	StackFrame *frame = PushStackFrame(finalArgCount, args, mo);
+	// Note: this updates currentFrame
+	StackFrame *frame = PushStackFrame<false>(finalArgCount, args, mo);
 
-	Value output;
 	if ((flags & MethodFlags::NATIVE) == MethodFlags::NATIVE)
 	{
-		mo->nativeEntry(this, finalArgCount, args);
+		try
+		{
+			mo->nativeEntry(this, finalArgCount, args);
+		}
+		catch (OvumException&)
+		{
+			// Native methods have no handlers for OvumExceptions.
+			// Hence, all we do is restore the previous stack frame and IP,
+			// then rethrow.
+			currentFrame = frame->prevFrame;
+			this->ip = frame->prevInstr;
+			throw;
+		}
 		// Native methods are not required to return with one value on the stack, but if
 		// they have more than one, only the lowest one is used.
-		if (frame->stackCount)
-			output = frame->evalStack[0];
-		else
-			output = NULL_VALUE;
+		if (frame->stackCount == 0)
+			frame->evalStack[0].type = nullptr;
 	}
 	else
 	{
 		if (!mo->IsInitialized())
 			InitializeMethod(mo);
 
-		Evaluate(frame, mo->entry);
+		this->ip = mo->entry;
+		entry:
+		try
+		{
+			Evaluate(frame);
+		}
+		catch (OvumException&)
+		{
+			if (FindErrorHandler(frame))
+				// IP is now at the catch handler's offset, so let's
+				// re-enter the method!
+				goto entry;
+
+			// Restore previous stack frame and IP, and rethrow
+			currentFrame = frame->prevFrame;
+			this->ip = frame->prevInstr;
+			throw;
+		}
 		// It should not be possible to return from a method with
 		// anything other than exactly one value on the stack!
 		assert(frame->stackCount == 1);
-		output = frame->evalStack[0];
 	}
 
 	// restore previous stack frame
 	currentFrame = frame->prevFrame;
-	ip = frame->prevInstr;
-	*result = output;
+	this->ip = frame->prevInstr;
+	// Note: If the method has 0 parameters and the result is on the
+	// caller's eval stack, then it may very well point directly into
+	// the frame we have here. Hence, we must assign this /after/
+	// restoring to the previous stack frame, otherwise we may
+	// overwrite frame->prevFrame and/or frame->prevInstr
+	*result = frame->evalStack[0];
 
 	// Done!
 }
@@ -533,7 +575,7 @@ void Thread::StoreMemberLL(Value *instance, String *member)
 }
 
 // Note: argCount does NOT include the instance.
-void Thread::LoadIndexer(uint16_t argCount, Value *result)
+void Thread::LoadIndexer(uint32_t argCount, Value *result)
 {
 	Value *args = currentFrame->evalStack + currentFrame->stackCount - argCount - 1;
 	if (result)
@@ -546,7 +588,7 @@ void Thread::LoadIndexer(uint16_t argCount, Value *result)
 	}
 }
 // Note: argc DOES NOT include the instance, but args DOES.
-void Thread::LoadIndexerLL(uint16_t argCount, Value *args, Value *result)
+void Thread::LoadIndexerLL(uint32_t argCount, Value *args, Value *result)
 {
 	if (IS_NULL(args[0]))
 		ThrowNullReferenceError();
@@ -569,14 +611,14 @@ void Thread::LoadIndexerLL(uint16_t argCount, Value *args, Value *result)
 }
 
 // Note: argCount DOES NOT include the instance or the value that's being stored.
-void Thread::StoreIndexer(uint16_t argCount)
+void Thread::StoreIndexer(uint32_t argCount)
 {
 	Value *args = currentFrame->evalStack + currentFrame->stackCount - argCount - 2;
 	StoreIndexerLL(argCount, args);
 }
 
 // Note: argCount DOES NOT include the instance or the value that's being stored, but args DOES.
-void Thread::StoreIndexerLL(uint16_t argCount, Value *args)
+void Thread::StoreIndexerLL(uint32_t argCount, Value *args)
 {
 	if (IS_NULL(args[0]))
 		ThrowNullReferenceError();
@@ -735,29 +777,38 @@ void Thread::DisposeCallStack()
 
 
 // Note: argCount and args DO include the instance here!
-StackFrame *Thread::PushStackFrame(const uint16_t argCount, Value *args, Method::Overload *method)
+template<bool First>
+StackFrame *Thread::PushStackFrame(const uint32_t argCount, Value *args, Method::Overload *method)
 {
-	assert(currentFrame->stackCount >= argCount);
+	if (First)
+	{
+		assert(currentFrame == nullptr);
+		if (argCount)
+			CopyMemoryT(reinterpret_cast<Value*>(callStack), args, argCount);
+	}
+	else
+	{
+		assert(currentFrame->stackCount >= argCount);
+		currentFrame->stackCount -= argCount; // pop the arguments (including the instance) off the current frame
+	}
 
-	currentFrame->stackCount -= argCount; // pop the arguments (including the instance) off the current frame
-
-	uint16_t paramCount = method->GetEffectiveParamCount();
-	uint16_t localCount = method->locals;
-	StackFrame *newFrame = reinterpret_cast<StackFrame*>(args + paramCount); // The instance is also an argument!
+	register uint32_t paramCount = method->GetEffectiveParamCount();
+	register uint32_t localCount = method->locals;
+	register StackFrame *newFrame = reinterpret_cast<StackFrame*>((First ? (Value*)callStack : args) + paramCount);
 
 	newFrame->Init(
 		0,                                   // stackCount
 		argCount,                            // argCount
 		(Value*)((char*)newFrame + STACK_FRAME_SIZE) + localCount, // evalStack pointer
-		ip,                                  // prevInstr
-		currentFrame,                        // prevFrame
+		First ? nullptr : ip,                // prevInstr
+		First ? nullptr : currentFrame,      // prevFrame
 		method                               // method
 	);
 
 	// initialize missing arguments to zeroes
 	if (argCount != paramCount)
 	{
-		uint16_t diff = paramCount - argCount;
+		register uint32_t diff = paramCount - argCount;
 		memset((Value*)newFrame - diff, 0, diff * sizeof(Value));
 	}
 
@@ -768,41 +819,7 @@ StackFrame *Thread::PushStackFrame(const uint16_t argCount, Value *args, Method:
 	return currentFrame = newFrame;
 }
 
-StackFrame *Thread::PushFirstStackFrame(const uint16_t argCount, Value args[], Method::Overload *method)
-{
-	assert(currentFrame == nullptr); // <-- !
-
-	// Copy the arguments onto the call stack
-	if (argCount)
-		CopyMemoryT(reinterpret_cast<Value*>(callStack), args, argCount);
-
-	uint16_t paramCount = method->paramCount;
-	uint16_t localCount = method->locals;
-	StackFrame *newFrame = reinterpret_cast<StackFrame*>(callStack + paramCount * sizeof(Value));
-
-	StackFrame newFrameValues = {
-		0,                                   // stackCount
-		argCount,                            // argCount
-		//(Value*)newFrame - paramCount,     // arguments pointer
-		(Value*)((char*)newFrame + STACK_FRAME_SIZE) + localCount, // evalStack pointer
-		nullptr,                             // prevInstr
-		nullptr,                             // prevFrame
-		method,                              // method
-	};
-	*newFrame = newFrameValues;
-
-	// initialize missing arguments to zeroes
-	if (argCount < paramCount)
-		memset((Value*)newFrame - paramCount + argCount, 0, (paramCount - argCount) * sizeof(Value));
-
-	// Also initialize all locals to 0.
-	if (localCount)
-		memset(LOCALS_OFFSET(newFrame), 0, localCount * sizeof(Value));
-
-	return currentFrame = newFrame;
-}
-
-void Thread::PrepareVariadicArgs(const MethodFlags flags, const uint16_t argCount, const uint16_t paramCount, StackFrame *frame)
+void Thread::PrepareVariadicArgs(const MethodFlags flags, const uint32_t argCount, const uint32_t paramCount, StackFrame *frame)
 {
 	int32_t count = argCount >= paramCount - 1 ? argCount - paramCount + 1 : 0;
 
@@ -991,7 +1008,7 @@ OVUM_API Value VM_Pop(ThreadHandle thread)
 {
 	return thread->Pop();
 }
-OVUM_API void VM_PopN(ThreadHandle thread, const unsigned int n)
+OVUM_API void VM_PopN(ThreadHandle thread, const uint32_t n)
 {
 	thread->Pop(n);
 }
@@ -1001,20 +1018,20 @@ OVUM_API void VM_Dup(ThreadHandle thread)
 	thread->Dup();
 }
 
-OVUM_API Value *VM_Local(ThreadHandle thread, const unsigned int n)
+OVUM_API Value *VM_Local(ThreadHandle thread, const uint32_t n)
 {
 	return thread->Local(n);
 }
 
-OVUM_API void VM_Invoke(ThreadHandle thread, const unsigned int argCount, Value *result)
+OVUM_API void VM_Invoke(ThreadHandle thread, const uint32_t argCount, Value *result)
 {
 	thread->Invoke(argCount, result);
 }
-OVUM_API void VM_InvokeMember(ThreadHandle thread, String *name, const unsigned int argCount, Value *result)
+OVUM_API void VM_InvokeMember(ThreadHandle thread, String *name, const uint32_t argCount, Value *result)
 {
 	thread->InvokeMember(name, argCount, result);
 }
-OVUM_API void VM_InvokeMethod(ThreadHandle thread, MethodHandle method, const unsigned int argCount, Value *result)
+OVUM_API void VM_InvokeMethod(ThreadHandle thread, MethodHandle method, const uint32_t argCount, Value *result)
 {
 	thread->InvokeMethod(method, argCount, result);
 }
@@ -1040,11 +1057,11 @@ OVUM_API void VM_StoreMember(ThreadHandle thread, String *member)
 	thread->StoreMember(member);
 }
 
-OVUM_API void VM_LoadIndexer(ThreadHandle thread, const uint16_t argCount, Value *result)
+OVUM_API void VM_LoadIndexer(ThreadHandle thread, const uint32_t argCount, Value *result)
 {
 	thread->LoadIndexer(argCount, result);
 }
-OVUM_API void VM_StoreIndexer(ThreadHandle thread, const uint16_t argCount)
+OVUM_API void VM_StoreIndexer(ThreadHandle thread, const uint32_t argCount)
 {
 	thread->StoreIndexer(argCount);
 }

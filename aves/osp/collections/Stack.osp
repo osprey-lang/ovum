@@ -43,6 +43,11 @@ public inheritable Stack
 		return list[-1];
 	}
 
+	override toString()
+	{
+		return "Stack[length = {0}]".format([length]);
+	}
+
 	iter
 	{
 		var startVersion = version;

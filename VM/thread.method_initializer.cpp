@@ -128,6 +128,13 @@ namespace instr
 		return instructions[index].instr->offset - relativeTo->offset - (int)relativeTo->GetSize();
 	}
 
+	void MethodBuilder::SetInstruction(int32_t index, Instruction *newInstr, bool deletePrev)
+	{
+		if (deletePrev)
+			delete instructions[index].instr;
+		instructions[index].instr = newInstr;
+	}
+
 	void MethodBuilder::AddTypeToInitialize(Type *type)
 	{
 		if ((type->flags & TypeFlags::STATIC_CTOR_RUN) != TypeFlags::NONE)
@@ -155,14 +162,14 @@ public:
 
 	inline virtual ~StackManager() { }
 
-	virtual uint16_t GetStackHeight() = 0;
+	virtual uint32_t GetStackHeight() = 0;
 
 	// Adds a branch to the end of the queue, with stack slots copied from the current branch.
 	// All stack slots retain their flags.
 	virtual void EnqueueBranch(int32_t firstInstr) = 0;
 	// Adds a branch to the end of the queue, with the specified initial stack height.
 	// The stack slots in the new branch have no special flags.
-	virtual void EnqueueBranch(uint16_t stackHeight, int32_t firstInstr) = 0;
+	virtual void EnqueueBranch(uint32_t stackHeight, int32_t firstInstr) = 0;
 
 	// Moves to the next branch in the queue, and returns
 	// the index of the first instruction in the branch.
@@ -177,7 +184,7 @@ private:
 	typedef struct Branch_S
 	{
 		int32_t firstInstr;
-		uint16_t stackHeight;
+		uint32_t stackHeight;
 		StackEntry stack[8];
 	} Branch;
 
@@ -191,7 +198,7 @@ public:
 		branches.push(Branch());
 	}
 
-	virtual uint16_t GetStackHeight()
+	virtual uint32_t GetStackHeight()
 	{
 		return branches.front().stackHeight;
 	}
@@ -201,15 +208,15 @@ public:
 		Branch &cur = branches.front();
 
 		Branch br = { firstInstr, cur.stackHeight };
-		for (int i = 0; i < cur.stackHeight; i++)
+		for (uint32_t i = 0; i < cur.stackHeight; i++)
 			br.stack[i] = cur.stack[i];
 
 		branches.push(br);
 	}
-	virtual void EnqueueBranch(uint16_t stackHeight, int32_t firstInstr)
+	virtual void EnqueueBranch(uint32_t stackHeight, int32_t firstInstr)
 	{
 		Branch br = { firstInstr, stackHeight };
-		for (int i = 0; i < stackHeight; i++)
+		for (uint32_t i = 0; i < stackHeight; i++)
 			br.stack[i].flags = StackEntry::IN_USE;
 		branches.push(br);
 	}
@@ -248,13 +255,13 @@ private:
 	{
 	public:
 		int32_t firstInstr;
-		uint16_t maxStack;
-		uint16_t stackHeight;
+		uint32_t maxStack;
+		uint32_t stackHeight;
 		StackEntry *stack;
 
 		inline Branch() : firstInstr(-1), maxStack(0), stackHeight(0), stack(nullptr)
 		{ }
-		inline Branch(const int32_t firstInstr, uint16_t maxStack) :
+		inline Branch(const int32_t firstInstr, uint32_t maxStack) :
 			firstInstr(firstInstr), maxStack(maxStack),
 			stackHeight(0), stack(new StackEntry[maxStack])
 		{ }
@@ -292,17 +299,17 @@ private:
 		}
 	};
 
-	uint16_t maxStack;
+	uint32_t maxStack;
 	std::queue<Branch> branches;
 
 public:
-	LargeStackManager(uint16_t maxStack) :
+	LargeStackManager(uint32_t maxStack) :
 		maxStack(maxStack)
 	{
 		branches.push(Branch());
 	}
 
-	virtual uint16_t GetStackHeight()
+	virtual uint32_t GetStackHeight()
 	{
 		return branches.front().stackHeight;
 	}
@@ -312,11 +319,11 @@ public:
 		Branch br(branches.front()); // Use the copy constructor! :D
 		branches.push(br);
 	}
-	virtual void EnqueueBranch(uint16_t stackHeight, int32_t firstInstr)
+	virtual void EnqueueBranch(uint32_t stackHeight, int32_t firstInstr)
 	{
 		Branch br = Branch(firstInstr, maxStack);
 		br.stackHeight = stackHeight;
-		for (int i = 0; i < stackHeight; i++)
+		for (uint32_t i = 0; i < stackHeight; i++)
 			br.stack[i].flags = StackEntry::IN_USE;
 		branches.push(br);
 	}
@@ -550,9 +557,74 @@ void Thread::CalculateStackHeights(instr::MethodBuilder &builder, Method::Overlo
 
 			if (instr->IsBranch())
 			{
-				Branch *br = static_cast<Branch*>(instr);
+				Branch *const br = static_cast<Branch*>(instr);
 				if (br->IsConditional())
+				{
 					stack.EnqueueBranch(br->target); // Use the same stack
+					if (prev && !br->HasBranches() &&
+						// Is the previous instruction ==, <, >, <= or >=?
+						((prev->opcode & ~1) == OPI_EQ_L ||
+						prev->opcode >= OPI_LT_L && prev->opcode <= OPI_GTE_S) &&
+						// And is this a brfalse or brtrue?
+						br->opcode >= OPI_BRFALSE_L && br->opcode <= OPI_BRTRUE_S)
+					{
+						// Great! Then we can turn the previous instruction into a
+						// brlt/brgt/brlte/brgte as required.
+						IntermediateOpcode newOpcode;
+						if (br->opcode == OPI_BRTRUE_L || br->opcode == OPI_BRTRUE_S)
+						{
+							// eq, brtrue  => breq
+							// lt, brtrue  => brlt
+							// gt, brtrue  => brgt
+							// lte, brtrue => brlte
+							// gte, brtrue => brgte
+							// eq/lt/gt/lte/gte are in the same order both in the operator
+							// section and the extended branch section, so we can just
+							// subtract OPI_EQ_L from prev->opcode, divide the result by
+							// two, and add it to OPI_BREQ.
+							// There is a one-instruction gap between OPI_EQ_* and OPI_LT_*,
+							// where OPI_CMP_* is, but fortunately that gap is covered by
+							// OPI_BRNEQ, which is not produced by this code.
+							newOpcode = (IntermediateOpcode)(OPI_BRLT + (prev->opcode - OPI_LT_L) / 2);
+							switch (prev->opcode)
+							{
+							case OPI_EQ_L:  case OPI_EQ_S:  newOpcode = OPI_BREQ;  break;
+							case OPI_LT_L:  case OPI_LT_S:  newOpcode = OPI_BRLT;  break;
+							case OPI_GT_L:  case OPI_GT_S:  newOpcode = OPI_BRGT;  break;
+							case OPI_LTE_L: case OPI_LTE_S: newOpcode = OPI_BRLTE; break;
+							case OPI_GTE_L: case OPI_GTE_S: newOpcode = OPI_BRGTE; break;
+							default: newOpcode = OPI_NOP; break; // Oh dear
+							}
+						}
+						else
+						{
+							// lt, brfalse  => brgte
+							// gt, brfalse  => brlte
+							// lte, brfalse => brgt
+							// gte, brfalse => brlt
+							// For simplicity, we've defined some aliases for these:
+							switch (prev->opcode)
+							{
+							case OPI_EQ_L:  case OPI_EQ_S:  newOpcode = OPI_BRNEQ;  break;
+							case OPI_LT_L:  case OPI_LT_S:  newOpcode = OPI_BRNLT;  break;
+							case OPI_GT_L:  case OPI_GT_S:  newOpcode = OPI_BRNGT;  break;
+							case OPI_LTE_L: case OPI_LTE_S: newOpcode = OPI_BRNLTE; break;
+							case OPI_GTE_L: case OPI_GTE_S: newOpcode = OPI_BRNGTE; break;
+							default: newOpcode = OPI_NOP; break; // Oh dear
+							}
+						}
+						assert(newOpcode != OPI_NOP);
+
+						// Set the previous instruction to the new comparison thing
+						// (This also deletes the Instruction*)
+						builder.SetInstruction(index - 1,
+							new BranchComparison(static_cast<ExecOperator*>(prev)->args,
+								br->target, newOpcode),
+							/*deletePrev:*/ true);
+						// Mark this instruction for removal
+						builder.MarkForRemoval(index);
+					}
+				}
 				else
 				{
 					prev = nullptr;
@@ -563,7 +635,7 @@ void Thread::CalculateStackHeights(instr::MethodBuilder &builder, Method::Overlo
 			else if (instr->IsSwitch())
 			{
 				Switch *sw = static_cast<Switch*>(instr);
-				for (uint16_t i = 0; i < sw->targetCount; i++)
+				for (uint32_t i = 0; i < sw->targetCount; i++)
 					stack.EnqueueBranch(sw->targets[i]); // Use the same stack
 			}
 			else if (instr->opcode == OPI_RET || instr->opcode == OPI_RETNULL ||
@@ -1221,7 +1293,7 @@ Method *Thread::MethodFromToken(Method::Overload *fromMethod, uint32_t token)
 	return result;
 }
 
-Method::Overload *Thread::MethodOverloadFromToken(Method::Overload *fromMethod, uint32_t token, uint16_t argCount)
+Method::Overload *Thread::MethodOverloadFromToken(Method::Overload *fromMethod, uint32_t token, uint32_t argCount)
 {
 	Method *method = MethodFromToken(fromMethod, token);
 

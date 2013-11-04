@@ -1,7 +1,6 @@
 #include "ov_vm.internal.h"
 #include <cstdlib>
 #include <cstring>
-#include <iostream>
 #include <vector>
 
 namespace gc_strings
@@ -270,7 +269,7 @@ void GC::Collect(Thread *const thread)
 	assert(processBase == nullptr);
 
 #ifdef PRINT_DEBUG_INFO
-	std::wcout << L"Preparing to collect #: " << LinkedListLength(collectBase) << std::endl;
+	wprintf(L"Preparing to collect #: %d\n", LinkedListLength(collectBase));
 #endif
 
 	// Step 3: free all objects left in the Collect list.

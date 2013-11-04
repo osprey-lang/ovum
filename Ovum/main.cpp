@@ -109,7 +109,7 @@ void CommandParseError(const char *message, wchar_t *extra)
 	SetConsoleTextAttribute(stdOut, CNSL_RED);
 	wcerr << "Could not start Ovum: " << message;
 	if (extra)
-		_tcout << extra;
+		wcout << extra;
 	wcerr << endl << endl;
 
 	SetConsoleTextAttribute(stdOut, cbuf.wAttributes);

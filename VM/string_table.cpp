@@ -1,6 +1,5 @@
 #include "ov_vm.internal.h"
 #include "string_table.internal.h"
-#include <iostream>
 
 StringTable::StringTable(const int capacity) :
 	count(0), freeCount(0), freeList(-1)
@@ -203,8 +202,8 @@ void StringTable::DebugBuckets()
 	for (int32_t i = 0; i < capacity; i++)
 	{
 		if (i > 0)
-			wcout << ", ";
-		wcout << buckets[i];
+			wprintf(L", ");
+		wprintf(L"%d", buckets[i]);
 		if (buckets[i] >= 0)
 		{
 			bucketsUsed++;
@@ -218,9 +217,8 @@ void StringTable::DebugBuckets()
 			}
 		}
 	}
-	wcout << endl;
+	wprintf(L"\n");
 
-	wcout << L"Used " << bucketsUsed << L" out of " << capacity << " buckets" << endl;
-
-	wcout << L"Most collided bucket: " << mostCollidedBucket << " (" << maxCollisionCount << ")" << endl;
+	wprintf(L"Used %d out of %d buckets\n", bucketsUsed, capacity);
+	wprintf(L"Most collided bucket: %d (%d)\n", mostCollidedBucket, maxCollisionCount);
 }

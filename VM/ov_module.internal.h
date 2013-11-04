@@ -4,9 +4,8 @@
 #define VM__MODULE_INTERNAL_H
 
 #include <cstdio>
-#include <iosfwd>
-#include <fstream>
 #include <vector>
+#include <string>
 #include "ov_vm.internal.h"
 #include "ov_type.internal.h"
 
@@ -47,17 +46,17 @@ public:
 		Value   constant;
 	};
 
-	inline ModuleMember()
-		: constant(NULL_VALUE), flags(ModuleMemberFlags::NONE)
+	inline ModuleMember() :
+		flags(ModuleMemberFlags::NONE)
 	{ }
-	inline ModuleMember(Type *type, bool isInternal)
-		: type(type), flags(ModuleMemberFlags::TYPE | (isInternal ? ModuleMemberFlags::INTERNAL : ModuleMemberFlags::PUBLIC))
+	inline ModuleMember(Type *type, bool isInternal) :
+		type(type), flags(ModuleMemberFlags::TYPE | (isInternal ? ModuleMemberFlags::INTERNAL : ModuleMemberFlags::PUBLIC))
 	{ }
-	inline ModuleMember(Method *function, bool isInternal)
-		: function(function), flags(ModuleMemberFlags::FUNCTION | (isInternal ? ModuleMemberFlags::INTERNAL : ModuleMemberFlags::PUBLIC))
+	inline ModuleMember(Method *function, bool isInternal) :
+		function(function), flags(ModuleMemberFlags::FUNCTION | (isInternal ? ModuleMemberFlags::INTERNAL : ModuleMemberFlags::PUBLIC))
 	{ }
-	inline ModuleMember(Value value, bool isInternal)
-		: constant(value), flags(ModuleMemberFlags::CONSTANT | (isInternal ? ModuleMemberFlags::INTERNAL : ModuleMemberFlags::PUBLIC))
+	inline ModuleMember(Value value, bool isInternal) :
+		constant(value), flags(ModuleMemberFlags::CONSTANT | (isInternal ? ModuleMemberFlags::INTERNAL : ModuleMemberFlags::PUBLIC))
 	{ }
 };
 
@@ -80,126 +79,8 @@ enum ModuleMemberId : uint32_t
 typedef uint32_t TokenId;
 
 
-class ModuleReader
-{
-public:
-	std::ifstream stream;
-	std::wstring fileName;
+class ModuleReader; // Defined in module.cpp
 
-	inline ModuleReader(const wchar_t *fileName)
-		: fileName(fileName), stream()
-	{
-		using namespace std;
-		stream.exceptions(ios::failbit | ios::eofbit | ios::badbit);
-		stream.open(fileName, ios::binary | ios::in);
-	}
-
-	inline ~ModuleReader()
-	{
-		if (stream.is_open())
-			stream.close();
-	}
-
-	template<class T>
-	inline ModuleReader &Read(T *dest, std::streamsize count)
-	{
-		stream.read((char*)dest, count * sizeof(T));
-		return *this;
-	}
-
-	inline int8_t ReadInt8()
-	{
-		int8_t target;
-		stream.read(reinterpret_cast<char*>(&target), sizeof(int8_t));
-		return target;
-	}
-
-	inline uint8_t ReadUInt8()
-	{
-		uint8_t target;
-		stream.read(reinterpret_cast<char*>(&target), sizeof(uint8_t));
-		return target;
-	}
-
-	// All the reading functions below assume the system is little-endian.
-	// This will be fixed at an unspecified later date.
-
-	inline int16_t ReadInt16()
-	{
-		int16_t target;
-		stream.read(reinterpret_cast<char*>(&target), sizeof(int16_t));
-		return target;
-	}
-
-	inline uint16_t ReadUInt16()
-	{
-		uint16_t target;
-		stream.read(reinterpret_cast<char*>(&target), sizeof(uint16_t));
-		return target;
-	}
-
-	inline int32_t ReadInt32()
-	{
-		int32_t target;
-		stream.read(reinterpret_cast<char*>(&target), sizeof(int32_t));
-		return target;
-	}
-
-	inline uint32_t ReadUInt32()
-	{
-		uint32_t target;
-		stream.read(reinterpret_cast<char*>(&target), sizeof(uint32_t));
-		return target;
-	}
-
-	inline int64_t ReadInt64()
-	{
-		int64_t target;
-		stream.read(reinterpret_cast<char*>(&target), sizeof(int64_t));
-		return target;
-	}
-
-	inline uint64_t ReadUInt64()
-	{
-		uint64_t target;
-		stream.read(reinterpret_cast<char*>(&target), sizeof(uint64_t));
-		return target;
-	}
-
-	inline TokenId ReadToken()
-	{
-		TokenId target;
-		stream.read(reinterpret_cast<char*>(&target), sizeof(TokenId));
-		return target;
-	}
-
-	inline void SkipCollection()
-	{
-		using namespace std;
-		uint32_t size = ReadUInt32();
-		stream.seekg(size, ios::cur);
-	}
-
-	String *ReadString();
-
-	String *ReadStringOrNull();
-
-	char *ReadCString();
-
-private:
-	String *ReadShortString(const int32_t length);
-
-	String *ReadLongString(const int32_t length);
-
-	static const int MaxShortStringLength = 128;
-};
-
-template<>
-inline ModuleReader &ModuleReader::Read(char *dest, std::streamsize count)
-{
-	stream.read(dest, count);
-	return *this;
-}
 
 typedef struct ModuleVersion_S ModuleVersion;
 typedef struct ModuleVersion_S
@@ -258,6 +139,8 @@ private:
 		this->capacity = capacity;
 		if (capacity != 0)
 			this->entries = new T[capacity];
+		else
+			this->entries = nullptr;
 	}
 
 	inline void Add(const T item)
@@ -292,12 +175,12 @@ public:
 	inline ~MemberTable()
 	{
 #ifdef PRINT_DEBUG_INFO
-		std::wcout << L"Destroying member table" << std::endl;
+		wprintf(L"Destroying member table\n");
 #endif
 		if (this->entries)
 			delete[] this->entries;
 #ifdef PRINT_DEBUG_INFO
-		std::wcout << L"Finished destroying member table" << std::endl;
+		wprintf(L"Finished destroying member table\n");
 #endif
 	}
 
@@ -334,7 +217,7 @@ public:
 	String *name;
 	ModuleVersion version;
 
-	Type *FindType(String *name, bool includeInternal) const;
+	Type       *FindType(String *name, bool includeInternal) const;
 	Method     *FindGlobalFunction(String *name, bool includeInternal) const;
 	const bool  FindConstant(String *name, bool includeInternal, Value &result) const;
 
@@ -540,6 +423,10 @@ public:
 	{ }
 	inline ModuleLoadException(std::wstring &fileName, const char *message)
 		: fileName(fileName), exception(message)
+	{ }
+
+	inline ModuleLoadException(const wchar_t *fileName, const char *message) :
+		fileName(fileName), exception(message)
 	{ }
 
 	inline const std::wstring &GetFileName() const throw()

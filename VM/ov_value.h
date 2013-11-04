@@ -88,6 +88,7 @@ typedef struct MethodInst_S MethodInst;
 // (that is, (type->flags & TYPE_PRIMITIVE) != TYPE_NONE), then
 // the integer, uinteger or real fields contain the instance data.
 // Otherwise, the instance field contains a pointer to the instance.
+typedef struct Value_S Value;
 typedef struct Value_S
 {
 	TypeHandle type;
@@ -164,11 +165,11 @@ OVUM_API extern const Value NULL_VALUE;
 
 inline void SetNull(Value &target)
 {
-	target = NULL_VALUE;
+	target.type = nullptr;
 }
 inline void SetNull(Value *target)
 {
-	*target = NULL_VALUE;
+	target->type = nullptr;
 }
 
 inline void SetBool(Value &target, const bool value)

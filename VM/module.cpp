@@ -1,8 +1,5 @@
 #include <shlwapi.h>
-#include <iostream>
-#include <sstream>
 #include <memory>
-#include <vector>
 #include "ov_module.internal.h"
 #include "ov_stringbuffer.internal.h"
 
@@ -18,6 +15,169 @@ namespace module_file
 
 	// The start of the "real" data in the module.
 	const unsigned int dataStart = 16;
+}
+
+class ModuleIOException : public exception
+{
+public:
+	inline ModuleIOException(const char *const what) :
+		exception(what)
+	{ }
+};
+
+enum class SeekDir
+{
+	BEGIN = 0,
+	CURRENT = 1,
+	END = 2,
+};
+
+class ModuleReader
+{
+private:
+	HANDLE stream;
+
+public:
+	std::wstring fileName;
+
+	inline ModuleReader() : fileName(), stream(nullptr) { }
+
+	inline ~ModuleReader()
+	{
+		if (stream != INVALID_HANDLE_VALUE)
+			CloseHandle(stream);
+	}
+
+	void Open(const wchar_t *fileName);
+
+	void Read(void *dest, uint32_t count);
+
+	long GetPosition();
+
+	void Seek(long amount, SeekDir dir);
+
+	inline int8_t ReadInt8()
+	{
+		int8_t target;
+		Read(&target, sizeof(int8_t));
+		return target;
+	}
+
+	inline uint8_t ReadUInt8()
+	{
+		uint8_t target;
+		Read(&target, sizeof(uint8_t));
+		return target;
+	}
+
+	// All the reading functions below assume the system is little-endian.
+	// This assumption will be fixed at an unspecified later date.
+
+	inline int16_t ReadInt16()
+	{
+		int16_t target;
+		Read(&target, sizeof(int16_t));
+		return target;
+	}
+
+	inline uint16_t ReadUInt16()
+	{
+		uint16_t target;
+		Read(&target, sizeof(uint16_t));
+		return target;
+	}
+
+	inline int32_t ReadInt32()
+	{
+		int32_t target;
+		Read(&target, sizeof(int32_t));
+		return target;
+	}
+
+	inline uint32_t ReadUInt32()
+	{
+		uint32_t target;
+		Read(&target, sizeof(uint32_t));
+		return target;
+	}
+
+	inline int64_t ReadInt64()
+	{
+		int64_t target;
+		Read(&target, sizeof(int64_t));
+		return target;
+	}
+
+	inline uint64_t ReadUInt64()
+	{
+		uint64_t target;
+		Read(&target, sizeof(uint64_t));
+		return target;
+	}
+
+	inline TokenId ReadToken()
+	{
+		TokenId target;
+		Read(&target, sizeof(TokenId));
+		return target;
+	}
+
+	inline void SkipCollection()
+	{
+		using namespace std;
+		uint32_t size = ReadUInt32();
+		Seek(size, SeekDir::CURRENT);
+	}
+
+	String *ReadString();
+
+	String *ReadStringOrNull();
+
+	char *ReadCString();
+
+private:
+	String *ReadShortString(const int32_t length);
+
+	String *ReadLongString(const int32_t length);
+
+	void HandleError(DWORD error);
+
+	static const int MaxShortStringLength = 128;
+};
+
+void ModuleReader::Open(const wchar_t *fileName)
+{
+	this->fileName.append(fileName);
+
+	stream = CreateFileW(fileName, FILE_READ_ACCESS, FILE_SHARE_READ,
+		nullptr, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, nullptr);
+	if (stream == INVALID_HANDLE_VALUE)
+		HandleError(GetLastError());
+}
+
+void ModuleReader::Read(void *dest, uint32_t count)
+{
+	DWORD bytesRead;
+	BOOL result = ReadFile(stream, dest, count, &bytesRead, nullptr);
+	if (!result)
+		HandleError(GetLastError());
+	if (bytesRead < count)
+		HandleError(ERROR_HANDLE_EOF);
+}
+
+long ModuleReader::GetPosition()
+{
+	long result = SetFilePointer(stream, 0, nullptr, FILE_CURRENT);
+	if (result == INVALID_SET_FILE_POINTER)
+		HandleError(GetLastError());
+	return result;
+}
+
+void ModuleReader::Seek(long amount, SeekDir dir)
+{
+	// The SeekDir values are the same as FILE_BEGIN, FILE_CURRENT and FILE_END.
+	if (SetFilePointer(stream, amount, nullptr, (DWORD)dir) == INVALID_SET_FILE_POINTER)
+		HandleError(GetLastError());
 }
 
 String *ModuleReader::ReadString()
@@ -60,7 +220,7 @@ String *ModuleReader::ReadShortString(const int32_t length)
 {
 	LitString<MaxShortStringLength> buf = { length, 0, StringFlags::STATIC };
 	// Fill the buffer with contents from the file
-	Read(const_cast<uchar*>(buf.chars), length);
+	Read(const_cast<uchar*>(buf.chars), sizeof(uchar) * length);
 
 	String *intern = GC::gc->GetInternedString(_S(buf));
 	if (intern == nullptr)
@@ -78,7 +238,7 @@ String *ModuleReader::ReadLongString(const int32_t length)
 	unique_ptr<uchar[]> data(new uchar[length + 1]);
 
 	// Note: the module file does NOT include a terminating \0!
-	Read(data.get(), length);
+	Read(data.get(), sizeof(uchar) * length);
 
 	// If a string with this value is already interned, we get that string instead.
 	// If we have that string, GC::InternString does nothing; if we don't, we have
@@ -89,6 +249,19 @@ String *ModuleReader::ReadLongString(const int32_t length)
 	return string;
 }
 
+void ModuleReader::HandleError(DWORD error)
+{
+	const char *message;
+	switch (error)
+	{
+	case ERROR_FILE_NOT_FOUND: message = "The file could not be found."; break;
+	case ERROR_HANDLE_EOF:     message = "Unexpected end of file.";      break;
+	default:                   message = "Unspecified I/O error.";       break;
+	}
+	throw ModuleIOException(message);
+}
+
+
 Module::Module(ModuleMeta &meta) :
 	// This initializer list is kind of silly
 	name(meta.name), version(meta.version), fullyOpened(false),
@@ -98,7 +271,7 @@ Module::Module(ModuleMeta &meta) :
 	constants(meta.constantCount),
 	fields(meta.fieldCount),
 	methods(meta.methodCount),
-	strings(0), // for now
+	strings(0), // for now, initialized with stuff later
 	members(meta.functionCount + meta.typeCount + meta.constantCount),
 	// refs
 	moduleRefs(0),
@@ -106,7 +279,8 @@ Module::Module(ModuleMeta &meta) :
 	typeRefs(0),
 	fieldRefs(0),
 	methodRefs(0),
-	methodStart(meta.methodStart)
+	methodStart(meta.methodStart),
+	nativeLib(nullptr)
 { }
 
 Module::~Module()
@@ -255,18 +429,15 @@ Module *Module::Find(String *name)
 
 Module *Module::Open(const wchar_t *fileName)
 {
-	/*DWORD attrs = GetFileAttributesW(fileName);
-	if (attrs == INVALID_FILE_ATTRIBUTES || (attrs & FILE_ATTRIBUTE_DIRECTORY))
-		throw ModuleLoadException(fileName, "Module file does not exist.");*/
-
 	Module *outputModule = nullptr;
 
 	try
 	{
-		ModuleReader reader(fileName); // This SHOULD not fail. but it's C++, so who knows.
+		ModuleReader reader; // This SHOULD not fail. but it's C++, so who knows.
+		reader.Open(fileName);
 		VerifyMagicNumber(reader);
 
-		reader.stream.seekg(module_file::dataStart, ios::beg);
+		reader.Seek(module_file::dataStart, SeekDir::BEGIN);
 
 		ModuleMeta meta;
 		ReadModuleMeta(reader, meta);
@@ -319,7 +490,7 @@ Module *Module::Open(const wchar_t *fileName)
 
 		outputModule = output.release();
 	}
-	catch (std::ios_base::failure &ioError)
+	catch (ModuleIOException &ioError)
 	{
 		throw ModuleLoadException(wstring(fileName), ioError.what());
 	}
@@ -373,19 +544,14 @@ Module *Module::OpenByName(String *name)
 
 	if (VM::vm->verbose)
 	{
-		wcout << L"Loading module '";
-		VM::Print(name);
-		wcout << L"' from file '" << filePath.get() << L'\'' << endl;
+		VM::Printf(L"Loading module '%ls' ", name);
+		wprintf(L"from file '%ls'\n", filePath.get());
 	}
 
 	Module *output = Open(filePath.get());
 
 	if (VM::vm->verbose)
-	{
-		wcout << L"Successfully loaded module '";
-		VM::Print(name);
-		wcout << L"'." << endl;
-	}
+		VM::Printf(L"Successfully loaded module '%ls'\n", name);
 
 	return output;
 }
@@ -489,11 +655,11 @@ void Module::ReadVersion(ModuleReader &reader, ModuleVersion &target)
 #define CHECKPOS_BEFORE() \
 	const uint32_t size = reader.ReadUInt32(); /* The size of the rest of the data */ \
 	if (size != 0) { \
-		const ios::pos_type posBefore = reader.stream.tellg()
+		const long posBefore = reader.GetPosition()
 
 #define CHECKPOS_AFTER_(tbl) \
-		const ios::pos_type posAfter = reader.stream.tellg(); \
-		if (posBefore + (ios::pos_type)size != posAfter) \
+		const long posAfter = reader.GetPosition(); \
+		if (posBefore + (long)size != posAfter) \
 			throw ModuleLoadException(reader.fileName, "The actual size of the " #tbl " table did not match the expected size."); \
 	}
 #define CHECKPOS_AFTER(tbl) CHECKPOS_AFTER_(tbl)
@@ -1079,17 +1245,11 @@ void Module::ReadOperators(ModuleReader &reader, Module *module, Type *type)
 
 			type->operators[(int)op] = mo;
 		}
-		type->InitOperators();
-	}
-	else if (type->baseType)
-	{
-		Type *baseType = type->baseType;
-		for (int i = 0; i < OPERATOR_COUNT; i++)
-			type->operators[i] = baseType->operators[i];
-		type->flags |= TypeFlags::OPS_INITED;
 	}
 
 	CHECKPOS_AFTER(OperatorDef);
+
+	type->InitOperators();
 }
 
 void Module::SetConstantFieldValue(ModuleReader &reader, Module *module, Field *field, Type *constantType, const int64_t value)
@@ -1125,7 +1285,7 @@ Method *Module::ReadSingleMethod(ModuleReader &reader, Module *module)
 	if (size == 0)
 		throw ModuleLoadException(reader.fileName, "Method found without overloads.");
 	
-	const ios::pos_type posBefore = reader.stream.tellg();
+	const long posBefore = reader.GetPosition();
 	const int32_t overloadCount = reader.ReadInt32();
 
 	if (overloadCount == 0)
@@ -1146,6 +1306,7 @@ Method *Module::ReadSingleMethod(ModuleReader &reader, Module *module)
 	unique_ptr<Method> method(new Method(name, module, memberFlags));
 
 	unique_ptr<Method::Overload[]> overloads(new Method::Overload[overloadCount]);
+	memset(overloads.get(), 0, overloadCount * sizeof(Method::Overload));
 
 	for (int32_t i = 0; i < overloadCount; i++)
 	{
@@ -1158,7 +1319,7 @@ Method *Module::ReadSingleMethod(ModuleReader &reader, Module *module)
 		uint16_t paramCount = reader.ReadUInt16();
 		// Skip parameter names (not needed)
 		// Note: all parameter names are string IDs
-		reader.stream.seekg(paramCount * sizeof(int32_t), ios::cur);
+		reader.Seek(paramCount * sizeof(int32_t), SeekDir::CURRENT);
 		ov->paramCount = paramCount;
 
 		// Flags
@@ -1214,15 +1375,15 @@ Method *Module::ReadSingleMethod(ModuleReader &reader, Module *module)
 				uint32_t offset = reader.ReadUInt32(); // The offset of the first instruction in the method, relative to the method block
 				uint32_t length = reader.ReadUInt32(); // The length of the body, in bytes
 
-				const ios::pos_type posCurrent = reader.stream.tellg(); // Resumption point
+				const long posCurrent = reader.GetPosition(); // Resumption point
 
 				// Read the method body
-				reader.stream.seekg(module->methodStart + offset, ios::beg);
+				reader.Seek(module->methodStart + offset, SeekDir::BEGIN);
 				unique_ptr<uint8_t[]> body(new uint8_t[length]);
 				reader.Read(body.get(), length);
 
 				// Return to previous position
-				reader.stream.seekg(posCurrent, ios::beg);
+				reader.Seek(posCurrent, SeekDir::BEGIN);
 
 				ov->length = length;
 				ov->entry = body.release();
@@ -1230,8 +1391,8 @@ Method *Module::ReadSingleMethod(ModuleReader &reader, Module *module)
 		}
 	}
 
-	const ios::pos_type posAfter = reader.stream.tellg();
-	if (posBefore + (ios::pos_type)size != posAfter)
+	const long posAfter = reader.GetPosition();
+	if (posBefore + (long)size != posAfter)
 		throw ModuleLoadException(reader.fileName, "The actual size of the overloads table did not match the expected size.");
 
 	method->overloadCount = overloadCount;

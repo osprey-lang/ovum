@@ -73,6 +73,11 @@ public inheritable Queue
 			list.add(i);
 	}
 
+	override toString()
+	{
+		return "Queue[length = 0]".format([length]);
+	}
+
 	iter
 	{
 		var startVersion = version;
