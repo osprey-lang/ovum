@@ -6,6 +6,14 @@
 #include <Shlwapi.h>
 #include "ov_vm.internal.h"
 
+#ifdef _MSC_VER
+// Microsoft's C++ implementation uses %s to mean wchar_t* in wide functions,
+// and requires the non-portable %S for char*s. Sigh.
+#define CSTR  L"%S"
+#else
+#define CSTR  L"%s"
+#endif
+
 VM *VM::vm;
 
 wchar_t *CloneWString(const wchar_t *source)
@@ -128,9 +136,9 @@ void VM::LoadModules(VMStartParams &params)
 	{
 		const std::wstring &fileName = e.GetFileName();
 		if (!fileName.empty())
-			fwprintf(stderr, L"Error loading module '%ls': %s\n", fileName.c_str(), e.what());
+			fwprintf(stderr, L"Error loading module '%ls': " CSTR L"\n", fileName.c_str(), e.what());
 		else
-			fwprintf(stderr, L"Error loading module: %s\n", e.what());
+			fwprintf(stderr, L"Error loading module: " CSTR L"\n", e.what());
 		exit(EXIT_FAILURE);
 	}
 
@@ -253,7 +261,7 @@ void VM::PrintMethodInitException(MethodInitException &e)
 	PrintErr(method->group->name);
 
 	PrintInternal(err, L"' from module %ls: ", method->group->declModule->name);
-	fwprintf(err, L"%s\n", e.what());
+	fwprintf(err, CSTR L"\n", e.what());
 
 	switch (e.GetFailureKind())
 	{
