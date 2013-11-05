@@ -108,13 +108,15 @@ AVES_API NATIVE_FUNCTION(aves_Real_toString)
 
 AVES_API NATIVE_FUNCTION(aves_Real_opEquals)
 {
-	double right = RealFromValue(thread, RIGHT).real;
-	double left = LEFT.real;
+	bool result = false;
+	if (RIGHT.type == Types::Real)
+		result = LEFT.real == RIGHT.real;
+	else if (RIGHT.type == Types::Int)
+		result = LEFT.real == (double)RIGHT.integer;
+	else if (RIGHT.type == Types::UInt)
+		result = LEFT.real == (double)RIGHT.uinteger;
 
-	if (IsNaN(left) || IsNaN(right))
-		VM_PushBool(thread, IsNaN(left) == IsNaN(right));
-	else
-		VM_PushBool(thread, left == right);
+	VM_PushBool(thread, result);
 }
 AVES_API NATIVE_FUNCTION(aves_Real_opCompare)
 {
