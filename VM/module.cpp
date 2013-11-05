@@ -280,7 +280,8 @@ Module::Module(ModuleMeta &meta) :
 	fieldRefs(0),
 	methodRefs(0),
 	methodStart(meta.methodStart),
-	nativeLib(nullptr)
+	nativeLib(nullptr),
+	mainMethod(nullptr)
 { }
 
 Module::~Module()
