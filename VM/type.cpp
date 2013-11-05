@@ -247,14 +247,21 @@ bool Member::IsAccessibleProtectedWithSharedType(const Type *instType, const Typ
 Type *Member::GetOriginatingType() const
 {
 	assert((flags & MemberFlags::ACCESS_LEVEL) == MemberFlags::PROTECTED);
+	const Method *method = nullptr;
+
 	if ((flags & MemberFlags::KIND) == MemberFlags::METHOD)
+		method = static_cast<const Method*>(this);
+	else if ((flags & MemberFlags::KIND) == MemberFlags::PROPERTY)
 	{
-		const Method *method = static_cast<const Method*>(this);
-		while (method->baseMethod)
-			method = method->baseMethod;
-		return method->declType;
+		const Property *prop = static_cast<const Property*>(this);
+		method = prop->getter ? prop->getter : prop->setter;
 	}
-	return declType;
+	else // Field
+		return declType;
+
+	while (method->baseMethod)
+		method = method->baseMethod;
+	return method->declType;
 }
 
 Value *const Field::GetField(Thread *const thread, const Value instance) const
