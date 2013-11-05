@@ -45,7 +45,7 @@ int VM::Run(VMStartParams &params)
 	{
 		wprintf(L"Module path:    %ls\n", params.modulePath);
 		wprintf(L"Startup file:   %ls\n", params.startupFile);
-		wprintf(L"Argument count: %ls\n", params.argc);
+		wprintf(L"Argument count: %d\n",  params.argc);
 	}
 
 	GC::Init(); // We must call this before VM::Init(), because VM::Init relies on the GC
@@ -59,7 +59,7 @@ int VM::Run(VMStartParams &params)
 		Method *main = vm->startupModule->GetMainMethod();
 		if (main == nullptr)
 		{
-			wprintf(L"Startup error: Startup module does not define a main method.\n");
+			fwprintf(stderr, L"Startup error: Startup module does not define a main method.\n");
 			result = EXIT_FAILURE;
 		}
 		else
