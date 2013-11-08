@@ -37,7 +37,8 @@ bool Thread::EvalBranchTableInitialized = false;
 
 Thread::Thread() :
 	currentFrame(nullptr), state(ThreadState::CREATED),
-	currentError(NULL_VALUE), ip(nullptr)
+	currentError(NULL_VALUE), ip(nullptr),
+	shouldSuspendForGC(false)
 {
 	InitCallStack();
 }
@@ -91,6 +92,13 @@ void Thread::Start(Method *method, Value &result)
 	state = ThreadState::STOPPED;
 
 	// Done! Hopefully.
+}
+
+
+void Thread::SuspendForGC()
+{
+	// Put some code in here so MSVC doesn't optimize the call out
+	wprintf(L"Suspending thread for GC!\n");
 }
 
 
@@ -1107,4 +1115,9 @@ OVUM_API void VM_ThrowDivideByZeroError(ThreadHandle thread, String *message)
 OVUM_API void VM_ThrowNullReferenceError(ThreadHandle thread, String *message)
 {
 	thread->ThrowNullReferenceError(message);
+}
+
+OVUM_API String *VM_GetStackTrace(ThreadHandle thread)
+{
+	return thread->GetStackTrace();
 }

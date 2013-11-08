@@ -59,6 +59,7 @@ void ResizeSet(ThreadHandle thread, SetInst *set)
 	set->buckets = newBuckets.release();
 	set->entries = newEntries.release();
 	set->values = newValues.release();
+	set->capacity = newSize;
 }
 
 AVES_API NATIVE_FUNCTION(aves_Set_new)
@@ -82,7 +83,18 @@ AVES_API NATIVE_FUNCTION(aves_Set_get_length)
 	VM_PushInt(thread, set->count - set->freeCount);
 }
 
-AVES_API NATIVE_FUNCTION(aves_Set_clone);
+AVES_API NATIVE_FUNCTION(aves_Set_clear)
+{
+	SetInst *set = _Set(THISV);
+
+	memset(set->buckets, -1, set->capacity * sizeof(int32_t*));
+	memset(set->entries, 0, set->capacity * sizeof(SetEntry));
+	memset(set->values, 0, set->capacity * sizeof(Value));
+	set->count = 0;
+	set->freeCount = 0;
+	set->freeList = -1;
+	set->version++;
+}
 AVES_API NATIVE_FUNCTION(aves_Set_containsInternal)
 {
 	// Arguments: (item, hash is Int|UInt)

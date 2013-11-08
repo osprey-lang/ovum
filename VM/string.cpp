@@ -216,16 +216,17 @@ OVUM_API bool String_Contains(const String *str, const String *value)
 
 	const uchar *strp = &str->firstChar;
 	const uchar firstValChar = value->firstChar;
-	int32_t remaining = str->length - value->length;
+	int32_t remaining = str->length - value->length + 1;
 	while (remaining > 0)
 	{
 		if (*strp == firstValChar)
 		{
-			// The comparison algorithm below is basically lifted from String_Equals, and then slightly modified
-			int32_t length = value->length;
+			// The comparison algorithm below is basically lifted from String_SubstringEquals,
+			// and then slightly modified
+			int32_t length = value->length - 1;
 
-			const uchar *strpCopy = strp;
-			const uchar *valp = &value->firstChar;
+			const uchar *strpCopy = strp + 1;
+			const uchar *valp = &value->firstChar + 1;
 
 			while (length > 10) // Unroll comparison loop by 10!
 			{
@@ -239,19 +240,17 @@ OVUM_API bool String_Contains(const String *str, const String *value)
 				length -= 10;
 			}
 
-			// Note: this depends on the fact that strings are null-terminated, and
-			// that the null character is never included in the string length.
 			while (length > 0)
 			{
-				if (*(int32_t*)strp != *(int32_t*)valp)
+				if (*strp != *valp)
 					break;
-				strp += 2;
-				valp += 2;
+				strp++;
+				valp++;
 
-				length -= 2;
+				length--;
 			}
 
-			if (length <= 0)
+			if (length == 0)
 				return true;
 			// otherwise, advance to the next character in str
 			strp = strpCopy;
