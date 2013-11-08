@@ -30,11 +30,10 @@ AVES_API NATIVE_FUNCTION(aves_Set_new);
 
 AVES_API NATIVE_FUNCTION(aves_Set_get_length);
 
-AVES_API NATIVE_FUNCTION(aves_Set_clone);
+AVES_API NATIVE_FUNCTION(aves_Set_clear);
 AVES_API NATIVE_FUNCTION(aves_Set_containsInternal);
 AVES_API NATIVE_FUNCTION(aves_Set_addInternal);
 AVES_API NATIVE_FUNCTION(aves_Set_removeInternal);
-AVES_API NATIVE_FUNCTION(aves_Set_toggleInternal);
 
 AVES_API NATIVE_FUNCTION(aves_Set_get_version);
 AVES_API NATIVE_FUNCTION(aves_Set_get_entryCount);

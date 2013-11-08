@@ -13,7 +13,9 @@ use "Method.osp";
 use "Type.osp";
 use "errors/errors.osp"; // all of the errors!
 use "helpers.osp";
+use "Console.osp";
 use "ConsoleKey.osp";
+use "ConsoleColor.osp";
 
 namespace aves;
 
@@ -22,9 +24,6 @@ namespace aves;
 /// Remarks: If the value is null, it is treated the same as `""`.
 ///          If the value is any other non-string value, `.toString()` is called on it.
 public function print(value)				__extern("aves_print");
-public function printErr(value)				__extern("aves_printErr");
-public function writeOut(value)				__extern("aves_writeOut");
-public function writeErr(value)				__extern("aves_writeErr");
 
 /// Summary: Prints a formatted value.
 /// Param format: The format string. Must be of type String.
@@ -35,31 +34,6 @@ public function print(format, values)
 		throw new TypeError("The format string must be a string.");
 	print(format.format(values));
 }
-public function printErr(format, values)
-{
-	if format is not String:
-		throw new TypeError("The format string must be a string.");
-	printErr(format.format(values));
-}
-public function writeOut(format, values)
-{
-	if format is not String:
-		throw new TypeError("The format string must be a string.");
-	writeOut(format.format(values));
-}
-public function writeErr(format, values)
-{
-	if format is not String:
-		throw new TypeError("The format string must be a string.");
-	writeErr(format.format(values));
-}
-
-public function readKey()					__extern("aves_readKey");
-public function readKey(hideChar)			__extern("aves_readKey");
-public function readChar()					__extern("aves_readChar");
-public function readLine()					__extern("aves_readLine", locals=1);
-
-public function clearConsole()				__extern("aves_clearConsole");
 
 /// Summary: Exits the application immediately.
 /// Param code: The exit code to pass to the calling environment.

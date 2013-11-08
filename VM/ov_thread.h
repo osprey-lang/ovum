@@ -154,4 +154,10 @@ OVUM_API void VM_ThrowOverflowError(ThreadHandle thread, String *message = nullp
 OVUM_API void VM_ThrowDivideByZeroError(ThreadHandle thread, String *message = nullptr);
 OVUM_API void VM_ThrowNullReferenceError(ThreadHandle thread, String *message = nullptr);
 
+// Generates a stack trace for all the managed calls on the specified thread.
+// This stack trace excludes the call to VM_GetStackTrace, as well as any invocations
+// of natively functions called directly by other native functions. The only native
+// functions that are included are those invoked by the VM.
+OVUM_API String *VM_GetStackTrace(ThreadHandle thread);
+
 #endif // VM__THREAD_H

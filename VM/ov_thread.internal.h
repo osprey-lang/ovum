@@ -90,6 +90,10 @@ typedef struct StackFrame_S
 	{
 		SetString_(evalStack + stackCount++, value);
 	}
+	inline void PushNull()
+	{
+		SetNull_(evalStack + stackCount++);
+	}
 
 	inline Value Pop()
 	{
@@ -128,13 +132,13 @@ typedef struct StackFrame_S
 enum class ThreadState
 {
 	// The thread has been created but not started.
-	CREATED   = 0x00,
+	CREATED         = 0x00,
 	// The thread is running.
-	RUNNING   = 0x01,
-	// The thread is suspended.
-	SUSPENDED = 0x02,
+	RUNNING         = 0x01,
+	// The thread is suspended by the GC.
+	SUSPENDED_BY_GC = 0x02,
 	// The thread has stopped, either from having its main method return, or from being killed.
-	STOPPED   = 0x03,
+	STOPPED         = 0x03,
 };
 
 class StackManager; // used by the method initializer
@@ -229,8 +233,16 @@ private:
 	// the base of said pointer.
 	StackFrame *currentFrame;
 
+	// Set to true if the GC has asked the thread to suspend itself.
+	volatile bool shouldSuspendForGC;
+
 	// The current state of the thread. And what a state it's in. Tsk tsk tsk.
 	ThreadState state;
+
+	// The call stack. This grows towards higher addresses.
+	// Note: although this represents a bunch of unspecific bytes, giving the type
+	// as unsigned char allows us to add and subtract from the address of this field.
+	unsigned char *callStack;
 
 	// The current error.
 	// If successfully caught, this is set to NULL_VALUE *after* the catch clause
@@ -239,11 +251,6 @@ private:
 	// clause may trigger a GC cycle or may want to rethrow the current error.
 	Value currentError;
 
-	// The call stack. This should be the last field in the class.
-	// Note: although this represents a bunch of unspecific bytes, giving the type
-	// as unsigned char allows us to add and subtract from the address of this field.
-	unsigned char *callStack;
-
 public:
 	inline void Push      (Value    value) { currentFrame->Push(value);       }
 	inline void PushBool  (bool     value) { currentFrame->PushBool(value);   }
@@ -251,8 +258,7 @@ public:
 	inline void PushUInt  (uint64_t value) { currentFrame->PushUInt(value);   }
 	inline void PushReal  (double   value) { currentFrame->PushReal(value);   }
 	inline void PushString(String  *value) { currentFrame->PushString(value); }
-
-	inline void PushNull() { currentFrame->Push(NULL_VALUE);  }
+	inline void PushNull  ()               { currentFrame->PushNull();        }
 
 	inline Value Pop() { return currentFrame->Pop(); }
 	inline void Pop(unsigned int n) { currentFrame->Pop(n); }
@@ -318,6 +324,8 @@ private:
 
 	void PrepareVariadicArgs(const MethodFlags flags, const uint32_t argCount, const uint32_t paramCount, StackFrame *frame);
 
+	void SuspendForGC();
+
 	void Evaluate(StackFrame *frame);
 	bool FindErrorHandler(StackFrame *frame);
 	void EvaluateLeave(StackFrame *frame, const int32_t target);
@@ -364,7 +372,7 @@ private:
 
 	friend class GC;
 	friend void VM_InvokeMethod(ThreadHandle, MethodHandle, const uint32_t, Value*);
-	friend class VM; // temp
+	friend String *VM_GetStackTrace(ThreadHandle);
 };
 
 #endif // VM__THREAD_INTERNAL_H

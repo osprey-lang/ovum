@@ -21,6 +21,14 @@ using namespace std;
 #define CNSL_FG(c)        c
 #define CNSL_BG(c)        (c << 4)
 
+#ifdef _MSC_VER
+// Microsoft's C++ implementation uses %s to mean wchar_t* in wide functions,
+// and requires the non-portable %S for char*s. Sigh.
+#define CSTR  L"%S"
+#else
+#define CSTR  L"%s"
+#endif
+
 int wmain(int argc, wchar_t *argv[])
 {
 	if (argc == 1)
@@ -97,9 +105,8 @@ void CommandParseError(const char *message, const wchar_t *extra)
 	HANDLE stdOut = GetStdHandle(STD_OUTPUT_HANDLE);
 	CONSOLE_SCREEN_BUFFER_INFO cbuf;
 	GetConsoleScreenBufferInfo(stdOut, &cbuf);
-
 	SetConsoleTextAttribute(stdOut, CNSL_RED);
-	fwprintf(stderr, L"Could not start Ovum: %s", message);
+	fwprintf(stderr, L"Could not start Ovum: " CSTR, message);
 	if (extra)
 		fwprintf(stderr, L"%ls", extra);
 	fwprintf(stderr, L"\n\n");

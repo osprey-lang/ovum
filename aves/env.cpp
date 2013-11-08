@@ -2,11 +2,6 @@
 
 Value *EnvArgsField;
 
-//AVES_API void aves_Env_init(TypeHandle type)
-//{
-//
-//}
-
 AVES_API NATIVE_FUNCTION(aves_Env_get_args)
 {
 	if (EnvArgsField == nullptr)
@@ -32,4 +27,9 @@ AVES_API NATIVE_FUNCTION(aves_Env_get_newline)
 AVES_API NATIVE_FUNCTION(aves_Env_get_tickCount)
 {
 	VM_PushInt(thread, GetTickCount64());
+}
+
+AVES_API NATIVE_FUNCTION(aves_Env_get_stackTrace)
+{
+	VM_PushString(thread, VM_GetStackTrace(thread));
 }

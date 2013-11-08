@@ -43,6 +43,9 @@ void Thread::Evaluate(StackFrame *frame)
 
 	while (true)
 	{
+		if (shouldSuspendForGC)
+			SuspendForGC();
+
 		this->ip = ip;
 		switch (*ip++) // always skip opcode
 		{

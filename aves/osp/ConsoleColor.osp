@@ -1,0 +1,28 @@
+namespace aves;
+
+public enum set ConsoleColor
+{
+	// These values correspond to the values defined in the Windows headers.
+	// For other systems, conversion is almost certainly going to be necessary.
+	//
+	// 0x08 == "intensity", which basically means "brighter"
+
+	black       = 0,
+	darkGray    = 0x08,
+	gray        = darkRed | darkGreen | darkBlue,
+	white       = gray | 0x08,
+
+	darkRed     = 0x04,
+	darkYellow  = darkRed | darkGreen,
+	darkGreen   = 0x02,
+	darkCyan    = darkGreen | darkBlue,
+	darkBlue    = 0x01,
+	darkMagenta = darkRed | darkBlue,
+
+	red         = darkRed     | 0x08,
+	yellow      = darkYellow  | 0x08,
+	green       = darkGreen   | 0x08,
+	cyan        = darkCyan    | 0x08,
+	blue        = darkBlue    | 0x08,
+	magenta     = darkMagenta | 0x08,
+}
