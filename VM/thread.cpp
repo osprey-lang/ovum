@@ -1,5 +1,4 @@
 #include "ov_vm.internal.h"
-#include <comdef.h>
 
 namespace thread_errors
 {
@@ -8,6 +7,7 @@ namespace thread_errors
 		LitString<92> _ConcatTypes                 = LitString<92>::FromCString("The concatenation operator requires two Lists, two Hashes, or two values of any other types.");
 		LitString<43> _CompareType                 = LitString<43>::FromCString("The comparison operator must return an Int.");
 		LitString<27> _NotInvokable                = LitString<27>::FromCString("The value is not invokable.");
+		LitString<28> _NotComparable               = LitString<28>::FromCString("The value is not comparable.");
 		LitString<30> _MemberNotFound              = LitString<30>::FromCString("The member could not be found.");
 		LitString<28> _MemberNotInvokable          = LitString<28>::FromCString("The member is not invokable.");
 		LitString<26> _AssigningToMethod           = LitString<26>::FromCString("Cannot assign to a method.");
@@ -21,6 +21,7 @@ namespace thread_errors
 	String *ConcatTypes                 = _S(_ConcatTypes);
 	String *CompareType                 = _S(_CompareType);
 	String *NotInvokable                = _S(_NotInvokable);
+	String *NotComparable               = _S(_NotComparable);
 	String *MemberNotFound              = _S(_MemberNotFound);
 	String *MemberNotInvokable          = _S(_MemberNotInvokable);
 	String *AssigningToMethod           = _S(_AssigningToMethod);
@@ -31,21 +32,20 @@ namespace thread_errors
 	String *NoIndexerFound              = _S(_NoIndexerFound);
 }
 
-#ifdef THREADED_EVALUATION
-bool Thread::EvalBranchTableInitialized = false;
-#endif
-
 Thread::Thread() :
 	currentFrame(nullptr), state(ThreadState::CREATED),
 	currentError(NULL_VALUE), ip(nullptr),
-	shouldSuspendForGC(false)
+	shouldSuspendForGC(false),
+	flags(ThreadFlags::NONE)
 {
 	InitCallStack();
+	InitGCLock();
 }
 
 Thread::~Thread()
 {
 	DisposeCallStack();
+	DisposeGCLock();
 }
 
 void Thread::Start(Method *method, Value &result)
@@ -95,10 +95,47 @@ void Thread::Start(Method *method, Value &result)
 }
 
 
+void Thread::PleaseSuspendForGCAsap()
+{
+	shouldSuspendForGC = true;
+}
+
+void Thread::EndGCSuspension()
+{
+	shouldSuspendForGC = false;
+}
+
 void Thread::SuspendForGC()
 {
-	// Put some code in here so MSVC doesn't optimize the call out
-	wprintf(L"Suspending thread for GC!\n");
+	assert(shouldSuspendForGC == true);
+
+	state = ThreadState::SUSPENDED_BY_GC;
+	// Do nothing here. Just wait for the GC to finish.
+	EnterCriticalSection(&gcCycleSection);
+
+	state = ThreadState::RUNNING;
+	shouldSuspendForGC = false;
+	// Resume normal operations!
+	LeaveCriticalSection(&gcCycleSection);
+}
+
+
+void Thread::EnterFullyNativeRegion()
+{
+	flags |= ThreadFlags::IN_NATIVE_REGION;
+}
+
+void Thread::LeaveFullyNativeRegion()
+{
+	flags &= ~ThreadFlags::IN_NATIVE_REGION;
+	if (shouldSuspendForGC)
+		SuspendForGC();
+}
+
+bool Thread::IsSuspendedForGC() const
+{
+	return state == ThreadState::SUSPENDED_BY_GC ||
+		(flags & ThreadFlags::IN_NATIVE_REGION) == ThreadFlags::IN_NATIVE_REGION;
 }
 
 
@@ -201,7 +238,7 @@ void Thread::InvokeMemberLL(String *name, uint32_t argCount, Value *value, Value
 		switch (member->flags & MemberFlags::KIND)
 		{
 		case MemberFlags::FIELD:
-			*value = *((Field*)member)->GetFieldUnchecked(value);
+			((Field*)member)->ReadFieldUnchecked(value, value);
 			InvokeLL(argCount, value, result);
 			break;
 		case MemberFlags::PROPERTY:
@@ -326,7 +363,7 @@ void Thread::InvokeOperatorLL(Value *args, Operator op, Value *result)
 
 	Method::Overload *method = args[0].type->operators[(int)op];
 	if (method == nullptr)
-		ThrowTypeError();
+		ThrowMissingOperatorError(op);
 
 	InvokeMethodOverload(method, Arity(op), args, result);
 }
@@ -426,22 +463,10 @@ bool Thread::EqualsLL(Value *args)
 	return IsTrue_(result);
 }
 
-int Thread::Compare()
+int64_t Thread::Compare()
 {
 	Value *args = currentFrame->evalStack + currentFrame->stackCount - 2;
 	return CompareLL(args);
-}
-
-int Thread::CompareLL(Value *args)
-{
-	Value result;
-	InvokeOperatorLL(args, Operator::CMP, &result);
-
-	if (result.type != VM::vm->types.Int)
-		ThrowTypeError(thread_errors::CompareType);
-
-	int64_t cmpValue = result.integer;
-	return (int)Clamp<-1, 1>(cmpValue);
 }
 
 void Thread::Concat(Value *result)
@@ -495,6 +520,55 @@ void Thread::ConcatLL(Value *args, Value *result)
 }
 
 
+// Base implementation of the various comparison methods
+// This duplicates a lot of code from InvokeOperatorLL
+// (Semicolon intentionally missing from the last statement)
+#define COMPARE_BASE() \
+	if (IS_NULL(args[0])) \
+		ThrowNullReferenceError(); \
+	\
+	Method::Overload *method = args[0].type->operators[(int)Operator::CMP]; \
+	if (method == nullptr) \
+		ThrowTypeError(thread_errors::NotComparable); \
+	\
+	Value result; \
+	InvokeMethodOverload(method, 2, args, &result); \
+	if (result.type != VM::vm->types.Int) \
+		ThrowTypeError(thread_errors::CompareType)
+
+int64_t Thread::CompareLL(Value *args)
+{
+	COMPARE_BASE();
+	return result.integer;
+}
+
+bool Thread::CompareLessThanLL(Value *args)
+{
+	COMPARE_BASE();
+	return result.integer < 0;
+}
+
+bool Thread::CompareGreaterThanLL(Value *args)
+{
+	COMPARE_BASE();
+	return result.integer > 0;
+}
+
+bool Thread::CompareLessEqualsLL(Value *args)
+{
+	COMPARE_BASE();
+	return result.integer <= 0;
+}
+
+bool Thread::CompareGreaterEqualsLL(Value *args)
+{
+	COMPARE_BASE();
+	return result.integer >= 0;
+}
+
+#undef COMPARE_BASE
+
+
 void Thread::LoadMember(String *member, Value *result)
 {
 	Value *inst = currentFrame->evalStack + currentFrame->stackCount - 1;
@@ -521,7 +595,7 @@ void Thread::LoadMemberLL(Value *instance, String *member, Value *result)
 
 	if ((m->flags & MemberFlags::FIELD) != MemberFlags::NONE)
 	{
-		*result = *reinterpret_cast<const Field*>(m)->GetFieldUnchecked(instance);
+		reinterpret_cast<const Field*>(m)->ReadFieldUnchecked(instance, result);
 		currentFrame->Pop(1); // Done with the instance!
 	}
 	else if ((m->flags & MemberFlags::METHOD) != MemberFlags::NONE)
@@ -565,7 +639,7 @@ void Thread::StoreMemberLL(Value *instance, String *member)
 		ThrowTypeError(thread_errors::AssigningToMethod);
 
 	if ((m->flags & MemberFlags::FIELD) != MemberFlags::NONE)
-		*reinterpret_cast<Field*>(m)->GetFieldUnchecked(instance) = *(instance + 1);
+		reinterpret_cast<Field*>(m)->WriteFieldUnchecked(instance);
 	else // MemberFlags::PROPERTY
 	{
 		Property *p = (Property*)m;
@@ -652,13 +726,14 @@ void Thread::StoreIndexerLL(uint32_t argCount, Value *args)
 void Thread::LoadStaticField(Field *field, Value *result)
 {
 	if (result)
-		*result = *field->staticValue;
+		*result = field->staticValue->Read();
 	else
-		currentFrame->Push(*field->staticValue);
+		currentFrame->Push(field->staticValue->Read());
 }
+
 void Thread::StoreStaticField(Field *field)
 {
-	*field->staticValue = currentFrame->Pop();
+	field->staticValue->Write(currentFrame->Pop());
 }
 
 void Thread::ToString(String **result)
@@ -762,6 +837,41 @@ void Thread::ThrowNoOverloadError(const uint32_t argCount, String *message)
 	Throw();
 }
 
+void Thread::ThrowMissingOperatorError(Operator op)
+{
+	static LitString<3> operatorNames[] = {
+		{ 1, 0, StringFlags::STATIC, '+',0         }, // Operator::ADD
+		{ 1, 0, StringFlags::STATIC, '-',0         }, // Operator::SUB
+		{ 1, 0, StringFlags::STATIC, '|',0         }, // Operator::OR
+		{ 1, 0, StringFlags::STATIC, '^',0         }, // Operator::XOR
+		{ 1, 0, StringFlags::STATIC, '*',0         }, // Operator::MUL
+		{ 1, 0, StringFlags::STATIC, '/',0         }, // Operator::DIV
+		{ 1, 0, StringFlags::STATIC, '%',0         }, // Operator::MOD
+		{ 1, 0, StringFlags::STATIC, '&',0         }, // Operator::AND
+		{ 2, 0, StringFlags::STATIC, '*','*',0     }, // Operator::POW
+		{ 2, 0, StringFlags::STATIC, '<','<',0     }, // Operator::SHL
+		{ 2, 0, StringFlags::STATIC, '>','>',0     }, // Operator::SHR
+		{ 1, 0, StringFlags::STATIC, '#',0         }, // Operator::HASHOP
+		{ 1, 0, StringFlags::STATIC, '$',0         }, // Operator::DOLLAR
+		{ 1, 0, StringFlags::STATIC, '+',0         }, // Operator::PLUS
+		{ 1, 0, StringFlags::STATIC, '-',0         }, // Operator::NEG
+		{ 1, 0, StringFlags::STATIC, '~',0         }, // Operator::NOT
+		{ 2, 0, StringFlags::STATIC, '=','=',0     }, // Operator::EQ
+		{ 3, 0, StringFlags::STATIC, '<','=','>',0 }, // Operator::CMP
+	};
+	static const wchar_t *const baseMessage = L"The type does not support the specified operator. (Operator: ";
+
+	{
+		StringBuffer message(this);
+		message.Append(this, wcslen(baseMessage), baseMessage);
+		message.Append(this, _S(operatorNames[(int)op]));
+		message.Append(this, ')');
+		PushString(message.ToString(this));
+	}
+	GC::gc->Construct(this, VM::vm->types.TypeError, 1, nullptr);
+	Throw();
+}
+
 void Thread::InitCallStack()
 {
 	callStack = (unsigned char*)VirtualAlloc(nullptr,
@@ -781,6 +891,16 @@ void Thread::InitCallStack()
 void Thread::DisposeCallStack()
 {
 	VirtualFree(callStack, 0, MEM_RELEASE);
+}
+
+void Thread::InitGCLock()
+{
+	InitializeCriticalSection(&gcCycleSection);
+}
+
+void Thread::DisposeGCLock()
+{
+	DeleteCriticalSection(&gcCycleSection);
 }
 
 
@@ -988,7 +1108,7 @@ OVUM_API void VM_Push(ThreadHandle thread, Value value)
 
 OVUM_API void VM_PushNull(ThreadHandle thread)
 {
-	thread->Push(NULL_VALUE);
+	thread->PushNull();
 }
 
 OVUM_API void VM_PushBool(ThreadHandle thread, const bool value)
@@ -1051,7 +1171,7 @@ OVUM_API bool VM_Equals(ThreadHandle thread)
 {
 	return thread->Equals();
 }
-OVUM_API int VM_Compare(ThreadHandle thread)
+OVUM_API int64_t VM_Compare(ThreadHandle thread)
 {
 	return thread->Compare();
 }
@@ -1115,6 +1235,19 @@ OVUM_API void VM_ThrowDivideByZeroError(ThreadHandle thread, String *message)
 OVUM_API void VM_ThrowNullReferenceError(ThreadHandle thread, String *message)
 {
 	thread->ThrowNullReferenceError(message);
+}
+
+OVUM_API void VM_EnterFullyNativeRegion(ThreadHandle thread)
+{
+	thread->EnterFullyNativeRegion();
+}
+OVUM_API void VM_LeaveFullyNativeRegion(ThreadHandle thread)
+{
+	thread->LeaveFullyNativeRegion();
+}
+OVUM_API bool VM_IsInFullyNativeRegion(ThreadHandle thread)
+{
+	return thread->IsInFullyNativeRegion();
 }
 
 OVUM_API String *VM_GetStackTrace(ThreadHandle thread)

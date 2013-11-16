@@ -41,6 +41,7 @@ OVUM_API bool Method_Accepts(const MethodHandle m, int argc);
 
 OVUM_API uint32_t Field_GetOffset(const FieldHandle field);
 OVUM_API bool Field_GetStaticValue(const FieldHandle field, Value &result);
+OVUM_API bool Field_SetStaticValue(const FieldHandle field, Value value);
 
 
 OVUM_API MethodHandle Property_GetGetter(const PropertyHandle prop);

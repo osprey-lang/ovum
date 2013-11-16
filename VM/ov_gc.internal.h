@@ -4,6 +4,7 @@
 #define VM__GC_INTERNAL_H
 
 #include <cassert>
+#include <atomic>
 #include "ov_vm.internal.h"
 #include "string_table.internal.h"
 
@@ -56,6 +57,12 @@ typedef struct GCObject_S
 	GCObject *prev; // Pointer to the previous GC object in the object's list (collect, process or keep).
 	GCObject *next; // Pointer to the next GC object in the object's list.
 
+	// A flag that is set while a thread is reading from or writing to
+	// a field of this instance. No other threads can read from or write
+	// to any field of the instance while this flag is set. This is to
+	// prevent race conditions, as Value cannot be read or written atomically.
+	std::atomic_flag fieldAccessFlag;
+
 	Type *type;
 
 	// The first field of the Value immediately follows the type;
@@ -84,6 +91,60 @@ typedef struct MutableString_S
 // Gets an instance pointer from a GCObject*, for a particular type.
 #define INST_FROM_GCO(gco,t) ((char*)(gco) + GCO_SIZE + (t)->fieldsOffset)
 
+class StaticRef
+{
+private:
+	std::atomic_flag accessFlag;
+	Value value;
+
+public:
+	// Note: no constructor. The type needs to be usable in an array.
+
+	// Initializes the static reference to the specified value.
+	// This should only be called ONCE per static reference.
+	inline void Init(Value value)
+	{
+		accessFlag.clear(std::memory_order_release);
+		this->value = value;
+	}
+
+	// Atomically reads the value of the static reference.
+	inline Value Read()
+	{
+		using namespace std;
+		while (accessFlag.test_and_set(memory_order_acquire))
+			;
+		Value result = value;
+		accessFlag.clear(memory_order_release);
+		return result;
+	}
+
+	// Atomically updates the value of the static reference.
+	inline void Write(Value value)
+	{
+		using namespace std;
+		while (accessFlag.test_and_set(memory_order_acquire))
+			;
+		this->value = value;
+		accessFlag.clear(memory_order_release);
+	}
+	inline void Write(Value *value)
+	{
+		using namespace std;
+		while (accessFlag.test_and_set(memory_order_acquire))
+			;
+		this->value = *value;
+		accessFlag.clear(memory_order_release);
+	}
+
+	inline Value *GetValuePointer()
+	{
+		return &value;
+	}
+
+	friend class GC;
+};
+
 class StaticRefBlock;
 class StaticRefBlock
 {
@@ -92,7 +153,7 @@ public:
 	unsigned int count;
 
 	static const size_t BLOCK_SIZE = 64;
-	Value values[BLOCK_SIZE];
+	StaticRef values[BLOCK_SIZE];
 
 	inline StaticRefBlock() : next(nullptr), count(0) { }
 	inline StaticRefBlock(StaticRefBlock *next) : next(next), count(0) { }
@@ -199,7 +260,7 @@ public:
 	void AddMemoryPressure(Thread *const thread, const size_t size);
 	void RemoveMemoryPressure(Thread *const thread, const size_t size);
 
-	Value *AddStaticReference(Value value);
+	StaticRef *AddStaticReference(Value value);
 
 	void Release(Thread *const thread, GCObject *gco);
 

@@ -112,6 +112,11 @@ AVES_API NATIVE_FUNCTION(aves_String_substr1)
 	int32_t start = GetIndex(thread, str, args + 1);
 	int32_t count = str->length - start;
 
+	if (start == 0)
+	{
+		VM_PushString(thread, str);
+		return;
+	}
 	if (count == 0)
 	{
 		VM_PushString(thread, strings::Empty);
@@ -132,12 +137,17 @@ AVES_API NATIVE_FUNCTION(aves_String_substr2)
 
 	int32_t start = GetIndex(thread, str, args + 1);
 	int64_t count = IntFromValue(thread, args[2]).integer;
-	if (start + count >= str->length)
+	if (start + count > str->length)
 	{
 		GC_Construct(thread, Types::ArgumentRangeError, 0, nullptr);
 		VM_Throw(thread);
 	}
 
+	if (start == 0 && count == str->length)
+	{
+		VM_PushString(thread, str);
+		return;
+	}
 	if (count == 0)
 	{
 		VM_PushString(thread, strings::Empty);
@@ -188,6 +198,81 @@ AVES_API NATIVE_FUNCTION(aves_String_replaceInner)
 		result = string::Replace(thread, THISV.common.string, oldValue, newValue, args[3].integer);
 
 	VM_PushString(thread, result);
+}
+AVES_API NATIVE_FUNCTION(aves_String_split)
+{
+	// arguments: (separator)
+	// locals: List output
+	String *str = THISV.common.string;
+	args[1] = StringFromValue(thread, args[1]);
+	String *sep = args[1].common.string;
+
+	Value *output = VM_Local(thread, 0);
+	Value ignore;
+
+	if (sep->length == 0) // Split into separate characters
+	{
+		// Construct the output list
+		VM_PushInt(thread, str->length);
+		GC_Construct(thread, GetType_List(), 1, output);
+
+		// And then copy each individual character to the output
+		const uchar *chp = &str->firstChar;
+		int32_t remaining = str->length;
+		while (remaining-- > 0)
+		{
+			VM_Push(thread, *output);
+			VM_PushString(thread, GC_ConstructString(thread, 1, chp++));
+			VM_InvokeMember(thread, strings::add, 1, &ignore);
+		}
+	}
+	else
+	{
+		// Construct the output list
+		VM_PushInt(thread, str->length / 2);
+		GC_Construct(thread, GetType_List(), 1, output);
+
+		const uchar *chp = &str->firstChar;
+		const uchar *chStart = chp;
+		int32_t index = 0;
+		while (index < str->length)
+		{
+			if (*chp == sep->firstChar)
+			{
+				if (String_SubstringEquals(str, index, sep))
+				{
+					// We mound a fatch! I mean, we found a match!
+					// Copy characters from chStart to chp into the output,
+					// and be aware that chp is inclusive.
+					VM_Push(thread, *output);
+					if (chp == chStart)
+						VM_PushString(thread, strings::Empty);
+					else
+						VM_PushString(thread, GC_ConstructString(thread, chp - chStart, chStart));
+					VM_InvokeMember(thread, strings::add, 1, &ignore);
+					index += sep->length;
+					chp += sep->length;
+					chStart = chp;
+					continue;
+				}
+			}
+			index++;
+			chp++;
+		}
+
+		// And add the last bit of the string, too
+		VM_Push(thread, *output);
+		if (chStart == &str->firstChar)
+			// No match found, just add the entire string
+			VM_PushString(thread, str);
+		else if (chp == chStart)
+			VM_PushString(thread, strings::Empty);
+		else
+			VM_PushString(thread, GC_ConstructString(thread, chp - chStart, chStart));
+		VM_InvokeMember(thread, strings::add, 1, &ignore);
+	}
+
+	VM_Push(thread, *output);
 }
 
 AVES_API NATIVE_FUNCTION(aves_String_toUpper)

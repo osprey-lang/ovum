@@ -82,7 +82,7 @@ OVUM_API bool VM_Equals(ThreadHandle thread);
 //     operator is invoked on the type of S[1].
 //   This method /requires/ the <=> operator to return an instance of aves.Int. If it does not,
 //     a TypeError is thrown.
-OVUM_API int VM_Compare(ThreadHandle thread);
+OVUM_API int64_t VM_Compare(ThreadHandle thread);
 
 // Loads a member from the top value on the stack. Note that the instance is always popped.
 //   thread:
@@ -153,6 +153,27 @@ OVUM_API void VM_ThrowMemoryError(ThreadHandle thread, String *message = nullptr
 OVUM_API void VM_ThrowOverflowError(ThreadHandle thread, String *message = nullptr);
 OVUM_API void VM_ThrowDivideByZeroError(ThreadHandle thread, String *message = nullptr);
 OVUM_API void VM_ThrowNullReferenceError(ThreadHandle thread, String *message = nullptr);
+
+// Informs the thread that it is entering a section of native code
+// which will not interact with the managed runtime in any way.
+// If the GC is triggered (by another thread) when this thread is in
+// the native section, garbage collection proceeds without suspending
+// this thread.
+// This should only be called by native code before performing a
+// potentially lengthy operation that does not interact with the
+// managed runtime, such as I/O or waiting for a synchronization
+// object to be released. This will permit the thread to continue
+// working in the background while the GC runs; otherwise, the GC
+// would have to wait for the lengthy operation to finish.
+OVUM_API void VM_EnterFullyNativeRegion(ThreadHandle thread);
+// Informs the thread that it has left the fully native section.
+// If the GC is running, the thread will now suspend itself; otherwise,
+// the method returns immediately and the thread continues execution.
+// See the documentation of VM_EnterFullyNativeRegion for details.
+OVUM_API void VM_LeaveFullyNativeRegion(ThreadHandle thread);
+// Determines whether the thread is in a fully native region.
+// See the documentation of VM_EnterFullyNativeRegion for details.
+OVUM_API bool VM_IsInFullyNativeRegion(ThreadHandle thread);
 
 // Generates a stack trace for all the managed calls on the specified thread.
 // This stack trace excludes the call to VM_GetStackTrace, as well as any invocations

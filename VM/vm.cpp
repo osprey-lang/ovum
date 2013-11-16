@@ -45,9 +45,9 @@ int VM::Run(VMStartParams &params)
 {
 	using namespace std;
 
-	_setmode(_fileno(stdout), _O_WTEXT);
-	_setmode(_fileno(stderr), _O_WTEXT);
-	_setmode(_fileno(stdin),  _O_WTEXT);
+	_setmode(_fileno(stdout), _O_U8TEXT);
+	_setmode(_fileno(stderr), _O_U8TEXT);
+	_setmode(_fileno(stdin),  _O_U8TEXT);
 
 	if (params.verbose)
 	{
@@ -162,7 +162,7 @@ void VM::InitArgs(int argCount, const wchar_t *args[])
 		const wchar_t *arg = args[i];
 		Value argValue;
 		SetString_(argValue, String_FromWString(nullptr, args[i]));
-		argValues[i] = GC::gc->AddStaticReference(argValue);
+		argValues[i] = GC::gc->AddStaticReference(argValue)->GetValuePointer();
 
 		if (this->verbose)
 		{

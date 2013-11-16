@@ -2,13 +2,15 @@ use namespace aves;
 
 namespace math;
 
-// This pseudo-random number generator uses an implementation of the Mersenne twister algorithm.
-
+/// Summary: Implements a pseudo-random number generator, using the Mersenne Twister algorithm.
+///
+///          This algorithm is NOT cryptographcially safe and should not be used to encrypt any
+///          form of sensitive data.
 public class Random
 {
 	public new()
 	{
-		init(Env.tickCount); // TODO: Default seed
+		init(Env.tickCount);
 	}
 
 	public new(seed)

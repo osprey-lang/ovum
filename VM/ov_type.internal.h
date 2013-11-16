@@ -123,27 +123,39 @@ public:
 	union
 	{
 		int32_t offset;
-		Value *staticValue;
+		StaticRef *staticValue;
 	};
 
 	inline Field(String *name, Type *declType, MemberFlags flags) :
 		Member(name, declType, flags | MemberFlags::FIELD)
 	{ }
 
-	Value *const GetField(Thread *const thread, const Value instance) const;
-	Value *const GetField(Thread *const thread, const Value *instance) const;
+	void ReadField(Thread *const thread, Value *instance, Value *dest) const;
+	void ReadFieldFast(Thread *const thread, Value *instance, Value *dest) const;
+	void ReadFieldUnchecked(Value *instance, Value *dest) const;
 
-	Value *const GetFieldFast(Thread *const thread, const Value instance) const;
-	Value *const GetFieldFast(Thread *const thread, const Value *instance) const;
+	inline Value ReadField(Thread *const thread, Value *instance) const
+	{
+		Value result;
+		ReadField(thread, instance, &result);
+		return result;
+	}
+	inline Value ReadFieldFast(Thread *const thread, Value *instance) const
+	{
+		Value result;
+		ReadFieldFast(thread, instance, &result);
+		return result;
+	}
+	inline Value ReadFieldUnchecked(Value *instance) const
+	{
+		Value result;
+		ReadFieldUnchecked(instance, &result);
+		return result;
+	}
 
-	inline Value *const GetFieldUnchecked(const Value instance) const
-	{
-		return reinterpret_cast<Value*>(instance.instance + this->offset);
-	}
-	inline Value *const GetFieldUnchecked(const Value *instance) const
-	{
-		return reinterpret_cast<Value*>(instance->instance + this->offset);
-	}
+	void WriteField(Thread *const thread, Value *instanceAndValue) const;
+	void WriteFieldFast(Thread *const thread, Value *instanceAndValue) const;
+	void WriteFieldUnchecked(Value *instanceAndValue) const;
 };
 
 
@@ -467,7 +479,7 @@ public:
 	// An instance of aves.Type that is bound to this type.
 	// Use GetTypeToken() to retrieve this value; this starts
 	// out as a NULL_VALUE and is only initialized on demand.
-	Value typeToken;
+	StaticRef *typeToken;
 
 	Value GetTypeToken(Thread *const thread);
 

@@ -43,10 +43,10 @@ void Thread::Evaluate(StackFrame *frame)
 
 	while (true)
 	{
+		this->ip = ip;
 		if (shouldSuspendForGC)
 			SuspendForGC();
 
-		this->ip = ip;
 		switch (*ip++) // always skip opcode
 		{
 		TARGET(OPI_NOP) NEXT_INSTR(); // Really, do nothing!
@@ -302,8 +302,8 @@ void Thread::Evaluate(StackFrame *frame)
 				register Value *const inst = OFF_ARG(ip, f);
 				register Value *const dest = OFF_ARG(ip + LOSZ, f);
 				ip += 2*LOSZ;
-											
-				*dest = *T_ARG(ip, Field*)->GetField(this, inst);
+
+				T_ARG(ip, Field*)->ReadField(this, inst, dest);
 				ip += sizeof(Field*);
 				f->stackCount--;
 			}
@@ -314,7 +314,7 @@ void Thread::Evaluate(StackFrame *frame)
 				register Value *const dest = OFF_ARG(ip + LOSZ, f);
 				ip += 2*LOSZ;
 											
-				*dest = *T_ARG(ip, Field*)->GetField(this, inst);
+				T_ARG(ip, Field*)->ReadField(this, inst, dest);
 				ip += sizeof(Field*);
 			}
 			NEXT_INSTR();
@@ -322,13 +322,13 @@ void Thread::Evaluate(StackFrame *frame)
 		// ldsfld: LocalOffset dest, Field *field
 		TARGET(OPI_LDSFLD_L)
 			{
-				*OFF_ARG(ip, f) = *T_ARG(ip + LOSZ, Field*)->staticValue;
+				*OFF_ARG(ip, f) = T_ARG(ip + LOSZ, Field*)->staticValue->Read();
 				ip += LOSZ + sizeof(Field*);
 			}
 			NEXT_INSTR();
 		TARGET(OPI_LDSFLD_S)
 			{
-				*OFF_ARG(ip, f) = *T_ARG(ip + LOSZ, Field*)->staticValue;
+				*OFF_ARG(ip, f) = T_ARG(ip + LOSZ, Field*)->staticValue->Read();
 				ip += LOSZ + sizeof(Field*);
 				f->stackCount++;
 			}
@@ -767,7 +767,7 @@ void Thread::Evaluate(StackFrame *frame)
 		// cmp: LocalOffset args, LocalOffset dest
 		TARGET(OPI_CMP_L)
 			{
-				register int result = CompareLL(OFF_ARG(ip, f));
+				register int64_t result = CompareLL(OFF_ARG(ip, f));
 				SetInt_(OFF_ARG(ip + LOSZ, f), result);
 				ip += 2*LOSZ;
 				// CompareLL pops arguments off the stack
@@ -775,7 +775,7 @@ void Thread::Evaluate(StackFrame *frame)
 			NEXT_INSTR();
 		TARGET(OPI_CMP_S)
 			{
-				register int result = CompareLL(OFF_ARG(ip, f));
+				register int64_t result = CompareLL(OFF_ARG(ip, f));
 				SetInt_(OFF_ARG(ip + LOSZ, f), result);
 				ip += 2*LOSZ;
 				// CompareLL pops arguments off the stack
@@ -786,7 +786,7 @@ void Thread::Evaluate(StackFrame *frame)
 		// lt: LocalOffset args, LocalOffset dest
 		TARGET(OPI_LT_L)
 			{
-				register bool result = CompareLL(OFF_ARG(ip, f)) < 0;
+				register bool result = CompareLessThanLL(OFF_ARG(ip, f));
 				SetBool_(OFF_ARG(ip + LOSZ, f), result);
 				ip += 2*LOSZ;
 				// CompareLL pops arguments off the stack
@@ -794,7 +794,7 @@ void Thread::Evaluate(StackFrame *frame)
 			NEXT_INSTR();
 		TARGET(OPI_LT_S)
 			{
-				register bool result = CompareLL(OFF_ARG(ip, f)) < 0;
+				register bool result = CompareLessThanLL(OFF_ARG(ip, f));
 				SetBool_(OFF_ARG(ip + LOSZ, f), result);
 				ip += 2*LOSZ;
 				// CompareLL pops arguments off the stack
@@ -805,7 +805,7 @@ void Thread::Evaluate(StackFrame *frame)
 		// gt: LocalOffset args, LocalOffset dest
 		TARGET(OPI_GT_L)
 			{
-				register bool result = CompareLL(OFF_ARG(ip, f)) > 0;
+				register bool result = CompareGreaterThanLL(OFF_ARG(ip, f));
 				SetBool_(OFF_ARG(ip + LOSZ, f), result);
 				ip += 2*LOSZ;
 				// CompareLL pops arguments off the stack
@@ -813,7 +813,7 @@ void Thread::Evaluate(StackFrame *frame)
 			NEXT_INSTR();
 		TARGET(OPI_GT_S)
 			{
-				register bool result = CompareLL(OFF_ARG(ip, f)) > 0;
+				register bool result = CompareGreaterThanLL(OFF_ARG(ip, f));
 				SetBool_(OFF_ARG(ip + LOSZ, f), result);
 				ip += 2*LOSZ;
 				// CompareLL pops arguments off the stack
@@ -824,7 +824,7 @@ void Thread::Evaluate(StackFrame *frame)
 		// lte: LocalOffset args, LocalOffset dest
 		TARGET(OPI_LTE_L)
 			{
-				register bool result = CompareLL(OFF_ARG(ip, f)) <= 0;
+				register bool result = CompareLessEqualsLL(OFF_ARG(ip, f));
 				SetBool_(OFF_ARG(ip + LOSZ, f), result);
 				ip += 2*LOSZ;
 				// CompareLL pops arguments off the stack
@@ -832,7 +832,7 @@ void Thread::Evaluate(StackFrame *frame)
 			NEXT_INSTR();
 		TARGET(OPI_LTE_S)
 			{
-				register bool result = CompareLL(OFF_ARG(ip, f)) <= 0;
+				register bool result = CompareLessEqualsLL(OFF_ARG(ip, f));
 				SetBool_(OFF_ARG(ip + LOSZ, f), result);
 				ip += 2*LOSZ;
 				// CompareLL pops arguments off the stack
@@ -843,7 +843,7 @@ void Thread::Evaluate(StackFrame *frame)
 		// gte: LocalOffset args, LocalOffset dest
 		TARGET(OPI_GTE_L)
 			{
-				register bool result = CompareLL(OFF_ARG(ip, f)) >= 0;
+				register bool result = CompareGreaterThanLL(OFF_ARG(ip, f));
 				SetBool_(OFF_ARG(ip + LOSZ, f), result);
 				ip += 2*LOSZ;
 				// CompareLL pops arguments off the stack
@@ -851,7 +851,7 @@ void Thread::Evaluate(StackFrame *frame)
 			NEXT_INSTR();
 		TARGET(OPI_GTE_S)
 			{
-				register bool result = CompareLL(OFF_ARG(ip, f)) >= 0;
+				register bool result = CompareGreaterThanLL(OFF_ARG(ip, f));
 				SetBool_(OFF_ARG(ip + LOSZ, f), result);
 				ip += 2*LOSZ;
 				// CompareLL pops arguments off the stack
@@ -904,13 +904,13 @@ void Thread::Evaluate(StackFrame *frame)
 		// stsfld: LocalOffset value, Field *field
 		TARGET(OPI_STSFLD_L)
 			{
-				*T_ARG(ip + LOSZ, Field*)->staticValue = *OFF_ARG(ip, f);
+				T_ARG(ip + LOSZ, Field*)->staticValue->Write(OFF_ARG(ip, f));
 				ip += LOSZ + sizeof(Field*);
 			}
 			NEXT_INSTR();
 		TARGET(OPI_STSFLD_S)
 			{
-				*T_ARG(ip + LOSZ, Field*)->staticValue = *OFF_ARG(ip, f);
+				T_ARG(ip + LOSZ, Field*)->staticValue->Write(OFF_ARG(ip, f));
 				ip += LOSZ + sizeof(Field*);
 				f->stackCount--;
 			}
@@ -920,7 +920,7 @@ void Thread::Evaluate(StackFrame *frame)
 		TARGET(OPI_STFLD)
 			{
 				register Value *const values = OFF_ARG(ip, f);
-				*T_ARG(ip + LOSZ, Field*)->GetField(this, values) = values[1];
+				T_ARG(ip + LOSZ, Field*)->WriteField(this, values);
 
 				ip += LOSZ + sizeof(Field*);
 				f->stackCount -= 2;
@@ -976,8 +976,8 @@ void Thread::Evaluate(StackFrame *frame)
 				register Value *const inst = OFF_ARG(ip, f);
 				register Value *const dest = OFF_ARG(ip + LOSZ, f);
 				ip += 2*LOSZ;
-											
-				*dest = *T_ARG(ip, Field*)->GetFieldFast(this, inst);
+				
+				T_ARG(ip, Field*)->ReadFieldFast(this, inst, dest);
 				ip += sizeof(Field*);
 				f->stackCount--;
 			}
@@ -988,7 +988,7 @@ void Thread::Evaluate(StackFrame *frame)
 				register Value *const dest = OFF_ARG(ip + LOSZ, f);
 				ip += 2*LOSZ;
 											
-				*dest = *T_ARG(ip, Field*)->GetFieldFast(this, inst);
+				T_ARG(ip, Field*)->ReadFieldFast(this, inst, dest);
 				ip += sizeof(Field*);
 			}
 			NEXT_INSTR();
@@ -998,7 +998,7 @@ void Thread::Evaluate(StackFrame *frame)
 		TARGET(OPI_STFLDFAST)
 			{
 				register Value *const values = OFF_ARG(ip, f);
-				*T_ARG(ip + LOSZ, Field*)->GetFieldFast(this, values) = values[1];
+				T_ARG(ip + LOSZ, Field*)->WriteFieldFast(this, values);
 
 				ip += LOSZ + sizeof(Field*);
 				f->stackCount -= 2;
@@ -1026,8 +1026,8 @@ void Thread::Evaluate(StackFrame *frame)
 		// brlt: LocalOffset args, int32_t offset
 		TARGET(OPI_BRLT)
 			{
-				register int result = CompareLL(OFF_ARG(ip, f));
-				if (result < 0)
+				register bool result = CompareLessThanLL(OFF_ARG(ip, f));
+				if (result)
 					ip += I32_ARG(ip + LOSZ);
 				ip += LOSZ + sizeof(int32_t);
 			}
@@ -1036,8 +1036,8 @@ void Thread::Evaluate(StackFrame *frame)
 		// brgt: LocalOffset args, int32_t offset
 		TARGET(OPI_BRGT)
 			{
-				register int result = CompareLL(OFF_ARG(ip, f));
-				if (result > 0)
+				register bool result = CompareGreaterThanLL(OFF_ARG(ip, f));
+				if (result)
 					ip += I32_ARG(ip + LOSZ);
 				ip += LOSZ + sizeof(int32_t);
 			}
@@ -1046,8 +1046,8 @@ void Thread::Evaluate(StackFrame *frame)
 		// brlte: LocalOffset args, int32_t offset
 		TARGET(OPI_BRLTE)
 			{
-				register int result = CompareLL(OFF_ARG(ip, f));
-				if (result <= 0)
+				register bool result = CompareLessEqualsLL(OFF_ARG(ip, f));
+				if (result)
 					ip += I32_ARG(ip + LOSZ);
 				ip += LOSZ + sizeof(int32_t);
 			}
@@ -1056,8 +1056,8 @@ void Thread::Evaluate(StackFrame *frame)
 		// brgte: LocalOffset args, int32_t offset
 		TARGET(OPI_BRGTE)
 			{
-				register int result = CompareLL(OFF_ARG(ip, f));
-				if (result >= 0)
+				register bool result = CompareGreaterEqualsLL(OFF_ARG(ip, f));
+				if (result)
 					ip += I32_ARG(ip + LOSZ);
 				ip += LOSZ + sizeof(int32_t);
 			}

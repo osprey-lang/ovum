@@ -119,6 +119,8 @@ AVES_API NATIVE_FUNCTION(aves_Console_readKey)
 	}
 	else
 	{
+		VM_EnterFullyNativeRegion(thread);
+
 		while (true)
 		{
 			DWORD numEventsRead = -1;
@@ -153,6 +155,8 @@ AVES_API NATIVE_FUNCTION(aves_Console_readKey)
 			}
 			break;
 		}
+
+		VM_LeaveFullyNativeRegion(thread);
 	}
 
 	{
@@ -179,7 +183,10 @@ AVES_API NATIVE_FUNCTION(aves_Console_readKey)
 }
 AVES_API NATIVE_FUNCTION(aves_Console_readChar)
 {
+	VM_EnterFullyNativeRegion(thread);
 	int ch = getchar();
+	VM_LeaveFullyNativeRegion(thread);
+
 	VM_PushInt(thread, ch);
 }
 AVES_API NATIVE_FUNCTION(aves_Console_readLine)
@@ -189,6 +196,8 @@ AVES_API NATIVE_FUNCTION(aves_Console_readLine)
 		VM_PushNull(thread);
 		return;
 	}
+
+	VM_EnterFullyNativeRegion(thread);
 
 	const int StackBufferSize = 512;
 	using namespace std;
@@ -227,6 +236,7 @@ AVES_API NATIVE_FUNCTION(aves_Console_readLine)
 				if (!newHeapBuffer)
 				{
 					free(heapBuffer);
+					VM_LeaveFullyNativeRegion(thread);
 					VM_ThrowMemoryError(thread);
 				}
 				heapBuffer = newHeapBuffer;
@@ -236,7 +246,10 @@ AVES_API NATIVE_FUNCTION(aves_Console_readLine)
 				// Move from the stack buffer to the heap buffer
 				heapBuffer = (wchar_t*)malloc(bufferSize * sizeof(wchar_t));
 				if (!heapBuffer)
+				{
+					VM_LeaveFullyNativeRegion(thread);
 					VM_ThrowMemoryError(thread);
+				}
 				CopyMemoryT(heapBuffer, buffer, StackBufferSize);
 			}
 			bufp = heapBuffer + length;
@@ -245,6 +258,8 @@ AVES_API NATIVE_FUNCTION(aves_Console_readLine)
 	// length < bufferSize here, so this does not
 	// overflow either of the buffers:
 	*bufp = 0; // Always terminate
+
+	VM_LeaveFullyNativeRegion(thread);
 
 	if (length == 0 && ch == 0x1A)
 	{
@@ -264,6 +279,8 @@ AVES_API NATIVE_FUNCTION(aves_Console_readLine)
 
 AVES_API NATIVE_FUNCTION(aves_Console_clear)
 {
+	VM_EnterFullyNativeRegion(thread);
+
 	// http://support.microsoft.com/kb/99261
 
 	HANDLE stdOut = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -291,6 +308,8 @@ AVES_API NATIVE_FUNCTION(aves_Console_clear)
 	// put the cursor at (0, 0)
 	success = SetConsoleCursorPosition(stdOut, home);
 	if (!success) Console::ThrowConsoleError(thread);
+
+	VM_LeaveFullyNativeRegion(thread);
 }
 
 void AssertIsConsoleColor(ThreadHandle thread, Value *arg)
@@ -562,5 +581,7 @@ AVES_API NATIVE_FUNCTION(aves_Console_setWindowSize)
 
 void Console::ThrowConsoleError(ThreadHandle thread)
 {
+	if (VM_IsInFullyNativeRegion(thread))
+		VM_LeaveFullyNativeRegion(thread);
 	VM_ThrowError(thread, _S(ConsoleIOError));
 }

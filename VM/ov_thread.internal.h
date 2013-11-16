@@ -21,13 +21,6 @@ namespace instr
 
 // The total size of a call stack.
 #define CALL_STACK_SIZE    1024*1024
-// The number of bytes that will always be available on the call stack.
-// This is to allow the runtime to do things on the call stack, like
-// throwing errors and whatnot, even during stack overflow conditions.
-// It also ensures that very small manipulations of the call stack, such
-// as shifting a method instance in before the arguments to the method,
-// will always succeed.
-#define CALL_STACK_BUFFER  1024
 
 
 typedef struct StackFrame_S StackFrame;
@@ -129,7 +122,7 @@ typedef struct StackFrame_S
 #define LOCALS_OFFSET(sf)    reinterpret_cast<::Value*>((char*)(sf) + STACK_FRAME_SIZE)
 
 
-enum class ThreadState
+enum class ThreadState : int
 {
 	// The thread has been created but not started.
 	CREATED         = 0x00,
@@ -140,6 +133,15 @@ enum class ThreadState
 	// The thread has stopped, either from having its main method return, or from being killed.
 	STOPPED         = 0x03,
 };
+
+enum class ThreadFlags : int
+{
+	NONE              = 0x00,
+	// The thread is in a fully native region.
+	// See VM_EnterFullyNativeRegion for details.
+	IN_NATIVE_REGION  = 0x01,
+};
+ENUM_OPS(ThreadFlags, int);
 
 class StackManager; // used by the method initializer
 
@@ -239,6 +241,9 @@ private:
 	// The current state of the thread. And what a state it's in. Tsk tsk tsk.
 	ThreadState state;
 
+	// Various thread flags.
+	ThreadFlags flags;
+
 	// The call stack. This grows towards higher addresses.
 	// Note: although this represents a bunch of unspecific bytes, giving the type
 	// as unsigned char allows us to add and subtract from the address of this field.
@@ -250,6 +255,12 @@ private:
 	// generic (hence, the error is not in a local or on the stack) and the catch
 	// clause may trigger a GC cycle or may want to rethrow the current error.
 	Value currentError;
+
+	// The critical section that the thread tries to enter when the GC is running
+	// on another thread. The GC enters this section first, and leaves it only when
+	// GC cycle is complete, thus blocking the current thread for the duration of
+	// the cycle.
+	CRITICAL_SECTION gcCycleSection;
 
 public:
 	inline void Push      (Value    value) { currentFrame->Push(value);       }
@@ -278,7 +289,7 @@ public:
 	void InvokeApplyMethod(Method *method, Value *result);
 
 	bool Equals();
-	int Compare();
+	int64_t Compare();
 	void Concat(Value *result);
 
 	void LoadMember(String *member, Value *result);
@@ -309,9 +320,21 @@ public:
 	void ThrowNoOverloadError(const uint32_t argCount, String *message = nullptr) throw(OvumException);
 #pragma warning(pop)
 
+	bool IsSuspendedForGC() const;
+
+	void EnterFullyNativeRegion();
+	void LeaveFullyNativeRegion();
+	inline bool IsInFullyNativeRegion() const
+	{
+		return (flags & ThreadFlags::IN_NATIVE_REGION) == ThreadFlags::IN_NATIVE_REGION;
+	}
+
 private:
 	void InitCallStack();
 	void DisposeCallStack();
+
+	void InitGCLock();
+	void DisposeGCLock();
 
 	// Pushes a new stack frame onto the call stack representing a call
 	// to the specified method.
@@ -324,6 +347,13 @@ private:
 
 	void PrepareVariadicArgs(const MethodFlags flags, const uint32_t argCount, const uint32_t paramCount, StackFrame *frame);
 
+	// Tells the thread to suspend itself as soon as possible.
+	// Thread::IsSuspendedForGC() returns true when this is done.
+	void PleaseSuspendForGCAsap();
+	// Tells the thread it doesn't have to suspend itself anymore,
+	// because the GC cycle has ended. This happens when the thread
+	// spends the entire GC cycle in a fully native section.
+	void EndGCSuspension();
 	void SuspendForGC();
 
 	void Evaluate(StackFrame *frame);
@@ -353,8 +383,16 @@ private:
 
 	void InvokeOperatorLL(Value *args, Operator op, Value *result);
 	bool EqualsLL(Value *args);
-	int CompareLL(Value *args);
+	int64_t CompareLL(Value *args);
 	void ConcatLL(Value *args, Value *result);
+
+	// Specialised comparers! For speed.
+	bool CompareLessThanLL(Value *args);
+	bool CompareGreaterThanLL(Value *args);
+	bool CompareLessEqualsLL(Value *args);
+	bool CompareGreaterEqualsLL(Value *args);
+
+	void ThrowMissingOperatorError(Operator op);
 
 	void InitializeMethod(Method::Overload *method);
 	void InitializeInstructions(instr::MethodBuilder &builder, Method::Overload *method);
