@@ -29,6 +29,7 @@ class Member;
 class Method;
 class Field;
 class Property;
+class StaticRef;
 
 class OvumException;
 class MethodInitException;

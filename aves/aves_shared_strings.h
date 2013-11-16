@@ -29,6 +29,7 @@ namespace strings
 	extern String *y;
 	extern String *width;
 	extern String *height;
+	extern String *add;
 
 	extern String *newline;
 }

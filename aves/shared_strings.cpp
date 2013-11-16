@@ -28,6 +28,7 @@ namespace strings
 	LitString<1> _y        = { 1, 0, StringFlags::STATIC, 'y',0 };
 	LitString<5> _width    = { 5, 0, StringFlags::STATIC, 'w','i','d','t','h',0 };
 	LitString<6> _height   = { 5, 0, StringFlags::STATIC, 'h','e','i','g','h','t',0 };
+	LitString<3> _add      = { 3, 0, StringFlags::STATIC, 'a','d','d',0 };
 
 	String *str      = _S(_str);
 	String *i        = _S(_i);
@@ -46,6 +47,7 @@ namespace strings
 	String *y        = _S(_y);
 	String *width    = _S(_width);
 	String *height   = _S(_height);
+	String *add      = _S(_add);
 
 	// TODO: Make this platform-sensitive; \r\n is really just for Windows, you know?
 	LitString<2> _newline  = { 2, 0, StringFlags::STATIC, '\r','\n',0 };

@@ -210,14 +210,14 @@ void GC::RemoveMemoryPressure(Thread *const thread, const size_t size)
 	// Not implemented yet
 }
 
-Value *GC::AddStaticReference(Value value)
+StaticRef *GC::AddStaticReference(Value value)
 {
 	if (staticRefs == nullptr ||
 		staticRefs->count == StaticRefBlock::BLOCK_SIZE)
 		staticRefs = new StaticRefBlock(staticRefs);
 
-	Value *output = staticRefs->values + staticRefs->count++;
-	*output = value;
+	StaticRef *output = staticRefs->values + staticRefs->count++;
+	output->Init(value);
 	return output;
 }
 
@@ -337,7 +337,8 @@ void GC::MarkRootSet()
 	StaticRefBlock *staticRefs = this->staticRefs;
 	while (staticRefs)
 	{
-		ProcessFields(staticRefs->count, staticRefs->values);
+		for (unsigned int i = 0; i < staticRefs->count; i++)
+			TryProcess(&staticRefs->values[i].value);
 		staticRefs = staticRefs->next;
 	}
 }
@@ -435,7 +436,7 @@ OVUM_API void GC_RemoveMemoryPressure(ThreadHandle thread, const size_t size)
 
 OVUM_API Value *GC_AddStaticReference(Value initialValue)
 {
-	return GC::gc->AddStaticReference(initialValue);
+	return GC::gc->AddStaticReference(initialValue)->GetValuePointer();
 }
 
 OVUM_API void GC_Collect(ThreadHandle thread)

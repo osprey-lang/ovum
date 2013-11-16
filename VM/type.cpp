@@ -67,7 +67,7 @@ LocalOffset Method::Overload::GetStackOffset(uint16_t stackSlot) const
 }
 
 Type::Type(int32_t memberCount) :
-	members(memberCount), typeToken(NULL_VALUE),
+	members(memberCount), typeToken(nullptr),
 	size(0), fieldCount(0), getReferences(nullptr), finalizer(nullptr)
 {
 	memset(operators, 0, sizeof(Method::Overload*) * OPERATOR_COUNT);
@@ -133,25 +133,27 @@ Member *Type::FindMember(String *name, Type *fromType) const
 
 Value Type::GetTypeToken(Thread *const thread)
 {
-	if (IS_NULL(typeToken))
+	if (typeToken == nullptr)
 		this->LoadTypeToken(thread);
 
-	return typeToken;
+	return typeToken->Read();
 }
 
 void Type::LoadTypeToken(Thread *const thread)
 {
 	// Type tokens can never be destroyed, so let's create a static
 	// reference to it.
-	Value *typeTkn = GC::gc->AddStaticReference(NULL_VALUE);
+	StaticRef *typeTkn = GC::gc->AddStaticReference(NULL_VALUE);
 
 	// Note: use GC::Alloc because the aves.Type type may not have
 	// a public constructor. GC::Construct would fail if it didn't.
-	GC::gc->Alloc(thread, VM::vm->types.Type, VM::vm->types.Type->size, typeTkn);
+	GC::gc->Alloc(thread, VM::vm->types.Type, VM::vm->types.Type->size, typeTkn->GetValuePointer());
 
 	// Call the type token initializer with this type and the brand
 	// new allocated instance data thing. Hurrah.
-	VM::vm->functions.initTypeToken(thread, typeTkn->instance, this);
+	VM::vm->functions.initTypeToken(thread, typeTkn->GetValuePointer()->instance, this);
+
+	typeToken = typeTkn;
 }
 
 void Type::InitStaticFields()
@@ -264,37 +266,69 @@ Type *Member::GetOriginatingType() const
 	return method->declType;
 }
 
-Value *const Field::GetField(Thread *const thread, const Value instance) const
-{
-	if (IS_NULL(instance))
-		thread->ThrowNullReferenceError();
-	if (!Type::ValueIsType(instance, this->declType))
-		thread->ThrowTypeError();
-	return reinterpret_cast<Value*>(instance.instance + this->offset);
-}
+#define ACQUIRE_FIELD_LOCK(inst) \
+	GCObject *gco = GCO_FROM_INST(inst); \
+	while (gco->fieldAccessFlag.test_and_set(std::memory_order_acquire)) \
+		;
+#define RELEASE_FIELD_LOCK() gco->fieldAccessFlag.clear()
 
-Value *const Field::GetField(Thread *const thread, const Value *instance) const
+void Field::ReadField(Thread *const thread, Value *instance, Value *dest) const
 {
 	if (instance->type == nullptr)
 		thread->ThrowNullReferenceError();
 	if (!Type::ValueIsType(*instance, this->declType))
 		thread->ThrowTypeError();
-	return reinterpret_cast<Value*>(instance->instance + this->offset);
+
+	ACQUIRE_FIELD_LOCK(instance->instance);
+	*dest = *reinterpret_cast<Value*>(instance->instance + this->offset);
+	RELEASE_FIELD_LOCK();
 }
 
-Value *const Field::GetFieldFast(Thread *const thread, const Value instance) const
-{
-	if (IS_NULL(instance))
-		thread->ThrowNullReferenceError();
-	return reinterpret_cast<Value*>(instance.instance + this->offset);
-}
-
-Value *const Field::GetFieldFast(Thread *const thread, const Value *instance) const
+void Field::ReadFieldFast(Thread *const thread, Value *instance, Value *dest) const
 {
 	if (instance->type == nullptr)
 		thread->ThrowNullReferenceError();
-	return reinterpret_cast<Value*>(instance->instance + this->offset);
+
+	ACQUIRE_FIELD_LOCK(instance->instance);
+	*dest = *reinterpret_cast<Value*>(instance->instance + this->offset);
+	RELEASE_FIELD_LOCK();
 }
+
+void Field::ReadFieldUnchecked(Value *instance, Value *dest) const
+{
+	ACQUIRE_FIELD_LOCK(instance->instance);
+	*dest = *reinterpret_cast<Value*>(instance->instance + this->offset);
+	RELEASE_FIELD_LOCK();
+}
+
+void Field::WriteField(Thread *const thread, Value *instanceAndValue) const
+{
+	if (instanceAndValue[0].type == nullptr)
+		thread->ThrowNullReferenceError();
+	if (!Type::ValueIsType(instanceAndValue[0], this->declType))
+		thread->ThrowTypeError();
+
+	ACQUIRE_FIELD_LOCK(instanceAndValue[0].instance);
+	*reinterpret_cast<Value*>(instanceAndValue[0].instance + this->offset) = instanceAndValue[1];
+	RELEASE_FIELD_LOCK();
+}
+
+void Field::WriteFieldFast(Thread *const thread, Value *instanceAndValue) const
+{
+	ACQUIRE_FIELD_LOCK(instanceAndValue[0].instance);
+	*reinterpret_cast<Value*>(instanceAndValue[0].instance + this->offset) = instanceAndValue[1];
+	RELEASE_FIELD_LOCK();
+}
+
+void Field::WriteFieldUnchecked(Value *instanceAndValue) const
+{
+	ACQUIRE_FIELD_LOCK(instanceAndValue[0].instance);
+	*reinterpret_cast<Value*>(instanceAndValue[0].instance + this->offset) = instanceAndValue[1];
+	RELEASE_FIELD_LOCK();
+}
+
+#undef ACQUIRE_FIELD_LOCK
+#undef RELEASE_FIELD_LOCK
 
 OVUM_API const StandardTypes &GetStandardTypes() { return VM::vm->types; }
 OVUM_API TypeHandle GetType_Object()             { return VM::vm->types.Object; }
@@ -376,7 +410,14 @@ OVUM_API uint32_t Field_GetOffset(const FieldHandle field)
 OVUM_API bool Field_GetStaticValue(const FieldHandle field, Value &result)
 {
 	if (field->staticValue)
-		result = *field->staticValue;
+		result = field->staticValue->Read();
+	return field->staticValue != nullptr;
+}
+
+OVUM_API bool Field_SetStaticValue(const FieldHandle field, Value value)
+{
+	if (field->staticValue != nullptr)
+		field->staticValue->Write(value);
 	return field->staticValue != nullptr;
 }
 
