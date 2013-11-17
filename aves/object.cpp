@@ -25,7 +25,7 @@ AVES_API NATIVE_FUNCTION(aves_Object_toString)
 
 	buf.Append(thread, '<');
 	buf.Append(thread, Type_GetFullName(THISV.type));
-	buf.Append(thread, 2, ": ");
+	buf.Append(thread, 4, " at ");
 
 	Value *valueString = VM_Local(thread, 0);
 	if ((Type_GetFlags(THISV.type) & TypeFlags::PRIMITIVE) == TypeFlags::PRIMITIVE)
@@ -34,6 +34,11 @@ AVES_API NATIVE_FUNCTION(aves_Object_toString)
 	{
 		buf.Append(thread, 2, "0x");
 		*valueString = uinteger::ToStringHex(thread, (uint64_t)THISV.instance, false);
+
+		// On 32-bit systems, make it 8 hex digits wide; on 64-bit, make it 16.
+		// Make it so, zero padding!
+		if (valueString->common.string->length < sizeof(void*) * 2)
+			buf.Append(thread, sizeof(void*) * 2 - valueString->common.string->length, '0');
 	}
 	buf.Append(thread, valueString->common.string);
 

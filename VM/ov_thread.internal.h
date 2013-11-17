@@ -47,35 +47,23 @@ typedef struct StackFrame_S
 	// to obtain the name of the method.
 	Method::Overload *method;
 
-	inline void Init(uint32_t stackCount, uint32_t argc,
-		Value *evalStack, uint8_t *prevInstr,
-		StackFrame *prevFrame, Method::Overload *method)
-	{
-		this->stackCount = stackCount;
-		this->argc       = argc;
-		this->evalStack  = evalStack;
-		this->prevInstr  = prevInstr;
-		this->prevFrame  = prevFrame;
-		this->method     = method;
-	}
-
-	inline void Push(Value value)
+	inline void Push      (Value value)
 	{
 		evalStack[stackCount++] = value;
 	}
-	inline void PushBool(bool value)
+	inline void PushBool  (bool value)
 	{
 		SetBool_(evalStack + stackCount++, value);
 	}
-	inline void PushInt(int64_t value)
+	inline void PushInt   (int64_t value)
 	{
 		SetInt_(evalStack + stackCount++, value);
 	}
-	inline void PushUInt(uint64_t value)
+	inline void PushUInt  (uint64_t value)
 	{
 		SetUInt_(evalStack + stackCount++, value);
 	}
-	inline void PushReal(double value)
+	inline void PushReal  (double value)
 	{
 		SetReal_(evalStack + stackCount++, value);
 	}
@@ -83,7 +71,7 @@ typedef struct StackFrame_S
 	{
 		SetString_(evalStack + stackCount++, value);
 	}
-	inline void PushNull()
+	inline void PushNull  ()
 	{
 		SetNull_(evalStack + stackCount++);
 	}
@@ -103,6 +91,16 @@ typedef struct StackFrame_S
 	{
 		assert(n <= stackCount);
 		return evalStack[stackCount - n - 1];
+	}
+	inline Type *PeekType(unsigned int n = 0) const
+	{
+		assert(n <= stackCount);
+		return evalStack[stackCount - n - 1].type;
+	}
+	inline String *PeekString(unsigned int n = 0) const
+	{
+		assert(n <= stackCount);
+		return evalStack[stackCount - n - 1].common.string;
 	}
 
 	inline void Shift(const uint16_t offset)
@@ -274,7 +272,11 @@ public:
 	inline Value Pop() { return currentFrame->Pop(); }
 	inline void Pop(unsigned int n) { currentFrame->Pop(n); }
 
-	inline void Dup() { currentFrame->Push(currentFrame->Peek()); }
+	inline void Dup()
+	{
+		Value *ptr = currentFrame->evalStack + currentFrame->stackCount++;
+		*(ptr + 1) = *ptr;
+	}
 
 	inline Value *Local(const unsigned int n) { return LOCALS_OFFSET(currentFrame) + n; }
 

@@ -741,12 +741,12 @@ void Thread::ToString(String **result)
 	LoadMember(static_strings::toString, nullptr);
 	Invoke(0, nullptr);
 
-	if (currentFrame->Peek(0).type != VM::vm->types.String)
+	if (currentFrame->PeekType(0) != VM::vm->types.String)
 		ThrowTypeError(static_strings::errors::ToStringWrongType);
 
 	if (result != nullptr)
 	{
-		*result = currentFrame->Peek(0).common.string;
+		*result = currentFrame->PeekString(0);
 		currentFrame->stackCount--;
 	}
 	// else, leave it on the stack!
@@ -769,7 +769,7 @@ void Thread::Throw(bool rethrow)
 void Thread::ThrowError(String *message)
 {
 	if (message == nullptr)
-		currentFrame->Push(NULL_VALUE);
+		currentFrame->PushNull();
 	else
 		currentFrame->PushString(message);
 	GC::gc->Construct(this, VM::vm->types.Error, 1, nullptr);
@@ -779,7 +779,7 @@ void Thread::ThrowError(String *message)
 void Thread::ThrowTypeError(String *message)
 {
 	if (message == nullptr)
-		currentFrame->Push(NULL_VALUE);
+		currentFrame->PushNull();
 	else
 		currentFrame->PushString(message);
 	GC::gc->Construct(this, VM::vm->types.TypeError, 1, nullptr);
@@ -789,7 +789,7 @@ void Thread::ThrowTypeError(String *message)
 void Thread::ThrowMemoryError(String *message)
 {
 	if (message == nullptr)
-		currentFrame->Push(NULL_VALUE);
+		currentFrame->PushNull();
 	else
 		currentFrame->PushString(message);
 	GC::gc->Construct(this, VM::vm->types.MemoryError, 1, nullptr);
@@ -799,7 +799,7 @@ void Thread::ThrowMemoryError(String *message)
 void Thread::ThrowOverflowError(String *message)
 {
 	if (message == nullptr)
-		currentFrame->Push(NULL_VALUE);
+		currentFrame->PushNull();
 	else
 		currentFrame->PushString(message);
 	GC::gc->Construct(this, VM::vm->types.OverflowError, 1, nullptr);
@@ -809,7 +809,7 @@ void Thread::ThrowOverflowError(String *message)
 void Thread::ThrowDivideByZeroError(String *message)
 {
 	if (message == nullptr)
-		currentFrame->Push(NULL_VALUE);
+		currentFrame->PushNull();
 	else
 		currentFrame->PushString(message);
 	GC::gc->Construct(this, VM::vm->types.DivideByZeroError, 1, nullptr);
@@ -819,7 +819,7 @@ void Thread::ThrowDivideByZeroError(String *message)
 void Thread::ThrowNullReferenceError(String *message)
 {
 	if (message == nullptr)
-		currentFrame->Push(NULL_VALUE);
+		currentFrame->PushNull();
 	else
 		currentFrame->PushString(message);
 	GC::gc->Construct(this, VM::vm->types.NullReferenceError, 1, nullptr);
@@ -830,7 +830,7 @@ void Thread::ThrowNoOverloadError(const uint32_t argCount, String *message)
 {
 	currentFrame->PushInt(argCount);
 	if (message == nullptr)
-		currentFrame->Push(NULL_VALUE);
+		currentFrame->PushNull();
 	else
 		currentFrame->PushString(message);
 	GC::gc->Construct(this, VM::vm->types.NoOverloadError, 2, nullptr);
@@ -924,25 +924,28 @@ StackFrame *Thread::PushStackFrame(const uint32_t argCount, Value *args, Method:
 	register uint32_t localCount = method->locals;
 	register StackFrame *newFrame = reinterpret_cast<StackFrame*>((First ? (Value*)callStack : args) + paramCount);
 
-	newFrame->Init(
-		0,                                   // stackCount
-		argCount,                            // argCount
-		(Value*)((char*)newFrame + STACK_FRAME_SIZE) + localCount, // evalStack pointer
-		First ? nullptr : ip,                // prevInstr
-		First ? nullptr : currentFrame,      // prevFrame
-		method                               // method
-	);
-
-	// initialize missing arguments to zeroes
+	newFrame->stackCount = 0;
+	newFrame->argc = argCount;
+	newFrame->evalStack = (Value*)((char*)newFrame + STACK_FRAME_SIZE) + localCount;
+	newFrame->prevInstr = First ? nullptr : ip;
+	newFrame->prevFrame = First ? nullptr : currentFrame;
+	newFrame->method = method;
+	
+	// initialize missing arguments to null
 	if (argCount != paramCount)
 	{
-		register uint32_t diff = paramCount - argCount;
-		memset((Value*)newFrame - diff, 0, diff * sizeof(Value));
+		register Value *missing = args + argCount;
+		while ((void*)missing != (void*)newFrame)
+			(missing++)->type = nullptr;
 	}
 
-	// Also initialize all locals to 0.
+	// Also initialize all locals to null
 	if (localCount)
-		memset(LOCALS_OFFSET(newFrame), 0, localCount * sizeof(Value));
+	{
+		register Value *locals = LOCALS_OFFSET(newFrame);
+		while (localCount--)
+			(locals++)->type = nullptr;
+	}
 
 	return currentFrame = newFrame;
 }
@@ -1248,6 +1251,15 @@ OVUM_API void VM_LeaveFullyNativeRegion(ThreadHandle thread)
 OVUM_API bool VM_IsInFullyNativeRegion(ThreadHandle thread)
 {
 	return thread->IsInFullyNativeRegion();
+}
+
+OVUM_API void VM_Sleep(ThreadHandle thread, unsigned int milliseconds)
+{
+	thread->EnterFullyNativeRegion();
+
+	Sleep(milliseconds);
+
+	thread->LeaveFullyNativeRegion();
 }
 
 OVUM_API String *VM_GetStackTrace(ThreadHandle thread)

@@ -175,6 +175,14 @@ OVUM_API void VM_LeaveFullyNativeRegion(ThreadHandle thread);
 // See the documentation of VM_EnterFullyNativeRegion for details.
 OVUM_API bool VM_IsInFullyNativeRegion(ThreadHandle thread);
 
+// Suspends the thread for the specified number of milliseconds.
+// If milliseconds is 0, the thread gives up the remainder of its time
+// slice to other threads that may be waiting for execution; if there
+// are no such threads, this function returns immediately.
+// The actual time spent sleeping may be less than the requested time,
+// depending on the system's time resolution.
+OVUM_API void VM_Sleep(ThreadHandle thread, unsigned int milliseconds);
+
 // Generates a stack trace for all the managed calls on the specified thread.
 // This stack trace excludes the call to VM_GetStackTrace, as well as any invocations
 // of natively functions called directly by other native functions. The only native
