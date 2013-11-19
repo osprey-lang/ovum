@@ -385,7 +385,7 @@ private:
 
 	void InvokeOperatorLL(Value *args, Operator op, Value *result);
 	bool EqualsLL(Value *args);
-	int64_t CompareLL(Value *args);
+	void CompareLL(Value *args, Value *result);
 	void ConcatLL(Value *args, Value *result);
 
 	// Specialised comparers! For speed.
