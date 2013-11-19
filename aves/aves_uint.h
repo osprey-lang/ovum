@@ -31,9 +31,18 @@ AVES_API NATIVE_FUNCTION(aves_UInt_opNot);
 // Internal methods
 namespace uinteger
 {
-	Value ToStringDecimal(ThreadHandle thread, const uint64_t value);
-	Value ToStringHex(ThreadHandle thread, const uint64_t value, const bool upper);
-	Value ToStringRadix(ThreadHandle thread, const uint64_t value, const unsigned int radix, const bool upper);
+	String *ToString(ThreadHandle thread, const uint64_t value,
+		const int radix, const int minWidth, const bool upper);
+
+	int32_t ToStringDecimal(ThreadHandle thread, const uint64_t value,
+		const int minWidth,
+		const int bufferSize, uchar *buf);
+	int32_t ToStringHex(ThreadHandle thread, const uint64_t value,
+		const bool upper, const int minWidth,
+		const int bufferSize, uchar *buf);
+	int32_t ToStringRadix(ThreadHandle thread, const uint64_t value,
+		const int radix, const bool upper, const int minWidth,
+		const int bufferSize, uchar *buf);
 
 	inline const uint64_t Power(ThreadHandle thread, const uint64_t base, const uint64_t exponent)
 	{

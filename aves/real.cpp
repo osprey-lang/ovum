@@ -41,7 +41,9 @@ AVES_API NATIVE_FUNCTION(aves_Real_toString)
 	if (sign && result[0] != 'N') // NaN may be sign == 1, so we do need the special check
 		*bufp++ = '-';
 
-	if (decimal != 9999 && decimal > precision || decimal < -precision)
+	if (decimal != 9999 && (decimal < 0 ?
+		-decimal + length >= precision :
+		decimal >= precision))
 	{
 		// Too many digits! Use scientific notation.
 		// Note: decimal is always less than 1000 for
@@ -65,8 +67,8 @@ AVES_API NATIVE_FUNCTION(aves_Real_toString)
 		*bufp++ = negativeDecimal ? '-' : '+';
 		if (decimal >= 100)
 			*bufp++ = '0' + decimal / 100;
-		//if (decimal >= 10) - Precision is 20, so this automatically follows
-		*bufp++ = '0' + (decimal / 10) % 10;
+		if (decimal >= 10)
+			*bufp++ = '0' + (decimal / 10) % 10;
 		*bufp++ = '0' + decimal % 10;
 	}
 	else if (decimal <= 0)

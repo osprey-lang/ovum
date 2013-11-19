@@ -38,6 +38,8 @@ namespace error_strings
 {
 	extern String *EndIndexLessThanStart;
 	extern String *HashKeyNotFound;
+	extern String *RadixOutOfRange;
+	extern String *InvalidIntegerFormat;
 }
 
 #endif // AVES__SHARED_STRINGS_H
