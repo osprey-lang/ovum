@@ -767,16 +767,14 @@ void Thread::Evaluate(StackFrame *frame)
 		// cmp: LocalOffset args, LocalOffset dest
 		TARGET(OPI_CMP_L)
 			{
-				register int64_t result = CompareLL(OFF_ARG(ip, f));
-				SetInt_(OFF_ARG(ip + LOSZ, f), result);
+				CompareLL(OFF_ARG(ip, f), OFF_ARG(ip + LOSZ, f));
 				ip += 2*LOSZ;
 				// CompareLL pops arguments off the stack
 			}
 			NEXT_INSTR();
 		TARGET(OPI_CMP_S)
 			{
-				register int64_t result = CompareLL(OFF_ARG(ip, f));
-				SetInt_(OFF_ARG(ip + LOSZ, f), result);
+				CompareLL(OFF_ARG(ip, f), OFF_ARG(ip + LOSZ, f));
 				ip += 2*LOSZ;
 				// CompareLL pops arguments off the stack
 				f->stackCount++;

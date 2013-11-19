@@ -466,7 +466,9 @@ bool Thread::EqualsLL(Value *args)
 int64_t Thread::Compare()
 {
 	Value *args = currentFrame->evalStack + currentFrame->stackCount - 2;
-	return CompareLL(args);
+	Value result;
+	CompareLL(args, &result);
+	return result.integer;
 }
 
 void Thread::Concat(Value *result)
@@ -523,7 +525,7 @@ void Thread::ConcatLL(Value *args, Value *result)
 // Base implementation of the various comparison methods
 // This duplicates a lot of code from InvokeOperatorLL
 // (Semicolon intentionally missing from the last statement)
-#define COMPARE_BASE() \
+#define COMPARE_BASE(pResult) \
 	if (IS_NULL(args[0])) \
 		ThrowNullReferenceError(); \
 	\
@@ -531,38 +533,40 @@ void Thread::ConcatLL(Value *args, Value *result)
 	if (method == nullptr) \
 		ThrowTypeError(thread_errors::NotComparable); \
 	\
-	Value result; \
-	InvokeMethodOverload(method, 2, args, &result); \
-	if (result.type != VM::vm->types.Int) \
+	InvokeMethodOverload(method, 2, args, (pResult)); \
+	if ((pResult)->type != VM::vm->types.Int) \
 		ThrowTypeError(thread_errors::CompareType)
 
-int64_t Thread::CompareLL(Value *args)
+void Thread::CompareLL(Value *args, Value *result)
 {
-	COMPARE_BASE();
-	return result.integer;
+	COMPARE_BASE(result);
 }
 
 bool Thread::CompareLessThanLL(Value *args)
 {
-	COMPARE_BASE();
+	Value result;
+	COMPARE_BASE(&result);
 	return result.integer < 0;
 }
 
 bool Thread::CompareGreaterThanLL(Value *args)
 {
-	COMPARE_BASE();
+	Value result;
+	COMPARE_BASE(&result);
 	return result.integer > 0;
 }
 
 bool Thread::CompareLessEqualsLL(Value *args)
 {
-	COMPARE_BASE();
+	Value result;
+	COMPARE_BASE(&result);
 	return result.integer <= 0;
 }
 
 bool Thread::CompareGreaterEqualsLL(Value *args)
 {
-	COMPARE_BASE();
+	Value result;
+	COMPARE_BASE(&result);
 	return result.integer >= 0;
 }
 
