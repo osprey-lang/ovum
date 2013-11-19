@@ -59,7 +59,11 @@ namespace error_strings
 {
 	LitString<43> _EndIndexLessThanStart = LitString<43>::FromCString("The end index is less than the start index.");
 	LitString<44> _HashKeyNotFound = LitString<44>::FromCString("The hash does not contain the specified key.");
+	LitString<46> _RadixOutOfRange = LitString<46>::FromCString("The radix must be between 2 and 36, inclusive.");
+	LitString<30> _InvalidIntegerFormat = LitString<30>::FromCString("Invalid integer format string.");
 
 	String *EndIndexLessThanStart = _S(_EndIndexLessThanStart);
 	String *HashKeyNotFound = _S(_HashKeyNotFound);
+	String *RadixOutOfRange = _S(_RadixOutOfRange);
+	String *InvalidIntegerFormat = _S(_InvalidIntegerFormat);
 }

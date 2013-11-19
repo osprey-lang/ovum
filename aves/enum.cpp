@@ -108,7 +108,7 @@ AVES_API NATIVE_FUNCTION(aves_EnumSet_toString)
 	if (remainingFlags != 0)
 	{
 		Value *remainingString = VM_Local(thread, 0);
-		*remainingString = integer::ToStringDecimal(thread, remainingFlags);
+		SetString(remainingString, integer::ToString(thread, remainingFlags, 10, 0, false));
 		if (buf.GetLength() > 0)
 		{
 			buf.Append(thread, 3, " | ");

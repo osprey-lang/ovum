@@ -1,5 +1,6 @@
 #include <cassert>
 #include <cmath>
+#include <memory>
 #include "aves_int.h"
 
 #define LEFT  (args[0])
@@ -18,27 +19,31 @@ AVES_API NATIVE_FUNCTION(aves_Int_getHashCode)
 
 AVES_API NATIVE_FUNCTION(aves_Int_toString)
 {
-	VM_Push(thread, integer::ToStringDecimal(thread, THISV.integer));
+	VM_PushString(thread, integer::ToString(thread, THISV.integer, 10, 0, false));
 }
 AVES_API NATIVE_FUNCTION(aves_Int_toStringf)
 {
-	Value format = args[1];
+	Value *format = args + 1;
 
-	if (IsInt(format) || IsUInt(format))
+	if (format->type == Types::Int || format->type == Types::UInt)
 	{
-		int64_t radix = format.integer;
-		if (radix < 2 || radix > 36)
+		if (format->integer < 2 || format->integer > 36)
 		{
-			GC_Construct(thread, Types::ArgumentRangeError, 0, nullptr);
+			VM_PushString(thread, strings::format);
+			VM_PushString(thread, error_strings::RadixOutOfRange);
+			GC_Construct(thread, Types::ArgumentRangeError, 2, nullptr);
 			VM_Throw(thread);
 		}
 
-		if (radix == 10)
-			VM_Push(thread, integer::ToStringDecimal(thread, THISV.integer));
-		else if (radix == 16)
-			VM_Push(thread, integer::ToStringHex(thread, THISV.integer, false));
-		else
-			VM_Push(thread, integer::ToStringRadix(thread, THISV.integer, (unsigned int)radix, false));
+		VM_PushString(thread, integer::ToString(thread, THISV.integer, (int)format->integer, 0, false));
+	}
+	else if (IsString(format))
+	{
+		int radix, minWidth;
+		bool upper;
+		integer::ParseFormatString(thread, format->common.string, &radix, &minWidth, &upper);
+
+		VM_PushString(thread, integer::ToString(thread, THISV.integer, radix, minWidth, upper));
 	}
 	else
 		VM_ThrowTypeError(thread);
@@ -217,118 +222,246 @@ AVES_API NATIVE_FUNCTION(aves_Int_opNot)
 
 // Internal methods
 
-namespace integer
+String *integer::ToString(ThreadHandle thread, const int64_t value,
+	const int radix, const int minWidth, const bool upper)
 {
-	LitString<20> MinDec = { 20, 0, StringFlags::STATIC, '-','9','2','2','3','3','7','2','0','3','6','8','5','4','7','7','5','8','0','8',0 };
-	LitString<17> MinHex = { 17, 0, StringFlags::STATIC, '-','8','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0',0 };
+	using namespace std;
+
+	static const int smallBufferSize = 128;
+
+	String *str;
+	if (minWidth < smallBufferSize)
+	{
+		uchar buf[smallBufferSize];
+		int32_t length;
+		if (radix == 10)
+			length = ToStringDecimal(thread, value, minWidth, smallBufferSize, buf);
+		else if (radix == 16)
+			length = ToStringHex(thread, value, upper, minWidth, smallBufferSize, buf);
+		else
+			length = ToStringRadix(thread, value, radix, upper, minWidth, smallBufferSize, buf);
+		str = GC_ConstructString(thread, length, buf + smallBufferSize - length);
+	}
+	else
+	{
+		int bufSize = minWidth + 1;
+		unique_ptr<uchar[]> buf(new uchar[bufSize]);
+		int32_t length;
+		if (radix == 10)
+			length = ToStringDecimal(thread, value, minWidth, bufSize, buf.get());
+		else if (radix == 16)
+			length = ToStringHex(thread, value, upper, minWidth, bufSize, buf.get());
+		else
+			length = ToStringRadix(thread, value, radix, upper, minWidth, bufSize, buf.get());
+		str = GC_ConstructString(thread, length, buf.get() + bufSize - length);
+	}
+
+	return str;
 }
 
-Value integer::ToStringDecimal(ThreadHandle thread, const int64_t value)
+int32_t integer::ToStringDecimal(ThreadHandle thread, const int64_t value,
+	const int minWidth, const int bufferSize, uchar *buf)
 {
 	// INT64_MIN is the only weird value: it's the only one that cannot
 	// be represented as a positive integer. This value will probably
-	// almost never be passed to this method, so let's hardcode it in!
+	// almost never be passed to this method, so let's just pass it on
+	// to the slightly less efficient ToStringRadix!
 	if (value == INT64_MIN)
-	{
-		Value output;
-		SetString(output, _S(integer::MinDec));
-		return output;
-	}
+		return ToStringRadix(thread, value, 10, false, minWidth, bufferSize, buf);
+
+	uchar *chp = buf + bufferSize;
 
 	int64_t temp = value;
 	bool neg = temp < 0;
 	if (neg)
-		temp = -temp; // Note: overflows on INT64_MIN
-
-	// int64_t's min value is -9223372036854775808, which is 20 characters. 
-	const int charCount = 20;
-	uchar chars[charCount];
-
+		temp = -temp;
+	
 	int32_t length = 0;
 	do
 	{
-		chars[charCount - ++length] = static_cast<uchar>('0' + temp % 10);
+		*--chp = (uchar)'0' + temp % 10;
+		length++;
 	} while (temp /= 10);
 
+	while (length < minWidth)
+	{
+		*--chp = (uchar)'0';
+		length++;
+	}
+
 	if (neg)
-		chars[charCount - ++length] = '-';
+	{
+		*--chp = (uchar)'-';
+		length++;
+	}
 
-	String *outputString = GC_ConstructString(thread, length, chars + charCount - length);
-
-	Value outputValue;
-	SetString(outputValue, outputString);
-	return outputValue;
+	return length;
 }
 
-Value integer::ToStringHex(ThreadHandle thread, const int64_t value, const bool upper)
+int32_t integer::ToStringHex(ThreadHandle thread, const int64_t value,
+	const bool upper, const int minWidth,
+	const int bufferSize, uchar *buf)
 {
-	// As with ToStringDecimal, we hardcode INT64_MIN's value here too.
+	// As with ToStringDecimal, we treat INT64_MIN specially here too.
 	if (value == INT64_MIN)
-	{
-		Value output;
-		SetString(output, _S(integer::MinHex));
-		return output;
-	}
+		return ToStringRadix(thread, value, 16, upper, minWidth, bufferSize, buf);
+
+	uchar *chp = buf + bufferSize;
 
 	int64_t temp = value;
 	bool neg = temp < 0;
 	if (neg)
-		temp = -temp; // Note: overflows on INT64_MIN
+		temp = -temp;
 
 	const uchar letterBase = upper ? 'A' : 'a';
-
-	// int64_t's min value in hex is -8000000000000000, which is 17 characters
-	const int charCount = 20;
-	uchar chars[charCount];
-
+	
 	int32_t length = 0;
 	do
 	{
-		int64_t rem = temp % 16;
-		chars[charCount - ++length] = static_cast<uchar>(rem >= 10 ? letterBase + rem - 10 : '0' + rem);
+		int rem = temp % 16;
+		*--chp = rem >= 10 ? letterBase + rem - 10 : (uchar)'0' + rem;
+		length++;
 	} while (temp /= 16);
 
+	while (length < minWidth)
+	{
+		*--chp = (uchar)'0';
+		length++;
+	}
+
 	if (neg)
-		chars[charCount - ++length] = '-';
+	{
+		*--chp = (uchar)'-';
+		length++;
+	}
 
-	String *outputString = GC_ConstructString(thread, length, chars + charCount - length);
-
-	Value outputValue;
-	SetString(outputValue, outputString);
-	return outputValue;
+	return length;
 }
 
-Value integer::ToStringRadix(ThreadHandle thread, const int64_t value, const unsigned int radix, const bool upper)
+int32_t integer::ToStringRadix(ThreadHandle thread, const int64_t value,
+	const int radix, const bool upper, const int minWidth,
+	const int bufferSize, uchar *buf)
 {
 	// The radix is supposed to be range checked outside of this method.
 	// Also, use ToStringDecimal and ToStringHex for base 10 and 16, respectively.
-	assert(radix >= 2 && radix <= 36 && radix != 10 && radix != 16);
+	assert(radix >= 2 && radix <= 36 && (radix != 10 && radix != 16 || value == INT64_MIN));
+
+	uchar *chp = buf + bufferSize;
 
 	int64_t temp = value;
 	int sign = temp < 0 ? -1 : 1;
-	//if (sign < 0)
-	//	temp = -temp;
 
 	const uchar letterBase = upper ? 'A' : 'a';
-
-	// The longest possible string that could be produced by this method is a negative
-	// binary string. 64-bit value = 64 binary characters + 1 for sign.
-	const int charCount = 65;
-	uchar chars[charCount];
 
 	int32_t length = 0;
 
 	do {
-		int64_t rem = sign * (temp % radix);
-		chars[charCount - ++length] = static_cast<uchar>(rem >= 10 ? letterBase + rem - 10 : '0' + rem);
+		int rem = sign * (temp % radix);
+		*--chp = rem >= 10 ? letterBase + rem - 10 : (uchar)'0' + rem;
+		length++;
 	} while (temp /= radix);
 
+	while (length < minWidth)
+	{
+		*--chp = (uchar)'0';
+		length++;
+	}
+
 	if (sign < 0)
-		chars[charCount - ++length] = '-';
+	{
+		*--chp = (uchar)'-';
+		length++;
+	}
 
-	String *outputString = GC_ConstructString(thread, length, chars + charCount - length);
+	return length;
+}
 
-	Value outputValue;
-	SetString(outputValue, outputString);
-	return outputValue;
+void integer::ParseFormatString(ThreadHandle thread, String *str, int *radix, int *minWidth, bool *upper)
+{
+	*radix = 10;
+	*minWidth = 0;
+	*upper = false;
+
+	static const unsigned int MaxWidth = 2048;
+
+	const uchar *ch = &str->firstChar;
+	int32_t i = 0;
+	switch (*ch)
+	{
+	case '0': // '0'+ (specifies width of number)
+		{
+			do
+			{
+				(*minWidth)++;
+			} while (i++ < str->length && *++ch == '0');
+		}
+		break;
+
+	case 'D': // 'd'[width]
+	case 'd': // 'D'[width]
+		i++; // eat the D
+		ch++;
+		if (str->length > 1) goto parseMinWidth;
+		break;
+
+	case 'x': // 'x'[width]
+	case 'X': // 'X'[width]
+		i++; // skip the X
+		*upper = *ch++ == 'X';
+		*radix = 16;
+		if (str->length > 1) goto parseMinWidth;
+		break;
+
+	case 'r': // 'r'radix[':'width]
+	case 'R': // 'R'radix[':'width]
+		i++; // skip the R
+		*upper = *ch++ == 'R';
+		if (str->length < 2) goto throwFormatError;
+
+		if (*ch < '0' || *ch > '9') goto throwFormatError;
+
+		*radix = *ch++ - '0';
+		i++;
+		if (str->length > 2 && *ch >= '0' && *ch <= '9')
+		{
+			*radix = *radix * 10 + (*ch++ - '0');
+			i++;
+		}
+		if (*radix < 2 || *radix > 36)
+		{
+			VM_PushString(thread, strings::format); // paramName
+			VM_PushString(thread, error_strings::RadixOutOfRange); // message
+			GC_Construct(thread, Types::ArgumentRangeError, 2, nullptr);
+			VM_Throw(thread);
+		}
+
+		if (*ch != ':')
+			break;
+		ch++, i++; // skip ':'
+		if (i == str->length) goto throwFormatError;
+
+parseMinWidth:
+		while (i < str->length && *ch >= '0' && *ch <= '9')
+		{
+			*minWidth *= 10;
+			*minWidth += *ch++ - '0';
+			i++;
+			if (*minWidth > MaxWidth)
+				break;
+		}
+		break;
+
+	default: goto throwFormatError;
+	}
+
+	if (i != str->length || *minWidth > MaxWidth)
+		goto throwFormatError;
+
+	return;
+
+throwFormatError:
+	VM_PushString(thread, error_strings::InvalidIntegerFormat);
+	GC_Construct(thread, Types::ArgumentError, 1, nullptr);
+	VM_Throw(thread);
+	return;
 }

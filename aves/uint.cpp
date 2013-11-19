@@ -1,5 +1,6 @@
 #include <cmath>
 #include <cassert>
+#include <memory>
 #include "aves_uint.h"
 
 #define LEFT  (args[0])
@@ -20,31 +21,37 @@ AVES_API NATIVE_FUNCTION(aves_UInt_getHashCode)
 
 AVES_API NATIVE_FUNCTION(aves_UInt_toString)
 {
-	VM_Push(thread, uinteger::ToStringDecimal(thread, THISV.uinteger));
+	VM_PushString(thread, uinteger::ToString(thread, THISV.uinteger, 10, 0, false));
 }
 AVES_API NATIVE_FUNCTION(aves_UInt_toStringf)
 {
-	Value format = args[1];
+	Value *format = args + 1;
 
-	if (IsInt(format) || IsUInt(format))
+	if (format->type == Types::Int || format->type == Types::UInt)
 	{
-		int64_t radix = format.integer;
-		if (radix < 2 || radix > 36)
+		if (format->integer < 2 || format->integer > 36)
 		{
-			GC_Construct(thread, Types::ArgumentRangeError, 0, nullptr);
+			VM_PushString(thread, strings::format);
+			VM_PushString(thread, error_strings::RadixOutOfRange);
+			GC_Construct(thread, Types::ArgumentRangeError, 2, nullptr);
 			VM_Throw(thread);
 		}
 
-		if (radix == 10)
-			VM_Push(thread, uinteger::ToStringDecimal(thread, THISV.uinteger));
-		else if (radix == 16)
-			VM_Push(thread, uinteger::ToStringHex(thread, THISV.uinteger, false));
-		else
-			VM_Push(thread, uinteger::ToStringRadix(thread, THISV.uinteger, (unsigned int)radix, false));
+		VM_PushString(thread, uinteger::ToString(thread, THISV.uinteger, (int)format->integer, 0, false));
+	}
+	else if (IsString(format))
+	{
+		int radix, minWidth;
+		bool upper;
+		integer::ParseFormatString(thread, format->common.string, &radix, &minWidth, &upper);
+
+		VM_PushString(thread, uinteger::ToString(thread, THISV.uinteger, radix, minWidth, upper));
 	}
 	else
 		VM_ThrowTypeError(thread);
 }
+
+// Operators
 
 AVES_API NATIVE_FUNCTION(aves_UInt_opEquals)
 {
@@ -210,72 +217,117 @@ AVES_API NATIVE_FUNCTION(aves_UInt_opNot)
 
 // Internal methods
 
-Value uinteger::ToStringDecimal(ThreadHandle thread, const uint64_t value)
+String *uinteger::ToString(ThreadHandle thread, const uint64_t value,
+	const int radix, const int minWidth,
+	const bool upper)
 {
-	// uint64_t's max value is 18446744073709551615, which is 20 characters. 
-	const int charCount = 20;
-	uchar chars[charCount];
+	using namespace std;
+
+	static const int smallBufferSize = 128;
+
+	String *str;
+	if (minWidth < smallBufferSize)
+	{
+		uchar buf[smallBufferSize];
+		int32_t length;
+		if (radix == 10)
+			length = ToStringDecimal(thread, value, minWidth, smallBufferSize, buf);
+		else if (radix == 16)
+			length = ToStringHex(thread, value, upper, minWidth, smallBufferSize, buf);
+		else
+			length = ToStringRadix(thread, value, radix, upper, minWidth, smallBufferSize, buf);
+		str = GC_ConstructString(thread, length, buf + smallBufferSize - length);
+	}
+	else
+	{
+		int bufSize = minWidth + 1;
+		unique_ptr<uchar[]> buf(new uchar[bufSize]);
+		int32_t length;
+		if (radix == 10)
+			length = ToStringDecimal(thread, value, minWidth, bufSize, buf.get());
+		else if (radix == 16)
+			length = ToStringHex(thread, value, upper, minWidth, bufSize, buf.get());
+		else
+			length = ToStringRadix(thread, value, radix, upper, minWidth, bufSize, buf.get());
+		str = GC_ConstructString(thread, length, buf.get() + bufSize - length);
+	}
+
+	return str;
+}
+
+int32_t uinteger::ToStringDecimal(ThreadHandle thread, const uint64_t value,
+	const int minWidth, const int bufferSize, uchar *buf)
+{
+	uchar *chp = buf + bufferSize;
 
 	uint64_t temp = value;
 	int length = 0;
 	do
 	{
-		chars[charCount - ++length] = static_cast<uchar>('0' + temp % 10);
+		*--chp = (uchar)'0' + (int)(temp % 10);
+		length++;
 	} while (temp /= 10);
 
-	String *outputString = GC_ConstructString(thread, length, chars + charCount - length);
+	while (length < minWidth)
+	{
+		*--chp = (uchar)'0';
+		length++;
+	}
 
-	Value outputValue;
-	SetString(outputValue, outputString);
-	return outputValue;
+	return length;
 }
 
-Value uinteger::ToStringHex(ThreadHandle thread, const uint64_t value, const bool upper)
+int32_t uinteger::ToStringHex(ThreadHandle thread, const uint64_t value,
+	const bool upper, const int minWidth,
+	const int bufferSize, uchar *buf)
 {
-	const uchar letterBase = upper ? 'A' : 'a';
+	uchar *chp = buf + bufferSize;
 
-	// uint64_t's max value in hex is ffffffffffffffff, which is 16 characters
-	const int charCount = 16;
-	uchar chars[charCount];
+	const uchar letterBase = upper ? 'A' : 'a';
 
 	uint64_t temp = value;
 	int length = 0;
 	do
 	{
-		int64_t rem = temp % 16;
-		chars[charCount - ++length] = static_cast<uchar>(rem >= 10 ? letterBase + rem - 10 : '0' + rem);
+		int rem = temp % 16;
+		*--chp = rem >= 10 ? letterBase + rem - 10 : (uchar)'0' + rem;
+		length++;
 	} while (temp /= 16);
 
-	String *outputString = GC_ConstructString(thread, length, chars + charCount - length);
+	while (length < minWidth)
+	{
+		*--chp = (uchar)'0';
+		length++;
+	}
 
-	Value outputValue;
-	SetString(outputValue, outputString);
-	return outputValue;
+	return length;
 }
 
-Value uinteger::ToStringRadix(ThreadHandle thread, const uint64_t value, const unsigned int radix, const bool upper)
+int32_t uinteger::ToStringRadix(ThreadHandle thread, const uint64_t value,
+	const int radix, const bool upper, const int minWidth,
+	const int bufferSize, uchar *buf)
 {
 	// The radix is supposed to be range checked outside of this method.
 	// Also, use ToStringDecimal and ToStringHex for base 10 and 16, respectively.
 	assert(radix >= 2 && radix <= 36 && radix != 10 && radix != 16);
 
+	uchar *chp = buf + bufferSize;
+
 	const uchar letterBase = upper ? 'A' : 'a';
-
-	// The longest possible string that could be produced by ToStringRadix
-	// is uint64_t's max value in binary. 64-bit value = 64 binary digits.
-	const int charCount = 64;
-	uchar chars[charCount];
-
+	
 	uint64_t temp = value;
 	int length = 0;
 	do {
 		int rem = temp % radix; // radix is clamped to [2, 36], so this is fine
-		chars[charCount - ++length] = static_cast<uchar>(rem >= 10 ? letterBase + rem - 10 : '0' + rem);
+		*--chp = rem >= 10 ? letterBase + rem - 10 : (uchar)'0' + rem;
+		length++;
 	} while (temp /= radix);
 
-	String *outputString = GC_ConstructString(thread, length, chars + charCount - length);
+	while (length < minWidth)
+	{
+		*--chp = (uchar)'0';
+		length++;
+	}
 
-	Value outputValue;
-	SetString(outputValue, outputString);
-	return outputValue;
+	return length;
 }
