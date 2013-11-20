@@ -38,7 +38,8 @@ public class Int __primitive
 				i += 1;
 		}
 
-		do {
+		do
+		{
 			if i == strLength or (cp = str.getCodepoint(i)) < 0x30 /*0*/ or cp > 0x39 /*9*/:
 				break; // next character must be a digit!
 			try

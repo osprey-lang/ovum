@@ -54,8 +54,11 @@ namespace uinteger
 		{
 			if ((b & 1) != 0)
 				result = UInt_MultiplyChecked(thread, result, a);
-			a = UInt_MultiplyChecked(thread, a, a);
 			b >>= 1;
+			if (b > 0)
+				// This sometimes overflows for the last iteration, after which
+				// the value is not even be used; specifically, at 2**32 * 2**32
+				a = UInt_MultiplyChecked(thread, a, a);
 		}
 
 		return result;
