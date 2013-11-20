@@ -6,6 +6,7 @@
 #include <stdint.h>
 #define IEEE_8087
 #define NO_LONG_LONG
+#define NO_HEX_FP
 
 // From dtoa.c, plus extra spacing for readability:
 /*
