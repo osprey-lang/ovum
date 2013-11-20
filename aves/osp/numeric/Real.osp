@@ -38,7 +38,7 @@ public class Real __primitive
 
 			// The string can only contain ASCII characters,
 			// because that's all dtoa's strtod accepts.
-			var i = 0;
+			var i = start;
 			while i < strLength
 			{
 				if str.getCodepoint(i) > 255:
