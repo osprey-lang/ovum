@@ -12,6 +12,8 @@ AVES_API NATIVE_FUNCTION(aves_Real_get_isInfinite);
 AVES_API NATIVE_FUNCTION(aves_Real_getHashCode);
 AVES_API NATIVE_FUNCTION(aves_Real_toString);
 
+AVES_API NATIVE_FUNCTION(aves_Real_parseInternal);
+
 AVES_API NATIVE_FUNCTION(aves_Real_opEquals);
 AVES_API NATIVE_FUNCTION(aves_Real_opCompare);
 AVES_API NATIVE_FUNCTION(aves_Real_opAdd);

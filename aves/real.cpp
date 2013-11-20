@@ -108,6 +108,41 @@ AVES_API NATIVE_FUNCTION(aves_Real_toString)
 	VM_PushString(thread, output);
 }
 
+AVES_API NATIVE_FUNCTION(aves_Real_parseInternal)
+{
+	// Arguments: (str is String, start is Int, end is Int)
+	// Real.parse ensures that the string only contains whitespace.
+	// Also, start and end are guaranteed to be within the range
+	// of int32_t. (End is inclusive.)
+
+	String *str = args[0].common.string;
+	int32_t start = (int32_t)args[1].integer;
+	int32_t end = (int32_t)args[2].integer;
+
+	double result;
+	{
+		// Create a temporary buffer of ASCII characters to pass into _aves_strtod
+		int32_t length = end - start + 1;
+		// (One extra char for \0)
+		std::unique_ptr<char[]> ascii(new char[length + 1]);
+		for (int32_t i = 0; i < length; i++)
+			ascii[i] = (char)((&str->firstChar)[start + i]);
+		ascii[length] = '\0';
+
+		char *strEnd;
+		result = _aves_strtod(ascii.get(), &strEnd);
+		if (strEnd != ascii.get() + length)
+			goto failure;
+	}
+
+	VM_PushReal(thread, result);
+	return;
+
+failure:
+	VM_PushNull(thread);
+	return;
+}
+
 AVES_API NATIVE_FUNCTION(aves_Real_opEquals)
 {
 	bool result = false;
