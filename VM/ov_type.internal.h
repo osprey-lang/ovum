@@ -486,9 +486,9 @@ public:
 	void InitOperators();
 	void InitStaticFields();
 
-	static inline const bool ValueIsType(Value value, Type *const type)
+	static inline const bool ValueIsType(Value *value, Type *const type)
 	{
-		Type *valtype = value.type;
+		Type *valtype = value->type;
 		while (valtype)
 		{
 			if (valtype == type)

@@ -391,27 +391,22 @@ namespace instr
 
 		void Append(const uint32_t originalOffset, const uint32_t originalSize, Instruction *instr);
 
-		inline int32_t FindIndex(const uint32_t originalOffset)
-		{
-			int32_t index = 0;
-			for (instr_iter i = instructions.begin(); i != instructions.end(); i++)
-			{
-				if (i->originalOffset == originalOffset)
-					return index;
-				index++;
-			}
-
-			return -1;
-		}
+		int32_t FindIndex(const uint32_t originalOffset) const;
 
 		uint32_t GetOriginalOffset(const int32_t index) const
 		{
+			if (index >= instructions.size())
+				return instructions.end()->originalOffset +
+					instructions.end()->originalSize;
 			return instructions[index].originalOffset;
 		}
 		uint32_t GetOriginalSize(const int32_t index) const
 		{
+			if (index >= instructions.size())
+				return 0;
 			return instructions[index].originalSize;
 		}
+		int32_t GetNewOffset(const int32_t index) const;
 		int32_t GetNewOffset(const int32_t index, const Instruction *relativeTo) const;
 
 		inline int32_t GetStackHeight(const int32_t index) const

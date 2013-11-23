@@ -358,9 +358,9 @@ private:
 	void EndGCSuspension();
 	void SuspendForGC();
 
-	void Evaluate(StackFrame *frame);
-	bool FindErrorHandler(StackFrame *frame);
-	void EvaluateLeave(StackFrame *frame, const int32_t target);
+	void Evaluate(register StackFrame *frame);
+	bool FindErrorHandler(register StackFrame *frame);
+	void EvaluateLeave(register StackFrame *frame, const int32_t target);
 
 	String *GetStackTrace();
 	void AppendArgumentType(StringBuffer &buf, Value arg);
@@ -368,7 +368,7 @@ private:
 	// argCount DOES NOT include the value to be invoked, but value does.
 	void InvokeLL(unsigned int argCount, Value *value, Value *result);
 	// args DOES include the instance, argCount DOES NOT
-	void InvokeMethodOverload(Method::Overload *mo, unsigned int argCount, Value *args, Value *result, const bool ignoreVariadic = false);
+	void InvokeMethodOverload(Method::Overload *mo, unsigned int argCount, Value *args, Value *result);
 
 	void InvokeApplyLL(Value *args, Value *result);
 	void InvokeApplyMethodLL(Method *method, Value *args, Value *result);
@@ -409,6 +409,8 @@ private:
 	static Method *MethodFromToken(Method::Overload *fromMethod, uint32_t token);
 	static Method::Overload *MethodOverloadFromToken(Method::Overload *fromMethod, uint32_t token, uint32_t argCount);
 	static Field *FieldFromToken(Method::Overload *fromMethod, uint32_t token, bool shouldBeStatic);
+
+	static void GetHashIndexerSetter(Method::Overload **target);
 
 	friend class GC;
 	friend void VM_InvokeMethod(ThreadHandle, MethodHandle, const uint32_t, Value*);

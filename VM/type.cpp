@@ -276,7 +276,7 @@ void Field::ReadField(Thread *const thread, Value *instance, Value *dest) const
 {
 	if (instance->type == nullptr)
 		thread->ThrowNullReferenceError();
-	if (!Type::ValueIsType(*instance, this->declType))
+	if (!Type::ValueIsType(instance, this->declType))
 		thread->ThrowTypeError();
 
 	ACQUIRE_FIELD_LOCK(instance->instance);
@@ -305,7 +305,7 @@ void Field::WriteField(Thread *const thread, Value *instanceAndValue) const
 {
 	if (instanceAndValue[0].type == nullptr)
 		thread->ThrowNullReferenceError();
-	if (!Type::ValueIsType(instanceAndValue[0], this->declType))
+	if (!Type::ValueIsType(instanceAndValue, this->declType))
 		thread->ThrowTypeError();
 
 	ACQUIRE_FIELD_LOCK(instanceAndValue[0].instance);
@@ -500,14 +500,14 @@ OVUM_API void Type_SetReferenceGetter(TypeHandle type, ReferenceGetter getter)
 
 OVUM_API String *Error_GetMessage(Value error)
 {
-	if (!Type::ValueIsType(error, VM::vm->types.Error))
+	if (!Type::ValueIsType(&error, VM::vm->types.Error))
 		return nullptr; // whoopsies!
 
 	return error.common.error->message;
 }
 OVUM_API String *Error_GetStackTrace(Value error)
 {
-	if (!Type::ValueIsType(error, VM::vm->types.Error))
+	if (!Type::ValueIsType(&error, VM::vm->types.Error))
 		return nullptr; // Type mismatch!
 
 	return error.common.error->stackTrace;

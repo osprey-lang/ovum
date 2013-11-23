@@ -30,6 +30,28 @@ namespace instr
 		hasBranches = hasBranches || instr->IsBranch() || instr->IsSwitch();
 	}
 
+	int32_t MethodBuilder::FindIndex(const uint32_t originalOffset) const
+	{
+		int32_t iMin = 0; // inclusive
+		int32_t iMax = (int32_t)instructions.size() - 1; // inclusive
+		while (iMax >= iMin)
+		{
+			int32_t iMid = (iMin + iMax) / 2;
+			uint32_t midOffset = instructions[iMid].originalOffset;
+			if (originalOffset < midOffset)
+				// Search lower half
+				iMax = iMid - 1;
+			else if (originalOffset > midOffset)
+				iMin = iMid + 1;
+			else
+				return iMid;
+		}
+
+		// try, catch and finally blocks may reference an offset
+		// beyond the last instruction.
+		return (int32_t)instructions.size(); // aw
+	}
+
 	void MethodBuilder::MarkForRemoval(const int32_t index)
 	{
 		assert(!instructions[index].instr->HasBranches());
@@ -46,15 +68,16 @@ namespace instr
 	void MethodBuilder::PerformRemovals(Method::Overload *method)
 	{
 		using namespace std;
+		const int SmallBufferSize = 64;
 
-		if (instructions.size() <= 32)
+		if (instructions.size() < SmallBufferSize)
 		{
-			int32_t newIncides[32];
+			int32_t newIncides[SmallBufferSize];
 			PerformRemovalsInternal(newIncides, method);
 		}
 		else
 		{
-			unique_ptr<int32_t[]> newIndices(new int32_t[instructions.size()]);
+			unique_ptr<int32_t[]> newIndices(new int32_t[instructions.size() + 1]);
 			PerformRemovalsInternal(newIndices.get(), method);
 		}
 	}
@@ -85,6 +108,9 @@ namespace instr
 				i++;
 			}
 		}
+		// try, catch and finally blocks may reference an index
+		// beyond the last instruction
+		newIndices[oldIndex] = newIndex;
 
 		if (hasBranches)
 			for (instr_iter i = instructions.begin(); i != instructions.end(); i++)
@@ -123,9 +149,29 @@ namespace instr
 		}
 	}
 
+	int32_t MethodBuilder::GetNewOffset(const int32_t index) const
+	{
+		typedef std::vector<InstrDesc>::const_iterator const_iter;
+		if (index >= instructions.size())
+		{
+			Instruction *end = (instructions.end() - 1)->instr;
+			return end->offset + end->GetSize();
+		}
+		return instructions[index].instr->offset;
+	}
+
 	int32_t MethodBuilder::GetNewOffset(const int32_t index, const Instruction *relativeTo) const
 	{
-		return instructions[index].instr->offset - relativeTo->offset - (int)relativeTo->GetSize();
+		typedef std::vector<InstrDesc>::const_iterator const_iter;
+		int32_t offset;
+		if (index >= instructions.size())
+		{
+			Instruction *end = (instructions.end() - 1)->instr;
+			offset = end->offset + end->GetSize();
+		}
+		else
+			offset = instructions[index].instr->offset;
+		return offset - relativeTo->offset - (int)relativeTo->GetSize();
 	}
 
 	void MethodBuilder::SetInstruction(int32_t index, Instruction *newInstr, bool deletePrev)
@@ -671,22 +717,23 @@ void Thread::WriteInitializedBody(instr::MethodBuilder &builder, Method::Overloa
 	{
 		Method::TryBlock &tryBlock = method->tryBlocks[t];
 		
-		tryBlock.tryStart = builder[tryBlock.tryStart]->offset;
-		tryBlock.tryEnd = builder[tryBlock.tryEnd]->offset;
+		tryBlock.tryStart = builder.GetNewOffset(tryBlock.tryStart);
+		tryBlock.tryEnd = builder.GetNewOffset(tryBlock.tryEnd);
 
 		if (tryBlock.kind == TryKind::CATCH)
 		{
 			for (int32_t c = 0; c < tryBlock.catches.count; c++)
 			{
 				Method::CatchBlock &catchBlock = tryBlock.catches.blocks[c];
-				catchBlock.catchStart = builder[catchBlock.catchStart]->offset;
-				catchBlock.catchEnd = builder[catchBlock.catchEnd]->offset;
+				catchBlock.catchStart = builder.GetNewOffset(catchBlock.catchStart);
+				catchBlock.catchEnd = builder.GetNewOffset(catchBlock.catchEnd);
 			}
 		}
 		else if (tryBlock.kind == TryKind::FINALLY)
 		{
-			tryBlock.finallyBlock.finallyStart = builder[tryBlock.finallyBlock.finallyStart]->offset;
-			tryBlock.finallyBlock.finallyEnd = builder[tryBlock.finallyBlock.finallyEnd]->offset;
+			auto &finallyBlock = tryBlock.finallyBlock;
+			finallyBlock.finallyStart = builder.GetNewOffset(finallyBlock.finallyStart);
+			finallyBlock.finallyEnd = builder.GetNewOffset(finallyBlock.finallyEnd);
 		}
 	}
 

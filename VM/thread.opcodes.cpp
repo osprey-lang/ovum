@@ -29,7 +29,7 @@
 
 #endif // THREADED_EVALUATION
 
-void Thread::Evaluate(StackFrame *frame)
+void Thread::Evaluate(register StackFrame *frame)
 {
 #ifdef THREADED_EVALUATION
 	static void *opcodeTargets[256] = {
@@ -37,7 +37,7 @@ void Thread::Evaluate(StackFrame *frame)
 	};
 #endif
 
-	register StackFrame *const f = frame;
+	register StackFrame *const f = currentFrame;
 	// this->ip has been set to the entry address
 	register uint8_t *ip = this->ip;
 
@@ -654,7 +654,7 @@ void Thread::Evaluate(StackFrame *frame)
 		// brtype: LocalOffset value, Type *type, int32_t offset
 		TARGET(OPI_BRTYPE_L)
 			{
-				if (Type::ValueIsType(*OFF_ARG(ip, f), T_ARG(ip + LOSZ, Type*)))
+				if (Type::ValueIsType(OFF_ARG(ip, f), T_ARG(ip + LOSZ, Type*)))
 					ip += I32_ARG(ip + LOSZ + sizeof(Type*));
 
 				ip += LOSZ + sizeof(Type*) + sizeof(int32_t);
@@ -662,7 +662,7 @@ void Thread::Evaluate(StackFrame *frame)
 			NEXT_INSTR();
 		TARGET(OPI_BRTYPE_S)
 			{
-				if (Type::ValueIsType(*OFF_ARG(ip, f), T_ARG(ip + LOSZ, Type*)))
+				if (Type::ValueIsType(OFF_ARG(ip, f), T_ARG(ip + LOSZ, Type*)))
 					ip += I32_ARG(ip + LOSZ + sizeof(Type*));
 
 				ip += LOSZ + sizeof(Type*) + sizeof(int32_t);
@@ -1068,13 +1068,13 @@ void Thread::Evaluate(StackFrame *frame)
 	}
 
 ret:
-	assert(frame->stackCount == 1);
+	assert(f->stackCount == 1);
 	// And then we just fall through and return!
 endfinally:
 	return;
 }
 
-bool Thread::FindErrorHandler(StackFrame *frame)
+bool Thread::FindErrorHandler(register StackFrame *frame)
 {
 	typedef Method::TryBlock::TryKind TryKind;
 
@@ -1091,7 +1091,7 @@ bool Thread::FindErrorHandler(StackFrame *frame)
 				for (int32_t c = 0; c < tryBlock.catches.count; c++)
 				{
 					Method::CatchBlock &catchBlock = tryBlock.catches.blocks[c];
-					if (Type::ValueIsType(currentError, catchBlock.caughtType))
+					if (Type::ValueIsType(&currentError, catchBlock.caughtType))
 					{
 						frame->stackCount = 0;
 						frame->Push(currentError);
@@ -1107,9 +1107,16 @@ bool Thread::FindErrorHandler(StackFrame *frame)
 				// Evaluate returns, we continue searching through the try blocks,
 				// until we've exhausted all of them.
 				uint8_t *const prevIp = this->ip;
+				// We must save the current error, because if an error is thrown and
+				// caught inside the finally, currentError will be updated to contain
+				// that error. We will cause problems if we don't restore the old one.
+				Value prevError = this->currentError;
+
 				this->ip = method->entry + tryBlock.finallyBlock.finallyStart;
 				Evaluate(frame);
 				this->ip = prevIp;
+
+				this->currentError = prevError;
 			}
 			// We can't stop enumerating the blocks just yet.
 			// There may be another try block that actually handles the error.
@@ -1118,7 +1125,7 @@ bool Thread::FindErrorHandler(StackFrame *frame)
 	return false;
 }
 
-void Thread::EvaluateLeave(StackFrame *frame, const int32_t target)
+void Thread::EvaluateLeave(register StackFrame *frame, const int32_t target)
 {
 	typedef Method::TryBlock::TryKind TryKind;
 
@@ -1139,9 +1146,16 @@ void Thread::EvaluateLeave(StackFrame *frame, const int32_t target)
 		{
 			// Evaluate the finally!
 			uint8_t *const prevIp = this->ip;
+			// We must save the current error, because if an error is thrown and
+			// caught inside the finally, currentError will be updated to contain
+			// that error. We will cause problems if we don't restore the old one.
+			Value prevError = this->currentError;
+
 			this->ip = method->entry + tryBlock.finallyBlock.finallyStart;
 			Evaluate(frame);
 			this->ip = prevIp;
+
+			this->currentError = prevError;
 		}
 	}
 }
