@@ -273,28 +273,27 @@ void Thread::InvokeMemberLL(String *name, uint32_t argCount, Value *value, Value
 }
 
 void Thread::InvokeMethodOverload(Method::Overload *mo, unsigned int argCount,
-								  Value *args, Value *result, const bool ignoreVariadic)
+								  Value *args, Value *result)
 {
 	register MethodFlags flags = mo->flags; // used several times below!
-	uint32_t finalArgCount = argCount;
 
-	if (!ignoreVariadic && (flags & MethodFlags::VARIADIC) != MethodFlags::NONE)
+	if ((flags & MethodFlags::VARIADIC) != MethodFlags::NONE)
 	{
 		PrepareVariadicArgs(flags, argCount, mo->paramCount, currentFrame);
-		finalArgCount = mo->paramCount;
+		argCount = mo->paramCount;
 	}
 
-	finalArgCount += (int)(flags & MethodFlags::INSTANCE) >> 3;
+	argCount += (int)(flags & MethodFlags::INSTANCE) >> 3;
 
 	// And now we can push the new stack frame!
 	// Note: this updates currentFrame
-	StackFrame *frame = PushStackFrame<false>(finalArgCount, args, mo);
+	StackFrame *frame = PushStackFrame<false>(argCount, args, mo);
 
 	if ((flags & MethodFlags::NATIVE) == MethodFlags::NATIVE)
 	{
 		try
 		{
-			mo->nativeEntry(this, finalArgCount, args);
+			mo->nativeEntry(this, argCount, args);
 		}
 		catch (OvumException&)
 		{
@@ -384,7 +383,7 @@ void Thread::InvokeApply(Value *result)
 void Thread::InvokeApplyLL(Value *args, Value *result)
 {
 	// First, ensure that args[1] is a List.
-	if (!Type::ValueIsType(args[1], VM::vm->types.List))
+	if (!Type::ValueIsType(args + 1, VM::vm->types.List))
 		ThrowTypeError(thread_errors::WrongApplyArgsType);
 
 	// Then, unpack it onto the evaluation stack!
@@ -412,7 +411,7 @@ void Thread::InvokeApplyMethod(Method *method, Value *result)
 void Thread::InvokeApplyMethodLL(Method *method, Value *args, Value *result)
 {
 	// First, ensure that args[0] is a List
-	if (!Type::ValueIsType(*args, VM::vm->types.List))
+	if (!Type::ValueIsType(args, VM::vm->types.List))
 		ThrowTypeError(thread_errors::WrongApplyArgsType);
 
 	assert((method->flags & MemberFlags::INSTANCE) == MemberFlags::NONE);
@@ -478,8 +477,8 @@ void Thread::Concat(Value *result)
 
 void Thread::ConcatLL(Value *args, Value *result)
 {
-	Value *a = args;
-	Value *b = args + 1;
+	register Value *a = args;
+	register Value *b = args + 1;
 	if (a->type == VM::vm->types.List || b->type == VM::vm->types.List)
 	{
 		// list concatenation
@@ -506,7 +505,36 @@ void Thread::ConcatLL(Value *args, Value *result)
 		if (a->type != b->type)
 			ThrowTypeError(thread_errors::ConcatTypes);
 
-		// TODO
+		static Method::Overload *hashSetItem = nullptr;
+		if (!hashSetItem) GetHashIndexerSetter(&hashSetItem);
+		assert(hashSetItem != nullptr);
+
+		register Value *hash = args + 2; // Put the hash on the stack for extra GC reachability!
+
+		GC::gc->Alloc(this, VM::vm->types.Hash, sizeof(HashInst), hash);
+		VM::vm->functions.initHashInstance(this, hash->common.hash, max(a->common.hash->count, b->common.hash->count));
+
+		register StackFrame *f = currentFrame;
+		f->stackCount++;
+
+		Value ignore;
+		do
+		{
+			for (int32_t i = 0; i < a->common.hash->count; i++)
+			{
+				HashEntry *e = &a->common.hash->entries[i];
+				hash[1] = hash[0]; // dup the hash
+				hash[2] = e->key;
+				hash[3] = e->value;
+				f->stackCount += 3;
+				// InvokeMethodOverload pops the three effective arguments
+				InvokeMethodOverload(hashSetItem, 2, hash + 1, &ignore);
+			}
+			a++;
+		} while (a == b);
+
+		*result = *hash;
+		f->stackCount--; // Pop the hash off the stack again
 	}
 	else
 	{
@@ -519,6 +547,16 @@ void Thread::ConcatLL(Value *args, Value *result)
 		*result = output;
 	}
 	currentFrame->stackCount -= 2;
+}
+
+void Thread::GetHashIndexerSetter(Method::Overload **target)
+{
+	Member *m = VM::vm->types.Hash->GetMember(static_strings::_item);
+
+	assert((m->flags & MemberFlags::KIND) == MemberFlags::PROPERTY);
+	assert(((Property*)m)->setter != nullptr);
+
+	*target = ((Property*)m)->setter->ResolveOverload(2);
 }
 
 
