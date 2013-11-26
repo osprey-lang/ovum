@@ -393,14 +393,14 @@ namespace instr
 
 		int32_t FindIndex(const uint32_t originalOffset) const;
 
-		uint32_t GetOriginalOffset(const int32_t index) const
+		inline uint32_t GetOriginalOffset(const int32_t index) const
 		{
 			if (index >= instructions.size())
 				return instructions.end()->originalOffset +
 					instructions.end()->originalSize;
 			return instructions[index].originalOffset;
 		}
-		uint32_t GetOriginalSize(const int32_t index) const
+		inline uint32_t GetOriginalSize(const int32_t index) const
 		{
 			if (index >= instructions.size())
 				return 0;
@@ -427,21 +427,21 @@ namespace instr
 		void MarkForRemoval(const int32_t index);
 		void PerformRemovals(Method::Overload *method);
 
-		Instruction *operator[](int32_t index) const
+		inline Instruction *operator[](int32_t index) const
 		{
 			return instructions[index].instr;
 		}
 		void SetInstruction(int32_t index, Instruction *newInstr, bool deletePrev);
 
 
-		int32_t GetTypeCount() const
+		inline int32_t GetTypeCount() const
 		{
 			return (int32_t)typesToInitialize.size();
 		}
 
 		void AddTypeToInitialize(Type *type);
 
-		Type *GetType(int32_t index) const
+		inline Type *GetType(int32_t index) const
 		{
 			return typesToInitialize[index];
 		}

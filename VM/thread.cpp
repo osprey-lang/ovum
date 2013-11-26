@@ -168,7 +168,7 @@ void Thread::InvokeLL(unsigned int argCount, Value *value, Value *result)
 		MethodInst *methodInst = value->common.method;
 		if (mo = methodInst->method->ResolveOverload(argCount))
 		{
-			if ((mo->flags & MethodFlags::INSTANCE) != MethodFlags::NONE)
+			if (!IS_NULL(methodInst->instance))
 				// Overwrite the Method with the instance
 				*value = methodInst->instance;
 			else
