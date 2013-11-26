@@ -268,7 +268,7 @@ public inheritable Hash
 	///             `Hash.fromObject(pt, "x", "y")     // => {x: pt.x, y: pt.y}`
 	/// Throws ArgumentNullError:
 	///          {object} is null.
-	///
+	/// Throws ArgumentError:
 	///          One of the values in {keys} is null.
 	/// Throws DuplicateKeyError:
 	///          One of the values in {keys} occurs more than once.
@@ -284,6 +284,8 @@ public inheritable Hash
 		var output = {};
 		for k in keys
 		{
+			if k is null:
+				throw new ArgumentError("The keys list cannot contain any null values.", "keys");
 			var stringKey = string(k);
 			output.add(stringKey, helpers.loadMember(object, stringKey));
 		}

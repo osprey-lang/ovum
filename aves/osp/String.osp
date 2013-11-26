@@ -33,7 +33,7 @@ public function string(value)
 ///          “character” are used interchangeably, except when used in the phrase
 ///          “Unicode character”.
 ///
-///          Due to internal implementation details and optimisations, this class
+///          Due to internal implementation details and optimizations, this class
 ///          is not inheritable.
 public class String
 {
@@ -353,6 +353,11 @@ public class String
 
 	private getTrimSet(chars)
 	{
+		if chars is String and chars.length <= 5:
+			// Searching a 5-char string for a single char is fast enough
+			// that we can permit this
+			return chars;
+
 		var charSet = new Set();
 		for ch in chars:
 			if ch is String and ch.length == 1:

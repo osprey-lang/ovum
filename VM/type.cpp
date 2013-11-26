@@ -269,8 +269,8 @@ Type *Member::GetOriginatingType() const
 #define ACQUIRE_FIELD_LOCK(inst) \
 	GCObject *gco = GCO_FROM_INST(inst); \
 	while (gco->fieldAccessFlag.test_and_set(std::memory_order_acquire)) \
-		;
-#define RELEASE_FIELD_LOCK() gco->fieldAccessFlag.clear()
+		continue
+#define RELEASE_FIELD_LOCK() gco->fieldAccessFlag.clear(std::memory_order_release)
 
 void Field::ReadField(Thread *const thread, Value *instance, Value *dest) const
 {

@@ -134,7 +134,8 @@ public inheritable List
 	///          index {start} up to the end of this list.
 	/// Throws TypeError: {index} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
-	///          {start} is less than -{length}, or greater than or equal to {length}.
+	///          {start} is less than -{length}, or greater than {length}.
+	/// Remarks: If {start} is equal to {length}, the returned list will be empty.
 	public slice(start)							__extern("aves_List_slice1", locals=1);
 	/// Summary: Copies items form this list into a new list, starting at the
 	///          specified start index, up to the specified exclusive end index.
@@ -151,7 +152,7 @@ public inheritable List
 	///
 	///          {end} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
-	///          {start} is less than -{length}, or greater than or equal to {length}.
+	///          {start} is less than -{length}, or greater than {length}.
 	///
 	///          {end} is less than -{length}, or greater than {length}.
 	///
@@ -161,6 +162,9 @@ public inheritable List
 	///          cause the return value to contain items up to but not including the last.
 	///          To get all values up to the end, pass the {length} of the list into {end},
 	///          or call `slice` with one argument.
+	///
+	///          If {start} is equal to {length}, the returned list will be empty
+	///          (as long as {end} is also valid).
 	public slice(start, end)					__extern("aves_List_slice2", locals=1);
 	/// Summary: Joins the values of this list into a string, separated by the
 	///          specified separator.
@@ -210,10 +214,10 @@ public inheritable List
 	///          zero if `x` and `y` compare as equal; greater than zero if `x` > `y`;
 	///          and less than zero if `x` < `y`.
 	///
-	///          To sort a list in reverse order, simply swap the operands of the
-	///          `<=>` operator:
+	///          To sort a list in reverse order, simply swap the order of the
+	///          operands of the `<=>` operator:
 	///
-	///          `list.sort(@(x, y) = x <=> y); // normal sorting` \
+	///          `list.sort(@(x, y) = x <=> y); // normal order` \
 	///          `list.sort(@(x, y) = y <=> x); // reverse`
 	///
 	///          Alternatively, first sort it, then reverse it:
@@ -329,7 +333,7 @@ public inheritable List
 	///          {predicate} returns true.
 	public filter(predicate)
 	{
-		var output = new List(this.capacity);
+		var output = new List(this.length);
 		var startVersion = version;
 
 		for i in [0 to length - 1]
@@ -368,7 +372,7 @@ public inheritable List
 	///          it avoids allocating memory for the intermediate filtered list.
 	public filterMap(predicate, mapper)
 	{
-		var output = new List(this.capacity);
+		var output = new List(this.length);
 		var startVersion = version;
 
 		for i in [0 to length - 1]

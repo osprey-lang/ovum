@@ -10,13 +10,13 @@ AVES_API void aves_List_init(TypeHandle type)
 	Type_SetFinalizer(type, aves_List_finalize);
 }
 
-int32_t GetIndex(ThreadHandle thread, ListInst *list, Value indexValue)
+int32_t GetIndex(ThreadHandle thread, ListInst *list, Value indexValue, bool canEqualLength)
 {
 	int64_t index = IntFromValue(thread, indexValue).integer;
 
 	if (index < 0)
 		index += list->length;
-	if (index < 0 || index >= list->length)
+	if (index < 0 || (canEqualLength ? index > list->length : index >= list->length))
 	{
 		VM_PushString(thread, strings::index);
 		GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr);
@@ -74,14 +74,14 @@ AVES_API NATIVE_FUNCTION(aves_List_get_version)
 AVES_API NATIVE_FUNCTION(aves_List_getItem)
 {
 	ListInst *list = _L(THISV);
-	int32_t index = GetIndex(thread, list, args[1]);
+	int32_t index = GetIndex(thread, list, args[1], false);
 
 	VM_Push(thread, list->values[index]);
 }
 AVES_API NATIVE_FUNCTION(aves_List_setItem)
 {
 	ListInst *list = _L(THISV);
-	int32_t index = GetIndex(thread, list, args[1]);
+	int32_t index = GetIndex(thread, list, args[1], false);
 
 	list->values[index] = args[2];
 	list->version++;
@@ -98,31 +98,23 @@ AVES_API NATIVE_FUNCTION(aves_List_add)
 }
 AVES_API NATIVE_FUNCTION(aves_List_insert)
 {
-	int64_t index64 = IntFromValue(thread, args[1]).integer;
 	ListInst *list = _L(THISV);
 	// when index == list->length, it means we insert at the end
-	if (index64 < 0 || index64 > list->length)
-	{
-		VM_PushString(thread, strings::index);
-		GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr);
-		VM_Throw(thread);
-	}
-
-	int32_t index32 = (int32_t)index64;
+	int32_t index = GetIndex(thread, list, args[1], true);
 
 	EnsureMinCapacity(thread, list, list->length + 1);
 
 	// Shift all items up by 1
-	for (int32_t i = list->length; i > index32; i--)
+	for (int32_t i = list->length; i > index; i--)
 		list->values[i] = list->values[i - 1];
-	list->values[index32] = args[2];
+	list->values[index] = args[2];
 	list->version++;
 }
 AVES_API NATIVE_FUNCTION(aves_List_removeAt)
 {
 	ListInst *list = _L(THISV);
 
-	int32_t index = GetIndex(thread, list, args[1]);
+	int32_t index = GetIndex(thread, list, args[1], false);
 
 	for (int32_t i = (int32_t)index; i < list->length - 1; i++)
 		list->values[i] = list->values[i + 1];
@@ -144,7 +136,7 @@ AVES_API NATIVE_FUNCTION(aves_List_slice1)
 	ListInst *list = _L(THISV);
 
 	// Get the start index
-	int32_t startIndex = GetIndex(thread, list, args[1]);
+	int32_t startIndex = GetIndex(thread, list, args[1], false);
 
 	// Create the output list
 	Value *outputValue = VM_Local(thread, 0);
@@ -163,12 +155,12 @@ AVES_API NATIVE_FUNCTION(aves_List_slice1)
 }
 AVES_API NATIVE_FUNCTION(aves_List_slice2)
 {
-	// slice(start, end)			(inclusive)
+	// slice(start inclusive, end exclusive)
 	ListInst *list = _L(THISV);
 
 	// Get the indexes
-	int32_t startIndex = GetIndex(thread, list, args[1]);
-	int32_t endIndex   = GetIndex(thread, list, args[2]);
+	int32_t startIndex = GetIndex(thread, list, args[1], true);
+	int32_t endIndex   = GetIndex(thread, list, args[2], true);
 
 	if (endIndex < startIndex)
 	{
@@ -183,7 +175,7 @@ AVES_API NATIVE_FUNCTION(aves_List_slice2)
 	GC_Construct(thread, GetType_List(), 0, outputValue);
 	ListInst *outputList = outputValue->common.list;
 
-	int32_t finalLength = endIndex - startIndex + 1;
+	int32_t finalLength = endIndex - startIndex;
 	EnsureMinCapacity(thread, outputList, finalLength);
 
 	// Copy the elements across

@@ -126,9 +126,7 @@ AVES_API NATIVE_FUNCTION(aves_Console_readKey)
 			DWORD numEventsRead = -1;
 			BOOL r = ReadConsoleInputW(GetStdHandle(STD_INPUT_HANDLE), &ir, 1, &numEventsRead);
 			if (!r || numEventsRead == 0)
-			{
-				VM_ThrowError(thread); // TODO: error message
-			}
+				Console::ThrowConsoleError(thread);
 
 			WORD keyCode = ir.Event.KeyEvent.wVirtualKeyCode;
 
@@ -199,7 +197,7 @@ AVES_API NATIVE_FUNCTION(aves_Console_readLine)
 
 	VM_EnterFullyNativeRegion(thread);
 
-	const int StackBufferSize = 512;
+	const int StackBufferSize = 256;
 	using namespace std;
 
 	int bufferSize = StackBufferSize;
