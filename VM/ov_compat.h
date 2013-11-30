@@ -58,18 +58,6 @@ inline long long Clamp(const long long value)
 		value;
 }
 
-// I'm surprised these are not built into C++.
-#ifdef _MSC_VER // Microsoft C++ compiler
-
-#define IsNaN    _isnan
-#define IsFinite _finite
-
-#elif
-
-inline const bool IsNaN(const double value) { return value != value; }
-inline const bool IsFinite(const double value) { return value <= DBL_MAX && value >= DBL_MIN; }
-
-#endif
 
 template<class T>
 inline void ReverseArray(const size_t length, T values[])
@@ -142,5 +130,14 @@ inline int32_t NextPowerOfTwo(int32_t n)
 // but for integer types, and if size and alignment are both constant values, it
 // can be fully evaluated at compile-time.
 #define ALIGN_TO(size,alignment)  ((size + (alignment) - 1) / (alignment) * (alignment))
+
+#if defined(_MSC_VER)
+#define NOINLINE  __declspec(noinline)
+#elif defined(__GNUC__)
+#define NOINLINE __attribute__((noinline))
+#else
+// Disable the feature
+#define NOINLINE
+#endif
 
 #endif // VM__COMPAT_H

@@ -351,14 +351,14 @@ private:
 
 	// Tells the thread to suspend itself as soon as possible.
 	// Thread::IsSuspendedForGC() returns true when this is done.
-	void PleaseSuspendForGCAsap();
+	NOINLINE void PleaseSuspendForGCAsap();
 	// Tells the thread it doesn't have to suspend itself anymore,
 	// because the GC cycle has ended. This happens when the thread
 	// spends the entire GC cycle in a fully native section.
-	void EndGCSuspension();
-	void SuspendForGC();
+	NOINLINE void EndGCSuspension();
+	NOINLINE void SuspendForGC();
 
-	void Evaluate(register StackFrame *frame);
+	void Evaluate();
 	bool FindErrorHandler(register StackFrame *frame);
 	void EvaluateLeave(register StackFrame *frame, const int32_t target);
 

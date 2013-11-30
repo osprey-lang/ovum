@@ -82,6 +82,9 @@ private:
 	void LoadModules(VMStartParams &params);
 	void InitArgs(int argCount, const wchar_t *args[]);
 
+	static FILE *stdOut;
+	static FILE *stdErr;
+
 	static void PrintInternal(FILE *file, const wchar_t *format, String *str);
 
 public:

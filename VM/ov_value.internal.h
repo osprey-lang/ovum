@@ -10,7 +10,7 @@
 #define VALUE_FIELDS(v,t)   reinterpret_cast<::Value*>((v).instance  + _Tp(t)->fieldsOffset)
 #define VALUE_FIELDS_P(v,t) reinterpret_cast<::Value*>((v)->instance + _Tp(t)->fieldsOffset)
 
-// These access stdTypes directly, instead of calling the various GetType_* methods.
+// These access VM::vm->types directly, instead of calling the various GetType_* methods.
 
 inline void SetNull_(Value &target)
 {

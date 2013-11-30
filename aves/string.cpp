@@ -92,10 +92,13 @@ AVES_API NATIVE_FUNCTION(aves_String_reverse)
 	uchar *dstp = const_cast<uchar*>(&outputString->firstChar + outputString->length - 1);
 
 	int32_t remaining = outputString->length;
-	while (remaining > 0)
+	while (remaining-- > 0)
 	{
 		if (UC_IsSurrogateLead(*srcp) && UC_IsSurrogateTrail(*(srcp + 1)))
+		{
 			*reinterpret_cast<uint32_t*>(--dstp) = *reinterpret_cast<const uint32_t*>(srcp++);
+			remaining--;
+		}
 		else
 			*dstp = *srcp;
 		dstp--;

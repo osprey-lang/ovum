@@ -74,7 +74,7 @@ void Thread::Start(Method *method, Value &result)
 		entry:
 		try
 		{
-			Evaluate(frame);
+			Evaluate(/*frame*/);
 		}
 		catch (OvumException&)
 		{
@@ -318,7 +318,7 @@ void Thread::InvokeMethodOverload(Method::Overload *mo, unsigned int argCount,
 		entry:
 		try
 		{
-			Evaluate(frame);
+			Evaluate(/*frame*/);
 		}
 		catch (OvumException&)
 		{

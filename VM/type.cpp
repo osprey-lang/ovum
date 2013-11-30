@@ -99,15 +99,6 @@ void Type::InitOperators()
 	{
 		if (!this->operators[op])
 			this->operators[op] = baseType->operators[op];
-
-		//Type *type = this;
-
-		//Method::Overload *method;
-		//do {
-		//	method = type->operators[op];
-		//} while (!method && (type = type->baseType));
-
-		//this->operators[op] = method; // null or an actual method.
 	}
 }
 
@@ -481,7 +472,15 @@ OVUM_API uint32_t Type_GetFieldOffset(TypeHandle type)
 OVUM_API void Type_SetFinalizer(TypeHandle type, Finalizer finalizer)
 {
 	if ((type->flags & TypeFlags::INITED) == TypeFlags::NONE)
+	{
 		type->finalizer = finalizer;
+		if (finalizer)
+			type->flags |= TypeFlags::HAS_FINALIZER;
+		else if (type->baseType)
+			type->flags |= type->baseType->flags & TypeFlags::HAS_FINALIZER;
+		else
+			type->flags &= ~TypeFlags::HAS_FINALIZER;
+	}
 }
 OVUM_API void Type_SetInstanceSize(TypeHandle type, uint32_t size)
 {

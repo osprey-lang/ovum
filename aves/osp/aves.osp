@@ -37,4 +37,5 @@ public function print(format, values)
 
 /// Summary: Exits the application immediately.
 /// Param code: The exit code to pass to the calling environment.
+///          (Int, UInt or Real)
 public function exit(code)					__extern("aves_exit");

@@ -1,54 +1,162 @@
 namespace aves;
 
+/// Summary: Exposes a read-only interface for iterating over a sequence.
+///          The method {moveNext} is used to move to the next element in
+///          the sequence, and {current} is used to obtain the current value.
+/// Remarks: The {Iterator} class only allows for a single iteration over
+///          the sequence. To obtain a read-only wrapper for a collection
+///          that can be iterated any number of times, consider using the
+///          {Iterable} class. See that class for more details.
 public abstract class Iterator
 {
 	public new();
 
+	/// Summary: Gets the current value in the sequence.
+	/// Remarks: This return value of this getter is undefined before
+	///          {moveNext} has been called for the first time, and
+	///          after {moveNext} has returned false.
 	public abstract get current;
+	/// Summary: Moves to the next value in the sequence, and returns a
+	///          value to indicate whether the end has been reached.
+	/// Returns: True if the iterator advanced to a new element, or false
+	///          if the end of the sequence has been reached.
+	/// Remarks: The iterator is initially positioned before the first
+	///          element; the first time {moveNext} is called on the
+	///          iterator, it moves to the first element.
+	///
+	///          When there are no more elements to consume, {moveNext}
+	///          must return false, and the value of {current} is undefined.
+	///
+	///          When {moveNext} has returned false, it must continue to
+	///          return false for every subsequent call. In other words,
+	///          when the iterator has reached its end, it stays there.
 	public abstract moveNext();
 
+	/// Summary: Determines whether all items in the sequence match
+	///          the given predicate.
+	/// Param predicate: An invokable value that takes one argument
+	///          (the current element) and returns a truthy value if
+	///          the element matches the predicate, or a falsy value
+	///          otherwise.
+	/// Returns: True if all items in the sequence match the predicate;
+	///          otherwise, false.
+	/// Throws ArgumentNullError: {predicate} is null.
 	public all(predicate)
 	{
+		if predicate is null:
+			throw new ArgumentNullError("predicate");
+
 		while moveNext():
 			if not predicate(current):
 				return false;
 		return true;
 	}
 
+	/// Summary: Determines whether any item in the sequence matches
+	///          the given predicate.
+	/// Param predicate: An invokable value that takes one argument
+	///          (the current element) and returns a truthy value if
+	///          the element matches the predicate, or a falsy value
+	///          otherwise.
+	/// Returns: True if any item in the sequence matches the predicate;
+	///          otherwise, false.
+	/// Throws ArgumentNullError: {predicate} is null.
 	public any(predicate)
 	{
+		if predicate is null:
+			throw new ArgumentNullError("predicate");
+
 		while moveNext():
 			if predicate(current):
 				return true;
 		return false;
 	}
 
+	/// Summary: Returns a new {Iterator} which produces the items from
+	///          this sequence that match the given predicate.
+	/// Param predicate: An invokable value that takes one argument
+	///          (the current element) and returns a truthy value if
+	///          the element matches the predicate, or a falsy value
+	///          otherwise.
+	/// Returns: A new {Iterator} which, when iterated over, produces
+	///          those items from this sequence that match the predicate.
+	/// Throws ArgumentNullError: {predicate} is null.
 	public filter(predicate)
 	{
+		if predicate is null:
+			throw new ArgumentNullError("predicate");
+
 		return new FilterIterator(this, predicate);
 	}
 
+	/// Summary: Returns the first element in the sequence.
+	/// Returns: The first element in the sequence.
+	/// Throws InvalidStateError: The collection is empty.
 	public first()
 	{
 		if moveNext():
 			return current;
-		return null;
+
+		throw new InvalidStateError(emptySequence);
 	}
+	/// Summary: Returns the first element in the sequence that matches
+	///          the given predicate.
+	/// Param predicate: An invokable value that takes one argument
+	///          (the current element) and returns a truthy value if
+	///          the element matches the predicate, or a falsy value
+	///          otherwise.
+	/// Returns: The first element in the sequence that matches the
+	///          predicate.
+	/// Throws ArgumentNullError: {predicate} is null.
+	/// Throws InvalidStateError:
+	///          The collection is empty.
+	///
+	///          No item in the collection matched the predicate.
 	public first(predicate)
 	{
+		if predicate is null:
+			throw new ArgumentNullError("predicate");
+		if not moveNext():
+			throw new InvalidStateError(emptySequence);
+
+		do
+		{
+			var value = current;
+			if predicate(value):
+				return value;
+		} while moveNext();
+
+		throw new InvalidStateError(noMatchFound);
+	}
+
+	public firstOrNull()
+	{
+		if moveNext():
+			return current;
+
+		return null;
+	}
+	public firstOrNull(predicate)
+	{
+		if predicate is null:
+			throw new ArgumentNullError("predicate");
+
 		while moveNext()
 		{
 			var value = current;
 			if predicate(value):
 				return value;
 		}
+
 		return null;
 	}
 
 	public fold(func)
 	{
+		if func is null:
+			throw new ArgumentNullError("func");
 		if not moveNext():
-			throw new Error("Cannot fold an empty Iterator without an initial value.");
+			throw new InvalidStateError("Cannot fold an empty Iterator without an initial value.");
 
 		var init = current;
 		while moveNext():
@@ -58,6 +166,9 @@ public abstract class Iterator
 	}
 	public fold(init, func)
 	{
+		if func is null:
+			throw new ArgumentNullError("func");
+
 		while moveNext():
 			init = func(init, current);
 
@@ -66,6 +177,7 @@ public abstract class Iterator
 
 	public join(sep)
 	{
+		sep = string(sep);
 		var output = new StringBuffer();
 
 		var first = true;
@@ -84,29 +196,83 @@ public abstract class Iterator
 
 	public last()
 	{
-		var output = null;
+		if not moveNext():
+			throw new InvalidStateError(emptySequence);
 
-		while moveNext():
+		var output;
+		do
+		{
 			output = current;
+		} while moveNext();
 
 		return output;
 	}
 	public last(predicate)
 	{
+		if predicate is null:
+			throw new ArgumentNullError("predicate");
+		if not moveNext():
+			throw new InvalidStateError(emptySequence);
+
+		var hasMatch = false;
 		var output = null;
 
 		while moveNext()
 		{
 			var value = current;
-			if predicate(value):
+			if predicate(value)
+			{
+				hasMatch = true;
 				output = value;
+			}
 		}
+
+		if not hasMatch:
+			throw new InvalidStateError(noMatchFound);
 
 		return output;
 	}
 
+	public lastOrNull()
+	{
+		if not moveNext():
+			return null;
+
+		var output;
+		do
+		{
+			output = current;
+		} while moveNext();
+
+		return output;
+	}
+	public lastOrNull(predicate)
+	{
+		if predicate is null:
+			throw new ArgumentNullError("predicate");
+
+		var hasMatch = false;
+		var output = null;
+
+		while moveNext()
+		{
+			var value = current;
+			if predicate(value)
+			{
+				hasMatch = true;
+				output = value;
+			}
+		}
+
+		if hasMatch:
+			return output;
+		return null;
+	}
+
 	public map(func)
 	{
+		if func is null:
+			throw new ArgumentNullError("func");
 		return new MapIterator(this, func);
 	}
 
@@ -121,6 +287,9 @@ public abstract class Iterator
 	}
 
 	public static get empty = new EmptyIterator();
+
+	private const emptySequence = "The sequence is empty.";
+	private const noMatchFound = "No matching item found.";
 
 	iter { return this; }
 }

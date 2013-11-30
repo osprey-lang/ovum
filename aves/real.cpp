@@ -5,6 +5,12 @@
 #include "ov_stringbuffer.h"
 #include "dtoa.config.h"
 
+#ifdef _MSC_VER
+#define isnan    _isnan
+#define isfinite _finite
+#define isinf(d) (!_finite(d))
+#endif
+
 #define LEFT  (args[0])
 #define RIGHT (args[1])
 
@@ -14,9 +20,13 @@ AVES_API NATIVE_FUNCTION(aves_real)
 	VM_Push(thread, result);
 }
 
+AVES_API NATIVE_FUNCTION(aves_Real_get_isNaN)
+{
+	VM_PushBool(thread, isnan(THISV.real));
+}
 AVES_API NATIVE_FUNCTION(aves_Real_get_isInfinite)
 {
-	VM_PushBool(thread, !IsFinite(THISV.real));
+	VM_PushBool(thread, isinf(THISV.real));
 }
 
 AVES_API NATIVE_FUNCTION(aves_Real_getHashCode)
@@ -167,9 +177,9 @@ AVES_API NATIVE_FUNCTION(aves_Real_opCompare)
 	//   NaN < -∞ < ... < -ε < -0.0 = +0.0 < +ε < ... < +∞
 	// Notice that NaN is ordered before all other values.
 
-	if (IsNaN(left))
+	if (isnan(left))
 	{
-		VM_PushInt(thread, IsNaN(right) ? 0 : -1);
+		VM_PushInt(thread, isnan(right) ? 0 : -1);
 		return;
 	}
 
