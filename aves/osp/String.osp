@@ -155,7 +155,7 @@ public class String
 	///
 	///     The placeholder value is converted to a string following the same rules as the
 	///     function `aves.string`: if the placeholder value is null, an empty string is inserted;
-	//      otherwise, if the value is not a String, `.toString()` is called on it with no
+	///     otherwise, if the value is not a String, `.toString()` is called on it with no
 	///     arguments. If that call does not return a String, this method throws a TypeError.
 	///
 	///     Additionally, you can align placeholder values to specific widths:

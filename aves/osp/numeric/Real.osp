@@ -6,7 +6,7 @@ public class Real __primitive
 {
 	private new();
 
-	public get isNaN = this != this;
+	public get isNaN								__extern("aves_Real_get_isNaN");
 	public get isInfinite							__extern("aves_Real_get_isInfinite");
 
 	public asInt()									__extern("aves_number_asInt");

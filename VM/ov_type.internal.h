@@ -467,8 +467,8 @@ public:
 	Method::Overload *operators[OPERATOR_COUNT];
 
 	// The reference getter for the type. Is null unless the type has
-	// the flag TYPE_CUSTOMPTR, in which case the GC uses this method
-	// to obtain a list of Value references from instance of the type.
+	// TypeFlags::CUSTOMPTR, in which case the GC uses this method to
+	// obtain a list of Value references from instance of the type.
 	ReferenceGetter getReferences;
 	// The finalizer for the type. Only available to native-code types.
 	Finalizer finalizer;
@@ -482,6 +482,11 @@ public:
 	StaticRef *typeToken;
 
 	Value GetTypeToken(Thread *const thread);
+
+	inline bool HasFinalizer() const
+	{
+		return (flags & TypeFlags::HAS_FINALIZER) == TypeFlags::HAS_FINALIZER;
+	}
 
 	void InitOperators();
 	void InitStaticFields();

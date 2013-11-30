@@ -15,6 +15,8 @@
 #endif
 
 VM *VM::vm;
+FILE *VM::stdOut;
+FILE *VM::stdErr;
 
 wchar_t *CloneWString(const wchar_t *source)
 {
@@ -110,6 +112,9 @@ int VM::Run(VMStartParams &params)
 
 void VM::Init(VMStartParams &params)
 {
+	VM::stdOut = stdout;
+	VM::stdErr = stderr;
+
 	vm = new VM(params);
 	vm->LoadModules(params);
 	vm->InitArgs(params.argc, params.argv);
@@ -176,6 +181,8 @@ void VM::InitArgs(int argCount, const wchar_t *args[])
 
 void VM::Unload()
 {
+	VM::stdOut = nullptr;
+	VM::stdErr = nullptr;
 	delete VM::vm;
 }
 
@@ -214,28 +221,28 @@ void VM::PrintInternal(FILE *f, const wchar_t *format, String *str)
 
 void VM::Print(String *str)
 {
-	PrintInternal(stdout, L"%ls", str);
+	PrintInternal(stdOut, L"%ls", str);
 }
 void VM::Printf(const wchar_t *format, String *str)
 {
-	PrintInternal(stdout, format, str);
+	PrintInternal(stdOut, format, str);
 }
 void VM::PrintLn(String *str)
 {
-	PrintInternal(stdout, L"%ls\n", str);
+	PrintInternal(stdOut, L"%ls\n", str);
 }
 
 void VM::PrintErr(String *str)
 {
-	PrintInternal(stderr, L"%ls", str);
+	PrintInternal(stdErr, L"%ls", str);
 }
 void VM::PrintfErr(const wchar_t *format, String *str)
 {
-	PrintInternal(stderr, format, str);
+	PrintInternal(stdErr, format, str);
 }
 void VM::PrintErrLn(String *str)
 {
-	PrintInternal(stderr, L"%ls\n", str);
+	PrintInternal(stdErr, L"%ls\n", str);
 }
 
 void VM::PrintOvumException(OvumException &e)
@@ -243,7 +250,7 @@ void VM::PrintOvumException(OvumException &e)
 	using namespace std;
 
 	Value error = e.GetError();
-	PrintInternal(stderr, L"Unhandled error: %ls: ", error.type->fullName);
+	PrintInternal(stdErr, L"Unhandled error: %ls: ", error.type->fullName);
 	PrintErrLn(error.common.error->message);
 	PrintErrLn(error.common.error->stackTrace);
 }
@@ -251,7 +258,7 @@ void VM::PrintMethodInitException(MethodInitException &e)
 {
 	using namespace std;
 
-	FILE *err = stderr;
+	FILE *err = stdErr;
 
 	fwprintf(err, L"An error occurred while initializing the method '");
 

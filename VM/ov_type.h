@@ -119,10 +119,11 @@ inline unsigned int Arity(Operator op)
 //       those in the module format specification. Please make sure
 //       that they are synchronised!
 //       However, the following flags are implementation details:
-//         TYPE_CUSTOMPTR
-//         TYPE_OPS_INITED
-//         TYPE_INITED
-//         TYPE_STATICCTORRUN
+//         CUSTOMPTR
+//         OPS_INITED
+//         INITED
+//         STATIC_CTOR_RUN
+//         HAS_FINALIZER
 enum class TypeFlags : uint32_t
 {
 	NONE            = 0x0000,
@@ -139,22 +140,25 @@ enum class TypeFlags : uint32_t
 	// The type is a value type; that is, it does not have an instance pointer.
 	// Value types are always implicitly sealed, hence the TYPE_SEALED flag.
 	// TYPES USING THIS FLAG WILL NOT BE ELIGIBLE FOR GARBAGE COLLECTION.
-	// If you use this flag and still store a pointer in the VALUE, you are an
+	// If you use this flag and still store a pointer in the Value, you are an
 	// evil, wicked, truly malevolent person who deserves to be punished.
+	// Unless there's a good reason to do so.
 	PRIMITIVE       = 0x0010 | SEALED,
-	// The type does not use a standard VALUE array for its fields.
+	// The type does not use a standard Value array for its fields.
 	// This is used only by the GC during collection.
 	// If the type is NOT List or Hash, any type using this flag MUST
 	// set its Type::getReferences field to an appropriate value.
 	// Failure to do so will crash the runtime when the GC runs a cycle.
 	CUSTOMPTR       = 0x0020,
-	// Internal use only. If absent from a type's flags, the Type_InitOperators method
-	// must be called on the type before invoking an operator on the type.
+	// Internal use only. If set, the type's operators have been initialized.
 	OPS_INITED      = 0x0040,
 	// Internal use only. If set, the type has been initialised.
 	INITED          = 0x0080,
 	// Internal use only. If set, the static constructor for the type has been run.
 	STATIC_CTOR_RUN = 0x0100,
+	// Internal use only. If set, the type or any of its base types has a finalizer,
+	// which must be run before the value is collected.
+	HAS_FINALIZER   = 0x0200,
 };
 ENUM_OPS(TypeFlags, uint32_t);
 

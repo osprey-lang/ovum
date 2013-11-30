@@ -29,7 +29,28 @@
 
 #endif // THREADED_EVALUATION
 
-void Thread::Evaluate(register StackFrame *frame)
+#define SET_INT(ptarg, ivalue) \
+	{ \
+		(ptarg)->type = VM::vm->types.Int; \
+		(ptarg)->integer = ivalue; \
+	}
+#define SET_UINT(ptarg, uvalue) \
+	{ \
+		(ptarg)->type = VM::vm->types.UInt; \
+		(ptarg)->uinteger = uvalue; \
+	}
+#define SET_REAL(ptarg, rvalue) \
+	{ \
+		(ptarg)->type = VM::vm->types.Real; \
+		(ptarg)->real = rvalue; \
+	}
+#define SET_STRING(ptarg, svalue) \
+	{ \
+		(ptarg)->type = VM::vm->types.String; \
+		(ptarg)->common.string = svalue; \
+	}
+
+void Thread::Evaluate(/*register StackFrame *frame*/)
 {
 #ifdef THREADED_EVALUATION
 	static void *opcodeTargets[256] = {
@@ -43,16 +64,18 @@ void Thread::Evaluate(register StackFrame *frame)
 
 	while (true)
 	{
-		this->ip = ip;
 		if (shouldSuspendForGC)
 			SuspendForGC();
 
+		this->ip = ip;
 		switch (*ip++) // always skip opcode
 		{
 		TARGET(OPI_NOP) NEXT_INSTR(); // Really, do nothing!
 
 		TARGET(OPI_POP)
-			f->stackCount--; // pop just decrements the stack height
+			{
+				f->stackCount--; // pop just decrements the stack height
+			}
 			NEXT_INSTR();
 
 		TARGET(OPI_RET)
@@ -145,13 +168,13 @@ void Thread::Evaluate(register StackFrame *frame)
 		// ldc.i: LocalOffset dest, int64_t value
 		TARGET(OPI_LDC_I_L)
 			{
-				SetInt_(OFF_ARG(ip, f), I64_ARG(ip + LOSZ));
+				SET_INT(OFF_ARG(ip, f), I64_ARG(ip + LOSZ));
 				ip += LOSZ + sizeof(int64_t);
 			}
 			NEXT_INSTR();
 		TARGET(OPI_LDC_I_S)
 			{
-				SetInt_(OFF_ARG(ip, f), I64_ARG(ip + LOSZ));
+				SET_INT(OFF_ARG(ip, f), I64_ARG(ip + LOSZ));
 				ip += LOSZ + sizeof(int64_t);
 				f->stackCount++;
 			}
@@ -160,13 +183,13 @@ void Thread::Evaluate(register StackFrame *frame)
 		// ldc.u: LocalOffset dest, uint64_t value
 		TARGET(OPI_LDC_U_L)
 			{
-				SetUInt_(OFF_ARG(ip, f), U64_ARG(ip + LOSZ));
+				SET_UINT(OFF_ARG(ip, f), U64_ARG(ip + LOSZ));
 				ip += LOSZ + sizeof(uint64_t);
 			}
 			NEXT_INSTR();
 		TARGET(OPI_LDC_U_S)
 			{
-				SetUInt_(OFF_ARG(ip, f), U64_ARG(ip + LOSZ));
+				SET_UINT(OFF_ARG(ip, f), U64_ARG(ip + LOSZ));
 				ip += LOSZ + sizeof(uint64_t);
 				f->stackCount++;
 			}
@@ -175,13 +198,13 @@ void Thread::Evaluate(register StackFrame *frame)
 		// ldc.r: LocalOffset dest, double value
 		TARGET(OPI_LDC_R_L)
 			{
-				SetReal_(OFF_ARG(ip, f), T_ARG(ip + LOSZ, double));
+				SET_REAL(OFF_ARG(ip, f), T_ARG(ip + LOSZ, double));
 				ip += LOSZ + sizeof(double);
 			}
 			NEXT_INSTR();
 		TARGET(OPI_LDC_R_S)
 			{
-				SetReal_(OFF_ARG(ip, f), T_ARG(ip + LOSZ, double));
+				SET_REAL(OFF_ARG(ip, f), T_ARG(ip + LOSZ, double));
 				ip += LOSZ + sizeof(int64_t);
 				f->stackCount++;
 			}
@@ -190,13 +213,13 @@ void Thread::Evaluate(register StackFrame *frame)
 		// ldstr: LocalOffset dest, String *value
 		TARGET(OPI_LDSTR_L)
 			{
-				SetString_(OFF_ARG(ip, f), T_ARG(ip + LOSZ, String*));
+				SET_STRING(OFF_ARG(ip, f), T_ARG(ip + LOSZ, String*));
 				ip += LOSZ + sizeof(String*);
 			}
 			NEXT_INSTR();
 		TARGET(OPI_LDSTR_S)
 			{
-				SetString_(OFF_ARG(ip, f), T_ARG(ip + LOSZ, String*));
+				SET_STRING(OFF_ARG(ip, f), T_ARG(ip + LOSZ, String*));
 				ip += LOSZ + sizeof(String*);
 				f->stackCount++;
 			}
@@ -205,13 +228,13 @@ void Thread::Evaluate(register StackFrame *frame)
 		// ldargc: LocalOffset dest
 		TARGET(OPI_LDARGC_L)
 			{
-				SetInt_(OFF_ARG(ip, f), f->argc);
+				SET_INT(OFF_ARG(ip, f), f->argc);
 				ip += LOSZ;
 			}
 			NEXT_INSTR();
 		TARGET(OPI_LDARGC_S)
 			{
-				SetInt_(OFF_ARG(ip, f), f->argc);
+				SET_INT(OFF_ARG(ip, f), f->argc);
 				ip += LOSZ;
 				f->stackCount++;
 			}
@@ -243,7 +266,6 @@ void Thread::Evaluate(register StackFrame *frame)
 
 		// newobj: LocalOffset args, LocalOffset dest, Type *type, uint16_t argc
 		TARGET(OPI_NEWOBJ_L)
-		TARGET(OPI_NEWOBJ_S)
 			{
 				register Value *const args = OFF_ARG(ip, f);
 				register Value *const dest = OFF_ARG(ip + LOSZ, f);
@@ -255,44 +277,72 @@ void Thread::Evaluate(register StackFrame *frame)
 				GC::gc->ConstructLL(this, type, U16_ARG(ip), args, dest);
 
 				// ConstructLL pops the arguments
-				f->stackCount += *(ip - 2*LOSZ - sizeof(Type*) - 1) & 1;
 				ip += sizeof(uint16_t);
+			}
+			NEXT_INSTR();
+		TARGET(OPI_NEWOBJ_S)
+			{
+				register Value *const args = OFF_ARG(ip, f);
+				register Value *const dest = OFF_ARG(ip + LOSZ, f);
+				ip += 2*LOSZ;
+
+				register Type *const type = T_ARG(ip, Type*);
+				ip += sizeof(Type*);
+
+				GC::gc->ConstructLL(this, type, U16_ARG(ip), args, dest);
+
+				ip += sizeof(uint16_t);
+				// ConstructLL pops the arguments
+				f->stackCount++;
 			}
 			NEXT_INSTR();
 
 		// list: LocalOffset dest, int32_t capacity
 		TARGET(OPI_LIST_L)
+			{
+				Value result;
+				GC::gc->Alloc(this, VM::vm->types.List, sizeof(ListInst), &result);
+				VM::vm->functions.initListInstance(this, result.common.list, I32_ARG(ip + LOSZ));
+
+				*OFF_ARG(ip, f) = result;
+				ip += LOSZ + sizeof(int32_t);
+			}
+			NEXT_INSTR();
 		TARGET(OPI_LIST_S)
 			{
-				register Value *const dest = OFF_ARG(ip, f);
-				register int32_t cap = I32_ARG(ip + LOSZ);
-
 				Value result; // Can't put it in dest until it's fully initialized
 				GC::gc->Alloc(this, VM::vm->types.List, sizeof(ListInst), &result);
-				VM::vm->functions.initListInstance(this, result.common.list, cap);
+				VM::vm->functions.initListInstance(this, result.common.list, I32_ARG(ip + LOSZ));
 
-				*dest = result;
-
-				f->stackCount += *(ip - 1) & 1;
+				*OFF_ARG(ip, f) = result;
 				ip += LOSZ + sizeof(int32_t);
+
+				f->stackCount++;
 			}
 			NEXT_INSTR();
 
 		// hash: LocalOffset dest, int32_t capacity
 		TARGET(OPI_HASH_L)
-		TARGET(OPI_HASH_S)
 			{
-				register Value *const dest = OFF_ARG(ip, f);
-				register int32_t cap = I32_ARG(ip + LOSZ);
-
 				Value result; // Can't put it in dest until it's fully initialized
 				GC::gc->Alloc(this, VM::vm->types.Hash, sizeof(HashInst), &result);
-				VM::vm->functions.initHashInstance(this, result.common.hash, cap);
+				VM::vm->functions.initHashInstance(this, result.common.hash, I32_ARG(ip + LOSZ));
 
-				*dest = result;
+				*OFF_ARG(ip, f) = result;
 
-				f->stackCount += *(ip - 1) & 1;
 				ip += LOSZ + sizeof(int32_t);
+			}
+			NEXT_INSTR();
+		TARGET(OPI_HASH_S)
+			{
+				Value result; // Can't put it in dest until it's fully initialized
+				GC::gc->Alloc(this, VM::vm->types.Hash, sizeof(HashInst), &result);
+				VM::vm->functions.initHashInstance(this, result.common.hash, I32_ARG(ip + LOSZ));
+
+				*OFF_ARG(ip, f) = result;
+
+				ip += LOSZ + sizeof(int32_t);
+				f->stackCount++;
 			}
 			NEXT_INSTR();
 
@@ -672,11 +722,23 @@ void Thread::Evaluate(register StackFrame *frame)
 
 		// switch: LocalOffset value, uint16_t count, int32_t offsets[count]
 		TARGET(OPI_SWITCH_L)
+			{
+				register Value *const value = OFF_ARG(ip, f);
+				if (value->type != VM::vm->types.Int)
+					ThrowTypeError();
+
+				register int32_t count = U16_ARG(ip + LOSZ);
+				ip += LOSZ + sizeof(uint16_t);
+
+				if (value->integer >= 0 && value->integer < count)
+					ip += *(reinterpret_cast<int32_t*>(ip) + (int32_t)value->integer);
+
+				ip += count * sizeof(int32_t);
+			}
+			NEXT_INSTR();
 		TARGET(OPI_SWITCH_S)
 			{
-				register int opc = *(ip - 1);
 				register Value *const value = OFF_ARG(ip, f);
-
 				if (value->type != VM::vm->types.Int)
 					ThrowTypeError();
 
@@ -688,7 +750,7 @@ void Thread::Evaluate(register StackFrame *frame)
 
 				ip += count * sizeof(int32_t);
 
-				f->stackCount -= opc & 1;
+				f->stackCount--;
 			}
 			NEXT_INSTR();
 
@@ -1113,7 +1175,7 @@ bool Thread::FindErrorHandler(register StackFrame *frame)
 				Value prevError = this->currentError;
 
 				this->ip = method->entry + tryBlock.finallyBlock.finallyStart;
-				Evaluate(frame);
+				Evaluate(/*frame*/);
 				this->ip = prevIp;
 
 				this->currentError = prevError;
@@ -1152,7 +1214,7 @@ void Thread::EvaluateLeave(register StackFrame *frame, const int32_t target)
 			Value prevError = this->currentError;
 
 			this->ip = method->entry + tryBlock.finallyBlock.finallyStart;
-			Evaluate(frame);
+			Evaluate(/*frame*/);
 			this->ip = prevIp;
 
 			this->currentError = prevError;

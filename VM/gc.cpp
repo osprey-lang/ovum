@@ -225,20 +225,21 @@ void GC::Release(Thread *const thread, GCObject *gco)
 {
 	assert((gco->flags & GCOFlags::MARK) == GCO_COLLECT(currentCollectMark));
 
-	Type *type = gco->type;
-	while (type)
-	{
-		if (type->finalizer)
-			type->finalizer(thread, INST_FROM_GCO(gco, type));
-		type = type->baseType;
-	}
-
 	if ((gco->flags & GCOFlags::EARLY_STRING) != GCOFlags::NONE ||
 		gco->type == VM::vm->types.String)	
 	{
 		String *str = reinterpret_cast<String*>(GCO_INSTANCE_BASE(gco));
 		if ((str->flags & StringFlags::INTERN) != StringFlags::NONE)
 			strings.RemoveIntern(str);
+	}
+	else if (gco->type->HasFinalizer())
+	{
+		Type *type = gco->type;
+		do
+		{
+			if (type->finalizer)
+				type->finalizer(thread, INST_FROM_GCO(gco, type));
+		} while (type = type->baseType);
 	}
 
 	totalSize -= gco->size; // gco->size includes the size of the GCOBJECT

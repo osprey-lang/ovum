@@ -1019,6 +1019,11 @@ Type *Module::ReadSingleType(ModuleReader &reader, Module *module, const TokenId
 		}
 	}
 
+	if (baseType && baseType->HasFinalizer())
+		// This flag may already have been set by the type initializer, if there is any.
+		// That's fine.
+		type->flags |= TypeFlags::HAS_FINALIZER;
+
 	TryRegisterStandardType(type.get(), module, reader);
 	return type.release();
 }

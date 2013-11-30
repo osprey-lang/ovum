@@ -7,6 +7,7 @@
 
 AVES_API NATIVE_FUNCTION(aves_real);
 
+AVES_API NATIVE_FUNCTION(aves_Real_get_isNaN);
 AVES_API NATIVE_FUNCTION(aves_Real_get_isInfinite);
 
 AVES_API NATIVE_FUNCTION(aves_Real_getHashCode);
