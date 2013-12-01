@@ -138,10 +138,10 @@ OVUM_API int64_t Int_SubtractChecked(ThreadHandle thread, const int64_t left, co
 	if ((left ^ right) < 0)
 	{
 		// If the arguments have DIFFERENT signs, then an overflow is possible.
-		// > If left is positive, then test  left > INT64_MAX + right
-		// > If left is negative, then test  left < INT64_MAX + right
-		if (left < 0 && !(left > INT64_MAX + right) ||
-			left > 0 && !(left < INT64_MAX + right))
+		// > If left is positive (and right is negative), then test  left > INT64_MAX + right
+		// > If left is negative (and right is positive), then test  left < INT64_MIN + right
+		if (left > 0 && left > INT64_MAX + right ||
+			left < 0 && left < INT64_MIN + right)
 			thread->ThrowOverflowError();
 	}
 

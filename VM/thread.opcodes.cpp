@@ -29,6 +29,11 @@
 
 #endif // THREADED_EVALUATION
 
+#define SET_BOOL(ptarg, bvalue) \
+	{ \
+		(ptarg)->type = VM::vm->types.Boolean; \
+		(ptarg)->integer = bvalue; \
+	}
 #define SET_INT(ptarg, ivalue) \
 	{ \
 		(ptarg)->type = VM::vm->types.Int; \
@@ -138,13 +143,13 @@ void Thread::Evaluate(/*register StackFrame *frame*/)
 		// ldfalse: LocalOffset dest
 		TARGET(OPI_LDFALSE_L)
 			{
-				SetBool_(OFF_ARG(ip, f), false);
+				SET_BOOL(OFF_ARG(ip, f), false);
 				ip += LOSZ;
 			}
 			NEXT_INSTR();
 		TARGET(OPI_LDFALSE_S)
 			{
-				SetBool_(OFF_ARG(ip, f), false);
+				SET_BOOL(OFF_ARG(ip, f), false);
 				ip += LOSZ;
 				f->stackCount++;
 			}
@@ -153,13 +158,13 @@ void Thread::Evaluate(/*register StackFrame *frame*/)
 		// ldtrue: LocalOffset dest
 		TARGET(OPI_LDTRUE_L)
 			{
-				SetBool_(OFF_ARG(ip, f), true);
+				SET_BOOL(OFF_ARG(ip, f), true);
 				ip += LOSZ;
 			}
 			NEXT_INSTR();
 		TARGET(OPI_LDTRUE_S)
 			{
-				SetBool_(OFF_ARG(ip, f), true);
+				SET_BOOL(OFF_ARG(ip, f), true);
 				ip += LOSZ;
 				f->stackCount++;
 			}
