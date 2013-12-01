@@ -80,10 +80,10 @@ int VM::Run(VMStartParams &params)
 			Value returnValue;
 			vm->mainThread->Start(main, returnValue);
 
-			if (returnValue.type == VM::vm->types.Int ||
-				returnValue.type == VM::vm->types.UInt)
+			if (returnValue.type == vm->types.Int ||
+				returnValue.type == vm->types.UInt)
 				result = (int)returnValue.integer;
-			else if (returnValue.type == VM::vm->types.Real)
+			else if (returnValue.type == vm->types.Real)
 				result = (int)returnValue.real;
 
 			if (vm->verbose)
