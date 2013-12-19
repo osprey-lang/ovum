@@ -39,7 +39,10 @@ AVES_API NATIVE_FUNCTION(aves_Error_get_message)
 AVES_API NATIVE_FUNCTION(aves_Error_get_stackTrace)
 {
 	ErrorInst *err = _E(THISV);
-	VM_PushString(thread, err->stackTrace);
+	if (err->stackTrace == nullptr)
+		VM_PushNull(thread);
+	else
+		VM_PushString(thread, err->stackTrace);
 }
 AVES_API NATIVE_FUNCTION(aves_Error_get_innerError)
 {
@@ -50,21 +53,6 @@ AVES_API NATIVE_FUNCTION(aves_Error_get_data)
 {
 	ErrorInst *err = _E(THISV);
 	VM_Push(thread, err->data);
-}
-
-AVES_API NATIVE_FUNCTION(aves_Error_toString)
-{
-	ErrorInst *err = _E(THISV);
-
-	StringBuffer output(thread, 256);
-	output.Append(thread, Type_GetFullName(THISV.type));
-	output.Append(thread, 2, ": ");
-	output.Append(thread, err->message);
-	output.Append(thread, strings::newline);
-	output.Append(thread, err->stackTrace);
-
-	String *result = output.ToString(thread);
-	VM_PushString(thread, result);
 }
 
 bool aves_Error_getReferences(void *basePtr, unsigned int &valc, Value **target)

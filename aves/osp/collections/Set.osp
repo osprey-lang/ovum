@@ -67,7 +67,7 @@ public inheritable Set
 		var output = this.clone();
 
 		for item in other:
-			output.add(other);
+			output.add(item);
 
 		return output;
 	}

@@ -5,4 +5,6 @@ public class Type
 	__init_type("aves_Type_init");
 
 	private new();
+
+	public get fullName				__extern("aves_Type_get_fullName");
 }

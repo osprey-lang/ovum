@@ -26,7 +26,7 @@ public inheritable Error
 	public new(message, innerError)		__extern("aves_Error_new", locals=1);
 
 	/// Summary: Gets the error message (String) associated with this error.
-	public get message					__extern("aves_Error_get_message");
+	public overridable get message		__extern("aves_Error_get_message");
 	/// Summary: Gets a stack trace (String) containing information about the call
 	///          stack at the time when the error was thrown. If the error has been
 	///          been constructed but not yet thrown, this property returns null.
@@ -36,5 +36,17 @@ public inheritable Error
 	/// Summary: Gets any additional data associated with this error. 
 	public get data						__extern("aves_Error_get_data");
 
-	overridable override toString()		__extern("aves_Error_toString");
+	overridable override toString()
+	{
+		var buf = new StringBuffer(512)
+			.append(typeof(this).fullName)
+			.append(": ")
+			.append(message);
+
+		if stackTrace:
+			buf.append(Env.newline)
+				.append(stackTrace);
+
+		return buf.toString();
+	}
 }

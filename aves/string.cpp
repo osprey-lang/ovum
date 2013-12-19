@@ -192,6 +192,12 @@ AVES_API NATIVE_FUNCTION(aves_String_replaceInner)
 		VM_Throw(thread);
 	}
 
+	if (args[3].integer == 0) // No replacements to perform! Return 'this'.
+	{
+		VM_PushString(thread, THISV.common.string);
+		return;
+	}
+
 	String *newValue = args[2].common.string;
 
 	String *result;
@@ -815,7 +821,7 @@ String *string::Replace(ThreadHandle thread, const String *input, String *oldVal
 	int64_t remaining = maxTimes;
 
 	int32_t i = 0;
-	while (i < imax && (maxTimes < 0 || remaining))
+	while (i < imax)
 	{
 		if (*inp == oldValue->firstChar &&
 			String_SubstringEquals(input, start + lengthCollected, oldValue))
@@ -830,7 +836,16 @@ String *string::Replace(ThreadHandle thread, const String *input, String *oldVal
 			i += oldValue->length;
 
 			if (maxTimes > 0)
-				remaining--;
+			{
+				if (remaining == 1) // last one!
+				{
+					// We need to append the rest of the original string now.
+					lengthCollected = imax - start;
+					break;
+				}
+				else
+					remaining--;
+			}
 		}
 		else
 		{

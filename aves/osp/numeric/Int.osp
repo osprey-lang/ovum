@@ -29,7 +29,7 @@ public class Int __primitive
 		if i < strLength
 		{
 			cp = str.getCodepoint(i);
-			if cp == 0x2D /*-*/ or cp == 0x2212 /*−*/
+			if cp == 0x2D /*-*/ or cp == 0x2212 /*− (minus)*/
 			{
 				neg = true;
 				i += 1;

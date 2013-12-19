@@ -17,8 +17,8 @@ AVES_API NATIVE_FUNCTION(aves_List_set_capacity);
 
 AVES_API NATIVE_FUNCTION(aves_List_get_version);
 
-AVES_API NATIVE_FUNCTION(aves_List_getItem);
-AVES_API NATIVE_FUNCTION(aves_List_setItem);
+AVES_API NATIVE_FUNCTION(aves_List_get_item);
+AVES_API NATIVE_FUNCTION(aves_List_set_item);
 
 AVES_API NATIVE_FUNCTION(aves_List_add);
 AVES_API NATIVE_FUNCTION(aves_List_insert);

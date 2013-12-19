@@ -2,6 +2,12 @@
 
 #define _T(val)		reinterpret_cast<TypeInst*>((val).instance)
 
+AVES_API NATIVE_FUNCTION(aves_Type_get_fullName)
+{
+	TypeInst *inst = _T(THISV);
+	VM_PushString(thread, Type_GetFullName(inst->type));
+}
+
 AVES_API void aves_Type_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(TypeInst));

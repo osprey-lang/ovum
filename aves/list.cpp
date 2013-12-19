@@ -71,14 +71,14 @@ AVES_API NATIVE_FUNCTION(aves_List_get_version)
 	VM_PushInt(thread, inst->version);
 }
 
-AVES_API NATIVE_FUNCTION(aves_List_getItem)
+AVES_API NATIVE_FUNCTION(aves_List_get_item)
 {
 	ListInst *list = _L(THISV);
 	int32_t index = GetIndex(thread, list, args[1], false);
 
 	VM_Push(thread, list->values[index]);
 }
-AVES_API NATIVE_FUNCTION(aves_List_setItem)
+AVES_API NATIVE_FUNCTION(aves_List_set_item)
 {
 	ListInst *list = _L(THISV);
 	int32_t index = GetIndex(thread, list, args[1], false);

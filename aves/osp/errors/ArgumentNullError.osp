@@ -43,5 +43,5 @@ public inheritable ArgumentNullError is ArgumentError
 		new base(message ?? defaultMessage, paramName, innerError);
 	}
 
-	private const defaultMessage = "Argument cannot be null";
+	private const defaultMessage = "Argument cannot be null.";
 }
