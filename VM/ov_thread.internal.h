@@ -319,6 +319,7 @@ public:
 	void ThrowOverflowError(String *message = nullptr) throw(OvumException);
 	void ThrowDivideByZeroError(String *message = nullptr) throw(OvumException);
 	void ThrowNullReferenceError(String *message = nullptr) throw(OvumException);
+	void ThrowMemberNotFoundError(String *member) throw(OvumException);
 	void ThrowNoOverloadError(const uint32_t argCount, String *message = nullptr) throw(OvumException);
 #pragma warning(pop)
 

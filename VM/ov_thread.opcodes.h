@@ -504,23 +504,23 @@ namespace instr
 		{ }
 		inline virtual ~Instruction() { }
 
-		unsigned int GetSize() const { return sizeof(IntermediateOpcode) + GetArgsSize(); }
+		inline unsigned int GetSize() const { return sizeof(IntermediateOpcode) + GetArgsSize(); }
 
-		virtual unsigned int GetArgsSize() const { return 0; }
+		inline virtual unsigned int GetArgsSize() const { return 0; }
 
 		virtual StackChange GetStackChange() const = 0;
 
-		bool HasInput() const           { return (flags & InstrFlags::HAS_INPUT)      == InstrFlags::HAS_INPUT; }
-		bool HasOutput() const          { return (flags & InstrFlags::HAS_OUTPUT)     == InstrFlags::HAS_OUTPUT; }
-		bool IsBranch() const           { return (flags & InstrFlags::BRANCH)         == InstrFlags::BRANCH; }
-		bool IsSwitch() const           { return (flags & InstrFlags::SWITCH)         == InstrFlags::SWITCH; }
-		bool IsLoadLocal() const        { return (flags & InstrFlags::LOAD_LOCAL)     == InstrFlags::LOAD_LOCAL; }
-		bool IsStoreLocal() const       { return (flags & InstrFlags::STORE_LOCAL)    == InstrFlags::STORE_LOCAL; }
-		bool IsDup() const              { return (flags & InstrFlags::DUP)            == InstrFlags::DUP; }
-		bool HasBranches() const        { return (flags & InstrFlags::HAS_BRANCHES)   == InstrFlags::HAS_BRANCHES; }
-		bool RequiresStackInput() const { return (flags & InstrFlags::INPUT_ON_STACK) == InstrFlags::INPUT_ON_STACK; }
+		inline bool HasInput() const           { return (flags & InstrFlags::HAS_INPUT)      == InstrFlags::HAS_INPUT; }
+		inline bool HasOutput() const          { return (flags & InstrFlags::HAS_OUTPUT)     == InstrFlags::HAS_OUTPUT; }
+		inline bool IsBranch() const           { return (flags & InstrFlags::BRANCH)         == InstrFlags::BRANCH; }
+		inline bool IsSwitch() const           { return (flags & InstrFlags::SWITCH)         == InstrFlags::SWITCH; }
+		inline bool IsLoadLocal() const        { return (flags & InstrFlags::LOAD_LOCAL)     == InstrFlags::LOAD_LOCAL; }
+		inline bool IsStoreLocal() const       { return (flags & InstrFlags::STORE_LOCAL)    == InstrFlags::STORE_LOCAL; }
+		inline bool IsDup() const              { return (flags & InstrFlags::DUP)            == InstrFlags::DUP; }
+		inline bool HasBranches() const        { return (flags & InstrFlags::HAS_BRANCHES)   == InstrFlags::HAS_BRANCHES; }
+		inline bool RequiresStackInput() const { return (flags & InstrFlags::INPUT_ON_STACK) == InstrFlags::INPUT_ON_STACK; }
 
-		void AddBranch() { flags = flags | InstrFlags::HAS_BRANCHES; }
+		inline void AddBranch() { flags = flags | InstrFlags::HAS_BRANCHES; }
 
 		inline virtual void UpdateInput(const LocalOffset offset, const bool isOnStack) { }
 		inline virtual void UpdateOutput(const LocalOffset offset, const bool isOnStack) { }
@@ -1198,7 +1198,7 @@ namespace instr
 			source(0), target(0)
 		{ }
 
-		inline virtual unsigned int GetArgSize() const
+		inline virtual unsigned int GetArgsSize() const
 		{
 			return 2 * sizeof(LocalOffset);
 		}
