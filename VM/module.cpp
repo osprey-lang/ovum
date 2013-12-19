@@ -254,9 +254,10 @@ void ModuleReader::HandleError(DWORD error)
 	const char *message;
 	switch (error)
 	{
-	case ERROR_FILE_NOT_FOUND: message = "The file could not be found."; break;
-	case ERROR_HANDLE_EOF:     message = "Unexpected end of file.";      break;
-	default:                   message = "Unspecified I/O error.";       break;
+	case ERROR_FILE_NOT_FOUND: message = "The file could not be found.";   break;
+	case ERROR_ACCESS_DENIED:  message = "Access to the file was denied."; break;
+	case ERROR_HANDLE_EOF:     message = "Unexpected end of file.";        break;
+	default:                   message = "Unspecified I/O error.";         break;
 	}
 	throw ModuleIOException(message);
 }

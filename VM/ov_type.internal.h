@@ -372,7 +372,7 @@ public:
 
 	inline Method(String *name, Module *declModule, MemberFlags flags) :
 		Member(name, declModule, flags | MemberFlags::METHOD),
-		overloadCount(0), overloads(nullptr)
+		overloadCount(0), overloads(nullptr), baseMethod(nullptr)
 	{ }
 
 	inline ~Method()

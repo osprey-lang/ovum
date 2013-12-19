@@ -14,46 +14,48 @@ namespace std_type_names
 	#define AVES	'a','v','e','s','.'
 	#define SFS     ::StringFlags::STATIC
 
-	LitString<11> _Object             = { 11, 0, SFS, AVES,'O','b','j','e','c','t',0 };
-	LitString<12> _Boolean            = { 12, 0, SFS, AVES,'B','o','o','l','e','a','n',0 };
-	LitString<8>  _Int                = {  8, 0, SFS, AVES,'I','n','t',0 };
-	LitString<9>  _UInt               = {  9, 0, SFS, AVES,'U','I','n','t',0 };
-	LitString<9>  _Real               = {  9, 0, SFS, AVES,'R','e','a','l',0 };
-	LitString<11> _String             = { 11, 0, SFS, AVES,'S','t','r','i','n','g',0 };
-	LitString<9>  _Enum               = {  9, 0, SFS, AVES,'E','n','u','m',0 };
-	LitString<9>  _List               = {  9, 0, SFS, AVES,'L','i','s','t',0 };
-	LitString<9>  _Hash               = {  9, 0, SFS, AVES,'H','a','s','h',0 };
-	LitString<11> _Method             = { 11, 0, SFS, AVES,'M','e','t','h','o','d',0 };
-	LitString<13> _Iterator           = { 13, 0, SFS, AVES,'I','t','e','r','a','t','o','r',0 };
-	LitString<9>  _Type               = {  9, 0, SFS, AVES,'T','y','p','e',0 };
-	LitString<10> _Error              = { 10, 0, SFS, AVES,'E','r','r','o','r',0 };
-	LitString<14> _TypeError          = { 14, 0, SFS, AVES,'T','y','p','e','E','r','r','o','r',0 };
-	LitString<16> _MemoryError        = { 16, 0, SFS, AVES,'M','e','m','o','r','y','E','r','r','o','r',0 };
-	LitString<18> _OverflowError      = { 18, 0, SFS, AVES,'O','v','e','r','f','l','o','w','E','r','r','o','r',0 };
-	LitString<20> _NoOverloadError    = { 20, 0, SFS, AVES,'N','o','O','v','e','r','l','o','a','d','E','r','r','o','r',0 };
-	LitString<22> _DivideByZeroError  = { 22, 0, SFS, AVES,'D','i','v','i','d','e','B','y','Z','e','r','o','E','r','r','o','r',0 };
-	LitString<23> _NullReferenceError = { 23, 0, SFS, AVES,'N','u','l','l','R','e','f','e','r','e','n','c','e','E','r','r','o','r',0 };
+	LitString<11> _Object              = { 11, 0, SFS, AVES,'O','b','j','e','c','t',0 };
+	LitString<12> _Boolean             = { 12, 0, SFS, AVES,'B','o','o','l','e','a','n',0 };
+	LitString<8>  _Int                 = {  8, 0, SFS, AVES,'I','n','t',0 };
+	LitString<9>  _UInt                = {  9, 0, SFS, AVES,'U','I','n','t',0 };
+	LitString<9>  _Real                = {  9, 0, SFS, AVES,'R','e','a','l',0 };
+	LitString<11> _String              = { 11, 0, SFS, AVES,'S','t','r','i','n','g',0 };
+	LitString<9>  _Enum                = {  9, 0, SFS, AVES,'E','n','u','m',0 };
+	LitString<9>  _List                = {  9, 0, SFS, AVES,'L','i','s','t',0 };
+	LitString<9>  _Hash                = {  9, 0, SFS, AVES,'H','a','s','h',0 };
+	LitString<11> _Method              = { 11, 0, SFS, AVES,'M','e','t','h','o','d',0 };
+	LitString<13> _Iterator            = { 13, 0, SFS, AVES,'I','t','e','r','a','t','o','r',0 };
+	LitString<9>  _Type                = {  9, 0, SFS, AVES,'T','y','p','e',0 };
+	LitString<10> _Error               = { 10, 0, SFS, AVES,'E','r','r','o','r',0 };
+	LitString<14> _TypeError           = { 14, 0, SFS, AVES,'T','y','p','e','E','r','r','o','r',0 };
+	LitString<16> _MemoryError         = { 16, 0, SFS, AVES,'M','e','m','o','r','y','E','r','r','o','r',0 };
+	LitString<18> _OverflowError       = { 18, 0, SFS, AVES,'O','v','e','r','f','l','o','w','E','r','r','o','r',0 };
+	LitString<20> _NoOverloadError     = { 20, 0, SFS, AVES,'N','o','O','v','e','r','l','o','a','d','E','r','r','o','r',0 };
+	LitString<22> _DivideByZeroError   = { 22, 0, SFS, AVES,'D','i','v','i','d','e','B','y','Z','e','r','o','E','r','r','o','r',0 };
+	LitString<23> _NullReferenceError  = { 23, 0, SFS, AVES,'N','u','l','l','R','e','f','e','r','e','n','c','e','E','r','r','o','r',0 };
+	LitString<24> _MemberNotFoundError = { 24, 0, SFS, AVES,'M','e','m','b','e','r','N','o','t','F','o','u','n','d','E','r','r','o','r',0 };
 
-	const unsigned int StandardTypeCount = 18;
+	const unsigned int StandardTypeCount = 19;
 	const StdType Types[] = {
-		{_S(_Object),	          &StandardTypes::Object,             nullptr},
-		{_S(_Boolean),	          &StandardTypes::Boolean,            nullptr},
-		{_S(_Int),		          &StandardTypes::Int,                nullptr},
-		{_S(_UInt),		          &StandardTypes::UInt,               nullptr},
-		{_S(_Real),		          &StandardTypes::Real,               nullptr},
-		{_S(_String),	          &StandardTypes::String,             nullptr},
-		{_S(_List),		          &StandardTypes::List,               "InitListInstance"},
-		{_S(_Hash),		          &StandardTypes::Hash,               "InitHashInstance"},
-		{_S(_Method),	          &StandardTypes::Method,             nullptr},
-		{_S(_Iterator),	          &StandardTypes::Iterator,           nullptr},
-		{_S(_Type),		          &StandardTypes::Type,               "InitTypeToken"},
-		{_S(_Error),	          &StandardTypes::Error,              nullptr},
-		{_S(_TypeError),          &StandardTypes::TypeError,          nullptr},
-		{_S(_MemoryError),		  &StandardTypes::MemoryError,        nullptr},
-		{_S(_OverflowError),	  &StandardTypes::OverflowError,      nullptr},
-		{_S(_NoOverloadError),    &StandardTypes::NoOverloadError,    nullptr},
-		{_S(_DivideByZeroError),  &StandardTypes::DivideByZeroError,  nullptr},
-		{_S(_NullReferenceError), &StandardTypes::NullReferenceError, nullptr},
+		{_S(_Object),	           &StandardTypes::Object,              nullptr},
+		{_S(_Boolean),	           &StandardTypes::Boolean,             nullptr},
+		{_S(_Int),		           &StandardTypes::Int,                 nullptr},
+		{_S(_UInt),		           &StandardTypes::UInt,                nullptr},
+		{_S(_Real),		           &StandardTypes::Real,                nullptr},
+		{_S(_String),	           &StandardTypes::String,              nullptr},
+		{_S(_List),		           &StandardTypes::List,                "InitListInstance"},
+		{_S(_Hash),		           &StandardTypes::Hash,                "InitHashInstance"},
+		{_S(_Method),	           &StandardTypes::Method,              nullptr},
+		{_S(_Iterator),	           &StandardTypes::Iterator,            nullptr},
+		{_S(_Type),		           &StandardTypes::Type,                "InitTypeToken"},
+		{_S(_Error),	           &StandardTypes::Error,               nullptr},
+		{_S(_TypeError),           &StandardTypes::TypeError,           nullptr},
+		{_S(_MemoryError),		   &StandardTypes::MemoryError,         nullptr},
+		{_S(_OverflowError),	   &StandardTypes::OverflowError,       nullptr},
+		{_S(_NoOverloadError),     &StandardTypes::NoOverloadError,     nullptr},
+		{_S(_DivideByZeroError),   &StandardTypes::DivideByZeroError,   nullptr},
+		{_S(_NullReferenceError),  &StandardTypes::NullReferenceError,  nullptr},
+		{_S(_MemberNotFoundError), &StandardTypes::MemberNotFoundError, nullptr},
 	};
 }
 
@@ -321,25 +323,26 @@ void Field::WriteFieldUnchecked(Value *instanceAndValue) const
 #undef ACQUIRE_FIELD_LOCK
 #undef RELEASE_FIELD_LOCK
 
-OVUM_API const StandardTypes &GetStandardTypes() { return VM::vm->types; }
-OVUM_API TypeHandle GetType_Object()             { return VM::vm->types.Object; }
-OVUM_API TypeHandle GetType_Boolean()            { return VM::vm->types.Boolean; }
-OVUM_API TypeHandle GetType_Int()                { return VM::vm->types.Int; }
-OVUM_API TypeHandle GetType_UInt()               { return VM::vm->types.UInt; }
-OVUM_API TypeHandle GetType_Real()               { return VM::vm->types.Real; }
-OVUM_API TypeHandle GetType_String()             { return VM::vm->types.String; }
-OVUM_API TypeHandle GetType_List()               { return VM::vm->types.List; }
-OVUM_API TypeHandle GetType_Hash()               { return VM::vm->types.Hash; }
-OVUM_API TypeHandle GetType_Method()             { return VM::vm->types.Method; }
-OVUM_API TypeHandle GetType_Iterator()           { return VM::vm->types.Iterator; }
-OVUM_API TypeHandle GetType_Type()               { return VM::vm->types.Type; }
-OVUM_API TypeHandle GetType_Error()              { return VM::vm->types.Error; }
-OVUM_API TypeHandle GetType_TypeError()          { return VM::vm->types.TypeError; }
-OVUM_API TypeHandle GetType_MemoryError()        { return VM::vm->types.MemoryError; }
-OVUM_API TypeHandle GetType_OverflowError()      { return VM::vm->types.OverflowError; }
-OVUM_API TypeHandle GetType_NoOverloadError()    { return VM::vm->types.NoOverloadError; }
-OVUM_API TypeHandle GetType_DivideByZeroError()  { return VM::vm->types.DivideByZeroError; }
-OVUM_API TypeHandle GetType_NullReferenceError() { return VM::vm->types.NullReferenceError; }
+OVUM_API const StandardTypes &GetStandardTypes()  { return VM::vm->types; }
+OVUM_API TypeHandle GetType_Object()              { return VM::vm->types.Object; }
+OVUM_API TypeHandle GetType_Boolean()             { return VM::vm->types.Boolean; }
+OVUM_API TypeHandle GetType_Int()                 { return VM::vm->types.Int; }
+OVUM_API TypeHandle GetType_UInt()                { return VM::vm->types.UInt; }
+OVUM_API TypeHandle GetType_Real()                { return VM::vm->types.Real; }
+OVUM_API TypeHandle GetType_String()              { return VM::vm->types.String; }
+OVUM_API TypeHandle GetType_List()                { return VM::vm->types.List; }
+OVUM_API TypeHandle GetType_Hash()                { return VM::vm->types.Hash; }
+OVUM_API TypeHandle GetType_Method()              { return VM::vm->types.Method; }
+OVUM_API TypeHandle GetType_Iterator()            { return VM::vm->types.Iterator; }
+OVUM_API TypeHandle GetType_Type()                { return VM::vm->types.Type; }
+OVUM_API TypeHandle GetType_Error()               { return VM::vm->types.Error; }
+OVUM_API TypeHandle GetType_TypeError()           { return VM::vm->types.TypeError; }
+OVUM_API TypeHandle GetType_MemoryError()         { return VM::vm->types.MemoryError; }
+OVUM_API TypeHandle GetType_OverflowError()       { return VM::vm->types.OverflowError; }
+OVUM_API TypeHandle GetType_NoOverloadError()     { return VM::vm->types.NoOverloadError; }
+OVUM_API TypeHandle GetType_DivideByZeroError()   { return VM::vm->types.DivideByZeroError; }
+OVUM_API TypeHandle GetType_NullReferenceError()  { return VM::vm->types.NullReferenceError; }
+OVUM_API TypeHandle GetType_MemberNotFoundError() { return VM::vm->types.MemberNotFoundError; }
 
 OVUM_API bool Member_IsAccessible(const MemberHandle member, TypeHandle instType, TypeHandle fromType)
 {

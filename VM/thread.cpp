@@ -142,13 +142,12 @@ bool Thread::IsSuspendedForGC() const
 void Thread::Invoke(unsigned int argCount, Value *result)
 {
 	Value *value = currentFrame->evalStack + currentFrame->stackCount - argCount - 1;
-	if (result)
+	if (result != nullptr)
 		InvokeLL(argCount, value, result);
 	else
 	{
-		Value output;
-		InvokeLL(argCount, value, &output);
-		currentFrame->Push(output);
+		InvokeLL(argCount, value, value);
+		currentFrame->stackCount++;
 	}
 }
 
@@ -205,9 +204,8 @@ void Thread::InvokeMethod(Method *method, unsigned int argCount, Value *result)
 		InvokeMethodOverload(mo, argCount, args, result);
 	else
 	{
-		Value output;
-		InvokeMethodOverload(mo, argCount, args, &output);
-		currentFrame->Push(output);
+		InvokeMethodOverload(mo, argCount, args, args);
+		currentFrame->stackCount++;
 	}
 }
 
@@ -218,9 +216,8 @@ void Thread::InvokeMember(String *name, unsigned int argCount, Value *result)
 		InvokeMemberLL(name, argCount, value, result);
 	else
 	{
-		Value output;
-		InvokeMemberLL(name, argCount, value, &output);
-		currentFrame->Push(output);
+		InvokeMemberLL(name, argCount, value, value);
+		currentFrame->stackCount++;
 	}
 }
 
@@ -269,7 +266,7 @@ void Thread::InvokeMemberLL(String *name, uint32_t argCount, Value *value, Value
 		}
 	}
 	else
-		ThrowTypeError(thread_errors::MemberNotFound);
+		ThrowMemberNotFoundError(name);
 }
 
 void Thread::InvokeMethodOverload(Method::Overload *mo, unsigned int argCount,
@@ -352,7 +349,14 @@ void Thread::InvokeMethodOverload(Method::Overload *mo, unsigned int argCount,
 
 void Thread::InvokeOperator(Operator op, Value *result)
 {
-	InvokeOperatorLL(currentFrame->evalStack + currentFrame->stackCount - Arity(op), op, result);
+	Value *args = currentFrame->evalStack + currentFrame->stackCount - Arity(op);
+	if (result != nullptr)
+		InvokeOperatorLL(args, op, result);
+	else
+	{
+		InvokeOperatorLL(args, op, args);
+		currentFrame->stackCount++;
+	}
 }
 
 void Thread::InvokeOperatorLL(Value *args, Operator op, Value *result)
@@ -374,9 +378,8 @@ void Thread::InvokeApply(Value *result)
 		InvokeApplyLL(args, result);
 	else
 	{
-		Value output;
-		InvokeApplyLL(args, &output);
-		currentFrame->Push(output);
+		InvokeApplyLL(args, args);
+		currentFrame->stackCount++;
 	}
 }
 
@@ -385,6 +388,9 @@ void Thread::InvokeApplyLL(Value *args, Value *result)
 	// First, ensure that args[1] is a List.
 	if (!Type::ValueIsType(args + 1, VM::vm->types.List))
 		ThrowTypeError(thread_errors::WrongApplyArgsType);
+	// Second, ensure that args[0] is not null.
+	if (IS_NULL(args[0]))
+		ThrowNullReferenceError();
 
 	// Then, unpack it onto the evaluation stack!
 	ListInst *argsList = args[1].common.list;
@@ -402,9 +408,8 @@ void Thread::InvokeApplyMethod(Method *method, Value *result)
 		InvokeApplyMethodLL(method, args, result);
 	else
 	{
-		Value output;
-		InvokeApplyMethodLL(method, args, &output);
-		currentFrame->Push(output);
+		InvokeApplyMethodLL(method, args, args);
+		currentFrame->stackCount++;
 	}
 }
 
@@ -456,27 +461,36 @@ bool Thread::EqualsLL(Value *args)
 	// because Object supports ==.
 	assert(method != nullptr); // okay, fine, but only when debugging
 
-	Value result;
-	InvokeMethodOverload(method, 2, args, &result);
+	// Save the result in the first argument
+	InvokeMethodOverload(method, 2, args, args);
 
-	return IsTrue_(result);
+	return IsTrue_(args[0]);
 }
 
 int64_t Thread::Compare()
 {
 	Value *args = currentFrame->evalStack + currentFrame->stackCount - 2;
-	Value result;
-	CompareLL(args, &result);
-	return result.integer;
+	CompareLL(args, args);
+	return args[0].integer;
 }
 
 void Thread::Concat(Value *result)
 {
-	ConcatLL(currentFrame->evalStack + currentFrame->stackCount - 2, result);
+	Value *args = currentFrame->evalStack + currentFrame->stackCount - 2;
+	if (result != nullptr)
+		ConcatLL(args, result);
+	else
+	{
+		ConcatLL(args, args);
+		currentFrame->stackCount++;
+	}
 }
 
 void Thread::ConcatLL(Value *args, Value *result)
 {
+	// Note: result may overlap args, so we cannot assign to it
+	//       until we are absolutely 100% done.
+
 	register Value *a = args;
 	register Value *b = args + 1;
 	if (a->type == VM::vm->types.List || b->type == VM::vm->types.List)
@@ -509,15 +523,13 @@ void Thread::ConcatLL(Value *args, Value *result)
 		if (!hashSetItem) GetHashIndexerSetter(&hashSetItem);
 		assert(hashSetItem != nullptr);
 
+		register StackFrame *f = currentFrame;
 		register Value *hash = args + 2; // Put the hash on the stack for extra GC reachability!
+		f->stackCount++;
 
 		GC::gc->Alloc(this, VM::vm->types.Hash, sizeof(HashInst), hash);
 		VM::vm->functions.initHashInstance(this, hash->common.hash, max(a->common.hash->count, b->common.hash->count));
 
-		register StackFrame *f = currentFrame;
-		f->stackCount++;
-
-		Value ignore;
 		do
 		{
 			for (int32_t i = 0; i < a->common.hash->count; i++)
@@ -528,7 +540,7 @@ void Thread::ConcatLL(Value *args, Value *result)
 				hash[3] = e->value;
 				f->stackCount += 3;
 				// InvokeMethodOverload pops the three effective arguments
-				InvokeMethodOverload(hashSetItem, 2, hash + 1, &ignore);
+				InvokeMethodOverload(hashSetItem, 2, hash + 1, hash + 1);
 			}
 			a++;
 		} while (a == b);
@@ -582,30 +594,26 @@ void Thread::CompareLL(Value *args, Value *result)
 
 bool Thread::CompareLessThanLL(Value *args)
 {
-	Value result;
-	COMPARE_BASE(&result);
-	return result.integer < 0;
+	COMPARE_BASE(args);
+	return args[0].integer < 0;
 }
 
 bool Thread::CompareGreaterThanLL(Value *args)
 {
-	Value result;
-	COMPARE_BASE(&result);
-	return result.integer > 0;
+	COMPARE_BASE(args);
+	return args[0].integer > 0;
 }
 
 bool Thread::CompareLessEqualsLL(Value *args)
 {
-	Value result;
-	COMPARE_BASE(&result);
-	return result.integer <= 0;
+	COMPARE_BASE(args);
+	return args[0].integer <= 0;
 }
 
 bool Thread::CompareGreaterEqualsLL(Value *args)
 {
-	Value result;
-	COMPARE_BASE(&result);
-	return result.integer >= 0;
+	COMPARE_BASE(args);
+	return args[0].integer >= 0;
 }
 
 #undef COMPARE_BASE
@@ -618,9 +626,8 @@ void Thread::LoadMember(String *member, Value *result)
 		Thread::LoadMemberLL(inst, member, result);
 	else
 	{
-		Value output;
-		LoadMemberLL(inst, member, &output);
-		currentFrame->Push(output);
+		LoadMemberLL(inst, member, inst);
+		currentFrame->stackCount++;
 	}
 }
 
@@ -631,7 +638,7 @@ void Thread::LoadMemberLL(Value *instance, String *member, Value *result)
 
 	const Member *m = instance->type->FindMember(member, currentFrame->method->declType);
 	if (m == nullptr)
-		ThrowTypeError(thread_errors::MemberNotFound);
+		ThrowMemberNotFoundError(member);
 	if ((m->flags & MemberFlags::INSTANCE) == MemberFlags::NONE)
 		ThrowTypeError(thread_errors::StaticMemberThroughInstance);
 
@@ -675,6 +682,8 @@ void Thread::StoreMemberLL(Value *instance, String *member)
 		ThrowNullReferenceError();
 
 	Member *m = instance->type->FindMember(member, currentFrame->method->declType);
+	if (m == nullptr)
+		ThrowMemberNotFoundError(member);
 	if ((m->flags & MemberFlags::INSTANCE) == MemberFlags::NONE)
 		ThrowTypeError(thread_errors::StaticMemberThroughInstance);
 	if ((m->flags & MemberFlags::METHOD) != MemberFlags::NONE)
@@ -692,7 +701,7 @@ void Thread::StoreMemberLL(Value *instance, String *member)
 		if (!mo) ThrowNoOverloadError(1);
 
 		// Remember: the instance and value are already on the stack!
-		InvokeMethodOverload(mo, 1, instance, nullptr);
+		InvokeMethodOverload(mo, 1, instance, instance);
 	}
 
 	currentFrame->Pop(2); // Done with the instance and the value!
@@ -706,9 +715,8 @@ void Thread::LoadIndexer(uint32_t argCount, Value *result)
 		LoadIndexerLL(argCount, args, result);
 	else
 	{
-		Value output;
-		LoadIndexerLL(argCount, args, &output);
-		currentFrame->Push(output);
+		LoadIndexerLL(argCount, args, args);
+		currentFrame->stackCount++;
 	}
 }
 // Note: argc DOES NOT include the instance, but args DOES.
@@ -761,8 +769,8 @@ void Thread::StoreIndexerLL(uint32_t argCount, Value *args)
 	Method::Overload *method = ((Property*)member)->setter->ResolveOverload(argCount + 1);
 	if (!method)
 		ThrowNoOverloadError(argCount + 1);
-	Value ignore;
-	InvokeMethodOverload(method, argCount + 1, args, &ignore);
+
+	InvokeMethodOverload(method, argCount + 1, args, args);
 }
 
 void Thread::LoadStaticField(Field *field, Value *result)
@@ -876,6 +884,13 @@ void Thread::ThrowNoOverloadError(const uint32_t argCount, String *message)
 	else
 		currentFrame->PushString(message);
 	GC::gc->Construct(this, VM::vm->types.NoOverloadError, 2, nullptr);
+	Throw();
+}
+
+void Thread::ThrowMemberNotFoundError(String *member)
+{
+	currentFrame->PushString(member);
+	GC::gc->Construct(this, VM::vm->types.MemberNotFoundError, 1, nullptr);
 	Throw();
 }
 
