@@ -267,9 +267,8 @@ public class String
 	///              `"aaahelloaaa".trim("a")   // => "hello"` \
 	///              `"abacusbacba".trim("abc") // => "us"`
 	///
-	///          Since String is iterable, it is therefore possible to pass in
-	///          a string containing the characters to trim, as in the example
-	///          above.
+	///          Since String is iterable, it is also possible to pass in a string
+	///          containing the characters to trim, as in the example above.
 	///
 	///          If {chars} contains a very large number of characters, the
 	///          temporary Set may consume a large amount of memory.
@@ -447,7 +446,7 @@ public class String
 		//   U+000C  Form Feed
 		//   U+000D  Carriage Return (\r)
 		//   U+0085  Next Line
-		return cp >= 0x09 and cp <= 0x000D or cp == 0x0085 or
+		return cp >= 0x0009 and cp <= 0x000D or cp == 0x0085 or
 			getCategory(i) & UnicodeCategory.separator != UnicodeCategory.none;
 	}
 

@@ -30,7 +30,7 @@ public inheritable ArgumentError is Error
 	public new(message, paramName)
 	{
 		new base(message ?? defaultMessage);
-		_paramName = string(paramName);
+		_paramName = paramName ?! string(paramName);
 	}
 	/// Summary: Creates a new {ArgumentError} with the specified message,
 	///          parameter name, and inner error.
@@ -43,12 +43,19 @@ public inheritable ArgumentError is Error
 	public new(message, paramName, innerError)
 	{
 		new base(message ?? defaultMessage, innerError);
-		_paramName = string(paramName);
+		_paramName = paramName ?! string(paramName);
 	}
 
 	private _paramName;
 	/// Summary: Gets the name of the parameter (String) that caused the error, or null.
 	public get paramName = _paramName;
+
+	overridable override get message
+	{
+		if _paramName is not null:
+			return "{0} (paramName: {1})".format([base.message, _paramName]);
+		return base.message;
+	}
 
 	private const defaultMessage = "An invalid argument was encountered.";
 }

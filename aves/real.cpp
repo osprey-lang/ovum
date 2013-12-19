@@ -31,9 +31,15 @@ AVES_API NATIVE_FUNCTION(aves_Real_get_isInfinite)
 
 AVES_API NATIVE_FUNCTION(aves_Real_getHashCode)
 {
-	// Value.integer overlaps with Value.real, and they're both 64-bits,
-	// so this is perfectly fine!
-	VM_PushInt(thread, args[1].integer);
+	double realValue = THISV.real;
+	if (realValue <= INT64_MAX &&
+		realValue >= INT64_MIN &&
+		fmod(realValue, 1.0) == 0)
+		VM_PushInt(thread, (int64_t)realValue);
+	else
+		// Value.integer overlaps with Value.real, and they're both 64-bits,
+		// so this is perfectly fine!
+		VM_PushInt(thread, THISV.integer);
 }
 AVES_API NATIVE_FUNCTION(aves_Real_toString)
 {

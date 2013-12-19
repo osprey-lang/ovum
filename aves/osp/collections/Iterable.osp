@@ -8,8 +8,14 @@ namespace aves;
 ///          an instance into the {Iterable} constructor.
 public inheritable Iterable
 {
+	/// Summary: Creates a new Iterable representing an empty collection.
+	public new()
+	{
+		collection = null;
+	}
 	/// Summary: Creates a new Iterable for the specified collection.
 	/// Param collection: The collection to create an iterable wrapper for.
+	///          If this value is null, it is treated like an empty collection.
 	/// Throws ArgumentNullError: {collection} is null.
 	/// Throws ArgumentError: {collection} is of a type derived from {Iterator}.
 	public new(collection)
@@ -24,5 +30,10 @@ public inheritable Iterable
 
 	private collection;
 
-	iter { return collection.iter; }
+	iter
+	{
+		if collection is null:
+			return Iterator.empty;
+		return collection.iter;
+	}
 }

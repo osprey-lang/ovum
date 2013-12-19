@@ -30,7 +30,7 @@ namespace strings
 	extern String *width;
 	extern String *height;
 	extern String *add;
-
+	
 	extern String *newline;
 }
 

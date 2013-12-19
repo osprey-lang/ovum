@@ -67,6 +67,17 @@ public inheritable Hash
 	/// Returns: True if {length} is zero; otherwise, false.
 	public get isEmpty = length == 0;
 
+	/// Summary: Gets an {Iterable} that can be used to iterate over
+	///          the keys in the hash table.
+	/// Returns: A new {Iterable} instance that iterates over the
+	///          keys in the hash table.
+	public get keys   = new KeyOrValueIterable(this, true);
+	/// Summary: Gets an {Iterable} that can be used to iterate over
+	///          the values in the hash table.
+	/// Returns: A new {Iterable} instance that iterates over the
+	///          values in the hash table.
+	public get values = new KeyOrValueIterable(this, false);
+
 	private get version							__extern("aves_Hash_get_version");
 	private get entryCount						__extern("aves_Hash_get_entryCount");
 
@@ -351,6 +362,56 @@ private class HashIterator is Iterator
 			if entry is not null
 			{
 				cur = [entry.key, entry.value];
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	private static getVersion(hash)				__extern("aves_Hash_get_version");
+	private static getEntryCount(hash)			__extern("aves_Hash_get_entryCount");
+	private static getEntry(hash, index)		__extern("aves_Hash_getEntry");
+}
+
+private class KeyOrValueIterable is Iterable
+{
+	public new(this.hash, this.useKey);
+
+	private hash, useKey;
+
+	iter
+	{
+		return new KeyOrValueIterator(hash, useKey);
+	}
+}
+
+private class KeyOrValueIterator is Iterator
+{
+	public new(this.hash, this.useKey)
+	{
+		version = getVersion(hash);
+	}
+
+	private hash;
+	private version;
+	private useKey;
+	private i = -1;
+	private cur = null;
+
+	override get current = cur;
+	override moveNext()
+	{
+		if getVersion(hash) != version:
+			throw new InvalidStateError("The hash has changed since the iteration started.");
+
+		while i < getEntryCount(hash) - 1
+		{
+			i += 1;
+			var entry = getEntry(hash, i);
+			if entry is not null
+			{
+				cur = useKey ? entry.key : entry.value;
 				return true;
 			}
 		}

@@ -27,7 +27,7 @@ public inheritable List
 	/// Throws TypeError: {index} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {index} is less than -{length}, or greater than or equal to {length}.
-	public get this[index]						__extern("aves_List_getItem");
+	public get this[index]						__extern("aves_List_get_item");
 	/// Summary: Sets the item at the specified index.
 	/// Param index: The index of the item to set. If negative, the index is
 	///              relative to the end of the list, e.g. -2 is the second to
@@ -35,7 +35,7 @@ public inheritable List
 	/// Throws TypeError: {index} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {index} is less than -{length}, or greater than or requal to {length}.
-	public set this[index]						__extern("aves_List_setItem");
+	public set this[index]						__extern("aves_List_set_item");
 
 	/// Summary: Gets the total number of items contained in the list.
 	/// Returns: The total number of items actually contained in the list,

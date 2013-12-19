@@ -1,4 +1,5 @@
 use "Iterable.osp";
+use "MethodIterable.osp";
 use "Iterator.osp";
 use "List.osp";
 use "Hash.osp";
