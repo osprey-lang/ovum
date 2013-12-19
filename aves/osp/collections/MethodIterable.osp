@@ -1,0 +1,40 @@
+namespace aves;
+
+/// Summary: Exposes a read-only interface used specifically for
+///          iterating over the return value from a call to a
+///          generator method. The MethodIterable instance needs
+///          to capture the arguments sent to the method in order
+///          to accomplish this.
+///
+///          This class inherits from {Iterable}.
+public inheritable MethodIterable is Iterable
+{
+	public new(method)
+	{
+		if method is null:
+			throw new ArgumentNullError("method");
+
+		this.method = method;
+		this.args = [];
+	}
+	public new(method, args)
+	{
+		if method is null:
+			throw new ArgumentNullError("method");
+		if args is null:
+			throw new ArgumentNullError("args");
+		if args is not List:
+			throw new TypeError("The arguments must be in a List.");
+
+		this.method = method;
+		this.args = args;
+	}
+
+	private method;
+	private args;
+
+	iter
+	{
+		return method -> args;
+	}
+}
