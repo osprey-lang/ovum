@@ -161,7 +161,7 @@ void VM::LoadModules(VMStartParams &params)
 void VM::InitArgs(int argCount, const wchar_t *args[])
 {
 	// Convert command-line arguments to String*s.
-	Value **argValues = new Value*[argCount];
+	std::unique_ptr<Value*[]> argValues(new Value*[argCount]);
 	for (int i = 0; i < argCount; i++)
 	{
 		const wchar_t *arg = args[i];
@@ -176,7 +176,7 @@ void VM::InitArgs(int argCount, const wchar_t *args[])
 		}
 	}
 
-	this->argValues = argValues;
+	this->argValues = argValues.release();
 }
 
 void VM::Unload()
@@ -292,11 +292,13 @@ void VM::PrintMethodInitException(MethodInitException &e)
 		break;
 	case MethodInitException::NO_MATCHING_OVERLOAD:
 		fwprintf(err, L"Method: '");
-		if (e.GetMethodGroup()->declType)
-			PrintInternal(err, L"%ls.", e.GetMethodGroup()->declType->fullName);
-		PrintErr(e.GetMethodGroup()->name);
-		PrintInternal(err, L"' from module %ls\n", e.GetMethodGroup()->declModule->name);
-
+		{
+			Method *method = e.GetMethodGroup();
+			if (method->declType)
+				PrintInternal(err, L"%ls.", method->declType->fullName);
+			PrintErr(method->name);
+			PrintInternal(err, L"' from module %ls\n", method->declModule->name);
+		}
 		fwprintf(err, L"Argument count: %u\n", e.GetArgumentCount());
 		break;
 	case MethodInitException::INACCESSIBLE_TYPE:

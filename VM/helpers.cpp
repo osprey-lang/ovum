@@ -31,85 +31,86 @@ namespace hash_helper
 }
 
 
-OVUM_API Value IntFromValue(ThreadHandle thread, Value v)
+OVUM_API void IntFromValue(ThreadHandle thread, Value *v)
 {
-	if (v.type == VM::vm->types.UInt)
+	if (v->type != VM::vm->types.Int)
 	{
-		if (v.uinteger > INT64_MAX)
-			thread->ThrowOverflowError();
-		v.type = VM::vm->types.Int; // This is safe: v is passed by value.
-	}
-	else if (v.type == VM::vm->types.Real)
-	{
-		// TODO: Verify that this is safe; if not, find another way of doing this.
-		if (v.real > INT64_MAX || v.real < INT64_MIN)
-			thread->ThrowOverflowError();
+		if (v->type == VM::vm->types.UInt)
+		{
+			if (v->uinteger > INT64_MAX)
+				thread->ThrowOverflowError();
+			v->type = VM::vm->types.Int; // This is safe: v is passed by value.
+		}
+		else if (v->type == VM::vm->types.Real)
+		{
+			// TODO: Verify that this is safe; if not, find another way of doing this.
+			if (v->real > INT64_MAX || v->real < INT64_MIN)
+				thread->ThrowOverflowError();
 
-		v.type = VM::vm->types.Int;
-		v.integer = (int64_t)v.real;
-	}
-	else if (v.type != VM::vm->types.Int)
+			v->type = VM::vm->types.Int;
+			v->integer = (int64_t)v->real;
+		}
+
 		thread->ThrowTypeError(errors::toIntFailed);
-
-	return v;
+	}
 }
 
-OVUM_API Value UIntFromValue(ThreadHandle thread, Value v)
+OVUM_API void UIntFromValue(ThreadHandle thread, Value *v)
 {
-	if (v.type == VM::vm->types.Int)
+	if (v->type != VM::vm->types.UInt)
 	{
-		if (v.integer < 0) // simple! This is even safe if the architecture doesn't use 2's complement!
-			thread->ThrowOverflowError();
-		v.type = VM::vm->types.UInt; // This is safe: v is passed by value
-	}
-	else if (v.type == VM::vm->types.Real)
-	{
-		// TODO: Verify that this is safe; if not, find another way of doing this.
-		if (v.real > UINT64_MAX || v.real < 0)
-			thread->ThrowOverflowError();
+		if (v->type == VM::vm->types.Int)
+		{
+			if (v->integer < 0) // simple! This is even safe if the architecture doesn't use 2's complement!
+				thread->ThrowOverflowError();
+			v->type = VM::vm->types.UInt; // This is safe: v is passed by value
+		}
+		else if (v->type == VM::vm->types.Real)
+		{
+			// TODO: Verify that this is safe; if not, find another way of doing this.
+			if (v->real > UINT64_MAX || v->real < 0)
+				thread->ThrowOverflowError();
 
-		v.type = VM::vm->types.UInt;
-		v.uinteger = (uint64_t)v.real;
-	}
-	else if (v.type != VM::vm->types.UInt)
+			v->type = VM::vm->types.UInt;
+			v->uinteger = (uint64_t)v->real;
+		}
+
 		thread->ThrowTypeError(errors::toUIntFailed);
-
-	return v;
+	}
 }
 
-OVUM_API Value RealFromValue(ThreadHandle thread, Value v)
+OVUM_API void RealFromValue(ThreadHandle thread, Value *v)
 {
 	// Note: during this conversion, it's more than possible that the
 	// int or uint value is too large to be precisely represented as
 	// a double. This is not considered an error condition.
-	if (v.type == VM::vm->types.Int)
-		SetReal_(v, (double)v.integer);
-	else if (v.type == VM::vm->types.UInt)
-		SetReal_(v, (double)v.uinteger);
-	else if (v.type != VM::vm->types.Real)
-		thread->ThrowTypeError(errors::toRealFailed);
+	if (v->type != VM::vm->types.Real)
+	{
+		if (v->type == VM::vm->types.Int)
+			SetReal_(v, (double)v->integer);
+		else if (v->type == VM::vm->types.UInt)
+			SetReal_(v, (double)v->uinteger);
 
-	return v;
+		thread->ThrowTypeError(errors::toRealFailed);
+	}
 }
 
-OVUM_API Value StringFromValue(ThreadHandle thread, Value v)
+OVUM_API void StringFromValue(ThreadHandle thread, Value *v)
 {
-	if (v.type != VM::vm->types.String)
+	if (v->type != VM::vm->types.String)
 	{
-		if (v.type == nullptr)
+		if (v->type == nullptr)
 		{
 			SetString_(v, static_strings::empty);
-			return v;
+			return;
 		}
 
-		thread->Push(v);
-		thread->InvokeMember(static_strings::toString, 0, &v);
+		thread->Push(*v);
+		thread->InvokeMember(static_strings::toString, 0, v);
 
-		if (v.type != VM::vm->types.String)
+		if (v->type != VM::vm->types.String)
 			thread->ThrowTypeError(static_strings::errors::ToStringWrongType);
 	}
-
-	return v;
 }
 
 // HASH HELPERS
