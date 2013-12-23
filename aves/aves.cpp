@@ -70,7 +70,7 @@ AVES_API NATIVE_FUNCTION(aves_print)
 	if (IS_NULL(*args))
 		SetString(args, strings::Empty); // null prints like empty string
 	else if (!IsString(*args))
-		*args = StringFromValue(thread, *args);
+		StringFromValue(thread, args);
 
 	VM_PrintLn(args->common.string);
 }

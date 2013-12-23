@@ -12,7 +12,8 @@ AVES_API void aves_Buffer_init(TypeHandle type)
 
 AVES_API NATIVE_FUNCTION(aves_Buffer_new)
 {
-	int64_t size64 = IntFromValue(thread, args[1]).integer;
+	IntFromValue(thread, args + 1);
+	int64_t size64 = args[1].integer;
 	if (size64 < 0 || size64 > UINT32_MAX)
 	{
 		GC_Construct(thread, Types::ArgumentRangeError, 0, nullptr);
@@ -37,7 +38,8 @@ AVES_API NATIVE_FUNCTION(aves_Buffer_get_size)
 
 unsigned int GetBufferIndex(ThreadHandle thread, Buffer *buf, Value indexValue, int valueSize)
 {
-	int64_t index64 = IntFromValue(thread, indexValue).integer;
+	IntFromValue(thread, &indexValue);
+	int64_t index64 = indexValue.integer;
 	if (index64 < 0 || index64 >= buf->size / valueSize)
 	{
 		VM_PushString(thread, strings::index);

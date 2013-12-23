@@ -65,7 +65,7 @@ AVES_API NATIVE_FUNCTION(aves_Console_write)
 	if (IS_NULL(*args))
 		return;
 	if (!IsString(*args))
-		*args = StringFromValue(thread, *args);
+		StringFromValue(thread, args);
 
 	VM_Print(args->common.string);
 }
@@ -74,7 +74,7 @@ AVES_API NATIVE_FUNCTION(aves_Console_writeErr)
 	if (IS_NULL(*args))
 		return;
 	if (!IsString(*args))
-		*args = StringFromValue(thread, *args);
+		StringFromValue(thread, args);
 
 	VM_PrintErr(args->common.string);
 }
@@ -83,7 +83,7 @@ AVES_API NATIVE_FUNCTION(aves_Console_writeLineErr)
 	if (IS_NULL(*args))
 		SetString(args, strings::Empty); // null prints like empty string
 	else if (!IsString(*args))
-		*args = StringFromValue(thread, *args);
+		StringFromValue(thread, args);
 
 	VM_PrintErrLn(args->common.string);
 }
@@ -416,7 +416,7 @@ void Console::SetCursorPosition(ThreadHandle thread, SHORT x, SHORT y)
 
 void AssertValidCoord(ThreadHandle thread, Value *v, String *paramName)
 {
-	*v = IntFromValue(thread, *v);
+	IntFromValue(thread, v);
 	if (v->integer < 0 || v->integer > SHRT_MAX)
 	{
 		VM_PushString(thread, paramName);
@@ -482,8 +482,10 @@ AVES_API NATIVE_FUNCTION(aves_Console_get_windowHeight)
 
 AVES_API NATIVE_FUNCTION(aves_Console_setBufferSize)
 {
-	int64_t width  = IntFromValue(thread, args[0]).integer;
-	int64_t height = IntFromValue(thread, args[1]).integer;
+	IntFromValue(thread, args + 0);
+	IntFromValue(thread, args + 1);
+	int64_t width  = args[0].integer;
+	int64_t height = args[1].integer;
 
 	CONSOLE_SCREEN_BUFFER_INFO csbi = Console::GetBufferInfo(thread);
 	// Make sure the new buffer is not smaller than the window
@@ -507,8 +509,10 @@ AVES_API NATIVE_FUNCTION(aves_Console_setBufferSize)
 }
 AVES_API NATIVE_FUNCTION(aves_Console_setWindowSize)
 {
-	int64_t width64  = IntFromValue(thread, args[0]).integer;
-	int64_t height64 = IntFromValue(thread, args[1]).integer;
+	IntFromValue(thread, args + 0);
+	IntFromValue(thread, args + 1);
+	int64_t width64  = args[0].integer;
+	int64_t height64 = args[1].integer;
 
 	if (width64 < 0 || width64 > INT32_MAX)
 	{

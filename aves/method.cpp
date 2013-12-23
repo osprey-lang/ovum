@@ -23,7 +23,8 @@ AVES_API NATIVE_FUNCTION(aves_Method_accepts)
 {
 	MethodInst *method = _M(THISV);
 
-	int64_t argCount = IntFromValue(thread, args[1]).integer;
+	IntFromValue(thread, args + 1);
+	int64_t argCount = args[1].integer;
 
 	if (argCount < 0 || argCount > INT32_MAX)
 		VM_PushBool(thread, false);

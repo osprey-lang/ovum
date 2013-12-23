@@ -149,7 +149,7 @@ public inheritable Hash
 		for i in [0 to entryCount - 1]
 		{
 			if startVersion != version:
-				throw new InvalidStateError(hashHasChanged);
+				throw new InvalidStateError(HashUtils.hashHasChanged);
 			var entry = getEntry(i);
 			if entry is not null and
 				not predicate(entry.key, entry.value):
@@ -176,7 +176,7 @@ public inheritable Hash
 		for i in [0 to entryCount - 1]
 		{
 			if startVersion != version:
-				throw new InvalidStateError(hashHasChanged);
+				throw new InvalidStateError(HashUtils.hashHasChanged);
 			var entry = getEntry(i);
 			if entry is not null and
 				predicate(entry.key, entry.value):
@@ -193,7 +193,7 @@ public inheritable Hash
 		for i in [0 to entryCount - 1]
 		{
 			if startVersion != version:
-				throw new InvalidStateError(hashHasChanged);
+				throw new InvalidStateError(HashUtils.hashHasChanged);
 			var entry =	getEntry(i);
 			if entry is not null:
 				func(entry.key, entry.value);
@@ -210,7 +210,7 @@ public inheritable Hash
 		for i in [0 to entryCount - 1]
 		{
 			if startVersion != version:
-				throw new InvalidStateError(hashHasChanged);
+				throw new InvalidStateError(HashUtils.hashHasChanged);
 			var entry = getEntry(i);
 			if entry is not null and predicate(entry.key, entry.value):
 				output.add(entry.key, entry.value);
@@ -227,7 +227,7 @@ public inheritable Hash
 		for i in [0 to entryCount - 1]
 		{
 			if startVersion != version:
-				throw new InvalidStateError(hashHasChanged);
+				throw new InvalidStateError(HashUtils.hashHasChanged);
 			var entry = getEntry(i);
 			if entry is not null:
 				output.add(func(entry.key, entry.value), entry.value);
@@ -244,7 +244,7 @@ public inheritable Hash
 		for i in [0 to entryCount - 1]
 		{
 			if startVersion != version:
-				throw new InvalidStateError(hashHasChanged);
+				throw new InvalidStateError(HashUtils.hashHasChanged);
 			var entry = getEntry(i);
 			if entry is not null:
 				output.add(entry.key, func(entry.key, entry.value));
@@ -313,8 +313,6 @@ public inheritable Hash
 		return "Hash[length = {0}]".format([length]);
 	}
 
-	private const hashHasChanged = "The hash has changed since the iteration started.";
-
 	iter
 	{
 		return new HashIterator(this);
@@ -341,7 +339,7 @@ private class HashIterator is Iterator
 {
 	public new(this.hash)
 	{
-		version = getVersion(hash);
+		version = HashUtils.getVersion(hash);
 	}
 
 	private hash;
@@ -352,13 +350,13 @@ private class HashIterator is Iterator
 	override get current = cur;
 	override moveNext()
 	{
-		if getVersion(hash) != version:
-			throw new InvalidStateError("The hash has changed since the iteration started.");
+		if HashUtils.getVersion(hash) != version:
+			throw new InvalidStateError(HashUtils.hashHasChanged);
 
-		while i < getEntryCount(hash) - 1
+		while i < HashUtils.getEntryCount(hash) - 1
 		{
 			i += 1;
-			var entry = getEntry(hash, i);
+			var entry = HashUtils.getEntry(hash, i);
 			if entry is not null
 			{
 				cur = [entry.key, entry.value];
@@ -368,10 +366,6 @@ private class HashIterator is Iterator
 
 		return false;
 	}
-
-	private static getVersion(hash)				__extern("aves_Hash_get_version");
-	private static getEntryCount(hash)			__extern("aves_Hash_get_entryCount");
-	private static getEntry(hash, index)		__extern("aves_Hash_getEntry");
 }
 
 private class KeyOrValueIterable is Iterable
@@ -390,7 +384,7 @@ private class KeyOrValueIterator is Iterator
 {
 	public new(this.hash, this.useKey)
 	{
-		version = getVersion(hash);
+		version = HashUtils.getVersion(hash);
 	}
 
 	private hash;
@@ -402,13 +396,13 @@ private class KeyOrValueIterator is Iterator
 	override get current = cur;
 	override moveNext()
 	{
-		if getVersion(hash) != version:
-			throw new InvalidStateError("The hash has changed since the iteration started.");
+		if HashUtils.getVersion(hash) != version:
+			throw new InvalidStateError(HashUtils.hashHasChanged);
 
-		while i < getEntryCount(hash) - 1
+		while i < HashUtils.getEntryCount(hash) - 1
 		{
 			i += 1;
-			var entry = getEntry(hash, i);
+			var entry = HashUtils.getEntry(hash, i);
 			if entry is not null
 			{
 				cur = useKey ? entry.key : entry.value;
@@ -418,8 +412,13 @@ private class KeyOrValueIterator is Iterator
 
 		return false;
 	}
+}
 
-	private static getVersion(hash)				__extern("aves_Hash_get_version");
-	private static getEntryCount(hash)			__extern("aves_Hash_get_entryCount");
-	private static getEntry(hash, index)		__extern("aves_Hash_getEntry");
+private static class HashUtils
+{
+	public const hashHasChanged = "The hash has changed since the iteration started.";
+
+	public static getVersion(hash)				__extern("aves_Hash_get_version");
+	public static getEntryCount(hash)			__extern("aves_Hash_get_entryCount");
+	public static getEntry(hash, index)			__extern("aves_Hash_getEntry");
 }

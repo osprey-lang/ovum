@@ -22,9 +22,8 @@ AVES_API NATIVE_FUNCTION(aves_Error_new)
 
 	if (argc > 1)
 	{
-		Value *message = VM_Local(thread, 0);
-		*message = StringFromValue(thread, args[1]);
-		err->message = message->common.string;
+		StringFromValue(thread, args + 1);
+		err->message = args[1].common.string;
 	}
 
 	if (argc > 2)

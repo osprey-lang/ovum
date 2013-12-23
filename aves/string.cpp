@@ -16,7 +16,8 @@ namespace error_strings
 
 int32_t GetIndex(ThreadHandle thread, String *str, Value *arg)
 {
-	int64_t index = IntFromValue(thread, *arg).integer;
+	IntFromValue(thread, arg);
+	int64_t index = arg->integer;
 	if (index < 0 || index >= str->length)
 	{
 		VM_PushString(thread, error_strings::IndexOutOfRange);
@@ -139,7 +140,8 @@ AVES_API NATIVE_FUNCTION(aves_String_substr2)
 	String *str = THISV.common.string;
 
 	int32_t start = GetIndex(thread, str, args + 1);
-	int64_t count = IntFromValue(thread, args[2]).integer;
+	IntFromValue(thread, args + 2);
+	int64_t count = args[2].integer;
 	if (start + count > str->length)
 	{
 		GC_Construct(thread, Types::ArgumentRangeError, 0, nullptr);
@@ -213,7 +215,7 @@ AVES_API NATIVE_FUNCTION(aves_String_split)
 	// arguments: (separator)
 	// locals: List output
 	String *str = THISV.common.string;
-	args[1] = StringFromValue(thread, args[1]);
+	StringFromValue(thread, args + 1);
 	String *sep = args[1].common.string;
 
 	Value *output = VM_Local(thread, 0);
@@ -379,7 +381,8 @@ AVES_API NATIVE_FUNCTION(aves_String_getHashCode)
 
 AVES_API NATIVE_FUNCTION(aves_String_fromCodepoint)
 {
-	int64_t cp64 = IntFromValue(thread, args[0]).integer;
+	IntFromValue(thread, args);
+	int64_t cp64 = args[0].integer;
 
 	if (cp64 < 0 || cp64 > 0x10FFFF)
 	{
@@ -422,7 +425,8 @@ AVES_API NATIVE_FUNCTION(aves_String_opCompare)
 AVES_API NATIVE_FUNCTION(aves_String_opMultiply)
 {
 	String *str = THISV.common.string;
-	int64_t times = IntFromValue(thread, args[1]).integer;
+	IntFromValue(thread, args + 1);
+	int64_t times = args[1].integer;
 	int64_t length = Int_MultiplyChecked(thread, times, str->length);
 	if (length > INT32_MAX)
 		VM_ThrowOverflowError(thread);
@@ -567,7 +571,8 @@ String *string::Format(ThreadHandle thread, const String *format, ListInst *list
 				}
 
 				Value *value = VM_Local(thread, 0);
-				*value = StringFromValue(thread, list->values[placeholderIndex]);
+				*value = list->values[placeholderIndex];
+				StringFromValue(thread, value);
 
 				AppendAlignedFormatString(thread, buf, value->common.string, alignment, alignmentWidth);
 			}
@@ -752,7 +757,7 @@ String *string::Format(ThreadHandle thread, const String *format, Value *hash)
 				VM_Push(thread, phKey);
 				VM_LoadIndexer(thread, 1, value);
 
-				*value = StringFromValue(thread, *value);
+				StringFromValue(thread, value);
 
 				AppendAlignedFormatString(thread, buf, value->common.string, alignment, alignmentWidth);
 			}

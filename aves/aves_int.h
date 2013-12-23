@@ -69,7 +69,7 @@ namespace integer
 			b >>= 1;
 			if (b > 0)
 				// This sometimes overflows for the last iteration, after which
-				// the value is not even be used; specifically, at 2**32 * 2**32
+				// the value is not even be used; for example, at 2**32 * 2**32
 				a = Int_MultiplyChecked(thread, a, a);
 		}
 
