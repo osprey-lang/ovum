@@ -12,7 +12,8 @@ AVES_API void aves_List_init(TypeHandle type)
 
 int32_t GetIndex(ThreadHandle thread, ListInst *list, Value indexValue, bool canEqualLength)
 {
-	int64_t index = IntFromValue(thread, indexValue).integer;
+	IntFromValue(thread, &indexValue);
+	int64_t index = indexValue.integer;
 
 	if (index < 0)
 		index += list->length;
@@ -32,7 +33,8 @@ AVES_API NATIVE_FUNCTION(aves_List_new)
 }
 AVES_API NATIVE_FUNCTION(aves_List_newCap)
 {
-	int64_t capacity = IntFromValue(thread, args[1]).integer;
+	IntFromValue(thread, args + 1);
+	int64_t capacity = args[1].integer;
 	if (capacity < 0 || capacity > INT32_MAX)
 	{
 		VM_PushString(thread, strings::capacity);
@@ -54,7 +56,8 @@ AVES_API NATIVE_FUNCTION(aves_List_get_capacity)
 }
 AVES_API NATIVE_FUNCTION(aves_List_set_capacity)
 {
-	int64_t capacity = IntFromValue(thread, args[1]).integer;
+	IntFromValue(thread, args + 1);
+	int64_t capacity = args[1].integer;
 	if (capacity < 0 || capacity > INT32_MAX)
 	{
 		VM_PushString(thread, strings::capacity);

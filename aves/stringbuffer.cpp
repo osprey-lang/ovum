@@ -14,7 +14,8 @@ AVES_API NATIVE_FUNCTION(aves_StringBuffer_new)
 }
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_newCap)
 {
-	int64_t capacity = IntFromValue(thread, args[1]).integer;
+	IntFromValue(thread, args + 1);
+	int64_t capacity = args[1].integer;
 
 	((StringBuffer*)THISV.instance)->StringBuffer::StringBuffer(thread, capacity);
 }

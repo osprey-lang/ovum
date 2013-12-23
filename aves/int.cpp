@@ -8,8 +8,8 @@
 
 AVES_API NATIVE_FUNCTION(aves_int)
 {
-	Value result = IntFromValue(thread, args[0]);
-	VM_Push(thread, result);
+	IntFromValue(thread, args);
+	VM_Push(thread, args[0]);
 }
 
 AVES_API NATIVE_FUNCTION(aves_Int_getHashCode)
@@ -78,7 +78,8 @@ AVES_API NATIVE_FUNCTION(aves_Int_opCompare)
 }
 AVES_API NATIVE_FUNCTION(aves_Int_opShiftLeft)
 {
-	int64_t amount = IntFromValue(thread, RIGHT).integer;
+	IntFromValue(thread, &RIGHT);
+	int64_t amount = RIGHT.integer;
 
 	if (amount < 0)
 	{
@@ -95,7 +96,8 @@ AVES_API NATIVE_FUNCTION(aves_Int_opShiftLeft)
 }
 AVES_API NATIVE_FUNCTION(aves_Int_opShiftRight)
 {
-	int64_t amount = IntFromValue(thread, RIGHT).integer;
+	IntFromValue(thread, &RIGHT);
+	int64_t amount = RIGHT.integer;
 
 	if (amount < 0)
 	{
@@ -112,25 +114,29 @@ AVES_API NATIVE_FUNCTION(aves_Int_opShiftRight)
 }
 AVES_API NATIVE_FUNCTION(aves_Int_opAdd)
 {
-	if (RIGHT.type == Types::Real)
-	{
-		VM_PushReal(thread, (double)LEFT.integer + RIGHT.real);
-		return;
-	}
 	if (RIGHT.type != Types::Int)
-		RIGHT = IntFromValue(thread, RIGHT);
+	{
+		if (RIGHT.type == Types::Real)
+		{
+			VM_PushReal(thread, (double)LEFT.integer + RIGHT.real);
+			return;
+		}
+		IntFromValue(thread, &RIGHT);
+	}
 
 	VM_PushInt(thread, Int_AddChecked(thread, LEFT.integer, RIGHT.integer));
 }
 AVES_API NATIVE_FUNCTION(aves_Int_opSubtract)
 {
-	if (RIGHT.type == Types::Real)
-	{
-		VM_PushReal(thread, (double)LEFT.integer - RIGHT.real);
-		return;
-	}
 	if (RIGHT.type != Types::Int)
-		RIGHT = IntFromValue(thread, RIGHT);
+	{
+		if (RIGHT.type == Types::Real)
+		{
+			VM_PushReal(thread, (double)LEFT.integer - RIGHT.real);
+			return;
+		}
+		IntFromValue(thread, &RIGHT);
+	}
 
 	VM_PushInt(thread, Int_SubtractChecked(thread, LEFT.integer, RIGHT.integer));
 }
@@ -150,37 +156,43 @@ AVES_API NATIVE_FUNCTION(aves_Int_opXor)
 }
 AVES_API NATIVE_FUNCTION(aves_Int_opMultiply)
 {
-	if (RIGHT.type == Types::Real)
-	{
-		VM_PushReal(thread, (double)LEFT.integer * RIGHT.real);
-		return;
-	}
 	if (RIGHT.type != Types::Int)
-		RIGHT = IntFromValue(thread, RIGHT);
+	{
+		if (RIGHT.type == Types::Real)
+		{
+			VM_PushReal(thread, (double)LEFT.integer * RIGHT.real);
+			return;
+		}
+		IntFromValue(thread, &RIGHT);
+	}
 
 	VM_PushInt(thread, Int_MultiplyChecked(thread, LEFT.integer, RIGHT.integer));
 }
 AVES_API NATIVE_FUNCTION(aves_Int_opDivide)
 {
-	if (RIGHT.type == Types::Real)
-	{
-		VM_PushReal(thread, (double)LEFT.integer / RIGHT.real);
-		return;
-	}
 	if (RIGHT.type != Types::Int)
-		RIGHT = IntFromValue(thread, RIGHT);
+	{
+		if (RIGHT.type == Types::Real)
+		{
+			VM_PushReal(thread, (double)LEFT.integer / RIGHT.real);
+			return;
+		}
+		IntFromValue(thread, &RIGHT);
+	}
 
 	VM_PushInt(thread, Int_DivideChecked(thread, LEFT.integer, RIGHT.integer));
 }
 AVES_API NATIVE_FUNCTION(aves_Int_opModulo)
 {
-	if (RIGHT.type == Types::Real)
-	{
-		VM_PushReal(thread, fmod((double)LEFT.integer, RIGHT.real));
-		return;
-	}
 	if (RIGHT.type != Types::Int)
-		RIGHT = IntFromValue(thread, RIGHT);
+	{
+		if (RIGHT.type == Types::Real)
+		{
+			VM_PushReal(thread, fmod((double)LEFT.integer, RIGHT.real));
+			return;
+		}
+		IntFromValue(thread, &RIGHT);
+	}
 
 	VM_PushInt(thread, Int_ModuloChecked(thread, LEFT.integer, RIGHT.integer));
 }
@@ -193,13 +205,15 @@ AVES_API NATIVE_FUNCTION(aves_Int_opAnd)
 }
 AVES_API NATIVE_FUNCTION(aves_Int_opPower)
 {
-	if (RIGHT.type == Types::Real)
-	{
-		VM_PushReal(thread, pow((double)LEFT.integer, RIGHT.real));
-		return;
-	}
 	if (RIGHT.type != Types::Int)
-		RIGHT = IntFromValue(thread, RIGHT);
+	{
+		if (RIGHT.type == Types::Real)
+		{
+			VM_PushReal(thread, pow((double)LEFT.integer, RIGHT.real));
+			return;
+		}
+		IntFromValue(thread, &RIGHT);
+	}
 
 	int64_t result = integer::Power(thread, LEFT.integer, RIGHT.integer);
 	VM_PushInt(thread, result);

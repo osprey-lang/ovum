@@ -1,7 +1,7 @@
 #include <cmath>
 #include "aves_math.h"
 
-#define GET_REAL_VALUE()	double value = RealFromValue(thread, args[0]).real
+#define GET_REAL_VALUE()	RealFromValue(thread, args); double value = args[0].real;
 
 AVES_API NATIVE_FUNCTION(aves_math_abs)
 {
@@ -56,8 +56,10 @@ AVES_API NATIVE_FUNCTION(aves_math_atan)
 
 AVES_API NATIVE_FUNCTION(aves_math_atan2)
 {
-	double y = RealFromValue(thread, args[0]).real;
-	double x = RealFromValue(thread, args[1]).real;
+	RealFromValue(thread, args + 0);
+	RealFromValue(thread, args + 1);
+	double y = args[0].real;
+	double x = args[1].real;
 
 	VM_PushReal(thread, atan2(y, x));
 }
@@ -125,7 +127,8 @@ AVES_API NATIVE_FUNCTION(aves_math_logBase)
 {
 	GET_REAL_VALUE();
 
-	double base = RealFromValue(thread, args[1]).real;
+	RealFromValue(thread, args + 1);
+	double base = args[1].real;
 
 	// log x to base b = ln x / ln b
 

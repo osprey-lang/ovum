@@ -16,8 +16,8 @@
 
 AVES_API NATIVE_FUNCTION(aves_real)
 {
-	Value result = RealFromValue(thread, args[0]);
-	VM_Push(thread, result);
+	RealFromValue(thread, args);
+	VM_Push(thread, args[0]);
 }
 
 AVES_API NATIVE_FUNCTION(aves_Real_get_isNaN)
@@ -196,33 +196,33 @@ AVES_API NATIVE_FUNCTION(aves_Real_opCompare)
 }
 AVES_API NATIVE_FUNCTION(aves_Real_opAdd)
 {
-	double right = RealFromValue(thread, RIGHT).real;
-	VM_PushReal(thread, LEFT.real + right);
+	RealFromValue(thread, &RIGHT);
+	VM_PushReal(thread, LEFT.real + RIGHT.real);
 }
 AVES_API NATIVE_FUNCTION(aves_Real_opSubtract)
 {
-	double right = RealFromValue(thread, RIGHT).real;
-	VM_PushReal(thread, LEFT.real - right);
+	RealFromValue(thread, &RIGHT);
+	VM_PushReal(thread, LEFT.real - RIGHT.real);
 }
 AVES_API NATIVE_FUNCTION(aves_Real_opMultiply)
 {
-	double right = RealFromValue(thread, RIGHT).real;
-	VM_PushReal(thread, LEFT.real * right);
+	RealFromValue(thread, &RIGHT);
+	VM_PushReal(thread, LEFT.real * RIGHT.real);
 }
 AVES_API NATIVE_FUNCTION(aves_Real_opDivide)
 {
-	double right = RealFromValue(thread, RIGHT).real;
-	VM_PushReal(thread, LEFT.real / right);
+	RealFromValue(thread, &RIGHT);
+	VM_PushReal(thread, LEFT.real / RIGHT.real);
 }
 AVES_API NATIVE_FUNCTION(aves_Real_opModulo)
 {
-	double right = RealFromValue(thread, RIGHT).real;
-	VM_PushReal(thread, fmod(LEFT.real, right));
+	RealFromValue(thread, &RIGHT);
+	VM_PushReal(thread, fmod(LEFT.real, RIGHT.real));
 }
 AVES_API NATIVE_FUNCTION(aves_Real_opPower)
 {
-	double right = RealFromValue(thread, RIGHT).real;
-	VM_PushReal(thread, pow(LEFT.real, right));
+	RealFromValue(thread, &RIGHT);
+	VM_PushReal(thread, pow(LEFT.real, RIGHT.real));
 }
 AVES_API NATIVE_FUNCTION(aves_Real_opPlus)
 {
