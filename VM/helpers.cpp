@@ -50,8 +50,8 @@ OVUM_API void IntFromValue(ThreadHandle thread, Value *v)
 			v->type = VM::vm->types.Int;
 			v->integer = (int64_t)v->real;
 		}
-
-		thread->ThrowTypeError(errors::toIntFailed);
+		else
+			thread->ThrowTypeError(errors::toIntFailed);
 	}
 }
 
@@ -74,8 +74,8 @@ OVUM_API void UIntFromValue(ThreadHandle thread, Value *v)
 			v->type = VM::vm->types.UInt;
 			v->uinteger = (uint64_t)v->real;
 		}
-
-		thread->ThrowTypeError(errors::toUIntFailed);
+		else
+			thread->ThrowTypeError(errors::toUIntFailed);
 	}
 }
 
@@ -90,8 +90,8 @@ OVUM_API void RealFromValue(ThreadHandle thread, Value *v)
 			SetReal_(v, (double)v->integer);
 		else if (v->type == VM::vm->types.UInt)
 			SetReal_(v, (double)v->uinteger);
-
-		thread->ThrowTypeError(errors::toRealFailed);
+		else
+			thread->ThrowTypeError(errors::toRealFailed);
 	}
 }
 
