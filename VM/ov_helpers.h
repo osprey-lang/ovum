@@ -7,13 +7,13 @@
 
 #include "ov_vm.h"
 
-OVUM_API Value IntFromValue(ThreadHandle thread, Value v);
+OVUM_API void IntFromValue(ThreadHandle thread, Value *v);
 
-OVUM_API Value UIntFromValue(ThreadHandle thread, Value v);
+OVUM_API void UIntFromValue(ThreadHandle thread, Value *v);
 
-OVUM_API Value RealFromValue(ThreadHandle thread, Value v);
+OVUM_API void RealFromValue(ThreadHandle thread, Value *v);
 
-OVUM_API Value StringFromValue(ThreadHandle thread, Value v);
+OVUM_API void StringFromValue(ThreadHandle thread, Value *v);
 
 
 // Checked arithmetics

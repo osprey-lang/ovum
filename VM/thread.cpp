@@ -551,8 +551,8 @@ void Thread::ConcatLL(Value *args, Value *result)
 	else
 	{
 		// string concatenation
-		*a = StringFromValue(this, *a);
-		*b = StringFromValue(this, *b);
+		StringFromValue(this, a);
+		StringFromValue(this, b);
 
 		Value output;
 		SetString_(output, String_Concat(this, a->common.string, b->common.string));
