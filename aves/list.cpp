@@ -111,6 +111,7 @@ AVES_API NATIVE_FUNCTION(aves_List_insert)
 	for (int32_t i = list->length; i > index; i--)
 		list->values[i] = list->values[i - 1];
 	list->values[index] = args[2];
+	list->length++;
 	list->version++;
 }
 AVES_API NATIVE_FUNCTION(aves_List_removeAt)
