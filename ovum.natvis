@@ -237,4 +237,16 @@
 			</Synthetic>
 		</Expand>
 	</Type>
+
+	<Type Name="instr::Instruction">
+		<DisplayString Condition="(flags &amp; instr::InstrFlags::BRANCH) != instr::InstrFlags::NONE">{{{opcode}, target={((Branch*)this)->target}}}</DisplayString>
+		<DisplayString Condition="(flags &amp; (instr::InstrFlags::LOAD_LOCAL | instr::InstrFlags::STORE_LOCAL)) != instr::InstrFlags::NONE">{{{opcode}, source={((MoveLocal*)this)-&gt;source}, target={((MoveLocal*)this)-&gt;target}}}</DisplayString>
+		<DisplayString>{{{opcode}}}</DisplayString>
+	</Type>
+
+	<Type Name="instr::MethodBuilder::InstrDesc">
+		<DisplayString Condition="removed">{{instr={instr}, removed}}</DisplayString>
+		<DisplayString Condition="stackHeight == -1">{{instr={instr}, unvisited}}</DisplayString>
+		<DisplayString>{{instr={instr}, stackHeight={stackHeight}}}</DisplayString>
+	</Type>
 </AutoVisualizer>
