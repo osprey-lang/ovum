@@ -357,10 +357,12 @@ namespace instr
 			uint32_t originalOffset;
 			uint32_t originalSize;
 			int32_t stackHeight;
+			bool removed;
 			Instruction *instr;
 
 			inline InstrDesc(const uint32_t originalOffset, const uint32_t originalSize, Instruction *instr) :
-				originalOffset(originalOffset), originalSize(originalSize), stackHeight(-1), instr(instr)
+				originalOffset(originalOffset), originalSize(originalSize),
+				stackHeight(-1), removed(false), instr(instr)
 			{ }
 		};
 		typedef std::vector<InstrDesc>::iterator instr_iter;
@@ -417,6 +419,8 @@ namespace instr
 		inline bool SetStackHeight(const int32_t index, const uint16_t stackHeight)
 		{
 			InstrDesc &instrDesc = instructions[index];
+			assert(!instrDesc.removed);
+
 			if (instrDesc.stackHeight >= 0 && stackHeight != instrDesc.stackHeight)
 				return false; // Uh-oh!
 
@@ -425,6 +429,7 @@ namespace instr
 		}
 
 		void MarkForRemoval(const int32_t index);
+		bool IsMarkedForRemoval(const int32_t index) const;
 		void PerformRemovals(Method::Overload *method);
 
 		inline Instruction *operator[](int32_t index) const
@@ -476,7 +481,7 @@ namespace instr
 		// The instruction is a DupInstr.
 		DUP = 0x0100,
 	};
-	ENUM_OPS(InstrFlags, uint8_t);
+	ENUM_OPS(InstrFlags, uint16_t);
 
 	class StackChange
 	{

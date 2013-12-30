@@ -54,15 +54,18 @@ namespace instr
 
 	void MethodBuilder::MarkForRemoval(const int32_t index)
 	{
-		assert(!instructions[index].instr->HasBranches());
-		// Mark the instruction for removal by setting the known stack height
-		// to a negative value. This will mark it as unreachable, and all such
-		// instructions are removed, as they are unnecessary.
-		// We use -2 rather than -1 as a way of distinguishing between unvisited
-		// and explicitly removed. Particularly, if you try to set the stack
-		// height of an explicitly removed instruction in debug mode, you will
-		// get a failed assertion.
-		instructions[index].stackHeight = -2;
+		// Note: it is okay to remove instructions that have incoming branches;
+		// the branch is simply forwarded to the next instruction.
+		// Also note: previously removals were marked by setting stackHeight to -2.
+		// This cannot be done, as we must preserve the known stack height in case
+		// the instruction has incoming branches; otherwise we cannot verify that
+		// it is reached with a consistent stack height on all branches.
+		instructions[index].removed = true;
+	}
+
+	bool MethodBuilder::IsMarkedForRemoval(const int32_t index) const
+	{
+		return instructions[index].removed;
 	}
 
 	void MethodBuilder::PerformRemovals(Method::Overload *method)
@@ -90,10 +93,11 @@ namespace instr
 		int32_t oldIndex = 0, newIndex = 0;
 		for (instr_iter i = instructions.begin(); i != instructions.end(); oldIndex++)
 		{
-			if (i->stackHeight < 0)
+			if (i->stackHeight < 0 || i->removed)
 			{
 				// This instruction may have been the first instruction in a protected region,
-				// in which case the next following instruction becomes the first in that block.
+				// or the target of a branch, in which case the next following instruction
+				// becomes the first in that block, or the target of the branch.
 				// Hence:
 				newIndices[oldIndex] = newIndex;
 				delete i->instr;
@@ -531,6 +535,9 @@ void Thread::CalculateStackHeights(instr::MethodBuilder &builder, Method::Overlo
 					throw MethodInitException("Instruction reached with different stack heights.",
 						method, index, MethodInitException::INCONSISTENT_STACK_HEIGHT);
 				break; // This branch has already been visited!
+				// Note: the instruction may have been marked for removal. The branch is
+				// still perfectly safe to skip, because the only way to get an instruction
+				// considered for removal is to visit it.
 			}
 			else
 				builder.SetStackHeight(index, stack.GetStackHeight());
@@ -539,56 +546,82 @@ void Thread::CalculateStackHeights(instr::MethodBuilder &builder, Method::Overlo
 				StackChange sc = instr->GetStackChange();
 				if (sc.removed > 0 || instr->HasInput())
 				{
-					// If:
-					//   1. there is a previous instruction
-					//   2. prev has an output
-					//   3. prev added exactly one value to the stack, or is dup
-					//   4. instr has no incoming branches
-					//   5. instr is a StoreLocal
-					// then we can update prev to point directly to the local variable,
-					// thus avoiding the stack altogether.
-					// If #1–4 are true, but instr is a pop, then we can similarly update
-					// prev's output to discard the result.
-					bool canUpdatePrev = prev != nullptr &&
-						prev->HasOutput() &&
-						(prev->GetStackChange().added == 1 || prev->IsDup()) &&
-						!instr->HasBranches();
+					// We can perform a bunch of fun optimizations here if:
+					//   1. there is a previous instruction, and
+					//   2. the current instruction has no incoming branches.
+					// If either is not true, we cannot optimize any local offsets here,
+					// so we skip to the default input offset.
+					if (prev == nullptr) goto updateInputDefault;
+					if (instr->HasBranches()) goto updateInputDefault;
 
-					if (canUpdatePrev && instr->IsStoreLocal())
+					// First, let's see if we can update the output of the previous instruction.
+					// If:
+					//   1. prev has an output, and
+					//   2. prev added exactly one value to the stack, or is dup
+					// then, if instr is a StoreLocal, we can update prev to point directly
+					// to the local variable, thus avoiding the stack altogether; otherwise,
+					// if instr is a pop, we can similarly update prev's output to discard
+					// the result.
+					// If either condition is not true, we must try to update the input of the
+					// current instruction.
+					if (!prev->HasOutput()) goto updateInput;
+					if (prev->GetStackChange().added != 1 && !prev->IsDup()) goto updateInput;
+
+					if (instr->IsStoreLocal())
 					{
 						prev->UpdateOutput(static_cast<StoreLocal*>(instr)->target, false);
 						builder.MarkForRemoval(index);
+						goto updateDone;
 					}
-					else if (canUpdatePrev && instr->opcode == OPI_POP)
+					if (instr->opcode == OPI_POP)
 					{
 						// Write the result to the stack, but pretend it's not on the stack.
 						// (This won't increment the stack height)
 						prev->UpdateOutput(method->GetStackOffset(stack.GetStackHeight() - 1), false);
 						builder.MarkForRemoval(index);
+						goto updateDone;
 					}
-					else
+
+					updateInput:
 					{
-						// If:
-						//   1. there is a previous instruction
-						//   2. prev is a LoadLocal
-						//   3. instr removes exactly one value from the stack
-						//   4. instr has an input that is not required to be on the stack
-						//   5. neither prev nor instr has incoming branches
-						// then we can update instr to take the input directly from prev's local,
-						// and remove prev.
-						// Note: we don't have to test sc.removed == 1 here, because RequiresStackInput()
-						// always returns true if the instruction uses more than one value.
-						if (prev != nullptr && prev->IsLoadLocal() && !prev->HasBranches() &&
-							instr->HasInput() && !instr->RequiresStackInput() && !instr->HasBranches())
+						// If instr requires its input to be on the stack, or it has
+						// incoming branches, then we can't optimize its input.
+						// instr->HasBranches() is tested for above.
+						if (instr->RequiresStackInput()) goto updateInputDefault;
+
+						if (prev->IsLoadLocal() && instr->HasInput())
 						{
+							// If prev is a LoadLocal, then we can update instr to take the input
+							// directly from prev's local and remove prev.
 							instr->UpdateInput(static_cast<LoadLocal*>(prev)->source, false);
-							// prev should be nulled after branching, even unconditionally,
-							// so this is fine.
 							builder.MarkForRemoval(index - 1);
+							goto updateDone;
 						}
-						else
-							instr->UpdateInput(method->GetStackOffset(stack.GetStackHeight() - sc.removed), true);
+						if (prev->IsDup() && instr->IsBranch() && ((Branch*)instr)->IsConditional())
+						{
+							// dup followed by conditional branch: use the dup's input for the branch,
+							// and pretend it's not on the stack.
+							// For example, something like this:
+							//     ldloc 0
+							//     ldmem "value"
+							//     dup
+							//     brnull LABEL
+							// gets turned into:
+							//     ldloc 0
+							//     ldmem "value" onto stack
+							//     brnull LABEL with local condition
+							instr->UpdateInput(static_cast<DupInstr*>(prev)->source, false);
+							builder.MarkForRemoval(index - 1);
+							goto updateDone;
+						}
 					}
+
+					updateInputDefault:
+					{
+						instr->UpdateInput(method->GetStackOffset(stack.GetStackHeight() - sc.removed), true);
+					}
+
+					updateDone: ;
 				}
 
 				if (instr->HasOutput())
@@ -616,7 +649,7 @@ void Thread::CalculateStackHeights(instr::MethodBuilder &builder, Method::Overlo
 					{
 						// Great! Then we can turn the previous instruction into a
 						// brlt/brgt/brlte/brgte as required.
-						IntermediateOpcode newOpcode;
+						IntermediateOpcode newOpcode = OPI_NOP;
 						if (br->opcode == OPI_BRTRUE_L || br->opcode == OPI_BRTRUE_S)
 						{
 							// eq, brtrue  => breq
@@ -631,7 +664,6 @@ void Thread::CalculateStackHeights(instr::MethodBuilder &builder, Method::Overlo
 							// There is a one-instruction gap between OPI_EQ_* and OPI_LT_*,
 							// where OPI_CMP_* is, but fortunately that gap is covered by
 							// OPI_BRNEQ, which is not produced by this code.
-							newOpcode = (IntermediateOpcode)(OPI_BRLT + (prev->opcode - OPI_LT_L) / 2);
 							switch (prev->opcode)
 							{
 							case OPI_EQ_L:  case OPI_EQ_S:  newOpcode = OPI_BREQ;  break;
@@ -639,7 +671,6 @@ void Thread::CalculateStackHeights(instr::MethodBuilder &builder, Method::Overlo
 							case OPI_GT_L:  case OPI_GT_S:  newOpcode = OPI_BRGT;  break;
 							case OPI_LTE_L: case OPI_LTE_S: newOpcode = OPI_BRLTE; break;
 							case OPI_GTE_L: case OPI_GTE_S: newOpcode = OPI_BRGTE; break;
-							default: newOpcode = OPI_NOP; break; // Oh dear
 							}
 						}
 						else
@@ -656,13 +687,12 @@ void Thread::CalculateStackHeights(instr::MethodBuilder &builder, Method::Overlo
 							case OPI_GT_L:  case OPI_GT_S:  newOpcode = OPI_BRNGT;  break;
 							case OPI_LTE_L: case OPI_LTE_S: newOpcode = OPI_BRNLTE; break;
 							case OPI_GTE_L: case OPI_GTE_S: newOpcode = OPI_BRNGTE; break;
-							default: newOpcode = OPI_NOP; break; // Oh dear
 							}
 						}
 						assert(newOpcode != OPI_NOP);
 
 						// Set the previous instruction to the new comparison thing
-						// (This also deletes the Instruction*)
+						// (This also deletes the old Instruction*)
 						builder.SetInstruction(index - 1,
 							new BranchComparison(static_cast<ExecOperator*>(prev)->args,
 								br->target, newOpcode),
