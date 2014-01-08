@@ -232,7 +232,7 @@ AVES_API NATIVE_FUNCTION(aves_BufferView_new)
 		VM_ThrowTypeError(thread);
 	if (!IsType(args[2], Types::BufferViewKind))
 		VM_ThrowTypeError(thread);
-	if (args[2].integer < BufferView::INT16 ||
+	if (args[2].integer < BufferView::BYTE ||
 		args[2].integer > BufferView::FLOAT64)
 	{
 		VM_PushString(thread, strings::kind);
@@ -253,6 +253,14 @@ AVES_API NATIVE_FUNCTION(aves_BufferView_get_item)
 	unsigned int index;
 	switch (view->kind)
 	{
+	case BufferView::BYTE:
+		index = GetBufferIndex(thread, buf, args[1], 1);
+		VM_PushUInt(thread, buf->bytes[index]);
+		break;
+	case BufferView::SBYTE:
+		index = GetBufferIndex(thread, buf, args[1], 1);
+		VM_PushInt(thread, buf->sbytes[index]);
+		break;
 	case BufferView::INT16:
 		index = GetBufferIndex(thread, buf, args[1], 2);
 		VM_PushInt(thread, buf->int16s[index]);
@@ -278,11 +286,11 @@ AVES_API NATIVE_FUNCTION(aves_BufferView_get_item)
 		VM_PushUInt(thread, buf->uint64s[index]);
 		break;
 	case BufferView::FLOAT32:
-		index = GetBufferIndex(thread, buf, args[1], 4);
+		index = GetBufferIndex(thread, buf, args[1], sizeof(float));
 		VM_PushReal(thread, buf->floats[index]);
 		break;
 	case BufferView::FLOAT64:
-		index = GetBufferIndex(thread, buf, args[1], 8);
+		index = GetBufferIndex(thread, buf, args[1], sizeof(double));
 		VM_PushReal(thread, buf->doubles[index]);
 		break;
 	}
@@ -292,7 +300,7 @@ AVES_API NATIVE_FUNCTION(aves_BufferView_set_item)
 	BufferView *view = (BufferView*)THISV.instance;
 	Buffer *buf = (Buffer*)view->buffer.instance;
 
-	if (view->kind >= BufferView::INT16 && view->kind <= BufferView::UINT64)
+	if (view->kind >= BufferView::BYTE && view->kind <= BufferView::UINT64)
 	{
 		if (args[2].type != Types::Int && args[2].type != Types::UInt)
 			VM_ThrowTypeError(thread);
@@ -303,6 +311,14 @@ AVES_API NATIVE_FUNCTION(aves_BufferView_set_item)
 	unsigned int index;
 	switch (view->kind)
 	{
+	case BufferView::BYTE:
+		index = GetBufferIndex(thread, buf, args[1], 1);
+		buf->bytes[index] = (uint8_t)args[2].integer;
+		break;
+	case BufferView::SBYTE:
+		index = GetBufferIndex(thread, buf, args[1], 1);
+		buf->sbytes[index] = (int8_t)args[2].integer;
+		break;
 	case BufferView::INT16:
 		index = GetBufferIndex(thread, buf, args[1], 2);
 		buf->int16s[index] = (int16_t)args[2].integer;
@@ -328,11 +344,11 @@ AVES_API NATIVE_FUNCTION(aves_BufferView_set_item)
 		buf->uint64s[index] = args[2].uinteger;
 		break;
 	case BufferView::FLOAT32:
-		index = GetBufferIndex(thread, buf, args[1], 4);
+		index = GetBufferIndex(thread, buf, args[1], sizeof(float));
 		buf->floats[index] = (float)args[2].real;
 		break;
 	case BufferView::FLOAT64:
-		index = GetBufferIndex(thread, buf, args[1], 8);
+		index = GetBufferIndex(thread, buf, args[1], sizeof(double));
 		buf->doubles[index] = args[2].real;
 		break;
 	}
@@ -346,6 +362,10 @@ AVES_API NATIVE_FUNCTION(aves_BufferView_get_length)
 	int valueSize;
 	switch (view->kind)
 	{
+	case BufferView::BYTE:
+	case BufferView::SBYTE:
+		valueSize = 1;
+		break;
 	case BufferView::INT16:
 	case BufferView::UINT16:
 		valueSize = 2;

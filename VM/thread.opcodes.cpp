@@ -55,7 +55,7 @@
 		(ptarg)->common.string = svalue; \
 	}
 
-void Thread::Evaluate(/*register StackFrame *frame*/)
+void Thread::Evaluate()
 {
 #ifdef THREADED_EVALUATION
 	static void *opcodeTargets[256] = {
@@ -1141,10 +1141,11 @@ endfinally:
 	return;
 }
 
-bool Thread::FindErrorHandler(register StackFrame *frame)
+bool Thread::FindErrorHandler()
 {
 	typedef Method::TryBlock::TryKind TryKind;
 
+	register StackFrame *frame = currentFrame;
 	Method::Overload *method = frame->method;
 	uint32_t offset = (uint32_t)(this->ip - method->entry);
 	for (int32_t t = 0; t < method->tryBlockCount; t++)
@@ -1153,8 +1154,9 @@ bool Thread::FindErrorHandler(register StackFrame *frame)
 		if (offset >= tryBlock.tryStart && offset <= tryBlock.tryEnd)
 		{
 			// The ip is inside a try block! Let's find a catch or finally.
-			if (tryBlock.kind == TryKind::CATCH)
+			switch (tryBlock.kind)
 			{
+			case TryKind::CATCH:
 				for (int32_t c = 0; c < tryBlock.catches.count; c++)
 				{
 					Method::CatchBlock &catchBlock = tryBlock.catches.blocks[c];
@@ -1166,24 +1168,29 @@ bool Thread::FindErrorHandler(register StackFrame *frame)
 						return true;
 					}
 				}
-			}
-			else if (tryBlock.kind == TryKind::FINALLY)
-			{
-				frame->stackCount = 0;
-				// Continue evaluation inside the finally block. When the inner
-				// Evaluate returns, we continue searching through the try blocks,
-				// until we've exhausted all of them.
-				uint8_t *const prevIp = this->ip;
-				// We must save the current error, because if an error is thrown and
-				// caught inside the finally, currentError will be updated to contain
-				// that error. We will cause problems if we don't restore the old one.
-				Value prevError = this->currentError;
+				break;
+			case TryKind::FINALLY:
+				{
+					frame->stackCount = 0;
+					// We must save the current error, because if an error is thrown and
+					// caught inside the finally, currentError will be updated to contain
+					// that error. We will cause problems if we don't restore the old one.
+					Value prevError = this->currentError;
 
-				this->ip = method->entry + tryBlock.finallyBlock.finallyStart;
-				Evaluate(/*frame*/);
-				this->ip = prevIp;
+					this->ip = method->entry + tryBlock.finallyBlock.finallyStart;
+					enter:
+					try { Evaluate(); }
+					catch (OvumException&)
+					{
+						if (FindErrorHandler())
+							goto enter;
+						throw;
+					}
+					this->ip = method->entry + offset;
 
-				this->currentError = prevError;
+					this->currentError = prevError;
+				}
+				break;
 			}
 			// We can't stop enumerating the blocks just yet.
 			// There may be another try block that actually handles the error.
@@ -1219,7 +1226,14 @@ void Thread::EvaluateLeave(register StackFrame *frame, const int32_t target)
 			Value prevError = this->currentError;
 
 			this->ip = method->entry + tryBlock.finallyBlock.finallyStart;
-			Evaluate(/*frame*/);
+			enter:
+			try { Evaluate(); }
+			catch (OvumException&)
+			{
+				if (FindErrorHandler())
+					goto enter;
+				throw;
+			}
 			this->ip = prevIp;
 
 			this->currentError = prevError;

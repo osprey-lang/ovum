@@ -194,6 +194,44 @@ public abstract class Iterator
 		return output.toString();
 	}
 
+	public intersperse(value)
+	{
+		if moveNext()
+		{
+			yield current;
+
+			while moveNext()
+			{
+				yield value;
+				yield current;
+			}
+		}
+	}
+	public intersperse(value, frequency)
+	{
+		frequency = int(frequency);
+		if frequency < 0:
+			throw new ArgumentRangeError("frequency");
+
+		return intersperseInner(value, frequency);
+	}
+	private intersperseInner(value, frequency)
+	{
+		if moveNext()
+		{
+			yield current;
+
+			var i = 1 % frequency;
+			while moveNext()
+			{
+				if i == 0:
+					yield value;
+				i = (i + 1) % frequency;
+				yield current;
+			}
+		}
+	}
+
 	public last()
 	{
 		if not moveNext():

@@ -59,17 +59,20 @@ typedef struct BufferView_S
 	// These must be the same as the values in Buffer.osp
 	enum BufferViewKind
 	{
-		INT16 = 1,
-		INT32 = 2,
-		INT64 = 3,
-		UINT16 = 4,
-		UINT32 = 5,
-		UINT64 = 6,
-		FLOAT32 = 7,
-		FLOAT64 = 8,
+		BYTE = 1,
+		SBYTE = 2,
+		INT16 = 3,
+		INT32 = 4,
+		INT64 = 5,
+		UINT16 = 6,
+		UINT32 = 7,
+		UINT64 = 8,
+		FLOAT32 = 9,
+		FLOAT64 = 10,
 	};
-	Value buffer;
+
 	BufferViewKind kind;
+	Value buffer;
 } BufferView;
 
 AVES_API void aves_BufferView_init(TypeHandle type);
