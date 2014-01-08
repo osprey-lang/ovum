@@ -1410,6 +1410,7 @@ Method *Module::ReadSingleMethod(ModuleReader &reader, Module *module)
 
 Method::TryBlock *Module::ReadTryBlocks(ModuleReader &reader, Module *module, int32_t &tryCount)
 {
+	typedef Method::TryBlock::TryKind TryKind;
 	unique_ptr<Method::TryBlock[]> output(nullptr);
 
 	CHECKPOS_BEFORE();
@@ -1428,38 +1429,41 @@ Method::TryBlock *Module::ReadTryBlocks(ModuleReader &reader, Module *module, in
 		Method::TryBlock *curTry = tries + i;
 		*curTry = Method::TryBlock(kind, tryStart, tryEnd);
 
-		if (kind == Method::TryBlock::TryKind::FINALLY)
+		switch (kind)
 		{
+		case TryKind::FINALLY:
 			curTry->finallyBlock.finallyStart = reader.ReadUInt32();
 			curTry->finallyBlock.finallyEnd = reader.ReadUInt32();
-		}
-		else if (kind == Method::TryBlock::TryKind::CATCH)
-		{
-			uint32_t catchSize = reader.ReadUInt32();
-			if (catchSize != 0)
+			break;
+		case TryKind::CATCH:
 			{
-				int32_t catchLength = reader.ReadInt32();
-				unique_ptr<Method::CatchBlock[]> catches(new Method::CatchBlock[catchLength]);
-
-				for (int32_t i = 0; i < catchLength; i++)
+				uint32_t catchSize = reader.ReadUInt32();
+				if (catchSize != 0)
 				{
-					Method::CatchBlock *curCatch = catches.get() + i;
+					int32_t catchLength = reader.ReadInt32();
+					unique_ptr<Method::CatchBlock[]> catches(new Method::CatchBlock[catchLength]);
 
-					curCatch->caughtTypeId = reader.ReadToken();
-					// Try to resolve the type right away. If it fails, do it when the method
-					// is initialized instead.
-					if (module->FindType(curCatch->caughtTypeId))
-						curCatch->caughtType = module->FindType(curCatch->caughtTypeId);
-					else
-						curCatch->caughtType = nullptr;
+					for (int32_t i = 0; i < catchLength; i++)
+					{
+						Method::CatchBlock *curCatch = catches.get() + i;
 
-					curCatch->catchStart   = reader.ReadUInt32();
-					curCatch->catchEnd     = reader.ReadUInt32();
+						curCatch->caughtTypeId = reader.ReadToken();
+						// Try to resolve the type right away. If it fails, do it when the method
+						// is initialized instead.
+						if (module->FindType(curCatch->caughtTypeId))
+							curCatch->caughtType = module->FindType(curCatch->caughtTypeId);
+						else
+							curCatch->caughtType = nullptr;
+
+						curCatch->catchStart = reader.ReadUInt32();
+						curCatch->catchEnd   = reader.ReadUInt32();
+					}
+
+					curTry->catches.count = catchLength;
+					curTry->catches.blocks = catches.release();
 				}
-
-				curTry->catches.count = catchLength;
-				curTry->catches.blocks = catches.release();
 			}
+			break;
 		}
 	}
 

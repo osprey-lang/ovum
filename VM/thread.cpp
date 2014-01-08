@@ -32,6 +32,7 @@ namespace thread_errors
 	String *NoIndexerFound              = _S(_NoIndexerFound);
 }
 
+
 Thread::Thread() :
 	currentFrame(nullptr), state(ThreadState::CREATED),
 	currentError(NULL_VALUE), ip(nullptr),
@@ -58,13 +59,13 @@ void Thread::Start(Method *method, Value &result)
 	assert(mo != nullptr);
 	assert((mo->flags & MethodFlags::VARIADIC) == MethodFlags::NONE);
 
-	StackFrame *frame = PushStackFrame<true>(0, nullptr, mo);
+	PushStackFrame<true>(0, nullptr, mo);
 
 	if ((mo->flags & MethodFlags::NATIVE) == MethodFlags::NATIVE)
 	{
-		mo->nativeEntry(this, 0, (Value*)frame);
-		if (frame->stackCount == 0)
-			frame->evalStack[0].type = nullptr;
+		mo->nativeEntry(this, 0, (Value*)currentFrame);
+		if (currentFrame->stackCount == 0)
+			currentFrame->evalStack[0].type = nullptr;
 	}
 	else
 	{
@@ -72,20 +73,17 @@ void Thread::Start(Method *method, Value &result)
 			InitializeMethod(mo);
 		this->ip = mo->entry;
 		entry:
-		try
-		{
-			Evaluate(/*frame*/);
-		}
+		try { Evaluate(); }
 		catch (OvumException&)
 		{
-			if (FindErrorHandler(frame))
+			if (FindErrorHandler())
 				goto entry;
 			throw;
 		}
-		assert(frame->stackCount == 1);
+		assert(currentFrame->stackCount == 1);
 	}
 
-	result = frame->evalStack[0];
+	result = currentFrame->evalStack[0];
 	currentFrame = nullptr;
 	ip = nullptr;
 
@@ -284,7 +282,7 @@ void Thread::InvokeMethodOverload(Method::Overload *mo, unsigned int argCount,
 
 	// And now we can push the new stack frame!
 	// Note: this updates currentFrame
-	StackFrame *frame = PushStackFrame<false>(argCount, args, mo);
+	PushStackFrame<false>(argCount, args, mo);
 
 	if ((flags & MethodFlags::NATIVE) == MethodFlags::NATIVE)
 	{
@@ -297,14 +295,14 @@ void Thread::InvokeMethodOverload(Method::Overload *mo, unsigned int argCount,
 			// Native methods have no handlers for OvumExceptions.
 			// Hence, all we do is restore the previous stack frame and IP,
 			// then rethrow.
-			currentFrame = frame->prevFrame;
-			this->ip = frame->prevInstr;
+			this->ip = currentFrame->prevInstr;
+			currentFrame = currentFrame->prevFrame;
 			throw;
 		}
 		// Native methods are not required to return with one value on the stack, but if
 		// they have more than one, only the lowest one is used.
-		if (frame->stackCount == 0)
-			frame->evalStack[0].type = nullptr;
+		if (currentFrame->stackCount == 0)
+			currentFrame->evalStack[0].type = nullptr;
 	}
 	else
 	{
@@ -313,28 +311,26 @@ void Thread::InvokeMethodOverload(Method::Overload *mo, unsigned int argCount,
 
 		this->ip = mo->entry;
 		entry:
-		try
-		{
-			Evaluate(/*frame*/);
-		}
+		try { Evaluate(); }
 		catch (OvumException&)
 		{
-			if (FindErrorHandler(frame))
+			if (FindErrorHandler())
 				// IP is now at the catch handler's offset, so let's
 				// re-enter the method!
 				goto entry;
 
 			// Restore previous stack frame and IP, and rethrow
-			currentFrame = frame->prevFrame;
-			this->ip = frame->prevInstr;
+			this->ip = currentFrame->prevInstr;
+			currentFrame = currentFrame->prevFrame;
 			throw;
 		}
 		// It should not be possible to return from a method with
 		// anything other than exactly one value on the stack!
-		assert(frame->stackCount == 1);
+		assert(currentFrame->stackCount == 1);
 	}
 
 	// restore previous stack frame
+	register StackFrame *frame = currentFrame;
 	currentFrame = frame->prevFrame;
 	this->ip = frame->prevInstr;
 	// Note: If the method has 0 parameters and the result is on the
@@ -963,7 +959,7 @@ void Thread::DisposeGCLock()
 
 // Note: argCount and args DO include the instance here!
 template<bool First>
-StackFrame *Thread::PushStackFrame(const uint32_t argCount, Value *args, Method::Overload *method)
+void Thread::PushStackFrame(const uint32_t argCount, Value *args, Method::Overload *method)
 {
 	if (First)
 	{
@@ -1004,7 +1000,8 @@ StackFrame *Thread::PushStackFrame(const uint32_t argCount, Value *args, Method:
 			(locals++)->type = nullptr;
 	}
 
-	return currentFrame = newFrame;
+	currentFrame = newFrame;
+	//return currentFrame = newFrame;
 }
 
 void Thread::PrepareVariadicArgs(const MethodFlags flags, const uint32_t argCount, const uint32_t paramCount, StackFrame *frame)

@@ -346,7 +346,7 @@ private:
 	//   method:
 	//     The overload that is being invoked in the stack frame.
 	template<bool First>
-	StackFrame *PushStackFrame(const uint32_t argCount, Value *args, Method::Overload *method);
+	void PushStackFrame(const uint32_t argCount, Value *args, Method::Overload *method);
 
 	void PrepareVariadicArgs(const MethodFlags flags, const uint32_t argCount, const uint32_t paramCount, StackFrame *frame);
 
@@ -360,7 +360,7 @@ private:
 	NOINLINE void SuspendForGC();
 
 	void Evaluate();
-	bool FindErrorHandler(register StackFrame *frame);
+	bool FindErrorHandler();
 	void EvaluateLeave(register StackFrame *frame, const int32_t target);
 
 	String *GetStackTrace();

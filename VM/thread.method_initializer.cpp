@@ -136,19 +136,20 @@ namespace instr
 			tryBlock->tryStart = newIndices[tryBlock->tryStart];
 			tryBlock->tryEnd = newIndices[tryBlock->tryEnd];
 
-			if (tryBlock->kind == TryKind::CATCH)
+			switch (tryBlock->kind)
 			{
+			case TryKind::CATCH:
 				for (int32_t c = 0; c < tryBlock->catches.count; c++)
 				{
 					Method::CatchBlock *catchBlock = tryBlock->catches.blocks + c;
 					catchBlock->catchStart = newIndices[catchBlock->catchStart];
 					catchBlock->catchEnd = newIndices[catchBlock->catchEnd];
 				}
-			}
-			else if (tryBlock->kind == TryKind::FINALLY)
-			{
+				break;
+			case TryKind::FINALLY:
 				tryBlock->finallyBlock.finallyStart = newIndices[tryBlock->finallyBlock.finallyStart];
 				tryBlock->finallyBlock.finallyEnd = newIndices[tryBlock->finallyBlock.finallyEnd];
+				break;
 			}
 		}
 	}
@@ -230,12 +231,15 @@ public:
 
 class SmallStackManager : public StackManager
 {
+public:
+	static const int MaxStack = 8;
+
 private:
 	typedef struct Branch_S
 	{
 		int32_t firstInstr;
 		uint32_t stackHeight;
-		StackEntry stack[8];
+		StackEntry stack[MaxStack];
 	} Branch;
 
 	std::queue<Branch> branches;
@@ -294,8 +298,6 @@ public:
 
 		return true; // Yay!
 	}
-
-	static const int MaxStack = 8;
 };
 
 class LargeStackManager : public StackManager
@@ -340,6 +342,7 @@ private:
 			swap(one.firstInstr, two.firstInstr);
 			swap(one.maxStack, two.maxStack);
 			swap(one.stackHeight, two.stackHeight);
+			swap(one.stack, two.stack);
 		}
 
 		inline Branch &operator=(Branch other)
@@ -476,25 +479,27 @@ void Thread::InitializeBranchOffsets(instr::MethodBuilder &builder, Method::Over
 
 		for (int32_t i = 0; i < method->tryBlockCount; i++)
 		{
-			Method::TryBlock *tryBlock = method->tryBlocks + i;
-			tryBlock->tryStart = builder.FindIndex(tryBlock->tryStart);
-			tryBlock->tryEnd = builder.FindIndex(tryBlock->tryEnd);
+			Method::TryBlock &tryBlock = method->tryBlocks[i];
+			tryBlock.tryStart = builder.FindIndex(tryBlock.tryStart);
+			tryBlock.tryEnd = builder.FindIndex(tryBlock.tryEnd);
 
-			if (tryBlock->kind == TryKind::CATCH)
+			switch (tryBlock.kind)
 			{
-				for (int32_t c = 0; c < tryBlock->catches.count; c++)
+			case TryKind::CATCH:
+				for (int32_t c = 0; c < tryBlock.catches.count; c++)
 				{
-					Method::CatchBlock *catchBlock = tryBlock->catches.blocks + c;
-					if (catchBlock->caughtType == nullptr)
-						catchBlock->caughtType = TypeFromToken(method, catchBlock->caughtTypeId);
-					catchBlock->catchStart = builder.FindIndex(catchBlock->catchStart);
-					catchBlock->catchEnd = builder.FindIndex(catchBlock->catchEnd);
+					Method::CatchBlock &catchBlock = tryBlock.catches.blocks[c];
+					if (catchBlock.caughtType == nullptr)
+						catchBlock.caughtType = TypeFromToken(method, catchBlock.caughtTypeId);
+					catchBlock.catchStart = builder.FindIndex(catchBlock.catchStart);
+					catchBlock.catchEnd = builder.FindIndex(catchBlock.catchEnd);
 				}
-			}
-			else if (tryBlock->kind == TryKind::FINALLY)
-			{
-				tryBlock->finallyBlock.finallyStart = builder.FindIndex(tryBlock->finallyBlock.finallyStart);
-				tryBlock->finallyBlock.finallyEnd = builder.FindIndex(tryBlock->finallyBlock.finallyEnd);
+				break;
+			case TryKind::FINALLY:
+				auto &finallyBlock = tryBlock.finallyBlock;
+				finallyBlock.finallyStart = builder.FindIndex(finallyBlock.finallyStart);
+				finallyBlock.finallyEnd = builder.FindIndex(finallyBlock.finallyEnd);
+				break;
 			}
 		}
 }
@@ -750,20 +755,23 @@ void Thread::WriteInitializedBody(instr::MethodBuilder &builder, Method::Overloa
 		tryBlock.tryStart = builder.GetNewOffset(tryBlock.tryStart);
 		tryBlock.tryEnd = builder.GetNewOffset(tryBlock.tryEnd);
 
-		if (tryBlock.kind == TryKind::CATCH)
+		switch (tryBlock.kind)
 		{
+		case TryKind::CATCH:
 			for (int32_t c = 0; c < tryBlock.catches.count; c++)
 			{
 				Method::CatchBlock &catchBlock = tryBlock.catches.blocks[c];
 				catchBlock.catchStart = builder.GetNewOffset(catchBlock.catchStart);
 				catchBlock.catchEnd = builder.GetNewOffset(catchBlock.catchEnd);
 			}
-		}
-		else if (tryBlock.kind == TryKind::FINALLY)
-		{
-			auto &finallyBlock = tryBlock.finallyBlock;
-			finallyBlock.finallyStart = builder.GetNewOffset(finallyBlock.finallyStart);
-			finallyBlock.finallyEnd = builder.GetNewOffset(finallyBlock.finallyEnd);
+			break;
+		case TryKind::FINALLY:
+			{
+				auto &finallyBlock = tryBlock.finallyBlock;
+				finallyBlock.finallyStart = builder.GetNewOffset(finallyBlock.finallyStart);
+				finallyBlock.finallyEnd = builder.GetNewOffset(finallyBlock.finallyEnd);
+			}
+			break;
 		}
 	}
 
@@ -1129,6 +1137,7 @@ void Thread::InitializeInstructions(instr::MethodBuilder &builder, Method::Overl
 				ip += sizeof(uint16_t);
 				std::unique_ptr<int32_t[]> targets(new int32_t[count]);
 				CopyMemoryT(targets.get(), (int32_t*)ip, count);
+				ip += count * sizeof(int32_t);
 				instr = new Switch(count, targets.release());
 			}
 			break;
@@ -1321,7 +1330,7 @@ void Thread::InitializeInstructions(instr::MethodBuilder &builder, Method::Overl
 			}
 			break;
 		default:
-			throw L"Invalid opcode encountered";
+			throw MethodInitException("Invalid opcode encountered.", method);
 		}
 		builder.Append((uint32_t)((char*)opc - (char*)method->entry), (uint32_t)((char*)ip - (char*)opc), instr);
 	}
