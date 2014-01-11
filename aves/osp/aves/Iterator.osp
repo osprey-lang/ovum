@@ -72,6 +72,15 @@ public abstract class Iterator
 		return false;
 	}
 
+	public each(func)
+	{
+		if func is null:
+			throw new ArgumentNullError("func");
+
+		while moveNext():
+			func(current);
+	}
+
 	/// Summary: Returns a new {Iterator} which produces the items from
 	///          this sequence that match the given predicate.
 	/// Param predicate: An invokable value that takes one argument
@@ -210,7 +219,7 @@ public abstract class Iterator
 	public intersperse(value, frequency)
 	{
 		frequency = int(frequency);
-		if frequency < 0:
+		if frequency <= 0:
 			throw new ArgumentRangeError("frequency");
 
 		return intersperseInner(value, frequency);

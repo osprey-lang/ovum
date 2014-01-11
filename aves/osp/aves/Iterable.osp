@@ -1,0 +1,189 @@
+namespace aves;
+
+/// Summary: Exposes a read-only interface that can be used to iterate
+///          over a specific object.
+/// Remarks: Unlike {Iterator} objects, {Iterable} can be iterated
+///          over any number of times. Because {Iterator} instances
+///          can only be iterated over once, you cannot pass such
+///          an instance into the {Iterable} constructor.
+public inheritable Iterable
+{
+	/// Summary: Creates a new Iterable representing an empty collection.
+	public new()
+	{
+		collection = null;
+	}
+	/// Summary: Creates a new Iterable for the specified collection.
+	/// Param collection: The collection to create an iterable wrapper for.
+	///          If this value is null, it is treated like an empty collection.
+	/// Throws ArgumentNullError: {collection} is null.
+	/// Throws ArgumentError: {collection} is of a type derived from {Iterator}.
+	public new(collection)
+	{
+		if collection is null:
+			throw new ArgumentNullError("collection");
+		if collection is Iterator:
+			throw new ArgumentError("The collection cannot be of a type derived from Iterator.", "collection");
+
+		this.collection = collection;
+	}
+
+	private collection;
+
+	public any(predicate)
+	{
+		return this.iter.any(predicate);
+	}
+
+	public all(predicate)
+	{
+		return this.iter.all(predicate);
+	}
+
+	public each(func)
+	{
+		if func is null:
+			throw new ArgumentNullError("func");
+
+		return new EachIterable(this, func);
+	}
+
+	public filter(predicate)
+	{
+		if predicate is null:
+			throw new ArgumentNullError("predicate");
+
+		return new FilterIterable(this, predicate);
+	}
+
+	public first()
+	{
+		return this.iter.first();
+	}
+	public first(predicate)
+	{
+		return this.iter.first(predicate);
+	}
+
+	public firstOrNull()
+	{
+		return this.iter.firstOrNull();
+	}
+	public firstOrNull(predicate)
+	{
+		return this.iter.firstOrNull(predicate);
+	}
+
+	public fold(func)
+	{
+		return this.iter.fold(func);
+	}
+	public fold(init, func)
+	{
+		return this.iter.fold(init, func);
+	}
+
+	public join(sep)
+	{
+		return this.iter.join(sep);
+	}
+
+	public intersperse(value)
+	{
+		return new IntersperseIterable(this, value);
+	}
+	public intersperse(value, frequency)
+	{
+		frequency = int(frequency);
+		if frequency <= 0:
+			throw new ArgumentRangeError("frequency");
+
+		return new IntersperseIterable(this, value, frequency);
+	}
+
+	public last()
+	{
+		return this.iter.last();
+	}
+	public last(predicate)
+	{
+		return this.iter.last(predicate);
+	}
+
+	public lastOrNull()
+	{
+		return this.iter.lastOrNull();
+	}
+	public lastOrNull(predicate)
+	{
+		return this.iter.lastOrNull(predicate);
+	}
+
+	public map(func)
+	{
+		if func is null:
+			throw new ArgumentNullError("func");
+
+		return new MapIterable(this, func);
+	}
+
+	iter
+	{
+		if collection is null:
+			return Iterator.empty;
+		return collection.iter;
+	}
+}
+
+private class EachIterable is Iterable
+{
+	public new(this.inner, this.func);
+
+	private inner, func;
+
+	iter
+	{
+		return inner.iter.each(func);
+	}
+}
+
+private class FilterIterable is Iterable
+{
+	public new(this.inner, this.predicate);
+
+	private inner, predicate;
+
+	iter
+	{
+		return inner.iter.filter(predicate);
+	}
+}
+
+private class MapIterable is Iterable
+{
+	public new(this.inner, this.func);
+
+	private inner, func;
+
+	iter
+	{
+		return inner.iter.map(func);
+	}
+}
+
+private class IntersperseIterable is Iterable
+{
+	public new(this.inner, this.value);
+	public new(this.inner, this.value, this.frequency);
+
+	private inner, value, frequency = -1;
+
+	iter
+	{
+		var i = inner.iter;
+		if frequency > 0:
+			return i.intersperse(value, frequency);
+		else
+			return i.intersperse(value);
+	}
+}
