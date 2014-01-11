@@ -70,7 +70,7 @@ public inheritable Queue
 	private static fill(list, startAt = 0)
 	{
 		for i in [startAt to list.capacity - 1]:
-			list.add(i);
+			list.add(null);
 	}
 
 	override toString()

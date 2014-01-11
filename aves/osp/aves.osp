@@ -1,41 +1,9 @@
 version 0:1;
-use "Object.osp";
-use "Boolean.osp";
-use "numeric/numeric.osp";
-use "Enum.osp";
-use "String.osp";
-use "StringBuffer.osp";
-use "collections/collections.osp";
-use "Buffer.osp";
+
+use "aves/aves.osp";
 use "math/math.osp";
-use "Env.osp";
-use "Method.osp";
-use "Type.osp";
-use "errors/errors.osp"; // all of the errors!
+use "io/io.osp";
 use "helpers.osp";
-use "Console.osp";
-use "ConsoleKey.osp";
-use "ConsoleColor.osp";
 
-namespace aves;
-
-/// Summary: Prints a value to the standard output, followed by a line terminator.
-/// Param value: The value to print.
-/// Remarks: If the value is null, it is treated the same as `""`.
-///          If the value is any other non-string value, `.toString()` is called on it.
-public function print(value)				__extern("aves_print");
-
-/// Summary: Prints a formatted value.
-/// Param format: The format string. Must be of type String.
-/// Param values: The values to pass into String.format().
-public function print(format, values)
-{
-	if format is not String:
-		throw new TypeError("The format string must be a string.");
-	print(format.format(values));
-}
-
-/// Summary: Exits the application immediately.
-/// Param code: The exit code to pass to the calling environment.
-///          (Int, UInt or Real)
-public function exit(code)					__extern("aves_exit");
+// Do not put any functions in the global declaration space;
+// always use a namespace of some kind.
