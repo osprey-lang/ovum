@@ -1,0 +1,8 @@
+use namespace aves;
+
+namespace io.errorHelpers;
+
+private function endOfFile()
+{
+	throw new EndOfFileError();
+}

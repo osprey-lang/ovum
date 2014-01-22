@@ -18,12 +18,16 @@ public:
 	static TypeHandle ArgumentNullError;
 	static TypeHandle ArgumentRangeError;
 	static TypeHandle DuplicateKeyError;
+	static TypeHandle InvalidStateError;
 	static TypeHandle UnicodeCategory;
 	static TypeHandle BufferViewKind;
 	static TypeHandle HashEntry;
 	static TypeHandle ConsoleColor;
 	static TypeHandle ConsoleKey;
 	static TypeHandle ConsoleKeyCode;
+
+	static TypeHandle IOError;
+	static TypeHandle FileNotFoundError;
 };
 
 AVES_API NATIVE_FUNCTION(aves_print);

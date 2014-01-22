@@ -89,6 +89,7 @@
     <ClInclude Include="aves_error.h" />
     <ClInclude Include="aves_hash.h" />
     <ClInclude Include="aves_helpers.h" />
+    <ClInclude Include="aves_io.h" />
     <ClInclude Include="aves_list.h" />
     <ClInclude Include="aves_math.h" />
     <ClInclude Include="aves_method.h" />
@@ -104,6 +105,8 @@
     <ClInclude Include="aves_type.h" />
     <ClInclude Include="aves_uint.h" />
     <ClInclude Include="dtoa.config.h" />
+    <ClInclude Include="io_file.h" />
+    <ClInclude Include="io_path.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
@@ -123,13 +126,16 @@
     <ClCompile Include="enum.cpp" />
     <ClCompile Include="env.cpp" />
     <ClCompile Include="error.cpp" />
+    <ClCompile Include="file.cpp" />
     <ClCompile Include="hash.cpp" />
     <ClCompile Include="helpers.cpp" />
     <ClCompile Include="int.cpp" />
+    <ClCompile Include="io.cpp" />
     <ClCompile Include="list.cpp" />
     <ClCompile Include="math.cpp" />
     <ClCompile Include="method.cpp" />
     <ClCompile Include="object.cpp" />
+    <ClCompile Include="path.cpp" />
     <ClCompile Include="real.cpp" />
     <ClCompile Include="set.cpp" />
     <ClCompile Include="shared_strings.cpp" />

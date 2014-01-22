@@ -2,6 +2,7 @@ version 0:1;
 
 use "aves/aves.osp";
 use "math/math.osp";
+use "io/io.osp";
 use "helpers.osp";
 
 // Do not put any functions in the global declaration space;

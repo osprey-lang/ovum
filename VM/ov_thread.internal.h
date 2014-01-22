@@ -134,10 +134,10 @@ enum class ThreadState : int
 
 enum class ThreadFlags : int
 {
-	NONE              = 0x00,
-	// The thread is in a fully native region.
-	// See VM_EnterFullyNativeRegion for details.
-	IN_NATIVE_REGION  = 0x01,
+	NONE                = 0x00,
+	// The thread is in an unmanaged region.
+	// See VM_EnterUnmanagedRegion for details.
+	IN_UNMANAGED_REGION = 0x01,
 };
 ENUM_OPS(ThreadFlags, int);
 
@@ -325,11 +325,11 @@ public:
 
 	bool IsSuspendedForGC() const;
 
-	void EnterFullyNativeRegion();
-	void LeaveFullyNativeRegion();
-	inline bool IsInFullyNativeRegion() const
+	void EnterUnmanagedRegion();
+	void LeaveUnmanagedRegion();
+	inline bool IsInUnmanagedRegion() const
 	{
-		return (flags & ThreadFlags::IN_NATIVE_REGION) == ThreadFlags::IN_NATIVE_REGION;
+		return (flags & ThreadFlags::IN_UNMANAGED_REGION) == ThreadFlags::IN_UNMANAGED_REGION;
 	}
 
 private:

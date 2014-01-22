@@ -1,0 +1,21 @@
+use namespace aves;
+
+namespace io;
+
+public inheritable IOError is Error
+{
+	public new()
+	{
+		new base(defaultMessage);
+	}
+	public new(message)
+	{
+		new base(message ?? defaultMessage);
+	}
+	public new(message, innerError)
+	{
+		new base(message ?? defaultMessage, innerError);
+	}
+
+	private const defaultMessage = "An unspecified I/O error occurred.";
+}

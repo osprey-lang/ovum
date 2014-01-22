@@ -1,0 +1,119 @@
+use namespace aves;
+
+namespace io;
+
+public class FileStream is Stream
+{
+	__init_type("io_FileStream_initType");
+
+	public new(fileName)
+	{
+		if fileName is null:
+			throw new ArgumentNullError("fileName");
+		init(string(fileName), FileMode.open, FileAccess.readWrite, FileShare.none);
+	}
+
+	public new(fileName, mode)
+	{
+		if fileName is null:
+			throw new ArgumentNullError("fileName");
+		if mode is not FileMode:
+			throw new TypeError(invalidFileMode);
+
+		var access = mode == FileMode.truncate or mode == FileMode.append ?
+			FileAccess.write :
+			FileAccess.readWrite;
+		init(string(fileName), mode, access, FileShare.none);
+	}
+
+	public new(fileName, mode, access)
+	{
+		if fileName is null:
+			throw new ArgumentNullError("fileName");
+		if mode is not FileMode:
+			throw new TypeError(invalidFileMode);
+		if access is not FileAccess:
+			throw new TypeError(invalidFileAccess);
+
+		init(string(fileName), mode, access, FileShare.none);
+	}
+
+	public new(fileName, mode, access, share)
+	{
+		if fileName is null:
+			throw new ArgumentNullError("fileName");
+		if mode is not FileMode:
+			throw new TypeError(invalidFileMode);
+		if access is not FileAccess:
+			throw new TypeError(invalidFileAccess);
+		if share is not FileShare:
+			throw new TypeError(invalidFileShare);
+
+		init(string(fileName), mode, access, share);
+	}
+
+	override get canRead						__extern("io_FileStream_get_canRead");
+	override get canWrite						__extern("io_FileStream_get_canWrite");
+	override get canSeek						__extern("io_FileStream_get_canSeek");
+
+	override get length							__extern("io_FileStream_get_length");
+
+	override get position = seekInternal(0, SeekOrigin.current); // seekInternal always returns the new position in the stream
+	override set position { seekInternal(value, SeekOrigin.start); }
+
+	private init(fileName, mode, access, share)	__extern("io_FileStream_init");
+
+	override readByte()							__extern("io_FileStream_readByte");
+	override readMax(buf, offset, count)
+	{
+		buf = ensureBuffer(buf);
+		offset = int(offset);
+		count = int(count);
+
+		if offset < 0:
+			throw new ArgumentRangeError("offset");
+		if count <= 0:
+			throw new ArgumentRangeError("count");
+		if offset + count > buf.size:
+			throw new ArgumentError("offset + count must be less than or equal to the buffer size.");
+
+		return readMaxInternal(buf, offset, count);
+	}
+	private readMaxInternal(buf, offset, count)	__extern("io_FileStream_readMaxInternal");
+
+	override writeByte(value)					__extern("io_FileStream_writeByte");
+	override write(buf, offset, count)
+	{
+		buf = ensureBuffer(buf);
+		offset = int(offset);
+		count = int(count);
+
+		if offset < 0:
+			throw new ArgumentRangeError("offset");
+		if count < 0:
+			throw new ArgumentRangeError("count");
+		if offset + count > buf.size:
+			throw new ArgumentError("offset + count must be less than or equal to the buffer size.");
+
+		writeInternal(buf, offset, count);
+	}
+	private writeInternal(buf, offset, count)	__extern("io_FileStream_writeInternal");
+
+	override flush()							__extern("io_FileStream_flush");
+
+	override seek(offset, origin)
+	{
+		offset = int(offset);
+		if origin is not SeekOrigin:
+			throw new TypeError("origin must be an io.SeekOrigin value.");
+
+		return seekInternal(offset, origin);
+	}
+	private seekInternal(offset, origin)		__extern("io_FileStream_seekInternal");
+
+	override close()							__extern("io_FileStream_close");
+
+	private const invalidFileMode   = "mode must be an io.FileMode value.";
+	private const invalidFileAccess = "access must be an io.FileAccess value.";
+	private const invalidFileShare  = "share must be an io.FileShare value.";
+}
