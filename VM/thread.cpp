@@ -118,14 +118,14 @@ void Thread::SuspendForGC()
 }
 
 
-void Thread::EnterFullyNativeRegion()
+void Thread::EnterUnmanagedRegion()
 {
-	flags |= ThreadFlags::IN_NATIVE_REGION;
+	flags |= ThreadFlags::IN_UNMANAGED_REGION;
 }
 
-void Thread::LeaveFullyNativeRegion()
+void Thread::LeaveUnmanagedRegion()
 {
-	flags &= ~ThreadFlags::IN_NATIVE_REGION;
+	flags &= ~ThreadFlags::IN_UNMANAGED_REGION;
 	if (shouldSuspendForGC)
 		SuspendForGC();
 }
@@ -133,7 +133,7 @@ void Thread::LeaveFullyNativeRegion()
 bool Thread::IsSuspendedForGC() const
 {
 	return state == ThreadState::SUSPENDED_BY_GC ||
-		(flags & ThreadFlags::IN_NATIVE_REGION) == ThreadFlags::IN_NATIVE_REGION;
+		(flags & ThreadFlags::IN_UNMANAGED_REGION) == ThreadFlags::IN_UNMANAGED_REGION;
 }
 
 
@@ -1294,26 +1294,26 @@ OVUM_API void VM_ThrowNullReferenceError(ThreadHandle thread, String *message)
 	thread->ThrowNullReferenceError(message);
 }
 
-OVUM_API void VM_EnterFullyNativeRegion(ThreadHandle thread)
+OVUM_API void VM_EnterUnmanagedRegion(ThreadHandle thread)
 {
-	thread->EnterFullyNativeRegion();
+	thread->EnterUnmanagedRegion();
 }
-OVUM_API void VM_LeaveFullyNativeRegion(ThreadHandle thread)
+OVUM_API void VM_LeaveUnmanagedRegion(ThreadHandle thread)
 {
-	thread->LeaveFullyNativeRegion();
+	thread->LeaveUnmanagedRegion();
 }
-OVUM_API bool VM_IsInFullyNativeRegion(ThreadHandle thread)
+OVUM_API bool VM_IsInUnmanagedRegion(ThreadHandle thread)
 {
-	return thread->IsInFullyNativeRegion();
+	return thread->IsInUnmanagedRegion();
 }
 
 OVUM_API void VM_Sleep(ThreadHandle thread, unsigned int milliseconds)
 {
-	thread->EnterFullyNativeRegion();
+	thread->EnterUnmanagedRegion();
 
 	Sleep(milliseconds);
 
-	thread->LeaveFullyNativeRegion();
+	thread->LeaveUnmanagedRegion();
 }
 
 OVUM_API String *VM_GetStackTrace(ThreadHandle thread)

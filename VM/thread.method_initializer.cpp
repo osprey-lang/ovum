@@ -1369,12 +1369,22 @@ Method *Thread::MethodFromToken(Method::Overload *fromMethod, uint32_t token)
 			fromMethod, token, MethodInitException::UNRESOLVED_TOKEN_ID);
 
 	if (result->IsStatic())
-		if (result->declType ?
-			!result->IsAccessible(nullptr, fromMethod->declType) :
-			(result->flags & MemberFlags::ACCESS_LEVEL) == MemberFlags::PRIVATE &&
-			result->declModule != fromMethod->group->declModule)
+	{
+		// Verify that the method is accessible from this location
+
+		bool accessible = result->declType ?
+			// If the method is declared in a type, use IsAccessible
+			// Note: instType is only used by protected members. For static methods,
+			// we pretend the method is being accessed through an instance of fromMethod->declType
+			result->IsAccessible(fromMethod->declType, fromMethod->declType) :
+			// Otherwise, the method is accessible if it's public,
+			// or private and declared in the same module as fromMethod
+			(result->flags & MemberFlags::ACCESS_LEVEL) == MemberFlags::PUBLIC ||
+				result->declModule == fromMethod->group->declModule;
+		if (!accessible)
 			throw MethodInitException("The method is inaccessible from this location.",
 				fromMethod, result, MethodInitException::INACCESSIBLE_MEMBER);
+	}
 
 	return result;
 }

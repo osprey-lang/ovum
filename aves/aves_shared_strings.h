@@ -30,6 +30,11 @@ namespace strings
 	extern String *width;
 	extern String *height;
 	extern String *add;
+	extern String *path;
+	extern String *mode;
+	extern String *access;
+	extern String *share;
+	extern String *origin;
 	
 	extern String *newline;
 }
@@ -40,6 +45,9 @@ namespace error_strings
 	extern String *HashKeyNotFound;
 	extern String *RadixOutOfRange;
 	extern String *InvalidIntegerFormat;
+	extern String *FileHandleClosed;
+	extern String *AppendMustBeWriteOnly;
+	extern String *CannotFlushReadOnlyStream;
 }
 
 #endif // AVES__SHARED_STRINGS_H

@@ -1,0 +1,62 @@
+use namespace aves;
+
+namespace io;
+
+public static class Path
+{
+	public static get directorySeparator				__extern("io_Path_get_directorySeparator");
+	public static get directorySeparator2				__extern("io_Path_get_directorySeparator2");
+
+	public static getInvalidPathChars()
+	{
+		return getInvalidPathCharsString().split("");
+	}
+	public static getInvalidFileNameChars()
+	{
+		return getInvalidFileNameCharsString().split("");
+	}
+
+	private static getInvalidPathCharsString()			__extern("io_Path_getInvalidPathCharsString");
+	private static getInvalidFileNameCharsString()		__extern("io_Path_getInvalidFileNameCharsString");
+
+	public static isAbsolute(path)						__extern("io_Path_isAbsolute");
+
+	public static join(path1, path2)					__extern("io_Path_join", locals=1);
+	public static join(path1, path2, path3)				__extern("io_Path_join", locals=1);
+	public static join(path1, path2, path3, path4)		__extern("io_Path_join", locals=1);
+	public static join(path1, path2, path3, path4, path5) __extern("io_Path_join", locals=1);
+
+	public static getFullPath(path)
+	{
+		if path is null:
+			throw new ArgumentNullError("path");
+		return getFullPathInternal(string(path));
+	}
+
+	private static getFullPathInternal(path)			__extern("io_Path_getFullPath");
+
+	public static getExtension(path)
+	{
+		if path is null:
+			throw new ArgumentNullError("path");
+		return getExtensionInternal(string(path));
+	}
+	public static hasExtension(path)
+	{
+		if path is null:
+			throw new ArgumentNullError("path");
+		return hasExtensionInternal(string(path));
+	}
+	public static changeExtension(path, ext)
+	{
+		if path is null:
+			throw new ArgumentNullError("path");
+		return changeExtensionInternal(string(path), ext);
+	}
+
+	private static getExtensionInternal(path)			__extern("io_Path_getExtension");
+	private static hasExtensionInternal(path)			__extern("io_Path_hasExtension");
+	private static changeExtensionInternal(path, ext)	__extern("io_Path_changeExtension", locals=1);
+
+	private static validatePath(path, checkWildcards)	__extern("io_Path_validatePath");
+}

@@ -13,78 +13,99 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Source Files\aves">
+      <UniqueIdentifier>{7f84ad72-728b-419c-a460-67516f177827}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\aves">
+      <UniqueIdentifier>{9cd2651b-1241-4607-a3c3-42aadbeb0604}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\io">
+      <UniqueIdentifier>{e98e0139-f083-4654-aeee-37bc5f310978}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\io">
+      <UniqueIdentifier>{02adfbd2-1117-4163-8e89-fe37abd2594d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="targetver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="aves.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="aves_ns.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="aves_int.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="aves_boolean.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="aves_object.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="aves_uint.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="aves_real.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="aves_math.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="aves_string.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="aves_enum.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="aves_shared_strings.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="aves_buffer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="aves_list.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="aves_stringbuffer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="aves_env.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="aves_hash.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="aves_error.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="aves_method.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="aves_helpers.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="aves_set.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="aves_type.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="dtoa.config.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="aves_uint.h">
+      <Filter>Header Files\aves</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_boolean.h">
+      <Filter>Header Files\aves</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_buffer.h">
+      <Filter>Header Files\aves</Filter>
+    </ClInclude>
     <ClInclude Include="aves_console.h">
+      <Filter>Header Files\aves</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_enum.h">
+      <Filter>Header Files\aves</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_env.h">
+      <Filter>Header Files\aves</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_error.h">
+      <Filter>Header Files\aves</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_hash.h">
+      <Filter>Header Files\aves</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_helpers.h">
+      <Filter>Header Files\aves</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_int.h">
+      <Filter>Header Files\aves</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_list.h">
+      <Filter>Header Files\aves</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_method.h">
+      <Filter>Header Files\aves</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_ns.h">
+      <Filter>Header Files\aves</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_object.h">
+      <Filter>Header Files\aves</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_real.h">
+      <Filter>Header Files\aves</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_set.h">
+      <Filter>Header Files\aves</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_string.h">
+      <Filter>Header Files\aves</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_stringbuffer.h">
+      <Filter>Header Files\aves</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_type.h">
+      <Filter>Header Files\aves</Filter>
+    </ClInclude>
+    <ClInclude Include="aves.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="io_path.h">
+      <Filter>Header Files\io</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_io.h">
+      <Filter>Header Files\io</Filter>
+    </ClInclude>
+    <ClInclude Include="io_file.h">
+      <Filter>Header Files\io</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_shared_strings.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -92,70 +113,79 @@
     <ClCompile Include="aves.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="dllmain.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="boolean.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="int.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="object.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="uint.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="real.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="math.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="string.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="enum.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="shared_strings.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="boolean.cpp">
+      <Filter>Source Files\aves</Filter>
     </ClCompile>
     <ClCompile Include="buffer.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\aves</Filter>
     </ClCompile>
-    <ClCompile Include="list.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="console.cpp">
+      <Filter>Source Files\aves</Filter>
     </ClCompile>
-    <ClCompile Include="stringbuffer.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="dllmain.cpp">
+      <Filter>Source Files\aves</Filter>
+    </ClCompile>
+    <ClCompile Include="enum.cpp">
+      <Filter>Source Files\aves</Filter>
     </ClCompile>
     <ClCompile Include="env.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="hash.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\aves</Filter>
     </ClCompile>
     <ClCompile Include="error.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\aves</Filter>
     </ClCompile>
-    <ClCompile Include="method.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="hash.cpp">
+      <Filter>Source Files\aves</Filter>
     </ClCompile>
     <ClCompile Include="helpers.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\aves</Filter>
+    </ClCompile>
+    <ClCompile Include="int.cpp">
+      <Filter>Source Files\aves</Filter>
+    </ClCompile>
+    <ClCompile Include="list.cpp">
+      <Filter>Source Files\aves</Filter>
+    </ClCompile>
+    <ClCompile Include="method.cpp">
+      <Filter>Source Files\aves</Filter>
+    </ClCompile>
+    <ClCompile Include="object.cpp">
+      <Filter>Source Files\aves</Filter>
+    </ClCompile>
+    <ClCompile Include="real.cpp">
+      <Filter>Source Files\aves</Filter>
     </ClCompile>
     <ClCompile Include="set.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\aves</Filter>
+    </ClCompile>
+    <ClCompile Include="string.cpp">
+      <Filter>Source Files\aves</Filter>
+    </ClCompile>
+    <ClCompile Include="stringbuffer.cpp">
+      <Filter>Source Files\aves</Filter>
     </ClCompile>
     <ClCompile Include="type.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\aves</Filter>
+    </ClCompile>
+    <ClCompile Include="uint.cpp">
+      <Filter>Source Files\aves</Filter>
     </ClCompile>
     <ClCompile Include="dtoa.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="console.cpp">
+    <ClCompile Include="path.cpp">
+      <Filter>Source Files\io</Filter>
+    </ClCompile>
+    <ClCompile Include="io.cpp">
+      <Filter>Source Files\io</Filter>
+    </ClCompile>
+    <ClCompile Include="file.cpp">
+      <Filter>Source Files\io</Filter>
+    </ClCompile>
+    <ClCompile Include="shared_strings.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

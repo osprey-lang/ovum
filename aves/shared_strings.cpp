@@ -31,6 +31,11 @@ namespace strings
 	LitString<5> _width    = { 5, 0, SFS, 'w','i','d','t','h',0 };
 	LitString<6> _height   = { 5, 0, SFS, 'h','e','i','g','h','t',0 };
 	LitString<3> _add      = { 3, 0, SFS, 'a','d','d',0 };
+	LitString<4> _path     = { 4, 0, SFS, 'p','a','t','h',0 };
+	LitString<4> _mode     = { 4, 0, SFS, 'm','o','d','e',0 };
+	LitString<6> _access   = { 6, 0, SFS, 'a','c','c','e','s','s',0 };
+	LitString<5> _share    = { 5, 0, SFS, 's','h','a','r','e',0 };
+	LitString<6> _origin   = { 6, 0, SFS, 'o','r','i','g','i','n',0 };
 
 	String *str      = _S(_str);
 	String *i        = _S(_i);
@@ -50,9 +55,17 @@ namespace strings
 	String *width    = _S(_width);
 	String *height   = _S(_height);
 	String *add      = _S(_add);
+	String *path     = _S(_path);
+	String *mode     = _S(_mode);
+	String *access   = _S(_access);
+	String *share    = _S(_share);
+	String *origin   = _S(_origin);
 
-	// TODO: Make this platform-sensitive; \r\n is really just for Windows, you know?
-	LitString<2> _newline  = { 2, 0, SFS, '\r','\n',0 };
+#ifdef _WIN32
+	LitString<2> _newline = { 2, 0, SFS, '\r','\n',0 };
+#else
+	LitString<1> _newline = { 1, 0, SFS, '\n',0 };
+#endif
 
 	String *newline  = _S(_newline);
 }
@@ -63,9 +76,15 @@ namespace error_strings
 	LitString<44> _HashKeyNotFound = LitString<44>::FromCString("The hash does not contain the specified key.");
 	LitString<46> _RadixOutOfRange = LitString<46>::FromCString("The radix must be between 2 and 36, inclusive.");
 	LitString<30> _InvalidIntegerFormat = LitString<30>::FromCString("Invalid integer format string.");
+	LitString<32> _FileHandleClosed = LitString<32>::FromCString("The file handle has been closed.");
+	LitString<54> _AppendMustBeWriteOnly = LitString<54>::FromCString("A file opened for appending must use FileAccess.write.");
+	LitString<32> _CannotFlushReadOnlyStream = LitString<32>::FromCString("Cannot flush a read-only stream.");
 
-	String *EndIndexLessThanStart = _S(_EndIndexLessThanStart);
-	String *HashKeyNotFound = _S(_HashKeyNotFound);
-	String *RadixOutOfRange = _S(_RadixOutOfRange);
-	String *InvalidIntegerFormat = _S(_InvalidIntegerFormat);
+	String *EndIndexLessThanStart     = _S(_EndIndexLessThanStart);
+	String *HashKeyNotFound           = _S(_HashKeyNotFound);
+	String *RadixOutOfRange           = _S(_RadixOutOfRange);
+	String *InvalidIntegerFormat      = _S(_InvalidIntegerFormat);
+	String *FileHandleClosed          = _S(_FileHandleClosed);
+	String *AppendMustBeWriteOnly     = _S(_AppendMustBeWriteOnly);
+	String *CannotFlushReadOnlyStream = _S(_CannotFlushReadOnlyStream);
 }

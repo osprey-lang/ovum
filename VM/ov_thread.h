@@ -157,7 +157,7 @@ OVUM_API void VM_ThrowNullReferenceError(ThreadHandle thread, String *message = 
 // Informs the thread that it is entering a section of native code
 // which will not interact with the managed runtime in any way.
 // If the GC is triggered (by another thread) when this thread is in
-// the native section, garbage collection proceeds without suspending
+// the unmanaged region, garbage collection proceeds without suspending
 // this thread.
 // This should only be called by native code before performing a
 // potentially lengthy operation that does not interact with the
@@ -165,15 +165,15 @@ OVUM_API void VM_ThrowNullReferenceError(ThreadHandle thread, String *message = 
 // object to be released. This will permit the thread to continue
 // working in the background while the GC runs; otherwise, the GC
 // would have to wait for the lengthy operation to finish.
-OVUM_API void VM_EnterFullyNativeRegion(ThreadHandle thread);
-// Informs the thread that it has left the fully native section.
+OVUM_API void VM_EnterUnmanagedRegion(ThreadHandle thread);
+// Informs the thread that it has left the unmanaged region.
 // If the GC is running, the thread will now suspend itself; otherwise,
 // the method returns immediately and the thread continues execution.
-// See the documentation of VM_EnterFullyNativeRegion for details.
-OVUM_API void VM_LeaveFullyNativeRegion(ThreadHandle thread);
-// Determines whether the thread is in a fully native region.
-// See the documentation of VM_EnterFullyNativeRegion for details.
-OVUM_API bool VM_IsInFullyNativeRegion(ThreadHandle thread);
+// See the documentation of VM_EnterUnmanagedRegion for details.
+OVUM_API void VM_LeaveUnmanagedRegion(ThreadHandle thread);
+// Determines whether the thread is in an unmanaged region.
+// See the documentation of VM_EnterUnmanagedRegion for details.
+OVUM_API bool VM_IsInUnmanagedRegion(ThreadHandle thread);
 
 // Suspends the thread for the specified number of milliseconds.
 // If milliseconds is 0, the thread gives up the remainder of its time

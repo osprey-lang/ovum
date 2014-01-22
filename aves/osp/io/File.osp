@@ -1,0 +1,139 @@
+use namespace aves;
+
+namespace io;
+
+public static class File
+{
+	public static exists(fileName)
+	{
+		if fileName is null:
+			throw new ArgumentNullError("fileName");
+
+		return existsInternal(string(fileName));
+	}
+	private static existsInternal(fileName)			__extern("io_File_existsInternal");
+
+	public static getSize(fileName)
+	{
+		if fileName is null:
+			throw new ArgumentNullError("fileName");
+		return getSizeInternal(string(fileName));
+	}
+	private static getSizeInternal(fileName)		__extern("io_File_getSizeInternal");
+
+	public static delete(fileName)
+	{
+		if fileName is null:
+			throw new ArgumentNullError("fileName");
+
+		return deleteInternal(string(fileName));
+	}
+	private static deleteInternal(fileName)			__extern("io_File_deleteInternal");
+
+	public static move(srcName, destName)
+	{
+		if srcName is null or destName is null:
+			throw new ArgumentNullError(srcName is null ? "srcName" : "destName");
+
+		return moveInternal(string(srcName), string(destName));
+	}
+	private static moveInternal(srcName, destName)	__extern("io_File_moveInternal");
+
+	public static open(fileName)
+	{
+		return new FileStream(fileName);
+	}
+	public static open(fileName, mode)
+	{
+		return new FileStream(fileName, mode);
+	}
+	public static open(fileName, mode, access)
+	{
+		return new FileStream(fileName, mode, access);
+	}
+	public static open(fileName, mode, access, share)
+	{
+		return new FileStream(fileName, mode, access, share);
+	}
+
+	public static openRead(fileName)
+	{
+		return new FileStream(fileName, FileMode.open, FileAccess.read, FileShare.read);
+	}
+
+	public static openWrite(fileName)
+	{
+		return new FileStream(fileName, FileMode.create, FileAccess.write, FileShare.none);
+	}
+
+	public static readAllBytes(fileName)
+	{
+		// Can't simply call the other overload - we need to open the file
+		// to see how big it is before we even construct the buffer.
+		var f, buf;
+		try
+		{
+			f = new FileStream(fileName, FileMode.open, FileAccess.read, FileShare.read);
+			var length = f.length;
+			buf = new Buffer(length);
+			f.readInto(buf, 0, length);
+		}
+		finally
+		{
+			f?.close();
+		}
+
+		return buf;
+	}
+	public static readAllBytes(fileName, buf, offset)
+	{
+		// Stream.readInto performs the same checks, but
+		// let's do this before actually opening the file.
+		if buf is null:
+			throw new ArgumentNullError("buf");
+		else if buf is BufferView:
+			buf = buf.buffer;
+		else if buf is not Buffer:
+			throw new TypeError("buf must be an aves.Buffer.");
+
+		offset = int(offset);
+
+		if offset < 0:
+			throw new ArgumentRangeError("offset");
+
+		var f, length;
+		try
+		{
+			f = new FileStream(fileName, FileMode.open, FileAccess.read, FileShare.read);
+			length = f.length;
+			f.readInto(buf, offset, length);
+		}
+		finally
+		{
+			f?.close();
+		}
+
+		return length;
+	}
+
+	public static writeAllBytes(fileName, buf)
+	{
+		if buf is null:
+			throw new ArgumentNullError("buf");
+		else if buf is BufferView:
+			buf = buf.buffer;
+		else if buf is not Buffer:
+			throw new TypeError("buf must be an aves.Buffer.");
+
+		var f;
+		try
+		{
+			f = new FileStream(fileName, FileMode.create, FileAccess.write, FileShare.none);
+			f.write(buf, 0, buf.size);
+		}
+		finally
+		{
+			f?.close();
+		}
+	}
+}
