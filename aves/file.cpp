@@ -77,7 +77,7 @@ AVES_API NATIVE_FUNCTION(io_File_moveInternal)
 
 // FileStream implementation
 
-#define _FS(v)		reinterpret_cast<FileStream*>((v).instance)
+#define _FS(v) reinterpret_cast<FileStream*>((v).instance)
 
 void FileStream::EnsureOpen(ThreadHandle thread)
 {
@@ -358,7 +358,7 @@ AVES_API NATIVE_FUNCTION(io_FileStream_seekInternal)
 	stream->EnsureOpen(thread);
 
 	DWORD seekOrigin;
-	switch (args[1].integer)
+	switch (args[2].integer)
 	{
 	case SeekOrigin::START:   seekOrigin = FILE_BEGIN;   break;
 	case SeekOrigin::CURRENT: seekOrigin = FILE_CURRENT; break;
@@ -371,26 +371,20 @@ AVES_API NATIVE_FUNCTION(io_FileStream_seekInternal)
 	}
 
 	HANDLE handle = stream->handle;
-	int64_t seekOffset = args[0].integer;
+	LARGE_INTEGER seekOffset;
+	seekOffset.QuadPart = args[1].integer;
 
 	VM_EnterUnmanagedRegion(thread);
 
-	LONG highHalf = (LONG)(seekOffset >> 32);
-	DWORD lowHalf = SetFilePointer(handle, (LONG)seekOffset, &highHalf, seekOrigin);
-	DWORD lastError = GetLastError();
+	LARGE_INTEGER newOffset;
+	BOOL r = SetFilePointerEx(handle, seekOffset, &newOffset, seekOrigin);
 
 	VM_LeaveUnmanagedRegion(thread);
 
-	// "Note  Because INVALID_SET_FILE_POINTER is a valid value for the low-order DWORD of
-	// the new file pointer, you must check both the return value of the function and the
-	// error code returned by GetLastError to determine whether or not an error has occurred.
-	// If an error has occurred, the return value of SetFilePointer is INVALID_SET_FILE_POINTER
-	// and GetLastError returns a value other than NO_ERROR."
-	//  — MSDN
-	if (lowHalf == INVALID_SET_FILE_POINTER && lastError != NO_ERROR)
-		io::ThrowIOError(thread, lastError);
+	if (!r)
+		io::ThrowIOError(thread, GetLastError());
 
-	VM_PushInt(thread, ((int64_t)highHalf << 32) | lowHalf);
+	VM_PushInt(thread, newOffset.QuadPart);
 }
 
 AVES_API NATIVE_FUNCTION(io_FileStream_close)

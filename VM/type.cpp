@@ -323,7 +323,13 @@ void Field::WriteFieldUnchecked(Value *instanceAndValue) const
 #undef ACQUIRE_FIELD_LOCK
 #undef RELEASE_FIELD_LOCK
 
-OVUM_API const StandardTypes &GetStandardTypes()  { return VM::vm->types; }
+OVUM_API void GetStandardTypes(StandardTypes *target, size_t targetSize)
+{
+	// Never copy more than sizeof(StandardTypes) bytes,
+	// but potentially copy less.
+	targetSize = min(targetSize, sizeof(StandardTypes));
+	memcpy(target, &VM::vm->types, targetSize);
+}
 OVUM_API TypeHandle GetType_Object()              { return VM::vm->types.Object; }
 OVUM_API TypeHandle GetType_Boolean()             { return VM::vm->types.Boolean; }
 OVUM_API TypeHandle GetType_Int()                 { return VM::vm->types.Int; }

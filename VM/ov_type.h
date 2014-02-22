@@ -274,7 +274,7 @@ typedef struct StandardTypes_S
 	TypeHandle MemberNotFoundError;
 } StandardTypes;
 
-OVUM_API const StandardTypes &GetStandardTypes();
+OVUM_API void GetStandardTypes(StandardTypes *target, size_t targetSize);
 OVUM_API TypeHandle GetType_Object();
 OVUM_API TypeHandle GetType_Boolean();
 OVUM_API TypeHandle GetType_Int();

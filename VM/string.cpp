@@ -1,10 +1,71 @@
 #include "ov_vm.internal.h"
 #include "ov_unicode.h"
 #include "ov_string.h"
+#include <memory>
 
 inline const bool IsHashed(const String *const str)
 {
 	return (str->flags & StringFlags::HASHED) != StringFlags::NONE;
+}
+
+inline int32_t String_GetHashCode(const int32_t length, const uchar *s)
+{
+#if STRING_HASH_ALGORITHM == 1
+	// Rip of one of the algorithms in the .NET Framework
+	int32_t hash1 = (5381 << 16) + 5381;
+	int32_t hash2 = hash1;
+
+	while (*s)
+	{
+		hash1 = ((hash1 << 5) + hash1) ^ *s;
+
+		if (*s++ == 0)
+			break;
+
+		hash2 = ((hash2 << 5) + hash2) ^ *s; 
+		*s++;
+	}
+
+	return hash1 + (hash2 * 1566083941);
+#elif STRING_HASH_ALGORITHM == 2
+	// Rip of the Mono algorithm, ever so slightly modified
+	int32_t hash = 0;
+
+	const uchar *end = s + length - 1;
+	while (s < end)
+	{
+		hash = (hash << 5) - hash + s[0];
+		hash = (hash << 5) - hash + s[1];
+		s += 2;
+	}
+	++end;
+	if (s < end)
+		hash = (hash << 5) - hash + *s;
+	return hash;
+#elif STRING_HASH_ALGORITHM == 3
+	// FNV-1a
+	// Note that this operates on a BYTE basis, not character
+	int32_t hash = 0x811c9dc5;
+	const int32_t prime = 0x01000193;
+
+	//const uint8_t *data = reinterpret_cast<const uint8_t*>(s);
+	int32_t remaining = length;
+	while (remaining--)
+	{
+		hash = ((*s & 0xff) ^ hash) * prime;
+		hash = ((*s >> 8) ^ hash) * prime;
+		s++;
+	}
+
+	return hash;
+#else
+	// Well okay. You didn't specify a hash algorithm, suit yourself.
+	int32_t hash = 0;
+	int32_t remaining = length;
+	while (remaining--)
+		hash += *s;
+	return hash;
+#endif
 }
 
 OVUM_API int32_t String_GetHashCode(String *str)
@@ -407,7 +468,7 @@ OVUM_API const int String_ToWString(wchar_t *dest, const String *source)
 	}
 	else if (sizeof(wchar_t) == sizeof(wuchar))
 	{
-		// assume sizeof(wchar_t) == 4, which is probably UTF-32
+		// sizeof(wchar_t) == 4, which is probably UTF-32
 
 		// First, iterate over the string to find out how many surrogate pairs there are,
 		// if any. These consume only one UTF-32 character.
@@ -485,10 +546,10 @@ OVUM_API String *String_FromWString(ThreadHandle thread, const wchar_t *source)
 			strp++;
 		}
 
-		uchar *buffer = new uchar[outLength];
+		std::unique_ptr<uchar[]> buffer(new uchar[outLength]);
 
 		strp = source;
-		uchar *outp = buffer;
+		uchar *outp = buffer.get();
 		while (*strp)
 		{
 			const wuchar ch = (const wuchar)*strp;
@@ -505,9 +566,7 @@ OVUM_API String *String_FromWString(ThreadHandle thread, const wchar_t *source)
 			outp++;
 		}
 
-		String *output = GC::gc->ConstructString(thread, outLength, buffer);
-
-		delete[] buffer;
+		String *output = GC::gc->ConstructString(thread, outLength, buffer.get());
 
 		return output;
 	}

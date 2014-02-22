@@ -10,8 +10,9 @@ class GC;
 
 // The StringTable class contains the implementation of the string
 // intern table, which is effectively a hash set of String* values.
-// This is used by the GC when strings are constructed, to avoid the
-// allocation of multiple identical strings.
+// This is used by the GC when strings are constructed during module
+// loading, to avoid the allocation of multiple identical strings.
+// Strings can also be explicitly interned.
 class StringTable
 {
 private:
@@ -40,16 +41,16 @@ public:
 	~StringTable();
 
 	String *GetInterned(String *value);
-	String *GetInterned(const int32_t length, const uchar values[]);
+	/*String *GetInterned(const int32_t length, const uchar values[]);*/
 
 	inline bool HasInterned(String *value)
 	{
 		return GetInterned(value) != nullptr;
 	}
-	inline bool HasInterned(const int32_t length, const uchar values[])
+	/*inline bool HasInterned(const int32_t length, const uchar values[])
 	{
 		return GetInterned(length, values) != nullptr;
-	}
+	}*/
 
 	String *Intern(String *value);
 

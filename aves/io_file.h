@@ -64,6 +64,8 @@ public:
 	// Cached, so that canRead and canWrite are fast.
 	FileAccess access;
 
+	Value fileName; // String
+
 	// TODO: File buffering and other fun stuff
 
 	void EnsureOpen(ThreadHandle thread);

@@ -693,7 +693,7 @@ void Thread::StoreMemberLL(Value *instance, String *member)
 		if (!p->setter)
 			ThrowTypeError(thread_errors::SettingReadonlyProperty);
 
-		Method::Overload *mo = p->getter->ResolveOverload(1);
+		Method::Overload *mo = p->setter->ResolveOverload(1);
 		if (!mo) ThrowNoOverloadError(1);
 
 		// Remember: the instance and value are already on the stack!

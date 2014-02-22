@@ -104,10 +104,12 @@
     <ClInclude Include="aves_stringbuffer.h" />
     <ClInclude Include="aves_type.h" />
     <ClInclude Include="aves_uint.h" />
+    <ClInclude Include="aves_utf16encoding.h" />
     <ClInclude Include="dtoa.config.h" />
     <ClInclude Include="io_file.h" />
     <ClInclude Include="io_path.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="aves_utf8encoding.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="aves.cpp" />
@@ -143,6 +145,8 @@
     <ClCompile Include="stringbuffer.cpp" />
     <ClCompile Include="type.cpp" />
     <ClCompile Include="uint.cpp" />
+    <ClCompile Include="utf16encoding.cpp" />
+    <ClCompile Include="utf8encoding.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

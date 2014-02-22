@@ -1,0 +1,214 @@
+namespace aves;
+
+/// Summary: Represents a text encoding, which can be used to convert
+///          {String} instances to byte sequences, and back again.
+///          This class is abstract.
+/// Remarks: Implementations of this class are strongly recommended to
+///          use {Buffer.fromValue} to extract a buffer from arguments
+///          whenever necessary, and to use {Buffer.verifyRange} when
+///          only part of a buffer is to be accessed. See the documentation
+///          of those methods for more details on how they work.
+public abstract class Encoding
+{
+	/// Summary: Gets a name for the encoding. If the encoding does not have
+	///          a well-defined name, this property should return null.
+	/// Returns: The name of the encoding.
+	public abstract get name;
+
+	/// Summary: Gets a new {Encoder} instance that can be used to encode
+	///          text data in multiple passes.
+	/// Returns: A new {Encoder} instance, set to its starting state.
+	public abstract getEncoder();
+	/// Summary: Gets a new {Decoder} instance that can be used to decode
+	///          sequences of bytes in multiple passes.
+	/// Returns: A new {Decoder} instance, set to its starting state.
+	public abstract getDecoder();
+
+	/// Summary: Calculates the number of bytes that would be required to
+	///          encode the specified string value.
+	/// Param str: The string value to calculate an encoded byte count for. (String)
+	/// Returns: The number of bytes required to encode {str}, as an Int.
+	/// Remarks: This method expects discrete conversions. While {Encoder}
+	///          and {Decoder} maintain state between calls to encoding and
+	///          decoding methods, this method does not. Calling this method
+	///          multiple times on the same Encoding with the same string
+	///          will always yield the same result.
+	///
+	///          Implementations of this method should consider null to be
+	///          equivalent to the empty string, `""`.
+	public abstract getByteCount(str);
+
+	/// Summary: Encodes an entire string into a sequence of bytes, which
+	///          are put into the specified buffer.
+	/// Param str: The string to encode. (String)
+	/// Param buf: A {Buffer} or {BufferView} object to populate with
+	///            the bytes of the encoded string.
+	/// Param offset: The offset within the buffer at which to start placing
+	///               the bytes of the converted string. (Int, UInt or Real)
+	/// Returns: The number of bytes written to {buf}, as an Int.
+	/// Throws TypeError:
+	///          {buf} is not a {Buffer} or {BufferView}.
+	///
+	///          {offset} could not be converted to an Int.
+	/// Throws ArgumentNullError:
+	///          {buf} is null.
+	/// Throws ArgumentRangeError:
+	///          {offset} refers to a location outside the buffer, or
+	///          the encoded string would end up outside the buffer.
+	/// Remarks: This method expects discrete conversions. While {Encoder}
+	///          and {Decoder} maintain state between calls to encoding and
+	///          decoding methods, this method does not. Calling this method
+	///          multiple times on the same Encoding with the same string
+	///          will always yield the same result.
+	///
+	///          Implementations of this method should consider null to be
+	///          equivalent to the empty string, `""`.
+	public abstract getBytes(str, buf, offset);
+	/// Summary: Encodes an entire string into a sequence of bytes, and
+	///          returns the resulting buffer.
+	/// Param str: The string to encode. (String)
+	/// Returns: A new {Buffer} instance containing the bytes of the
+	///          encoded string value.
+	/// Throws TypeError: {str} could not be converted to a string.
+	/// Remarks: This method expects discrete conversions. While {Encoder}
+	///          and {Decoder} maintain state between calls to encoding and
+	///          decoding methods, this method does not. Calling this method
+	///          multiple times on the same Encoding with the same string
+	///          will always yield the same result.
+	///
+	///          Implementations of this method should consider null to be
+	///          equivalent to the empty string, `""`.
+	public overridable getBytes(str)
+	{
+		str = string(str);
+
+		var buf = new Buffer(getByteCount(str));
+		getBytes(str, buf, 0);
+		return buf;
+	}
+
+	/// Summary: Calculates the number of characters (UTF-16 code units) that
+	///          would be required to decode the given buffer.
+	/// Param buf:    A {Buffer} or {BufferView} containing the bytes to be
+	///               decoded.
+	/// Param offset: The index within the buffer at which to start reading
+	///               bytes. (Int, UInt or Real)
+	/// Param count:  The number of bytes to decode. (Int, UInt or Real)
+	/// Returns: The number of characters (UTF-16 code units) that would be
+	///          required to decode the given buffer, as an Int.
+	/// Throws TypeError:
+	///          {buf} is not a {Buffer} or {BufferView}.
+	///
+	///          {offset} or {count} could not be converted to an Int.
+	/// Throws ArgumentNullError:
+	///          {buf} is null.
+	/// Throws ArgumentRangeError:
+	///          {offset} or {count} is less than zero.
+	/// Throws ArgumentError:
+	///          {offset} + {count} is greater than the size of the buffer.
+	/// Remarks: This method expects discrete conversions. While {Encoder}
+	///          and {Decoder} maintain state between calls to encoding and
+	///          decoding methods, this method does not. Calling this method
+	///          multiple times on the same Encoding with the same bytes
+	///          will always yield the same result.
+	///
+	///          Characters are  appended to a {StringBuffer} during decoding.
+	///          As a result of {StringBuffer} being resizable, it is usually
+	///          not necessary to call this method before decoding, but it may
+	///          still be advantageous if the number of bytes to decode is large.
+	public abstract getCharCount(buf, offset, count);
+
+	/// Summary: Decodes an entire buffer and appends the resulting characters
+	///          to a {StringBuffer}.
+	/// Param buf: A {Buffer} or {BufferView} containing the bytes to decode.
+	/// Param stringBuf: A {StringBuffer} which receives the decoded characters.
+	/// Returns: The number of characters (UTF-16 code units) that were appended
+	///          to the string buffer.
+	/// Throws TypeError:
+	///          {buf} is not a {Buffer} or {BufferView}.
+	///
+	///          {stringBuf} is not a {StringBuffer}.
+	/// Throws ArgumentNullError:
+	///          {buf} or {stringBuf} is null.
+	/// Remarks: This method expects discrete conversions. While {Encoder}
+	///          and {Decoder} maintain state between calls to encoding and
+	///          decoding methods, this method does not. Calling this method
+	///          multiple times on the same Encoding with the same bytes
+	///          will always yield the same result.
+	public overridable getChars(buf, stringBuf)
+	{
+		buf = Buffer.fromValue(buf);
+
+		return getChars(buf, 0, buf.size, stringBuf);
+	}
+	/// Summary: Decodes the specified part of a buffer and appends the resulting
+	///          characters to a {StringBuffer}.
+	/// Param buf:    A {Buffer} or {BufferView} containing the bytes to decode.
+	/// Param offset: The index within the buffer at which to start reading
+	///               bytes. (Int, UInt or Real)
+	/// Param count:  The number of bytes to decode. (Int, UInt or Real)
+	/// Param stringBuf: A {StringBuffer} which receives the decoded characters.
+	/// Returns: The number of characters (UTF-16 code units) that were appended
+	///          to the string buffer.
+	/// Throws TypeError:
+	///          {buf} is not a {Buffer} or {BufferView}.
+	///
+	///          {offset} or {count} could not be converted to an Int.
+	///
+	///          {stringBuf} is not a {StringBuffer}.
+	/// Throws ArgumentNullError:
+	///          {buf} or {stringBuf} is null.
+	/// Throws ArgumentRangeError:
+	///          {offset} or {count} is less than zero.
+	/// Throws ArgumentError:
+	///          {offset} + {count} is greater than the size of the buffer.
+	/// Remarks: This method expects discrete conversions. While {Encoder}
+	///          and {Decoder} maintain state between calls to encoding and
+	///          decoding methods, this method does not. Calling this method
+	///          multiple times on the same Encoding with the same bytes
+	///          will always yield the same result.
+	public abstract getChars(buf, offset, count, stringBuf);
+
+	public overridable getString(buf)
+	{
+		buf = Buffer.fromValue(buf);
+
+		return getString(buf, 0, buf.size);
+	}
+	public overridable getString(buf, offset, count)
+	{
+		buf = Buffer.fromValue(buf);
+		offset = int(offset);
+		count = int(count);
+		buf.verifyRange(offset, count);
+
+		var sb = new StringBuffer();
+		getChars(buf, offset, count, sb);
+
+		return sb.toString();
+	}
+
+	override toString()
+	{
+		return "Encoding[name = {0}]".format([name]);
+	}
+
+	private static _utf8;
+	public static get utf8
+	{
+		if _utf8 is null: _utf8 = new Utf8Encoding();
+		return _utf8;
+	}
+
+	private static _utf16, _utf16BE;
+	public static get utf16
+	{
+		if _utf16 is null: _utf16 = new Utf16Encoding(false);
+		return _utf16;
+	}
+	public static get utf16BigEndian
+	{
+		if _utf16BE is null: _utf16BE = new Utf16Encoding(true);
+		return _utf16BE;
+	}
+}

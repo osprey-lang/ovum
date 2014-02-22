@@ -267,7 +267,8 @@ AVES_API NATIVE_FUNCTION(aves_Hash_removeInternal)
 
 					entry->hashCode = -1;
 					entry->next = inst->freeList;
-					entry->key = entry->value = NULL_VALUE;
+					entry->key.type = nullptr;
+					entry->value.type = nullptr;
 					inst->freeList = i;
 					inst->freeCount++;
 					inst->version++;

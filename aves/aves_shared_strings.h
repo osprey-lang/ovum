@@ -48,6 +48,7 @@ namespace error_strings
 	extern String *FileHandleClosed;
 	extern String *AppendMustBeWriteOnly;
 	extern String *CannotFlushReadOnlyStream;
+	extern String *EncodingBufferOverrun;
 }
 
 #endif // AVES__SHARED_STRINGS_H

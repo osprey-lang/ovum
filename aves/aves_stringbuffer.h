@@ -15,6 +15,7 @@ AVES_API NATIVE_FUNCTION(aves_StringBuffer_get_capacity);
 
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_appendLine);
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_appendInternal);
+AVES_API NATIVE_FUNCTION(aves_StringBuffer_appendCodepointInternal);
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_insertInternal);
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_toString);
 

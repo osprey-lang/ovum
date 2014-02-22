@@ -26,6 +26,14 @@ public class StringBuffer
 		return appendLine();
 	}
 
+	public appendCodepoint(codepoint)
+	{
+		codepoint = int(codepoint);
+		if codepoint < 0 or codepoint > 0x10FFFF:
+			throw new ArgumentRangeError("codepoint");
+		return appendCodepointInternal(codepoint);
+	}
+
 	public insert(index, value)
 	{
 		return insertInternal(int(index), string(value));
@@ -34,5 +42,6 @@ public class StringBuffer
 	override toString()						__extern("aves_StringBuffer_toString");
 
 	private appendInternal(value, times)	__extern("aves_StringBuffer_appendInternal");
+	private appendCodepointInternal(cp)		__extern("aves_StringBuffer_appendCodepointInternal");
 	private insertInternal(index, value)	__extern("aves_StringBuffer_insertInternal");
 }

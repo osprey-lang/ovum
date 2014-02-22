@@ -356,5 +356,7 @@ OVUM_API int VM_GetArgs(const int destLength, String *dest[])
 }
 OVUM_API int VM_GetArgValues(const int destLength, Value dest[])
 {
+	if (VM::vm == nullptr)
+		return -1;
 	return VM::vm->GetArgValues(destLength, dest);
 }

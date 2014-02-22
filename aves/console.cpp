@@ -172,7 +172,7 @@ AVES_API NATIVE_FUNCTION(aves_Console_readKey)
 		VM_PushBool(thread, (state & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED)) != 0);
 		GC_Construct(thread, Types::ConsoleKey, 5, nullptr);
 
-		if (argc == 0 || IsFalse(args[0]))
+		if (argc == 0 || IsFalse(args + 0))
 		{
 			LitString<1> str = { 1, 0, StringFlags::STATIC, ch, 0 };
 			VM_Print(_S(str));
@@ -182,6 +182,7 @@ AVES_API NATIVE_FUNCTION(aves_Console_readKey)
 AVES_API NATIVE_FUNCTION(aves_Console_readChar)
 {
 	VM_EnterUnmanagedRegion(thread);
+	// TODO: find a solution that works with Unicode streams
 	int ch = getchar();
 	VM_LeaveUnmanagedRegion(thread);
 
@@ -396,7 +397,7 @@ AVES_API NATIVE_FUNCTION(aves_Console_set_showCursor)
 	if (!success)
 		Console::ThrowConsoleError(thread);
 
-	cci.bVisible = IsTrue(args[0]);
+	cci.bVisible = IsTrue(args + 0);
 	SetConsoleCursorInfo(Console::StdOut, &cci);
 }
 
