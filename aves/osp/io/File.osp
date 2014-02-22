@@ -63,7 +63,12 @@ public static class File
 
 	public static openWrite(fileName)
 	{
-		return new FileStream(fileName, FileMode.create, FileAccess.write, FileShare.none);
+		return new FileStream(fileName, FileMode.openOrCreate, FileAccess.write, FileShare.none);
+	}
+
+	public static create(fileName)
+	{
+		return new FileStream(fileName, FileMode.create, FileAccess.readWrite, FileShare.none);
 	}
 
 	public static readAllBytes(fileName)
@@ -116,6 +121,103 @@ public static class File
 		return length;
 	}
 
+	public static readAllText(fileName)
+	{
+		if fileName is null:
+			throw new ArgumentNullError("fileName");
+		fileName = string(fileName);
+
+		// Without an explicit encoding, we try to read the first
+		// two bytes of the file:
+		//   FE FF -> Encoding.utf16BigEndian
+		//   FF FE -> Encoding.utf16
+		//   EF BB -> read one more byte: if it's BF, Encoding.utf8
+		// If we find a suitable BOM, we pass the stream on to
+		// readAllTextHelper. Otherwise, we back up to the beginning
+		// of the stream, and use Encoding.utf8.
+
+		var result, stream = null;
+		try
+		{
+			stream = openRead(fileName);
+
+			var b1 = stream.readByte();
+			if b1 == -1:
+				// Empty file? Empty string.
+				result = "";
+			else
+			{
+				var b2 = stream.readByte();
+				// Note: b2 may be -1. That's fine; the file may contain only one byte.
+				var encoding = null;
+				if b1 == 0xFE and b2 == 0xFF:
+					encoding = Encoding.utf16BigEndian;
+				else if b1 == 0xFF and b2 == 0xFE:
+					encoding = Encoding.utf16;
+				else if b1 == 0xEF and b2 == 0xBB
+				{
+					b2 = stream.readByte();
+					if b2 == 0xBF:
+						encoding = Encoding.utf8;
+				}
+
+				if encoding is null
+				{
+					encoding = Encoding.utf8;
+					stream.seek(0, SeekOrigin.start);
+				}
+
+				result = readAllTextHelper(stream, encoding);
+			}
+		}
+		finally
+		{
+			stream?.close();
+		}
+
+		return result;
+	}
+	public static readAllText(fileName, encoding)
+	{
+		if fileName is null:
+			throw new ArgumentNullError("fileName");
+		if encoding is null:
+			throw new ArgumentNullError("encoding");
+		if encoding is not Encoding:
+			throw new TypeError("The encoding must be an aves.Encoding instance.");
+		fileName = string(fileName);
+
+		var result, stream = null;
+		try
+		{
+			stream = openRead(fileName);
+			result = readAllTextHelper(stream, encoding);
+		}
+		finally
+		{
+			stream?.close();
+		}
+
+		return result;
+	}
+
+	private static readAllTextHelper(stream, encoding)
+	{
+		var decoder = encoding.getDecoder();
+
+		var buf = new Buffer(4k);
+		var sb = new StringBuffer(2k);
+
+		var bytesRead;
+		do
+		{
+			bytesRead = stream.readMax(buf, 0, 4k);
+			decoder.getChars(buf, 0, bytesRead, sb, bytesRead == 0);
+		} while bytesRead > 0;
+
+		return sb.toString();
+	}
+
 	public static writeAllBytes(fileName, buf)
 	{
 		if buf is null:
@@ -129,6 +231,48 @@ public static class File
 		try
 		{
 			f = new FileStream(fileName, FileMode.create, FileAccess.write, FileShare.none);
+			f.write(buf, 0, buf.size);
+		}
+		finally
+		{
+			f?.close();
+		}
+	}
+
+	public static writeAllText(contents, fileName)
+	{
+		writeAllText(contents, fileName, Encoding.utf8);
+	}
+	public static writeAllText(contents, fileName, encoding)
+	{
+		if fileName is null:
+			throw new ArgumentNullError("fileName");
+		if encoding is null:
+			throw new ArgumentNullError("encoding");
+		if encoding is not Encoding:
+			throw new ArgumentError("encoding must be an aves.Encoding instance.", "encoding");
+		contents = string(contents);
+		fileName = string(fileName);
+
+		var f;
+		try
+		{
+			f = create(fileName);
+
+			if encoding is Utf16Encoding:
+				// Emit UTF-16 identifier specially for UTF-16, U+FEFF
+				if encoding.bigEndian
+				{
+					f.writeByte(0xFE);
+					f.writeByte(0xFF);
+				}
+				else
+				{
+					f.writeByte(0xFF);
+					f.writeByte(0xFE);
+				}
+
+			var buf = encoding.getBytes(contents);
 			f.write(buf, 0, buf.size);
 		}
 		finally

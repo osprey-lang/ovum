@@ -171,9 +171,9 @@ AVES_API NATIVE_FUNCTION(aves_String_format)
 	Value *values = args + 1;
 
 	String *result = nullptr;
-	if (IsType(*values, GetType_List()))
+	if (IsType(values, GetType_List()))
 		result = string::Format(thread, THISV.common.string, values->common.list);
-	else if (IsType(*values, GetType_Hash()))
+	else if (IsType(values, GetType_Hash()))
 		result = string::Format(thread, THISV.common.string, values);
 	else
 		VM_ThrowTypeError(thread, error_strings::FormatValueType);
@@ -819,7 +819,7 @@ String *string::Replace(ThreadHandle thread, const String *input, String *oldVal
 	StringBuffer buf(thread, input->length);
 
 	const uchar *inp = &input->firstChar;
-	int32_t imax = input->length - oldValue->length;
+	int32_t imax = input->length - oldValue->length + 1;
 
 	int32_t start = 0;
 	int32_t lengthCollected = 0;
@@ -829,13 +829,13 @@ String *string::Replace(ThreadHandle thread, const String *input, String *oldVal
 	while (i < imax)
 	{
 		if (*inp == oldValue->firstChar &&
-			String_SubstringEquals(input, start + lengthCollected, oldValue))
+			String_SubstringEquals(input, i, oldValue))
 		{
 			if (lengthCollected > 0)
 				buf.Append(thread, lengthCollected, &input->firstChar + start);
 
 			buf.Append(thread, newValue);
-			start = start + lengthCollected + oldValue->length;
+			start = i + oldValue->length;
 			lengthCollected = 0;
 			inp += oldValue->length;
 			i += oldValue->length;
@@ -860,7 +860,7 @@ String *string::Replace(ThreadHandle thread, const String *input, String *oldVal
 		}
 	}
 
-	if (lengthCollected + oldValue->length > 0)
+	if (input->length > oldValue->length && lengthCollected + oldValue->length > 0)
 		buf.Append(thread, lengthCollected + oldValue->length, &input->firstChar + start);
 
 	return buf.ToString(thread);

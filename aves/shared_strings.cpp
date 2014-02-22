@@ -79,6 +79,7 @@ namespace error_strings
 	LitString<32> _FileHandleClosed = LitString<32>::FromCString("The file handle has been closed.");
 	LitString<54> _AppendMustBeWriteOnly = LitString<54>::FromCString("A file opened for appending must use FileAccess.write.");
 	LitString<32> _CannotFlushReadOnlyStream = LitString<32>::FromCString("Cannot flush a read-only stream.");
+	LitString<42> _EncodingBufferOverrun = LitString<42>::FromCString("Cannot write beyond the end of the buffer.");
 
 	String *EndIndexLessThanStart     = _S(_EndIndexLessThanStart);
 	String *HashKeyNotFound           = _S(_HashKeyNotFound);
@@ -87,4 +88,5 @@ namespace error_strings
 	String *FileHandleClosed          = _S(_FileHandleClosed);
 	String *AppendMustBeWriteOnly     = _S(_AppendMustBeWriteOnly);
 	String *CannotFlushReadOnlyStream = _S(_CannotFlushReadOnlyStream);
+	String *EncodingBufferOverrun     = _S(_EncodingBufferOverrun);
 }

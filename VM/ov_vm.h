@@ -23,8 +23,7 @@
 // Represents a handle to a specific thread.
 typedef void *const ThreadHandle;
 // Represents a handle to a specific type.
-// Note the constness of the pointer data.
-typedef const void *TypeHandle;
+typedef void *TypeHandle;
 // Represents a handle to a specific module.
 typedef void *ModuleHandle;
 // Represents a handle to a member of a type.

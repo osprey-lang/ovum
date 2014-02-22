@@ -1,5 +1,6 @@
 #include "ov_stringbuffer.h"
 #include "aves_stringbuffer.h"
+#include <new> // For placement new
 
 AVES_API void aves_StringBuffer_init(TypeHandle type)
 {
@@ -10,14 +11,24 @@ AVES_API void aves_StringBuffer_init(TypeHandle type)
 
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_new)
 {
-	((StringBuffer*)THISV.instance)->StringBuffer::StringBuffer(thread);
+	StringBuffer *buf = (StringBuffer*)THISV.instance;
+
+	new(buf) StringBuffer(thread);
 }
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_newCap)
 {
+	StringBuffer *buf = (StringBuffer*)THISV.instance;
+
 	IntFromValue(thread, args + 1);
 	int64_t capacity = args[1].integer;
+	if (capacity < 0 || capacity > INT32_MAX)
+	{
+		VM_PushString(thread, strings::capacity);
+		GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr);
+		VM_Throw(thread);
+	}
 
-	((StringBuffer*)THISV.instance)->StringBuffer::StringBuffer(thread, capacity);
+	new(buf) StringBuffer(thread, capacity);
 }
 
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_get_length)
@@ -56,6 +67,26 @@ AVES_API NATIVE_FUNCTION(aves_StringBuffer_appendInternal)
 
 	for (int32_t i = 0; i < (int32_t)times; i++)
 		buf->Append(thread, str);
+
+	VM_Push(thread, THISV);
+}
+AVES_API NATIVE_FUNCTION(aves_StringBuffer_appendCodepointInternal)
+{
+	// appendCodepointInternal(cp is Int)
+	// The public-facing method makes sure the type is right,
+	// and also range-checks the value
+
+	StringBuffer *buf = (StringBuffer*)THISV.instance;
+	wuchar codepoint = (wuchar)args[1].integer;
+
+	if (codepoint > 0xFFFF)
+	{
+		// Surrogate pair, whoo!
+		SurrogatePair pair = UC_ToSurrogatePair(codepoint);
+		buf->Append(thread, 2, (uchar*)&pair);
+	}
+	else
+		buf->Append(thread, 1, (uchar)codepoint);
 
 	VM_Push(thread, THISV);
 }

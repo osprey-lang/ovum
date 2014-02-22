@@ -8,7 +8,7 @@ namespace buffer_errors
 	String *MemoryError = _S(_MemoryError);
 }
 
-StringBuffer::StringBuffer(Thread * const thread, const int32_t capacity) : length(0), data(nullptr)
+StringBuffer::StringBuffer(Thread *const thread, const int32_t capacity) : length(0), data(nullptr)
 {
 	SetCapacity(thread, capacity);
 }
@@ -81,13 +81,13 @@ void StringBuffer::Append(Thread *const thread, const int32_t count, const uchar
 	this->length += count;
 }
 
-void StringBuffer::Append(Thread * const thread, String *str)
+void StringBuffer::Append(Thread *const thread, String *str)
 {
 	// Just pass it on! Whee!
 	Append(thread, str->length, &str->firstChar);
 }
 
-void StringBuffer::Append(Thread * const thread, const uchar ch)
+void StringBuffer::Append(Thread *const thread, const uchar ch)
 {
 	// And this too! Whee!
 	Append(thread, 1, &ch);
@@ -141,7 +141,7 @@ void StringBuffer::Clear()
 	}
 }
 
-String *StringBuffer::ToString(Thread * const thread)
+String *StringBuffer::ToString(Thread *const thread)
 {
 	return GC::gc->ConstructString(thread, this->length, this->data);
 }

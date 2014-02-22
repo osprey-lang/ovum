@@ -6,12 +6,6 @@ LitString<4> _trueString  = { 4, 0, StringFlags::STATIC, 't','r','u','e',0 };
 String *falseString = _S(falseString);
 String *trueString  = _S(trueString);
 
-AVES_API NATIVE_FUNCTION(aves_bool)
-{
-	bool truthy = IsTrue(args[0]);
-	VM_PushBool(thread, truthy);
-}
-
 AVES_API NATIVE_FUNCTION(aves_Boolean_getHashCode)
 {
 	VM_PushInt(thread, args[0].integer ? 1 : 0);

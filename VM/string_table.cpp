@@ -131,7 +131,7 @@ String *StringTable::GetInterned(String *value)
 	return GetValue(value, false);
 }
 
-String *StringTable::GetInterned(const int32_t length, const uchar values[])
+/*String *StringTable::GetInterned(const int32_t length, const uchar values[])
 {
 	int32_t hashCode = String_GetHashCode(length, values) & INT32_MAX;
 
@@ -144,7 +144,7 @@ String *StringTable::GetInterned(const int32_t length, const uchar values[])
 	}
 
 	return nullptr;
-}
+}*/
 
 String *StringTable::Intern(String *value)
 {

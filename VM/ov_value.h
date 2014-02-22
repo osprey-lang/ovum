@@ -12,7 +12,7 @@
 // pair; it does not have to represent a single Unicode character.
 typedef uint16_t uchar;
 
-enum class StringFlags : uint8_t
+enum class StringFlags : uint32_t
 {
 	NONE = 0,
 	// Tells the GC not to collect a String*, because it was created
@@ -27,7 +27,7 @@ enum class StringFlags : uint8_t
 	// is collected.
 	INTERN = 4,
 };
-ENUM_OPS(StringFlags, uint8_t);
+ENUM_OPS(StringFlags, uint32_t);
 
 // Note: Strings are variable-size instances, and should never be passed by value.
 // Always pass String pointers around. To get the character data, take the address
@@ -89,7 +89,7 @@ typedef struct MethodInst_S MethodInst;
 // the integer, uinteger or real fields contain the instance data.
 // Otherwise, the instance field contains a pointer to the instance.
 typedef struct Value_S Value;
-typedef struct Value_S
+struct Value_S
 {
 	TypeHandle type;
 
@@ -110,7 +110,7 @@ typedef struct Value_S
 			MethodInst *method;
 		} common;
 	};
-} Value;
+};
 
 
 typedef struct ListInst_S
@@ -230,29 +230,29 @@ inline void SetString(Value *target, String *value)
 
 #define IS_NULL(v)		((v).type == nullptr)
 
-OVUM_API bool IsTrue(Value value);
+OVUM_API bool IsTrue(Value *value);
 
-OVUM_API bool IsFalse(Value value);
+OVUM_API bool IsFalse(Value *value);
 
-OVUM_API bool IsType(Value value, TypeHandle type);
+OVUM_API bool IsType(Value *value, TypeHandle type);
 
-OVUM_API bool IsSameReference(Value a, Value b);
+OVUM_API bool IsSameReference(Value *a, Value *b);
 
 
-OVUM_API bool IsBoolean(Value value);
-inline bool IsBoolean(Value *value) { return IsBoolean(*value); }
+OVUM_API bool IsBoolean(Value *value);
+inline bool IsBoolean(Value value) { return IsBoolean(&value); }
 
-OVUM_API bool IsInt(Value value);
-inline bool IsInt(Value *value)    { return IsInt(*value); }
+OVUM_API bool IsInt(Value *value);
+inline bool IsInt(Value value)    { return IsInt(&value); }
 
-OVUM_API bool IsUInt(Value value);
-inline bool IsUInt(Value *value)   { return IsUInt(*value); }
+OVUM_API bool IsUInt(Value *value);
+inline bool IsUInt(Value value)   { return IsUInt(&value); }
 
-OVUM_API bool IsReal(Value value);
-inline bool IsReal(Value *value)   { return IsReal(*value); }
+OVUM_API bool IsReal(Value *value);
+inline bool IsReal(Value value)   { return IsReal(&value); }
 
-OVUM_API bool IsString(Value value);
-inline bool IsString(Value *value) { return IsString(*value); }
+OVUM_API bool IsString(Value *value);
+inline bool IsString(Value value) { return IsString(&value); }
 
 
 #endif // VM__VALUE_H

@@ -40,15 +40,18 @@ namespace io;
 ///          to read from, write to or seek within it.
 ///
 ///          When a method takes a buffer as an argument, implementations
-///          should use {Stream.ensureBuffer} to ensure the argument is
-///          indeed a buffer. This method extracts the {Buffer} from
-///          a {BufferView}, or throws a {TypeError} if the argument is not
-///          a {Buffer} instance. For example,
+///          should use {Buffer.fromValue} to ensure the argument is indeed
+///          a buffer. This method extracts the {Buffer} from a {BufferView},
+///          or throws a {TypeError} if the argument is not a {Buffer}
+///          instance. Additionally, {Buffer.verifyRange} should be used to
+///          verify that the offset and count are actually within the buffer.
+///          For example,
 ///
 ///          `override readMax(buf, offset, count) {`\
-///          `   buf = ensureBuffer(buf);`\
+///          `   buf = Buffer.fromValue(buf);`\
 ///          `   offset = int(offset);`\
 ///          `   count = int(count);`\
+///          `   buf.verifyRange(offset, count);`\
 ///          `   // ... rest of method ...`\
 ///          `}`
 public abstract class Stream
@@ -195,16 +198,11 @@ public abstract class Stream
 	///          {offset} or {count} could not be converted to an Int.
 	public overridable readInto(buf, offset, count)
 	{
-		buf = ensureBuffer(buf);
+		buf = Buffer.fromValue(buf);
 		offset = int(offset);
 		count = int(count);
 
-		if offset < 0:
-			throw new ArgumentRangeError("offset");
-		if count <= 0:
-			throw new ArgumentRangeError("count");
-		if offset + count > buf.size:
-			throw new ArgumentError("offset + count must be less than or equal to the buffer size.");
+		buf.verifyRange(offset, count);
 
 		var bytesRead = 0;
 		do
@@ -250,7 +248,7 @@ public abstract class Stream
 	///          {buf} is not a {Buffer} or {BufferView}.
 	public overridable write(buf)
 	{
-		buf = ensureBuffer(buf);
+		buf = Buffer.fromValue(buf);
 		write(buf, 0, buf.size);
 	}
 	/// Summary: Writes part of the specified buffer to the stream.
@@ -325,25 +323,8 @@ public abstract class Stream
 	///          operations are possible on any given stream.
 	public abstract close();
 
-	/// Summary: Ensures that a specified object is a {Buffer}.
-	/// Param buf: A {Buffer} or {BufferView} object.
-	/// Returns: If {buf} is a {Buffer}, it is returned as-is. If it is
-	///          a {BufferView}, the underlying buffer is returned.
-	/// Throws ArgumentNullError:
-	///          {buf} is null.
-	/// Throws TypeError:
-	///          {buf} is not a {Buffer} or {BufferView}.
-	protected static ensureBuffer(buf)
-	{
-		if buf is null:
-			throw new ArgumentNullError("buf");
-		else if buf is BufferView:
-			buf = buf.buffer;
-		else if buf is not Buffer:
-			throw new TypeError("buf must be an aves.Buffer.");
-		return buf;
-	}
-
+	/// Summary: Gets an instance of a stream that always returns end-of-file
+	///          and discards any data written to it.
 	public static get void = new VoidStream();
 }
 
@@ -384,5 +365,7 @@ public enum SeekOrigin
 	///          of the file.
 	/// Remarks: A positive seek offset still seeks forward,
 	///          while a negative offset is required to back up.
+	///          For example, to seek to the 16th byte before the
+	///          end, call `stream.seek(-16, SeekOrigin.end)`.
 	end = 3,
 }

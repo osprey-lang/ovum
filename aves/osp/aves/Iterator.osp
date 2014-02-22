@@ -203,6 +203,73 @@ public abstract class Iterator
 		return output.toString();
 	}
 
+	public group(func)
+	{
+		if func is null:
+			throw new ArgumentNullError("func");
+
+		var result = {};
+
+		while moveNext()
+		{
+			var key = func(current);
+			if not result.hasKey(key):
+				result[key] = [];
+			result[key].add(current);
+		}
+
+		return result;
+	}
+	public group(keyFunc, valueFunc)
+	{
+		if keyFunc is null:
+			throw new ArgumentNullError("keyFunc");
+		if valueFunc is null:
+			throw new ArgumentNullError("valueFunc");
+
+		var result = {};
+
+		while moveNext()
+		{
+			var key = keyFunc(current);
+			if not result.hasKey(key):
+				result[key] = [];
+			result[key].add(valueFunc(current));
+		}
+
+		return result;
+	}
+
+	public groupEvery(frequency)
+	{
+		frequency = int(frequency);
+		if frequency <= 0:
+			throw new ArgumentRangeError("frequency");
+
+		return groupEveryInner(frequency);
+	}
+	private groupEveryInner(frequency)
+	{
+		var curList = null;
+
+		while moveNext()
+		{
+			if curList is null:
+				curList = new List(frequency);
+
+			curList.add(current);
+
+			if curList.length == frequency
+			{
+				yield curList;
+				curList = null;
+			}
+		}
+
+		if curList is not null:
+			yield curList;
+	}
+
 	public intersperse(value)
 	{
 		if moveNext()

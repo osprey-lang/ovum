@@ -33,9 +33,51 @@ public class Buffer
 	public writeFloat32(index, value)		__extern("aves_Buffer_writeFloat32");
 	public writeFloat64(index, value)		__extern("aves_Buffer_writeFloat64");
 
+	/// Summary: Verifies that the specified range is inside the buffer.
+	///          If the range is valid, this function returns successfully;
+	///          otherwise, it throws an error as specified.
+	/// Param offset: An offset into the buffer. (Int)
+	/// Param count: The length of the range, in bytes. (Int)
+	/// Throws ArgumentRangeError:
+	///          {offset} is less than zero.
+	///
+	///          {count} is less than zero.
+	/// Throws ArgumentError:
+	///          {offset} + {count} is greater than the size of the buffer.
+	/// Remarks: {offset} and {count} are not type-checked. It is assumed
+	///          that the caller will convert both to ints.
+	public verifyRange(offset, count)
+	{
+		if offset < 0:
+			throw new ArgumentRangeError("offset");
+		if count < 0:
+			throw new ArgumentRangeError("count");
+		if offset + count > size:
+			throw new ArgumentError("offset + count must be less than or equal to the buffer size.");
+	}
+
 	override toString()
 	{
 		return "Buffer[size = {0}]".format([size]);
+	}
+
+	/// Summary: Extracts a {Buffer} from the specified value.
+	/// Param buf: A {Buffer} or {BufferView} object.
+	/// Returns: If {buf} is a {Buffer}, it is returned as-is. If it is
+	///          a {BufferView}, the underlying buffer is returned.
+	/// Throws ArgumentNullError:
+	///          {buf} is null.
+	/// Throws TypeError:
+	///          {buf} is not a {Buffer} or {BufferView}.
+	public static fromValue(buf)
+	{
+		if buf is null:
+			throw new ArgumentNullError("buf");
+		else if buf is BufferView:
+			buf = buf.buffer;
+		else if buf is not Buffer:
+			throw new TypeError("buf must be an aves.Buffer or aves.BufferView.");
+		return buf;
 	}
 
 	iter

@@ -1,0 +1,20 @@
+namespace aves;
+
+public abstract class Encoder
+{
+	public abstract getByteCount(str, flush);
+
+	public abstract getBytes(str, buf, offset, flush);
+	public overridable getBytes(str, flush)
+	{
+		str = string(str);
+		flush = bool(flush);
+
+		var buf = new Buffer(getByteCount(str, flush));
+		getBytes(str, buf, 0, flush);
+
+		return buf;
+	}
+
+	public abstract reset();
+}

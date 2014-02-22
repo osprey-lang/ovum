@@ -108,6 +108,12 @@
     <ClInclude Include="aves_shared_strings.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="aves_utf8encoding.h">
+      <Filter>Header Files\aves</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_utf16encoding.h">
+      <Filter>Header Files\aves</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="aves.cpp">
@@ -187,6 +193,12 @@
     </ClCompile>
     <ClCompile Include="shared_strings.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utf8encoding.cpp">
+      <Filter>Source Files\aves</Filter>
+    </ClCompile>
+    <ClCompile Include="utf16encoding.cpp">
+      <Filter>Source Files\aves</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

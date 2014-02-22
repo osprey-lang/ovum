@@ -228,9 +228,9 @@ AVES_API void aves_BufferView_init(TypeHandle type)
 
 AVES_API NATIVE_FUNCTION(aves_BufferView_new)
 {
-	if (!IsType(args[1], BufferType))
+	if (!IsType(args + 1, BufferType))
 		VM_ThrowTypeError(thread);
-	if (!IsType(args[2], Types::BufferViewKind))
+	if (!IsType(args + 2, Types::BufferViewKind))
 		VM_ThrowTypeError(thread);
 	if (args[2].integer < BufferView::BYTE ||
 		args[2].integer > BufferView::FLOAT64)

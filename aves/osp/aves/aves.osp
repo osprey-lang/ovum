@@ -7,8 +7,11 @@ use "Buffer.osp";
 use "Console.osp";
 use "ConsoleColor.osp";
 use "ConsoleKey.osp";
+use "Decoder.osp";
 use "DivideByZeroError.osp";
 use "DuplicateKeyError.osp";
+use "Encoder.osp";
+use "Encoding.osp";
 use "Enum.osp";
 use "Env.osp";
 use "Error.osp";
@@ -34,6 +37,8 @@ use "StringBuffer.osp";
 use "Type.osp";
 use "TypeError.osp";
 use "UInt.osp";
+use "Utf16Encoding.osp";
+use "Utf8Encoding.osp";
 
 namespace aves;
 
