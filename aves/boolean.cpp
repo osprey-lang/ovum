@@ -1,21 +1,5 @@
 #include "aves_boolean.h"
 
-LitString<5> _falseString = { 5, 0, StringFlags::STATIC, 'f','a','l','s','e',0 };
-LitString<4> _trueString  = { 4, 0, StringFlags::STATIC, 't','r','u','e',0 };
-
-String *falseString = _S(falseString);
-String *trueString  = _S(trueString);
-
-AVES_API NATIVE_FUNCTION(aves_Boolean_getHashCode)
-{
-	VM_PushInt(thread, args[0].integer ? 1 : 0);
-}
-
-AVES_API NATIVE_FUNCTION(aves_Boolean_toString)
-{
-	VM_PushString(thread, args[0].integer ? trueString : falseString);
-}
-
 AVES_API NATIVE_FUNCTION(aves_Boolean_opEquals)
 {
 	// args[0] is guaranteed to be of type Boolean!
@@ -35,9 +19,4 @@ AVES_API NATIVE_FUNCTION(aves_Boolean_opCompare)
 		left < right ? -1 :
 		left > right ? 1 :
 		0);
-}
-
-AVES_API NATIVE_FUNCTION(aves_Boolean_opPlus)
-{
-	VM_PushInt(thread, args[0].integer ? 1 : 0);
 }
