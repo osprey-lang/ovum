@@ -427,7 +427,7 @@ void integer::ParseFormatString(ThreadHandle thread, String *str, int *radix, in
 		break;
 
 	case 'r': // 'r'radix[':'width]
-	case 'R': // 'R'radix[':'width]
+	case 'R': // 'R'radix[':'width] (or with ',' in place of ':')
 		i++; // skip the R
 		*upper = *ch++ == 'R';
 		if (str->length < 2) goto throwFormatError;
@@ -449,9 +449,9 @@ void integer::ParseFormatString(ThreadHandle thread, String *str, int *radix, in
 			VM_Throw(thread);
 		}
 
-		if (*ch != ':')
+		if (*ch != ':' && *ch != ',')
 			break;
-		ch++, i++; // skip ':'
+		ch++, i++; // skip ':'/','
 		if (i == str->length) goto throwFormatError;
 
 parseMinWidth:
