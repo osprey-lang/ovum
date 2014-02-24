@@ -4,6 +4,9 @@
 
 #define _E(value)	((value).common.error)
 
+LitString<30> _DefaultErrorMessage = LitString<30>::FromCString("An unspecified error occurred.");
+String *DefaultErrorMessage = _S(_DefaultErrorMessage);
+
 AVES_API void aves_Error_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(ErrorInst));
@@ -20,11 +23,13 @@ AVES_API NATIVE_FUNCTION(aves_Error_new)
 
 	ErrorInst *err = _E(THISV);
 
-	if (argc > 1)
+	if (argc > 1 && !IS_NULL(args[1]))
 	{
 		StringFromValue(thread, args + 1);
 		err->message = args[1].common.string;
 	}
+	else
+		err->message = DefaultErrorMessage;
 
 	if (argc > 2)
 		err->innerError = args[2];
