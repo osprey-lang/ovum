@@ -59,7 +59,7 @@ AVES_API NATIVE_FUNCTION(aves_UInt_opEquals)
 	if (RIGHT.type == Types::UInt)
 		equals = LEFT.uinteger == RIGHT.uinteger;
 	else if (RIGHT.type == Types::Int)
-		equals = LEFT.uinteger == (RIGHT.integer & INT64_MAX);
+		equals = RIGHT.integer >= 0 && LEFT.uinteger == RIGHT.uinteger;
 	else if (RIGHT.type == Types::Real)
 		equals = (double)LEFT.uinteger == RIGHT.real;
 
@@ -67,15 +67,37 @@ AVES_API NATIVE_FUNCTION(aves_UInt_opEquals)
 }
 AVES_API NATIVE_FUNCTION(aves_UInt_opCompare)
 {
-	if (RIGHT.type != Types::UInt)
+	int result;
+	if (RIGHT.type == Types::UInt)
+	{
+		uint64_t left  = LEFT.uinteger;
+		uint64_t right = RIGHT.uinteger;
+		result = left < right ? -1 :
+			left > right ? 1 :
+			0;
+	}
+	else if (RIGHT.type == Types::Int)
+	{
+		uint64_t left = LEFT.uinteger;
+		int64_t right = RIGHT.integer;
+		if ((int32_t)(right >> 32) < 0 ||
+			(uint32_t)(left >> 32) > INT32_MAX)
+			result = 1;
+		else
+			result = (uint64_t)left < right ? -1 :
+				(uint64_t)left > right ? 1 :
+				0;
+	}
+	else if (RIGHT.type == Types::Real)
+	{
+		double left  = (double)LEFT.uinteger;
+		double right = RIGHT.real;
+		result = left < right ? -1 :
+			left > right ? 1 :
+			0;
+	}
+	else
 		VM_ThrowTypeError(thread);
-
-	uint64_t left  = LEFT.uinteger;
-	uint64_t right = RIGHT.uinteger;
-
-	int result = left < right ? -1 :
-		left > right ? 1 :
-		0;
 	VM_PushInt(thread, result);
 }
 AVES_API NATIVE_FUNCTION(aves_UInt_opShiftLeft)
