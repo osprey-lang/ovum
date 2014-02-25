@@ -163,7 +163,11 @@ AVES_API NATIVE_FUNCTION(aves_Real_opEquals)
 {
 	bool result = false;
 	if (RIGHT.type == Types::Real)
-		result = LEFT.real == RIGHT.real;
+	{
+		double left  = LEFT.real;
+		double right = RIGHT.real;
+		result = isnan(left) && isnan(right) || left == right;
+	}
 	else if (RIGHT.type == Types::Int)
 		result = LEFT.real == (double)RIGHT.integer;
 	else if (RIGHT.type == Types::UInt)
@@ -173,11 +177,17 @@ AVES_API NATIVE_FUNCTION(aves_Real_opEquals)
 }
 AVES_API NATIVE_FUNCTION(aves_Real_opCompare)
 {
-	if (RIGHT.type != Types::Real)
+	double right;
+	if (RIGHT.type == Types::Real)
+		right = RIGHT.real;
+	else if (RIGHT.type == Types::Int)
+		right = (double)RIGHT.integer;
+	else if (RIGHT.type == Types::UInt)
+		right = (double)RIGHT.uinteger;
+	else
 		VM_ThrowTypeError(thread);
 
 	double left = LEFT.real;
-	double right = RIGHT.real;
 
 	// Real values are ordered as follows:
 	//   NaN < -∞ < ... < -ε < -0.0 = +0.0 < +ε < ... < +∞
