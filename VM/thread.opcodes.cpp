@@ -908,7 +908,7 @@ void Thread::Evaluate()
 		// gte: LocalOffset args, LocalOffset dest
 		TARGET(OPI_GTE_L)
 			{
-				register bool result = CompareGreaterThanLL(OFF_ARG(ip, f));
+				register bool result = CompareGreaterEqualsLL(OFF_ARG(ip, f));
 				SetBool_(OFF_ARG(ip + LOSZ, f), result);
 				ip += 2*LOSZ;
 				// CompareLL pops arguments off the stack
@@ -916,7 +916,7 @@ void Thread::Evaluate()
 			NEXT_INSTR();
 		TARGET(OPI_GTE_S)
 			{
-				register bool result = CompareGreaterThanLL(OFF_ARG(ip, f));
+				register bool result = CompareGreaterEqualsLL(OFF_ARG(ip, f));
 				SetBool_(OFF_ARG(ip + LOSZ, f), result);
 				ip += 2*LOSZ;
 				// CompareLL pops arguments off the stack
