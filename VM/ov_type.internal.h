@@ -292,8 +292,12 @@ public:
 		// Flags associated with the method.
 		MethodFlags flags;
 
+		String **paramNames;
+
 		int32_t tryBlockCount;
 		TryBlock *tryBlocks;
+
+		debug::DebugSymbols *debugSymbols;
 
 		union
 		{
@@ -349,6 +353,8 @@ public:
 
 		inline ~Overload()
 		{
+			delete[] paramNames;
+
 			if ((flags & (MethodFlags::NATIVE | MethodFlags::ABSTRACT)) == MethodFlags::NONE)
 				delete[] entry;
 

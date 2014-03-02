@@ -1,4 +1,5 @@
 #include "ov_vm.internal.h"
+#include "ov_debug_symbols.internal.h"
 
 namespace thread_errors
 {
@@ -1086,9 +1087,11 @@ String *Thread::GetStackTrace()
 	//     aves.Method(this: thisType, methodName)
 
 	StackFrame *frame = currentFrame;
+	uint8_t *ip = this->ip;
 	while (frame)
 	{
-		Method *group = frame->method->group;
+		Method::Overload *method = frame->method;
+		Method *group = method->group;
 
 		buf.Append(this, 2, ' ');
 
@@ -1105,20 +1108,28 @@ String *Thread::GetStackTrace()
 		buf.Append(this, group->name);
 		buf.Append(this, '(');
 
-		uint16_t paramCount = frame->method->GetEffectiveParamCount();
+		unsigned int paramCount = method->GetEffectiveParamCount();
 
-		for (int i = 0; i < paramCount; i++)
+		for (unsigned int i = 0; i < paramCount; i++)
 		{
 			if (i > 0)
 				buf.Append(this, 2, ", ");
-			else if (i == 0 && frame->method->IsInstanceMethod())
-				buf.Append(this, 6, "this: ");
+
+			if (i == 0 && method->IsInstanceMethod())
+				buf.Append(this, 4, "this");
+			else
+				buf.Append(this, method->paramNames[i - method->InstanceOffset()]);
+			buf.Append(this, '=');
+
 			AppendArgumentType(buf, ((Value*)frame - paramCount)[i]);
 		}
 
 		buf.Append(this, ')');
+		if (method->debugSymbols)
+			AppendSourceLocation(buf, method, ip);
 		buf.Append(this, '\n');
 
+		ip = frame->prevInstr;
 		frame = frame->prevFrame;
 	}
 
@@ -1138,7 +1149,7 @@ void Thread::AppendArgumentType(StringBuffer &buf, Value arg)
 		{
 			// Append some information about the instance and method group, too.
 			MethodInst *method = arg.common.method;
-			buf.Append(this, 7, "(this: ");
+			buf.Append(this, 6, "(this=");
 			AppendArgumentType(buf, method->instance);
 			buf.Append(this, 2, ", ");
 
@@ -1152,6 +1163,36 @@ void Thread::AppendArgumentType(StringBuffer &buf, Value arg)
 
 			buf.Append(this, ')');
 		}
+	}
+}
+
+void Thread::AppendSourceLocation(StringBuffer &buf, Method::Overload *method, uint8_t *ip)
+{
+	uint32_t offset = (uint32_t)(ip - method->entry);
+
+	debug::SourceLocation *loc = method->debugSymbols->FindSymbol(offset);
+	if (loc)
+	{
+		buf.Append(this, 9, " at line ");
+		// Build a decimal string for the line number
+		{
+			const uchar NumberLength = 16; // 16 digits ought to be enough for anybody
+
+			uchar lineNumberStr[NumberLength];
+			uchar *chp = lineNumberStr + NumberLength;
+			int32_t length = 0;
+
+			int32_t lineNumber = loc->lineNumber;
+			do
+			{
+				*--chp = (uchar)'0' + lineNumber % 10;
+				length++;
+			} while (lineNumber /= 10);
+			buf.Append(this, length, chp);
+		}
+		buf.Append(this, 5, " in \"");
+		buf.Append(this, loc->file->fileName);
+		buf.Append(this, '"');
 	}
 }
 

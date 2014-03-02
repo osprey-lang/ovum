@@ -443,6 +443,11 @@ OVUM_API String *Type_GetFullName(TypeHandle type)
 	return type->fullName;
 }
 
+OVUM_API TypeHandle Type_GetBaseType(TypeHandle type)
+{
+	return type->baseType;
+}
+
 OVUM_API MemberHandle Type_GetMember(TypeHandle type, String *name)
 {
 	return type->GetMember(name);
@@ -477,6 +482,10 @@ OVUM_API uint32_t Type_GetFieldOffset(TypeHandle type)
 {
 	return type->fieldsOffset;
 }
+OVUM_API uint32_t Type_GetInstanceSize(TypeHandle type)
+{
+	return type->size;
+}
 
 OVUM_API void Type_SetFinalizer(TypeHandle type, Finalizer finalizer)
 {
@@ -504,19 +513,4 @@ OVUM_API void Type_SetReferenceGetter(TypeHandle type, ReferenceGetter getter)
 {
 	if ((type->flags & TypeFlags::INITED) == TypeFlags::NONE)
 		type->getReferences = getter;
-}
-
-OVUM_API String *Error_GetMessage(Value error)
-{
-	if (!Type::ValueIsType(&error, VM::vm->types.Error))
-		return nullptr; // whoopsies!
-
-	return error.common.error->message;
-}
-OVUM_API String *Error_GetStackTrace(Value error)
-{
-	if (!Type::ValueIsType(&error, VM::vm->types.Error))
-		return nullptr; // Type mismatch!
-
-	return error.common.error->stackTrace;
 }
