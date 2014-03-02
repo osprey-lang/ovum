@@ -1,5 +1,7 @@
 #include "ov_vm.internal.h"
 #include "ov_thread.opcodes.h"
+#include "ov_module.internal.h"
+#include "ov_debug_symbols.internal.h"
 #include <vector>
 #include <queue>
 #include <memory>
@@ -150,6 +152,17 @@ namespace instr
 				tryBlock->finallyBlock.finallyStart = newIndices[tryBlock->finallyBlock.finallyStart];
 				tryBlock->finallyBlock.finallyEnd = newIndices[tryBlock->finallyBlock.finallyEnd];
 				break;
+			}
+		}
+
+		if (method->debugSymbols)
+		{
+			debug::DebugSymbols *debug = method->debugSymbols;
+			for (int32_t i = 0; i < debug->symbolCount; i++)
+			{
+				debug::SourceLocation &loc = debug->symbols[i];
+				loc.startOffset = newIndices[loc.startOffset];
+				loc.endOffset = newIndices[loc.endOffset];
 			}
 		}
 	}
@@ -477,31 +490,44 @@ void Thread::InitializeBranchOffsets(instr::MethodBuilder &builder, Method::Over
 			}
 		}
 
-		for (int32_t i = 0; i < method->tryBlockCount; i++)
-		{
-			Method::TryBlock &tryBlock = method->tryBlocks[i];
-			tryBlock.tryStart = builder.FindIndex(tryBlock.tryStart);
-			tryBlock.tryEnd = builder.FindIndex(tryBlock.tryEnd);
+	for (int32_t i = 0; i < method->tryBlockCount; i++)
+	{
+		Method::TryBlock &tryBlock = method->tryBlocks[i];
+		tryBlock.tryStart = builder.FindIndex(tryBlock.tryStart);
+		tryBlock.tryEnd = builder.FindIndex(tryBlock.tryEnd);
 
-			switch (tryBlock.kind)
+		switch (tryBlock.kind)
+		{
+		case TryKind::CATCH:
+			for (int32_t c = 0; c < tryBlock.catches.count; c++)
 			{
-			case TryKind::CATCH:
-				for (int32_t c = 0; c < tryBlock.catches.count; c++)
-				{
-					Method::CatchBlock &catchBlock = tryBlock.catches.blocks[c];
-					if (catchBlock.caughtType == nullptr)
-						catchBlock.caughtType = TypeFromToken(method, catchBlock.caughtTypeId);
-					catchBlock.catchStart = builder.FindIndex(catchBlock.catchStart);
-					catchBlock.catchEnd = builder.FindIndex(catchBlock.catchEnd);
-				}
-				break;
-			case TryKind::FINALLY:
+				Method::CatchBlock &catchBlock = tryBlock.catches.blocks[c];
+				if (catchBlock.caughtType == nullptr)
+					catchBlock.caughtType = TypeFromToken(method, catchBlock.caughtTypeId);
+				catchBlock.catchStart = builder.FindIndex(catchBlock.catchStart);
+				catchBlock.catchEnd = builder.FindIndex(catchBlock.catchEnd);
+			}
+			break;
+		case TryKind::FINALLY:
+			{
 				auto &finallyBlock = tryBlock.finallyBlock;
 				finallyBlock.finallyStart = builder.FindIndex(finallyBlock.finallyStart);
 				finallyBlock.finallyEnd = builder.FindIndex(finallyBlock.finallyEnd);
-				break;
 			}
+			break;
 		}
+	}
+
+	if (method->debugSymbols)
+	{
+		debug::DebugSymbols *debug = method->debugSymbols;
+		for (int32_t i = 0; i < debug->symbolCount; i++)
+		{
+			debug::SourceLocation &loc = debug->symbols[i];
+			loc.startOffset = builder.FindIndex(loc.startOffset);
+			loc.endOffset = builder.FindIndex(loc.endOffset);
+		}
+	}
 }
 
 void Thread::CalculateStackHeights(instr::MethodBuilder &builder, Method::Overload *method, StackManager &stack)
@@ -772,6 +798,17 @@ void Thread::WriteInitializedBody(instr::MethodBuilder &builder, Method::Overloa
 				finallyBlock.finallyEnd = builder.GetNewOffset(finallyBlock.finallyEnd);
 			}
 			break;
+		}
+	}
+
+	if (method->debugSymbols)
+	{
+		debug::DebugSymbols *debug = method->debugSymbols;
+		for (int32_t i = 0; i < debug->symbolCount; i++)
+		{
+			debug::SourceLocation &loc = debug->symbols[i];
+			loc.startOffset = builder.GetNewOffset(loc.startOffset);
+			loc.endOffset = builder.GetNewOffset(loc.endOffset);
 		}
 	}
 

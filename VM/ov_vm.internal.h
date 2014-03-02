@@ -34,6 +34,12 @@ class StaticRef;
 class OvumException;
 class MethodInitException;
 
+namespace debug
+{
+	class DebugSymbols;
+	class ModuleDebugData;
+}
+
 // Represents a handle to a specific thread.
 typedef Thread *const ThreadHandle;
 // Represents a handle to a specific type.
@@ -126,6 +132,5 @@ public:
 #include "ov_type.internal.h"
 #include "ov_thread.internal.h"
 #include "ov_gc.internal.h"
-#include "ov_module.internal.h"
 
 #endif // VM__VM_INTERNAL

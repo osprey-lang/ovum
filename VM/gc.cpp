@@ -1,4 +1,6 @@
 #include "ov_vm.internal.h"
+#include "ov_module.internal.h"
+#include "ov_debug_symbols.internal.h"
 #include <cstdlib>
 #include <cstring>
 #include <vector>
@@ -332,6 +334,13 @@ void GC::MarkRootSet()
 
 		for (int32_t s = 0; s < m->strings.GetLength(); s++)
 			TryProcessString(m->strings[s]);
+
+		if (m->debugData)
+		{
+			debug::ModuleDebugData *debug = m->debugData;
+			for (int32_t f = 0; f < debug->fileCount; f++)
+				TryProcessString(debug->files[f].fileName);
+		}
 	}
 
 	// And then we have all the beautiful, lovely static references.

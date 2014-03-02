@@ -85,6 +85,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="ov_compat.h" />
+    <ClInclude Include="ov_debug_symbols.internal.h" />
     <ClInclude Include="ov_gc.h" />
     <ClInclude Include="ov_gc.internal.h" />
     <ClInclude Include="ov_helpers.h" />
@@ -111,6 +112,7 @@
     <ClInclude Include="thread.opcode_targets.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="debug_symbols.cpp" />
     <ClCompile Include="dllmain.cpp">
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</CompileAsManaged>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">

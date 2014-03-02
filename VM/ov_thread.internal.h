@@ -365,6 +365,7 @@ private:
 
 	String *GetStackTrace();
 	void AppendArgumentType(StringBuffer &buf, Value arg);
+	void AppendSourceLocation(StringBuffer &buf, Method::Overload *method, uint8_t *ip);
 
 	// argCount DOES NOT include the value to be invoked, but value does.
 	void InvokeLL(unsigned int argCount, Value *value, Value *result);

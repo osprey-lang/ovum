@@ -70,9 +70,6 @@ public:
 	}
 };
 
-OVUM_API String *Error_GetMessage(Value error);
-OVUM_API String *Error_GetStackTrace(Value error);
-
 
 // It is VITAL that these are in the same order as the opcodes.
 // See vm.opcodes.h/Opcode
@@ -231,6 +228,7 @@ typedef void (*TypeTokenInitializer)(ThreadHandle thread, void *basePtr, TypeHan
 
 OVUM_API TypeFlags Type_GetFlags(TypeHandle type);
 OVUM_API String *Type_GetFullName(TypeHandle type);
+OVUM_API TypeHandle Type_GetBaseType(TypeHandle type);
 
 OVUM_API MemberHandle Type_GetMember(TypeHandle type, String *name);
 OVUM_API MemberHandle Type_FindMember(TypeHandle type, String *name, TypeHandle fromType);
@@ -242,6 +240,7 @@ OVUM_API MethodHandle Type_GetOperator(TypeHandle type, Operator op);
 OVUM_API Value Type_GetTypeToken(ThreadHandle thread, TypeHandle type);
 
 OVUM_API uint32_t Type_GetFieldOffset(TypeHandle type);
+OVUM_API uint32_t Type_GetInstanceSize(TypeHandle type);
 OVUM_API void Type_SetFinalizer(TypeHandle type, Finalizer finalizer);
 OVUM_API void Type_SetInstanceSize(TypeHandle type, uint32_t size);
 OVUM_API void Type_SetReferenceGetter(TypeHandle type, ReferenceGetter getter);

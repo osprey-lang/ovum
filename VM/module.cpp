@@ -2,6 +2,7 @@
 #include <memory>
 #include "ov_module.internal.h"
 #include "ov_stringbuffer.internal.h"
+#include "ov_debug_symbols.internal.h"
 
 using namespace std;
 
@@ -17,133 +18,13 @@ namespace module_file
 	const unsigned int dataStart = 16;
 }
 
-class ModuleIOException : public exception
+
+ModuleReader::ModuleReader() : fileName(), stream(nullptr) { }
+ModuleReader::~ModuleReader()
 {
-public:
-	inline ModuleIOException(const char *const what) :
-		exception(what)
-	{ }
-};
-
-enum class SeekDir
-{
-	BEGIN = 0,
-	CURRENT = 1,
-	END = 2,
-};
-
-class ModuleReader
-{
-private:
-	HANDLE stream;
-
-public:
-	std::wstring fileName;
-
-	inline ModuleReader() : fileName(), stream(nullptr) { }
-
-	inline ~ModuleReader()
-	{
-		if (stream != INVALID_HANDLE_VALUE)
-			CloseHandle(stream);
-	}
-
-	void Open(const wchar_t *fileName);
-
-	void Read(void *dest, uint32_t count);
-
-	long GetPosition();
-
-	void Seek(long amount, SeekDir dir);
-
-	inline int8_t ReadInt8()
-	{
-		int8_t target;
-		Read(&target, sizeof(int8_t));
-		return target;
-	}
-
-	inline uint8_t ReadUInt8()
-	{
-		uint8_t target;
-		Read(&target, sizeof(uint8_t));
-		return target;
-	}
-
-	// All the reading functions below assume the system is little-endian.
-	// This assumption will be fixed at an unspecified later date.
-
-	inline int16_t ReadInt16()
-	{
-		int16_t target;
-		Read(&target, sizeof(int16_t));
-		return target;
-	}
-
-	inline uint16_t ReadUInt16()
-	{
-		uint16_t target;
-		Read(&target, sizeof(uint16_t));
-		return target;
-	}
-
-	inline int32_t ReadInt32()
-	{
-		int32_t target;
-		Read(&target, sizeof(int32_t));
-		return target;
-	}
-
-	inline uint32_t ReadUInt32()
-	{
-		uint32_t target;
-		Read(&target, sizeof(uint32_t));
-		return target;
-	}
-
-	inline int64_t ReadInt64()
-	{
-		int64_t target;
-		Read(&target, sizeof(int64_t));
-		return target;
-	}
-
-	inline uint64_t ReadUInt64()
-	{
-		uint64_t target;
-		Read(&target, sizeof(uint64_t));
-		return target;
-	}
-
-	inline TokenId ReadToken()
-	{
-		TokenId target;
-		Read(&target, sizeof(TokenId));
-		return target;
-	}
-
-	inline void SkipCollection()
-	{
-		using namespace std;
-		uint32_t size = ReadUInt32();
-		Seek(size, SeekDir::CURRENT);
-	}
-
-	String *ReadString();
-
-	String *ReadStringOrNull();
-
-	char *ReadCString();
-
-private:
-	String *ReadShortString(const int32_t length);
-
-	String *ReadLongString(const int32_t length);
-
-	void HandleError(DWORD error);
-
-	static const int MaxShortStringLength = 128;
-};
+	if (stream != nullptr && stream != INVALID_HANDLE_VALUE)
+		CloseHandle(stream);
+}
 
 void ModuleReader::Open(const wchar_t *fileName)
 {
@@ -153,6 +34,10 @@ void ModuleReader::Open(const wchar_t *fileName)
 		nullptr, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, nullptr);
 	if (stream == INVALID_HANDLE_VALUE)
 		HandleError(GetLastError());
+}
+void ModuleReader::Open(const std::wstring &fileName)
+{
+	Open(fileName.c_str());
 }
 
 void ModuleReader::Read(void *dest, uint32_t count)
@@ -173,10 +58,10 @@ long ModuleReader::GetPosition()
 	return result;
 }
 
-void ModuleReader::Seek(long amount, SeekDir dir)
+void ModuleReader::Seek(long amount, SeekOrigin origin)
 {
-	// The SeekDir values are the same as FILE_BEGIN, FILE_CURRENT and FILE_END.
-	if (SetFilePointer(stream, amount, nullptr, (DWORD)dir) == INVALID_SET_FILE_POINTER)
+	// The SeekOrigin values are the same as FILE_BEGIN, FILE_CURRENT and FILE_END.
+	if (SetFilePointer(stream, amount, nullptr, (DWORD)origin) == INVALID_SET_FILE_POINTER)
 		HandleError(GetLastError());
 }
 
@@ -189,7 +74,6 @@ String *ModuleReader::ReadString()
 	else
 		return ReadLongString(length);
 }
-
 String *ModuleReader::ReadStringOrNull()
 {
 	const int32_t length = ReadInt32();
@@ -232,7 +116,6 @@ String *ModuleReader::ReadShortString(const int32_t length)
 
 	return intern;
 }
-
 String *ModuleReader::ReadLongString(const int32_t length)
 {
 	unique_ptr<uchar[]> data(new uchar[length + 1]);
@@ -244,7 +127,7 @@ String *ModuleReader::ReadLongString(const int32_t length)
 	// If we have that string, GC::InternString does nothing; if we don't, we have
 	// a brand new string and interning it actually interns it.
 	String *string = GC::gc->ConstructString(nullptr, length, data.get());
-	GC::gc->InternString(string);
+	string = GC::gc->InternString(string);
 
 	return string;
 }
@@ -282,7 +165,8 @@ Module::Module(ModuleMeta &meta) :
 	methodRefs(0),
 	methodStart(meta.methodStart),
 	nativeLib(nullptr),
-	mainMethod(nullptr)
+	mainMethod(nullptr),
+	debugData(nullptr)
 { }
 
 Module::~Module()
@@ -304,6 +188,9 @@ Module::~Module()
 	// Don't delete the refs here! They are in their own modules.
 
 	FreeNativeLibrary();
+
+	if (debugData != nullptr)
+		delete debugData;
 }
 
 Type *Module::FindType(String *name, bool includeInternal) const
@@ -439,7 +326,7 @@ Module *Module::Open(const wchar_t *fileName)
 		reader.Open(fileName);
 		VerifyMagicNumber(reader);
 
-		reader.Seek(module_file::dataStart, SeekDir::BEGIN);
+		reader.Seek(module_file::dataStart, SeekOrigin::BEGIN);
 
 		ModuleMeta meta;
 		ReadModuleMeta(reader, meta);
@@ -489,6 +376,8 @@ Module *Module::Open(const wchar_t *fileName)
 			if (nativeMain)
 				nativeMain(output.get());
 		}
+
+		output->debugData = debug::ModuleDebugData::TryLoad(fileName, output.get());
 
 		outputModule = output.release();
 	}
@@ -1322,12 +1211,15 @@ Method *Module::ReadSingleMethod(ModuleReader &reader, Module *module)
 		Method::Overload *ov = overloads.get() + i;
 		ov->group = method.get();
 
-		// Parameter count
+		// Parameter count & names
 		uint16_t paramCount = reader.ReadUInt16();
-		// Skip parameter names (not needed)
-		// Note: all parameter names are string IDs
-		reader.Seek(paramCount * sizeof(int32_t), SeekDir::CURRENT);
 		ov->paramCount = paramCount;
+		ov->paramNames = new String*[paramCount];
+		for (int p = 0; p < paramCount; p++)
+		{
+			TokenId paramNameId = reader.ReadToken();
+			ov->paramNames[p] = module->FindString(paramNameId);
+		}
 
 		// Flags
 		ov->flags = (MethodFlags)0;
@@ -1385,12 +1277,12 @@ Method *Module::ReadSingleMethod(ModuleReader &reader, Module *module)
 				const long posCurrent = reader.GetPosition(); // Resumption point
 
 				// Read the method body
-				reader.Seek(module->methodStart + offset, SeekDir::BEGIN);
+				reader.Seek(module->methodStart + offset, SeekOrigin::BEGIN);
 				unique_ptr<uint8_t[]> body(new uint8_t[length]);
 				reader.Read(body.get(), length);
 
 				// Return to previous position
-				reader.Seek(posCurrent, SeekDir::BEGIN);
+				reader.Seek(posCurrent, SeekOrigin::BEGIN);
 
 				ov->length = length;
 				ov->entry = body.release();

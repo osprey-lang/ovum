@@ -96,6 +96,9 @@
     <ClInclude Include="thread.opcode_targets.h">
       <Filter>Header Files\Internal</Filter>
     </ClInclude>
+    <ClInclude Include="ov_debug_symbols.internal.h">
+      <Filter>Header Files\Internal</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -144,6 +147,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="thread.method_initializer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="debug_symbols.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

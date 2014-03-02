@@ -5,6 +5,7 @@
 #include <memory>
 #include <Shlwapi.h>
 #include "ov_vm.internal.h"
+#include "ov_module.internal.h"
 
 #ifdef _MSC_VER
 // Microsoft's C++ implementation uses %s to mean wchar_t* in wide functions,
