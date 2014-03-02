@@ -77,7 +77,7 @@ namespace debug
 
 			for (int i = 0; i < 4; i++)
 				if (magicNumber[i] != debug_file::magicNumber[i])
-					goto ret;
+					return nullptr;
 
 			unique_ptr<ModuleDebugData> output(new ModuleDebugData());
 
@@ -85,14 +85,14 @@ namespace debug
 			ReadMethodSymbols(reader, module, output.get());
 
 			result = output.release();
+			result->AttachSymbols();
 		}
 		catch (ModuleIOException &e)
 		{
 			// Ignore; just return null
+			return nullptr;
 		}
-		result->AttachSymbols();
 
-	ret:
 		return result;
 	}
 
