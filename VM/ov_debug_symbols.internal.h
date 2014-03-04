@@ -56,7 +56,7 @@ namespace debug
 		ModuleDebugData();
 		~ModuleDebugData();
 
-		static ModuleDebugData *TryLoad(const wchar_t *moduleFile, Module *module);
+		static void TryLoad(const wchar_t *moduleFile, Module *module);
 
 	private:
 		static void ReadSourceFiles(ModuleReader &reader, ModuleDebugData *target);

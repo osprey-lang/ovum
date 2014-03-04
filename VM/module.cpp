@@ -377,7 +377,7 @@ Module *Module::Open(const wchar_t *fileName)
 				nativeMain(output.get());
 		}
 
-		output->debugData = debug::ModuleDebugData::TryLoad(fileName, output.get());
+		debug::ModuleDebugData::TryLoad(fileName, output.get());
 
 		outputModule = output.release();
 	}
