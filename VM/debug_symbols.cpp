@@ -60,11 +60,10 @@ namespace debug
 		delete[] symbols;
 	}
 
-	ModuleDebugData *ModuleDebugData::TryLoad(const wchar_t *moduleFile, Module *module)
+	void ModuleDebugData::TryLoad(const wchar_t *moduleFile, Module *module)
 	{
 		using namespace std;
 
-		ModuleDebugData *result = nullptr;
 		try
 		{
 			ModuleReader reader;
@@ -77,23 +76,22 @@ namespace debug
 
 			for (int i = 0; i < 4; i++)
 				if (magicNumber[i] != debug_file::magicNumber[i])
-					return nullptr;
+					return;
 
 			unique_ptr<ModuleDebugData> output(new ModuleDebugData());
+			module->debugData = output.get(); // So that the GC can reach it
 
 			ReadSourceFiles(reader, output.get());
 			ReadMethodSymbols(reader, module, output.get());
 
-			result = output.release();
-			result->AttachSymbols();
+			output->AttachSymbols();
+			output.release();
 		}
 		catch (ModuleIOException &e)
 		{
-			// Ignore; just return null
-			return nullptr;
+			// Ignore error; reset and return
+			module->debugData = nullptr;
 		}
-
-		return result;
 	}
 
 	void ModuleDebugData::AttachSymbols()

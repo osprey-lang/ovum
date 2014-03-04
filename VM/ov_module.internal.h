@@ -405,6 +405,7 @@ private:
 
 	friend class ModuleReader;
 	friend class GC;
+	friend class debug::ModuleDebugData;
 };
 
 class ModuleLoadException : public std::exception
