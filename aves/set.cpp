@@ -23,9 +23,6 @@ void InitializeBuckets(SetInst *set, const int32_t capacity)
 	set->entries = new SetEntry[size];
 	memset(set->entries, 0, size * sizeof(SetEntry));
 
-	set->values = new Value[size];
-	memset(set->values, 0, size * sizeof(Value));
-
 	set->freeList = -1;
 }
 
@@ -40,10 +37,7 @@ void ResizeSet(ThreadHandle thread, SetInst *set)
 
 	unique_ptr<SetEntry[]> newEntries(new SetEntry[newSize]);
 	CopyMemoryT(newEntries.get(), set->entries, set->count);
-
-	unique_ptr<Value[]> newValues(new Value[newSize]);
-	CopyMemoryT(newValues.get(), set->values, set->count);
-
+	
 	SetEntry *e = newEntries.get();
 	for (int32_t i = 0; i < set->count; i++, e++)
 	{
@@ -54,11 +48,9 @@ void ResizeSet(ThreadHandle thread, SetInst *set)
 
 	delete[] set->buckets;
 	delete[] set->entries;
-	delete[] set->values;
 
 	set->buckets = newBuckets.release();
 	set->entries = newEntries.release();
-	set->values = newValues.release();
 	set->capacity = newSize;
 }
 
@@ -89,7 +81,6 @@ AVES_API NATIVE_FUNCTION(aves_Set_clear)
 
 	memset(set->buckets, -1, set->capacity * sizeof(int32_t*));
 	memset(set->entries, 0, set->capacity * sizeof(SetEntry));
-	memset(set->values, 0, set->capacity * sizeof(Value));
 	set->count = 0;
 	set->freeCount = 0;
 	set->freeList = -1;
@@ -110,7 +101,7 @@ AVES_API NATIVE_FUNCTION(aves_Set_containsInternal)
 			if (set->entries[i].hashCode == hash)
 			{
 				VM_Push(thread, args[1]); // item
-				VM_Push(thread, set->values[i]);
+				VM_Push(thread, set->entries[i].value);
 				if (VM_Equals(thread))
 				{
 					VM_PushBool(thread, true);
@@ -137,7 +128,7 @@ AVES_API NATIVE_FUNCTION(aves_Set_addInternal)
 		if (set->entries[i].hashCode == hash)
 		{
 			VM_Push(thread, args[1]); // item
-			VM_Push(thread, set->values[i]);
+			VM_Push(thread, set->entries[i].value);
 			if (VM_Equals(thread))
 			{
 				VM_PushBool(thread, false); // Already in the set!
@@ -166,7 +157,7 @@ AVES_API NATIVE_FUNCTION(aves_Set_addInternal)
 
 	set->entries[index].hashCode = hash;
 	set->entries[index].next = set->buckets[bucket];
-	set->values[index] = args[1]; // item
+	set->entries[index].value = args[1]; // item
 	set->buckets[bucket] = index;
 	set->version++;
 
@@ -188,7 +179,7 @@ AVES_API NATIVE_FUNCTION(aves_Set_removeInternal)
 			if (set->entries[i].hashCode == hash)
 			{
 				VM_Push(thread, args[1]); // item
-				VM_Push(thread, set->values[i]);
+				VM_Push(thread, set->entries[i].value);
 				if (VM_Equals(thread))
 				{
 					// Found it!
@@ -200,7 +191,7 @@ AVES_API NATIVE_FUNCTION(aves_Set_removeInternal)
 
 					entry->hashCode = -1;
 					entry->next = set->freeList;
-					set->values[i] = NULL_VALUE;
+					entry->value = NULL_VALUE;
 					set->freeList = i;
 					set->freeCount++;
 					set->version++;
@@ -235,14 +226,24 @@ AVES_API NATIVE_FUNCTION(aves_Set_getEntryAt)
 {
 	SetInst *set = _Set(THISV);
 	int32_t index = (int32_t)args[1].integer;
-	VM_Push(thread, set->values[index]);
+	VM_Push(thread, set->entries[index].value);
 }
 
-bool aves_Set_getReferences(void *basePtr, unsigned int &valc, Value **target)
+bool aves_Set_getReferences(void *basePtr, unsigned int *valc, Value **target, int32_t *state)
 {
 	SetInst *set = reinterpret_cast<SetInst*>(basePtr);
-	valc = set->count; // May be zero
-	*target = set->values; // May be null
+	int32_t i = *state;
+	while (i < set->count)
+	{
+		if (set->entries[i].hashCode != -1)
+		{
+			*valc = 1;
+			*target = &set->entries[i].value;
+			*state = i + 1;
+			return true;
+		}
+		i++;
+	}
 	return false;
 }
 
@@ -252,7 +253,6 @@ void aves_Set_finalize(ThreadHandle thread, void *basePtr)
 
 	delete[] set->buckets;
 	delete[] set->entries;
-	delete[] set->values;
 	set->capacity  = 0;
 	set->count     = 0;
 	set->freeCount = 0;

@@ -114,6 +114,9 @@
     <ClInclude Include="aves_utf16encoding.h">
       <Filter>Header Files\aves</Filter>
     </ClInclude>
+    <ClInclude Include="io_directory.h">
+      <Filter>Header Files\io</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="aves.cpp">
@@ -199,6 +202,9 @@
     </ClCompile>
     <ClCompile Include="utf16encoding.cpp">
       <Filter>Source Files\aves</Filter>
+    </ClCompile>
+    <ClCompile Include="directory.cpp">
+      <Filter>Source Files\io</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

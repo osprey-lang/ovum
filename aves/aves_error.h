@@ -14,6 +14,6 @@ AVES_API NATIVE_FUNCTION(aves_Error_get_stackTrace);
 AVES_API NATIVE_FUNCTION(aves_Error_get_innerError);
 AVES_API NATIVE_FUNCTION(aves_Error_get_data);
 
-bool aves_Error_getReferences(void *basePtr, unsigned int &valc, Value **target);
+bool aves_Error_getReferences(void *basePtr, unsigned int *valc, Value **target, int32_t *state);
 
 #endif // AVES__ERROR_H

@@ -1,0 +1,15 @@
+use namespace aves;
+
+namespace io;
+
+public static class Directory
+{
+	public static exists(pathName)
+	{
+		if pathName is null:
+			throw new ArgumentNullError("pathName");
+
+		return existsInternal(string(pathName));
+	}
+	private static existsInternal(pathName)				__extern("io_Directory_existsInternal");
+}

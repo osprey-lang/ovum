@@ -34,7 +34,7 @@ void EnsureMinCapacity(ThreadHandle thread, ListInst *list, const int32_t capaci
 
 void SetListCapacity(ThreadHandle thread, ListInst *list, const int32_t capacity);
 
-bool aves_List_getReferences(void *basePtr, unsigned int &valc, Value **target);
+bool aves_List_getReferences(void *basePtr, unsigned int *valc, Value **target, int32_t *state);
 
 void aves_List_finalize(ThreadHandle thread, void *basePtr);
 

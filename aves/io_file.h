@@ -95,7 +95,6 @@ AVES_API NATIVE_FUNCTION(io_FileStream_seekInternal);
 
 AVES_API NATIVE_FUNCTION(io_FileStream_close);
 
-bool io_FileStream_getReferences(void *basePtr, unsigned int &valc, Value **target);
 void io_FileStream_finalize(ThreadHandle thread, void *basePtr);
 
 #endif // IO__FILE_H

@@ -229,11 +229,11 @@ void SetListCapacity(ThreadHandle thread, ListInst *list, const int32_t capacity
 	list->version++;
 }
 
-bool aves_List_getReferences(void *basePtr, unsigned int &valc, Value **target)
+bool aves_List_getReferences(void *basePtr, unsigned int *valc, Value **target, int32_t *state)
 {
 	ListInst *list = reinterpret_cast<ListInst*>(basePtr);
 	*target = list->values;
-	valc = list->length; // Note: not capacity, because we don't know how many have been assigned to
+	*valc = list->length; // Note: not capacity, because we don't know how many have been assigned to
 	return false;
 }
 

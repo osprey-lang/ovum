@@ -205,17 +205,6 @@ public:
 	//   3. It is not a string with the flag STATIC (no associated GCObject).
 	//   4. Its GCObject* is marked GCO_COLLECT.
 	// NOTE: This function is only called for /reachable/ Values.
-	inline bool ShouldProcess(Value val)
-	{
-		if (val.type == nullptr || (val.type->flags & TypeFlags::PRIMITIVE) == TypeFlags::PRIMITIVE)
-			return false;
-
-		if (val.type == VM::vm->types.String &&
-			(val.common.string->flags & StringFlags::STATIC) == StringFlags::STATIC)
-			return false;
-
-		return (GCO_FROM_VALUE(val)->flags & GCOFlags::MARK) == GCO_COLLECT(currentCollectMark);
-	}
 	inline bool ShouldProcess(Value *val)
 	{
 		if (val->type == nullptr || (val->type->flags & TypeFlags::PRIMITIVE) == TypeFlags::PRIMITIVE)
@@ -365,11 +354,6 @@ public:
 
 	void MarkRootSet();
 
-	inline void TryProcess(Value value)
-	{
-		if (ShouldProcess(value))
-			Process(GCO_FROM_VALUE(value));
-	}
 	inline void TryProcess(Value *value)
 	{
 		if (ShouldProcess(value))

@@ -17,6 +17,7 @@ public static class File
 	{
 		if fileName is null:
 			throw new ArgumentNullError("fileName");
+
 		return getSizeInternal(string(fileName));
 	}
 	private static getSizeInternal(fileName)		__extern("io_File_getSizeInternal");
@@ -103,7 +104,7 @@ public static class File
 
 		offset = int(offset);
 
-		if offset < 0:
+		if offset < 0 or offset > buf.size:
 			throw new ArgumentRangeError("offset");
 
 		var f, length;

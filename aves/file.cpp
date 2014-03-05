@@ -95,7 +95,6 @@ void FileStream::ErrorHandleClosed(ThreadHandle thread)
 AVES_API void io_FileStream_initType(TypeHandle type)
 {
 	Type_SetInstanceSize(type, (uint32_t)sizeof(FileStream));
-	Type_SetReferenceGetter(type, io_FileStream_getReferences);
 	Type_SetFinalizer(type, io_FileStream_finalize);
 }
 
@@ -418,12 +417,6 @@ AVES_API NATIVE_FUNCTION(io_FileStream_close)
 			io::ThrowIOError(thread, GetLastError());
 		stream->handle = NULL;
 	}
-}
-
-bool io_FileStream_getReferences(void *basePtr, unsigned int &valc, Value **target)
-{
-	valc = 0;
-	return false;
 }
 
 void io_FileStream_finalize(ThreadHandle thread, void *basePtr)
