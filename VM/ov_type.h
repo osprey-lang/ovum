@@ -143,9 +143,6 @@ enum class TypeFlags : uint32_t
 	PRIMITIVE       = 0x0010 | SEALED,
 	// The type does not use a standard Value array for its fields.
 	// This is used only by the GC during collection.
-	// If the type is NOT List or Hash, any type using this flag MUST
-	// set its Type::getReferences field to an appropriate value.
-	// Failure to do so will crash the runtime when the GC runs a cycle.
 	CUSTOMPTR       = 0x0020,
 	// Internal use only. If set, the type's operators have been initialized.
 	OPS_INITED      = 0x0040,
@@ -159,28 +156,36 @@ enum class TypeFlags : uint32_t
 };
 ENUM_OPS(TypeFlags, uint32_t);
 
-// A ReferenceGetter produces an array of Values from a basePtr.
-// The basePtr is the base of the fields for a value of the type
-// that implements a ReferenceGetter.
-// The valc argument contains the total number of Values the instance
-// of the type references.
+// A ReferenceGetter produces an array of Values from a basePtr. This function
+// is called repeatedly for the same object until false is returned.
 //
-// If the Value array put in target needs to be deleted as soon as
-// it has been used, return true. Otherwise, return false.
-// Return true IF AND ONLY IF the array was specially created for the GC.
+// The value of 'state' is preserved across calls to the same reference getter
+// on the same object during the same GC cycle, and starts out at zero. This is
+// to permit implementations of native types to containnon-adjacent Values. For
+// example, aves.Set keeps its values in a special native struct alongside other
+// data, and the state is used as a numeric index into the entries.
+//
+// Parameters:
+//   basePtr:
+//     The base of the fields for a value of the type that
+//     implements the ReferenceGetter.
+//   valc:
+//     Receives the total number of Values the instance
+//     of the type references.
+//   target:
+//     Receives a pointer to the first Value in an array of values.
+//   state:
+//     Keeps track of the enumeration state. Types that do not need a state
+//     are free to ignore this value.
 //
 // If your type has both Value fields and non-Value fields, consider making
 // the Values adjacent in memory. That way, you can just give target the
-// address of the first Value and set valc to some appropriate value, which
-// removes the need for allocating more data during a collection cycle,
-// which may fail if the amount of available memory is very small.
-//
-// When called from the GC, the target argument is guaranteed to refer
-// to a valid storage location.
+// address of the first Value and set valc to the appropriate length, thus
+// removing the need for repeatedly calling the reference getter.
 //
 // NOTENOTENOTE: basePtr is NOT relative to where the instance begins
 // in memory, but is rather instancePtr + type->fieldsOffset.
-typedef bool (*ReferenceGetter)(void *basePtr, unsigned int &valc, Value **target);
+typedef bool (*ReferenceGetter)(void *basePtr, unsigned int *valc, Value **target, int32_t *state);
 
 // A Finalizer is called when the object is about to be deleted.
 // If the type has the flag TYPE_CUSTOMPTR, it may have to supply

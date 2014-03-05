@@ -20,8 +20,8 @@ AVES_API void InitTypeToken(ThreadHandle thread, void *basePtr, TypeHandle type)
 	inst->type = type;
 }
 
-bool aves_Type_getReferences(void *basePtr, unsigned int &valc, Value **target)
+bool aves_Type_getReferences(void *basePtr, unsigned int *valc, Value **target, int32_t *state)
 {
-	valc = 0;
+	*valc = 0;
 	return false;
 }

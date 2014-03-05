@@ -5,7 +5,6 @@
 AVES_API void aves_StringBuffer_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(StringBuffer));
-	Type_SetReferenceGetter(type, aves_StringBuffer_getReferences);
 	Type_SetFinalizer(type, aves_StringBuffer_finalize);
 }
 
@@ -113,13 +112,6 @@ AVES_API NATIVE_FUNCTION(aves_StringBuffer_toString)
 	StringBuffer *buf = (StringBuffer*)THISV.instance;
 
 	VM_PushString(thread, buf->ToString(thread));
-}
-
-bool aves_StringBuffer_getReferences(void *basePtr, unsigned int &valc, Value **target)
-{
-	*target = nullptr;
-	valc = 0;
-	return false;
 }
 
 void aves_StringBuffer_finalize(ThreadHandle thread, void *basePtr)

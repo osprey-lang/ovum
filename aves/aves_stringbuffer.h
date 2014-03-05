@@ -19,8 +19,6 @@ AVES_API NATIVE_FUNCTION(aves_StringBuffer_appendCodepointInternal);
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_insertInternal);
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_toString);
 
-bool aves_StringBuffer_getReferences(void *basePtr, unsigned int &valc, Value **target);
-
 void aves_StringBuffer_finalize(ThreadHandle thread, void *basePtr);
 
 #endif // AVES__STRINGBUFFER_H

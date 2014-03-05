@@ -9,7 +9,7 @@ typedef struct SetEntry_S
 {
 	int32_t hashCode;
 	int32_t next;
-	// The value is contained in the 'values' array, at the same index as this entry
+	Value value;
 } SetEntry;
 typedef struct SetInst_S
 {
@@ -19,9 +19,8 @@ typedef struct SetInst_S
 	int32_t freeList;   // the index of the first freed entry
 	int32_t version;    // the "version" of the hash, incremented whenever changes are made
 
-	int32_t *buckets;   // indexes into entries and values
+	int32_t *buckets;   // indexes into entries
 	SetEntry *entries;  // entries!
-	Value *values;      // values! Separate array for GC examination speediness.
 } SetInst;
 
 AVES_API void aves_Set_init(TypeHandle type);
@@ -40,7 +39,7 @@ AVES_API NATIVE_FUNCTION(aves_Set_get_entryCount);
 AVES_API NATIVE_FUNCTION(aves_Set_hasEntryAt);
 AVES_API NATIVE_FUNCTION(aves_Set_getEntryAt);
 
-bool aves_Set_getReferences(void *basePtr, unsigned int &valc, Value **target);
+bool aves_Set_getReferences(void *basePtr, unsigned int *valc, Value **target, int32_t *state);
 void aves_Set_finalize(ThreadHandle thread, void *basePtr);
 
 #endif // AVES__SET_H

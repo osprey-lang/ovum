@@ -106,6 +106,7 @@
     <ClInclude Include="aves_uint.h" />
     <ClInclude Include="aves_utf16encoding.h" />
     <ClInclude Include="dtoa.config.h" />
+    <ClInclude Include="io_directory.h" />
     <ClInclude Include="io_file.h" />
     <ClInclude Include="io_path.h" />
     <ClInclude Include="targetver.h" />
@@ -116,6 +117,7 @@
     <ClCompile Include="boolean.cpp" />
     <ClCompile Include="buffer.cpp" />
     <ClCompile Include="console.cpp" />
+    <ClCompile Include="directory.cpp" />
     <ClCompile Include="dllmain.cpp">
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</CompileAsManaged>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">

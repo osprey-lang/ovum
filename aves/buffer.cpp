@@ -402,10 +402,10 @@ AVES_API NATIVE_FUNCTION(aves_BufferView_get_kind)
 	VM_Push(thread, kind);
 }
 
-bool aves_BufferView_getReferences(void *basePtr, unsigned int &valc, Value **target)
+bool aves_BufferView_getReferences(void *basePtr, unsigned int *valc, Value **target, int32_t *state)
 {
 	BufferView *view = (BufferView*)basePtr;
-	valc = 1;
+	*valc = 1;
 	*target = &view->buffer;
 	return false;
 }

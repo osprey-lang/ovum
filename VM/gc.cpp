@@ -323,7 +323,7 @@ void GC::MarkRootSet()
 	// We need to do this because the GC may be triggered in
 	// a finally clause, and we wouldn't want to obliterate
 	// the error if we still need to catch it later, right?
-	TryProcess(mainThread->currentError);
+	TryProcess(&mainThread->currentError);
 
 	// Examine module strings! We don't want to collect these, even
 	// if there is nothing referencing them anywhere else.
@@ -393,14 +393,16 @@ void GC::ProcessCustomFields(Type *type, GCObject *gco)
 	}
 	else if (type->getReferences) // If the type has no reference getter, assume it has no managed references
 	{
-		unsigned int fieldCount;
-		Value *fields;
-		bool deleteAfter = type->getReferences(INST_FROM_GCO(gco, type), fieldCount, &fields);
+		bool cont;
+		int32_t state = 0;
+		do
+		{
+			unsigned int fieldCount = 0;
+			Value *fields = nullptr;
+			cont = type->getReferences(INST_FROM_GCO(gco, type), &fieldCount, &fields, &state);
 
-		ProcessFields(fieldCount, fields);
-
-		if (deleteAfter)
-			delete[] fields;
+			ProcessFields(fieldCount, fields);
+		} while (cont);
 	}
 }
 

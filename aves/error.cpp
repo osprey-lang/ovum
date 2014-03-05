@@ -59,11 +59,11 @@ AVES_API NATIVE_FUNCTION(aves_Error_get_data)
 	VM_Push(thread, err->data);
 }
 
-bool aves_Error_getReferences(void *basePtr, unsigned int &valc, Value **target)
+bool aves_Error_getReferences(void *basePtr, unsigned int *valc, Value **target, int32_t *state)
 {
 	ErrorInst *err = reinterpret_cast<ErrorInst*>(basePtr);
 
-	valc = 2;
+	*valc = 2;
 	*target = &err->innerError;
 
 	return false;

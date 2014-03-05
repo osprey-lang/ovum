@@ -310,9 +310,21 @@ AVES_API void InitHashInstance(ThreadHandle thread, HashInst *hash, const int32_
 		InitializeBuckets(thread, hash, capacity);
 }
 
-bool aves_Hash_getReferences(void *basePtr, unsigned int &valc, Value **target)
+bool aves_Hash_getReferences(void *basePtr, unsigned int *valc, Value **target, int32_t *state)
 {
-	// TODO: aves_Hash_getReferences
+	HashInst *hash = (HashInst*)basePtr;
+	int32_t i = *state;
+	while (i < hash->count)
+	{
+		if (hash->entries[i].hashCode != -1)
+		{
+			*valc = 2;
+			*target = &hash->entries[i].key;
+			*state = i + 1;
+			return true;
+		}
+		i++;
+	}
 	return false;
 }
 
