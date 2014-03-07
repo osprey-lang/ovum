@@ -8,7 +8,7 @@
 #include "ov_vm.internal.h"
 #include "string_table.internal.h"
 
-enum class GCOFlags : uint8_t
+enum class GCOFlags : uint32_t
 {
 	NONE  = 0x00,
 	// The mark occupies the lowest two bits.
@@ -26,21 +26,14 @@ enum class GCOFlags : uint8_t
 	// Use with caution.
 	IMMORTAL = 0x08,
 };
-ENUM_OPS(GCOFlags, uint8_t);
+ENUM_OPS(GCOFlags, uint32_t);
 
-#define GCO_SIZE    ALIGN_TO(sizeof(::GCObject),sizeof(::Value))
-
-#define MARK_GCO(gco,mk) ((gco)->flags = (::GCOFlags)((mk) | ((gco)->flags & ~::GCOFlags::MARK)))
+#define GCO_SIZE    ALIGN_TO(sizeof(::GCObject),8)
 
 // These GCO flags are always in the range 1–3
 #define GCO_COLLECT(ccm) ((::GCOFlags)((ccm) + 1))
 #define GCO_PROCESS(ccm) ((::GCOFlags)(((ccm) + 1) % 3 + 1))
 #define GCO_KEEP(ccm)    ((::GCOFlags)(((ccm) + 2) % 3 + 1))
-
-#define GCO_CLEAR_LINKS(gco) ((gco)->next = (gco)->prev = nullptr)
-
-#define GCO_INSTANCE_BASE(gco) ((char*)(gco) + GCO_SIZE)
-#define GCO_FIELDS_BASE(gco)   ((::Value*)((char*)(gco) + GCO_SIZE))
 
 // The maximum amount of data that can be allocated before the GC kicks in.
 // Objects larger than GC_LARGE_OBJECT_SIZE only contribute GC_LARGE_OBJECT_SIZE bytes
@@ -67,6 +60,43 @@ typedef struct GCObject_S
 
 	// The first field of the Value immediately follows the type;
 	// this is the base of the Value's fields/custom pointer.
+
+	inline void Mark(GCOFlags mark)
+	{
+		flags = mark | flags & ~GCOFlags::MARK;
+	}
+
+	inline uint8_t *InstanceBase()
+	{
+		return (uint8_t*)this + GCO_SIZE;
+	}
+	inline uint8_t *InstanceBase(Type *type)
+	{
+		return (uint8_t*)this + GCO_SIZE + type->fieldsOffset;
+	}
+	inline Value *FieldsBase()
+	{
+		return (Value*)((char*)this + GCO_SIZE);
+	}
+	inline Value *FieldsBase(Type *type)
+	{
+		return (Value*)((char*)this + GCO_SIZE + type->fieldsOffset);
+	}
+
+	inline void ClearLinks()
+	{
+		prev = nullptr;
+		next = nullptr;
+	}
+
+	inline static GCObject *FromInst(void *inst)
+	{
+		return reinterpret_cast<GCObject*>((char*)inst - GCO_SIZE);
+	}
+	inline static GCObject *FromValue(Value *value)
+	{
+		return FromInst(value->instance);
+	}
 } GCObject;
 
 // This is identical to String except that all the 'const' modifiers
@@ -83,13 +113,6 @@ typedef struct MutableString_S
 	StringFlags flags;
 	uchar firstChar;
 } MutableString;
-
-// Recovers a GCObject* from an instance pointer.
-#define GCO_FROM_INST(inst)  (reinterpret_cast<::GCObject*>((char*)(inst) - GCO_SIZE))
-// Recovers a GCObject* from a Value.
-#define GCO_FROM_VALUE(val)  GCO_FROM_INST((val).instance)
-// Gets an instance pointer from a GCObject*, for a particular type.
-#define INST_FROM_GCO(gco,t) ((char*)(gco) + GCO_SIZE + (t)->fieldsOffset)
 
 class StaticRef
 {
@@ -214,7 +237,7 @@ public:
 			(val->common.string->flags & StringFlags::STATIC) == StringFlags::STATIC)
 			return false;
 
-		return (GCO_FROM_VALUE(*val)->flags & GCOFlags::MARK) == GCO_COLLECT(currentCollectMark);
+		return (GCObject::FromValue(val)->flags & GCOFlags::MARK) == GCO_COLLECT(currentCollectMark);
 	}
 
 	void Alloc(Thread *const thread, Type *type, size_t size, GCObject **output);
@@ -223,7 +246,7 @@ public:
 		GCObject *gco;
 		Alloc(thread, type, size, &gco);
 		output->type = type;
-		output->instance = (uint8_t*)GCO_INSTANCE_BASE(gco);
+		output->instance = gco->InstanceBase();
 	}
 
 
@@ -333,12 +356,12 @@ public:
 			gco->type->size > 0 /*|| gco->type->fieldsOffset > 0*/) // may have fields
 		{
 			InsertIntoList(gco, &processBase);
-			MARK_GCO(gco, GCO_PROCESS(currentCollectMark));
+			gco->Mark(GCO_PROCESS(currentCollectMark));
 		}
 		else // no chance of instance fields, so nothing to process
 		{
 			InsertIntoList(gco, &keepBase);
-			MARK_GCO(gco, GCO_KEEP(currentCollectMark));
+			gco->Mark(GCO_KEEP(currentCollectMark));
 		}
 	}
 	inline void Keep(GCObject *gco)
@@ -349,7 +372,7 @@ public:
 
 		RemoveFromList(gco, &processBase);
 		InsertIntoList(gco, &keepBase);
-		MARK_GCO(gco, GCO_KEEP(currentCollectMark));
+		gco->Mark(GCO_KEEP(currentCollectMark));
 	}
 
 	void MarkRootSet();
@@ -357,13 +380,13 @@ public:
 	inline void TryProcess(Value *value)
 	{
 		if (ShouldProcess(value))
-			Process(GCO_FROM_VALUE(*value));
+			Process(GCObject::FromValue(value));
 	}
 	inline void TryProcessString(String *str)
 	{
 		if ((str->flags & StringFlags::STATIC) == StringFlags::NONE &&
-			(GCO_FROM_INST(str)->flags & GCOFlags::MARK) == GCO_COLLECT(currentCollectMark))
-			Process(GCO_FROM_INST(str));
+			(GCObject::FromInst(str)->flags & GCOFlags::MARK) == GCO_COLLECT(currentCollectMark))
+			Process(GCObject::FromInst(str));
 	}
 
 	void ProcessObjectAndFields(GCObject *gco);

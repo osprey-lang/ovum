@@ -39,6 +39,8 @@ public class StringBuffer
 		return insertInternal(int(index), string(value));
 	}
 
+	public clear()							__extern("aves_StringBuffer_clear");
+
 	override toString()						__extern("aves_StringBuffer_toString");
 
 	private appendInternal(value, times)	__extern("aves_StringBuffer_appendInternal");

@@ -2,6 +2,8 @@
 #include "aves_stringbuffer.h"
 #include <new> // For placement new
 
+#define _SB(v)	reinterpret_cast<StringBuffer*>(v.instance)
+
 AVES_API void aves_StringBuffer_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(StringBuffer));
@@ -10,13 +12,13 @@ AVES_API void aves_StringBuffer_init(TypeHandle type)
 
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_new)
 {
-	StringBuffer *buf = (StringBuffer*)THISV.instance;
+	StringBuffer *buf = _SB(THISV);
 
 	new(buf) StringBuffer(thread);
 }
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_newCap)
 {
-	StringBuffer *buf = (StringBuffer*)THISV.instance;
+	StringBuffer *buf = _SB(THISV);
 
 	IntFromValue(thread, args + 1);
 	int64_t capacity = args[1].integer;
@@ -32,18 +34,18 @@ AVES_API NATIVE_FUNCTION(aves_StringBuffer_newCap)
 
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_get_length)
 {
-	StringBuffer *buf = (StringBuffer*)THISV.instance;
+	StringBuffer *buf = _SB(THISV);
 	VM_PushInt(thread, buf->GetLength());
 }
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_get_capacity)
 {
-	StringBuffer *buf = (StringBuffer*)THISV.instance;
+	StringBuffer *buf = _SB(THISV);
 	VM_PushInt(thread, buf->GetCapacity());
 }
 
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_appendLine)
 {
-	StringBuffer *buf = (StringBuffer*)THISV.instance;
+	StringBuffer *buf = _SB(THISV);
 	buf->Append(thread, strings::newline);
 
 	VM_Push(thread, THISV);
@@ -61,7 +63,7 @@ AVES_API NATIVE_FUNCTION(aves_StringBuffer_appendInternal)
 		VM_Throw(thread);
 	}
 
-	StringBuffer *buf = (StringBuffer*)THISV.instance;
+	StringBuffer *buf = _SB(THISV);
 	String *str = args[1].common.string;
 
 	for (int32_t i = 0; i < (int32_t)times; i++)
@@ -75,7 +77,7 @@ AVES_API NATIVE_FUNCTION(aves_StringBuffer_appendCodepointInternal)
 	// The public-facing method makes sure the type is right,
 	// and also range-checks the value
 
-	StringBuffer *buf = (StringBuffer*)THISV.instance;
+	StringBuffer *buf = _SB(THISV);
 	wuchar codepoint = (wuchar)args[1].integer;
 
 	if (codepoint > 0xFFFF)
@@ -93,7 +95,7 @@ AVES_API NATIVE_FUNCTION(aves_StringBuffer_insertInternal)
 {
 	// insertInternal(index is Int, value is String)
 	// (The public-facing methods ensure the types are correct)
-	StringBuffer *buf = (StringBuffer*)THISV.instance;
+	StringBuffer *buf = _SB(THISV);
 	int64_t index = args[1].integer;
 
 	if (index < 0 || index > buf->GetLength())
@@ -107,10 +109,14 @@ AVES_API NATIVE_FUNCTION(aves_StringBuffer_insertInternal)
 
 	VM_Push(thread, THISV);
 }
+AVES_API NATIVE_FUNCTION(aves_StringBuffer_clear)
+{
+	StringBuffer *buf = _SB(THISV);
+	buf->Clear();
+}
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_toString)
 {
-	StringBuffer *buf = (StringBuffer*)THISV.instance;
-
+	StringBuffer *buf = _SB(THISV);
 	VM_PushString(thread, buf->ToString(thread));
 }
 

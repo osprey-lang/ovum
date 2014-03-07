@@ -17,6 +17,7 @@ AVES_API NATIVE_FUNCTION(aves_StringBuffer_appendLine);
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_appendInternal);
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_appendCodepointInternal);
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_insertInternal);
+AVES_API NATIVE_FUNCTION(aves_StringBuffer_clear);
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_toString);
 
 void aves_StringBuffer_finalize(ThreadHandle thread, void *basePtr);
