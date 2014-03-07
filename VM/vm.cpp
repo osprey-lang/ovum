@@ -127,11 +127,11 @@ void VM::LoadModules(VMStartParams &params)
 	wchar_t *startupPath = CloneWString(params.startupFile);
 	PathRemoveFileSpecW(startupPath);
 	this->startupPath = String_FromWString(nullptr, startupPath);
-	GC::gc->MakeImmortal(GCO_FROM_INST(this->startupPath));
+	GC::gc->MakeImmortal(GCObject::FromInst(this->startupPath));
 	delete[] startupPath;
 
 	this->modulePath = String_FromWString(nullptr, params.modulePath);
-	GC::gc->MakeImmortal(GCO_FROM_INST(this->modulePath));
+	GC::gc->MakeImmortal(GCObject::FromInst(this->modulePath));
 
 	// And now we can start opening modules! Hurrah!
 	try

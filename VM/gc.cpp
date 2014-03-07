@@ -114,7 +114,7 @@ void GC::Alloc(Thread *const thread, Type *type, size_t size, GCObject **output)
 	{
 		RemoveFromList(gco, &collectBase);
 		InsertIntoList(gco, &keepBase);
-		MARK_GCO(gco, GCO_KEEP(currentCollectMark));
+		gco->Mark(GCO_KEEP(currentCollectMark));
 		Collect(thread);
 	}
 }
@@ -137,7 +137,7 @@ void GC::ConstructLL(Thread *const thread, Type *type, const uint16_t argc, Valu
 
 	Value value;
 	value.type = type;
-	value.instance = (uint8_t*)GCO_INSTANCE_BASE(gco);
+	value.instance = gco->InstanceBase();
 
 	StackFrame *frame = thread->currentFrame;
 	Value *framePointer = args + argc;
@@ -170,7 +170,7 @@ String *GC::ConstructString(Thread *const thread, const int32_t length, const uc
 	if (VM::vm->types.String == nullptr)
 		gco->flags |= GCOFlags::EARLY_STRING;
 
-	MutableString *str = reinterpret_cast<MutableString*>(GCO_INSTANCE_BASE(gco));
+	MutableString *str = reinterpret_cast<MutableString*>(gco->InstanceBase());
 	str->length = length;
 	// Note: Alloc() initializes the bytes to 0. The default values of
 	// hashCode and flags are both 0, so we don't need to set either here.
@@ -230,7 +230,7 @@ void GC::Release(Thread *const thread, GCObject *gco)
 	if ((gco->flags & GCOFlags::EARLY_STRING) != GCOFlags::NONE ||
 		gco->type == VM::vm->types.String)	
 	{
-		String *str = reinterpret_cast<String*>(GCO_INSTANCE_BASE(gco));
+		String *str = reinterpret_cast<String*>(gco->InstanceBase());
 		if ((str->flags & StringFlags::INTERN) != StringFlags::NONE)
 			strings.RemoveIntern(str);
 	}
@@ -240,7 +240,7 @@ void GC::Release(Thread *const thread, GCObject *gco)
 		do
 		{
 			if (type->finalizer)
-				type->finalizer(thread, INST_FROM_GCO(gco, type));
+				type->finalizer(thread, gco->InstanceBase(type));
 		} while (type = type->baseType);
 	}
 
@@ -368,7 +368,7 @@ void GC::ProcessObjectAndFields(GCObject *gco)
 		if ((type->flags & TypeFlags::CUSTOMPTR) != TypeFlags::NONE)
 			ProcessCustomFields(type, gco);
 		else if (type->fieldCount)
-			ProcessFields(type->fieldCount, (Value*)INST_FROM_GCO(gco, type));
+			ProcessFields(type->fieldCount, gco->FieldsBase(type));
 
 		type = type->baseType;
 	}
@@ -378,16 +378,16 @@ void GC::ProcessCustomFields(Type *type, GCObject *gco)
 {
 	if (type == VM::vm->types.Hash)
 	{
-		ProcessHash((HashInst*)GCO_INSTANCE_BASE(gco));
+		ProcessHash((HashInst*)gco->InstanceBase());
 	}
 	else if (type == VM::vm->types.List)
 	{
-		ListInst *list = (ListInst*)GCO_INSTANCE_BASE(gco);
+		ListInst *list = (ListInst*)gco->InstanceBase();
 		ProcessFields(list->length, list->values);
 	}
 	else if (type == VM::vm->types.Method)
 	{
-		MethodInst *minst = (MethodInst*)GCO_INSTANCE_BASE(gco);
+		MethodInst *minst = (MethodInst*)gco->InstanceBase();
 		if (minst->instance.type)
 			TryProcess(&minst->instance);
 	}
@@ -399,7 +399,7 @@ void GC::ProcessCustomFields(Type *type, GCObject *gco)
 		{
 			unsigned int fieldCount = 0;
 			Value *fields = nullptr;
-			cont = type->getReferences(INST_FROM_GCO(gco, type), &fieldCount, &fields, &state);
+			cont = type->getReferences(gco->InstanceBase(type), &fieldCount, &fields, &state);
 
 			ProcessFields(fieldCount, fields);
 		} while (cont);

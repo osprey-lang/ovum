@@ -1,3 +1,5 @@
+use "BinaryReader.osp";
+use "BinaryWriter.osp";
 use "Directory.osp";
 use "EndOfFileError.osp";
 use "errorHelpers.osp";

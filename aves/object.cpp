@@ -14,9 +14,9 @@ AVES_API NATIVE_FUNCTION(aves_Object_getHashCode)
 	// It's a cheap trick, but hey.
 
 	if (sizeof(void*) == 8)
-		VM_PushInt(thread, (int64_t)THISV.instance >> 2);
+		VM_PushInt(thread, (uint64_t)THISV.instance >> 2);
 	else
-		VM_PushInt(thread, (int32_t)THISV.instance >> 2);
+		VM_PushInt(thread, (uint32_t)THISV.instance >> 2);
 }
 
 AVES_API NATIVE_FUNCTION(aves_Object_toString)
@@ -33,7 +33,7 @@ AVES_API NATIVE_FUNCTION(aves_Object_toString)
 	else
 	{
 		buf.Append(thread, 2, "0x");
-		valueString = uinteger::ToString(thread, (uint64_t)THISV.instance, 10, sizeof(void*) * 2, false);
+		valueString = uinteger::ToString(thread, (uint64_t)THISV.instance, 16, sizeof(void*) * 2, false);
 	}
 	buf.Append(thread, valueString);
 

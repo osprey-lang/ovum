@@ -1,0 +1,172 @@
+use namespace aves;
+
+namespace io;
+
+public inheritable BinaryWriter
+{
+	public new(stream)
+	{
+		new this(stream, Encoding.utf8, false);
+	}
+	public new(stream, encoding)
+	{
+		new this(stream, encoding, false);
+	}
+	public new(stream, encoding, bigEndian)
+	{
+		if stream is not Stream:
+			throw new TypeError("stream must be an io.Stream instance.");
+		if not stream.canWrite:
+			throw new ArgumentError("The stream must be writable.", "stream");
+		if encoding is not Encoding:
+			throw new TypeError("encoding must be an aves.Encoding instance.");
+
+		_stream = stream;
+		_encoding = encoding;
+		_bigEndian = bool(bigEndian);
+	}
+
+	private _stream;
+	public get stream = _stream;
+
+	private _encoding;
+	public get encoding = _encoding;
+
+	private _bigEndian;
+	public get bigEndian = _bigEndian;
+
+	public get position = _stream.position;
+
+	private const bufferSize = 8;
+	private _buffer = new Buffer(bufferSize);
+	protected get buffer = _buffer;
+
+	public overridable close()
+	{
+		_stream.close();
+	}
+
+	public overridable writeBoolean(value)
+	{
+		_stream.writeByte(value ? 1 : 0);
+	}
+
+	public overridable writeByte(value)
+	{
+		value = int(value);
+		_buffer.writeByte(0, value);
+		write(1);
+	}
+	public overridable writeSByte(value)
+	{
+		value = int(value);
+		_buffer.writeSByte(0, value);
+		write(1);
+	}
+
+	public overridable writeInt16(value)
+	{
+		value = int(value);
+		_buffer.writeInt16(0, value);
+		if _bigEndian != Env.bigEndian:
+			binHelpers.reverse2(_buffer);
+		write(2);
+	}
+	public overridable writeInt32(value)
+	{
+		value = int(value);
+		_buffer.writeInt32(0, value);
+		if _bigEndian != Env.bigEndian:
+			binHelpers.reverse4(_buffer);
+		write(4);
+	}
+	public overridable writeInt64(value)
+	{
+		value = int(value);
+		_buffer.writeInt64(0, value);
+		if _bigEndian != Env.bigEndian:
+			binHelpers.reverse8(_buffer);
+		write(8);
+	}
+
+	public writePackedInt(value)
+	{
+		// Use UInt so that shifting right will not
+		// perform sign extension
+		value = int(value).asUInt();
+
+		while value >= 0x80
+		{
+			_stream.writeByte(value & 0x7f | 0x80);
+			value >>= 7;
+		}
+		_stream.writeByte(value);
+	}
+
+	public overridable writeUInt16(value)
+	{
+		value = int(value);
+		_buffer.writeUInt16(0, value);
+		if _bigEndian != Env.bigEndian:
+			binHelpers.reverse2(_buffer);
+		write(2);
+	}
+	public overridable writeUInt32(value)
+	{
+		value = int(value);
+		_buffer.writeUInt32(0, value);
+		if _bigEndian != Env.bigEndian:
+			binHelpers.reverse4(_buffer);
+		write(4);
+	}
+	public overridable writeUInt64(value)
+	{
+		value = int(value);
+		_buffer.writeUInt64(0, value);
+		if _bigEndian != Env.bigEndian:
+			binHelpers.reverse8(_buffer);
+		write(8);
+	}
+
+	public overridable writeFloat32(value)
+	{
+		value = real(value);
+		_buffer.writeFloat32(0, value);
+		if _bigEndian != Env.bigEndian:
+			binHelpers.reverse4(_buffer);
+		write(4);
+	}
+	public overridable writeFloat64(value)
+	{
+		value = real(value);
+		_buffer.writeFloat64(0, value);
+		if _bigEndian != Env.bigEndian:
+			binHelpers.reverse8(_buffer);
+		write(8);
+	}
+
+	public overridable writeString(str)
+	{
+		str = string(str);
+		var byteCount = _encoding.getByteCount(str);
+		writePackedInt(byteCount);
+
+		var buf = byteCount <= bufferSize ?
+			_buffer :
+			new Buffer(byteCount);
+
+		_encoding.getBytes(str, buf, 0);
+
+		_stream.write(buf, 0, byteCount);
+	}
+
+	private write(size)
+	{
+		_stream.write(_buffer, 0, size);
+	}
+
+	public overridable seek(amount, origin)
+	{
+		return _stream.seek(amount, origin);
+	}
+}

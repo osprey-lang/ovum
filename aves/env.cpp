@@ -33,3 +33,14 @@ AVES_API NATIVE_FUNCTION(aves_Env_get_stackTrace)
 {
 	VM_PushString(thread, VM_GetStackTrace(thread));
 }
+
+AVES_API NATIVE_FUNCTION(aves_Env_get_bigEndian)
+{
+	static const union
+	{
+		uint32_t u32;
+		char bytes[4];
+	} endianness = { 0xff000000 };
+
+	VM_PushBool(thread, endianness.bytes[0] == 0xff);
+}

@@ -260,7 +260,7 @@ Type *Member::GetOriginatingType() const
 }
 
 #define ACQUIRE_FIELD_LOCK(inst) \
-	GCObject *gco = GCO_FROM_INST(inst); \
+	GCObject *gco = GCObject::FromInst(inst); \
 	while (gco->fieldAccessFlag.test_and_set(std::memory_order_acquire)) \
 		continue
 #define RELEASE_FIELD_LOCK() gco->fieldAccessFlag.clear(std::memory_order_release)
