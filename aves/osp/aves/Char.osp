@@ -1,0 +1,55 @@
+namespace aves;
+
+public class Char __primitive
+{
+	private new();
+
+	/// Summary: Gets the length (in number of UTF-16 code units) required
+	///          by this Unicode character when encoded as UTF-16.
+	/// Returns: The number of code units required to encode this Unicode
+	///          character as UTF-16, as an Int.
+	/// Remarks: This property always returns 1 or 2.
+	public get length					__extern("aves_Char_get_length");
+
+	/// Summary: Gets the Unicode category of this Unicode character.
+	public get category					__extern("aves_Char_get_category");
+
+	public get isSurrogateChar = category == UnicodeCategory.surrogate;
+	public get isControl = category == UnicodeCategory.control;
+	public get isDigit = category == UnicodeCategory.decimalNumber;
+	public get isLetter = category & UnicodeCategory.letter != UnicodeCategory.none;
+	public get isLower = category == UnicodeCategory.lowercaseLetter;
+	public get isUpper = category == UnicodeCategory.uppercaseLetter;
+	public get isNumber = category & UnicodeCategory.number != UnicodeCategory.none;
+	public get isPunct = category & UnicodeCategory.punct != UnicodeCategory.none;
+	public get isSymbol = category & UnicodeCategory.symbol != UnicodeCategory.none;
+	public get isAssigned = category != UnicodeCategory.unassigned;
+	public get isWhiteSpace
+	{
+		var cp = +this;
+		// (Copied from String.osp)
+		// The following code points are considered white space,
+		// even though they are categorised as control characters:
+		//   U+0009  Character Tabulation (\t)
+		//   U+000A  Line Feed (\n)
+		//   U+000B  Line Tabulation
+		//   U+000C  Form Feed
+		//   U+000D  Carriage Return (\r)
+		//   U+0085  Next Line
+		return cp >= 0x0009 and cp <= 0x000D or cp == 0x0085 or
+			category & UnicodeCategory.separator != UnicodeCategory.none;
+	}
+
+	public toUpper()					__extern("aves_Char_toUpper");
+	public toLower()					__extern("aves_Char_toLower");
+
+	override getHashCode()				__extern("aves_Char_getHashCode");
+	override toString()					__extern("aves_Char_toString");
+
+	public static fromCodepoint(cp)		__extern("aves_Char_fromCodepoint");
+
+	operator ==(a, b)					__extern("aves_Char_opEquals");
+	operator <=>(a, b)					__extern("aves_Char_opCompare");
+	operator *(ch, times)				__extern("aves_Char_opMultiply");
+	operator +(ch)						__extern("aves_Char_opPlus");
+}
