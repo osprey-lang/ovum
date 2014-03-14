@@ -14,6 +14,8 @@ public:
 	static TypeHandle Int;
 	static TypeHandle UInt;
 	static TypeHandle Real;
+	static TypeHandle Char;
+	static TypeHandle String;
 	static TypeHandle ArgumentError;
 	static TypeHandle ArgumentNullError;
 	static TypeHandle ArgumentRangeError;

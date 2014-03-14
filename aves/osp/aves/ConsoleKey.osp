@@ -4,7 +4,7 @@ public class ConsoleKey
 {
 	private _char;
 	public get char = _char;
-	public get charString = String.fromCodepoint(_char);
+	public get charString = _char.toString();
 
 	private _keyCode;
 	public get keyCode = _keyCode;
@@ -14,14 +14,14 @@ public class ConsoleKey
 	public get alt     = _alt;
 	public get control = _control;
 
-	public new(charCode, keyCode, shift, alt, control)
+	public new(char, keyCode, shift, alt, control)
 	{
-		if charCode is not Int:
-			throw new TypeError("charCode must be an Int.");
+		if char is not Char:
+			throw new TypeError("charCode must be a Char.");
 		if keyCode is not ConsoleKeyCode:
 			throw new TypeError("keyCode must be of type aves.ConsoleKeyCode.");
 
-		_char = charCode;
+		_char = char;
 		_keyCode = keyCode;
 		_shift = not not shift;
 		_alt = not not alt;

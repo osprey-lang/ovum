@@ -24,6 +24,7 @@ AVES_API NATIVE_FUNCTION(aves_String_split);
 AVES_API NATIVE_FUNCTION(aves_String_toUpper);
 AVES_API NATIVE_FUNCTION(aves_String_toLower);
 
+AVES_API NATIVE_FUNCTION(aves_String_getCharacter);
 AVES_API NATIVE_FUNCTION(aves_String_getCodepoint);
 
 AVES_API NATIVE_FUNCTION(aves_String_getCategory);
