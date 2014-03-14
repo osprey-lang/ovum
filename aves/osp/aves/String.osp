@@ -375,8 +375,9 @@ public class String
 	private getTrimStart(charSet)
 	{
 		var start = 0;
-		while start < length and charSet.contains(this[start]):
-			start += 1;
+		var ch;
+		while start < length and charSet.contains(ch = getCharacter(start)):
+			start += ch.length;
 		return start;
 	}
 	private getTrimEnd()
@@ -389,8 +390,9 @@ public class String
 	private getTrimEnd(charSet)
 	{
 		var end = length - 1;
-		while end >= 0 and charSet.contains(this[end]):
-			end -= 1;
+		var ch;
+		while end >= 0 and charSet.contains(ch = getCharacter(end)):
+			end -= ch.length;
 		return end;
 	}
 

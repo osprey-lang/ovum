@@ -121,6 +121,8 @@ AVES_API NATIVE_FUNCTION(aves_Char_opCompare)
 	}
 	else
 		VM_ThrowTypeError(thread);
+
+	VM_PushInt(thread, result);
 }
 AVES_API NATIVE_FUNCTION(aves_Char_opMultiply)
 {
