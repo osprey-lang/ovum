@@ -119,4 +119,11 @@ AVES_API NATIVE_FUNCTION(aves_Utf8Decoder_getCharCountInternal);
 AVES_API NATIVE_FUNCTION(aves_Utf8Decoder_getCharsInternal);
 AVES_API NATIVE_FUNCTION(aves_Utf8Decoder_reset);
 
+// Some native APIs!
+AVES_API int32_t aves_GetUtf8ByteCount(ThreadHandle thread, String *str);
+AVES_API int32_t aves_GetUtf8Bytes(ThreadHandle thread, String *str, uint8_t *buffer, uint32_t bufSize, int32_t offset);
+
+AVES_API int32_t aves_GetUtf8CharCount(ThreadHandle thread, uint8_t *buffer, uint32_t bufSize, int32_t offset, int32_t count);
+AVES_API int32_t aves_GetUtf8Chars(ThreadHandle thread, uint8_t *buffer, uint32_t bufSize, int32_t offset, int32_t count, StringBuffer *sb);
+
 #endif // AVES__UTF8ENCODING

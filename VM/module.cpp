@@ -308,6 +308,14 @@ Method *Module::GetMainMethod() const
 }
 
 
+void *Module::FindNativeFunction(const char *name)
+{
+	if (nativeLib != nullptr)
+		return FindNativeEntryPoint(name);
+	return nullptr;
+}
+
+
 Module *Module::Find(String *name)
 {
 	using namespace std;
@@ -1419,4 +1427,9 @@ OVUM_API MethodHandle Module_FindGlobalFunction(ModuleHandle module, String *nam
 OVUM_API const bool Module_FindConstant(ModuleHandle module, String *name, bool includeInternal, Value &result)
 {
 	return module->FindConstant(name, includeInternal, result);
+}
+
+OVUM_API void *Module_FindNativeFunction(ModuleHandle module, const char *name)
+{
+	return module->FindNativeFunction(name);
 }

@@ -219,6 +219,18 @@ void aves_Buffer_finalize(ThreadHandle thread, void *basePtr)
 	delete[] buf->bytes;
 }
 
+AVES_API uint8_t *aves_Buffer_getDataPointer(Value *buffer, uint32_t *bufferSize)
+{
+	if (buffer == nullptr || !IsType(buffer, BufferType))
+		return nullptr;
+
+	Buffer *buf = (Buffer*)buffer->instance;
+	if (bufferSize != nullptr)
+		*bufferSize = buf->size;
+
+	return buf->bytes;
+}
+
 
 AVES_API void aves_BufferView_init(TypeHandle type)
 {

@@ -391,6 +391,15 @@ void GC::ProcessCustomFields(Type *type, GCObject *gco)
 		if (minst->instance.type)
 			TryProcess(&minst->instance);
 	}
+	else if (type == VM::vm->types.Error)
+	{
+		ErrorInst *error = (ErrorInst*)gco->InstanceBase();
+		if (error->message)
+			TryProcessString(error->message);
+		if (error->stackTrace)
+			TryProcessString(error->stackTrace);
+		TryProcess(&error->innerError);
+	}
 	else if (type->getReferences) // If the type has no reference getter, assume it has no managed references
 	{
 		bool cont;

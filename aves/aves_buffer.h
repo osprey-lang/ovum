@@ -53,6 +53,9 @@ AVES_API NATIVE_FUNCTION(aves_Buffer_writeFloat64);
 
 void aves_Buffer_finalize(ThreadHandle thread, void *basePtr);
 
+// For other native modules that want a byte pointer from a Buffer
+AVES_API uint8_t *aves_Buffer_getDataPointer(Value *buffer, uint32_t *bufferSize);
+
 
 typedef struct BufferView_S
 {
