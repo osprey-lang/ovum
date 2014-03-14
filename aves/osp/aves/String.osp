@@ -39,14 +39,15 @@ public class String
 {
 	private new();
 
-	/// Summary: Gets the UTF-16 code unit at the specified index, as a String of length 1.
+	/// Summary: Gets the UTF-16 code unit at the specified index, as a Char.
 	/// Param index: The index of a character within the string.
 	/// Throws ArgumentRangeError:
 	///          {index} is less than zero.
 	///
-	///          {index} is greater than or requal to the length of the string.
+	///          {index} is greater than or equal to the length of the string.
 	/// Remarks: If the index refers to the first code unit of a surrogate pair, then the
-	///          resulting string will only contain that one code unit, not the surrogate pair.
+	///          resulting char will only contain that one code unit, not the surrogate pair.
+	///          Use {getCharacter} to obtain the value represented by the surrogate pair.
 	public get this[index]					__extern("aves_String_get_item");
 
 	/// Summary: Gets the length of the string, in number of UTF-16 code units, as an Int.
@@ -82,10 +83,10 @@ public class String
 	public equalsIgnoreCase(value)			__extern("aves_String_equalsIgnoreCase");
 	/// Summary: Determines whether the given string occurs as a substring
 	///          within this string. The comparison is case-sensitive.
-	/// Param value: The substring to look for in this string. (String)
+	/// Param value: The substring to look for in this string. (String, Char)
 	/// Returns: True if this string contains {value} as a substring; otherwise,
 	///          false.
-	/// Throws TypeError: {value} is not a String.
+	/// Throws TypeError: {value} is not a String or Char.
 	public contains(value)					__extern("aves_String_contains");
 	/// Summary: Determines whether the current string starts with the specified
 	///          string. The comparison is case-sensitive.
@@ -350,17 +351,18 @@ public class String
 		return substr(0, end + 1);
 	}
 
-	private getTrimSet(chars)
+	private static getTrimSet(chars)
 	{
-		if chars is String and chars.length <= 5:
-			// Searching a 5-char string for a single char is fast enough
-			// that we can permit this
-			return chars;
-
-		var charSet = new Set();
-		for ch in chars:
-			if ch is String and ch.length == 1:
-				charSet.add(ch);
+		var charSet;
+		if chars is String:
+			charSet = Set.fromCollection(chars);
+		else
+		{
+			charSet = new Set();
+			for ch in chars:
+				if ch is Char or ch is String:
+					charSet.add(ch);
+		}
 		return charSet;
 	}
 	private getTrimStart()
@@ -395,6 +397,7 @@ public class String
 	public toUpper()						__extern("aves_String_toUpper");
 	public toLower()						__extern("aves_String_toLower");
 
+	public getCharacter(i)					__extern("aves_String_getCharacter");
 	public getCodepoint(i)					__extern("aves_String_getCodepoint");
 
 	public getCategory(i)					__extern("aves_String_getCategory");
@@ -457,11 +460,12 @@ public class String
 	}
 
 	/// Summary: Constructs a new String containing the Unicode character
-	///          represented by {cp}. The code point must be in the range
-	///          0 <= {code} <= 0x10FFFF.
-	/// Param cp: The Unicode code point to convert to a string. (Int, UInt or Real)
-	/// Returns: A string containing one or two UTF-16 characters that represent
-	///          the Unicode character with the code point {cp}.
+	///          represented by {cp}. If {cp} is a numeric value, the code point
+	///          must be in the range 0 <= {cp} <= 0x10FFFF.
+	/// Param cp: The Unicode character or code point to convert to a string.
+	///           (Char, Int, UInt or Real)
+	/// Returns: A string of length 1 or 2 that represents the UTF-16 string
+	///          with the single code point {cp}.
 	/// Throws TypeError:
 	///          {cp} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
@@ -475,7 +479,7 @@ public class String
 
 	operator ==(a, b)						__extern("aves_String_opEquals");
 	operator <=>(a, b)						__extern("aves_String_opCompare");
-	operator *(a, b)						__extern("aves_String_opMultiply");
+	operator *(str, times)					__extern("aves_String_opMultiply");
 
 	iter
 	{
@@ -499,8 +503,8 @@ private class StringIterator is Iterator
 	{
 		if i < str.length - 1
 		{
-			i += 1;
-			cur = str[i];
+			cur = str.getCharacter(i);
+			i += cur.length;
 			return true;
 		}
 		else

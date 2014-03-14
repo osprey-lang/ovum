@@ -83,6 +83,7 @@
   <ItemGroup>
     <ClInclude Include="aves.h" />
     <ClInclude Include="aves_buffer.h" />
+    <ClInclude Include="aves_char.h" />
     <ClInclude Include="aves_console.h" />
     <ClInclude Include="aves_enum.h" />
     <ClInclude Include="aves_env.h" />
@@ -116,6 +117,7 @@
     <ClCompile Include="aves.cpp" />
     <ClCompile Include="boolean.cpp" />
     <ClCompile Include="buffer.cpp" />
+    <ClCompile Include="char.cpp" />
     <ClCompile Include="console.cpp" />
     <ClCompile Include="directory.cpp" />
     <ClCompile Include="dllmain.cpp">

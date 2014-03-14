@@ -25,8 +25,6 @@ OVUM_API UnicodeCategory UC_GetCategory(const uchar ch)
 
 OVUM_API UnicodeCategory UC_GetCategoryW(const wuchar ch)
 {
-	assert_valid_wuchar(ch);
-
 	return UC_GetCategoryInternal(ch);
 }
 
@@ -37,7 +35,5 @@ OVUM_API CaseMap UC_GetCaseMap(const uchar ch)
 
 OVUM_API CaseMap UC_GetCaseMapW(const wuchar ch)
 {
-	assert_valid_wuchar(ch);
-
 	return UC_GetCaseMapInternal(ch);
 }

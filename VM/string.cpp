@@ -244,6 +244,11 @@ OVUM_API bool String_SubstringEquals(const String *str, const int32_t startIndex
 	return length <= 0;
 }
 
+bool IsSurrogatePair(uchar a, uchar b)
+{
+	return UC_IsSurrogateLead(a) && UC_IsSurrogateTrail(b);
+}
+
 OVUM_API int String_Compare(const String *a, const String *b)
 {
 	int32_t alen = a->length, blen = b->length;
@@ -253,11 +258,26 @@ OVUM_API int String_Compare(const String *a, const String *b)
 
 	while (alen && blen)
 	{
-		if (*ap != *bp)
+		// Note: strings are zero-terminated despite having a known length.
+		// We can always safely access the next character.
+		wuchar aw = *ap++;
+		if (IsSurrogatePair((uchar)aw, *ap))
+		{
+			aw = UC_ToWide((uchar)aw, *ap++);
+			alen--;
+		}
+		wuchar bw = *bp++;
+		if (IsSurrogatePair((uchar)bw, *bp))
+		{
+			bw = UC_ToWide((uchar)bw, *bp++);
+			blen--;
+		}
+
+		if (aw != bw)
 			// Note: without the int cast, the unsigned subtraction
-			// will overflow if *bp > *ap. uchar is guaranteed to fit
-			// inside an int.
-			return (int)*ap - (int)*bp;
+			// will overflow if bw > aw. wuchar is guaranteed to fit
+			// inside an int32_t.
+			return (int32_t)aw - (int32_t)bw;
 		alen--;
 		blen--;
 	}

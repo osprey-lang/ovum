@@ -8,9 +8,11 @@
 
 namespace type_names
 {
-	LitString<8> Int  = { 8, 0, SFS, AVES,'I','n','t',0 };
-	LitString<9> UInt = { 9, 0, SFS, AVES,'U','I','n','t',0 };
-	LitString<9> Real = { 9, 0, SFS, AVES,'R','e','a','l',0 };
+	LitString<8> Int     = { 8,  0, SFS, AVES,'I','n','t',0 };
+	LitString<9> UInt    = { 9,  0, SFS, AVES,'U','I','n','t',0 };
+	LitString<9> Real    = { 9,  0, SFS, AVES,'R','e','a','l',0 };
+	LitString<9> Char    = { 9,  0, SFS, AVES,'C','h','a','r',0 };
+	LitString<11> String = { 11, 0, SFS, AVES,'S','t','r','i','n','g',0 };
 
 	LitString<18> ArgumentError      = { 18, 0, SFS, AVES,'A','r','g','u','m','e','n','t','E','r','r','o','r',0 };
 	LitString<22> ArgumentNullError  = { 22, 0, SFS, AVES,'A','r','g','u','m','e','n','t','N','u','l','l','E','r','r','o','r',0 };
@@ -31,6 +33,8 @@ namespace type_names
 TypeHandle Types::Int;
 TypeHandle Types::UInt;
 TypeHandle Types::Real;
+TypeHandle Types::Char;
+TypeHandle Types::String;
 TypeHandle Types::ArgumentError;
 TypeHandle Types::ArgumentNullError;
 TypeHandle Types::ArgumentRangeError;
@@ -53,6 +57,8 @@ AVES_API void OvumModuleMain(ModuleHandle module)
 	Types::Int                = Module_FindType(module, _S(type_names::Int),                true);
 	Types::UInt               = Module_FindType(module, _S(type_names::UInt),               true);
 	Types::Real               = Module_FindType(module, _S(type_names::Real),               true);
+	Types::Char               = Module_FindType(module, _S(type_names::Char),               true);
+	Types::String             = Module_FindType(module, _S(type_names::String),             true);
 	Types::ArgumentError      = Module_FindType(module, _S(type_names::ArgumentError),      true);
 	Types::ArgumentNullError  = Module_FindType(module, _S(type_names::ArgumentNullError),  true);
 	Types::ArgumentRangeError = Module_FindType(module, _S(type_names::ArgumentRangeError), true);

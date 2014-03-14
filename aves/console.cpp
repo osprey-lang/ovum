@@ -158,14 +158,17 @@ AVES_API NATIVE_FUNCTION(aves_Console_readKey)
 	}
 
 	{
+		Value charValue;
+		charValue.type = Types::Char;
+		charValue.integer = (uint32_t)ir.Event.KeyEvent.uChar.UnicodeChar;
+
 		Value keyCodeValue;
 		keyCodeValue.type = Types::ConsoleKeyCode;
 		keyCodeValue.integer = ir.Event.KeyEvent.wVirtualKeyCode;
 
 		DWORD state = ir.Event.KeyEvent.dwControlKeyState;
 
-		uchar ch = (uchar)ir.Event.KeyEvent.uChar.UnicodeChar;
-		VM_PushInt(thread, ch);
+		VM_Push(thread, charValue);
 		VM_Push(thread, keyCodeValue);
 		VM_PushBool(thread, (state & SHIFT_PRESSED) != 0);
 		VM_PushBool(thread, (state & (LEFT_ALT_PRESSED | RIGHT_ALT_PRESSED)) != 0);
@@ -174,7 +177,7 @@ AVES_API NATIVE_FUNCTION(aves_Console_readKey)
 
 		if (argc == 0 || IsFalse(args + 0))
 		{
-			LitString<1> str = { 1, 0, StringFlags::STATIC, ch, 0 };
+			LitString<1> str = { 1, 0, StringFlags::STATIC, (uchar)ir.Event.KeyEvent.uChar.UnicodeChar, 0 };
 			VM_Print(_S(str));
 		}
 	}

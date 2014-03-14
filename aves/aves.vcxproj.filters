@@ -117,6 +117,9 @@
     <ClInclude Include="io_directory.h">
       <Filter>Header Files\io</Filter>
     </ClInclude>
+    <ClInclude Include="aves_char.h">
+      <Filter>Header Files\aves</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="aves.cpp">
@@ -205,6 +208,9 @@
     </ClCompile>
     <ClCompile Include="dllmain.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="char.cpp">
+      <Filter>Source Files\aves</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

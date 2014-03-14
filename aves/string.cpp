@@ -2,6 +2,7 @@
 #include "ov_string.h"
 #include "ov_stringbuffer.h"
 #include "ov_unicode.h"
+#include "aves_char.h"
 
 namespace error_strings
 {
@@ -34,8 +35,10 @@ AVES_API NATIVE_FUNCTION(aves_String_get_item)
 
 	int32_t index = GetIndex(thread, str, args + 1);
 
-	String *output = GC_ConstructString(thread, 1, &str->firstChar + index);
-	VM_PushString(thread, output);
+	Value output;
+	output.type = Types::Char;
+	output.integer = (&str->firstChar)[index];
+	VM_Push(thread, output);
 }
 
 AVES_API NATIVE_FUNCTION(aves_String_get_length)
@@ -45,40 +48,69 @@ AVES_API NATIVE_FUNCTION(aves_String_get_length)
 
 AVES_API NATIVE_FUNCTION(aves_String_equalsIgnoreCase)
 {
-	if (!IsString(args[1]))
+	bool eq;
+	if (args[1].type == Types::String)
+		eq = String_EqualsIgnoreCase(THISV.common.string, args[1].common.string);
+	else if (args[1].type == Types::Char)
 	{
-		VM_PushBool(thread, false);
+		LitString<2> other = Char::ToLitString((wuchar)args[1].integer);
+		eq = String_EqualsIgnoreCase(THISV.common.string, _S(other));
 	}
 	else
-	{
-		bool result = String_EqualsIgnoreCase(THISV.common.string, args[1].common.string);
-		VM_PushBool(thread, result);
-	}
+		eq = false;
+
+	VM_PushBool(thread, eq);
 }
 AVES_API NATIVE_FUNCTION(aves_String_contains)
 {
-	if (!IsString(args[1]))
+	bool result;
+	if (args[1].type == Types::String)
+		result = String_Contains(THISV.common.string, args[1].common.string);
+	else if (args[1].type == Types::Char)
+	{
+		LitString<2> value = Char::ToLitString((wuchar)args[1].integer);
+		result = String_Contains(THISV.common.string, _S(value));
+	}
+	else
 		VM_ThrowTypeError(thread);
 
-	bool result = String_Contains(THISV.common.string, args[1].common.string);
 	VM_PushBool(thread, result);
 }
 AVES_API NATIVE_FUNCTION(aves_String_startsWith)
 {
-	if (!IsString(args[1]))
+	String *str = THISV.common.string;
+
+	bool result;
+	if (args[1].type == Types::String)
+		result = String_SubstringEquals(str, 0, args[1].common.string);
+	else if (args[1].type == Types::Char)
+	{
+		LitString<2> part = Char::ToLitString((wuchar)args[1].integer);
+		result = String_SubstringEquals(str, 0, _S(part));
+	}
+	else
 		VM_ThrowTypeError(thread);
 
-	bool result = String_SubstringEquals(THISV.common.string, 0, args[1].common.string);
 	VM_PushBool(thread, result);
 }
 AVES_API NATIVE_FUNCTION(aves_String_endsWith)
 {
-	if (!IsString(args[1]))
+	String *str = THISV.common.string;
+
+	bool result;
+	if (args[1].type == Types::String)
+	{
+		String *part = args[1].common.string;
+		result = String_SubstringEquals(str, str->length - part->length, part);
+	}
+	else if (args[1].type == Types::Char)
+	{
+		LitString<2> part = Char::ToLitString((wuchar)args[1].integer);
+		result = String_SubstringEquals(str, str->length - part.length, _S(part));
+	}
+	else
 		VM_ThrowTypeError(thread);
 
-	String *other = args[1].common.string;
-	bool result = String_SubstringEquals(THISV.common.string,
-		THISV.common.string->length - other->length, other);
 	VM_PushBool(thread, result);
 }
 
@@ -297,6 +329,24 @@ AVES_API NATIVE_FUNCTION(aves_String_toLower)
 	VM_PushString(thread, result);
 }
 
+AVES_API NATIVE_FUNCTION(aves_String_getCharacter)
+{
+	String *str = THISV.common.string;
+	int32_t index = GetIndex(thread, str, args + 1);
+
+	const uchar *chp = &str->firstChar + index;
+
+	wuchar result;
+	if (UC_IsSurrogateLead(chp[0]) && UC_IsSurrogateTrail(chp[1]))
+		result = UC_ToWide(chp[0], chp[1]);
+	else
+		result = *chp;
+
+	Value character;
+	character.type = Types::Char;
+	character.integer = result;
+	VM_Push(thread, character);
+}
 AVES_API NATIVE_FUNCTION(aves_String_getCodepoint)
 {
 	String *str = THISV.common.string;
@@ -304,7 +354,7 @@ AVES_API NATIVE_FUNCTION(aves_String_getCodepoint)
 
 	const uchar *chp = &str->firstChar + index;
 
-	uint32_t result;
+	wuchar result;
 	if (UC_IsSurrogateLead(chp[0]) && UC_IsSurrogateTrail(chp[1]))
 		result = UC_ToWide(chp[0], chp[1]);
 	else
@@ -381,7 +431,8 @@ AVES_API NATIVE_FUNCTION(aves_String_getHashCode)
 
 AVES_API NATIVE_FUNCTION(aves_String_fromCodepoint)
 {
-	IntFromValue(thread, args);
+	if (args[0].type != Types::Char)
+		IntFromValue(thread, args);
 	int64_t cp64 = args[0].integer;
 
 	if (cp64 < 0 || cp64 > 0x10FFFF)
@@ -406,34 +457,57 @@ AVES_API NATIVE_FUNCTION(aves_String_fromCodepoint)
 
 AVES_API NATIVE_FUNCTION(aves_String_opEquals)
 {
-	if (!IsString(args[1]))
-		VM_PushBool(thread, false);
-	else
+	bool eq;
+	if (args[1].type == Types::String)
+		eq = String_Equals(args[0].common.string, args[1].common.string);
+	else if (args[1].type == Types::Char)
 	{
-		bool result = String_Equals(args[0].common.string, args[1].common.string);
-		VM_PushBool(thread, result);
+		LitString<2> right = Char::ToLitString((wuchar)args[1].integer);
+		eq = String_Equals(args[0].common.string, _S(right));
 	}
+	else
+		eq = false;
+
+	VM_PushBool(thread, eq);
 }
 AVES_API NATIVE_FUNCTION(aves_String_opCompare)
 {
-	if (!IsString(args[1]))
+	int result;
+	if (args[1].type == Types::String)
+		result = String_Compare(args[0].common.string, args[1].common.string);
+	else if (args[1].type == Types::Char)
+	{
+		LitString<2> right = Char::ToLitString((wuchar)args[1].integer);
+		result = String_Compare(args[0].common.string, _S(right));
+	}
+	else
 		VM_ThrowTypeError(thread);
 
-	int result = String_Compare(args[0].common.string, args[1].common.string);
 	VM_PushInt(thread, result);
 }
 AVES_API NATIVE_FUNCTION(aves_String_opMultiply)
 {
-	String *str = THISV.common.string;
 	IntFromValue(thread, args + 1);
+
 	int64_t times = args[1].integer;
+	if (times == 0)
+	{
+		VM_PushString(thread, strings::Empty);
+		return;
+	}
+
+	String *str = THISV.common.string;
 	int64_t length = Int_MultiplyChecked(thread, times, str->length);
 	if (length > INT32_MAX)
-		VM_ThrowOverflowError(thread);
+	{
+		VM_PushString(thread, strings::times);
+		GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr);
+		VM_Throw(thread);
+	}
 
 	StringBuffer buf(thread, (int32_t)length);
 
-	for (int64_t i = 0; i < times; i++)
+	for (int32_t i = 0; i < (int32_t)times; i++)
 		buf.Append(thread, str);
 
 	String *result = buf.ToString(thread);

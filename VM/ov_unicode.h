@@ -6,7 +6,7 @@
 #include <cassert>
 #include "ov_vm.h"
 
-enum UnicodeCategory : uint8_t
+enum UnicodeCategory : uint32_t
 {
 	UC_TOP_CATEGORY_MASK = 0xF0,
 	UC_SUB_CATEGORY_MASK = 0x0F,
@@ -87,18 +87,18 @@ inline bool UC_IsSurrogateTrail(const uchar ch)
 	return ch >= 0xDC00 && ch <= 0xDFFF;
 }
 
-inline const wuchar UC_ToWide(const uchar lead, const uchar trail)
+inline wuchar UC_ToWide(const uchar lead, const uchar trail)
 {
 	return 0x10000 + (((wuchar)lead - 0xD800) << 10) + (wuchar)trail - 0xDC00;
 }
-inline const wuchar UC_ToWide(const SurrogatePair pair)
+inline wuchar UC_ToWide(const SurrogatePair pair)
 {
 	return UC_ToWide(pair.lead, pair.trail);
 }
 
 inline const bool UC_NeedsSurrogatePair(const wuchar ch)
 {
-	return ch >= 0x10000 && ch <= 0x10FFFF;
+	return ch > 0xFFFF;
 }
 
 
@@ -161,8 +161,7 @@ inline uchar UC_ToLower(const uchar ch)
 
 inline bool UC_IsCategory(const wuchar ch, const UnicodeCategory cat)
 {
-	assert_valid_wuchar(ch);
-	UnicodeCategory charCat = UC_GetCategory(ch);
+	UnicodeCategory charCat = UC_GetCategoryW(ch);
 	if ((cat & UC_SUB_CATEGORY_MASK) == 0)
 		return (charCat & UC_TOP_CATEGORY_MASK) == cat;
 	else
@@ -170,23 +169,19 @@ inline bool UC_IsCategory(const wuchar ch, const UnicodeCategory cat)
 }
 inline bool UC_IsUpper(const wuchar ch)
 {
-	assert_valid_wuchar(ch);
 	return UC_GetCategoryW(ch) == UC_LETTER_UPPERCASE;
 }
 inline bool UC_IsLower(const wuchar ch)
 {
-	assert_valid_wuchar(ch);
 	return UC_GetCategoryW(ch) == UC_LETTER_LOWERCASE;
 }
 
 inline wuchar UC_ToUpper(const wuchar ch)
 {
-	assert_valid_wuchar(ch);
 	return UC_GetCaseMapW(ch).upper;
 }
 inline wuchar UC_ToLower(const wuchar ch)
 {
-	assert_valid_wuchar(ch);
 	return UC_GetCaseMapW(ch).lower;
 }
 
