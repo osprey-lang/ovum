@@ -222,6 +222,8 @@ public:
 
 	Method     *GetMainMethod() const;
 
+	void       *FindNativeFunction(const char *name);
+
 	static Module *Find(String *name);
 	static Module *Open(const wchar_t *fileName);
 	static Module *OpenByName(String *name);

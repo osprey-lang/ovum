@@ -23,5 +23,10 @@ OVUM_API MethodHandle Module_FindGlobalFunction(ModuleHandle module, String *nam
 
 OVUM_API const bool Module_FindConstant(ModuleHandle module, String *name, bool includeInternal, Value &result);
 
+// Locates the entry point with the specified name in the native library
+// of the given module. If the module has no native library or the entry
+// point doesn't exist, this method returns null.
+OVUM_API void *Module_FindNativeFunction(ModuleHandle module, const char *name);
+
 
 #endif // VM__MODULE_H

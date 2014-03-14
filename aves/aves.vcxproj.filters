@@ -134,9 +134,6 @@
     <ClCompile Include="console.cpp">
       <Filter>Source Files\aves</Filter>
     </ClCompile>
-    <ClCompile Include="dllmain.cpp">
-      <Filter>Source Files\aves</Filter>
-    </ClCompile>
     <ClCompile Include="enum.cpp">
       <Filter>Source Files\aves</Filter>
     </ClCompile>
@@ -205,6 +202,9 @@
     </ClCompile>
     <ClCompile Include="directory.cpp">
       <Filter>Source Files\io</Filter>
+    </ClCompile>
+    <ClCompile Include="dllmain.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

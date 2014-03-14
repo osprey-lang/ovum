@@ -62,7 +62,9 @@ public:
 	StringFlags flags;
 	uchar chars[Len + 1];
 
-	static inline LitString<Len> FromCString(const char *const data)
+	typedef const char CString[Len + 1];
+
+	static inline LitString<Len> FromCString(CString data)
 	{
 		LitString<Len> output = { Len, 0, StringFlags::STATIC };
 
