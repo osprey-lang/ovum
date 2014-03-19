@@ -83,6 +83,57 @@ typedef struct GCObject_S
 		return (Value*)((char*)this + GCO_SIZE + type->fieldsOffset);
 	}
 
+	// Inserts a GCObject into a linked list.
+	// The parameter 'list' points to the first object in the list.
+	//
+	// For performance reasons, this method does not remove the GCO from
+	// the previous list it's in. Call RemoveFromList() first, unless you
+	// know the GCO isn't in any list.
+	inline void InsertIntoList(GCObject **list)
+	{
+		// Before insertion:
+		// nullptr  <--  *list  <->  (*list)->next
+		// After insertion:
+		// nullptr  <--  gco  <->  *list  <->  (*list)->next
+		this->prev = nullptr;  // gco is the first value, so it has nothing prior to it.
+		this->next = *list; // The next value is the current base of the list.
+		if (*list)
+			(*list)->prev = this;
+		*list = this;       // And then we update the base of the list!
+	}
+	// Removes a GCObject from its associated linked list, which is passed
+	// as a parameter (not stored with the GCObject).
+	//
+	// This should always be called before calling InsertIntoList, which
+	// does not automatically call this method for performance reasons.
+	//
+	// NOTE: also for performance reasons, this code does NOT set gco's
+	// next and prev fields to null. RemoveFromList will be called mostly
+	// before calling InsertIntoList, which writes to those fields.
+	// If you need these fields to be null, you must set them yourself.
+	// Call ClearLinks() on the GCO to accomplish this.
+	inline void RemoveFromList(GCObject **list)
+	{
+		GCObject *prev = this->prev;
+		GCObject *next = this->next;
+		// This code maintains two important facts:
+		//   1. If gco->prev == nullptr (that is, gco is the first object in the list),
+		//      then gco->next->prev will also be null.
+		//   2. If gco->next == nullptr (that is, it's the last object in the list),
+		//      then gco->prev->next will also be null.
+
+		// If this is the only object in the list, then this == *list
+		// and next == nullptr, so list will correctly be set to null.
+		if (this == *list)
+			*list = next;
+
+		// Before removal:
+		// prev  <->  gco  <->  next
+		// After removal:
+		// prev  <->  next
+		if (prev) prev->next = next;
+		if (next) next->prev = prev;
+	}
 	inline void ClearLinks()
 	{
 		prev = nullptr;
@@ -274,64 +325,9 @@ public:
 
 	StaticRef *AddStaticReference(Value value);
 
-	void Release(Thread *const thread, GCObject *gco);
+	void Release(GCObject *gco);
 
 	void Collect(Thread *const thread);
-
-	// Removes a GCObject from its associated linked list.
-	// This should always be called before calling InsertIntoList, which
-	// does not automatically call this method for performance reasons.
-	//
-	// 'list' is the base of the list, and is only modified if gco->next
-	// and gco->prev are both null (that is, if the object is the only
-	// object in the list).
-	//
-	// NOTE: also for performance reasons, this code does NOT set gco's
-	// next and prev fields to null. RemoveFromList will be called mostly
-	// before calling InsertIntoList, which writes to those fields.
-	// If you need these fields to be null, you must set them yourself.
-	// Use the GCO_CLEAR_LINKS(gco) macro for this.
-	static inline void RemoveFromList(GCObject *gco, GCObject **list)
-	{
-		GCObject *prev = gco->prev;
-		GCObject *next = gco->next;
-		// This code maintains two important facts:
-		//   1. If gco->prev == nullptr (that is, gco is the first object in the list),
-		//      then gco->next->prev will also be null.
-		//   2. If gco->next == nullptr (that is, it's the last object in the list),
-		//      then gco->prev->next will also be null.
-
-		if (gco == *list)
-			*list = next;
-
-		if (!prev && !next)
-		{
-			*list = nullptr;
-		}
-		else
-		{
-			// Before removal:
-			// prev  <->  gco  <->  next
-			// After removal:
-			// prev  <->  next
-			if (prev) prev->next = next;
-			if (next) next->prev = prev;
-		}
-	}
-	// Inserts a GCObject into a linked list.
-	// The parameter 'list' points to the first object in the list.
-	static inline void InsertIntoList(GCObject *gco, GCObject **list)
-	{
-		// Before insertion:
-		// nullptr  <--  *list  <->  (*list)->next
-		// After insertion:
-		// nullptr  <--  gco  <->  *list  <->  (*list)->next
-		gco->prev = nullptr;  // gco is the first value, so it has nothing prior to it.
-		gco->next = *list; // The next value is the current base.
-		if (*list)
-			(*list)->prev = gco;
-		*list = gco;       // And then we update the base of the list!
-	}
 
 	static inline unsigned int LinkedListLength(GCObject *first)
 	{
@@ -351,16 +347,16 @@ public:
 		// Must move from collect to process.
 		assert((gco->flags & GCOFlags::MARK) == GCO_COLLECT(currentCollectMark));
 
-		RemoveFromList(gco, &collectBase);
+		gco->RemoveFromList(&collectBase);
 		if ((gco->flags & GCOFlags::EARLY_STRING) == GCOFlags::NONE &&
 			gco->type->size > 0 /*|| gco->type->fieldsOffset > 0*/) // may have fields
 		{
-			InsertIntoList(gco, &processBase);
+			gco->InsertIntoList(&processBase);
 			gco->Mark(GCO_PROCESS(currentCollectMark));
 		}
 		else // no chance of instance fields, so nothing to process
 		{
-			InsertIntoList(gco, &keepBase);
+			gco->InsertIntoList(&keepBase);
 			gco->Mark(GCO_KEEP(currentCollectMark));
 		}
 	}
@@ -370,8 +366,8 @@ public:
 		assert((gco->flags & GCOFlags::MARK) == GCO_PROCESS(currentCollectMark) ||
 			(gco->flags & GCOFlags::IMMORTAL) == GCOFlags::IMMORTAL);
 
-		RemoveFromList(gco, &processBase);
-		InsertIntoList(gco, &keepBase);
+		gco->RemoveFromList(&processBase);
+		gco->InsertIntoList(&keepBase);
 		gco->Mark(GCO_KEEP(currentCollectMark));
 	}
 

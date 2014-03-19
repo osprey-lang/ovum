@@ -29,7 +29,7 @@ AVES_API NATIVE_FUNCTION(aves_StringBuffer_newCap)
 		VM_Throw(thread);
 	}
 
-	new(buf) StringBuffer(thread, capacity);
+	new(buf) StringBuffer(thread, (int32_t)capacity);
 }
 
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_get_length)
@@ -120,7 +120,7 @@ AVES_API NATIVE_FUNCTION(aves_StringBuffer_toString)
 	VM_PushString(thread, buf->ToString(thread));
 }
 
-void aves_StringBuffer_finalize(ThreadHandle thread, void *basePtr)
+void aves_StringBuffer_finalize(void *basePtr)
 {
 	// NOTE: Do not delete the memory! Just call the destructor.
 	// The GC allocated things, so we let it clean things up.

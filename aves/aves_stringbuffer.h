@@ -20,6 +20,6 @@ AVES_API NATIVE_FUNCTION(aves_StringBuffer_insertInternal);
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_clear);
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_toString);
 
-void aves_StringBuffer_finalize(ThreadHandle thread, void *basePtr);
+void aves_StringBuffer_finalize(void *basePtr);
 
 #endif // AVES__STRINGBUFFER_H

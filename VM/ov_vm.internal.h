@@ -5,6 +5,10 @@
 
 //#define PRINT_DEBUG_INFO
 
+#if defined(_WIN32) && !defined(UNICODE)
+#error You are not supposed to compile Ovum without Unicode support.
+#endif
+
 #ifndef VM_EXPORTS
 #error You're not supposed to include this file from outside the VM project!
 #endif
@@ -40,19 +44,12 @@ namespace debug
 	class ModuleDebugData;
 }
 
-// Represents a handle to a specific thread.
 typedef Thread *const ThreadHandle;
-// Represents a handle to a specific type.
-typedef Type *TypeHandle;
-// Represents a handle to a specific module.
-typedef Module *ModuleHandle;
-// Represents a handle to a member of a type.
-typedef Member *MemberHandle;
-// Represents a handle to a method.
-typedef Method *MethodHandle;
-// Represents a handle to a field.
-typedef Field *FieldHandle;
-// Represents a handle to a property.
+typedef Type     *TypeHandle;
+typedef Module   *ModuleHandle;
+typedef Member   *MemberHandle;
+typedef Method   *MethodHandle;
+typedef Field    *FieldHandle;
 typedef Property *PropertyHandle;
 
 #include "ov_vm.h"

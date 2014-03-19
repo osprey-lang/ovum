@@ -7,4 +7,9 @@ public class Type
 	private new();
 
 	public get fullName				__extern("aves_Type_get_fullName");
+
+	override toString()
+	{
+		return "<Type {0}>".format([fullName]);
+	}
 }

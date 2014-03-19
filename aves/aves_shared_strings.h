@@ -24,7 +24,7 @@ namespace strings
 	extern String *kind;
 	extern String *key;
 	extern String *cp;
-	extern String *_args;
+	extern String *_args; // _args
 	extern String *x;
 	extern String *y;
 	extern String *width;
@@ -35,6 +35,7 @@ namespace strings
 	extern String *access;
 	extern String *share;
 	extern String *origin;
+	extern String *_call; // .call
 	
 	extern String *newline;
 }
@@ -49,6 +50,7 @@ namespace error_strings
 	extern String *AppendMustBeWriteOnly;
 	extern String *CannotFlushReadOnlyStream;
 	extern String *EncodingBufferOverrun;
+	extern String *ValueNotInvokable;
 }
 
 #endif // AVES__SHARED_STRINGS_H

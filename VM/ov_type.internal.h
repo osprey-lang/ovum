@@ -14,10 +14,10 @@ class Module;
 class Member;
 class Method;
 
-enum class MemberFlags : uint16_t
+enum class MemberFlags : uint32_t
 {
-	// The member has no flags.
 	NONE      = 0x0000,
+
 	// The member is a field.
 	FIELD     = 0x0001,
 	// The member is a method.
@@ -32,13 +32,6 @@ enum class MemberFlags : uint16_t
 	// The member is private.
 	PRIVATE   = 0x0020,
 
-	//// The member is abstract.
-	//ABSTRACT  = 0x0080,
-	//// The member is virtual (overridable in Osprey).
-	//VIRTUAL   = 0x0100,
-	//// The member is sealed (no direct equivalent in Osprey).
-	//SEALED    = 0x0200,
-
 	// The member is an instance member.
 	INSTANCE  = 0x0400,
 
@@ -52,7 +45,7 @@ enum class MemberFlags : uint16_t
 	// A mask for extracting the kind of a member.
 	KIND = FIELD | METHOD | PROPERTY,
 };
-ENUM_OPS(MemberFlags, uint16_t);
+ENUM_OPS(MemberFlags, uint32_t);
 
 class Member
 {
@@ -158,39 +151,6 @@ public:
 	void WriteFieldUnchecked(Value *instanceAndValue) const;
 };
 
-
-enum class MethodFlags : int16_t
-{
-	// No method flags.
-	NONE      = 0x0000,
-	// The method has a variadic parameter at the end.
-	VAR_END   = 0x0001,
-	// The method has a variadic parameter at the start.
-	VAR_START = 0x0002,
-
-	// The method has a native-code implementation.
-	NATIVE    = 0x0004,
-
-	// The method is an instance method. Without this flag,
-	// methods are static.
-	INSTANCE  = 0x0008,
-
-	// The method is virtual (overridable in Osprey).
-	VIRTUAL   = 0x0010,
-	// The method is abstract (it has no implementation).
-	ABSTRACT  = 0x0020,
-
-	// The method is a constructor.
-	CTOR      = 0x0040,
-
-	// The method has been initialized. Used for bytecode methods only,
-	// to indicate that the bytecode initializer has processed the method.
-	INITED    = 0x0080,
-
-	// A mask for extracting the variadic flags of a method.
-	VARIADIC = VAR_END | VAR_START,
-};
-ENUM_OPS(MethodFlags, int16_t);
 
 typedef struct StackFrame_S StackFrame;
 // Represents a local offset, that is, an offset that is relative

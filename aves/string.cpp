@@ -113,6 +113,46 @@ AVES_API NATIVE_FUNCTION(aves_String_endsWith)
 
 	VM_PushBool(thread, result);
 }
+AVES_API NATIVE_FUNCTION(aves_String_indexOf)
+{
+	String *str = THISV.common.string;
+
+	int32_t index;
+	if (args[1].type == Types::String)
+		index = string::IndexOf(str, args[1].common.string);
+	else if (args[1].type == Types::Char)
+	{
+		LitString<2> part = Char::ToLitString((wuchar)args[1].integer);
+		index = string::IndexOf(str, _S(part));
+	}
+	else
+		VM_ThrowTypeError(thread);
+
+	if (index == -1)
+		VM_PushNull(thread);
+	else
+		VM_PushInt(thread, index);
+}
+AVES_API NATIVE_FUNCTION(aves_String_lastIndexOf)
+{
+	String *str = THISV.common.string;
+
+	int32_t index;
+	if (args[1].type == Types::String)
+		index = string::LastIndexOf(str, args[1].common.string);
+	else if (args[1].type == Types::Char)
+	{
+		LitString<2> part = Char::ToLitString((wuchar)args[1].integer);
+		index = string::LastIndexOf(str, _S(part));
+	}
+	else
+		VM_ThrowTypeError(thread);
+
+	if (index == -1)
+		VM_PushNull(thread);
+	else
+		VM_PushInt(thread, index);
+}
 
 AVES_API NATIVE_FUNCTION(aves_String_reverse)
 {
@@ -514,7 +554,36 @@ AVES_API NATIVE_FUNCTION(aves_String_opMultiply)
 	VM_PushString(thread, result);
 }
 
-enum class FormatAlignment : signed char
+int32_t string::IndexOf(const String *str, const String *part)
+{
+	const uchar *strp = &str->firstChar;
+
+	int32_t imax = str->length - part->length + 1;
+	for (int32_t i = 0; i < imax; i++)
+	{
+		if (strp[i] == part->firstChar &&
+			String_SubstringEquals(str, i, part))
+			return i;
+	}
+
+	return -1;
+}
+
+int32_t string::LastIndexOf(const String *str, const String *part)
+{
+	const uchar *strp = &str->firstChar;
+
+	for (int32_t i = str->length - part->length; i >= 0; i++)
+	{
+		if (strp[i] == part->firstChar &&
+			String_SubstringEquals(str, i, part))
+			return i;
+	}
+
+	return -1;
+}
+
+enum class FormatAlignment
 {
 	LEFT   = 0,
 	CENTER = 1,

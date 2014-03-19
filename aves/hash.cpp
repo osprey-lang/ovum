@@ -328,7 +328,7 @@ bool aves_Hash_getReferences(void *basePtr, unsigned int *valc, Value **target, 
 	return false;
 }
 
-void aves_Hash_finalize(ThreadHandle thread, void *basePtr)
+void aves_Hash_finalize(void *basePtr)
 {
 	HashInst *hash = reinterpret_cast<HashInst*>(basePtr);
 

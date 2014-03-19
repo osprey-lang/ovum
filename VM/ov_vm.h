@@ -3,21 +3,14 @@
 #ifndef VM__VM_H
 #define VM__VM_H
 
-#ifndef VM_EXPORTS
-#pragma comment(lib, "VM.lib")
-#endif
-
 #ifdef VM_EXPORTS
 #define _OVUM_API __declspec(dllexport)
 #else
+#pragma comment(lib, "VM.lib")
 #define _OVUM_API __declspec(dllimport)
 #endif
 
 #define OVUM_API	extern "C" _OVUM_API
-
-#ifndef UNICODE
-#error You are not supposed to compile Ovum without Unicode support.
-#endif
 
 #ifndef VM_EXPORTS
 // Represents a handle to a specific thread.

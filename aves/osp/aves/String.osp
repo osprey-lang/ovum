@@ -92,14 +92,30 @@ public class String
 	///          string. The comparison is case-sensitive.
 	/// Param value: The value to test against.
 	/// Returns: True if this string starts with {value}; otherwise, false.
-	/// Throws TypeError: {value} is not a String.
+	/// Throws TypeError: {value} is not a String or Char.
 	public startsWith(value)				__extern("aves_String_startsWith");
 	/// Summary: Determines whether the current string ends with the specified
 	///          string. The comparison is case-sensitive.
 	/// Param value: The value to test against.
 	/// Returns: True if this string starts with {value}; otherwise, false.
-	/// Throws TypeError: {value} is not a String.
+	/// Throws TypeError: {value} is not a String or Char.
 	public endsWith(value)					__extern("aves_String_endsWith");
+	/// Summary: Returns the index of the first occurrence of the specified
+	///          substring within the current string.
+	/// Param value: The substring to search for.
+	/// Returns: The index of the first occurrence of the given substring within
+	///          this string, as an Int, or null if this string doesn&rsquo;t
+	///          contain the substring.
+	/// Throws TypeError: {value} is not a String or Char.
+	public indexOf(value)					__extern("aves_String_indexOf");
+	/// Summary: Returns the index of the last occurrence of the specified
+	///          substring within the current string.
+	/// Param value: The substring to search for.
+	/// Returns: The index of the last occurrence of the given substring within
+	///          this string, as an Int, or null if this string doesn&rsquo;t
+	///          contain the substring.
+	/// Throws TypeError: {value} is not a String or Char.
+	public lastIndexOf(value)				__extern("aves_String_lastIndexOf");
 
 	/// Summary: Returns a new string containing the characters of this string
 	///          in reverse order.
@@ -150,9 +166,10 @@ public class String
 	/// Remarks:
 	///     The format placeholders must be in the general format `{ph}`, where `ph` is the
 	///     “name” of the placeholder. If you pass a List into {values}, `ph` must correspond
-	///     to an index in that list (negative numbers are not allowed). If {values} is a Hash,
-	///     then `ph` must be a key in that Hash; additionally, `ph` must be a valid Osprey
-	///     identifier or keyword (e.g. `{feathers?}` is not a valid placeholder).
+	///     to an index in that list, consisting of the digits 0 to 9 (negative numbers are
+	///     not allowed). If {values} is a Hash, then `ph` must be a key in that Hash;
+	///     additionally, `ph` must be a valid Osprey identifier or keyword (e.g. `{feathers?}`
+	///     is not a valid placeholder).
 	///
 	///     The placeholder value is converted to a string following the same rules as the
 	///     function `aves.string`: if the placeholder value is null, an empty string is inserted;

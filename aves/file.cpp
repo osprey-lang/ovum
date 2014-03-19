@@ -419,7 +419,7 @@ AVES_API NATIVE_FUNCTION(io_FileStream_close)
 	}
 }
 
-void io_FileStream_finalize(ThreadHandle thread, void *basePtr)
+void io_FileStream_finalize(void *basePtr)
 {
 	FileStream *stream = reinterpret_cast<FileStream*>(basePtr);
 
