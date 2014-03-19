@@ -513,14 +513,14 @@ private class StringIterator is Iterator
 	public new(this.str);
 
 	private str;
-	private i = -1;
+	private i = 0;
 	private cur = null;
 
 	override get current = cur;
 
 	override moveNext()
 	{
-		if i < str.length - 1
+		if i < str.length
 		{
 			cur = str.getCharacter(i);
 			i += cur.length;
