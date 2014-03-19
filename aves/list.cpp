@@ -237,7 +237,7 @@ bool aves_List_getReferences(void *basePtr, unsigned int *valc, Value **target, 
 	return false;
 }
 
-void aves_List_finalize(ThreadHandle thread, void *basePtr)
+void aves_List_finalize(void *basePtr)
 {
 	ListInst *list = reinterpret_cast<ListInst*>(basePtr);
 

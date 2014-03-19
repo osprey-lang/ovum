@@ -39,7 +39,7 @@ GC::~GC()
 	while (gco)
 	{
 		GCObject *next = gco->next;
-		Release(VM::vm->mainThread, gco);
+		Release(gco);
 		gco = next;
 	}
 
@@ -99,7 +99,7 @@ void GC::Alloc(Thread *const thread, Type *type, size_t size, GCObject **output)
 	// If the GC is currently running, then do not collect the new GCO.
 	// Otherwise, put it in collectBase. It won't be collected until the next cycle.
 	gco->flags = isRunning ? GCO_KEEP(currentCollectMark) : GCO_COLLECT(currentCollectMark);
-	InsertIntoList(gco, isRunning ? &keepBase : &collectBase);
+	gco->InsertIntoList(isRunning ? &keepBase : &collectBase);
 
 	// These should never overflow unless we forget to reset/decrement them,
 	// because it should not be possible to allocate more than SIZE_MAX bytes.
@@ -112,8 +112,8 @@ void GC::Alloc(Thread *const thread, Type *type, size_t size, GCObject **output)
 	// we need to move the object to the Keep list, or the object will be collected.
 	if (!isRunning && debt >= GC_MAX_DEBT)
 	{
-		RemoveFromList(gco, &collectBase);
-		InsertIntoList(gco, &keepBase);
+		gco->RemoveFromList(&collectBase);
+		gco->InsertIntoList(&keepBase);
 		gco->Mark(GCO_KEEP(currentCollectMark));
 		Collect(thread);
 	}
@@ -223,7 +223,7 @@ StaticRef *GC::AddStaticReference(Value value)
 	return output;
 }
 
-void GC::Release(Thread *const thread, GCObject *gco)
+void GC::Release(GCObject *gco)
 {
 	assert((gco->flags & GCOFlags::MARK) == GCO_COLLECT(currentCollectMark));
 
@@ -240,7 +240,7 @@ void GC::Release(Thread *const thread, GCObject *gco)
 		do
 		{
 			if (type->finalizer)
-				type->finalizer(thread, gco->InstanceBase(type));
+				type->finalizer(gco->InstanceBase(type));
 		} while (type = type->baseType);
 	}
 
@@ -256,7 +256,7 @@ void GC::Collect(Thread *const thread)
 	MarkRootSet();
 
 	// Step 2: examine all objects in the Process list.
-	// Using the type information in each GCOBJECT, we can figure
+	// Using the type information in each GCObject, we can figure
 	// out what an instance points to!
 	// Note: objects are added to the beginning of the list.
 	while (processBase)
@@ -264,9 +264,8 @@ void GC::Collect(Thread *const thread)
 		GCObject *item = processBase;
 		do
 		{
-			GCObject *next = item->next;
 			ProcessObjectAndFields(item);
-			item = next;
+			item = item->next;
 		} while (item);
 	}
 	assert(processBase == nullptr);
@@ -276,21 +275,21 @@ void GC::Collect(Thread *const thread)
 #endif
 
 	// Step 3: free all objects left in the Collect list.
-	//GCObject *collect = collectBase;
 	while (collectBase)
 	{
-		GCObject *next = collectBase->next;
 		if ((collectBase->flags & GCOFlags::IMMORTAL) != GCOFlags::NONE)
 			Keep(collectBase);
 		else
-			Release(thread, collectBase);
-		collectBase = next;
+			Release(collectBase);
+		collectBase = collectBase->next;
 	}
+
 	// Step 4: reset the debt.
 	// NOTE potential problem: this disregards any objects
 	// that were allocated during collection, e.g. as part
 	// of finalizers or whatever.
 	debt = 0;
+
 	// Step 5: increment currentCollectMark for next cycle
 	// and set current Keep list to Collect.
 	currentCollectMark = (currentCollectMark + 2) % 3;

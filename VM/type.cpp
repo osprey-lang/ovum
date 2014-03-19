@@ -350,11 +350,6 @@ OVUM_API TypeHandle GetType_DivideByZeroError()   { return VM::vm->types.DivideB
 OVUM_API TypeHandle GetType_NullReferenceError()  { return VM::vm->types.NullReferenceError; }
 OVUM_API TypeHandle GetType_MemberNotFoundError() { return VM::vm->types.MemberNotFoundError; }
 
-OVUM_API bool Member_IsAccessible(const MemberHandle member, TypeHandle instType, TypeHandle fromType)
-{
-	return member->IsAccessible(instType, fromType);
-}
-
 OVUM_API String *Member_GetName(const MemberHandle member)
 {
 	return member->name;
@@ -369,6 +364,37 @@ OVUM_API MemberKind Member_GetKind(const MemberHandle member)
 		case MemberFlags::PROPERTY: return MemberKind::PROPERTY;
 		default:                    return MemberKind::INVALID;
 	}
+}
+OVUM_API MemberAccess Member_GetAccessLevel(const MemberHandle member)
+{
+	switch (member->flags & MemberFlags::ACCESS_LEVEL)
+	{
+	case MemberFlags::PUBLIC:
+		return MemberAccess::PUBLIC;
+	case MemberFlags::PRIVATE:
+		return MemberAccess::PRIVATE;
+	case MemberFlags::PROTECTED:
+		return MemberAccess::PROTECTED;
+	default:
+		return MemberAccess::INVALID;
+	}
+}
+OVUM_API TypeHandle Member_GetDeclType(const MemberHandle member)
+{
+	return member->declType;
+}
+
+OVUM_API bool Member_IsStatic(const MemberHandle member)
+{
+	return member->IsStatic();
+}
+OVUM_API bool Member_IsImpl(const MemberHandle member)
+{
+	return (member->flags & MemberFlags::IMPL) == MemberFlags::IMPL;
+}
+OVUM_API bool Member_IsAccessible(const MemberHandle member, TypeHandle instType, TypeHandle fromType)
+{
+	return member->IsAccessible(instType, fromType);
 }
 
 OVUM_API MethodHandle Member_ToMethod(const MemberHandle member)
@@ -390,15 +416,23 @@ OVUM_API PropertyHandle Member_ToProperty(const MemberHandle member)
 	return nullptr;
 }
 
-OVUM_API TypeHandle Member_GetDeclType(const MemberHandle member)
+
+OVUM_API int32_t Method_GetOverloadCount(const MethodHandle method)
 {
-	return member->declType;
+	return method->overloadCount;
+}
+OVUM_API MethodFlags Method_GetFlags(const MethodHandle method, int overloadIndex)
+{
+	return method->overloads[overloadIndex].flags;
+}
+OVUM_API MethodHandle Method_GetBaseMethod(const MethodHandle method)
+{
+	return method->baseMethod;
 }
 
-
-OVUM_API bool Method_Accepts(const MethodHandle m, int argc)
+OVUM_API bool Method_Accepts(const MethodHandle method, int argc)
 {
-	return m->Accepts(argc);
+	return method->Accepts(argc);
 }
 
 
@@ -437,15 +471,17 @@ OVUM_API TypeFlags Type_GetFlags(TypeHandle type)
 {
 	return type->flags;
 }
-
 OVUM_API String *Type_GetFullName(TypeHandle type)
 {
 	return type->fullName;
 }
-
 OVUM_API TypeHandle Type_GetBaseType(TypeHandle type)
 {
 	return type->baseType;
+}
+OVUM_API ModuleHandle Type_GetDeclModule(TypeHandle type)
+{
+	return type->module;
 }
 
 OVUM_API MemberHandle Type_GetMember(TypeHandle type, String *name)

@@ -13,6 +13,8 @@ AVES_API NATIVE_FUNCTION(aves_String_equalsIgnoreCase);
 AVES_API NATIVE_FUNCTION(aves_String_contains);
 AVES_API NATIVE_FUNCTION(aves_String_startsWith);
 AVES_API NATIVE_FUNCTION(aves_String_endsWith);
+AVES_API NATIVE_FUNCTION(aves_String_indexOf);
+AVES_API NATIVE_FUNCTION(aves_String_lastIndexOf);
 
 AVES_API NATIVE_FUNCTION(aves_String_reverse);
 AVES_API NATIVE_FUNCTION(aves_String_substr1);
@@ -42,6 +44,9 @@ AVES_API NATIVE_FUNCTION(aves_String_opMultiply);
 
 namespace string
 {
+	int32_t IndexOf(const String *str, const String *part);
+	int32_t LastIndexOf(const String *str, const String *part);
+
 	String *Format(ThreadHandle thread, const String *format, ListInst *list);
 	String *Format(ThreadHandle thread, const String *format, Value *hash);
 

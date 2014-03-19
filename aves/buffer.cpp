@@ -212,7 +212,7 @@ AVES_API NATIVE_FUNCTION(aves_Buffer_writeFloat64)
 	buf->doubles[index] = value;
 }
 
-void aves_Buffer_finalize(ThreadHandle thread, void *basePtr)
+void aves_Buffer_finalize(void *basePtr)
 {
 	Buffer *buf = reinterpret_cast<Buffer*>(basePtr);
 	buf->size = 0;

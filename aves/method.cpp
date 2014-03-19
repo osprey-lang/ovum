@@ -10,8 +10,27 @@ AVES_API void aves_Method_init(TypeHandle type)
 
 AVES_API NATIVE_FUNCTION(aves_Method_new)
 {
-	// TODO: aves_Method_new
-	VM_ThrowError(thread);
+	if (IS_NULL(args[1]))
+	{
+		VM_PushString(thread, strings::value);
+		GC_Construct(thread, Types::ArgumentNullError, 1, nullptr);
+		VM_Throw(thread);
+	}
+
+	MemberHandle invocator = Type_FindMember(args[1].type, strings::_call, args[0].type);
+	if (invocator == nullptr ||
+		Member_GetKind(invocator) != MemberKind::METHOD ||
+		Member_IsStatic(invocator))
+	{
+		VM_PushString(thread, error_strings::ValueNotInvokable); // message
+		VM_PushString(thread, strings::value); // paramName
+		GC_Construct(thread, Types::ArgumentError, 2, nullptr);
+		VM_Throw(thread);
+	}
+
+	MethodInst *method = args[0].common.method;
+	method->instance = args[1];
+	method->method = (MethodHandle)invocator;
 }
 AVES_API NATIVE_FUNCTION(aves_Method_get_hasInstance)
 {

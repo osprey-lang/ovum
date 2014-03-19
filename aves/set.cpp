@@ -247,7 +247,7 @@ bool aves_Set_getReferences(void *basePtr, unsigned int *valc, Value **target, i
 	return false;
 }
 
-void aves_Set_finalize(ThreadHandle thread, void *basePtr)
+void aves_Set_finalize(void *basePtr)
 {
 	SetInst *set = reinterpret_cast<SetInst*>(basePtr);
 

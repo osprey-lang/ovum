@@ -36,6 +36,7 @@ namespace strings
 	LitString<6> _access   = { 6, 0, SFS, 'a','c','c','e','s','s',0 };
 	LitString<5> _share    = { 5, 0, SFS, 's','h','a','r','e',0 };
 	LitString<6> _origin   = { 6, 0, SFS, 'o','r','i','g','i','n',0 };
+	LitString<5> __call    = { 5, 0, SFS, '.','c','a','l','l',0 };
 
 	String *str      = _S(_str);
 	String *i        = _S(_i);
@@ -60,6 +61,7 @@ namespace strings
 	String *access   = _S(_access);
 	String *share    = _S(_share);
 	String *origin   = _S(_origin);
+	String *_call    = _S(__call);
 
 #ifdef _WIN32
 	LitString<2> _newline = { 2, 0, SFS, '\r','\n',0 };
@@ -80,6 +82,7 @@ namespace error_strings
 	LitString<54> _AppendMustBeWriteOnly = LitString<54>::FromCString("A file opened for appending must use FileAccess.write.");
 	LitString<32> _CannotFlushReadOnlyStream = LitString<32>::FromCString("Cannot flush a read-only stream.");
 	LitString<42> _EncodingBufferOverrun = LitString<42>::FromCString("Cannot write beyond the end of the buffer.");
+	LitString<37> _ValueNotInvokable = LitString<37>::FromCString("The specified value is not invokable.");
 
 	String *EndIndexLessThanStart     = _S(_EndIndexLessThanStart);
 	String *HashKeyNotFound           = _S(_HashKeyNotFound);
@@ -89,4 +92,5 @@ namespace error_strings
 	String *AppendMustBeWriteOnly     = _S(_AppendMustBeWriteOnly);
 	String *CannotFlushReadOnlyStream = _S(_CannotFlushReadOnlyStream);
 	String *EncodingBufferOverrun     = _S(_EncodingBufferOverrun);
+	String *ValueNotInvokable         = _S(_ValueNotInvokable);
 }

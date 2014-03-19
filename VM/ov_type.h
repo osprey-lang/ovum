@@ -14,8 +14,6 @@ typedef void (__cdecl *NativeMethod)(ThreadHandle thread, const int argc, Value 
 #define THISV	(args[0])
 
 
-OVUM_API bool Member_IsAccessible(const MemberHandle member, TypeHandle instType, TypeHandle fromType);
-
 OVUM_API String *Member_GetName(const MemberHandle member);
 
 enum class MemberKind
@@ -25,18 +23,66 @@ enum class MemberKind
 	FIELD    = 2,
 	PROPERTY = 3,
 };
+enum class MemberAccess
+{
+	INVALID   = -1,
+	PUBLIC    = 0,
+	PROTECTED = 1,
+	PRIVATE   = 2,
+};
+
 OVUM_API MemberKind Member_GetKind(const MemberHandle member);
+OVUM_API MemberAccess Member_GetAccessLevel(const MemberHandle member);
+OVUM_API TypeHandle Member_GetDeclType(const MemberHandle member);
+
+OVUM_API bool Member_IsStatic(const MemberHandle member);
+OVUM_API bool Member_IsImpl(const MemberHandle member);
+OVUM_API bool Member_IsAccessible(const MemberHandle member, TypeHandle instType, TypeHandle fromType);
 
 OVUM_API MethodHandle Member_ToMethod(const MemberHandle member);
 OVUM_API FieldHandle Member_ToField(const MemberHandle member);
 OVUM_API PropertyHandle Member_ToProperty(const MemberHandle member);
 
-OVUM_API TypeHandle Member_GetDeclType(const MemberHandle member);
 
+enum class MethodFlags : int32_t
+{
+	NONE      = 0x0000,
+	// The method has a variadic parameter at the end.
+	VAR_END   = 0x0001,
+	// The method has a variadic parameter at the start.
+	VAR_START = 0x0002,
+
+	// The method has a native-code implementation.
+	NATIVE    = 0x0004,
+
+	// The method is an instance method. Without this flag,
+	// methods are static.
+	INSTANCE  = 0x0008,
+
+	// The method is virtual (overridable in Osprey).
+	VIRTUAL   = 0x0010,
+	// The method is abstract (it has no implementation).
+	ABSTRACT  = 0x0020,
+
+	// The method is a constructor.
+	CTOR      = 0x0040,
+
+	// The method has been initialized. Used for bytecode methods only,
+	// to indicate that the bytecode initializer has processed the method.
+	INITED    = 0x0080,
+
+	// A mask for extracting the variadic flags of a method.
+	VARIADIC = VAR_END | VAR_START,
+};
+ENUM_OPS(MethodFlags, int32_t);
+
+OVUM_API int32_t Method_GetOverloadCount(const MethodHandle method);
+OVUM_API MethodFlags Method_GetFlags(const MethodHandle method, int overloadIndex);
+OVUM_API MethodHandle Method_GetBaseMethod(const MethodHandle method);
 
 // Determines whether any overload in the method accepts the given number of arguments.
 // For instance methods, this does NOT include the instance.
-OVUM_API bool Method_Accepts(const MethodHandle m, int argc);
+OVUM_API bool Method_Accepts(const MethodHandle method, int argc);
 
 
 OVUM_API uint32_t Field_GetOffset(const FieldHandle field);
@@ -72,7 +118,7 @@ public:
 
 
 // It is VITAL that these are in the same order as the opcodes.
-// See vm.opcodes.h/Opcode
+// See ov_thread.opcodes.h/Opcode
 enum class Operator : uint8_t
 {
 	ADD,    // The binary + operator.
@@ -98,6 +144,7 @@ enum class Operator : uint8_t
 // If you change Operator and/or Opcode without changing this,
 // you have no one to blame but yourself.
 #define OPERATOR_COUNT 18
+
 inline unsigned int Arity(Operator op)
 {
 	switch (op)
@@ -200,11 +247,16 @@ typedef bool (*ReferenceGetter)(void *basePtr, unsigned int *valc, Value **targe
 // the offset of the finalizing type, and may therefore differ from
 // Value.instance.
 //
+// NOTE: Finalizers do not have access to the managed runtime. Do not
+// attempt to access the managed runtime from a finalizer. Do not try
+// to allocate any managed memory during a finalizer. Doing either
+// results in undefined and probably very undesirable behavior.
+//
 // NOTENOTENOTE: If the finalizer adds any references to the object
 // that is about to be deleted, the GC WILL NOT CARE and will delete
 // the object anyway. Malicious native-code modules may freely insert
 // memory leaks here.
-typedef void (*Finalizer)(ThreadHandle thread, void *basePtr);
+typedef void (*Finalizer)(void *basePtr);
 
 // Initializes a single type, which may involve setting flags or the size
 // of the instance. Type initializers should only be used for types with
@@ -234,6 +286,7 @@ typedef void (*TypeTokenInitializer)(ThreadHandle thread, void *basePtr, TypeHan
 OVUM_API TypeFlags Type_GetFlags(TypeHandle type);
 OVUM_API String *Type_GetFullName(TypeHandle type);
 OVUM_API TypeHandle Type_GetBaseType(TypeHandle type);
+OVUM_API ModuleHandle Type_GetDeclModule(TypeHandle type);
 
 OVUM_API MemberHandle Type_GetMember(TypeHandle type, String *name);
 OVUM_API MemberHandle Type_FindMember(TypeHandle type, String *name, TypeHandle fromType);
@@ -267,7 +320,7 @@ typedef struct StandardTypes_S
 	TypeHandle Hash;
 	TypeHandle Method;
 	TypeHandle Iterator;
-	TypeHandle Type; // reflection!
+	TypeHandle Type; //\\ ;epyT eldnaHepyT
 	TypeHandle Error;
 	TypeHandle TypeError;
 	TypeHandle MemoryError;
@@ -304,19 +357,32 @@ class TypeMemberIterator
 private:
 	TypeHandle type;
 	int32_t index;
+	bool includeInherited;
 
 public:
-	inline TypeMemberIterator(TypeHandle type) :
-		type(type), index(-1)
+	inline TypeMemberIterator(TypeHandle type)
+		: type(type), index(-1), includeInherited(false)
+	{ }
+	inline TypeMemberIterator(TypeHandle type, bool includeInherited)
+		: type(type), index(-1), includeInherited(includeInherited)
 	{ }
 
 	inline bool MoveNext()
 	{
-		if (index < Type_GetMemberCount(type) - 1)
+		while (type)
 		{
-			index++;
-			return true;
+			if (index < Type_GetMemberCount(type) - 1)
+			{
+				index++;
+				return true;
+			}
+
+			// Try the base type, unless includeInherited is false,
+			// in which case we stop.
+			type = includeInherited ? Type_GetBaseType(type) : nullptr;
+			index = -1;
 		}
+
 		return false;
 	}
 
