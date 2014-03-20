@@ -1,0 +1,127 @@
+namespace aves;
+
+public enum set UnicodeCategory
+{
+	none = 0,
+
+	// The various values are specified explicitly here
+	// in order to ensure they don't change for any reason,
+	// as they are also used in native code.
+
+	/// Summary: Combines the flags {uppercaseLetter}, {lowercaseLetter},
+	///          {titlecaseLetter}, {modifierLetter} and {otherLetter}, which
+	///          includes all Unicode categories that represent letters.
+	///          Unicode designation L (letter).
+	letter = uppercaseLetter | lowercaseLetter | titlecaseLetter | modifierLetter | otherLetter,
+	/// Summary: Uppercase letter. Unicode designation Lu (letter, uppercase).
+	uppercaseLetter    = 1 << 0,
+	/// Summary: Lowercase letter. Unicode designation Ll (letter, lowercase).
+	lowercaseLetter    = 1 << 1,
+	/// Summary: Titlecase letter. Unicode designation Lt (letter, titlecase).
+	titlecaseLetter    = 1 << 2,
+	/// Summary: Modifier letter, which is a spacing character that indicates
+	///          modification of a preceding character. Unicode designation
+	///          Lm (letter, modifier).
+	modifierLetter     = 1 << 3,
+	/// Summary: A letter that is not an uppercase, lowercase, titlecase or
+	///          modifier letter. Unicode designation Lo (letter, other).
+	otherLetter        = 1 << 4,
+
+	/// Summary: Combines the flags {nonspacingMark}, {spacingMark} and
+	///          {enclosingMark}, which includes all Unicode categories
+	///          that represent marks. Unicode designation M (mark).
+	mark = nonspacingMark | spacingMark | enclosingMark,
+	nonspacingMark     = 1 << 5,
+	spacingMark        = 1 << 6,
+	enclosingMark      = 1 << 7,
+
+	/// Summary: Combines the flags {decimalNumber}, {letterNumber} and
+	///          {otherNumber}, thus including all Unicode categories that
+	///          represent numbers and digits. Unicode designation N (number).
+	number = decimalNumber | letterNumber | otherNumber,
+	/// Summary: A decimal digit character, that is, a digit representing a number
+	///          between 0 and 9. Unicode designation Nd (number, decimal digit).
+	decimalNumber      = 1 << 8,
+	letterNumber       = 1 << 9,
+	otherNumber        = 1 << 10,
+
+	/// Summary: Combines the flags {connectorPunct}, {dashPunct}, {openingPunct},
+	///          {closingPunct}, {initialQuotePunct}, {finalQuotePunct} and
+	///          {otherPunct}, which includes all Unicode categories that represent
+	///          punctuation characters. Unicode designation P (punctuation).
+	punct = connectorPunct | dashPunct | openingPunct | closingPunct | initialPunct | finalPunct | otherPunct,
+	/// Summary: Punctuation character that connects two characters. Unicode
+	///          designation Pc (punctuation, connector).
+	connectorPunct     = 1 << 11,
+	/// Summary: Dash or hyphen character. Unicode designation Pd (punctuation, dash).
+	/// Remarks: This category does not include the soft hyphen character (U+00AD,
+	///          `'\-'`), which is a {control} character.
+	dashPunct          = 1 << 12,
+	/// Summary: Opening character of a paired punctuation mark, such as parentheses,
+	///          square brackets or braces. Unicode designation Ps (punctuation, open).
+	openingPunct       = 1 << 13,
+	/// Summary: Closing character of a paired punctuation mark, such as parentheses,
+	///          square brackets or braces. Unicode designation Pe (punctuation, close).
+	closingPunct       = 1 << 14,
+	/// Summary: Initial or opening quote character. Unicode designation Pi (punctuation,
+	///          initial quote).
+	initialQuotePunct  = 1 << 15,
+	/// Summary: Final or closing quote character. Unicode designation Pf (punctuation,
+	///          final quote).
+	finalQuotePunct    = 1 << 16,
+	/// Summary: Punctuation character that is not a connector character, dash, hyphen,
+	///          opening or closing punctuation mark, or an initial or final quote.
+	///          Unicode designation Po (punctuation, other).
+	otherPunct         = 1 << 17,
+
+	/// Summary: Combines the flags {mathSymbol}, {currencySymbol}, {modifierSymbol}
+	///          and {otherSymbol}, which includes all Unicode categories that
+	///          represent symbols. Unicode designation S (symbol).
+	symbol = mathSymbol | currencySymbol | modifierSymbol | otherSymbol,
+	mathSymbol         = 1 << 18,
+	currencySymbol     = 1 << 19,
+	modifierSymbol     = 1 << 20,
+	otherSymbol        = 1 << 21,
+
+	/// Summary: Combines the flags {spaceSeparator}, {lineSeparator} and
+	///          {paragraphSeparator}, which includes all Unicode categories that
+	///          represent white space.
+	/// Remarks: Unicode contains six additional characters that are often
+	///          classified as white space, despite belonging to the category
+	///          {control}. They are: U+0009 (`'\t'`, Character Tabulation),
+	///          U+000A (`'\n'`, Line Feed), U+000B (Line Tabulation), U+000C
+	///          (Form Feed), U+000D (`'\r'`, Carriage Return), and U+0085
+	///          (Next Line).
+	///
+	///          {String.isWhiteSpace} and {Char.isWhiteSpace} return true
+	///          for these characters. It is recommended that those methods
+	///          be used to check whether a character should be considered
+	///          white space.
+	separator = spaceSeparator | lineSeparator | paragraphSeparator,
+	spaceSeparator     = 1 << 22,
+	lineSeparator      = 1 << 23,
+	paragraphSeparator = 1 << 24,
+
+	/// Summary: Combines the flags {control}, {format}, {surrogate},
+	///          {privateUse} and {unassigned}. Unicode designation C (other).
+	other = control | format | surrogate | privateUse | unassigned,
+	/// Summary: Control character. Unicode designation Cc (other, control).
+	/// Remarks: This category includes the following characters that are
+	///          normally considered white space: U+0009 (`'\t'`, Character
+	///          Tabulation), U+000A (`'\n'`, Line Feed), U+000B (Line
+	///          Tabulation), U+000C (Form Feed), U+000D (`'\r'`, Carriage
+	///          Return), and U+0085 (Next Line).
+	control            = 1 << 25,
+	/// Summary: Format character. Unicode designation Cf (other, format).
+	format             = 1 << 26,
+	/// Summary: One half of a surrogate pair. This category does not divulge
+	///          which half the character represents. Unicode designation
+	///          Cs (other, surrogate).
+	surrogate          = 1 << 27,
+	/// Summary: Private-use character. Unicode designation Co (other,
+	///          private use).
+	privateUse         = 1 << 28,
+	/// Summary: Character that is not assigned to any Unicode category.
+	///          Unicode designation Cn (other, not assigned).
+	unassigned         = 1 << 29,
+}
