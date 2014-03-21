@@ -49,7 +49,7 @@ public enum set UnicodeCategory
 	///          {closingPunct}, {initialQuotePunct}, {finalQuotePunct} and
 	///          {otherPunct}, which includes all Unicode categories that represent
 	///          punctuation characters. Unicode designation P (punctuation).
-	punct = connectorPunct | dashPunct | openingPunct | closingPunct | initialPunct | finalPunct | otherPunct,
+	punct = connectorPunct | dashPunct | openingPunct | closingPunct | initialQuotePunct | finalQuotePunct | otherPunct,
 	/// Summary: Punctuation character that connects two characters. Unicode
 	///          designation Pc (punctuation, connector).
 	connectorPunct     = 1 << 11,
