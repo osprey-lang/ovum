@@ -1,4 +1,5 @@
 #include "aves_char.h"
+#include "aves_string.h"
 #include "ov_string.h"
 #include "ov_stringbuffer.h"
 
@@ -32,11 +33,16 @@ AVES_API NATIVE_FUNCTION(aves_Char_get_category)
 {
 	wuchar ch = (wuchar)THISV.integer;
 
-	Value cat;
-	cat.type = Types::UnicodeCategory;
-	cat.integer = (int32_t)UC_GetCategoryW(ch);
+	UnicodeCategory cat = UC_GetCategoryW(ch);
 
-	VM_Push(thread, cat);
+	// The values of native type UnicodeCategory are not the same as
+	// the values of the Osprey type, so we need to convert!
+
+	Value catValue;
+	catValue.type = Types::UnicodeCategory;
+	catValue.integer = unicode::OvumCategoryToAves(cat);
+
+	VM_Push(thread, catValue);
 }
 
 AVES_API NATIVE_FUNCTION(aves_Char_toUpper)

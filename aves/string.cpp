@@ -412,45 +412,10 @@ AVES_API NATIVE_FUNCTION(aves_String_getCategory)
 
 	// The values of native type UnicodeCategory are not the same as
 	// the values of the Osprey type, so we need to convert!
-	uint32_t catValue;
-	switch (cat)
-	{
-		case UC_LETTER_UPPERCASE:    catValue = 1 <<  0; break;
-		case UC_LETTER_LOWERCASE:    catValue = 1 <<  1; break;
-		case UC_LETTER_TITLECASE:    catValue = 1 <<  2; break;
-		case UC_LETTER_MODIFIER:     catValue = 1 <<  3; break;
-		case UC_LETTER_OTHER:        catValue = 1 <<  4; break;
-		case UC_MARK_NONSPACING:     catValue = 1 <<  5; break;
-		case UC_MARK_SPACING:        catValue = 1 <<  6; break;
-		case UC_MARK_ENCLOSING:      catValue = 1 <<  7; break;
-		case UC_NUMBER_DECIMAL:      catValue = 1 <<  8; break;
-		case UC_NUMBER_LETTER:       catValue = 1 <<  9; break;
-		case UC_NUMBER_OTHER:        catValue = 1 << 10; break;
-		case UC_PUNCT_CONNECTOR:     catValue = 1 << 11; break;
-		case UC_PUNCT_DASH:          catValue = 1 << 12; break;
-		case UC_PUNCT_OPEN:          catValue = 1 << 13; break;
-		case UC_PUNCT_CLOSE:         catValue = 1 << 14; break;
-		case UC_PUNCT_INITIAL:       catValue = 1 << 15; break;
-		case UC_PUNCT_FINAL:         catValue = 1 << 16; break;
-		case UC_PUNCT_OTHER:         catValue = 1 << 17; break;
-		case UC_SYMBOL_MATH:         catValue = 1 << 18; break;
-		case UC_SYMBOL_CURRENCY:     catValue = 1 << 19; break;
-		case UC_SYMBOL_MODIFIER:     catValue = 1 << 20; break;
-		case UC_SYMBOL_OTHER:        catValue = 1 << 21; break;
-		case UC_SEPARATOR_SPACE:     catValue = 1 << 22; break;
-		case UC_SEPARATOR_LINE:      catValue = 1 << 23; break;
-		case UC_SEPARATOR_PARAGRAPH: catValue = 1 << 24; break;
-		case UC_CONTROL:             catValue = 1 << 25; break;
-		case UC_FORMAT:              catValue = 1 << 26; break;
-		case UC_SURROGATE:           catValue = 1 << 27; break;
-		case UC_PRIVATE_USE:         catValue = 1 << 28; break;
-		case UC_UNASSIGNED:          catValue = 1 << 29; break;
-		default: catValue = 0; break;
-	}
 
 	Value output;
 	output.type = Types::UnicodeCategory;
-	output.integer = catValue;
+	output.integer = unicode::OvumCategoryToAves(cat);
 	VM_Push(thread, output);
 }
 AVES_API NATIVE_FUNCTION(aves_String_isSurrogatePair)
