@@ -302,6 +302,7 @@ void VM::PrintMethodInitException(MethodInitException &e)
 		fwprintf(err, L"Argument count: %u\n", e.GetArgumentCount());
 		break;
 	case MethodInitException::INACCESSIBLE_TYPE:
+	case MethodInitException::TYPE_NOT_CONSTRUCTIBLE:
 		PrintInternal(err, L"Type: '%ls' ", e.GetType()->fullName);
 		PrintInternal(err, L"from module %ls\n", e.GetType()->module->name);
 		break;

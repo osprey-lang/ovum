@@ -406,6 +406,9 @@ public:
 	void Collect(Thread *const thread, bool collectGen1);
 
 private:
+	void BeginCycle(Thread *const thread);
+	void EndCycle(Thread *const thread);
+
 	void Release(GCObject *gco);
 
 	static inline unsigned int LinkedListLength(GCObject *first)

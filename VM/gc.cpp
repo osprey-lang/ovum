@@ -242,7 +242,14 @@ void GC::Construct(Thread *const thread, Type *type, const uint16_t argc, Value 
 		thread->ThrowTypeError();
 
 	StackFrame *frame = thread->currentFrame;
-	ConstructLL(thread, type, argc, frame->evalStack + frame->stackCount - argc, output);
+	Value *args = frame->evalStack + frame->stackCount - argc;
+	if (output)
+		ConstructLL(thread, type, argc, args, output);
+	else
+	{
+		ConstructLL(thread, type, argc, args, args);
+		frame->stackCount++;
+	}
 }
 
 void GC::ConstructLL(Thread *const thread, Type *type, const uint16_t argc, Value *args, Value *output)
@@ -250,30 +257,24 @@ void GC::ConstructLL(Thread *const thread, Type *type, const uint16_t argc, Valu
 	GCObject *gco;
 	Alloc(thread, type, type->fieldsOffset + type->size, &gco);
 
-	Value value;
-	value.type = type;
-	value.instance = gco->InstanceBase();
-
-	StackFrame *frame = thread->currentFrame;
 	Value *framePointer = args + argc;
 
 	// Unshift value onto beginning of eval stack! Hurrah.
-	// If argc == 0, the loop doesn't run.
 	for (int i = 0; i < argc; i++)
 	{
 		*framePointer = *(framePointer - 1);
 		framePointer--;
 	}
 
-	*framePointer = value;
-	frame->stackCount++;
+	framePointer->type = type;
+	framePointer->instance = gco->InstanceBase();
+	thread->currentFrame->stackCount++;
 
 	Value ignore; // all Ovum methods return values, even the constructor
-	thread->InvokeMember(static_strings::_new, argc, &ignore);
-	if (output)
-		*output = value;
-	else
-		frame->Push(value);
+	thread->InvokeMethodOverload(type->instanceCtor->ResolveOverload(argc), argc, framePointer, &ignore);
+
+	output->type = type;
+	output->instance = gco->InstanceBase();
 }
 
 String *GC::ConstructString(Thread *const thread, const int32_t length, const uchar value[])
@@ -395,6 +396,8 @@ void GC::Release(GCObject *gco)
 
 void GC::Collect(Thread *const thread, bool collectGen1)
 {
+	BeginCycle(thread);
+
 	collectCount++;
 
 	// Upon entering this method, all objects are in collectBase and pinnedBase.
@@ -512,6 +515,18 @@ void GC::Collect(Thread *const thread, bool collectGen1)
 	collectBase = keepBase;
 	keepBase = nullptr;
 	gen0Current = (char*)gen0Base;
+
+	EndCycle(thread);
+}
+
+void GC::BeginCycle(Thread *const thread)
+{
+	// Future change: suspend every thread except the current
+}
+
+void GC::EndCycle(Thread *const thread)
+{
+	// Future change: resume every thread except the current
 }
 
 void GC::MarkRootSet()

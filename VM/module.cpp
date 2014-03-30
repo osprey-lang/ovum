@@ -905,6 +905,11 @@ Type *Module::ReadSingleType(ModuleReader &reader, Module *module, const TokenId
 	ReadProperties(reader, module, type.get());
 	ReadOperators(reader, module, type.get());
 
+	Member *instanceCtor = type->GetMember(static_strings::_new);
+	if (instanceCtor && !instanceCtor->IsStatic() &&
+		(instanceCtor->flags & MemberFlags::METHOD) == MemberFlags::METHOD)
+		type->instanceCtor = static_cast<Method*>(instanceCtor);
+
 	{
 		unique_ptr<char[]> initer(reader.ReadCString());
 		if (initer.get() != nullptr)
