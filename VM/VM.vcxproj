@@ -84,6 +84,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="critical_section.internal.h" />
     <ClInclude Include="ov_compat.h" />
     <ClInclude Include="ov_debug_symbols.internal.h" />
     <ClInclude Include="ov_gc.h" />

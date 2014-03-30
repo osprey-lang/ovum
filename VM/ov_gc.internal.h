@@ -7,10 +7,11 @@
 #include <atomic>
 #include "ov_vm.internal.h"
 #include "string_table.internal.h"
+#include "critical_section.internal.h"
 
 enum class GCOFlags : uint32_t
 {
-	NONE  = 0x00,
+	NONE          = 0x0000,
 	// The mark occupies the lowest two bits.
 	// Collectible objects are marked with currentCollectMark,
 	// which changes each cycle.
@@ -18,34 +19,53 @@ enum class GCOFlags : uint32_t
 	//   GCO_COLLECT(currentCollectMark)
 	//   GCO_PROCESS(currentCollectMark)
 	//   GCO_KEEP(currentCollectMark)
-	MARK  = 0x03, // Mask for extracting the mark.
+	MARK          = 0x0003, // Mask for extracting the mark.
+
 	// The GCObject represents a string allocated before the
 	// standard String type was loaded.
-	EARLY_STRING = 0x04,
-	// The GCObject is never collected. Until the program ends.
-	// Use with caution.
-	IMMORTAL = 0x08,
+	EARLY_STRING  = 0x0004,
+
+	// The GCObject cannot be moved by the GC. This flag is only
+	// relevant for gen0 objects.
+	PINNED        = 0x0008,
+
+	// The GCObject is in generation 0. This flag cannot be used
+	// together with GEN_1 or LARGE_OBJECT.
+	GEN_0         = 0x0010,
+	// The GCObject is in generation 1. This flag cannot be used
+	// together with GEN_0 or LARGE_OBJECT.
+	GEN_1         = 0x0020,
+	// The GCObject is in the large object heap. These objects
+	// are never moved. This flag cannot be used together with
+	// GEN_0 or GEN_1.
+	LARGE_OBJECT  = 0x0040,
+	// Mask for extracting the age
+	GENERATION    = 0x0070,
+
+	// The GCObjects has references to gen0 objects. This flag is
+	// only set during a GC cycle, and is cleared as soon as all
+	// gen0 references have been updated.
+	HAS_GEN0_REFS = 0x0080,
+
+	// The GCObject has been moved to generation 1. The newAddress
+	// field contains the new address.
+	MOVED         = 0x0100,
 };
 ENUM_OPS(GCOFlags, uint32_t);
 
-#define GCO_SIZE    ALIGN_TO(sizeof(::GCObject),8)
-
-// These GCO flags are always in the range 1–3
+// These GCO marks are always in the range 1–3
 #define GCO_COLLECT(ccm) ((::GCOFlags)((ccm) + 1))
 #define GCO_PROCESS(ccm) ((::GCOFlags)(((ccm) + 1) % 3 + 1))
 #define GCO_KEEP(ccm)    ((::GCOFlags)(((ccm) + 2) % 3 + 1))
 
-// The maximum amount of data that can be allocated before the GC kicks in.
-// Objects larger than GC_LARGE_OBJECT_SIZE only contribute GC_LARGE_OBJECT_SIZE bytes
-// to the debt, because they are unlikely to be short-lived objects.
-#define GC_MAX_DEBT           1048576 // = 1 MB
-#define GC_LARGE_OBJECT_SIZE  87040   // = 85 kB
-
-typedef struct GCObject_S GCObject;
-typedef struct GCObject_S
+class GCObject
 {
+public:
 	GCOFlags flags; // Collection flag
 	size_t size; // The size of the GCObject + fields.
+
+	uint32_t pinCount;
+	uint32_t hashCode;
 
 	GCObject *prev; // Pointer to the previous GC object in the object's list (collect, process or keep).
 	GCObject *next; // Pointer to the next GC object in the object's list.
@@ -56,32 +76,30 @@ typedef struct GCObject_S
 	// prevent race conditions, as Value cannot be read or written atomically.
 	std::atomic_flag fieldAccessFlag;
 
-	Type *type;
+	union
+	{
+		// The managed type of the GCObject.
+		Type *type;
+		// If the GCObject has been moved from gen0 to gen1,
+		// this contains the new location of the object.
+		GCObject *newAddress;
+	};
 
 	// The first field of the Value immediately follows the type;
-	// this is the base of the Value's fields/custom pointer.
+	// this is the base of the Value's instance pointer.
 
 	inline void Mark(GCOFlags mark)
 	{
-		flags = mark | flags & ~GCOFlags::MARK;
+		flags = flags & ~GCOFlags::MARK | mark;
 	}
 
-	inline uint8_t *InstanceBase()
-	{
-		return (uint8_t*)this + GCO_SIZE;
-	}
-	inline uint8_t *InstanceBase(Type *type)
-	{
-		return (uint8_t*)this + GCO_SIZE + type->fieldsOffset;
-	}
-	inline Value *FieldsBase()
-	{
-		return (Value*)((char*)this + GCO_SIZE);
-	}
-	inline Value *FieldsBase(Type *type)
-	{
-		return (Value*)((char*)this + GCO_SIZE + type->fieldsOffset);
-	}
+	inline bool IsPinned()    { return (flags & GCOFlags::PINNED) == GCOFlags::PINNED; }
+	inline bool HasGen0Refs() { return (flags & GCOFlags::HAS_GEN0_REFS) == GCOFlags::HAS_GEN0_REFS; }
+
+	uint8_t *InstanceBase();
+	uint8_t *InstanceBase(Type *type);
+	Value *FieldsBase();
+	Value *FieldsBase(Type *type);
 
 	// Inserts a GCObject into a linked list.
 	// The parameter 'list' points to the first object in the list.
@@ -140,15 +158,37 @@ typedef struct GCObject_S
 		next = nullptr;
 	}
 
-	inline static GCObject *FromInst(void *inst)
-	{
-		return reinterpret_cast<GCObject*>((char*)inst - GCO_SIZE);
-	}
-	inline static GCObject *FromValue(Value *value)
-	{
-		return FromInst(value->instance);
-	}
-} GCObject;
+	static GCObject *FromInst(void *inst);
+	static GCObject *FromValue(Value *value);
+};
+
+static const size_t GCO_SIZE = ALIGN_TO(sizeof(GCObject), 8);
+
+inline uint8_t *GCObject::InstanceBase()
+{
+	return (uint8_t*)this + GCO_SIZE;
+}
+inline uint8_t *GCObject::InstanceBase(Type *type)
+{
+	return (uint8_t*)this + GCO_SIZE + type->fieldsOffset;
+}
+inline Value *GCObject::FieldsBase()
+{
+	return (Value*)((char*)this + GCO_SIZE);
+}
+inline Value *GCObject::FieldsBase(Type *type)
+{
+	return (Value*)((char*)this + GCO_SIZE + type->fieldsOffset);
+}
+
+inline GCObject *GCObject::FromInst(void *inst)
+{
+	return reinterpret_cast<GCObject*>((char*)inst - GCO_SIZE);
+}
+inline GCObject *GCObject::FromValue(Value *value)
+{
+	return FromInst(value->instance);
+}
 
 // This is identical to String except that all the 'const' modifiers
 // have been removed. There's a damn good reason String::length and
@@ -178,7 +218,7 @@ public:
 	// This should only be called ONCE per static reference.
 	inline void Init(Value value)
 	{
-		accessFlag.clear(std::memory_order_release);
+		accessFlag = std::atomic_flag();
 		this->value = value;
 	}
 
@@ -191,6 +231,14 @@ public:
 		Value result = value;
 		accessFlag.clear(memory_order_release);
 		return result;
+	}
+	inline void Read(Value *target)
+	{
+		using namespace std;
+		while (accessFlag.test_and_set(memory_order_acquire))
+			;
+		*target = value;
+		accessFlag.clear(memory_order_release);
 	}
 
 	// Atomically updates the value of the static reference.
@@ -225,43 +273,90 @@ class StaticRefBlock
 public:
 	StaticRefBlock *next;
 	unsigned int count;
+	// Only used during collection. Set to true if the block
+	// contains any references to gen0 objects.
+	bool hasGen0Refs;
 
 	static const size_t BLOCK_SIZE = 64;
 	StaticRef values[BLOCK_SIZE];
 
-	inline StaticRefBlock() : next(nullptr), count(0) { }
-	inline StaticRefBlock(StaticRefBlock *next) : next(next), count(0) { }
+	inline StaticRefBlock() : next(nullptr), count(0), hasGen0Refs(false) { }
+	inline StaticRefBlock(StaticRefBlock *next) : next(next), count(0), hasGen0Refs(0) { }
 };
 
 class GC
 {
 private:
-	bool isRunning;
+	static const size_t GEN0_SIZE = 1536 * 1024;
+	static const size_t LARGE_OBJECT_SIZE = 87040;
+	// If there is more than this amount of dead memory in gen1,
+	// that generation is always collected.
+	static const size_t GEN1_DEAD_OBJECTS_THRESHOLD = 768 * 1024;
 
-	GCObject *collectBase;
-	GCObject *processBase;
-	GCObject *keepBase;
+	typedef struct
+	{
+		// All survivors from generation 0.
+		GCObject *gen0;
+		// All survivors with references to gen0 objects.
+		// Initially only contains survivors from gen1 and
+		// the large object heap, but is later updated to
+		// include gen0 survivors with gen0 refs.
+		GCObject *withGen0Refs;
+		// Total size of gen1 survivors. This does NOT
+		// include objects from the large object heap.
+		size_t gen1SurvivorSize;
+	} Survivors;
 
 	// The current bit pattern used for marking an object as "collect".
 	// This changes every GC cycle.
 	int currentCollectMark;
-	// The number of new bytes added to the GC since the last collection.
-	size_t debt;
-	// The total number of allocated bytes the GC knows about.
-	size_t totalSize;
+
+	HANDLE mainHeap;
+	HANDLE largeObjectHeap;
+	void *gen0Base;
+	void *gen0End;
+	char *gen0Current;
+	
+	GCObject *collectBase;
+	GCObject *processBase;
+	GCObject *keepBase;
+	GCObject *pinnedBase;
+	// This field is only assigned during a GC cycle, and points to
+	// a location on the call stack. It should be set to null in all
+	// other situations.
+	Survivors *survivors;
+
+	// The total size of generation 1, not including unmanaged data.
+	size_t gen1Size;
 
 	uint32_t collectCount;
 
 	StringTable strings;
 	StaticRefBlock *staticRefs;
 
-	inline void MakeImmortal(GCObject *gco)
-	{
-		gco->flags |= GCOFlags::IMMORTAL;
-	}
+	CriticalSection allocSection;
 
-	void *InternalAlloc(size_t size);
-	void InternalRelease(GCObject *gco);
+	GCObject *AllocRaw(size_t size);
+	GCObject *AllocRawGen1(size_t size);
+	void ReleaseRaw(GCObject *gco);
+
+	void InitializeHeaps();
+	void DestroyHeaps();
+
+	// Acquires exclusive access to the allocation lock.
+	// If this lock cannot be acquired immediately, the thread spins
+	// for a bit, then sleeps, until the lock becomes available.
+	// During this waiting, the GC also marks the thread as being in
+	// an unmanaged region. This is to prevent deadlocks, in case the
+	// thread that currently owns the lock causes a GC cycle to run:
+	// without entering an unmanaged region, the GC cycle thread would
+	// wait indefinitely for this thread to suspend itself, which in
+	// turn is waiting for the GC cycle thread to release the allocation
+	// lock, which won't happen until the cycle has ended.
+	void BeginAlloc(Thread *const thread);
+	// Releases the allocation lock, allowing any waiting threads to
+	// jump in and start allocating memory.
+	void EndAlloc();
 
 public:
 	// Initializes the garbage collector.
@@ -271,25 +366,6 @@ public:
 
 	GC();
 	~GC();
-
-	// Determines whether a particular Value should be processed.
-	// A Value should be processed if:
-	//   1. Its type is not null.
-	//   2. Its type is not PRIMITIVE.
-	//   3. It is not a string with the flag STATIC (no associated GCObject).
-	//   4. Its GCObject* is marked GCO_COLLECT.
-	// NOTE: This function is only called for /reachable/ Values.
-	inline bool ShouldProcess(Value *val)
-	{
-		if (val->type == nullptr || (val->type->flags & TypeFlags::PRIMITIVE) == TypeFlags::PRIMITIVE)
-			return false;
-
-		if (val->type == VM::vm->types.String &&
-			(val->common.string->flags & StringFlags::STATIC) == StringFlags::STATIC)
-			return false;
-
-		return (GCObject::FromValue(val)->flags & GCOFlags::MARK) == GCO_COLLECT(currentCollectMark);
-	}
 
 	void Alloc(Thread *const thread, Type *type, size_t size, GCObject **output);
 	inline void Alloc(Thread *const thread, Type *type, size_t size, Value *output)
@@ -303,6 +379,8 @@ public:
 
 	String *ConstructString(Thread *const thread, const int32_t length, const uchar value[]);
 	String *ConvertString(Thread *const thread, const char *string);
+
+	String *ConstructModuleString(Thread *const thread, const int32_t length, const uchar value[]);
 
 	inline String *GetInternedString(String *value)
 	{
@@ -325,9 +403,10 @@ public:
 
 	StaticRef *AddStaticReference(Value value);
 
-	void Release(GCObject *gco);
+	void Collect(Thread *const thread, bool collectGen1);
 
-	void Collect(Thread *const thread);
+private:
+	void Release(GCObject *gco);
 
 	static inline unsigned int LinkedListLength(GCObject *first)
 	{
@@ -342,64 +421,111 @@ public:
 		return count;
 	}
 
-	inline void Process(GCObject *gco)
-	{
-		// Must move from collect to process.
-		assert((gco->flags & GCOFlags::MARK) == GCO_COLLECT(currentCollectMark));
-
-		gco->RemoveFromList(&collectBase);
-		if ((gco->flags & GCOFlags::EARLY_STRING) == GCOFlags::NONE &&
-			gco->type->size > 0 /*|| gco->type->fieldsOffset > 0*/) // may have fields
-		{
-			gco->InsertIntoList(&processBase);
-			gco->Mark(GCO_PROCESS(currentCollectMark));
-		}
-		else // no chance of instance fields, so nothing to process
-		{
-			gco->InsertIntoList(&keepBase);
-			gco->Mark(GCO_KEEP(currentCollectMark));
-		}
-	}
-	inline void Keep(GCObject *gco)
-	{
-		// Must move from process to keep, or keep an immortal object.
-		assert((gco->flags & GCOFlags::MARK) == GCO_PROCESS(currentCollectMark) ||
-			(gco->flags & GCOFlags::IMMORTAL) == GCOFlags::IMMORTAL);
-
-		gco->RemoveFromList(&processBase);
-		gco->InsertIntoList(&keepBase);
-		gco->Mark(GCO_KEEP(currentCollectMark));
-	}
+	void MarkForProcessing(GCObject *gco);
+	void AddSurvivor(GCObject *gco);
 
 	void MarkRootSet();
 
-	inline void TryProcess(Value *value)
+	// Determines whether a particular Value should be processed.
+	// A Value should be processed if:
+	//   1. Its type is not null.
+	//   2. Its type is not PRIMITIVE.
+	//   3. It is not a string with the flag STATIC (no associated GCObject).
+	//   4. Its GCObject* is marked GCO_COLLECT.
+	// NOTE: This function is only called for /reachable/ Values.
+	inline bool ShouldProcess(Value *val, bool *hasGen0Refs)
 	{
-		if (ShouldProcess(value))
-			Process(GCObject::FromValue(value));
+		if (val->type == nullptr || val->type->IsPrimitive())
+			return false;
+
+		if (val->type == VM::vm->types.String &&
+			(val->common.string->flags & StringFlags::STATIC) == StringFlags::STATIC)
+			return false;
+
+		// If gco is a non-pinned gen0 object, set *hasGen0Refs to true.
+		GCOFlags flags = GCObject::FromValue(val)->flags;
+		if ((flags & GCOFlags::GEN_0) == GCOFlags::GEN_0 &&
+			(flags & GCOFlags::PINNED) == GCOFlags::NONE)
+			*hasGen0Refs = true;
+
+		return (flags & GCOFlags::MARK) == GCO_COLLECT(currentCollectMark);
 	}
-	inline void TryProcessString(String *str)
+	inline void TryMarkForProcessing(Value *value, bool *hasGen0Refs)
 	{
-		if ((str->flags & StringFlags::STATIC) == StringFlags::NONE &&
-			(GCObject::FromInst(str)->flags & GCOFlags::MARK) == GCO_COLLECT(currentCollectMark))
-			Process(GCObject::FromInst(str));
+		if (ShouldProcess(value, hasGen0Refs))
+			MarkForProcessing(GCObject::FromValue(value));
+	}
+	inline void TryMarkStringForProcessing(String *str, bool *hasGen0Refs)
+	{
+		if ((str->flags & StringFlags::STATIC) == StringFlags::NONE)
+		{
+			GCObject *gco = GCObject::FromInst(str);
+			if ((gco->flags & GCOFlags::GEN_0) == GCOFlags::GEN_0)
+				*hasGen0Refs = true;
+			if ((gco->flags & GCOFlags::MARK) == GCO_COLLECT(currentCollectMark))
+				MarkForProcessing(GCObject::FromInst(str));
+		}
 	}
 
 	void ProcessObjectAndFields(GCObject *gco);
-	void ProcessCustomFields(Type *type, GCObject *gco);
-	void ProcessHash(HashInst *hash);
-	inline void ProcessFields(unsigned int fieldCount, Value fields[])
+	void ProcessCustomFields(Type *type, void *instBase, bool *hasGen0Refs);
+	void ProcessHash(HashInst *hash, bool *hasGen0Refs);
+	inline void ProcessFields(unsigned int fieldCount, Value fields[], bool *hasGen0Refs)
 	{
 		for (unsigned int i = 0; i < fieldCount; i++)
 			// If the object is marked GCO_KEEP, we're done processing it.
 			// If it's marked GCO_PROCESS, it'll be processed eventually.
 			// Otherwise, mark it for processing!
-			TryProcess(fields + i);
+			TryMarkForProcessing(fields + i, hasGen0Refs);
 	}
 
+	void MoveGen0Survivors();
+	void AddPinnedObject(GCObject *gco);
+	static GCObject *FlattenPinnedTree(GCObject *root, GCObject **lastItem);
+
+	void UpdateGen0References();
+	void UpdateRootSet();
+	static void UpdateObjectFields(GCObject *gco);
+	static void UpdateCustomFields(Type *type, void *instBase);
+	static void UpdateHash(HashInst *hash);
+
+	static inline bool ShouldUpdateRef(Value *val)
+	{
+		if (val->type == nullptr || val->type->IsPrimitive())
+			return false;
+
+		if (val->type == VM::vm->types.String &&
+			(val->common.string->flags & StringFlags::STATIC) == StringFlags::STATIC)
+			return false;
+
+		return (GCObject::FromValue(val)->flags & GCOFlags::MOVED) == GCOFlags::MOVED;
+	}
+	static inline void TryUpdateRef(Value *value)
+	{
+		if (ShouldUpdateRef(value))
+			value->instance = GCObject::FromValue(value)->newAddress->InstanceBase();
+	}
+	static inline void TryUpdateStringRef(String **str)
+	{
+		if (((*str)->flags & StringFlags::STATIC) == StringFlags::NONE)
+		{
+			GCObject *gco = GCObject::FromInst(*str);
+			if ((gco->flags & GCOFlags::MOVED) == GCOFlags::MOVED)
+				*str = (String*)gco->newAddress->InstanceBase();
+		}
+	}
+	static inline void UpdateFields(unsigned int fieldCount, Value fields[])
+	{
+		for (unsigned int i = 0; i < fieldCount; i++)
+			TryUpdateRef(fields + i);
+	}
+
+public:
 	static GC *gc;
 
 	friend class VM;
 };
+
+static const size_t GC_SIZE = sizeof(GC);
 
 #endif // VM__GC_INTERNAL_H

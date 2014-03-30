@@ -17,7 +17,7 @@ AVES_API NATIVE_FUNCTION(aves_Enum_toString)
 	{
 		FieldHandle field = Member_ToField(iter.Current());
 		Value value;
-		if (field && Field_GetStaticValue(field, value) &&
+		if (field && Field_GetStaticValue(field, &value) &&
 			value.type == thisType && value.integer == THISV.integer)
 		{
 			VM_PushString(thread, Member_GetName((MemberHandle)field));
@@ -75,7 +75,7 @@ AVES_API NATIVE_FUNCTION(aves_EnumSet_toString)
 	{
 		FieldHandle field = Member_ToField(iter.Current());
 		Value value;
-		if (field && Field_GetStaticValue(field, value) &&
+		if (field && Field_GetStaticValue(field, &value) &&
 			value.type == thisType)
 		{
 			// If the value matches THISV.integer entirely, we always

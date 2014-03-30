@@ -257,4 +257,28 @@ OVUM_API bool IsString(Value *value);
 inline bool IsString(Value value) { return IsString(&value); }
 
 
+template<typename T>
+class Alias
+{
+private:
+	Value *value;
+
+public:
+	inline Alias(Value *value) : value(value) { }
+
+	inline T *operator->() const
+	{
+		return reinterpret_cast<T*>(value->instance);
+	}
+	inline T *operator*() const
+	{
+		return reinterpret_cast<T*>(value->instance);
+	}
+
+	inline TypeHandle GetType() const
+	{
+		return value->type;
+	}
+};
+
 #endif // VM__VALUE_H

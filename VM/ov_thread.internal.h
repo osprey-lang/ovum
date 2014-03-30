@@ -6,6 +6,7 @@
 #include <cassert>
 #include "ov_vm.internal.h"
 #include "ov_stringbuffer.internal.h"
+#include "critical_section.internal.h"
 
 #ifdef THREADED_EVALUATION
 #ifndef __GNUC__
@@ -258,7 +259,7 @@ private:
 	// on another thread. The GC enters this section first, and leaves it only when
 	// GC cycle is complete, thus blocking the current thread for the duration of
 	// the cycle.
-	CRITICAL_SECTION gcCycleSection;
+	CriticalSection gcCycleSection;
 
 public:
 	inline void Push      (Value    value) { currentFrame->Push(value);       }
@@ -335,10 +336,7 @@ public:
 private:
 	void InitCallStack();
 	void DisposeCallStack();
-
-	void InitGCLock();
-	void DisposeGCLock();
-
+	
 	// Pushes a new stack frame onto the call stack representing a call
 	// to the specified method.
 	//   argCount:

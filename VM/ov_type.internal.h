@@ -449,6 +449,10 @@ public:
 
 	Value GetTypeToken(Thread *const thread);
 
+	inline bool IsPrimitive() const
+	{
+		return (flags & TypeFlags::PRIMITIVE) == TypeFlags::PRIMITIVE;
+	}
 	inline bool HasFinalizer() const
 	{
 		return (flags & TypeFlags::HAS_FINALIZER) == TypeFlags::HAS_FINALIZER;

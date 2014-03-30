@@ -36,4 +36,73 @@ OVUM_API Value *GC_AddStaticReference(Value initialValue);
 
 OVUM_API void GC_Collect(ThreadHandle thread);
 
+OVUM_API uint32_t GC_GetObjectHashCode(Value *value);
+
+OVUM_API void GC_Pin(Value *value);
+
+OVUM_API void GC_Unpin(Value *value);
+
+class Pinned
+{
+private:
+	Value *const value;
+
+	inline Pinned(Pinned &other) : value(nullptr) { }
+	inline Pinned(Pinned &&other) : value(nullptr) { }
+	inline Pinned &operator=(Pinned &other) { return *this; }
+	inline Pinned &operator=(Pinned &&other) { return *this; }
+
+public:
+	inline Pinned(Value *value)
+		: value(value)
+	{
+		GC_Pin(value);
+	}
+	inline ~Pinned()
+	{
+		GC_Unpin(value);
+	}
+
+	inline Value *operator->() const
+	{
+		return value;
+	}
+	inline Value *operator*() const
+	{
+		return value;
+	}
+};
+
+template<typename T>
+class PinnedAlias
+{
+private:
+	Value *const value;
+
+	inline PinnedAlias(PinnedAlias &other) : value(nullptr) { }
+	inline PinnedAlias(PinnedAlias &&other) : value(nullptr) { }
+	inline PinnedAlias &operator=(PinnedAlias &other) { return *this; }
+	inline PinnedAlias &operator=(PinnedAlias &&other) { return *this; }
+
+public:
+	inline PinnedAlias(Value *value)
+		: value(value)
+	{
+		GC_Pin(value);
+	}
+	inline ~PinnedAlias()
+	{
+		GC_Unpin(value);
+	}
+
+	inline T *operator->() const
+	{
+		return reinterpret_cast<T*>(value->instance);
+	}
+	inline T *operator*() const
+	{
+		return reinterpret_cast<T*>(value->instance);
+	}
+};
+
 #endif // VM__GC_H

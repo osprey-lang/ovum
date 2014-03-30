@@ -27,14 +27,20 @@ void GC::Unload()
 }
 
 GC::GC() :
-	isRunning(false),
-	collectBase(nullptr), processBase(nullptr), keepBase(nullptr),
-	currentCollectMark(0), debt(0), totalSize(0),
-	collectCount(0), strings(32), staticRefs(nullptr)
-{ }
+	collectBase(nullptr), processBase(nullptr), keepBase(nullptr), pinnedBase(nullptr),
+	currentCollectMark(0), gen1Size(0),
+	collectCount(0), strings(32), staticRefs(nullptr),
+	mainHeap(nullptr), largeObjectHeap(nullptr),
+	gen0Base(nullptr), gen0Current(nullptr), gen0End(nullptr),
+	survivors(nullptr),
+	allocSection(5000)
+{
+	InitializeHeaps();
+}
 
 GC::~GC()
 {
+	// Clean up all objects
 	GCObject *gco = collectBase;
 	while (gco)
 	{
@@ -42,9 +48,18 @@ GC::~GC()
 		Release(gco);
 		gco = next;
 	}
-
 	collectBase = nullptr;
 
+	gco = pinnedBase;
+	while (gco)
+	{
+		GCObject *next = gco->next;
+		Release(gco);
+		gco = next;
+	}
+	pinnedBase = nullptr;
+
+	// And delete static reference blocks, too
 	StaticRefBlock *refs = staticRefs;
 	while (refs)
 	{
@@ -52,18 +67,122 @@ GC::~GC()
 		delete refs;
 		refs = next;
 	}
+	staticRefs = nullptr;
+
+	DestroyHeaps();
+}
+
+void GC::InitializeHeaps()
+{
+	// Create the mainHeap with enough initial memory for the gen0 chunk
+	mainHeap = HeapCreate(0, GEN0_SIZE, 0);
+
+	// The LOH has no initial size
+	largeObjectHeap = HeapCreate(0, 0, 0);
+	if (mainHeap == nullptr || largeObjectHeap == nullptr)
+		abort(); // Not enough memory for the heap
+
+	// Allocate gen0
+	gen0Base = HeapAlloc(mainHeap, HEAP_GENERATE_EXCEPTIONS, GEN0_SIZE);
+	gen0End = (char*)gen0Base + GEN0_SIZE;
+	gen0Current = (char*)gen0Base;
+}
+
+void GC::DestroyHeaps()
+{
+	if (mainHeap)
+		HeapDestroy(mainHeap);
+	if (largeObjectHeap)
+		HeapDestroy(largeObjectHeap);
 }
 
 
-void *GC::InternalAlloc(size_t size)
+GCObject *GC::AllocRaw(size_t size)
 {
+	using namespace std;
 	assert(size >= GCO_SIZE);
-	return malloc(size);
+
+	GCObject *result;
+	if (size > LARGE_OBJECT_SIZE)
+	{
+		result = (GCObject*)HeapAlloc(largeObjectHeap, HEAP_ZERO_MEMORY, size);
+		if (result)
+			result->flags |= GCOFlags::LARGE_OBJECT;
+	}
+	else
+	{
+		// If there were any pinned objects in the last GC cycle,
+		// we must verify that the new GCObject doesn't overlap
+		// any pinned object. If so, we position the gen0Current
+		// pointer behind the last pinned object where space is
+		// available.
+		if (pinnedBase)
+		{
+			GCObject *pinned = pinnedBase;
+			// Given the ranges [a, b) and [c, d), e.g.:
+			//      a         b
+			//      [---------)
+			//   [-------)
+			//   c       d
+			// the ranges are overlap if c < b and a < d.
+			// In our case,
+			//    a = pinned
+			//    b = (char*)pinned + pinned->size
+			//    c = gen0Current
+			//    d = gen0Current + size
+			while (pinned &&
+				gen0Current < (char*)pinned + pinned->size &&
+				(char*)pinned < gen0Current + size)
+			{
+				GCObject *next = pinned->next;
+				// The pinned list is only traversed in one direction;
+				// it is not necessary to call RemoveFromList first.
+				// InsertIntoList updates the prev and next pointers
+				// on the GCObject.
+				pinned->InsertIntoList(&collectBase);
+				gen0Current = (char*)pinned + ALIGN_TO(pinned->size, 8);
+
+				pinned = next;
+			}
+			pinnedBase = pinned;
+		}
+
+		result = (GCObject*)gen0Current;
+		gen0Current += ALIGN_TO(size, 8);
+		if (gen0Current > gen0End)
+			// Not enough space in gen0. Return null, which forces a cycle.
+			result = nullptr;
+		else
+		{
+			// Always zero all the memory before returning
+			memset(result, 0, size);
+			result->flags |= GCOFlags::GEN_0;
+		}
+	}
+
+	return result;
 }
 
-void GC::InternalRelease(GCObject *gco)
+GCObject *GC::AllocRawGen1(size_t size)
 {
-	free(gco);
+	// Don't call with HEAP_ZERO_MEMORY. We'll be copying the old
+	// object into this address anyway, it'd be unnecessary work.
+	return (GCObject*)HeapAlloc(mainHeap, 0, size);
+}
+
+void GC::ReleaseRaw(GCObject *gco)
+{
+	switch (gco->flags & GCOFlags::GENERATION)
+	{
+	// Do nothing with gen0 objects
+	case GCOFlags::GEN_1:
+		gen1Size -= gco->size;
+		HeapFree(mainHeap, 0, gco);
+		break;
+	case GCOFlags::LARGE_OBJECT:
+		HeapFree(largeObjectHeap, 0, gco);
+		break;
+	}
 }
 
 void GC::Alloc(Thread *const thread, Type *type, size_t size, GCObject **output)
@@ -71,58 +190,54 @@ void GC::Alloc(Thread *const thread, Type *type, size_t size, GCObject **output)
 	if (SIZE_MAX - size < GCO_SIZE)
 		thread->ThrowMemoryError(gc_strings::ObjectTooBig);
 
+	BeginAlloc(thread);
+
 	size += GCO_SIZE;
-	GCObject *gco = (GCObject*)InternalAlloc(size);
+	GCObject *gco = AllocRaw(size);
 
 	if (!gco) // Allocation failed (we're probably out of memory)
 	{
-		// Allocation may happen during collection, in which case we don't do anything.
-		if (!isRunning)
-		{
-			// Note that we do not need to do anything to preserve the gco,
-			// because we don't actually have a reference to anything.
-			Collect(thread);  // Try to free some memory
-			gco = (GCObject*)InternalAlloc(size); // And allocate again...
-		}
+		Collect(thread, size >= LARGE_OBJECT_SIZE);  // Try to free some memory...
+
+		gco = AllocRaw(size); // ... And allocate again
+
 		if (!gco)
-		{
 			// It is not possible to recover from an out-of-memory error.
 			// To avoid potential problems with finalizers allocating memory,
 			// abort() is used instead of exit().
 			abort();
-		}
 	}
 
-	memset(gco, 0, size);
+	// AllocRaw zeroes the memory, so DO NOT do that here.
 	gco->size = size;
 	gco->type = type;
-	// If the GC is currently running, then do not collect the new GCO.
-	// Otherwise, put it in collectBase. It won't be collected until the next cycle.
-	gco->flags = isRunning ? GCO_KEEP(currentCollectMark) : GCO_COLLECT(currentCollectMark);
-	gco->InsertIntoList(isRunning ? &keepBase : &collectBase);
-
-	// These should never overflow unless we forget to reset/decrement them,
-	// because it should not be possible to allocate more than SIZE_MAX bytes.
-	debt += size > GC_LARGE_OBJECT_SIZE ? GC_LARGE_OBJECT_SIZE : size;
-	totalSize += size;
+	gco->flags |= GCO_COLLECT(currentCollectMark);
+	gco->InsertIntoList(&collectBase);
 
 	*output = gco;
 
-	// There is no managed reference to the object yet, so if collection is necessary,
-	// we need to move the object to the Keep list, or the object will be collected.
-	if (!isRunning && debt >= GC_MAX_DEBT)
+	EndAlloc();
+}
+
+void GC::BeginAlloc(Thread *const thread)
+{
+	if (!allocSection.TryEnter())
 	{
-		gco->RemoveFromList(&collectBase);
-		gco->InsertIntoList(&keepBase);
-		gco->Mark(GCO_KEEP(currentCollectMark));
-		Collect(thread);
+		thread->EnterUnmanagedRegion();
+		allocSection.Enter();
+		thread->LeaveUnmanagedRegion();
 	}
+}
+
+void GC::EndAlloc()
+{
+	allocSection.Leave();
 }
 
 void GC::Construct(Thread *const thread, Type *type, const uint16_t argc, Value *output)
 {
 	if (type == VM::vm->types.String ||
-		(type->flags & TypeFlags::PRIMITIVE) == TypeFlags::PRIMITIVE ||
+		type->IsPrimitive() ||
 		(type->flags & TypeFlags::ABSTRACT) == TypeFlags::ABSTRACT)
 		thread->ThrowTypeError();
 
@@ -202,15 +317,46 @@ String *GC::ConvertString(Thread *const thread, const char *string)
 	return output;
 }
 
+String *GC::ConstructModuleString(Thread *const thread, const int32_t length, const uchar value[])
+{
+	// Replicate some functionality of Alloc here
+	size_t size = sizeof(String) + length*sizeof(uchar) + GCO_SIZE;
+
+	GCObject *gco = AllocRawGen1(size);
+	if (!gco)
+		throw ModuleLoadException(L"(none)", "Unable to allocate memory for module string.");
+
+	// AllocRawGen1 does NOT zero the memory, so we have to do that ourselves:
+	memset(gco, 0, size);
+
+	// Pin the strings so that they will never move, even if we later update
+	// the GC to compact gen1
+	gco->size = size;
+	gco->type = VM::vm->types.String;
+	gco->flags |= GCO_COLLECT(currentCollectMark) | GCOFlags::PINNED;
+	if (gco->type == nullptr)
+		gco->flags |= GCOFlags::EARLY_STRING;
+	gco->pinCount++;
+	gco->InsertIntoList(&collectBase);
+
+	MutableString *str = reinterpret_cast<MutableString*>(gco->InstanceBase());
+	str->length = length;
+	CopyMemoryT(&str->firstChar, value, length);
+
+	return reinterpret_cast<String*>(str);
+}
+
 
 void GC::AddMemoryPressure(Thread *const thread, const size_t size)
 {
 	// Not implemented yet
 }
+
 void GC::RemoveMemoryPressure(Thread *const thread, const size_t size)
 {
 	// Not implemented yet
 }
+
 
 StaticRef *GC::AddStaticReference(Value value)
 {
@@ -244,63 +390,135 @@ void GC::Release(GCObject *gco)
 		} while (type = type->baseType);
 	}
 
-	totalSize -= gco->size; // gco->size includes the size of the GCOBJECT
-	InternalRelease(gco); // goodbye, dear pointer.
+	ReleaseRaw(gco); // goodbye, dear pointer.
 }
 
-void GC::Collect(Thread *const thread)
+void GC::Collect(Thread *const thread, bool collectGen1)
 {
 	collectCount++;
-	// Upon entering this method, all objects are in collectBase.
-	// Step 1: move all the root objects to the Process list.
+
+	// Upon entering this method, all objects are in collectBase and pinnedBase.
+	// The pinnedBase list is usually empty when we enter here, but a cycle can
+	// be triggered when the pinned objects take up too much space or leave gaps
+	// too small to fit an object into, or when a large object can't be allocated.
+	//
+	// Let's start by copying all pinned objects into the Collect list. During
+	// the cycle, we'll rebuild the pinned list anyway.
+	if (pinnedBase)
+	{
+		GCObject *pinned = pinnedBase;
+		while (pinned)
+		{
+			GCObject *next = pinned->next;
+			// No need to call RemoveFromList first;
+			// we're accessing the items sequentially,
+			// and nothing else will touch the list.
+			pinned->InsertIntoList(&collectBase);
+			pinned = next;
+		}
+		pinnedBase = nullptr;
+	}
+
+	Survivors survivors = { nullptr, nullptr, 0 };
+	this->survivors = &survivors;
+	// Step 1: Move all the root objects to the Process list.
 	MarkRootSet();
 
-	// Step 2: examine all objects in the Process list.
-	// Using the type information in each GCObject, we can figure
-	// out what an instance points to!
-	// Note: objects are added to the beginning of the list.
+	// Step 2: Examine all objects in the Process list.
+	// Objects are grouped into one of the following:
+	// * Gen0 survivors (including pinned objects)
+	//     => survivors->gen0
+	// * Survivors (from gen1 or LOH) with refs to non-pinned gen0 objects;
+	//   that is, any non-gen0 object that needs updating later
+	//     => survivors->withGen0Refs
+	// * All other survivors
+	//     => keepBase
+	// During this step, we also update survivors->gen1SurvivorSize,
+	// which will later help us determine whether gen1 has enough dead
+	// objects to warrant cleaning it up this cycle.
 	while (processBase)
 	{
 		GCObject *item = processBase;
 		do
 		{
+			GCObject *next = item->next;
 			ProcessObjectAndFields(item);
-			item = item->next;
+			item = next;
 		} while (item);
 	}
 	assert(processBase == nullptr);
 
+	// Step 3: Process gen0 survivors.
+	// For each object:
+	// * If the object is pinned, add it to the list of pinned objects.
+	// * Otherwise, allocate gen1 space for the object, move the data, and
+	//   mark the original gen0 location with GCOFlags::MOVED.
+	// * Then, if the object has gen0 refs, add it to the list of such objects;
+	//   otherwise, move it to the Keep list (nothing more to process).
+	MoveGen0Survivors();
+	assert(survivors.gen0 == nullptr);
+
+	// Step 4: Update objects with gen0 references.
+	// An astute reader may have noticed that pinned objects with gen0 refs
+	// are not actually in the survivors->withGen0Refs list, but in pinnedBase.
+	// For this reason, we walk through those here as well. The number of
+	// pinned objects is likely to be small.
+	// We must also not forget to update root references; unfortunately,
+	// this means we have to walk through the entire root set.
+	UpdateGen0References();
+	assert(survivors.withGen0Refs == nullptr);
+
+	// Step 5: Collect garbage.
+	// Finalize any collectible dead objects with finalizers, and release the
+	// memory. We only collect gen1 if collectGen1 is true, or if there are
+	// enough dead objects in it.
 #ifdef PRINT_DEBUG_INFO
 	wprintf(L"Preparing to collect #: %d\n", LinkedListLength(collectBase));
 #endif
-
-	// Step 3: free all objects left in the Collect list.
-	while (collectBase)
+	if (!collectGen1)
+		collectGen1 = gen1Size - survivors.gen1SurvivorSize >= GEN1_DEAD_OBJECTS_THRESHOLD;
 	{
-		if ((collectBase->flags & GCOFlags::IMMORTAL) != GCOFlags::NONE)
-			Keep(collectBase);
-		else
-			Release(collectBase);
-		collectBase = collectBase->next;
+		GCObject *item = collectBase;
+		while (item)
+		{
+			GCObject *next = item->next;
+
+			if (collectGen1 || (item->flags & GCOFlags::GENERATION) != GCOFlags::GEN_1)
+				Release(item);
+			else
+			{
+				// Uncollectible gen1 object, will be collected in the future
+				item->InsertIntoList(&keepBase);
+				// Make sure it's marked GCO_COLLECT next cycle
+				item->Mark(GCO_KEEP(currentCollectMark));
+			}
+
+			item = next;
+		}
+		collectBase = nullptr;
 	}
 
-	// Step 4: reset the debt.
-	// NOTE potential problem: this disregards any objects
-	// that were allocated during collection, e.g. as part
-	// of finalizers or whatever.
-	debt = 0;
+	// The Keep and Pinned lists should contain all the live objects now,
+	// and all other lists should be empty.
+	this->survivors = nullptr;
+	assert(survivors.gen0         == nullptr);
+	assert(survivors.withGen0Refs == nullptr);
+	assert(collectBase            == nullptr);
+	assert(processBase            == nullptr);
 
-	// Step 5: increment currentCollectMark for next cycle
+	// Step 6: Increment currentCollectMark for next cycle
 	// and set current Keep list to Collect.
 	currentCollectMark = (currentCollectMark + 2) % 3;
 	collectBase = keepBase;
 	keepBase = nullptr;
+	gen0Current = (char*)gen0Base;
 }
 
 void GC::MarkRootSet()
 {
 	Thread *const mainThread = VM::vm->mainThread;
 
+	bool hasGen0Refs;
 	// Mark stack frames first.
 	StackFrame *frame = mainThread->currentFrame;
 	// Frames are marked top-to-bottom.
@@ -310,11 +528,11 @@ void GC::MarkRootSet()
 		// Does the method have any parameters?
 		unsigned int paramCount = method->GetEffectiveParamCount();
 		if (paramCount)
-			ProcessFields(paramCount, (Value*)frame - paramCount);
+			ProcessFields(paramCount, (Value*)frame - paramCount, &hasGen0Refs);
 		// By design, the locals and the eval stack are adjacent in memory.
 		// Hence, the following is safe:
 		if (method->locals || frame->stackCount)
-			ProcessFields(method->locals + frame->stackCount, LOCALS_OFFSET(frame));
+			ProcessFields(method->locals + frame->stackCount, LOCALS_OFFSET(frame), &hasGen0Refs);
 
 		frame = frame->prevFrame;
 	}
@@ -322,34 +540,86 @@ void GC::MarkRootSet()
 	// We need to do this because the GC may be triggered in
 	// a finally clause, and we wouldn't want to obliterate
 	// the error if we still need to catch it later, right?
-	TryProcess(&mainThread->currentError);
+	TryMarkForProcessing(&mainThread->currentError, &hasGen0Refs);
 
 	// Examine module strings! We don't want to collect these, even
 	// if there is nothing referencing them anywhere else.
 	for (int i = 0; i < Module::loadedModules->GetLength(); i++)
 	{
+#ifndef NDEBUG
+		hasGen0Refs = false;
+#endif
+
 		Module *m = Module::loadedModules->Get(i);
-		TryProcessString(m->name);
+		TryMarkStringForProcessing(m->name, &hasGen0Refs);
 
 		for (int32_t s = 0; s < m->strings.GetLength(); s++)
-			TryProcessString(m->strings[s]);
+			TryMarkStringForProcessing(m->strings[s], &hasGen0Refs);
 
 		if (m->debugData)
 		{
 			debug::ModuleDebugData *debug = m->debugData;
 			for (int32_t f = 0; f < debug->fileCount; f++)
-				TryProcessString(debug->files[f].fileName);
+				TryMarkStringForProcessing(debug->files[f].fileName, &hasGen0Refs);
 		}
+
+		// Module strings are supposed to be all in gen1
+		assert(!hasGen0Refs);
 	}
+
+	// Let's also take care of the startup path and module path
+	if (VM::vm->startupPath)
+		TryMarkStringForProcessing(VM::vm->startupPath, &hasGen0Refs);
+	if (VM::vm->modulePath)
+		TryMarkStringForProcessing(VM::vm->modulePath, &hasGen0Refs);
 
 	// And then we have all the beautiful, lovely static references.
 	StaticRefBlock *staticRefs = this->staticRefs;
 	while (staticRefs)
 	{
+		hasGen0Refs = false;
 		for (unsigned int i = 0; i < staticRefs->count; i++)
-			TryProcess(&staticRefs->values[i].value);
+			TryMarkForProcessing(&staticRefs->values[i].value, &hasGen0Refs);
+		staticRefs->hasGen0Refs = hasGen0Refs;
 		staticRefs = staticRefs->next;
 	}
+}
+
+void GC::MarkForProcessing(GCObject *gco)
+{
+	// Must move from collect to process.
+	assert((gco->flags & GCOFlags::MARK) == GCO_COLLECT(currentCollectMark));
+
+	gco->RemoveFromList(gco == pinnedBase ? &pinnedBase : &collectBase);
+	if ((gco->flags & GCOFlags::EARLY_STRING) == GCOFlags::NONE &&
+		gco->type->size > 0) // may have fields
+	{
+		gco->InsertIntoList(&processBase);
+		gco->Mark(GCO_PROCESS(currentCollectMark));
+	}
+	else // no chance of instance fields, so nothing to process
+	{
+		AddSurvivor(gco);
+		gco->Mark(GCO_KEEP(currentCollectMark));
+	}
+}
+
+void GC::AddSurvivor(GCObject *gco)
+{
+	GCObject **list;
+	GCOFlags flags = gco->flags;
+	if ((flags & GCOFlags::GEN_0) == GCOFlags::GEN_0)
+		list = &survivors->gen0;
+	else
+	{
+		if (gco->HasGen0Refs())
+			list = &survivors->withGen0Refs;
+		else
+			list = &keepBase;
+		if ((gco->flags & GCOFlags::GEN_1) == GCOFlags::GEN_1)
+			survivors->gen1SurvivorSize += gco->size;
+	}
+	gco->InsertIntoList(list);
 }
 
 void GC::ProcessObjectAndFields(GCObject *gco)
@@ -357,47 +627,57 @@ void GC::ProcessObjectAndFields(GCObject *gco)
 	// The object is not supposed to be anything but GCO_PROCESS at this point.
 	assert((gco->flags & GCOFlags::MARK) == GCO_PROCESS(currentCollectMark));
 	// It's also not supposed to be a value type.
-	assert(!gco->type || (gco->type->flags & TypeFlags::PRIMITIVE) != TypeFlags::PRIMITIVE);
+	assert(!gco->type || !gco->type->IsPrimitive());
 
-	Keep(gco);
+	// Do this first, so that objects referencing this object will not
+	// attempt to re-mark it for processing
+	gco->Mark(GCO_KEEP(currentCollectMark));
 
+	bool hasGen0Refs = false;
 	Type *type = gco->type;
 	while (type)
 	{
 		if ((type->flags & TypeFlags::CUSTOMPTR) != TypeFlags::NONE)
-			ProcessCustomFields(type, gco);
+			ProcessCustomFields(type, gco->InstanceBase(), &hasGen0Refs);
 		else if (type->fieldCount)
-			ProcessFields(type->fieldCount, gco->FieldsBase(type));
+			ProcessFields(type->fieldCount, gco->FieldsBase(type), &hasGen0Refs);
 
 		type = type->baseType;
 	}
+
+	if (hasGen0Refs)
+		gco->flags |= GCOFlags::HAS_GEN0_REFS;
+
+	gco->RemoveFromList(&processBase);
+	// Insert into the appropriate survivor list
+	AddSurvivor(gco);
 }
 
-void GC::ProcessCustomFields(Type *type, GCObject *gco)
+void GC::ProcessCustomFields(Type *type, void *instBase, bool *hasGen0Refs)
 {
 	if (type == VM::vm->types.Hash)
 	{
-		ProcessHash((HashInst*)gco->InstanceBase());
+		ProcessHash((HashInst*)instBase, hasGen0Refs);
 	}
 	else if (type == VM::vm->types.List)
 	{
-		ListInst *list = (ListInst*)gco->InstanceBase();
-		ProcessFields(list->length, list->values);
+		ListInst *list = (ListInst*)instBase;
+		ProcessFields(list->length, list->values, hasGen0Refs);
 	}
 	else if (type == VM::vm->types.Method)
 	{
-		MethodInst *minst = (MethodInst*)gco->InstanceBase();
+		MethodInst *minst = (MethodInst*)instBase;
 		if (minst->instance.type)
-			TryProcess(&minst->instance);
+			TryMarkForProcessing(&minst->instance, hasGen0Refs);
 	}
 	else if (type == VM::vm->types.Error)
 	{
-		ErrorInst *error = (ErrorInst*)gco->InstanceBase();
+		ErrorInst *error = (ErrorInst*)instBase;
 		if (error->message)
-			TryProcessString(error->message);
+			TryMarkStringForProcessing(error->message, hasGen0Refs);
 		if (error->stackTrace)
-			TryProcessString(error->stackTrace);
-		TryProcess(&error->innerError);
+			TryMarkStringForProcessing(error->stackTrace, hasGen0Refs);
+		TryMarkForProcessing(&error->innerError, hasGen0Refs);
 	}
 	else if (type->getReferences) // If the type has no reference getter, assume it has no managed references
 	{
@@ -407,14 +687,15 @@ void GC::ProcessCustomFields(Type *type, GCObject *gco)
 		{
 			unsigned int fieldCount = 0;
 			Value *fields = nullptr;
-			cont = type->getReferences(gco->InstanceBase(type), &fieldCount, &fields, &state);
+			cont = type->getReferences((char*)instBase + type->fieldsOffset,
+				&fieldCount, &fields, &state);
 
-			ProcessFields(fieldCount, fields);
+			ProcessFields(fieldCount, fields, hasGen0Refs);
 		} while (cont);
 	}
 }
 
-void GC::ProcessHash(HashInst *hash)
+void GC::ProcessHash(HashInst *hash, bool *hasGen0Refs)
 {
 	int32_t entryCount = hash->count;
 	HashEntry *entries = hash->entries;
@@ -423,8 +704,252 @@ void GC::ProcessHash(HashInst *hash)
 		if (entries[i].hashCode >= 0)
 		{
 			HashEntry *entry = entries + i;
-			TryProcess(&entry->key);
-			TryProcess(&entry->value);
+			TryMarkForProcessing(&entry->key, hasGen0Refs);
+			TryMarkForProcessing(&entry->value, hasGen0Refs);
+		}
+}
+
+void GC::MoveGen0Survivors()
+{
+	GCObject **list = &survivors->gen0;
+	size_t *gen1SurvivorSize = &survivors->gen1SurvivorSize;
+
+	GCObject *obj = *list;
+	while (obj)
+	{
+		GCObject *next = obj->next;
+
+		obj->RemoveFromList(list);
+		if (!obj->IsPinned())
+		{
+			// If the object is not pinned, then allocate gen1 space for it.
+			GCObject *newAddress = AllocRawGen1(obj->size);
+			if (newAddress == nullptr)
+				// Not enough available memory to move to generation 1;
+				// cannot recover from this.
+				abort();
+
+			memcpy(newAddress, obj, obj->size);
+			newAddress->flags = (newAddress->flags & ~GCOFlags::GENERATION) | GCOFlags::GEN_1;
+			newAddress->InsertIntoList(newAddress->HasGen0Refs() ? &survivors->withGen0Refs : &keepBase);
+			gen1Size += newAddress->size;
+			*gen1SurvivorSize += newAddress->size;
+
+			obj->flags |= GCOFlags::MOVED;
+			obj->newAddress = newAddress;
+
+			if (newAddress->type == VM::vm->types.String ||
+				(newAddress->flags & GCOFlags::EARLY_STRING) == GCOFlags::EARLY_STRING)
+			{
+				String *str = reinterpret_cast<String*>(newAddress->InstanceBase());
+				if ((str->flags & StringFlags::INTERN) == StringFlags::INTERN)
+					strings.UpdateIntern(str);
+			}
+		}
+		else
+		{
+			AddPinnedObject(obj);
+		}
+
+		obj = next;
+	}
+
+	if (pinnedBase)
+	{
+		GCObject *lastPinned; // ignored
+		pinnedBase = FlattenPinnedTree(pinnedBase, &lastPinned);
+	}
+}
+
+void GC::AddPinnedObject(GCObject *gco)
+{
+	// We initially store the pinned objects in a binary search tree,
+	// which is then flattened to a linked list when we're done with
+	// moving gen0 survivors. Depending on the order in which we walk
+	// through pinned objects, this tree may be terribly unbalanced,
+	// but the number of pinned objects should be small and therefore
+	// the performance impact negligible.
+	// 'prev' is used as the left node (numerically less than the GCO),
+	// 'next' as the right (numerically greater than the GCO).
+	gco->prev = gco->next = nullptr;
+
+	GCObject **root = &pinnedBase;
+	while (true)
+	{
+		if (!*root)
+		{
+			*root = gco;
+			break;
+		}
+		else if (gco < *root)
+			root = &(*root)->prev;
+		else if (gco > *root)
+			root = &(*root)->next;
+#if !defined(NDEBUG) || NDEBUG == 0
+		else
+		{
+			assert(!"Failed to insert pinned object into tree; it's probably in the tree already!");
+			break; // fail :(
+		}
+#endif
+	}
+}
+
+GCObject *GC::FlattenPinnedTree(GCObject *root, GCObject **lastItem)
+{
+	GCObject *first = root;
+	*lastItem = root;
+	if (root->prev)
+	{
+		GCObject *leftLast;
+		first = FlattenPinnedTree(root->prev, &leftLast);
+		leftLast->next = root;
+	}
+	if (root->next)
+	{
+		root->next = FlattenPinnedTree(root->next, lastItem);
+	}
+	return first;
+}
+
+void GC::UpdateGen0References()
+{
+	UpdateRootSet();
+
+	GCObject *gco = survivors->withGen0Refs;
+	while (gco)
+	{
+		GCObject *next = gco->next;
+
+		gco->RemoveFromList(&survivors->withGen0Refs);
+		gco->InsertIntoList(&keepBase);
+		UpdateObjectFields(gco);
+
+		gco = next;
+	}
+
+	gco = pinnedBase;
+	while (gco)
+	{
+		if (gco->HasGen0Refs())
+			UpdateObjectFields(gco);
+		gco = gco->next;
+	}
+}
+
+void GC::UpdateRootSet()
+{
+	Thread *const mainThread = VM::vm->mainThread;
+
+	// Update stack frames first
+	StackFrame *frame = mainThread->currentFrame;
+	while (frame)
+	{
+		Method::Overload *method = frame->method;
+		unsigned int paramCount = method->GetEffectiveParamCount();
+		if (paramCount)
+			UpdateFields(paramCount, (Value*)frame - paramCount);
+
+		if (method->locals || frame->stackCount)
+			UpdateFields(method->locals + frame->stackCount, LOCALS_OFFSET(frame));
+
+		frame = frame->prevFrame;
+	}
+
+	// Current error
+	TryUpdateRef(&mainThread->currentError);
+
+	// Module strings do not have any gen0 references
+
+	// Startup and module path
+	if (VM::vm->startupPath)
+		TryUpdateStringRef(&VM::vm->startupPath);
+	if (VM::vm->modulePath)
+		TryUpdateStringRef(&VM::vm->modulePath);
+
+	// Static references
+	StaticRefBlock *staticRefs = this->staticRefs;
+	while (staticRefs)
+	{
+		if (staticRefs->hasGen0Refs)
+		{
+			for (unsigned int i = 0; i < staticRefs->count; i++)
+				TryUpdateRef(&staticRefs->values[i].value);
+			staticRefs->hasGen0Refs = false;
+		}
+		staticRefs = staticRefs->next;
+	}
+}
+
+void GC::UpdateObjectFields(GCObject *gco)
+{
+	Type *type = gco->type;
+	while (type)
+	{
+		if ((type->flags & TypeFlags::CUSTOMPTR) != TypeFlags::NONE)
+			UpdateCustomFields(type, gco->InstanceBase());
+		else if (type->fieldCount)
+			UpdateFields(type->fieldCount, gco->FieldsBase(type));
+
+		type = type->baseType;
+	}
+
+	gco->flags &= ~GCOFlags::HAS_GEN0_REFS;
+}
+
+void GC::UpdateCustomFields(Type *type, void *instBase)
+{
+	if (type == VM::vm->types.Hash)
+	{
+		UpdateHash((HashInst*)instBase);
+	}
+	else if (type == VM::vm->types.List)
+	{
+		ListInst *list = (ListInst*)instBase;
+		UpdateFields(list->length, list->values);
+	}
+	else if (type == VM::vm->types.Method)
+	{
+		MethodInst *minst = (MethodInst*)instBase;
+		if (minst->instance.type)
+			TryUpdateRef(&minst->instance);
+	}
+	else if (type == VM::vm->types.Error)
+	{
+		ErrorInst *error = (ErrorInst*)instBase;
+		if (error->message)
+			TryUpdateStringRef(&error->message);
+		if (error->stackTrace)
+			TryUpdateStringRef(&error->stackTrace);
+		TryUpdateRef(&error->innerError);
+	}
+	else if (type->getReferences) // If the type has no reference getter, assume it has no managed references
+	{
+		bool cont;
+		int32_t state = 0;
+		do
+		{
+			unsigned int fieldCount = 0;
+			Value *fields = nullptr;
+			cont = type->getReferences((char*)instBase + type->fieldsOffset,
+				&fieldCount, &fields, &state);
+
+			UpdateFields(fieldCount, fields);
+		} while (cont);
+	}
+}
+
+void GC::UpdateHash(HashInst *hash)
+{
+	int32_t entryCount = hash->count;
+	HashEntry *entries = hash->entries;
+
+	for (int32_t i = 0; i < entryCount; i++)
+		if (entries[i].hashCode >= 0)
+		{
+			HashEntry *entry = entries + i;
+			TryUpdateRef(&entry->key);
+			TryUpdateRef(&entry->value);
 		}
 }
 
@@ -461,5 +986,58 @@ OVUM_API Value *GC_AddStaticReference(Value initialValue)
 
 OVUM_API void GC_Collect(ThreadHandle thread)
 {
-	GC::gc->Collect(thread);
+	GC::gc->Collect(thread, false);
+}
+
+OVUM_API uint32_t GC_GetObjectHashCode(Value *value)
+{
+	if (value->type == nullptr || value->type->IsPrimitive())
+		return 0; // Nope!
+
+	GCObject *gco = GCObject::FromValue(value);
+	if (gco->hashCode == 0)
+	{
+		// Shift down by 3 because addresses are (generally) aligned on the 8-byte boundary
+		if (sizeof(void*) == 8)
+		{
+			uint64_t addr = (uint64_t)gco >> 3;
+			gco->hashCode = (uint32_t)addr ^ (uint32_t)(addr >> 23);
+		}
+		else
+			gco->hashCode = (uint32_t)gco >> 3;
+	}
+	return gco->hashCode;
+}
+
+OVUM_API void GC_Pin(Value *value)
+{
+	using namespace std;
+	if (value->type != nullptr && !value->type->IsPrimitive())
+	{
+		GCObject *gco = GCObject::FromValue(value);
+		// We must synchronise access to these two fields.
+		// Let's just reuse the field access flag.
+		while (gco->fieldAccessFlag.test_and_set(memory_order_acquire))
+			;
+		gco->pinCount++;
+		gco->flags |= GCOFlags::PINNED;
+		gco->fieldAccessFlag.clear(memory_order_release);
+	}
+}
+
+OVUM_API void GC_Unpin(Value *value)
+{
+	using namespace std;
+	if (value->type != nullptr && !value->type->IsPrimitive())
+	{
+		GCObject *gco = GCObject::FromValue(value);
+		// We must synchronise access to these two fields.
+		// Let's just reuse the field access flag.
+		while (gco->fieldAccessFlag.test_and_set(memory_order_acquire))
+			;
+		gco->pinCount--;
+		if (gco->pinCount == 0)
+			gco->flags &= ~GCOFlags::PINNED;
+		gco->fieldAccessFlag.clear(memory_order_release);
+	}
 }

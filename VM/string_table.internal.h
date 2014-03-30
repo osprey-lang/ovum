@@ -34,27 +34,22 @@ private:
 
 	void Resize();
 
-	bool StringEquals(String *a, const int32_t blen, const uchar b[]);
-
 public:
 	StringTable(const int32_t capacity);
 	~StringTable();
 
 	String *GetInterned(String *value);
-	/*String *GetInterned(const int32_t length, const uchar values[]);*/
 
 	inline bool HasInterned(String *value)
 	{
 		return GetInterned(value) != nullptr;
 	}
-	/*inline bool HasInterned(const int32_t length, const uchar values[])
-	{
-		return GetInterned(length, values) != nullptr;
-	}*/
 
 	String *Intern(String *value);
 
 	bool RemoveIntern(String *value);
+
+	void UpdateIntern(String *value);
 
 	void DebugBuckets();
 

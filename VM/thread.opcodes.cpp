@@ -1162,8 +1162,8 @@ bool Thread::FindErrorHandler()
 					Method::CatchBlock &catchBlock = tryBlock.catches.blocks[c];
 					if (Type::ValueIsType(&currentError, catchBlock.caughtType))
 					{
-						frame->stackCount = 0;
-						frame->Push(currentError);
+						frame->stackCount = 1;
+						frame->evalStack[0] = currentError;
 						this->ip = method->entry + catchBlock.catchStart;
 						return true;
 					}

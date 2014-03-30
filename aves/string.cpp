@@ -243,12 +243,14 @@ AVES_API NATIVE_FUNCTION(aves_String_format)
 	Value *values = args + 1;
 
 	String *result = nullptr;
-	if (IsType(values, GetType_List()))
-		result = string::Format(thread, THISV.common.string, values->common.list);
-	else if (IsType(values, GetType_Hash()))
-		result = string::Format(thread, THISV.common.string, values);
-	else
-		VM_ThrowTypeError(thread, error_strings::FormatValueType);
+	{ Pinned str(THISP);
+		if (IsType(values, GetType_List()))
+			result = string::Format(thread, str->common.string, values->common.list);
+		else if (IsType(values, GetType_Hash()))
+			result = string::Format(thread, str->common.string, values);
+		else
+			VM_ThrowTypeError(thread, error_strings::FormatValueType);
+	}
 
 	VM_PushString(thread, result);
 }
@@ -285,10 +287,10 @@ AVES_API NATIVE_FUNCTION(aves_String_replaceInner)
 AVES_API NATIVE_FUNCTION(aves_String_split)
 {
 	// arguments: (separator)
-	// locals: List output
-	String *str = THISV.common.string;
+	// locals: { output is List }
+
 	StringFromValue(thread, args + 1);
-	String *sep = args[1].common.string;
+	PinnedAlias<String> str(THISP), sep(args + 1);
 
 	Value *output = VM_Local(thread, 0);
 	Value ignore;
@@ -322,7 +324,7 @@ AVES_API NATIVE_FUNCTION(aves_String_split)
 		{
 			if (*chp == sep->firstChar)
 			{
-				if (String_SubstringEquals(str, index, sep))
+				if (String_SubstringEquals(*str, index, *sep))
 				{
 					// We mound a fatch! I mean, we found a match!
 					// Copy characters from chStart to chp into the output,
@@ -347,7 +349,7 @@ AVES_API NATIVE_FUNCTION(aves_String_split)
 		VM_Push(thread, *output);
 		if (chStart == &str->firstChar)
 			// No match found, just add the entire string
-			VM_PushString(thread, str);
+			VM_PushString(thread, *str);
 		else if (chp == chStart)
 			VM_PushString(thread, strings::Empty);
 		else
@@ -454,7 +456,10 @@ AVES_API NATIVE_FUNCTION(aves_String_fromCodepoint)
 		output = GC_ConstructString(thread, 2, reinterpret_cast<uchar*>(&pair));
 	}
 	else
-		output = GC_ConstructString(thread, 1, reinterpret_cast<uchar*>(&cp64));
+	{
+		uchar cp = (uchar)cp64;
+		output = GC_ConstructString(thread, 1, reinterpret_cast<uchar*>(&cp));
+	}
 
 	// Return value is on the stack
 	VM_PushString(thread, output);

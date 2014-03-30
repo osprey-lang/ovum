@@ -9,14 +9,7 @@ AVES_API NATIVE_FUNCTION(aves_Object_new)
 
 AVES_API NATIVE_FUNCTION(aves_Object_getHashCode)
 {
-	// We shift down the address by 2 to counteract hash
-	// collisions when there's alignment going on.
-	// It's a cheap trick, but hey.
-
-	if (sizeof(void*) == 8)
-		VM_PushInt(thread, (uint64_t)THISV.instance >> 2);
-	else
-		VM_PushInt(thread, (uint32_t)THISV.instance >> 2);
+	VM_PushInt(thread, GC_GetObjectHashCode(THISP));
 }
 
 AVES_API NATIVE_FUNCTION(aves_Object_toString)
@@ -25,16 +18,13 @@ AVES_API NATIVE_FUNCTION(aves_Object_toString)
 
 	buf.Append(thread, '<');
 	buf.Append(thread, Type_GetFullName(THISV.type));
-	buf.Append(thread, 4, " at ");
+	buf.Append(thread, ' ');
 
 	String *valueString;
 	if ((Type_GetFlags(THISV.type) & TypeFlags::PRIMITIVE) == TypeFlags::PRIMITIVE)
 		valueString = integer::ToString(thread, THISV.integer, 10, 0, false);
 	else
-	{
-		buf.Append(thread, 2, "0x");
-		valueString = uinteger::ToString(thread, (uint64_t)THISV.instance, 16, sizeof(void*) * 2, false);
-	}
+		valueString = uinteger::ToString(thread, GC_GetObjectHashCode(THISP), 16, 8, false);
 	buf.Append(thread, valueString);
 
 	buf.Append(thread, '>');

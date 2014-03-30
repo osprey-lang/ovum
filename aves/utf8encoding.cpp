@@ -424,7 +424,7 @@ int32_t Utf8Decoder::GetCharCount(ThreadHandle thread, Buffer *buf, int32_t offs
 					// represents something larger than U+10FFFF, so we
 					// spit out U+FFFD.
 					state = 7; // >5-byte sequence
-					left.all = b > 0xB ? 5 : 4; // number of cont. bytes to skip
+					left.all = b > 0xFB ? 5 : 4; // number of cont. bytes to skip
 					break;
 				case 0xE:
 				case 0xF:
@@ -610,7 +610,7 @@ int32_t Utf8Decoder::GetChars(ThreadHandle thread, Buffer *buf, int32_t offset, 
 				case 0x8: case 0x9: case 0xA: case 0xB:
 				case 0xC: case 0xD:
 					state = 7;
-					left.all = b > 0xB ? 5 : 4;
+					left.all = b > 0xFB ? 5 : 4;
 					break;
 				case 0xE:
 				case 0xF:

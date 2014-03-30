@@ -110,7 +110,7 @@ String *ModuleReader::ReadShortString(const int32_t length)
 	if (intern == nullptr)
 	{
 		// Not interned, have to allocate!
-		intern = GC::gc->ConstructString(nullptr, length, buf.chars);
+		intern = GC::gc->ConstructModuleString(nullptr, length, buf.chars);
 		GC::gc->InternString(intern);
 	}
 
@@ -126,7 +126,7 @@ String *ModuleReader::ReadLongString(const int32_t length)
 	// If a string with this value is already interned, we get that string instead.
 	// If we have that string, GC::InternString does nothing; if we don't, we have
 	// a brand new string and interning it actually interns it.
-	String *string = GC::gc->ConstructString(nullptr, length, data.get());
+	String *string = GC::gc->ConstructModuleString(nullptr, length, data.get());
 	string = GC::gc->InternString(string);
 
 	return string;
@@ -834,7 +834,7 @@ void Module::ReadConstantDefs(ModuleReader &reader, Module *module)
 		Type *type = module->FindType(typeId);
 		if (type == nullptr)
 			throw ModuleLoadException(reader.fileName, "Unresolved TypeRef or TypeDef token ID in ConstantDef.");
-		if (type != VM::vm->types.String && (type->flags & TypeFlags::PRIMITIVE) != TypeFlags::PRIMITIVE)
+		if (type != VM::vm->types.String && !type->IsPrimitive())
 			throw ModuleLoadException(reader.fileName, "ConstantDef type must be primitive or aves.String.");
 
 		int64_t value = reader.ReadInt64();
@@ -1158,7 +1158,7 @@ void Module::ReadOperators(ModuleReader &reader, Module *module, Type *type)
 
 void Module::SetConstantFieldValue(ModuleReader &reader, Module *module, Field *field, Type *constantType, const int64_t value)
 {
-	if (constantType != VM::vm->types.String && (constantType->flags & TypeFlags::PRIMITIVE) == TypeFlags::NONE)
+	if (constantType != VM::vm->types.String && !constantType->IsPrimitive())
 		throw ModuleLoadException(reader.fileName, "Constant type in FieldDef must be primitive or aves.String.");
 				
 	Value constantValue;

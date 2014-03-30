@@ -8,7 +8,10 @@ AVES_API NATIVE_FUNCTION(io_Directory_existsInternal)
 
 	WIN32_FILE_ATTRIBUTE_DATA data;
 
-	bool r = io::ReadFileAttributes(thread, pathName, &data, false);
+	bool r;
+	{ Pinned pn(args + 0);
+		r = io::ReadFileAttributes(thread, pathName, &data, false);
+	}
 
 	if (r)
 		r = data.dwFileAttributes != -1 &&

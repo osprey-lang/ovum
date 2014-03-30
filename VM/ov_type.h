@@ -12,6 +12,7 @@ typedef void (__cdecl *NativeMethod)(ThreadHandle thread, const int argc, Value 
 #define NATIVE_FUNCTION(name)	void __cdecl name(::ThreadHandle thread, const int argc, ::Value args[])
 // The 'this' in a NATIVE_FUNCTION, which is always argument 0.
 #define THISV	(args[0])
+#define THISP   (args + 0)
 
 
 OVUM_API String *Member_GetName(const MemberHandle member);
@@ -86,7 +87,7 @@ OVUM_API bool Method_Accepts(const MethodHandle method, int argc);
 
 
 OVUM_API uint32_t Field_GetOffset(const FieldHandle field);
-OVUM_API bool Field_GetStaticValue(const FieldHandle field, Value &result);
+OVUM_API bool Field_GetStaticValue(const FieldHandle field, Value *result);
 OVUM_API bool Field_SetStaticValue(const FieldHandle field, Value value);
 
 

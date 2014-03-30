@@ -82,26 +82,26 @@ inline void SetString_(Value *target, String *value)
 inline bool IsTrue_(Value value)
 {
 	return value.type != nullptr &&
-		((value.type->flags & TypeFlags::PRIMITIVE) != TypeFlags::PRIMITIVE ||
+		(!value.type->IsPrimitive() ||
 		value.integer != 0);
 }
 inline bool IsTrue_(Value *value)
 {
 	return value->type != nullptr &&
-		((value->type->flags & TypeFlags::PRIMITIVE) != TypeFlags::PRIMITIVE ||
+		(!value->type->IsPrimitive() ||
 		value->integer != 0);
 }
 
 inline bool IsFalse_(Value value)
 {
 	return value.type == nullptr ||
-		(value.type->flags & TypeFlags::PRIMITIVE) == TypeFlags::PRIMITIVE &&
+		value.type->IsPrimitive() &&
 		value.integer == 0;
 }
 inline bool IsFalse_(Value *value)
 {
 	return value->type == nullptr ||
-		(value->type->flags & TypeFlags::PRIMITIVE) == TypeFlags::PRIMITIVE &&
+		value->type->IsPrimitive() &&
 		value->integer == 0;
 }
 
@@ -112,11 +112,10 @@ inline bool IsSameReference_(Value a, Value b)
 	// a.type == b.type at this point
 	if (a.type == nullptr)
 		return true; // both are null
-	if ((a.type->flags & TypeFlags::PRIMITIVE) == TypeFlags::PRIMITIVE)
+	if (a.type->IsPrimitive())
 		return a.integer == b.integer;
 	return a.instance == b.instance;
 }
-
 inline bool IsSameReference_(Value *a, Value *b)
 {
 	if (a->type != b->type)
@@ -124,7 +123,7 @@ inline bool IsSameReference_(Value *a, Value *b)
 	// a->type == b->type at this point
 	if (a->type == nullptr)
 		return true;
-	if ((a->type->flags & TypeFlags::PRIMITIVE) == TypeFlags::PRIMITIVE)
+	if (a->type->IsPrimitive())
 		return a->integer == b->integer;
 	return a->instance == b->instance;
 }
