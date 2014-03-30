@@ -428,6 +428,9 @@ public:
 	// Members! These allow us to look up members by name.
 	StringHash<Member*> members;
 
+	// The instance constructor of the type, or null if there is none.
+	Method *instanceCtor;
+
 	// Operator implementations. If an operator implementation is null,
 	// then the type does not implement that operator.
 	Method::Overload *operators[OPERATOR_COUNT];

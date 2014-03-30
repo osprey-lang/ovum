@@ -688,13 +688,6 @@ void Thread::CalculateStackHeights(instr::MethodBuilder &builder, Method::Overlo
 							// gt, brtrue  => brgt
 							// lte, brtrue => brlte
 							// gte, brtrue => brgte
-							// eq/lt/gt/lte/gte are in the same order both in the operator
-							// section and the extended branch section, so we can just
-							// subtract OPI_EQ_L from prev->opcode, divide the result by
-							// two, and add it to OPI_BREQ.
-							// There is a one-instruction gap between OPI_EQ_* and OPI_LT_*,
-							// where OPI_CMP_* is, but fortunately that gap is covered by
-							// OPI_BRNEQ, which is not produced by this code.
 							switch (prev->opcode)
 							{
 							case OPI_EQ_L:  case OPI_EQ_S:  newOpcode = OPI_BREQ;  break;
@@ -815,7 +808,7 @@ void Thread::WriteInitializedBody(instr::MethodBuilder &builder, Method::Overloa
 	delete[] method->entry;
 	method->entry  = buffer.release();
 	method->length = builder.GetByteSize();
-	method->flags  = method->flags | MethodFlags::INITED;
+	method->flags |= MethodFlags::INITED;
 }
 
 void Thread::CallStaticConstructors(instr::MethodBuilder &builder)
@@ -1011,6 +1004,7 @@ void Thread::InitializeInstructions(instr::MethodBuilder &builder, Method::Overl
 				ip += sizeof(uint32_t);
 				uint16_t argCount = *ip;
 				ip++;
+				EnsureConstructible(type, argCount, method);
 				instr = new NewObject(type, argCount);
 			}
 			break;
@@ -1020,6 +1014,7 @@ void Thread::InitializeInstructions(instr::MethodBuilder &builder, Method::Overl
 				ip += sizeof(uint32_t);
 				uint16_t argCount = U16_ARG(ip);
 				ip += sizeof(uint16_t);
+				EnsureConstructible(type, argCount, method);
 				instr = new NewObject(type, argCount);
 			}
 			break;
@@ -1456,4 +1451,22 @@ Field *Thread::FieldFromToken(Method::Overload *fromMethod, uint32_t token, bool
 			fromMethod, field, MethodInitException::FIELD_STATIC_MISMATCH);
 
 	return field;
+}
+
+void Thread::EnsureConstructible(Type *type, uint32_t argCount, Method::Overload *fromMethod)
+{
+	if (type->IsPrimitive() ||
+		(type->flags & TypeFlags::ABSTRACT) == TypeFlags::ABSTRACT ||
+		(type->flags & TypeFlags::STATIC) == TypeFlags::STATIC)
+		throw MethodInitException("Primitive, abstract and static types cannot be used with the newobj instruction.",
+			fromMethod, type, MethodInitException::TYPE_NOT_CONSTRUCTIBLE);
+	if (type->instanceCtor == nullptr)
+		throw MethodInitException("The type does not declare an instance constructor.",
+			fromMethod, type, MethodInitException::TYPE_NOT_CONSTRUCTIBLE);
+	if (!type->instanceCtor->IsAccessible(type, fromMethod->declType))
+		throw MethodInitException("The instance constructor is not accessible from this location.",
+			fromMethod, type, MethodInitException::TYPE_NOT_CONSTRUCTIBLE);
+	if (!type->instanceCtor->ResolveOverload(argCount))
+		throw MethodInitException("The instance constructor does not take the specified number of arguments.",
+			fromMethod, type->instanceCtor, argCount, MethodInitException::NO_MATCHING_OVERLOAD);
 }

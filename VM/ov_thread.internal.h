@@ -158,6 +158,7 @@ public:
 		UNRESOLVED_TOKEN_ID,
 		NO_MATCHING_OVERLOAD,
 		INACCESSIBLE_TYPE,
+		TYPE_NOT_CONSTRUCTIBLE,
 	};
 
 private:
@@ -409,6 +410,7 @@ private:
 	static Method *MethodFromToken(Method::Overload *fromMethod, uint32_t token);
 	static Method::Overload *MethodOverloadFromToken(Method::Overload *fromMethod, uint32_t token, uint32_t argCount);
 	static Field *FieldFromToken(Method::Overload *fromMethod, uint32_t token, bool shouldBeStatic);
+	static void EnsureConstructible(Type *type, uint32_t argCount, Method::Overload *fromMethod);
 
 	static void GetHashIndexerSetter(Method::Overload **target);
 
