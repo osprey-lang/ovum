@@ -27,7 +27,10 @@ AVES_API NATIVE_FUNCTION(io_File_existsInternal)
 
 	WIN32_FILE_ATTRIBUTE_DATA data;
 
-	bool r = io::ReadFileAttributes(thread, fileName, &data, false);
+	bool r;
+	{ Pinned fn(args + 0);
+		r = io::ReadFileAttributes(thread, fileName, &data, false);
+	}
 
 	if (r)
 		r = data.dwFileAttributes != -1 &&
@@ -42,7 +45,9 @@ AVES_API NATIVE_FUNCTION(io_File_getSizeInternal)
 	Path::ValidatePath(thread, fileName, false);
 
 	WIN32_FILE_ATTRIBUTE_DATA data;
-	io::ReadFileAttributes(thread, fileName, &data, true);
+	{ Pinned fn(args + 0);
+		io::ReadFileAttributes(thread, fileName, &data, true);
+	}
 
 	VM_PushInt(thread, (int64_t)data.nFileSizeLow | ((int64_t)data.nFileSizeHigh << 32));
 }
@@ -52,7 +57,15 @@ AVES_API NATIVE_FUNCTION(io_File_deleteInternal)
 	String *fileName = args[0].common.string;
 	Path::ValidatePath(thread, fileName, false);
 
-	BOOL r = DeleteFileW((LPCWSTR)&fileName->firstChar);
+	BOOL r;
+	{ Pinned fn(args + 0);
+		VM_EnterUnmanagedRegion(thread);
+
+		r = DeleteFileW((LPCWSTR)&fileName->firstChar);
+
+		VM_LeaveUnmanagedRegion(thread);
+	}
+
 	if (!r)
 		io::ThrowIOError(thread, GetLastError(), fileName);
 }
@@ -65,11 +78,14 @@ AVES_API NATIVE_FUNCTION(io_File_moveInternal)
 	Path::ValidatePath(thread, srcName, false);
 	Path::ValidatePath(thread, destName, false);
 
-	VM_EnterUnmanagedRegion(thread);
+	BOOL r;
+	{ Pinned src(args + 0), dst(args + 1);
+		VM_EnterUnmanagedRegion(thread);
 
-	BOOL r = MoveFileW((LPCWSTR)&srcName->firstChar, (LPCWSTR)&destName->firstChar);
+		r = MoveFileW((LPCWSTR)&srcName->firstChar, (LPCWSTR)&destName->firstChar);
 
-	VM_LeaveUnmanagedRegion(thread);
+		VM_LeaveUnmanagedRegion(thread);
+	}
 
 	if (!r)
 		io::ThrowIOError(thread, GetLastError());
@@ -164,13 +180,15 @@ AVES_API NATIVE_FUNCTION(io_FileStream_init)
 	share = (DWORD)args[4].integer;
 
 	HANDLE handle;
-	VM_EnterUnmanagedRegion(thread);
+	{ Pinned fn(args + 1);
+		VM_EnterUnmanagedRegion(thread);
 
-	handle = CreateFileW((LPCWSTR)&fileName->firstChar,
-		access, share, nullptr, mode,
-		FILE_ATTRIBUTE_NORMAL, NULL);
+		handle = CreateFileW((LPCWSTR)&fileName->firstChar,
+			access, share, nullptr, mode,
+			FILE_ATTRIBUTE_NORMAL, NULL);
 
-	VM_LeaveUnmanagedRegion(thread);
+		VM_LeaveUnmanagedRegion(thread);
+	}
 
 	if (handle == INVALID_HANDLE_VALUE)
 		io::ThrowIOError(thread, GetLastError(), fileName);
@@ -291,7 +309,7 @@ AVES_API NATIVE_FUNCTION(io_FileStream_writeByte)
 	VM_EnterUnmanagedRegion(thread);
 
 	DWORD bytesWritten;
-	int8_t byte = (int8_t)args[1].integer;
+	uint8_t byte = (uint8_t)args[1].integer;
 	BOOL r = WriteFile(handle, &byte, 1, &bytesWritten, nullptr);
 
 	VM_LeaveUnmanagedRegion(thread);
@@ -309,7 +327,8 @@ AVES_API NATIVE_FUNCTION(io_FileStream_writeInternal)
 	stream->EnsureOpen(thread);
 
 	HANDLE handle = stream->handle;
-	// The GC will never move the Buffer::bytes pointer
+	// The GC will never move the Buffer::bytes pointer,
+	// no need to pin it
 	uint8_t *buffer = reinterpret_cast<Buffer*>(args[1].instance)->bytes;
 	buffer += (int32_t)args[2].integer;
 
@@ -388,7 +407,7 @@ AVES_API NATIVE_FUNCTION(io_FileStream_seekInternal)
 
 AVES_API NATIVE_FUNCTION(io_FileStream_close)
 {
-	FileStream *stream = _FS(THISV);
+	PinnedAlias<FileStream> stream(THISP);
 
 	// Note: it's safe to call FileStream.close() multiple times
 

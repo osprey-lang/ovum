@@ -38,16 +38,15 @@ Thread::Thread() :
 	currentFrame(nullptr), state(ThreadState::CREATED),
 	currentError(NULL_VALUE), ip(nullptr),
 	shouldSuspendForGC(false),
-	flags(ThreadFlags::NONE)
+	flags(ThreadFlags::NONE),
+	gcCycleSection(4000)
 {
 	InitCallStack();
-	InitGCLock();
 }
 
 Thread::~Thread()
 {
 	DisposeCallStack();
-	DisposeGCLock();
 }
 
 void Thread::Start(Method *method, Value &result)
@@ -110,12 +109,12 @@ void Thread::SuspendForGC()
 
 	state = ThreadState::SUSPENDED_BY_GC;
 	// Do nothing here. Just wait for the GC to finish.
-	EnterCriticalSection(&gcCycleSection);
+	gcCycleSection.Enter();
 
 	state = ThreadState::RUNNING;
 	shouldSuspendForGC = false;
 	// Resume normal operations!
-	LeaveCriticalSection(&gcCycleSection);
+	gcCycleSection.Leave();
 }
 
 
@@ -133,8 +132,7 @@ void Thread::LeaveUnmanagedRegion()
 
 bool Thread::IsSuspendedForGC() const
 {
-	return state == ThreadState::SUSPENDED_BY_GC ||
-		(flags & ThreadFlags::IN_UNMANAGED_REGION) == ThreadFlags::IN_UNMANAGED_REGION;
+	return state == ThreadState::SUSPENDED_BY_GC || IsInUnmanagedRegion();
 }
 
 
@@ -773,7 +771,7 @@ void Thread::StoreIndexerLL(uint32_t argCount, Value *args)
 void Thread::LoadStaticField(Field *field, Value *result)
 {
 	if (result)
-		*result = field->staticValue->Read();
+		field->staticValue->Read(result);
 	else
 		currentFrame->Push(field->staticValue->Read());
 }
@@ -945,16 +943,6 @@ void Thread::InitCallStack()
 void Thread::DisposeCallStack()
 {
 	VirtualFree(callStack, 0, MEM_RELEASE);
-}
-
-void Thread::InitGCLock()
-{
-	InitializeCriticalSection(&gcCycleSection);
-}
-
-void Thread::DisposeGCLock()
-{
-	DeleteCriticalSection(&gcCycleSection);
 }
 
 

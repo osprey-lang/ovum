@@ -205,8 +205,12 @@ AVES_API void InitListInstance(ThreadHandle thread, ListInst *list, const int32_
 	if (capacity == 0)
 		list->values = nullptr;
 	else
+	{
 		// Note: we use malloc so that we can later use realloc to resize the list
 		list->values = (Value*)malloc(capacity * sizeof(Value));
+		if (list->values == nullptr)
+			VM_ThrowMemoryError(thread);
+	}
 }
 
 void EnsureMinCapacity(ThreadHandle thread, ListInst *list, const int32_t capacity)
@@ -224,7 +228,10 @@ void SetListCapacity(ThreadHandle thread, ListInst *list, const int32_t capacity
 		VM_Throw(thread);
 	}
 
-	list->values = (Value*)realloc(list->values, capacity * sizeof(Value));
+	Value *newValues = (Value*)realloc(list->values, capacity * sizeof(Value));
+	if (newValues == nullptr)
+		VM_ThrowMemoryError(thread);
+	list->values = newValues;
 	list->capacity = capacity;
 	list->version++;
 }

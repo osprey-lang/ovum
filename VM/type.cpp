@@ -441,10 +441,10 @@ OVUM_API uint32_t Field_GetOffset(const FieldHandle field)
 	return field->offset;
 }
 
-OVUM_API bool Field_GetStaticValue(const FieldHandle field, Value &result)
+OVUM_API bool Field_GetStaticValue(const FieldHandle field, Value *result)
 {
 	if (field->staticValue)
-		result = field->staticValue->Read();
+		field->staticValue->Read(result);
 	return field->staticValue != nullptr;
 }
 

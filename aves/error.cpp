@@ -21,7 +21,7 @@ AVES_API NATIVE_FUNCTION(aves_Error_new)
 	//     (message, innerError)
 	// Remember: argc includes the instance.
 
-	ErrorInst *err = _E(THISV);
+	Alias<ErrorInst> err(THISP);
 
 	if (argc > 1 && !IS_NULL(args[1]))
 	{

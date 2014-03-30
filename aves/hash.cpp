@@ -112,17 +112,18 @@ AVES_API NATIVE_FUNCTION(aves_Hash_initialize)
 AVES_API NATIVE_FUNCTION(aves_Hash_getItemInternal)
 {
 	// Args: (key: non-null, hash: Int|UInt)
-	HashInst *inst = _H(THISV);
+	{ Pinned h(THISP);
+		HashInst *inst = _H(THISV);
 
-	int32_t hashCode = U64_TO_HASH(args[2].uinteger);
-	int32_t index = FindEntry(thread, inst, args + 1, hashCode);
-	if (index >= 0)
-	{
-		VM_Push(thread, inst->entries[index].value);
-		return;
+		int32_t hashCode = U64_TO_HASH(args[2].uinteger);
+		int32_t index = FindEntry(thread, inst, args + 1, hashCode);
+		if (index >= 0)
+		{
+			VM_Push(thread, inst->entries[index].value);
+			return;
+		}
 	}
 
-	// TODO: Key Not Found error
 	// ArgumentError(message, paramName)
 	VM_PushString(thread, error_strings::HashKeyNotFound);
 	VM_PushString(thread, strings::key);
@@ -150,6 +151,7 @@ AVES_API NATIVE_FUNCTION(aves_Hash_getEntry)
 AVES_API NATIVE_FUNCTION(aves_Hash_insert)
 {
 	// Args: (key: non-null, hash: Int|UInt, value, add: Boolean)
+	Pinned h(THISP);
 	HashInst *inst = _H(THISV);
 
 	bool add = !!args[4].integer;
@@ -160,7 +162,7 @@ AVES_API NATIVE_FUNCTION(aves_Hash_insert)
 	int32_t hashCode = U64_TO_HASH(args[2].uinteger) & INT32_MAX;
 	int32_t bucket = hashCode % inst->capacity;
 
-	for (int32_t i = inst->buckets[bucket]; i >= 0; i = inst->entries[i].next)
+	for (int32_t i = inst->buckets[bucket]; i >= 0; )
 	{
 		HashEntry *entry = inst->entries + i;
 		if (entry->hashCode == hashCode)
@@ -180,6 +182,7 @@ AVES_API NATIVE_FUNCTION(aves_Hash_insert)
 				return; // Done!
 			}
 		}
+		i = entry->next;
 	}
 
 	// The key is not in the hash table, let's add it!
@@ -215,14 +218,17 @@ AVES_API NATIVE_FUNCTION(aves_Hash_hasKeyInternal)
 {
 	// Args: (key: non-null, hash: Int|UInt)
 	int32_t hashCode = U64_TO_HASH(args[2].uinteger);
-	int32_t index = FindEntry(thread, _H(THISV), args + 1, hashCode);
+	int32_t index;
+	{ Pinned h(THISP);
+		index = FindEntry(thread, _H(THISV), args + 1, hashCode);
+	}
 
 	VM_PushBool(thread, index >= 0);
 }
 AVES_API NATIVE_FUNCTION(aves_Hash_hasValue)
 {
 	// Args: (value)
-	HashInst *inst = _H(THISV);
+	Alias<HashInst> inst(THISP);
 
 	for (int32_t i = 0; i < inst->count; i++)
 		if (inst->entries[i].hashCode >= 0)
@@ -241,11 +247,11 @@ AVES_API NATIVE_FUNCTION(aves_Hash_hasValue)
 AVES_API NATIVE_FUNCTION(aves_Hash_removeInternal)
 {
 	// Args: (key: non-null, hash: Int|UInt)
-
 	HashInst *inst = _H(THISV);
 
 	if (inst->buckets != nullptr)
 	{
+		Pinned h(THISP);
 		int32_t hashCode = U64_TO_HASH(args[2].uinteger);
 		int32_t bucket = hashCode % inst->capacity;
 		int32_t lastEntry = -1;

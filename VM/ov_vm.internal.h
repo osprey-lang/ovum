@@ -14,7 +14,7 @@
 #endif
 
 // This file includes all the internal features of the VM, which are not visible
-// if you just include "vm.h". These are not /supposed/ to be visible to users
+// if you just include "ov_vm.h". These are not /supposed/ to be visible to users
 // of the VM DLL API.
 //
 // You should probably only include this from within CPP files of the VM project,

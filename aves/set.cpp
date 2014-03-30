@@ -89,6 +89,7 @@ AVES_API NATIVE_FUNCTION(aves_Set_clear)
 AVES_API NATIVE_FUNCTION(aves_Set_containsInternal)
 {
 	// Arguments: (item, hash is Int|UInt)
+	Pinned s(THISP);
 	SetInst *set = _Set(THISV);
 
 	if (set->buckets != nullptr)
@@ -116,6 +117,7 @@ AVES_API NATIVE_FUNCTION(aves_Set_containsInternal)
 AVES_API NATIVE_FUNCTION(aves_Set_addInternal)
 {
 	// Arguments: (item, hash is Int|UInt)
+	Pinned s(THISP);
 	SetInst *set = _Set(THISV);
 	if (set->buckets == nullptr)
 		InitializeBuckets(set, 0);
@@ -166,6 +168,7 @@ AVES_API NATIVE_FUNCTION(aves_Set_addInternal)
 AVES_API NATIVE_FUNCTION(aves_Set_removeInternal)
 {
 	// Arguments: (item, hash is Int|UInt)
+	Pinned s(THISP);
 	SetInst *set = _Set(THISV);
 
 	if (set->buckets != nullptr)

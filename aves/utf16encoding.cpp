@@ -22,8 +22,9 @@ AVES_API NATIVE_FUNCTION(aves_Utf16Encoding_get_bigEndian)
 AVES_API NATIVE_FUNCTION(aves_Utf16Encoding_getByteCount)
 {
 	// getByteCount(str)
-	Utf16Encoding *encoding = reinterpret_cast<Utf16Encoding*>(THISV.instance);
 	StringFromValue(thread, args + 1);
+
+	Utf16Encoding *encoding = reinterpret_cast<Utf16Encoding*>(THISV.instance);
 
 	Utf16Encoder enc(encoding->bigEndian);
 	int32_t byteCount = enc.GetByteCount(thread, args[1].common.string, true);

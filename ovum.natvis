@@ -218,13 +218,14 @@
 		</Expand>
 	</Type>
 
-	<Type Name="GCObject_S">
+	<Type Name="GCObject">
 		<DisplayString>{{size={size} mark={(int)(flags &amp; GCOFlags::MARK)} type={&amp;type->fullName->firstChar,sub}}}</DisplayString>
 		<Expand>
 			<Item Name="[size]">size</Item>
 			<Item Name="[type]">type</Item>
 			<Item Name="[mark]">(int)(flags &amp; GCOFlags::MARK)</Item>
 			<Item Name="[flags]">flags</Item>
+			<Item Name="[pinCount]">pinCount</Item>
 			<Synthetic Name="[chain]">
 				<DisplayString>Other GCObjects in this chain</DisplayString>
 				<Expand>

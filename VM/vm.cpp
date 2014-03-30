@@ -35,7 +35,8 @@ OVUM_API int VM_Start(VMStartParams params)
 
 VM::VM(VMStartParams &params) :
 	argCount(params.argc), verbose(params.verbose),
-	types(), functions(), mainThread(new Thread())
+	types(), functions(), mainThread(new Thread()),
+	startupPath(nullptr), modulePath(nullptr)
 { }
 
 VM::~VM()
@@ -127,11 +128,9 @@ void VM::LoadModules(VMStartParams &params)
 	wchar_t *startupPath = CloneWString(params.startupFile);
 	PathRemoveFileSpecW(startupPath);
 	this->startupPath = String_FromWString(nullptr, startupPath);
-	GC::gc->MakeImmortal(GCObject::FromInst(this->startupPath));
 	delete[] startupPath;
 
 	this->modulePath = String_FromWString(nullptr, params.modulePath);
-	GC::gc->MakeImmortal(GCObject::FromInst(this->modulePath));
 
 	// And now we can start opening modules! Hurrah!
 	try

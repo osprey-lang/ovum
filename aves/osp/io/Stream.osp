@@ -276,6 +276,35 @@ public abstract class Stream
 	///          {offset} or {count} could not be converted to an Int.
 	public abstract write(buf, offset, count);
 
+	/// Summary: Writes the entire byte contents of this stream into
+	///          the specified destination stream.
+	/// Param dest: The stream to write bytes into.
+	/// Returns: The total number of bytes written to {dest}, as an Int.
+	/// Throws ArgumentNullError:
+	///          {dest} is null.
+	/// Throws TypeError:
+	///          {dest} is not a {Stream}.
+	/// Throws ArgumentError:
+	///          {dest} is not writable.
+	public copyTo(dest)
+	{
+		return copy(this, dest);
+	}
+	/// Summary: Writes the entire byte contents of the specified
+	///          source stream into this stream.
+	/// Param source: The stream to read bytes from.
+	/// Returns: The total number of bytes read from {source}, as an Int.
+	/// Throws ArgumentNullError:
+	///          {source} is null.
+	/// Throws TypeError:
+	///          {source} is not a {Stream}.
+	/// Throws ArgumentError:
+	///          {source} is not readable.
+	public copyFrom(source)
+	{
+		return copy(source, this);
+	}
+
 	/// Summary: Flushes any pending write buffers, causing their data
 	///          to be immediately written to the underlying storage.
 	/// Throws InvalidStateError:
@@ -326,6 +355,47 @@ public abstract class Stream
 	/// Summary: Gets an instance of a stream that always returns end-of-file
 	///          and discards any data written to it.
 	public static get void = new VoidStream();
+
+	/// Summary: Reads all the bytes from the source stream, up to the end,
+	///          and writes them to the destination stream.
+	/// Param source: The stream to read bytes from.
+	/// Param dest:   The stream to write bytes to.
+	/// Returns: The total number of bytes copied, as an Int.
+	/// Throws ArgumentNullError:
+	///          {source} or {dest} is null.
+	/// Throws TypeError:
+	///          {source} or {dest} is not a {Stream}.
+	/// Throws ArgumentError:
+	///          {source} is not readable.
+	///
+	///          {dest} is not writable.
+	public static copy(source, dest)
+	{
+		if source is null or dest is null:
+			throw new ArgumentNullError(source is null ? "source" : "dest");
+		if source is not Stream:
+			throw new TypeError("source must be an instance of io.Stream.");
+		if dest is not Stream:
+			throw new TypeError("dest must be an instance of io.Stream.");
+		if not source.canRead:
+			throw new ArgumentError("The source stream must be readable.", "source");
+		if not dest.canWrite:
+			throw new ArgumentError("The destination stream must be writable.", "dest");
+
+		const bufferSize = 8k;
+		var buf = new Buffer(bufferSize);
+		var totalBytes = 0;
+
+		var bytesRead;
+		do
+		{
+			bytesRead = source.readMax(buf, 0, bufferSize);
+			dest.write(buf, 0, bytesRead);
+			totalBytes += bytesRead;
+		} while bytesRead != 0;
+
+		return totalBytes;
+	}
 }
 
 private class VoidStream is Stream

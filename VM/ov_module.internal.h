@@ -186,6 +186,8 @@ public:
 
 	inline const int32_t GetLength() const { return length; }
 	inline const int32_t GetCapacity() const { return capacity; }
+
+	inline T *GetEntryPointer(const int32_t index) { return entries + index; }
 	
 	inline bool HasItem(const int32_t index) const
 	{

@@ -63,6 +63,42 @@ String *StringTable::GetValue(String *value, const bool add)
 	return nullptr;
 }
 
+void StringTable::Resize()
+{
+	int32_t newSize = HashHelper_GetPrime(capacity * 2);
+
+	int32_t *newBuckets = new int32_t[newSize];
+	memset(newBuckets, -1, newSize * sizeof(int32_t));
+
+	Entry *newEntries = new Entry[newSize];
+	CopyMemoryT(newEntries, entries, count);
+
+	Entry *e = newEntries;
+	for (int32_t i = 0; i < count; i++, e++)	
+	{
+		int32_t bucket = e->hashCode % newSize;
+		e->next = newBuckets[bucket];
+		newBuckets[bucket] = i;
+	}
+
+	delete[] this->buckets;
+	delete[] this->entries;
+
+	capacity = newSize;
+	this->buckets = newBuckets;
+	this->entries = newEntries;
+}
+
+String *StringTable::GetInterned(String *value)
+{
+	return GetValue(value, false);
+}
+
+String *StringTable::Intern(String *value)
+{
+	return GetValue(value, true);
+}
+
 bool StringTable::RemoveIntern(String *value)
 {
 	// The string MUST be an interned string here. Must be.
@@ -100,95 +136,24 @@ bool StringTable::RemoveIntern(String *value)
 	return false;
 }
 
-void StringTable::Resize()
+void StringTable::UpdateIntern(String *value)
 {
-	int32_t newSize = HashHelper_GetPrime(capacity * 2);
+	// The string should be interned already.
+	assert((value->flags & StringFlags::INTERN) == StringFlags::INTERN);
+	// It should also not be possible to have a non-hashed intern.
+	assert((value->flags & StringFlags::HASHED) == StringFlags::HASHED);
 
-	int32_t *newBuckets = new int32_t[newSize];
-	memset(newBuckets, -1, newSize * sizeof(int32_t));
-
-	Entry *newEntries = new Entry[newSize];
-	CopyMemoryT(newEntries, entries, count);
-
-	Entry *e = newEntries;
-	for (int32_t i = 0; i < count; i++, e++)	
+	int32_t hashCode = value->hashCode & INT32_MAX;
+	Entry *entry;
+	for (int32_t i = buckets[hashCode % capacity]; i >= 0; i = entry->next)
 	{
-		int32_t bucket = e->hashCode % newSize;
-		e->next = newBuckets[bucket];
-		newBuckets[bucket] = i;
-	}
-
-	delete[] this->buckets;
-	delete[] this->entries;
-
-	capacity = newSize;
-	this->buckets = newBuckets;
-	this->entries = newEntries;
-}
-
-String *StringTable::GetInterned(String *value)
-{
-	return GetValue(value, false);
-}
-
-/*String *StringTable::GetInterned(const int32_t length, const uchar values[])
-{
-	int32_t hashCode = String_GetHashCode(length, values) & INT32_MAX;
-
-	int32_t bucket = hashCode % capacity;
-	for (int32_t i = buckets[bucket]; i >= 0; i = entries[i].next)
-	{
-		Entry *e = entries + i;
-		if (e->hashCode == hashCode && StringEquals(e->value, length, values))
-			return e->value;
-	}
-
-	return nullptr;
-}*/
-
-String *StringTable::Intern(String *value)
-{
-	return GetValue(value, true);
-}
-
-bool StringTable::StringEquals(String *a, const int32_t blen, const uchar b[])
-{
-	if (a->length != blen)
-		return false;
-
-	// This is a slightly modified version of the algorithm used in String_Equals.
-
-	// It doesn't matter which string we take the length of; 
-	// they're guaranteed to be the same here anyway.
-	int32_t length = a->length;
-
-	const uchar *ap = &a->firstChar;
-	const uchar *bp = b;
-
-	// Unroll the loop by 10 characters
-	while (length > 10)
-	{
-		if (*(int32_t*)ap != *(int32_t*)bp ||
-			*(int32_t*)(ap + 2) != *(int32_t*)(bp + 2) ||
-			*(int32_t*)(ap + 4) != *(int32_t*)(bp + 4) ||
-			*(int32_t*)(ap + 6) != *(int32_t*)(bp + 6) ||
-			*(int32_t*)(ap + 8) != *(int32_t*)(bp + 8)) break;
-		ap += 10;
-		bp += 10;
-		length -= 10;
-	}
-
-	while (length > 0)
-	{
-		if (*(int32_t*)ap != *(int32_t*)bp)
+		entry = entries + i;
+		if (entry->hashCode == hashCode && String_Equals(value, entry->value))
+		{
+			entry->value = value;
 			break;
-		ap += 2;
-		bp += 2;
-
-		length -= 2;
+		}
 	}
-
-	return length <= 0;
 }
 
 void StringTable::DebugBuckets()
