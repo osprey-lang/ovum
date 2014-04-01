@@ -152,7 +152,7 @@ public:
 };
 
 
-typedef struct StackFrame_S StackFrame;
+class StackFrame;
 // Represents a local offset, that is, an offset that is relative
 // to the base of the stack frame. This is negative for arguments.
 // Use the overloaded + operator together with a StackFrame to get
@@ -431,6 +431,10 @@ public:
 	// The instance constructor of the type, or null if there is none.
 	Method *instanceCtor;
 
+	// The number of overloadable operators.
+	// If you change Operator and/or Opcode without changing this,
+	// you have no one to blame but yourself.
+	static const int OPERATOR_COUNT = 18;
 	// Operator implementations. If an operator implementation is null,
 	// then the type does not implement that operator.
 	Method::Overload *operators[OPERATOR_COUNT];

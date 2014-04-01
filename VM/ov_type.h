@@ -141,10 +141,6 @@ enum class Operator : uint8_t
 	EQ,     // The == operator.
 	CMP,    // The <=> operator.
 };
-// The number of overloadable operators.
-// If you change Operator and/or Opcode without changing this,
-// you have no one to blame but yourself.
-#define OPERATOR_COUNT 18
 
 inline unsigned int Arity(Operator op)
 {
