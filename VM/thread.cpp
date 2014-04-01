@@ -968,7 +968,7 @@ void Thread::PushStackFrame(const uint32_t argCount, Value *args, Method::Overlo
 
 	newFrame->stackCount = 0;
 	newFrame->argc = argCount;
-	newFrame->evalStack = (Value*)((char*)newFrame + STACK_FRAME_SIZE) + localCount;
+	newFrame->evalStack = newFrame->Locals() + localCount;
 	newFrame->prevInstr = First ? nullptr : ip;
 	newFrame->prevFrame = First ? nullptr : currentFrame;
 	newFrame->method = method;
@@ -984,7 +984,7 @@ void Thread::PushStackFrame(const uint32_t argCount, Value *args, Method::Overlo
 	// Also initialize all locals to null
 	if (localCount)
 	{
-		register Value *locals = LOCALS_OFFSET(newFrame);
+		register Value *locals = newFrame->Locals();
 		while (localCount--)
 			(locals++)->type = nullptr;
 	}

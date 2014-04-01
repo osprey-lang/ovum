@@ -1128,10 +1128,6 @@ void Thread::Evaluate()
 			}
 			NEXT_INSTR();
 		}
-
-#ifdef THREADED_EVALUATION
-		throw L"Evaluate fell through the switch.";
-#endif
 	}
 
 ret:

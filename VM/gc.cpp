@@ -547,7 +547,7 @@ void GC::MarkRootSet()
 		// By design, the locals and the eval stack are adjacent in memory.
 		// Hence, the following is safe:
 		if (method->locals || frame->stackCount)
-			ProcessFields(method->locals + frame->stackCount, LOCALS_OFFSET(frame), &hasGen0Refs);
+			ProcessFields(method->locals + frame->stackCount, frame->Locals(), &hasGen0Refs);
 
 		frame = frame->prevFrame;
 	}
@@ -866,7 +866,7 @@ void GC::UpdateRootSet()
 			UpdateFields(paramCount, (Value*)frame - paramCount);
 
 		if (method->locals || frame->stackCount)
-			UpdateFields(method->locals + frame->stackCount, LOCALS_OFFSET(frame));
+			UpdateFields(method->locals + frame->stackCount, frame->Locals());
 
 		frame = frame->prevFrame;
 	}

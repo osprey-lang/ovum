@@ -20,13 +20,10 @@ namespace instr
 	class MethodBuilder;
 }
 
-// The total size of a call stack.
-#define CALL_STACK_SIZE    1024*1024
 
-
-typedef struct StackFrame_S StackFrame;
-typedef struct StackFrame_S
+class StackFrame
 {
+public:
 	// The current size of the evaluation stack.
 	// This is the first field because it is the most frequently accessed;
 	// therefore, no offset needs to be added to the stack frame pointer
@@ -114,11 +111,17 @@ typedef struct StackFrame_S
 		}
 		stackCount--;
 	}
-} StackFrame;
 
-#define STACK_FRAME_SIZE     ALIGN_TO(sizeof(::StackFrame), sizeof(::Value))
-// The base of the locals array, relative to a stack frame base pointer.
-#define LOCALS_OFFSET(sf)    reinterpret_cast<::Value*>((char*)(sf) + STACK_FRAME_SIZE)
+	// The base of the locals array
+	Value *Locals() const;
+};
+
+static const size_t STACK_FRAME_SIZE = ALIGN_TO(sizeof(::StackFrame), 8);
+
+inline Value *StackFrame::Locals() const
+{
+	return reinterpret_cast<Value*>((char*)this + STACK_FRAME_SIZE);
+}
 
 
 enum class ThreadState : int
@@ -219,6 +222,10 @@ public:
 
 class Thread
 {
+private:
+	// The size of the managed call stack
+	static const size_t CALL_STACK_SIZE = 1024 * 1024;
+
 public:
 	Thread();
 	~Thread();
@@ -280,7 +287,7 @@ public:
 		*(ptr + 1) = *ptr;
 	}
 
-	inline Value *Local(const unsigned int n) { return LOCALS_OFFSET(currentFrame) + n; }
+	inline Value *Local(const unsigned int n) { return currentFrame->Locals() + n; }
 
 	// argCount does NOT include the instance.
 	void Invoke(uint32_t argCount, Value *result);
