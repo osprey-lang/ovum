@@ -45,7 +45,7 @@ int wmain(int argc, wchar_t *argv[])
 	vm.startupFile = args.startupFile;
 	vm.verbose     = args.verbose;
 
-	return VM_Start(vm);
+	return VM_Start(&vm);
 }
 
 void ParseCommandLine(int argc, wchar_t *argv[], OvumArgs &args)

@@ -28,9 +28,33 @@ wchar_t *CloneWString(const wchar_t *source)
 	return output.release();
 }
 
-OVUM_API int VM_Start(VMStartParams params)
+OVUM_API int VM_Start(VMStartParams *params)
 {
-	return VM::Run(params);
+	using namespace std;
+
+	_setmode(_fileno(stdout), _O_U8TEXT);
+	_setmode(_fileno(stderr), _O_U8TEXT);
+	_setmode(_fileno(stdin),  _O_U8TEXT);
+
+	if (params->verbose)
+	{
+		wprintf(L"Module path:    %ls\n", params->modulePath);
+		wprintf(L"Startup file:   %ls\n", params->startupFile);
+		wprintf(L"Argument count: %d\n",  params->argc);
+	}
+
+	GC::Init(); // We must call this before VM::Init(), because VM::Init relies on the GC
+	Module::Init();
+	VM::Init(*params); // Also takes care of loading modules
+
+	int result = VM::vm->Run(*params);
+
+	// done!
+	GC::Unload();
+	Module::Unload();
+	VM::Unload();
+
+	return result;
 }
 
 VM::VM(VMStartParams &params) :
@@ -47,28 +71,11 @@ VM::~VM()
 
 int VM::Run(VMStartParams &params)
 {
-	using namespace std;
-
-	_setmode(_fileno(stdout), _O_U8TEXT);
-	_setmode(_fileno(stderr), _O_U8TEXT);
-	_setmode(_fileno(stdin),  _O_U8TEXT);
-
-	if (params.verbose)
-	{
-		wprintf(L"Module path:    %ls\n", params.modulePath);
-		wprintf(L"Startup file:   %ls\n", params.startupFile);
-		wprintf(L"Argument count: %d\n",  params.argc);
-	}
-
-	GC::Init(); // We must call this before VM::Init(), because VM::Init relies on the GC
-	Module::Init();
-	VM::Init(params); // Also takes care of loading modules
-
-	int result = 0;
+	int result;
 
 	try
 	{
-		Method *main = vm->startupModule->GetMainMethod();
+		Method *main = startupModule->GetMainMethod();
 		if (main == nullptr)
 		{
 			fwprintf(stderr, L"Startup error: Startup module does not define a main method.\n");
@@ -76,19 +83,21 @@ int VM::Run(VMStartParams &params)
 		}
 		else
 		{
-			if (vm->verbose)
+			if (verbose)
 				wprintf(L"<<< Begin program output >>>\n");
 
 			Value returnValue;
-			vm->mainThread->Start(main, returnValue);
+			mainThread->Start(main, returnValue);
 
-			if (returnValue.type == vm->types.Int ||
-				returnValue.type == vm->types.UInt)
+			if (returnValue.type == types.Int ||
+				returnValue.type == types.UInt)
 				result = (int)returnValue.integer;
-			else if (returnValue.type == vm->types.Real)
+			else if (returnValue.type == types.Real)
 				result = (int)returnValue.real;
+			else
+				result = 0;
 
-			if (vm->verbose)
+			if (verbose)
 				wprintf(L"<<< End program output >>>\n");
 		}
 	}
@@ -102,12 +111,6 @@ int VM::Run(VMStartParams &params)
 		PrintMethodInitException(e);
 		result = EXIT_FAILURE;
 	}
-
-	// done!
-	// Note: unload the GC first, as it may use the main thread.
-	GC::Unload();
-	Module::Unload();
-	VM::Unload();
 
 	return result;
 }

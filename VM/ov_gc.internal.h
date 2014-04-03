@@ -360,9 +360,9 @@ private:
 
 public:
 	// Initializes the garbage collector.
-	static void Init();
+	NOINLINE static void Init();
 	// Unloads the garbage collector.
-	static void Unload();
+	NOINLINE static void Unload();
 
 	GC();
 	~GC();

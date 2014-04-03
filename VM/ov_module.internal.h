@@ -230,8 +230,8 @@ public:
 	static Module *Open(const wchar_t *fileName);
 	static Module *OpenByName(String *name);
 
-	static void Init();
-	static void Unload();
+	NOINLINE static void Init();
+	NOINLINE static void Unload();
 
 private:
 	class Pool
