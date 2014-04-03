@@ -97,10 +97,10 @@ public:
 	VM(VMStartParams &params);
 	~VM();
 
-	static int Run(VMStartParams &params);
+	int Run(VMStartParams &params);
 
-	static void Init(VMStartParams &params);
-	static void Unload();
+	NOINLINE static void Init(VMStartParams &params);
+	NOINLINE static void Unload();
 
 	static void Print(String *str);
 	static void Printf(const wchar_t *format, String *str);
@@ -121,6 +121,8 @@ public:
 
 	friend class GC;
 	friend class Module;
+
+	friend int VM_Start(VMStartParams *params);
 };
 
 #include "string_hash.internal.h"

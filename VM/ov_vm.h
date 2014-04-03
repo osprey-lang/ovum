@@ -59,7 +59,7 @@ typedef struct VMStartParams_S
 	bool verbose;
 } VMStartParams;
 
-OVUM_API int VM_Start(VMStartParams params);
+OVUM_API int VM_Start(VMStartParams *params);
 
 OVUM_API void VM_Print(String *str);
 OVUM_API void VM_PrintLn(String *str);
