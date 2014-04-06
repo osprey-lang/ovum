@@ -15,21 +15,18 @@ namespace io;
 ///          occur during regular stream interaction, but this is not
 ///          a strict requirement. The documentation for each abstract
 ///          and overridable method contains a base set of error types
-///          that should always be used for the error conditions as
+///          that should always be thrown for the error conditions as
 ///          described.
 ///
 ///          All stream classes support a `close` method, which should
 ///          always be called when the stream is no longer needed.
 ///          This will ensure that file handles, network connections
-///          and so on are properly closed. A recommended idiom for
-///          ensuring proper cleanup is the following:
+///          and so on are properly closed. To ensure proper cleanup,
+///          consider using the `with` keyword, as in this example:
 ///
-///          `var stream;`\
-///          `try {`\
-///          `    stream = getStream(...);`\
-///          `    // ... use stream ...`\
-///          `} finally {`\
-///          `    stream?.close();`\
+///          `with stream = getStream(...)` \
+///          `{` \
+///          `    // ... use stream ...` \
 ///          `}`
 ///
 ///          Note the use of the safe access operator, `?.`, which
@@ -37,7 +34,8 @@ namespace io;
 ///          (if not, the `stream` variable is null).
 ///
 ///          Once a stream has been closed, it is no longer possible
-///          to read from, write to or seek within it.
+///          to read from, write to or seek within it. Attempting to do
+///          so throws an {InvalidStateError}.
 ///
 ///          When a method takes a buffer as an argument, implementations
 ///          should use {Buffer.fromValue} to ensure the argument is indeed
@@ -371,6 +369,31 @@ public abstract class Stream
 	///          {dest} is not writable.
 	public static copy(source, dest)
 	{
+		return copy(source, dest, 64k);
+	}
+
+	/// Summary: Reads all the bytes from the source stream, up to the end,
+	///          and writes them to the destination stream, using the specified
+	///          buffer size.
+	/// Param source: The stream to read bytes from.
+	/// Param dest:   The stream to write bytes to.
+	/// Param bufferSize: The size of the buffer. (Int, UInt or Real)
+	/// Returns: The total number of bytes copied, as an Int.
+	/// Throws ArgumentNullError:
+	///          {source} or {dest} is null.
+	/// Throws TypeError:
+	///          {source} or {dest} is not a {Stream}.
+	///
+	///          {bufferSize} could not be converted to an Int.
+	/// Throws ArgumentError:
+	///          {source} is not readable.
+	///
+	///          {dest} is not writable.
+	/// Throws ArgumentRangeError:
+	///          {bufferSize} is less than or equal to zero.
+	public static copy(source, dest, bufferSize)
+	{
+		bufferSize = int(bufferSize);
 		if source is null or dest is null:
 			throw new ArgumentNullError(source is null ? "source" : "dest");
 		if source is not Stream:
@@ -381,8 +404,9 @@ public abstract class Stream
 			throw new ArgumentError("The source stream must be readable.", "source");
 		if not dest.canWrite:
 			throw new ArgumentError("The destination stream must be writable.", "dest");
+		if bufferSize <= 0:
+			throw new ArgumentRangeError("bufferSize");
 
-		const bufferSize = 8k;
 		var buf = new Buffer(bufferSize);
 		var totalBytes = 0;
 

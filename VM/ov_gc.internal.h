@@ -376,7 +376,6 @@ public:
 		output->instance = gco->InstanceBase();
 	}
 
-
 	String *ConstructString(Thread *const thread, const int32_t length, const uchar value[]);
 	String *ConvertString(Thread *const thread, const char *string);
 
@@ -466,7 +465,7 @@ private:
 			if ((gco->flags & GCOFlags::GEN_0) == GCOFlags::GEN_0)
 				*hasGen0Refs = true;
 			if ((gco->flags & GCOFlags::MARK) == GCO_COLLECT(currentCollectMark))
-				MarkForProcessing(GCObject::FromInst(str));
+				MarkForProcessing(gco);
 		}
 	}
 

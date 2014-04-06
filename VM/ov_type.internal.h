@@ -152,30 +152,6 @@ public:
 };
 
 
-class StackFrame;
-// Represents a local offset, that is, an offset that is relative
-// to the base of the stack frame. This is negative for arguments.
-// Use the overloaded + operator together with a StackFrame to get
-// the local that it actually refers to.
-class LocalOffset
-{
-private:
-	int32_t offset;
-
-public:
-	inline LocalOffset(const int32_t offset) : offset(offset * sizeof(Value)) { }
-
-	inline int32_t GetOffset() const { return offset / sizeof(Value); }
-
-	inline Value *const operator+(const StackFrame *const frame) const
-	{
-		// Offsets 0 and 1 point directly into the stack frame;
-		// they are never supposed to be reached.
-		assert(offset != 0 && offset != 1);
-		return (Value*)((char*)frame + offset);
-	}
-};
-
 class Method : public Member
 {
 public:
@@ -304,12 +280,12 @@ public:
 			return (flags & MethodFlags::INITED) == MethodFlags::INITED;
 		}
 
-		inline LocalOffset GetArgumentOffset(uint16_t arg) const
+		inline int32_t GetArgumentOffset(uint16_t arg) const
 		{
-			return LocalOffset((int16_t)(arg - GetEffectiveParamCount()));
+			return (int32_t)(arg - GetEffectiveParamCount()) * sizeof(Value);
 		}
-		LocalOffset GetLocalOffset(uint16_t local) const;
-		LocalOffset GetStackOffset(uint16_t stackSlot) const;
+		int32_t GetLocalOffset(uint16_t local) const;
+		int32_t GetStackOffset(uint16_t stackSlot) const;
 
 		inline ~Overload()
 		{
