@@ -59,13 +59,13 @@ namespace std_type_names
 	};
 }
 
-LocalOffset Method::Overload::GetLocalOffset(uint16_t local) const
+int32_t Method::Overload::GetLocalOffset(uint16_t local) const
 {
-	return LocalOffset((int16_t)(STACK_FRAME_SIZE / sizeof(Value) + local));
+	return (int32_t)(STACK_FRAME_SIZE + local * sizeof(Value));
 }
-LocalOffset Method::Overload::GetStackOffset(uint16_t stackSlot) const
+int32_t Method::Overload::GetStackOffset(uint16_t stackSlot) const
 {
-	return LocalOffset((int16_t)(STACK_FRAME_SIZE / sizeof(Value) + locals + stackSlot));
+	return (int32_t)(STACK_FRAME_SIZE + (locals + stackSlot) * sizeof(Value));
 }
 
 Type::Type(int32_t memberCount) :

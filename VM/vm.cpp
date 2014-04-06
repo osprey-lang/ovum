@@ -30,19 +30,6 @@ wchar_t *CloneWString(const wchar_t *source)
 
 OVUM_API int VM_Start(VMStartParams *params)
 {
-	using namespace std;
-
-	_setmode(_fileno(stdout), _O_U8TEXT);
-	_setmode(_fileno(stderr), _O_U8TEXT);
-	_setmode(_fileno(stdin),  _O_U8TEXT);
-
-	if (params->verbose)
-	{
-		wprintf(L"Module path:    %ls\n", params->modulePath);
-		wprintf(L"Startup file:   %ls\n", params->startupFile);
-		wprintf(L"Argument count: %d\n",  params->argc);
-	}
-
 	GC::Init(); // We must call this before VM::Init(), because VM::Init relies on the GC
 	Module::Init();
 	VM::Init(*params); // Also takes care of loading modules
@@ -78,7 +65,7 @@ int VM::Run(VMStartParams &params)
 		Method *main = startupModule->GetMainMethod();
 		if (main == nullptr)
 		{
-			fwprintf(stderr, L"Startup error: Startup module does not define a main method.\n");
+			fwprintf(stdErr, L"Startup error: Startup module does not define a main method.\n");
 			result = EXIT_FAILURE;
 		}
 		else
@@ -119,6 +106,17 @@ void VM::Init(VMStartParams &params)
 {
 	VM::stdOut = stdout;
 	VM::stdErr = stderr;
+
+	_setmode(_fileno(stdOut), _O_U8TEXT);
+	_setmode(_fileno(stdErr), _O_U8TEXT);
+	_setmode(_fileno(stdin),  _O_U8TEXT);
+
+	if (params.verbose)
+	{
+		wprintf(L"Module path:    %ls\n", params.modulePath);
+		wprintf(L"Startup file:   %ls\n", params.startupFile);
+		wprintf(L"Argument count: %d\n",  params.argc);
+	}
 
 	vm = new VM(params);
 	vm->LoadModules(params);

@@ -344,6 +344,29 @@ enum IntermediateOpcode : uint8_t
 	OPI_BRNGTE      = OPI_BRLT
 };
 
+// Represents a local offset, that is, an offset that is relative
+// to the base of the stack frame. This is negative for arguments.
+// Use the overloaded + operator together with a StackFrame to get
+// the local that it actually refers to.
+class LocalOffset
+{
+private:
+	int32_t offset;
+
+public:
+	inline LocalOffset(const int32_t offset) : offset(offset) { }
+
+	inline int32_t GetOffset() const { return offset; }
+
+	inline Value *const operator+(const StackFrame *const frame) const
+	{
+		// The local offset is never supposed to point into
+		// the stack frame itself.
+		assert(offset < 0 || offset >= STACK_FRAME_SIZE);
+		return (Value*)((char*)frame + offset);
+	}
+};
+
 namespace instr
 {
 	class Instruction;
@@ -662,7 +685,7 @@ namespace instr
 			if (isOnStack)
 			{
 				// dup claims to add two values, but we're only interested in the second argument
-				target = LocalOffset(offset.GetOffset() + 1);
+				target = LocalOffset(offset.GetOffset() + sizeof(Value));
 				opcode = (IntermediateOpcode)(opcode | 2);
 			}
 			else
