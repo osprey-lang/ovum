@@ -6,13 +6,19 @@
 #include "ov_vm.internal.h"
 #include "ov_unicode.h"
 
-inline CaseMap operator+(const CaseMap map, const int32_t codepoint)
+struct CaseOffsets
+{
+	int32_t upper;
+	int32_t lower;
+};
+
+inline CaseMap operator+(const CaseOffsets map, const int32_t codepoint)
 {
 	const CaseMap output = { map.upper + codepoint, map.lower + codepoint };
 	return output;
 }
 
-inline CaseMap operator+(const int32_t codepoint, const CaseMap map)
+inline CaseMap operator+(const int32_t codepoint, const CaseOffsets map)
 {
 	return map + codepoint;
 }

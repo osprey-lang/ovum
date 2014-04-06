@@ -10,12 +10,12 @@ const UnicodeCategory UC_GetCategoryInternal(const int32_t codepoint)
 
 const CaseMap UC_GetCaseMapInternal(const int32_t codepoint)
 {
-	const CaseMap *cases = reinterpret_cast<const CaseMap*>(CaseMaps);
+	const CaseOffsets *cases = reinterpret_cast<const CaseOffsets*>(CaseMaps);
 	int32_t index = PrimaryCaseMap[codepoint >> 13];
 	index = CaseIndexMap[(index << 7) + ((codepoint >> 6) & 127)];
-	CaseMap map = cases[(index << 6) + (codepoint & 63)];
+	CaseOffsets offsets = cases[(index << 6) + (codepoint & 63)];
 
-	return map + codepoint;
+	return offsets + codepoint;
 }
 
 OVUM_API UnicodeCategory UC_GetCategory(const uchar ch)
