@@ -35,7 +35,6 @@ class Field;
 class Property;
 class StaticRef;
 
-class OvumException;
 class MethodInitException;
 
 namespace debug
@@ -54,6 +53,8 @@ typedef Property *PropertyHandle;
 
 #include "ov_vm.h"
 #include <cstdio>
+
+typedef uint32_t TokenId;
 
 class VM
 {
@@ -114,7 +115,7 @@ public:
 	int GetArgs(const int destLength, String *dest[]);
 	int GetArgValues(const int destLength, Value dest[]);
 
-	static void PrintOvumException(OvumException &e);
+	static void PrintUnhandledError(Value &error);
 	static void PrintMethodInitException(MethodInitException &e);
 
 	static VM *vm;

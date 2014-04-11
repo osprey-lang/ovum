@@ -420,14 +420,14 @@ namespace instr
 
 		inline uint32_t GetOriginalOffset(const int32_t index) const
 		{
-			if (index >= instructions.size())
+			if (index >= (int32_t)instructions.size())
 				return instructions.end()->originalOffset +
 					instructions.end()->originalSize;
 			return instructions[index].originalOffset;
 		}
 		inline uint32_t GetOriginalSize(const int32_t index) const
 		{
-			if (index >= instructions.size())
+			if (index >= (int32_t)instructions.size())
 				return 0;
 			return instructions[index].originalSize;
 		}

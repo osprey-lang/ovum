@@ -25,7 +25,7 @@ AVES_API NATIVE_FUNCTION(aves_HashEntry_get_nextIndex);
 AVES_API NATIVE_FUNCTION(aves_HashEntry_get_key);
 AVES_API NATIVE_FUNCTION(aves_HashEntry_get_value);
 
-AVES_API void InitHashInstance(ThreadHandle thread, HashInst *hash, const int32_t capacity);
+AVES_API int InitHashInstance(ThreadHandle thread, HashInst *hash, const int32_t capacity);
 
 bool aves_Hash_getReferences(void *basePtr, unsigned int *valc, Value **target, int32_t *state);
 

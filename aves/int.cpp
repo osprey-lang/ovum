@@ -6,48 +6,58 @@
 #define LEFT  (args[0])
 #define RIGHT (args[1])
 
-AVES_API NATIVE_FUNCTION(aves_int)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_int)
 {
-	IntFromValue(thread, args);
+	CHECKED(IntFromValue(thread, args));
 	VM_Push(thread, args[0]);
+	RETURN_SUCCESS;
 }
+END_NATIVE_FUNCTION
 
 AVES_API NATIVE_FUNCTION(aves_Int_getHashCode)
 {
 	VM_Push(thread, THISV);
+	RETURN_SUCCESS;
 }
 
-AVES_API NATIVE_FUNCTION(aves_Int_toString)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Int_toString)
 {
-	VM_PushString(thread, integer::ToString(thread, THISV.integer, 10, 0, false));
+	String *str;
+	CHECKED_MEM(str = integer::ToString(thread, THISV.integer, 10, 0, false));
+	VM_PushString(thread, str);
 }
-AVES_API NATIVE_FUNCTION(aves_Int_toStringf)
+END_NATIVE_FUNCTION
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Int_toStringf)
 {
 	Value *format = args + 1;
 
+	String *str;
 	if (format->type == Types::Int || format->type == Types::UInt)
 	{
 		if (format->integer < 2 || format->integer > 36)
 		{
 			VM_PushString(thread, strings::format);
 			VM_PushString(thread, error_strings::RadixOutOfRange);
-			GC_Construct(thread, Types::ArgumentRangeError, 2, nullptr);
-			VM_Throw(thread);
+			CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 2, nullptr));
+			return VM_Throw(thread);
 		}
 
-		VM_PushString(thread, integer::ToString(thread, THISV.integer, (int)format->integer, 0, false));
+		str = integer::ToString(thread, THISV.integer, (int)format->integer, 0, false);
 	}
 	else if (IsString(format))
 	{
 		int radix, minWidth;
 		bool upper;
-		integer::ParseFormatString(thread, format->common.string, &radix, &minWidth, &upper);
+		CHECKED(integer::ParseFormatString(thread, format->common.string, &radix, &minWidth, &upper));
 
-		VM_PushString(thread, integer::ToString(thread, THISV.integer, radix, minWidth, upper));
+		str = integer::ToString(thread, THISV.integer, radix, minWidth, upper);
 	}
 	else
-		VM_ThrowTypeError(thread);
+		return VM_ThrowTypeError(thread);
+	CHECKED_MEM(str);
+	VM_PushString(thread, str);
 }
+END_NATIVE_FUNCTION
 
 // Operators
 
@@ -62,6 +72,7 @@ AVES_API NATIVE_FUNCTION(aves_Int_opEquals)
 		equals = (double)LEFT.integer == RIGHT.real;
 
 	VM_PushBool(thread, equals);
+	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_Int_opCompare)
 {
@@ -95,166 +106,210 @@ AVES_API NATIVE_FUNCTION(aves_Int_opCompare)
 			0;
 	}
 	else
-		VM_ThrowTypeError(thread);
+		return VM_ThrowTypeError(thread);
 
 	VM_PushInt(thread, result);
+	RETURN_SUCCESS;
 }
-AVES_API NATIVE_FUNCTION(aves_Int_opShiftLeft)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Int_opShiftLeft)
 {
-	IntFromValue(thread, &RIGHT);
+	CHECKED(IntFromValue(thread, &RIGHT));
 	int64_t amount = RIGHT.integer;
 
 	if (amount < 0)
 	{
-		GC_Construct(thread, Types::ArgumentRangeError, 0, nullptr);
-		VM_Throw(thread);
+		CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 0, nullptr));
+		return VM_Throw(thread);
 	}
 	if (amount > 64)
 	{
 		VM_PushInt(thread, 0);
-		return;
+		RETURN_SUCCESS;
 	}
 
 	VM_PushInt(thread, LEFT.integer << (int)amount);
+	RETURN_SUCCESS;
 }
-AVES_API NATIVE_FUNCTION(aves_Int_opShiftRight)
+END_NATIVE_FUNCTION
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Int_opShiftRight)
 {
-	IntFromValue(thread, &RIGHT);
+	CHECKED(IntFromValue(thread, &RIGHT));
 	int64_t amount = RIGHT.integer;
 
 	if (amount < 0)
 	{
-		GC_Construct(thread, Types::ArgumentRangeError, 0, nullptr);
-		VM_Throw(thread);
+		CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 0, nullptr));
+		return VM_Throw(thread);
 	}
 	if (amount > 64)
 	{
 		VM_PushInt(thread, LEFT.integer < 0 ? -1 : 0);
-		return;
+		RETURN_SUCCESS;
 	}
 
 	VM_PushInt(thread, LEFT.integer >> (int)amount);
 }
-AVES_API NATIVE_FUNCTION(aves_Int_opAdd)
+END_NATIVE_FUNCTION
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Int_opAdd)
 {
 	if (RIGHT.type != Types::Int)
 	{
 		if (RIGHT.type == Types::Real)
 		{
 			VM_PushReal(thread, (double)LEFT.integer + RIGHT.real);
-			return;
+			RETURN_SUCCESS;
 		}
-		IntFromValue(thread, &RIGHT);
+		CHECKED(IntFromValue(thread, &RIGHT));
 	}
 
-	VM_PushInt(thread, Int_AddChecked(thread, LEFT.integer, RIGHT.integer));
+	int64_t result;
+	if (Int_AddChecked(LEFT.integer, RIGHT.integer, result))
+		return VM_ThrowOverflowError(thread);
+	VM_PushInt(thread, result);
 }
-AVES_API NATIVE_FUNCTION(aves_Int_opSubtract)
+END_NATIVE_FUNCTION
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Int_opSubtract)
 {
 	if (RIGHT.type != Types::Int)
 	{
 		if (RIGHT.type == Types::Real)
 		{
 			VM_PushReal(thread, (double)LEFT.integer - RIGHT.real);
-			return;
+			RETURN_SUCCESS;
 		}
-		IntFromValue(thread, &RIGHT);
+		CHECKED(IntFromValue(thread, &RIGHT));
 	}
 
-	VM_PushInt(thread, Int_SubtractChecked(thread, LEFT.integer, RIGHT.integer));
+	int64_t result;
+	if (Int_SubtractChecked(LEFT.integer, RIGHT.integer, result))
+		return VM_ThrowOverflowError(thread);
+	VM_PushInt(thread, result);
 }
+END_NATIVE_FUNCTION
 AVES_API NATIVE_FUNCTION(aves_Int_opOr)
 {
 	if (RIGHT.type != Types::Int && RIGHT.type != Types::UInt)
-		VM_ThrowTypeError(thread);
+		return VM_ThrowTypeError(thread);
 
 	VM_PushInt(thread, LEFT.integer | RIGHT.integer);
+	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_Int_opXor)
 {
 	if (RIGHT.type != Types::Int && RIGHT.type != Types::UInt)
-		VM_ThrowTypeError(thread);
+		return VM_ThrowTypeError(thread);
 
 	VM_PushInt(thread, LEFT.integer ^ RIGHT.integer);
+	RETURN_SUCCESS;
 }
-AVES_API NATIVE_FUNCTION(aves_Int_opMultiply)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Int_opMultiply)
 {
 	if (RIGHT.type != Types::Int)
 	{
 		if (RIGHT.type == Types::Real)
 		{
 			VM_PushReal(thread, (double)LEFT.integer * RIGHT.real);
-			return;
+			RETURN_SUCCESS;
 		}
-		IntFromValue(thread, &RIGHT);
+		CHECKED(IntFromValue(thread, &RIGHT));
 	}
 
-	VM_PushInt(thread, Int_MultiplyChecked(thread, LEFT.integer, RIGHT.integer));
+	int64_t result;
+	if (Int_MultiplyChecked(LEFT.integer, RIGHT.integer, result))
+		return VM_ThrowOverflowError(thread);
+	VM_PushInt(thread, result);
 }
-AVES_API NATIVE_FUNCTION(aves_Int_opDivide)
+END_NATIVE_FUNCTION
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Int_opDivide)
 {
 	if (RIGHT.type != Types::Int)
 	{
 		if (RIGHT.type == Types::Real)
 		{
 			VM_PushReal(thread, (double)LEFT.integer / RIGHT.real);
-			return;
+			RETURN_SUCCESS;
 		}
-		IntFromValue(thread, &RIGHT);
+		CHECKED(IntFromValue(thread, &RIGHT));
 	}
 
-	VM_PushInt(thread, Int_DivideChecked(thread, LEFT.integer, RIGHT.integer));
+	int64_t result;
+	int r = Int_DivideChecked(LEFT.integer, RIGHT.integer, result);
+	if (r)
+	{
+		if (r == OVUM_ERROR_DIVIDE_BY_ZERO)
+			return VM_ThrowDivideByZeroError(thread);
+		return VM_ThrowOverflowError(thread);
+	}
+	VM_PushInt(thread, result);
 }
-AVES_API NATIVE_FUNCTION(aves_Int_opModulo)
+END_NATIVE_FUNCTION
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Int_opModulo)
 {
 	if (RIGHT.type != Types::Int)
 	{
 		if (RIGHT.type == Types::Real)
 		{
 			VM_PushReal(thread, fmod((double)LEFT.integer, RIGHT.real));
-			return;
+			RETURN_SUCCESS;
 		}
-		IntFromValue(thread, &RIGHT);
+		CHECKED(IntFromValue(thread, &RIGHT));
 	}
 
-	VM_PushInt(thread, Int_ModuloChecked(thread, LEFT.integer, RIGHT.integer));
+	int64_t result;
+	if (Int_ModuloChecked(LEFT.integer, RIGHT.integer, result))
+		return VM_ThrowDivideByZeroError(thread);
+	VM_PushInt(thread, result);
 }
+END_NATIVE_FUNCTION
 AVES_API NATIVE_FUNCTION(aves_Int_opAnd)
 {
 	if (RIGHT.type != Types::Int && RIGHT.type != Types::UInt)
-		VM_ThrowTypeError(thread);
+		return VM_ThrowTypeError(thread);
 
 	VM_PushInt(thread, LEFT.integer & RIGHT.integer);
+	RETURN_SUCCESS;
 }
-AVES_API NATIVE_FUNCTION(aves_Int_opPower)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Int_opPower)
 {
 	if (RIGHT.type != Types::Int)
 	{
 		if (RIGHT.type == Types::Real)
 		{
 			VM_PushReal(thread, pow((double)LEFT.integer, RIGHT.real));
-			return;
+			RETURN_SUCCESS;
 		}
-		IntFromValue(thread, &RIGHT);
+		CHECKED(IntFromValue(thread, &RIGHT));
 	}
 
-	int64_t result = integer::Power(thread, LEFT.integer, RIGHT.integer);
+	if (RIGHT.integer < 0)
+	{
+		CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 0, nullptr));
+		return VM_Throw(thread);
+	}
+
+	int64_t result;
+	if (integer::Power(LEFT.integer, RIGHT.integer, result))
+		return VM_ThrowOverflowError(thread);
 	VM_PushInt(thread, result);
 }
+END_NATIVE_FUNCTION
 AVES_API NATIVE_FUNCTION(aves_Int_opPlus)
 {
 	VM_Push(thread, args[0]);
+	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_Int_opNegate)
 {
 	if (args[0].integer == INT64_MIN)
-		VM_ThrowOverflowError(thread);
+		return VM_ThrowOverflowError(thread);
 
 	VM_PushInt(thread, -args[0].integer);
+	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_Int_opNot)
 {
 	VM_PushInt(thread, ~args[0].integer);
+	RETURN_SUCCESS;
 }
 
 // Internal methods
@@ -413,7 +468,7 @@ int32_t integer::ToStringRadix(ThreadHandle thread, const int64_t value,
 	return length;
 }
 
-void integer::ParseFormatString(ThreadHandle thread, String *str, int *radix, int *minWidth, bool *upper)
+int integer::ParseFormatString(ThreadHandle thread, String *str, int *radix, int *minWidth, bool *upper)
 {
 	*radix = 10;
 	*minWidth = 0;
@@ -438,7 +493,8 @@ void integer::ParseFormatString(ThreadHandle thread, String *str, int *radix, in
 	case 'd': // 'D'[width]
 		i++; // eat the D
 		ch++;
-		if (str->length > 1) goto parseMinWidth;
+		if (str->length > 1)
+			goto parseMinWidth;
 		break;
 
 	case 'x': // 'x'[width]
@@ -446,16 +502,19 @@ void integer::ParseFormatString(ThreadHandle thread, String *str, int *radix, in
 		i++; // skip the X
 		*upper = *ch++ == 'X';
 		*radix = 16;
-		if (str->length > 1) goto parseMinWidth;
+		if (str->length > 1)
+			goto parseMinWidth;
 		break;
 
 	case 'r': // 'r'radix[':'width]
 	case 'R': // 'R'radix[':'width] (or with ',' in place of ':')
 		i++; // skip the R
 		*upper = *ch++ == 'R';
-		if (str->length < 2) goto throwFormatError;
+		if (str->length < 2)
+			goto throwFormatError;
 
-		if (*ch < '0' || *ch > '9') goto throwFormatError;
+		if (*ch < '0' || *ch > '9')
+			goto throwFormatError;
 
 		*radix = *ch++ - '0';
 		i++;
@@ -465,17 +524,13 @@ void integer::ParseFormatString(ThreadHandle thread, String *str, int *radix, in
 			i++;
 		}
 		if (*radix < 2 || *radix > 36)
-		{
-			VM_PushString(thread, strings::format); // paramName
-			VM_PushString(thread, error_strings::RadixOutOfRange); // message
-			GC_Construct(thread, Types::ArgumentRangeError, 2, nullptr);
-			VM_Throw(thread);
-		}
+			goto throwFormatError;
 
 		if (*ch != ':' && *ch != ',')
 			break;
 		ch++, i++; // skip ':'/','
-		if (i == str->length) goto throwFormatError;
+		if (i == str->length)
+			goto throwFormatError;
 
 parseMinWidth:
 		while (i < str->length && *ch >= '0' && *ch <= '9')
@@ -488,17 +543,19 @@ parseMinWidth:
 		}
 		break;
 
-	default: goto throwFormatError;
+	default:
+		goto throwFormatError;
 	}
 
 	if (i != str->length || *minWidth > MaxWidth)
 		goto throwFormatError;
 
-	return;
+	RETURN_SUCCESS;
 
 throwFormatError:
 	VM_PushString(thread, error_strings::InvalidIntegerFormat);
-	GC_Construct(thread, Types::ArgumentError, 1, nullptr);
-	VM_Throw(thread);
-	return;
+	int r = GC_Construct(thread, Types::ArgumentError, 1, nullptr);
+	if (r == OVUM_SUCCESS)
+		r = VM_Throw(thread);
+	return r;
 }

@@ -54,7 +54,7 @@ public:
 
 	void Reset();
 
-	static void BufferOverrunError(ThreadHandle thread);
+	static int BufferOverrunError(ThreadHandle thread);
 };
 
 AVES_API void aves_Utf8Encoder_init(TypeHandle type);

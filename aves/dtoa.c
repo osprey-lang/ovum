@@ -34,6 +34,11 @@
  *     (backwards compatibility with older compilers is not of interest)
  ***************************************************************/
 
+#ifdef _MSC_VER
+#pragma warning(disable : 4244) // conversion from 'T' to 'U', possible loss of data
+#pragma warning(disable : 4018) // comparison operator: signed/unsigned mismatch
+#endif
+
 /* Please send bug reports to David M. Gay (dmg at acm dot org,
  * with " at " changed at "@" and " dot " changed to ".").	*/
 

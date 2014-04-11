@@ -10,6 +10,7 @@ AVES_API NATIVE_FUNCTION(aves_Utf8Encoding_getByteCount)
 	int32_t byteCount = enc.GetByteCount(thread, args[1].common.string, true);
 
 	VM_PushInt(thread, byteCount);
+	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_Utf8Encoding_getBytesInternal)
 {
@@ -20,8 +21,11 @@ AVES_API NATIVE_FUNCTION(aves_Utf8Encoding_getBytesInternal)
 	Buffer *buf = reinterpret_cast<Buffer*>(args[2].instance);
 	int32_t offset = (int32_t)args[3].integer;
 	int32_t byteCount = enc.GetBytes(thread, args[1].common.string, buf, offset, true);
+	if (byteCount < 0)
+		return ~byteCount;
 
 	VM_PushInt(thread, byteCount);
+	RETURN_SUCCESS;
 }
 
 AVES_API NATIVE_FUNCTION(aves_Utf8Encoding_getCharCountInternal)
@@ -35,6 +39,7 @@ AVES_API NATIVE_FUNCTION(aves_Utf8Encoding_getCharCountInternal)
 		(int32_t)args[2].integer, (int32_t)args[3].integer, true);
 
 	VM_PushInt(thread, charCount);
+	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_Utf8Encoding_getCharsInternal)
 {
@@ -48,8 +53,11 @@ AVES_API NATIVE_FUNCTION(aves_Utf8Encoding_getCharsInternal)
 		reinterpret_cast<Buffer*>(args[1].instance),
 		(int32_t)args[2].integer, (int32_t)args[3].integer,
 		sb, true);
+	if (charCount < 0)
+		return ~charCount;
 
 	VM_PushInt(thread, charCount);
+	RETURN_SUCCESS;
 }
 
 
@@ -124,8 +132,8 @@ int32_t Utf8Encoder::GetBytes(ThreadHandle thread, String *str, Buffer *buf, int
 			if (!UC_IsSurrogateTrail(ch))
 			{
 				// Add U+FFFD, which is EF BF BD encoded.
-				if (offset + 3 > buf->size)
-					BufferOverrunError(thread);
+				if ((uint32_t)offset + 3 > buf->size)
+					return ~BufferOverrunError(thread);
 
 				*bp++ = 0xEF;
 				*bp++ = 0xBF;
@@ -136,8 +144,8 @@ int32_t Utf8Encoder::GetBytes(ThreadHandle thread, String *str, Buffer *buf, int
 				goto append;
 			}
 
-			if (offset + 4 > buf->size)
-				BufferOverrunError(thread);
+			if ((uint32_t)offset + 4 > buf->size)
+				return ~BufferOverrunError(thread);
 
 			wuchar wch = UC_ToWide(surrogateChar, ch);
 			*bp++ = 0xf0 | (wch >> 18);
@@ -155,8 +163,8 @@ int32_t Utf8Encoder::GetBytes(ThreadHandle thread, String *str, Buffer *buf, int
 		{
 			if (ch >= 0xDC00) // trail without lead becomes U+FFFD
 			{
-				if (offset + 3 > buf->size)
-					BufferOverrunError(thread);
+				if ((uint32_t)offset + 3 > buf->size)
+					return ~BufferOverrunError(thread);
 
 				*bp++ = 0xEF;
 				*bp++ = 0xBF;
@@ -171,8 +179,8 @@ int32_t Utf8Encoder::GetBytes(ThreadHandle thread, String *str, Buffer *buf, int
 
 		if (ch > 0x07FF)
 		{
-			if (offset + 3 > buf->size)
-				BufferOverrunError(thread);
+			if ((uint32_t)offset + 3 > buf->size)
+				return ~BufferOverrunError(thread);
 			*bp++ = 0xE0 | (ch >> 12);
 			*bp++ = 0x80 | (ch >> 6) & 0x3F;
 			*bp++ = 0x80 | ch & 0x3F;
@@ -181,8 +189,8 @@ int32_t Utf8Encoder::GetBytes(ThreadHandle thread, String *str, Buffer *buf, int
 		}
 		else if (ch > 0x7F)
 		{
-			if (offset + 2 > buf->size)
-				BufferOverrunError(thread);
+			if ((uint32_t)offset + 2 > buf->size)
+				return ~BufferOverrunError(thread);
 			*bp++ = 0xC0 | (ch >> 6) & 0x3F;
 			*bp++ = 0x80 | ch & 0x3F;
 			offset += 2;
@@ -190,8 +198,8 @@ int32_t Utf8Encoder::GetBytes(ThreadHandle thread, String *str, Buffer *buf, int
 		}
 		else
 		{
-			if (offset + 1 > buf->size)
-				BufferOverrunError(thread);
+			if ((uint32_t)offset + 1 > buf->size)
+				return ~BufferOverrunError(thread);
 			*bp++ = (uint8_t)ch;
 			offset++;
 			count++;
@@ -200,8 +208,8 @@ int32_t Utf8Encoder::GetBytes(ThreadHandle thread, String *str, Buffer *buf, int
 
 	if (flush && surrogateChar)
 	{
-		if (offset + 3 > buf->size)
-			BufferOverrunError(thread);
+		if ((uint32_t)offset + 3 > buf->size)
+			return ~BufferOverrunError(thread);
 
 		*bp++ = 0xEF;
 		*bp++ = 0xBF;
@@ -222,11 +230,13 @@ void Utf8Encoder::Reset()
 	this->surrogateChar = 0;
 }
 
-void Utf8Encoder::BufferOverrunError(ThreadHandle thread)
+int Utf8Encoder::BufferOverrunError(ThreadHandle thread)
 {
 	VM_PushString(thread, error_strings::EncodingBufferOverrun);
-	GC_Construct(thread, Types::ArgumentError, 1, nullptr);
-	VM_Throw(thread);
+	int r = GC_Construct(thread, Types::ArgumentError, 1, nullptr);
+	if (r == OVUM_SUCCESS)
+		r = VM_Throw(thread);
+	return r;
 }
 
 AVES_API void aves_Utf8Encoder_init(TypeHandle type)
@@ -234,15 +244,16 @@ AVES_API void aves_Utf8Encoder_init(TypeHandle type)
 	Type_SetInstanceSize(type, sizeof(Utf8Encoder));
 }
 
-AVES_API NATIVE_FUNCTION(aves_Utf8Encoder_getByteCount)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Utf8Encoder_getByteCount)
 {
 	// getByteCount(str, flush)
 	Utf8Encoder *enc = reinterpret_cast<Utf8Encoder*>(THISV.instance);
-	StringFromValue(thread, args + 1);
+	CHECKED(StringFromValue(thread, args + 1));
 
 	int32_t byteCount = enc->GetByteCount(thread, args[1].common.string, IsTrue(args + 2));
 	VM_PushInt(thread, byteCount);
 }
+END_NATIVE_FUNCTION
 AVES_API NATIVE_FUNCTION(aves_Utf8Encoder_getBytesInternal)
 {
 	// getBytesInternal(str is String, buf is Buffer, offset is Int, flush is Boolean)
@@ -252,12 +263,16 @@ AVES_API NATIVE_FUNCTION(aves_Utf8Encoder_getBytesInternal)
 		reinterpret_cast<Buffer*>(args[2].instance),
 		(int32_t)args[3].integer,
 		!!args[4].integer);
+	if (byteCount < 0)
+		return ~byteCount;
 
 	VM_PushInt(thread, byteCount);
+	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_Utf8Encoder_reset)
 {
 	reinterpret_cast<Utf8Encoder*>(THISV.instance)->Reset();
+	RETURN_SUCCESS;
 }
 
 
@@ -480,7 +495,8 @@ int32_t Utf8Decoder::GetChars(ThreadHandle thread, Buffer *buf, int32_t offset, 
 			state = 0;
 			if ((b & 0xC0) != 0x80)
 			{
-				sb->Append(thread, ReplacementChar);
+				if (!sb->Append(ReplacementChar))
+					return ~OVUM_ERROR_NO_MEMORY;
 				goto defaultCase;
 			}
 
@@ -488,14 +504,16 @@ int32_t Utf8Decoder::GetChars(ThreadHandle thread, Buffer *buf, int32_t offset, 
 				(b & 0x3F);
 			if (ch < 0x0080) // overlong sequence
 				ch = ReplacementChar;
-			sb->Append(thread, ch);
+			if (!sb->Append(ch))
+				return ~OVUM_ERROR_NO_MEMORY;
 			break;
 
 		// 3-byte sequences
 		case 2:
 			if ((b & 0xC0) != 0x80)
 			{
-				sb->Append(thread, ReplacementChar);
+				if (!sb->Append(ReplacementChar))
+					return ~OVUM_ERROR_NO_MEMORY;
 				charCount++;
 				state = 0;
 				goto defaultCase;
@@ -509,7 +527,8 @@ int32_t Utf8Decoder::GetChars(ThreadHandle thread, Buffer *buf, int32_t offset, 
 			state = 0;
 			if ((b & 0xC0) != 0x80)
 			{
-				sb->Append(thread, ReplacementChar);
+				if (!sb->Append(ReplacementChar))
+					return ~OVUM_ERROR_NO_MEMORY;
 				goto defaultCase;
 			}
 
@@ -523,7 +542,8 @@ int32_t Utf8Decoder::GetChars(ThreadHandle thread, Buffer *buf, int32_t offset, 
 				(ch >= 0xD800 && ch <= 0xDFFF) ||
 				ch > 0xFFFE)
 				ch = ReplacementChar;
-			sb->Append(thread, ch);
+			if (!sb->Append(ch))
+				return ~OVUM_ERROR_NO_MEMORY;
 			break;
 
 		// 4-byte sequences
@@ -531,7 +551,8 @@ int32_t Utf8Decoder::GetChars(ThreadHandle thread, Buffer *buf, int32_t offset, 
 		case 5:
 			if ((b & 0xC0) != 0x80)
 			{
-				sb->Append(thread, ReplacementChar);
+				if (!sb->Append(ReplacementChar))
+					return ~OVUM_ERROR_NO_MEMORY;
 				charCount++;
 				state = 0;
 				goto defaultCase;
@@ -546,7 +567,8 @@ int32_t Utf8Decoder::GetChars(ThreadHandle thread, Buffer *buf, int32_t offset, 
 
 			if ((b & 0xC0) != 0x80)
 			{
-				sb->Append(thread, ReplacementChar);
+				if (!sb->Append(ReplacementChar))
+					return ~OVUM_ERROR_NO_MEMORY;
 				goto defaultCase;
 			}
 
@@ -565,11 +587,13 @@ int32_t Utf8Decoder::GetChars(ThreadHandle thread, Buffer *buf, int32_t offset, 
 				{
 					charCount++;
 					SurrogatePair pair = UC_ToSurrogatePair(wch);
-					sb->Append(thread, pair.lead);
-					sb->Append(thread, pair.trail);
+					if (!sb->Append(pair.lead) ||
+						!sb->Append(pair.trail))
+						return ~OVUM_ERROR_NO_MEMORY;
 				}
 				else
-					sb->Append(thread, ReplacementChar);
+					if (!sb->Append(ReplacementChar))
+						return ~OVUM_ERROR_NO_MEMORY;
 			}
 			break;
 
@@ -579,7 +603,8 @@ int32_t Utf8Decoder::GetChars(ThreadHandle thread, Buffer *buf, int32_t offset, 
 				charCount++;
 				state = 0;
 				// U+FFFD, always
-				sb->Append(thread, ReplacementChar);
+				if (!sb->Append(ReplacementChar))
+					return ~OVUM_ERROR_NO_MEMORY;
 				if ((b & 0xC0) != 0x80)
 					// Not a continuation byte? Process defaultly.
 					goto defaultCase;
@@ -614,7 +639,8 @@ int32_t Utf8Decoder::GetChars(ThreadHandle thread, Buffer *buf, int32_t offset, 
 					break;
 				case 0xE:
 				case 0xF:
-					sb->Append(thread, ReplacementChar);
+					if (!sb->Append(ReplacementChar))
+						return ~OVUM_ERROR_NO_MEMORY;
 					charCount++;
 					break;
 				default: // 0-7
@@ -629,7 +655,8 @@ int32_t Utf8Decoder::GetChars(ThreadHandle thread, Buffer *buf, int32_t offset, 
 					// b must be a continuation character outside
 					// a multibyte sequence, which is not okay.
 					b = ReplacementChar;
-				sb->Append(thread, (uchar)b);
+				if (!sb->Append((uchar)b))
+					return ~OVUM_ERROR_NO_MEMORY;;
 				charCount++;
 				break;
 			}
@@ -639,7 +666,8 @@ int32_t Utf8Decoder::GetChars(ThreadHandle thread, Buffer *buf, int32_t offset, 
 
 	if (flush && state != 0)
 	{
-		sb->Append(thread, ReplacementChar);
+		if (!sb->Append(ReplacementChar))
+			return ~OVUM_ERROR_NO_MEMORY;
 		charCount++;
 		state = 0;
 	}
@@ -673,6 +701,7 @@ AVES_API NATIVE_FUNCTION(aves_Utf8Decoder_getCharCountInternal)
 		!!args[4].integer);
 
 	VM_PushInt(thread, charCount);
+	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_Utf8Decoder_getCharsInternal)
 {
@@ -684,12 +713,16 @@ AVES_API NATIVE_FUNCTION(aves_Utf8Decoder_getCharsInternal)
 		(int32_t)args[2].integer, (int32_t)args[3].integer,
 		reinterpret_cast<StringBuffer*>(args[4].instance),
 		!!args[5].integer);
+	if (charCount < 0)
+		return ~charCount;
 
 	VM_PushInt(thread, charCount);
+	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_Utf8Decoder_reset)
 {
 	reinterpret_cast<Utf8Decoder*>(THISV.instance)->Reset();
+	RETURN_SUCCESS;
 }
 
 // Native APIs

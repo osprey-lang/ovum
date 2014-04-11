@@ -123,31 +123,12 @@ public:
 		Member(name, declType, flags | MemberFlags::FIELD)
 	{ }
 
-	void ReadField(Thread *const thread, Value *instance, Value *dest) const;
-	void ReadFieldFast(Thread *const thread, Value *instance, Value *dest) const;
+	int ReadField(Thread *const thread, Value *instance, Value *dest) const;
+	int ReadFieldFast(Thread *const thread, Value *instance, Value *dest) const;
 	void ReadFieldUnchecked(Value *instance, Value *dest) const;
 
-	inline Value ReadField(Thread *const thread, Value *instance) const
-	{
-		Value result;
-		ReadField(thread, instance, &result);
-		return result;
-	}
-	inline Value ReadFieldFast(Thread *const thread, Value *instance) const
-	{
-		Value result;
-		ReadFieldFast(thread, instance, &result);
-		return result;
-	}
-	inline Value ReadFieldUnchecked(Value *instance) const
-	{
-		Value result;
-		ReadFieldUnchecked(instance, &result);
-		return result;
-	}
-
-	void WriteField(Thread *const thread, Value *instanceAndValue) const;
-	void WriteFieldFast(Thread *const thread, Value *instanceAndValue) const;
+	int WriteField(Thread *const thread, Value *instanceAndValue) const;
+	int WriteFieldFast(Thread *const thread, Value *instanceAndValue) const;
 	void WriteFieldUnchecked(Value *instanceAndValue) const;
 };
 
@@ -430,7 +411,7 @@ public:
 	// out as a NULL_VALUE and is only initialized on demand.
 	StaticRef *typeToken;
 
-	Value GetTypeToken(Thread *const thread);
+	int GetTypeToken(Thread *const thread, Value *result);
 
 	inline bool IsPrimitive() const
 	{
@@ -457,7 +438,7 @@ public:
 	}
 
 private:
-	void LoadTypeToken(Thread *const thread);
+	int LoadTypeToken(Thread *const thread);
 };
 
 inline Member::Member(String *name, Type *declType, MemberFlags flags) :

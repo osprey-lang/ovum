@@ -6,6 +6,7 @@ AVES_API NATIVE_FUNCTION(aves_Type_get_fullName)
 {
 	TypeInst *inst = _T(THISV);
 	VM_PushString(thread, Type_GetFullName(inst->type));
+	RETURN_SUCCESS;
 }
 
 AVES_API void aves_Type_init(TypeHandle type)
@@ -14,10 +15,11 @@ AVES_API void aves_Type_init(TypeHandle type)
 	Type_SetReferenceGetter(type, aves_Type_getReferences);
 }
 
-AVES_API void InitTypeToken(ThreadHandle thread, void *basePtr, TypeHandle type)
+AVES_API int InitTypeToken(ThreadHandle thread, void *basePtr, TypeHandle type)
 {
 	TypeInst *inst = reinterpret_cast<TypeInst*>(basePtr);
 	inst->type = type;
+	RETURN_SUCCESS;
 }
 
 bool aves_Type_getReferences(void *basePtr, unsigned int *valc, Value **target, int32_t *state)

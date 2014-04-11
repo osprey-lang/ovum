@@ -102,6 +102,12 @@
     <ClInclude Include="critical_section.internal.h">
       <Filter>Header Files\Internal</Filter>
     </ClInclude>
+    <ClInclude Include="membertable.internal.h">
+      <Filter>Header Files\Internal</Filter>
+    </ClInclude>
+    <ClInclude Include="modulereader.internal.h">
+      <Filter>Header Files\Internal</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -153,6 +159,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="debug_symbols.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="modulereader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

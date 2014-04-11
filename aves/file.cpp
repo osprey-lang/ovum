@@ -4,7 +4,7 @@
 #include "aves_buffer.h"
 #include <memory>
 
-bool io::ReadFileAttributes(ThreadHandle thread, String *fileName, WIN32_FILE_ATTRIBUTE_DATA *data, bool throwOnError)
+int io::ReadFileAttributes(ThreadHandle thread, String *fileName, WIN32_FILE_ATTRIBUTE_DATA *data, bool throwOnError, bool &success)
 {
 	// Ovum and Win32 are both UTF-16, so we can just use the string value as-is.
 	VM_EnterUnmanagedRegion(thread);
@@ -15,47 +15,51 @@ bool io::ReadFileAttributes(ThreadHandle thread, String *fileName, WIN32_FILE_AT
 	VM_LeaveUnmanagedRegion(thread);
 
 	if (!r && throwOnError)
-		ThrowIOError(thread, GetLastError(), fileName);
+		return ThrowIOError(thread, GetLastError(), fileName);
 
-	return (bool)r;
+	success = r ? true : false;
+	RETURN_SUCCESS;
 }
 
-AVES_API NATIVE_FUNCTION(io_File_existsInternal)
+AVES_API BEGIN_NATIVE_FUNCTION(io_File_existsInternal)
 {
 	String *fileName = args[0].common.string;
-	Path::ValidatePath(thread, fileName, false);
+	CHECKED(Path::ValidatePath(thread, fileName, false));
 
 	WIN32_FILE_ATTRIBUTE_DATA data;
 
-	bool r;
+	bool result;
 	{ Pinned fn(args + 0);
-		r = io::ReadFileAttributes(thread, fileName, &data, false);
+		CHECKED(io::ReadFileAttributes(thread, fileName, &data, false, result));
 	}
 
-	if (r)
-		r = data.dwFileAttributes != -1 &&
+	if (result)
+		result = data.dwFileAttributes != -1 &&
 			((data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0);
 
-	VM_PushBool(thread, r);
+	VM_PushBool(thread, result);
 }
+END_NATIVE_FUNCTION
 
-AVES_API NATIVE_FUNCTION(io_File_getSizeInternal)
+AVES_API BEGIN_NATIVE_FUNCTION(io_File_getSizeInternal)
 {
 	String *fileName = args[0].common.string;
-	Path::ValidatePath(thread, fileName, false);
+	CHECKED(Path::ValidatePath(thread, fileName, false));
 
+	bool _;
 	WIN32_FILE_ATTRIBUTE_DATA data;
 	{ Pinned fn(args + 0);
-		io::ReadFileAttributes(thread, fileName, &data, true);
+		CHECKED(io::ReadFileAttributes(thread, fileName, &data, true, _));
 	}
 
 	VM_PushInt(thread, (int64_t)data.nFileSizeLow | ((int64_t)data.nFileSizeHigh << 32));
 }
+END_NATIVE_FUNCTION
 
-AVES_API NATIVE_FUNCTION(io_File_deleteInternal)
+AVES_API BEGIN_NATIVE_FUNCTION(io_File_deleteInternal)
 {
 	String *fileName = args[0].common.string;
-	Path::ValidatePath(thread, fileName, false);
+	CHECKED(Path::ValidatePath(thread, fileName, false));
 
 	BOOL r;
 	{ Pinned fn(args + 0);
@@ -67,16 +71,17 @@ AVES_API NATIVE_FUNCTION(io_File_deleteInternal)
 	}
 
 	if (!r)
-		io::ThrowIOError(thread, GetLastError(), fileName);
+		return io::ThrowIOError(thread, GetLastError(), fileName);
 }
+END_NATIVE_FUNCTION
 
-AVES_API NATIVE_FUNCTION(io_File_moveInternal)
+AVES_API BEGIN_NATIVE_FUNCTION(io_File_moveInternal)
 {
 	String *srcName = args[0].common.string;
 	String *destName = args[1].common.string;
 
-	Path::ValidatePath(thread, srcName, false);
-	Path::ValidatePath(thread, destName, false);
+	CHECKED(Path::ValidatePath(thread, srcName, false));
+	CHECKED(Path::ValidatePath(thread, destName, false));
 
 	BOOL r;
 	{ Pinned src(args + 0), dst(args + 1);
@@ -88,24 +93,28 @@ AVES_API NATIVE_FUNCTION(io_File_moveInternal)
 	}
 
 	if (!r)
-		io::ThrowIOError(thread, GetLastError());
+		return io::ThrowIOError(thread, GetLastError());
 }
+END_NATIVE_FUNCTION
 
 // FileStream implementation
 
 #define _FS(v) reinterpret_cast<FileStream*>((v).instance)
 
-void FileStream::EnsureOpen(ThreadHandle thread)
+int FileStream::EnsureOpen(ThreadHandle thread)
 {
 	if (handle == NULL)
-		ErrorHandleClosed(thread);
+		return ErrorHandleClosed(thread);
+	RETURN_SUCCESS;
 }
 
-void FileStream::ErrorHandleClosed(ThreadHandle thread)
+int FileStream::ErrorHandleClosed(ThreadHandle thread)
 {
 	VM_PushString(thread, error_strings::FileHandleClosed);
-	GC_Construct(thread, Types::InvalidStateError, 1, nullptr);
-	VM_Throw(thread);
+	int r = GC_Construct(thread, Types::InvalidStateError, 1, nullptr);
+	if (r == OVUM_SUCCESS)
+		r = VM_Throw(thread);
+	return r;
 }
 
 AVES_API void io_FileStream_initType(TypeHandle type)
@@ -114,12 +123,12 @@ AVES_API void io_FileStream_initType(TypeHandle type)
 	Type_SetFinalizer(type, io_FileStream_finalize);
 }
 
-AVES_API NATIVE_FUNCTION(io_FileStream_init)
+AVES_API BEGIN_NATIVE_FUNCTION(io_FileStream_init)
 {
 	// Args: (fileName is String, mode is FileMode, access is FileAccess, share is FileShare)
 
 	String *fileName = args[1].common.string;
-	Path::ValidatePath(thread, fileName, true);
+	CHECKED(Path::ValidatePath(thread, fileName, true));
 
 	// Let's turn mode, access and share into appropriate arguments for CreateFile()
 	// 'mode' corresponds to the dwCreationDisposition parameter.
@@ -136,9 +145,8 @@ AVES_API NATIVE_FUNCTION(io_FileStream_init)
 	case FileMode::APPEND:         mode = OPEN_ALWAYS;       break;
 	default:
 		VM_PushString(thread, strings::mode);
-		GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr);
-		VM_Throw(thread);
-		break;
+		CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr));
+		return VM_Throw(thread);
 	}
 
 	switch (args[3].integer) // access
@@ -150,9 +158,8 @@ AVES_API NATIVE_FUNCTION(io_FileStream_init)
 		// io.FileAccess is an enum set, but only
 		// the three combinations above are valid.
 		VM_PushString(thread, strings::access);
-		GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr);
-		VM_Throw(thread);
-		break;
+		CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr));
+		return VM_Throw(thread);
 	}
 	if ((FileMode)args[2].integer == FileMode::APPEND)
 	{
@@ -160,8 +167,8 @@ AVES_API NATIVE_FUNCTION(io_FileStream_init)
 		{
 			VM_PushString(thread, error_strings::AppendMustBeWriteOnly); // message
 			VM_PushString(thread, strings::access); // paramName
-			GC_Construct(thread, Types::ArgumentError, 2, nullptr);
-			VM_Throw(thread);
+			CHECKED(GC_Construct(thread, Types::ArgumentError, 2, nullptr));
+			return VM_Throw(thread);
 		}
 		// access is now updated to FILE_APPEND_DATA; mode remains the same.
 		// It seems that no other access flags for appending.
@@ -171,8 +178,8 @@ AVES_API NATIVE_FUNCTION(io_FileStream_init)
 	if (args[4].uinteger > 7) // uinteger so that negative numbers are > 0
 	{
 		VM_PushString(thread, strings::share);
-		GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr);
-		VM_Throw(thread);
+		CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr));
+		return VM_Throw(thread);
 	}
 	// By a genuine coincidence, io.FileShare's values perfectly match those
 	// used by the Windows API, so we can just assign the value as-is.
@@ -191,12 +198,13 @@ AVES_API NATIVE_FUNCTION(io_FileStream_init)
 	}
 
 	if (handle == INVALID_HANDLE_VALUE)
-		io::ThrowIOError(thread, GetLastError(), fileName);
+		return io::ThrowIOError(thread, GetLastError(), fileName);
 
 	FileStream *stream = _FS(THISV);
 	stream->handle = handle;
 	stream->access = (FileAccess)args[3].integer;
 }
+END_NATIVE_FUNCTION
 
 AVES_API NATIVE_FUNCTION(io_FileStream_get_canRead)
 {
@@ -205,6 +213,7 @@ AVES_API NATIVE_FUNCTION(io_FileStream_get_canRead)
 		VM_PushBool(thread, false); // The handle has been closed
 	else
 		VM_PushBool(thread, (stream->access & FileAccess::READ) == FileAccess::READ);
+	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(io_FileStream_get_canWrite)
 {
@@ -213,6 +222,7 @@ AVES_API NATIVE_FUNCTION(io_FileStream_get_canWrite)
 		VM_PushBool(thread, false); // The handle has been closed
 	else
 		VM_PushBool(thread, (stream->access & FileAccess::WRITE) == FileAccess::WRITE);
+	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(io_FileStream_get_canSeek)
 {
@@ -224,12 +234,13 @@ AVES_API NATIVE_FUNCTION(io_FileStream_get_canSeek)
 		//       it is not possible to seek in a file.
 		//       (Other than when the handle has been closed.)
 		VM_PushBool(thread, true);
+	RETURN_SUCCESS;
 }
 
-AVES_API NATIVE_FUNCTION(io_FileStream_get_length)
+AVES_API BEGIN_NATIVE_FUNCTION(io_FileStream_get_length)
 {
 	FileStream *stream = _FS(THISV);
-	stream->EnsureOpen(thread);
+	CHECKED(stream->EnsureOpen(thread));
 
 	HANDLE handle = stream->handle;
 
@@ -241,15 +252,16 @@ AVES_API NATIVE_FUNCTION(io_FileStream_get_length)
 	VM_LeaveUnmanagedRegion(thread);
 
 	if (!r)
-		io::ThrowIOError(thread, GetLastError());
+		return io::ThrowIOError(thread, GetLastError());
 
 	VM_PushInt(thread, size.QuadPart);
 }
+END_NATIVE_FUNCTION
 
-AVES_API NATIVE_FUNCTION(io_FileStream_readByte)
+AVES_API BEGIN_NATIVE_FUNCTION(io_FileStream_readByte)
 {
 	FileStream *stream = _FS(THISV);
-	stream->EnsureOpen(thread);
+	CHECKED(stream->EnsureOpen(thread));
 
 	HANDLE handle = stream->handle;
 
@@ -262,20 +274,21 @@ AVES_API NATIVE_FUNCTION(io_FileStream_readByte)
 	VM_LeaveUnmanagedRegion(thread);
 
 	if (!r)
-		io::ThrowIOError(thread, GetLastError());
+		return io::ThrowIOError(thread, GetLastError());
 
 	if (bytesRead == 0)
 		VM_PushInt(thread, -1);
 	else
 		VM_PushInt(thread, byte);
 }
-AVES_API NATIVE_FUNCTION(io_FileStream_readMaxInternal)
+END_NATIVE_FUNCTION
+AVES_API BEGIN_NATIVE_FUNCTION(io_FileStream_readMaxInternal)
 {
 	// Args: (buf is Buffer, offset is Int, count is Int)
 	// FileStream.readMax verifies that offset and count are
 	// within the buffer, and that buf is actually a Buffer.
 	FileStream *stream = _FS(THISV);
-	stream->EnsureOpen(thread);
+	CHECKED(stream->EnsureOpen(thread));
 
 	HANDLE handle = stream->handle;
 	// The GC will never move the Buffer::bytes pointer
@@ -292,17 +305,18 @@ AVES_API NATIVE_FUNCTION(io_FileStream_readMaxInternal)
 	VM_LeaveUnmanagedRegion(thread);
 
 	if (!r)
-		io::ThrowIOError(thread, GetLastError());
+		return io::ThrowIOError(thread, GetLastError());
 
 	VM_PushInt(thread, bytesRead);
 }
+END_NATIVE_FUNCTION
 
-AVES_API NATIVE_FUNCTION(io_FileStream_writeByte)
+AVES_API BEGIN_NATIVE_FUNCTION(io_FileStream_writeByte)
 {
 	FileStream *stream = _FS(THISV);
-	stream->EnsureOpen(thread);
+	CHECKED(stream->EnsureOpen(thread));
 
-	IntFromValue(thread, args + 1);
+	CHECKED(IntFromValue(thread, args + 1));
 
 	HANDLE handle = stream->handle;
 
@@ -315,16 +329,17 @@ AVES_API NATIVE_FUNCTION(io_FileStream_writeByte)
 	VM_LeaveUnmanagedRegion(thread);
 
 	if (!r)
-		io::ThrowIOError(thread, GetLastError());
+		return io::ThrowIOError(thread, GetLastError());
 }
+END_NATIVE_FUNCTION
 
-AVES_API NATIVE_FUNCTION(io_FileStream_writeInternal)
+AVES_API BEGIN_NATIVE_FUNCTION(io_FileStream_writeInternal)
 {
 	// Args: (buf is Buffer, offset is Int, count is Int)
 	// FileStream.write verifies that offset and count are
 	// within the buffer, and that buf is actually a Buffer.
 	FileStream *stream = _FS(THISV);
-	stream->EnsureOpen(thread);
+	CHECKED(stream->EnsureOpen(thread));
 
 	HANDLE handle = stream->handle;
 	// The GC will never move the Buffer::bytes pointer,
@@ -342,19 +357,20 @@ AVES_API NATIVE_FUNCTION(io_FileStream_writeInternal)
 	VM_LeaveUnmanagedRegion(thread);
 
 	if (!r)
-		io::ThrowIOError(thread, GetLastError());
+		return io::ThrowIOError(thread, GetLastError());
 }
+END_NATIVE_FUNCTION
 
-AVES_API NATIVE_FUNCTION(io_FileStream_flush)
+AVES_API BEGIN_NATIVE_FUNCTION(io_FileStream_flush)
 {
 	FileStream *stream = _FS(THISV);
-	stream->EnsureOpen(thread);
+	CHECKED(stream->EnsureOpen(thread));
 
 	if ((stream->access & FileAccess::WRITE) != FileAccess::WRITE)
 	{
 		VM_PushString(thread, error_strings::CannotFlushReadOnlyStream);
-		GC_Construct(thread, Types::InvalidStateError, 1, nullptr);
-		VM_Throw(thread);
+		CHECKED(GC_Construct(thread, Types::InvalidStateError, 1, nullptr));
+		return VM_Throw(thread);
 	}
 
 	HANDLE handle = stream->handle;
@@ -366,14 +382,15 @@ AVES_API NATIVE_FUNCTION(io_FileStream_flush)
 	VM_LeaveUnmanagedRegion(thread);
 
 	if (!r)
-		io::ThrowIOError(thread, GetLastError());
+		return io::ThrowIOError(thread, GetLastError());
 }
+END_NATIVE_FUNCTION
 
-AVES_API NATIVE_FUNCTION(io_FileStream_seekInternal)
+AVES_API BEGIN_NATIVE_FUNCTION(io_FileStream_seekInternal)
 {
 	// Args: (offset is Int, origin is SeekOrigin)
 	FileStream *stream = _FS(THISV);
-	stream->EnsureOpen(thread);
+	CHECKED(stream->EnsureOpen(thread));
 
 	DWORD seekOrigin;
 	switch (args[2].integer)
@@ -383,9 +400,8 @@ AVES_API NATIVE_FUNCTION(io_FileStream_seekInternal)
 	case SeekOrigin::END:     seekOrigin = FILE_END;     break;
 	default:
 		VM_PushString(thread, strings::origin);
-		GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr);
-		VM_Throw(thread);
-		break;
+		CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr));
+		return VM_Throw(thread);
 	}
 
 	HANDLE handle = stream->handle;
@@ -400,10 +416,11 @@ AVES_API NATIVE_FUNCTION(io_FileStream_seekInternal)
 	VM_LeaveUnmanagedRegion(thread);
 
 	if (!r)
-		io::ThrowIOError(thread, GetLastError());
+		return io::ThrowIOError(thread, GetLastError());
 
 	VM_PushInt(thread, newOffset.QuadPart);
 }
+END_NATIVE_FUNCTION
 
 AVES_API NATIVE_FUNCTION(io_FileStream_close)
 {
@@ -424,7 +441,7 @@ AVES_API NATIVE_FUNCTION(io_FileStream_close)
 			VM_LeaveUnmanagedRegion(thread);
 
 			if (!r)
-				io::ThrowIOError(thread, GetLastError());
+				return io::ThrowIOError(thread, GetLastError());
 		}
 
 		// Try to close the handle
@@ -433,9 +450,11 @@ AVES_API NATIVE_FUNCTION(io_FileStream_close)
 		VM_LeaveUnmanagedRegion(thread);
 
 		if (!r)
-			io::ThrowIOError(thread, GetLastError());
+			return io::ThrowIOError(thread, GetLastError());
 		stream->handle = NULL;
 	}
+
+	RETURN_SUCCESS;
 }
 
 void io_FileStream_finalize(void *basePtr)

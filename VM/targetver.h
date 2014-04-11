@@ -1,6 +1,5 @@
 #pragma once
 
-
 #ifndef VM__TARGETVER_H
 #define VM__TARGETVER_H
 

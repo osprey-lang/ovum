@@ -13,7 +13,7 @@ AVES_API void aves_Error_init(TypeHandle type)
 	Type_SetReferenceGetter(type, aves_Error_getReferences);
 }
 
-AVES_API NATIVE_FUNCTION(aves_Error_new)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Error_new)
 {
 	// Arguments:
 	//     ()
@@ -25,7 +25,7 @@ AVES_API NATIVE_FUNCTION(aves_Error_new)
 
 	if (argc > 1 && !IS_NULL(args[1]))
 	{
-		StringFromValue(thread, args + 1);
+		CHECKED(StringFromValue(thread, args + 1));
 		err->message = args[1].common.string;
 	}
 	else
@@ -34,11 +34,13 @@ AVES_API NATIVE_FUNCTION(aves_Error_new)
 	if (argc > 2)
 		err->innerError = args[2];
 }
+END_NATIVE_FUNCTION
 
 AVES_API NATIVE_FUNCTION(aves_Error_get_message)
 {
 	ErrorInst *err = _E(THISV);
 	VM_PushString(thread, err->message);
+	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_Error_get_stackTrace)
 {
@@ -47,16 +49,19 @@ AVES_API NATIVE_FUNCTION(aves_Error_get_stackTrace)
 		VM_PushNull(thread);
 	else
 		VM_PushString(thread, err->stackTrace);
+	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_Error_get_innerError)
 {
 	ErrorInst *err = _E(THISV);
 	VM_Push(thread, err->innerError);
+	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_Error_get_data)
 {
 	ErrorInst *err = _E(THISV);
 	VM_Push(thread, err->data);
+	RETURN_SUCCESS;
 }
 
 bool aves_Error_getReferences(void *basePtr, unsigned int *valc, Value **target, int32_t *state)

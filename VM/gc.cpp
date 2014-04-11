@@ -185,10 +185,10 @@ void GC::ReleaseRaw(GCObject *gco)
 	}
 }
 
-void GC::Alloc(Thread *const thread, Type *type, size_t size, GCObject **output)
+int GC::Alloc(Thread *const thread, Type *type, size_t size, GCObject **output)
 {
 	if (SIZE_MAX - size < GCO_SIZE)
-		thread->ThrowMemoryError(gc_strings::ObjectTooBig);
+		return thread->ThrowMemoryError(gc_strings::ObjectTooBig);
 
 	BeginAlloc(thread);
 
@@ -202,10 +202,7 @@ void GC::Alloc(Thread *const thread, Type *type, size_t size, GCObject **output)
 		gco = AllocRaw(size); // ... And allocate again
 
 		if (!gco)
-			// It is not possible to recover from an out-of-memory error.
-			// To avoid potential problems with finalizers allocating memory,
-			// abort() is used instead of exit().
-			abort();
+			return OVUM_ERROR_NO_MEMORY;
 	}
 
 	// AllocRaw zeroes the memory, so DO NOT do that here.
@@ -217,6 +214,8 @@ void GC::Alloc(Thread *const thread, Type *type, size_t size, GCObject **output)
 	*output = gco;
 
 	EndAlloc();
+
+	RETURN_SUCCESS;
 }
 
 void GC::BeginAlloc(Thread *const thread)
@@ -234,28 +233,32 @@ void GC::EndAlloc()
 	allocSection.Leave();
 }
 
-void GC::Construct(Thread *const thread, Type *type, const uint16_t argc, Value *output)
+int GC::Construct(Thread *const thread, Type *type, const uint16_t argc, Value *output)
 {
 	if (type == VM::vm->types.String ||
 		type->IsPrimitive() ||
 		(type->flags & TypeFlags::ABSTRACT) == TypeFlags::ABSTRACT)
-		thread->ThrowTypeError();
+		return thread->ThrowTypeError();
 
+	int r;
 	StackFrame *frame = thread->currentFrame;
 	Value *args = frame->evalStack + frame->stackCount - argc;
 	if (output)
-		ConstructLL(thread, type, argc, args, output);
+		r = ConstructLL(thread, type, argc, args, output);
 	else
 	{
-		ConstructLL(thread, type, argc, args, args);
-		frame->stackCount++;
+		r = ConstructLL(thread, type, argc, args, args);
+		if (r == OVUM_SUCCESS)
+			frame->stackCount++;
 	}
+	return r;
 }
 
-void GC::ConstructLL(Thread *const thread, Type *type, const uint16_t argc, Value *args, Value *output)
+int GC::ConstructLL(Thread *const thread, Type *type, const uint16_t argc, Value *args, Value *output)
 {
 	GCObject *gco;
-	Alloc(thread, type, type->fieldsOffset + type->size, &gco);
+	int r = Alloc(thread, type, type->fieldsOffset + type->size, &gco);
+	if (r != OVUM_SUCCESS) return r;
 
 	Value *framePointer = args + argc;
 
@@ -271,10 +274,15 @@ void GC::ConstructLL(Thread *const thread, Type *type, const uint16_t argc, Valu
 	thread->currentFrame->stackCount++;
 
 	Value ignore; // all Ovum methods return values, even the constructor
-	thread->InvokeMethodOverload(type->instanceCtor->ResolveOverload(argc), argc, framePointer, &ignore);
+	r = thread->InvokeMethodOverload(type->instanceCtor->ResolveOverload(argc), argc, framePointer, &ignore);
 
-	output->type = type;
-	output->instance = gco->InstanceBase();
+	if (r == OVUM_SUCCESS)
+	{
+		output->type = type;
+		output->instance = gco->InstanceBase();
+	}
+
+	return r;
 }
 
 String *GC::ConstructString(Thread *const thread, const int32_t length, const uchar value[])
@@ -282,9 +290,14 @@ String *GC::ConstructString(Thread *const thread, const int32_t length, const uc
 	GCObject *gco;
 	// Note: sizeof(String) includes firstChar, but we need an extra character
 	// for the terminating \0 anyway. So this is fine.
-	Alloc(thread, VM::vm->types.String, sizeof(String) + length*sizeof(uchar), &gco);
-	if (VM::vm->types.String == nullptr)
-		gco->flags |= GCOFlags::EARLY_STRING;
+	int r = Alloc(thread, VM::vm->types.String, sizeof(String) + length*sizeof(uchar), &gco);
+	if (r != OVUM_SUCCESS) return nullptr;
+
+	// We're not supposed to use ConstructString until after all the modules
+	// have been loaded, so we should never have to worry about not having
+	// the String type available. In other words, gco->type should not be null,
+	// and we never set the EARLY_STRING flag.
+	assert(gco->type != nullptr);
 
 	MutableString *str = reinterpret_cast<MutableString*>(gco->InstanceBase());
 	str->length = length;
@@ -304,11 +317,11 @@ String *GC::ConvertString(Thread *const thread, const char *string)
 	size_t length = strlen(string);
 
 	if (length > INT32_MAX)
-		thread->ThrowOverflowError(gc_strings::CStringTooBig);
+		return nullptr;
 
-	String *output = ConstructString(thread, length, nullptr);
+	String *output = ConstructString(thread, (int32_t)length, nullptr);
 
-	if (length > 0)
+	if (output && length > 0)
 	{
 		uchar *mutch = const_cast<uchar*>(&output->firstChar);
 		while (*string)
@@ -325,7 +338,7 @@ String *GC::ConstructModuleString(Thread *const thread, const int32_t length, co
 
 	GCObject *gco = AllocRawGen1(size);
 	if (!gco)
-		throw ModuleLoadException(L"(none)", "Unable to allocate memory for module string.");
+		throw ModuleLoadException(L"(none)", "Not enough memory for module string.");
 
 	// AllocRawGen1 does NOT zero the memory, so we have to do that ourselves:
 	memset(gco, 0, size);
@@ -969,9 +982,9 @@ void GC::UpdateHash(HashInst *hash)
 }
 
 
-OVUM_API void GC_Construct(ThreadHandle thread, TypeHandle type, const uint16_t argc, Value *output)
+OVUM_API int GC_Construct(ThreadHandle thread, TypeHandle type, const uint16_t argc, Value *output)
 {
-	GC::gc->Construct(thread, type, argc, output);
+	return GC::gc->Construct(thread, type, argc, output);
 }
 
 OVUM_API String *GC_ConstructString(ThreadHandle thread, const int32_t length, const uchar *values)

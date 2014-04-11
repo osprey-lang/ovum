@@ -8,9 +8,9 @@ namespace buffer_errors
 	String *MemoryError = _S(_MemoryError);
 }
 
-StringBuffer::StringBuffer(Thread *const thread, const int32_t capacity) : length(0), data(nullptr)
+StringBuffer::StringBuffer(const int32_t capacity) : length(0), data(nullptr)
 {
-	SetCapacity(thread, capacity);
+	SetCapacity(capacity);
 }
 StringBuffer::~StringBuffer()
 {
@@ -22,55 +22,50 @@ StringBuffer::~StringBuffer()
 	}
 }
 
-int32_t StringBuffer::SetCapacity(Thread *const thread, const int32_t newCapacity)
+int32_t StringBuffer::SetCapacity(const int32_t newCapacity)
 {
 	int32_t newCap = newCapacity;
 	if (newCap < this->length)
 		newCap = this->length;
 
 	if (newCap > SIZE_MAX / sizeof(uchar))
-		thread->ThrowMemoryError(buffer_errors::MemoryError);
+		throw std::bad_alloc();
 
 	uchar *newData = reinterpret_cast<uchar*>(realloc(data, sizeof(uchar) * newCap));
 	if (newData == nullptr)
-		thread->ThrowMemoryError(buffer_errors::MemoryError);
+		throw std::bad_alloc();
 
 	this->data = newData;
 	this->capacity = newCap;
 	return newCap;
 }
 
-void StringBuffer::EnsureMinCapacity(Thread *const thread, int32_t newAmount)
+void StringBuffer::EnsureMinCapacity(int32_t newAmount)
 {
 	if (INT32_MAX - newAmount < this->length)
-	{
-		if (thread)
-			thread->ThrowOverflowError();
-		else
-			throw std::exception("Could not resize string buffer: an overflow occurred.");
-	}
+		throw std::exception("Could not resize string buffer: an overflow occurred.");
 
 	if (this->length + newAmount > this->capacity)
 	{
 		// Double the capacity, but make sure newAmount will actually fit too
 		int32_t newLength = this->length << 1;
-			if (newLength < this->length + newAmount)
-				newLength += newAmount;
-		SetCapacity(thread, newLength);
+		if (newLength < this->length + newAmount)
+			newLength += newAmount;
+		SetCapacity(newLength);
 	}
 }
 
-void StringBuffer::Append(Thread *const thread, const int32_t length, const uchar data[])
+void StringBuffer::Append(const int32_t length, const uchar data[])
 {
-	EnsureMinCapacity(thread, length);
+	EnsureMinCapacity(length);
 
 	CopyMemoryT(this->data + this->length, data, length);
 	this->length += length;
 }
 
-void StringBuffer::Append(Thread *const thread, const int32_t count, const uchar ch)
+void StringBuffer::Append(const int32_t count, const uchar ch)
 {
-	EnsureMinCapacity(thread, count);
+	EnsureMinCapacity(count);
 
 	uchar *chp = this->data + this->length;
 	for (int32_t i = 0; i < count; i++)
@@ -81,21 +76,21 @@ void StringBuffer::Append(Thread *const thread, const int32_t count, const uchar
 	this->length += count;
 }
 
-void StringBuffer::Append(Thread *const thread, String *str)
+void StringBuffer::Append(String *str)
 {
 	// Just pass it on! Whee!
-	Append(thread, str->length, &str->firstChar);
+	Append(str->length, &str->firstChar);
 }
 
-void StringBuffer::Append(Thread *const thread, const uchar ch)
+void StringBuffer::Append(const uchar ch)
 {
 	// And this too! Whee!
-	Append(thread, 1, &ch);
+	Append(1, &ch);
 }
 
-void StringBuffer::Append(Thread *const thread, const int32_t length, const char data[])
+void StringBuffer::Append(const int32_t length, const char data[])
 {
-	EnsureMinCapacity(thread, length);
+	EnsureMinCapacity(length);
 
 	uchar *chp = this->data + this->length;
 	for (int32_t i = 0; i < length; i++)
@@ -106,15 +101,15 @@ void StringBuffer::Append(Thread *const thread, const int32_t length, const char
 	this->length += length;
 }
 
-void StringBuffer::Append(Thread *const thread, const int32_t length, const wchar_t data[])
+void StringBuffer::Append(const int32_t length, const wchar_t data[])
 {
 	if (sizeof(wchar_t) == sizeof(uchar))
 		// Assume wchar_t is UTF-16 (or at least UCS-2)
-		Append(thread, length, (uchar*)data);
+		Append(length, (uchar*)data);
 	else if (sizeof(wchar_t) == sizeof(wuchar))
 	{
 		// Assume wchar_t is UTF-32
-		EnsureMinCapacity(thread, length);
+		EnsureMinCapacity(length);
 
 		for (int32_t i = 0; i < length; i++)
 		{
@@ -122,23 +117,17 @@ void StringBuffer::Append(Thread *const thread, const int32_t length, const wcha
 			if (UC_NeedsSurrogatePair(ch))
 			{
 				const SurrogatePair surr = UC_ToSurrogatePair(ch);
-				Append(thread, 2, (uchar*)&surr);
+				Append(2, (uchar*)&surr);
 			}
 			else
-				Append(thread, 1, (uchar*)&ch);
+				Append(1, (uchar*)&ch);
 		}
 	}
-	else
-		thread->ThrowError();
 }
 
 void StringBuffer::Clear()
 {
-	if (this->length)
-	{
-		memset(this->data, 0, sizeof(uchar) * this->capacity);
-		this->length = 0;
-	}
+	this->length = 0;
 }
 
 String *StringBuffer::ToString(Thread *const thread)

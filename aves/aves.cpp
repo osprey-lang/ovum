@@ -75,15 +75,16 @@ AVES_API void OvumModuleMain(ModuleHandle module)
 }
 
 
-AVES_API NATIVE_FUNCTION(aves_print)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_print)
 {
 	if (IS_NULL(*args))
 		SetString(args, strings::Empty); // null prints like empty string
 	else if (!IsString(*args))
-		StringFromValue(thread, args);
+		CHECKED(StringFromValue(thread, args));
 
 	VM_PrintLn(args->common.string);
 }
+END_NATIVE_FUNCTION
 
 AVES_API NATIVE_FUNCTION(aves_exit)
 {
@@ -98,17 +99,21 @@ AVES_API NATIVE_FUNCTION(aves_exit)
 		exitCode = 0;
 
 	exit(exitCode);
+	RETURN_SUCCESS;
 }
 
 AVES_API NATIVE_FUNCTION(aves_number_asInt)
 {
 	VM_PushInt(thread, THISV.integer);
+	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_number_asUInt)
 {
 	VM_PushUInt(thread, THISV.uinteger);
+	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_number_asReal)
 {
 	VM_PushReal(thread, THISV.real);
+	RETURN_SUCCESS;
 }

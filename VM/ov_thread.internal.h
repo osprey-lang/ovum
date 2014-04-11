@@ -4,6 +4,7 @@
 #define VM__THREAD_INTERNAL_H
 
 #include <cassert>
+#include <exception>
 #include "ov_vm.internal.h"
 #include "ov_stringbuffer.internal.h"
 #include "critical_section.internal.h"
@@ -230,7 +231,7 @@ public:
 	Thread();
 	~Thread();
 
-	void Start(Method *method, Value &result);
+	int Start(Method *method, Value &result);
 
 private:
 	// The current instruction pointer. This should always be the first field in the class.
@@ -290,47 +291,44 @@ public:
 	inline Value *Local(const unsigned int n) { return currentFrame->Locals() + n; }
 
 	// argCount does NOT include the instance.
-	void Invoke(uint32_t argCount, Value *result);
+	int Invoke(uint32_t argCount, Value *result);
 	// argCount DOES NOT include the instance.
-	void InvokeMethod(Method *method, uint32_t argCount, Value *result);
+	int InvokeMethod(Method *method, uint32_t argCount, Value *result);
 	// argCount does NOT include the instance.
-	void InvokeMember(String *name, uint32_t argCount, Value *result);
-	void InvokeOperator(Operator op, Value *result);
-	void InvokeApply(Value *result);
-	void InvokeApplyMethod(Method *method, Value *result);
+	int InvokeMember(String *name, uint32_t argCount, Value *result);
+	int InvokeOperator(Operator op, Value *result);
+	int InvokeApply(Value *result);
+	int InvokeApplyMethod(Method *method, Value *result);
 
-	bool Equals();
-	int64_t Compare();
-	void Concat(Value *result);
+	int Equals(bool *result);
+	int Compare(int64_t *result);
+	int Concat(Value *result);
 
-	void LoadMember(String *member, Value *result);
-	void StoreMember(String *member);
+	int LoadMember(String *member, Value *result);
+	int StoreMember(String *member);
 
 	// Note: argCount does NOT include the instance.
-	void LoadIndexer(uint32_t argCount, Value *result);
+	int LoadIndexer(uint32_t argCount, Value *result);
 	// Note: argCount does NOT include the instance or the value that's being stored.
-	void StoreIndexer(uint32_t argCount);
+	int StoreIndexer(uint32_t argCount);
 
 	void LoadStaticField(Field *field, Value *result);
 	void StoreStaticField(Field *field);
 
-	void ToString(String **result);
+	int ToString(String **result);
 
-#pragma warning(push)
-#pragma warning(disable: 4290) // Ignoring C++ exception specification
-	void Throw(bool rethrow = false) throw(OvumException);
+	int Throw(bool rethrow = false);
 
 	// Throw helpers!
 
-	void ThrowError(String *message = nullptr) throw(OvumException);
-	void ThrowTypeError(String *message = nullptr) throw(OvumException);
-	void ThrowMemoryError(String *message = nullptr) throw(OvumException);
-	void ThrowOverflowError(String *message = nullptr) throw(OvumException);
-	void ThrowDivideByZeroError(String *message = nullptr) throw(OvumException);
-	void ThrowNullReferenceError(String *message = nullptr) throw(OvumException);
-	void ThrowMemberNotFoundError(String *member) throw(OvumException);
-	void ThrowNoOverloadError(const uint32_t argCount, String *message = nullptr) throw(OvumException);
-#pragma warning(pop)
+	int ThrowError(String *message = nullptr);
+	int ThrowTypeError(String *message = nullptr);
+	int ThrowMemoryError(String *message = nullptr);
+	int ThrowOverflowError(String *message = nullptr);
+	int ThrowDivideByZeroError(String *message = nullptr);
+	int ThrowNullReferenceError(String *message = nullptr);
+	int ThrowMemberNotFoundError(String *member);
+	int ThrowNoOverloadError(const uint32_t argCount, String *message = nullptr);
 
 	bool IsSuspendedForGC() const;
 
@@ -354,7 +352,7 @@ private:
 	template<bool First>
 	void PushStackFrame(const uint32_t argCount, Value *args, Method::Overload *method);
 
-	void PrepareVariadicArgs(const MethodFlags flags, const uint32_t argCount, const uint32_t paramCount, StackFrame *frame);
+	int PrepareVariadicArgs(const MethodFlags flags, const uint32_t argCount, const uint32_t paramCount, StackFrame *frame);
 
 	// Tells the thread to suspend itself as soon as possible.
 	// Thread::IsSuspendedForGC() returns true when this is done.
@@ -365,51 +363,51 @@ private:
 	NOINLINE void EndGCSuspension();
 	NOINLINE void SuspendForGC();
 
-	void Evaluate();
-	bool FindErrorHandler();
-	void EvaluateLeave(register StackFrame *frame, const int32_t target);
+	int Evaluate();
+	int FindErrorHandler(int32_t maxIndex);
+	int EvaluateLeave(register StackFrame *frame, const int32_t target);
 
 	String *GetStackTrace();
-	void AppendArgumentType(StringBuffer &buf, Value arg);
+	void AppendArgumentType(StringBuffer &buf, Value *arg);
 	void AppendSourceLocation(StringBuffer &buf, Method::Overload *method, uint8_t *ip);
 
 	// argCount DOES NOT include the value to be invoked, but value does.
-	void InvokeLL(unsigned int argCount, Value *value, Value *result);
+	int InvokeLL(unsigned int argCount, Value *value, Value *result);
 	// args DOES include the instance, argCount DOES NOT
-	void InvokeMethodOverload(Method::Overload *mo, unsigned int argCount, Value *args, Value *result);
+	int InvokeMethodOverload(Method::Overload *mo, unsigned int argCount, Value *args, Value *result);
 
-	void InvokeApplyLL(Value *args, Value *result);
-	void InvokeApplyMethodLL(Method *method, Value *args, Value *result);
+	int InvokeApplyLL(Value *args, Value *result);
+	int InvokeApplyMethodLL(Method *method, Value *args, Value *result);
 
-	void InvokeMemberLL(String *name, uint32_t argCount, Value *value, Value *result);
+	int InvokeMemberLL(String *name, uint32_t argCount, Value *value, Value *result);
 
-	void LoadMemberLL(Value *instance, String *member, Value *result);
-	void StoreMemberLL(Value *instance, String *member);
+	int LoadMemberLL(Value *instance, String *member, Value *result);
+	int StoreMemberLL(Value *instance, String *member);
 
 	// argCount DOES NOT include the instance, but args DOES
-	void LoadIndexerLL(uint32_t argCount, Value *args, Value *dest);
+	int LoadIndexerLL(uint32_t argCount, Value *args, Value *dest);
 	// argCount DOES NOT include the instance or the value being assigned, but args DOES
-	void StoreIndexerLL(uint32_t argCount, Value *args);
+	int StoreIndexerLL(uint32_t argCount, Value *args);
 
-	void InvokeOperatorLL(Value *args, Operator op, Value *result);
-	bool EqualsLL(Value *args);
-	void CompareLL(Value *args, Value *result);
-	void ConcatLL(Value *args, Value *result);
+	int InvokeOperatorLL(Value *args, Operator op, Value *result);
+	int EqualsLL(Value *args, bool &result);
+	int CompareLL(Value *args, Value *result);
+	int ConcatLL(Value *args, Value *result);
 
 	// Specialised comparers! For speed.
-	bool CompareLessThanLL(Value *args);
-	bool CompareGreaterThanLL(Value *args);
-	bool CompareLessEqualsLL(Value *args);
-	bool CompareGreaterEqualsLL(Value *args);
+	int CompareLessThanLL(Value *args, bool &result);
+	int CompareGreaterThanLL(Value *args, bool &result);
+	int CompareLessEqualsLL(Value *args, bool &result);
+	int CompareGreaterEqualsLL(Value *args, bool &result);
 
-	void ThrowMissingOperatorError(Operator op);
+	int ThrowMissingOperatorError(Operator op);
 
-	void InitializeMethod(Method::Overload *method);
-	void InitializeInstructions(instr::MethodBuilder &builder, Method::Overload *method);
+	int InitializeMethod(Method::Overload *method);
+	static void InitializeInstructions(instr::MethodBuilder &builder, Method::Overload *method);
 	static void InitializeBranchOffsets(instr::MethodBuilder &builder, Method::Overload *method);
 	static void CalculateStackHeights(instr::MethodBuilder &builder, Method::Overload *method, StackManager &stack);
 	static void WriteInitializedBody(instr::MethodBuilder &builder, Method::Overload *method);
-	void CallStaticConstructors(instr::MethodBuilder &builder);
+	int CallStaticConstructors(instr::MethodBuilder &builder);
 
 	// These are used by the initializer
 	static Type *TypeFromToken(Method::Overload *fromMethod, uint32_t token);
@@ -422,7 +420,7 @@ private:
 	static void GetHashIndexerSetter(Method::Overload **target);
 
 	friend class GC;
-	friend void VM_InvokeMethod(ThreadHandle, MethodHandle, const uint32_t, Value*);
+	friend class VM;
 	friend String *VM_GetStackTrace(ThreadHandle);
 };
 

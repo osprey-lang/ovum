@@ -1,7 +1,8 @@
+#include <cstdio>
+#include <memory>
 #include "aves_console.h"
 #include "aves_ns.h"
 #include "ov_string.h"
-#include <cstdio>
 
 LitString<39> ConsoleIOError = LitString<39>::FromCString("An I/O error occurred with the console.");
 
@@ -13,13 +14,13 @@ public:
 	static WORD DefaultColors;
 	static HANDLE StdOut;
 
-	static CONSOLE_SCREEN_BUFFER_INFO GetBufferInfo(ThreadHandle thread);
-	static void GetDefaultColors(ThreadHandle thread);
-	static WORD GetCurrentAttrs(ThreadHandle thread);
-	static COORD GetCursorPosition(ThreadHandle thread);
+	static int GetBufferInfo(ThreadHandle thread, CONSOLE_SCREEN_BUFFER_INFO &csbi);
+	static int GetDefaultColors(ThreadHandle thread);
+	static int GetCurrentAttrs(ThreadHandle thread, WORD &attrs);
+	static int GetCursorPosition(ThreadHandle thread, COORD &pos);
 	static void SetCursorPosition(ThreadHandle thread, SHORT x, SHORT y);
 
-	static void ThrowConsoleError(ThreadHandle thread);
+	static int ThrowConsoleError(ThreadHandle thread);
 };
 
 bool Console::InputEOF;
@@ -27,29 +28,35 @@ bool Console::HaveDefaultColors;
 WORD Console::DefaultColors;
 HANDLE Console::StdOut;
 
-CONSOLE_SCREEN_BUFFER_INFO Console::GetBufferInfo(ThreadHandle thread)
+int Console::GetBufferInfo(ThreadHandle thread, CONSOLE_SCREEN_BUFFER_INFO &csbi)
+{
+	BOOL r = GetConsoleScreenBufferInfo(Console::StdOut, &csbi);
+	if (!r) return ThrowConsoleError(thread);
+
+	RETURN_SUCCESS;
+}
+
+int Console::GetDefaultColors(ThreadHandle thread)
 {
 	CONSOLE_SCREEN_BUFFER_INFO csbi;
-	BOOL r = GetConsoleScreenBufferInfo(Console::StdOut, &csbi);
-	if (!r)
-		ThrowConsoleError(thread);
-
-	return csbi;
+	int r = GetBufferInfo(thread, csbi);
+	if (r == OVUM_SUCCESS)
+	{
+		DefaultColors = csbi.wAttributes & 0xff;
+		HaveDefaultColors = true;
+	}
+	return r;
 }
-
-void Console::GetDefaultColors(ThreadHandle thread)
+int Console::GetCurrentAttrs(ThreadHandle thread, WORD &attrs)
 {
-	CONSOLE_SCREEN_BUFFER_INFO csbi = GetBufferInfo(thread);
-
-	DefaultColors = csbi.wAttributes & 0xff;
-	HaveDefaultColors = true;
-}
-WORD Console::GetCurrentAttrs(ThreadHandle thread)
-{
-	CONSOLE_SCREEN_BUFFER_INFO csbi = GetBufferInfo(thread);
-
-	// Text color occupies the lowest byte:
-	return csbi.wAttributes & 0xff;
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	int r = GetBufferInfo(thread, csbi);
+	if (r == OVUM_SUCCESS)
+	{
+		// Text color occupies the lowest byte:
+		attrs = csbi.wAttributes & 0xff;
+	}
+	return r;
 }
 
 AVES_API void aves_Console_init(TypeHandle type)
@@ -60,33 +67,36 @@ AVES_API void aves_Console_init(TypeHandle type)
 	Console::StdOut = GetStdHandle(STD_OUTPUT_HANDLE);
 }
 
-AVES_API NATIVE_FUNCTION(aves_Console_write)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_write)
 {
 	if (IS_NULL(*args))
-		return;
+		RETURN_SUCCESS;
 	if (!IsString(*args))
-		StringFromValue(thread, args);
+		CHECKED(StringFromValue(thread, args));
 
 	VM_Print(args->common.string);
 }
-AVES_API NATIVE_FUNCTION(aves_Console_writeErr)
+END_NATIVE_FUNCTION
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_writeErr)
 {
 	if (IS_NULL(*args))
-		return;
+		RETURN_SUCCESS;
 	if (!IsString(*args))
-		StringFromValue(thread, args);
+		CHECKED(StringFromValue(thread, args));
 
 	VM_PrintErr(args->common.string);
 }
-AVES_API NATIVE_FUNCTION(aves_Console_writeLineErr)
+END_NATIVE_FUNCTION
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_writeLineErr)
 {
 	if (IS_NULL(*args))
 		SetString(args, strings::Empty); // null prints like empty string
 	else if (!IsString(*args))
-		StringFromValue(thread, args);
+		CHECKED(StringFromValue(thread, args));
 
 	VM_PrintErrLn(args->common.string);
 }
+END_NATIVE_FUNCTION
 
 bool IsKeyDownEvent(INPUT_RECORD &ir)
 {
@@ -103,7 +113,7 @@ bool IsAltKeyDown(INPUT_RECORD &ir)
 	return (ir.Event.KeyEvent.dwControlKeyState & (LEFT_ALT_PRESSED | RIGHT_ALT_PRESSED)) != 0;
 }
 
-AVES_API NATIVE_FUNCTION(aves_Console_readKey)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_readKey)
 {
 	static INPUT_RECORD cachedInputRecord = { };
 
@@ -173,7 +183,7 @@ AVES_API NATIVE_FUNCTION(aves_Console_readKey)
 		VM_PushBool(thread, (state & SHIFT_PRESSED) != 0);
 		VM_PushBool(thread, (state & (LEFT_ALT_PRESSED | RIGHT_ALT_PRESSED)) != 0);
 		VM_PushBool(thread, (state & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED)) != 0);
-		GC_Construct(thread, Types::ConsoleKey, 5, nullptr);
+		CHECKED(GC_Construct(thread, Types::ConsoleKey, 5, nullptr));
 
 		if (argc == 0 || IsFalse(args + 0))
 		{
@@ -182,21 +192,22 @@ AVES_API NATIVE_FUNCTION(aves_Console_readKey)
 		}
 	}
 }
+END_NATIVE_FUNCTION
 AVES_API NATIVE_FUNCTION(aves_Console_readChar)
 {
 	VM_EnterUnmanagedRegion(thread);
-	// TODO: find a solution that works with Unicode streams
-	int ch = getchar();
+	wint_t ch = getwchar();
 	VM_LeaveUnmanagedRegion(thread);
 
 	VM_PushInt(thread, ch);
+	RETURN_SUCCESS;
 }
-AVES_API NATIVE_FUNCTION(aves_Console_readLine)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_readLine)
 {
 	if (Console::InputEOF)
 	{
 		VM_PushNull(thread);
-		return;
+		RETURN_SUCCESS;
 	}
 
 	VM_EnterUnmanagedRegion(thread);
@@ -239,7 +250,7 @@ AVES_API NATIVE_FUNCTION(aves_Console_readLine)
 				{
 					free(heapBuffer);
 					VM_LeaveUnmanagedRegion(thread);
-					VM_ThrowMemoryError(thread);
+					return VM_ThrowMemoryError(thread);
 				}
 				heapBuffer = newHeapBuffer;
 			}
@@ -250,7 +261,7 @@ AVES_API NATIVE_FUNCTION(aves_Console_readLine)
 				if (!heapBuffer)
 				{
 					VM_LeaveUnmanagedRegion(thread);
-					VM_ThrowMemoryError(thread);
+					return VM_ThrowMemoryError(thread);
 				}
 				CopyMemoryT(heapBuffer, buffer, StackBufferSize);
 			}
@@ -269,15 +280,17 @@ AVES_API NATIVE_FUNCTION(aves_Console_readLine)
 		// update EOF flag and return null.
 		Console::InputEOF = true;
 		VM_PushNull(thread);
-		return;
+		RETURN_SUCCESS;
 	}
 
 	// Convert input to a string, woohoo!
-	String *str = String_FromWString(thread, heapBuffer ? heapBuffer : buffer);
+	String *str;
+	CHECKED_MEM(str = String_FromWString(thread, heapBuffer ? heapBuffer : buffer));
 	if (heapBuffer)
 		free(heapBuffer);
 	VM_PushString(thread, str);
 }
+END_NATIVE_FUNCTION
 
 AVES_API NATIVE_FUNCTION(aves_Console_clear)
 {
@@ -293,36 +306,40 @@ AVES_API NATIVE_FUNCTION(aves_Console_clear)
 	// get the number of character cells in the current buffer
 	CONSOLE_SCREEN_BUFFER_INFO csbi;
 	success = GetConsoleScreenBufferInfo(stdOut, &csbi);
-	if (!success) Console::ThrowConsoleError(thread);
+	if (!success) return Console::ThrowConsoleError(thread);
 
 	DWORD conSize = csbi.dwSize.X * csbi.dwSize.Y;
 
 	// fill the entire screen with blanks
 	DWORD charsWritten;
 	success = FillConsoleOutputCharacterW(stdOut, L' ', conSize, home, &charsWritten);
-	if (!success) Console::ThrowConsoleError(thread);
+	if (!success) return Console::ThrowConsoleError(thread);
 
 	// now set the buffer's attributes accordingly 
 	charsWritten = 0;
 	success = FillConsoleOutputAttribute(stdOut, csbi.wAttributes, conSize, home, &charsWritten);
-	if (!success) Console::ThrowConsoleError(thread);
+	if (!success) return Console::ThrowConsoleError(thread);
 
 	// put the cursor at (0, 0)
 	success = SetConsoleCursorPosition(stdOut, home);
-	if (!success) Console::ThrowConsoleError(thread);
+	if (!success) return Console::ThrowConsoleError(thread);
 
 	VM_LeaveUnmanagedRegion(thread);
+
+	RETURN_SUCCESS;
 }
 
-void AssertIsConsoleColor(ThreadHandle thread, Value *arg)
+int AssertIsConsoleColor(ThreadHandle thread, Value *arg)
 {
 	if (arg->type != Types::ConsoleColor)
-		VM_ThrowTypeError(thread);
+		return VM_ThrowTypeError(thread);
+	RETURN_SUCCESS;
 }
 
-AVES_API NATIVE_FUNCTION(aves_Console_get_textColor)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_get_textColor)
 {
-	WORD currentAttrs = Console::GetCurrentAttrs(thread);
+	WORD currentAttrs;
+	CHECKED(Console::GetCurrentAttrs(thread, currentAttrs));
 
 	Value result;
 	result.type = Types::ConsoleColor;
@@ -330,19 +347,23 @@ AVES_API NATIVE_FUNCTION(aves_Console_get_textColor)
 	result.integer = currentAttrs & 0x0f;
 	VM_Push(thread, result);
 }
-AVES_API NATIVE_FUNCTION(aves_Console_set_textColor)
+END_NATIVE_FUNCTION
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_set_textColor)
 {
-	AssertIsConsoleColor(thread, args);
+	CHECKED(AssertIsConsoleColor(thread, args));
 
 	if (!Console::HaveDefaultColors)
-		Console::GetDefaultColors(thread);
+		CHECKED(Console::GetDefaultColors(thread));
 
-	WORD currentAttrs = Console::GetCurrentAttrs(thread);
+	WORD currentAttrs;
+	CHECKED(Console::GetCurrentAttrs(thread, currentAttrs));
 	SetConsoleTextAttribute(Console::StdOut, (currentAttrs & ~0x0f) | (WORD)args->integer);
 }
-AVES_API NATIVE_FUNCTION(aves_Console_get_backColor)
+END_NATIVE_FUNCTION
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_get_backColor)
 {
-	WORD currentAttrs = Console::GetCurrentAttrs(thread);
+	WORD currentAttrs;
+	CHECKED(Console::GetCurrentAttrs(thread, currentAttrs));
 
 	Value result;
 	result.type = Types::ConsoleColor;
@@ -350,67 +371,76 @@ AVES_API NATIVE_FUNCTION(aves_Console_get_backColor)
 	result.integer = (currentAttrs & 0xf0) >> 4;
 	VM_Push(thread, result);
 }
-AVES_API NATIVE_FUNCTION(aves_Console_set_backColor)
+END_NATIVE_FUNCTION
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_set_backColor)
 {
-	AssertIsConsoleColor(thread, args);
+	CHECKED(AssertIsConsoleColor(thread, args));
 
 	if (!Console::HaveDefaultColors)
-		Console::GetDefaultColors(thread);
+		CHECKED(Console::GetDefaultColors(thread));
 
-	WORD currentAttrs = Console::GetCurrentAttrs(thread);
+	WORD currentAttrs;
+	CHECKED(Console::GetCurrentAttrs(thread, currentAttrs));
 	SetConsoleTextAttribute(Console::StdOut, (currentAttrs & ~0xf0) | ((WORD)args->integer << 4));
 }
-AVES_API NATIVE_FUNCTION(aves_Console_setColors)
+END_NATIVE_FUNCTION
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_setColors)
 {
-	AssertIsConsoleColor(thread, args + 0);
-	AssertIsConsoleColor(thread, args + 1);
+	CHECKED(AssertIsConsoleColor(thread, args + 0));
+	CHECKED(AssertIsConsoleColor(thread, args + 1));
 
 	if (!Console::HaveDefaultColors)
-		Console::GetDefaultColors(thread);
+		CHECKED(Console::GetDefaultColors(thread));
 
-	WORD currentAttrs = Console::GetCurrentAttrs(thread);
+	WORD currentAttrs;
+	CHECKED(Console::GetCurrentAttrs(thread, currentAttrs));
 	SetConsoleTextAttribute(Console::StdOut, (currentAttrs & ~0xff) |
 		((WORD)args[0].integer & 0x0f) | // foreground
 		(((WORD)args[1].integer & 0x0f) << 4)); // background
 }
-AVES_API NATIVE_FUNCTION(aves_Console_resetColors)
+END_NATIVE_FUNCTION
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_resetColors)
 {
 	if (Console::HaveDefaultColors)
 	{
-		CONSOLE_SCREEN_BUFFER_INFO csbi = Console::GetBufferInfo(thread);
+		CONSOLE_SCREEN_BUFFER_INFO csbi;
+		CHECKED(Console::GetBufferInfo(thread, csbi));
 
 		SetConsoleTextAttribute(Console::StdOut,
 			Console::DefaultColors | (csbi.wAttributes & ~0xff));
 	}
 }
+END_NATIVE_FUNCTION
 
 AVES_API NATIVE_FUNCTION(aves_Console_get_showCursor)
 {
 	CONSOLE_CURSOR_INFO cci;
 	BOOL success = GetConsoleCursorInfo(Console::StdOut, &cci);
 	if (!success)
-		Console::ThrowConsoleError(thread);
+		return Console::ThrowConsoleError(thread);
 
-	VM_PushBool(thread, cci.bVisible);
+	VM_PushBool(thread, cci.bVisible ? true : false);
+	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_Console_set_showCursor)
 {
 	CONSOLE_CURSOR_INFO cci;
 	BOOL success = GetConsoleCursorInfo(Console::StdOut, &cci);
 	if (!success)
-		Console::ThrowConsoleError(thread);
+		return Console::ThrowConsoleError(thread);
 
 	cci.bVisible = IsTrue(args + 0);
 	SetConsoleCursorInfo(Console::StdOut, &cci);
+	RETURN_SUCCESS;
 }
 
-COORD Console::GetCursorPosition(ThreadHandle thread)
+int Console::GetCursorPosition(ThreadHandle thread, COORD &pos)
 {
 	CONSOLE_SCREEN_BUFFER_INFO csbi;
-	BOOL success = GetConsoleScreenBufferInfo(StdOut, &csbi);
-	if (!success)
-		Console::ThrowConsoleError(thread);
-	return csbi.dwCursorPosition;
+	int r = GetBufferInfo(thread, csbi);
+	if (r == OVUM_SUCCESS)
+		pos = csbi.dwCursorPosition;
+	return r;
 }
 void Console::SetCursorPosition(ThreadHandle thread, SHORT x, SHORT y)
 {
@@ -418,123 +448,151 @@ void Console::SetCursorPosition(ThreadHandle thread, SHORT x, SHORT y)
 	SetConsoleCursorPosition(StdOut, pos);
 }
 
-void AssertValidCoord(ThreadHandle thread, Value *v, String *paramName)
+int AssertValidCoord(ThreadHandle thread, Value *v, String *paramName)
 {
-	IntFromValue(thread, v);
-	if (v->integer < 0 || v->integer > SHRT_MAX)
+	int r = IntFromValue(thread, v);
+	if (r == OVUM_SUCCESS)
 	{
-		VM_PushString(thread, paramName);
-		GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr);
-		VM_Throw(thread);
+		if (v->integer < 0 || v->integer > SHRT_MAX)
+		{
+			VM_PushString(thread, paramName);
+			r = GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr);
+			if (r == OVUM_SUCCESS)
+				r = VM_Throw(thread);
+		}
 	}
+	return r;
 }
 
-AVES_API NATIVE_FUNCTION(aves_Console_get_cursorX)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_get_cursorX)
 {
-	VM_PushInt(thread, Console::GetCursorPosition(thread).X);
+	COORD pos;
+	CHECKED(Console::GetCursorPosition(thread, pos));
+	VM_PushInt(thread, pos.X);
 }
-AVES_API NATIVE_FUNCTION(aves_Console_set_cursorX)
+END_NATIVE_FUNCTION
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_set_cursorX)
 {
-	AssertValidCoord(thread, args, strings::value);
+	CHECKED(AssertValidCoord(thread, args, strings::value));
 
+	COORD pos;
+	CHECKED(Console::GetCursorPosition(thread, pos));
 	Console::SetCursorPosition(thread,
-		(SHORT)args[0].integer,
-		Console::GetCursorPosition(thread).Y);
+		(SHORT)args[0].integer, pos.Y);
 }
+END_NATIVE_FUNCTION
 
-AVES_API NATIVE_FUNCTION(aves_Console_get_cursorY)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_get_cursorY)
 {
-	VM_PushInt(thread, Console::GetCursorPosition(thread).Y);
+	COORD pos;
+	CHECKED(Console::GetCursorPosition(thread, pos));
+	VM_PushInt(thread, pos.Y);
 }
-AVES_API NATIVE_FUNCTION(aves_Console_set_cursorY)
+END_NATIVE_FUNCTION
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_set_cursorY)
 {
-	AssertValidCoord(thread, args, strings::value);
+	CHECKED(AssertValidCoord(thread, args, strings::value));
+
+	COORD pos;
+	CHECKED(Console::GetCursorPosition(thread, pos));
 	Console::SetCursorPosition(thread,
-		Console::GetCursorPosition(thread).X,
-		(SHORT)args[0].integer);
+		pos.X, (SHORT)args[0].integer);
 }
+END_NATIVE_FUNCTION
 
-AVES_API NATIVE_FUNCTION(aves_Console_setCursorPosition)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_setCursorPosition)
 {
-	AssertValidCoord(thread, args + 0, strings::x);
-	AssertValidCoord(thread, args + 1, strings::y);
+	CHECKED(AssertValidCoord(thread, args + 0, strings::x));
+	CHECKED(AssertValidCoord(thread, args + 1, strings::y));
 
 	Console::SetCursorPosition(thread, (SHORT)args[0].integer, (SHORT)args[1].integer);
 }
+END_NATIVE_FUNCTION
 
-AVES_API NATIVE_FUNCTION(aves_Console_get_bufferWidth)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_get_bufferWidth)
 {
-	CONSOLE_SCREEN_BUFFER_INFO csbi = Console::GetBufferInfo(thread);
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	CHECKED(Console::GetBufferInfo(thread, csbi));
 	VM_PushInt(thread, csbi.dwSize.X);
 }
-AVES_API NATIVE_FUNCTION(aves_Console_get_bufferHeight)
+END_NATIVE_FUNCTION
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_get_bufferHeight)
 {
-	CONSOLE_SCREEN_BUFFER_INFO csbi = Console::GetBufferInfo(thread);
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	CHECKED(Console::GetBufferInfo(thread, csbi));
 	VM_PushInt(thread, csbi.dwSize.Y);
 }
+END_NATIVE_FUNCTION
 
-AVES_API NATIVE_FUNCTION(aves_Console_get_windowWidth)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_get_windowWidth)
 {
-	CONSOLE_SCREEN_BUFFER_INFO csbi = Console::GetBufferInfo(thread);
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	CHECKED(Console::GetBufferInfo(thread, csbi));
 	VM_PushInt(thread, csbi.srWindow.Right - csbi.srWindow.Left + 1);
 }
-AVES_API NATIVE_FUNCTION(aves_Console_get_windowHeight)
+END_NATIVE_FUNCTION
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_get_windowHeight)
 {
-	CONSOLE_SCREEN_BUFFER_INFO csbi = Console::GetBufferInfo(thread);
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	CHECKED(Console::GetBufferInfo(thread, csbi));
 	VM_PushInt(thread, csbi.srWindow.Bottom - csbi.srWindow.Top + 1);
 }
+END_NATIVE_FUNCTION
 
-AVES_API NATIVE_FUNCTION(aves_Console_setBufferSize)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_setBufferSize)
 {
-	IntFromValue(thread, args + 0);
-	IntFromValue(thread, args + 1);
+	CHECKED(IntFromValue(thread, args + 0));
+	CHECKED(IntFromValue(thread, args + 1));
 	int64_t width  = args[0].integer;
 	int64_t height = args[1].integer;
 
-	CONSOLE_SCREEN_BUFFER_INFO csbi = Console::GetBufferInfo(thread);
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	CHECKED(Console::GetBufferInfo(thread, csbi));
 	// Make sure the new buffer is not smaller than the window
 	if (width < csbi.srWindow.Right + 1 || width >= SHRT_MAX)
 	{
 		VM_PushString(thread, strings::width);
-		GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr);
-		VM_Throw(thread);
+		CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr));
+		return VM_Throw(thread);
 	}
 	if (height < csbi.srWindow.Bottom + 1 || height >= SHRT_MAX)
 	{
 		VM_PushString(thread, strings::height);
-		GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr);
-		VM_Throw(thread);
+		CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr));
+		return VM_Throw(thread);
 	}
 
 	COORD size = { (SHORT)width, (SHORT)height };
 	BOOL success = SetConsoleScreenBufferSize(Console::StdOut, size);
 	if (!success)
-		Console::ThrowConsoleError(thread);
+		return Console::ThrowConsoleError(thread);
 }
-AVES_API NATIVE_FUNCTION(aves_Console_setWindowSize)
+END_NATIVE_FUNCTION
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_setWindowSize)
 {
-	IntFromValue(thread, args + 0);
-	IntFromValue(thread, args + 1);
+	CHECKED(IntFromValue(thread, args + 0));
+	CHECKED(IntFromValue(thread, args + 1));
 	int64_t width64  = args[0].integer;
 	int64_t height64 = args[1].integer;
 
 	if (width64 < 0 || width64 > INT32_MAX)
 	{
 		VM_PushString(thread, strings::width);
-		GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr);
-		VM_Throw(thread);
+		CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr));
+		return VM_Throw(thread);
 	}
 	if (height64 < 0 || height64 > INT32_MAX)
 	{
 		VM_PushString(thread, strings::height);
-		GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr);
-		VM_Throw(thread);
+		CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr));
+		return VM_Throw(thread);
 	}
 
 	int32_t width  = (int32_t)width64;
 	int32_t height = (int32_t)height64;
 
-	CONSOLE_SCREEN_BUFFER_INFO csbi = Console::GetBufferInfo(thread);
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	CHECKED(Console::GetBufferInfo(thread, csbi));
 	BOOL success;
 
 	// If the new window size is too small for the buffer,
@@ -546,8 +604,8 @@ AVES_API NATIVE_FUNCTION(aves_Console_setWindowSize)
 		if (csbi.srWindow.Left >= SHRT_MAX - width)
 		{
 			VM_PushString(thread, strings::width);
-			GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr);
-			VM_Throw(thread);
+			CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr));
+			return VM_Throw(thread);
 		}
 		newBufferSize.X = csbi.srWindow.Left + width;
 		resizeBuffer = true;
@@ -557,8 +615,8 @@ AVES_API NATIVE_FUNCTION(aves_Console_setWindowSize)
 		if (csbi.srWindow.Top >= SHRT_MAX - height)
 		{
 			VM_PushString(thread, strings::height);
-			GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr);
-			VM_Throw(thread);
+			CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr));
+			return VM_Throw(thread);
 		}
 		newBufferSize.Y = csbi.srWindow.Top + height;
 		resizeBuffer = true;
@@ -568,7 +626,7 @@ AVES_API NATIVE_FUNCTION(aves_Console_setWindowSize)
 	{
 		success = SetConsoleScreenBufferSize(Console::StdOut, newBufferSize);
 		if (!success)
-			Console::ThrowConsoleError(thread);
+			return Console::ThrowConsoleError(thread);
 	}
 
 	SMALL_RECT window = csbi.srWindow;
@@ -581,13 +639,14 @@ AVES_API NATIVE_FUNCTION(aves_Console_setWindowSize)
 		// Restore previous buffer size!
 		if (resizeBuffer)
 			SetConsoleScreenBufferSize(Console::StdOut, csbi.dwSize);
-		Console::ThrowConsoleError(thread);
+		return Console::ThrowConsoleError(thread);
 	}
 }
+END_NATIVE_FUNCTION
 
-void Console::ThrowConsoleError(ThreadHandle thread)
+int Console::ThrowConsoleError(ThreadHandle thread)
 {
 	if (VM_IsInUnmanagedRegion(thread))
 		VM_LeaveUnmanagedRegion(thread);
-	VM_ThrowError(thread, _S(ConsoleIOError));
+	return VM_ThrowError(thread, _S(ConsoleIOError));
 }

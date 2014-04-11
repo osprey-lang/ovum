@@ -31,9 +31,9 @@ public:
 
 	static bool IsAbsolute(String *path);
 
-	static String *GetFullPath(ThreadHandle thread, String *path);
+	static int GetFullPath(ThreadHandle thread, String *path, String **result);
 
-	static void ValidatePath(ThreadHandle thread, String *path, bool checkWildcards);
+	static int ValidatePath(ThreadHandle thread, String *path, bool checkWildcards);
 };
 
 AVES_API NATIVE_FUNCTION(io_Path_get_directorySeparator);

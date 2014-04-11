@@ -367,13 +367,17 @@ public:
 	GC();
 	~GC();
 
-	void Alloc(Thread *const thread, Type *type, size_t size, GCObject **output);
-	inline void Alloc(Thread *const thread, Type *type, size_t size, Value *output)
+	int Alloc(Thread *const thread, Type *type, size_t size, GCObject **output);
+	inline int Alloc(Thread *const thread, Type *type, size_t size, Value *output)
 	{
 		GCObject *gco;
-		Alloc(thread, type, size, &gco);
-		output->type = type;
-		output->instance = gco->InstanceBase();
+		int r = Alloc(thread, type, size, &gco);
+		if (r == OVUM_SUCCESS)
+		{
+			output->type = type;
+			output->instance = gco->InstanceBase();
+		}
+		return r;
 	}
 
 	String *ConstructString(Thread *const thread, const int32_t length, const uchar value[]);
@@ -394,8 +398,8 @@ public:
 		return strings.Intern(value);
 	}
 
-	void Construct(Thread *const thread, Type *type, const uint16_t argc, Value *output);
-	void ConstructLL(Thread *const thread, Type *type, const uint16_t argc, Value *args, Value *output);
+	int Construct(Thread *const thread, Type *type, const uint16_t argc, Value *output);
+	int ConstructLL(Thread *const thread, Type *type, const uint16_t argc, Value *args, Value *output);
 
 	void AddMemoryPressure(Thread *const thread, const size_t size);
 	void RemoveMemoryPressure(Thread *const thread, const size_t size);

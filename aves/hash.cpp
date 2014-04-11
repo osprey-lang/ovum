@@ -11,30 +11,35 @@ AVES_API void aves_Hash_init(TypeHandle type)
 	Type_SetFinalizer(type, aves_Hash_finalize);
 }
 
-void InitializeBuckets(ThreadHandle thread, HashInst *inst, const int32_t capacity)
+bool InitializeBuckets(ThreadHandle thread, HashInst *inst, const int32_t capacity)
 {
 	int32_t size = HashHelper_GetPrime(capacity);
 
-	inst->buckets = new int32_t[size];
+	if (!(inst->buckets = new(std::nothrow) int32_t[size]))
+		return false;
 	memset(inst->buckets, -1, size * sizeof(int32_t));
 
-	inst->entries = new HashEntry[size];
+	if (!(inst->entries = new(std::nothrow) HashEntry[size]))
+		return false;
 	memset(inst->entries, 0, size * sizeof(HashEntry));
 
 	inst->capacity = size;
 	inst->freeList = -1;
+	return true;
 }
 
-void ResizeHash(ThreadHandle thread, HashInst *inst)
+bool ResizeHash(ThreadHandle thread, HashInst *inst)
 {
 	using namespace std;
 
 	int32_t newSize = HashHelper_GetPrime(inst->count * 2);
 
-	unique_ptr<int32_t[]> newBuckets(new int32_t[newSize]);
+	unique_ptr<int32_t[]> newBuckets(new(std::nothrow) int32_t[newSize]);
+	if (newBuckets.get() == nullptr) return false;
 	memset(newBuckets.get(), -1, newSize * sizeof(int32_t));
 
-	unique_ptr<HashEntry[]> newEntries(new HashEntry[newSize]);
+	unique_ptr<HashEntry[]> newEntries(new(std::nothrow) HashEntry[newSize]);
+	if (newEntries.get() == nullptr) return false;
 	CopyMemoryT(newEntries.get(), inst->entries, inst->count);
 
 	HashEntry *e = newEntries.get();
@@ -51,10 +56,13 @@ void ResizeHash(ThreadHandle thread, HashInst *inst)
 	inst->capacity = newSize;
 	inst->buckets = newBuckets.release();
 	inst->entries = newEntries.release();
+	return true;
 }
 
-int32_t FindEntry(ThreadHandle thread, HashInst *inst, Value *key, const int32_t hashCode)
+int FindEntry(ThreadHandle thread, HashInst *inst, Value *key, const int32_t hashCode, int32_t &index)
 {
+	index = -1;
+
 	if (inst->buckets != nullptr)
 	{
 		int32_t hashCode2 = hashCode & INT32_MAX;
@@ -65,13 +73,19 @@ int32_t FindEntry(ThreadHandle thread, HashInst *inst, Value *key, const int32_t
 			{
 				VM_Push(thread, *key);
 				VM_Push(thread, entry.key);
-				if (VM_Equals(thread))
-					return i;
+				bool equals;
+				int r = VM_Equals(thread, &equals);
+				if (r != OVUM_SUCCESS) return r;
+				if (equals)
+				{
+					index = i;
+					break;
+				}
 			}
 		}
 	}
 
-	return -1; // not found
+	RETURN_SUCCESS;
 }
 
 AVES_API NATIVE_FUNCTION(aves_Hash_get_length)
@@ -79,24 +93,28 @@ AVES_API NATIVE_FUNCTION(aves_Hash_get_length)
 	HashInst *inst = _H(THISV);
 
 	VM_PushInt(thread, inst->count - inst->freeCount);
+	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_Hash_get_capacity)
 {
 	HashInst *inst = _H(THISV);
 
 	VM_PushInt(thread, inst->capacity);
+	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_Hash_get_version)
 {
 	HashInst *inst = _H(THISV);
 
 	VM_PushInt(thread, inst->version);
+	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_Hash_get_entryCount)
 {
 	HashInst *inst = _H(THISV);
 
 	VM_PushInt(thread, inst->count);
+	RETURN_SUCCESS;
 }
 
 AVES_API NATIVE_FUNCTION(aves_Hash_initialize)
@@ -107,29 +125,33 @@ AVES_API NATIVE_FUNCTION(aves_Hash_initialize)
 
 	int64_t capacity = args[1].integer;
 	if (capacity > 0)
-		InitializeBuckets(thread, inst, (int32_t)capacity);
+		if (!InitializeBuckets(thread, inst, (int32_t)capacity))
+			return VM_ThrowMemoryError(thread);
+	RETURN_SUCCESS;
 }
-AVES_API NATIVE_FUNCTION(aves_Hash_getItemInternal)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Hash_getItemInternal)
 {
 	// Args: (key: non-null, hash: Int|UInt)
 	{ Pinned h(THISP);
 		HashInst *inst = _H(THISV);
 
 		int32_t hashCode = U64_TO_HASH(args[2].uinteger);
-		int32_t index = FindEntry(thread, inst, args + 1, hashCode);
+		int32_t index;
+		CHECKED(FindEntry(thread, inst, args + 1, hashCode, index));
 		if (index >= 0)
 		{
 			VM_Push(thread, inst->entries[index].value);
-			return;
+			RETURN_SUCCESS;
 		}
 	}
 
 	// ArgumentError(message, paramName)
 	VM_PushString(thread, error_strings::HashKeyNotFound);
 	VM_PushString(thread, strings::key);
-	GC_Construct(thread, Types::ArgumentError, 2, nullptr);
-	VM_Throw(thread);
+	CHECKED(GC_Construct(thread, Types::ArgumentError, 2, nullptr));
+	return VM_Throw(thread);
 }
+END_NATIVE_FUNCTION
 AVES_API NATIVE_FUNCTION(aves_Hash_getEntry)
 {
 	HashInst *inst = _H(THISV);
@@ -147,8 +169,9 @@ AVES_API NATIVE_FUNCTION(aves_Hash_getEntry)
 	}
 	else
 		VM_PushNull(thread);
+	RETURN_SUCCESS;
 }
-AVES_API NATIVE_FUNCTION(aves_Hash_insert)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Hash_insert)
 {
 	// Args: (key: non-null, hash: Int|UInt, value, add: Boolean)
 	Pinned h(THISP);
@@ -157,7 +180,8 @@ AVES_API NATIVE_FUNCTION(aves_Hash_insert)
 	bool add = !!args[4].integer;
 
 	if (inst->buckets == nullptr)
-		InitializeBuckets(thread, inst, 0);
+		if (!InitializeBuckets(thread, inst, 0))
+			return VM_ThrowMemoryError(thread);
 
 	int32_t hashCode = U64_TO_HASH(args[2].uinteger) & INT32_MAX;
 	int32_t bucket = hashCode % inst->capacity;
@@ -169,17 +193,19 @@ AVES_API NATIVE_FUNCTION(aves_Hash_insert)
 		{
 			VM_Push(thread, args[1]); // key
 			VM_Push(thread, entry->key);
-			if (VM_Equals(thread))
+			bool equals;
+			CHECKED(VM_Equals(thread, &equals));
+			if (equals)
 			{
 				if (add)
 				{
-					GC_Construct(thread, Types::DuplicateKeyError, 0, nullptr);
-					VM_Throw(thread);
+					CHECKED(GC_Construct(thread, Types::DuplicateKeyError, 0, nullptr));
+					return VM_Throw(thread);
 				}
 
 				entry->value = args[3];
 				inst->version++;
-				return; // Done!
+				RETURN_SUCCESS; // Done!
 			}
 		}
 		i = entry->next;
@@ -197,7 +223,8 @@ AVES_API NATIVE_FUNCTION(aves_Hash_insert)
 	{
 		if (inst->count == inst->capacity)
 		{
-			ResizeHash(thread, inst);
+			if (!ResizeHash(thread, inst))
+				return VM_ThrowMemoryError(thread);
 			bucket = hashCode % inst->capacity;
 		}
 		index = inst->count;
@@ -214,18 +241,20 @@ AVES_API NATIVE_FUNCTION(aves_Hash_insert)
 	}
 	inst->version++;
 }
-AVES_API NATIVE_FUNCTION(aves_Hash_hasKeyInternal)
+END_NATIVE_FUNCTION
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Hash_hasKeyInternal)
 {
 	// Args: (key: non-null, hash: Int|UInt)
 	int32_t hashCode = U64_TO_HASH(args[2].uinteger);
 	int32_t index;
 	{ Pinned h(THISP);
-		index = FindEntry(thread, _H(THISV), args + 1, hashCode);
+		CHECKED(FindEntry(thread, _H(THISV), args + 1, hashCode, index));
 	}
 
 	VM_PushBool(thread, index >= 0);
 }
-AVES_API NATIVE_FUNCTION(aves_Hash_hasValue)
+END_NATIVE_FUNCTION
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Hash_hasValue)
 {
 	// Args: (value)
 	Alias<HashInst> inst(THISP);
@@ -235,16 +264,19 @@ AVES_API NATIVE_FUNCTION(aves_Hash_hasValue)
 		{
 			VM_Push(thread, args[1]); // value
 			VM_Push(thread, inst->entries[i].value);
-			if (VM_Equals(thread))
+			bool equals;
+			CHECKED(VM_Equals(thread, &equals));
+			if (equals)
 			{
 				VM_PushBool(thread, true);
-				return;
+				RETURN_SUCCESS;
 			}
 		}
 
 	VM_PushBool(thread, false);
 }
-AVES_API NATIVE_FUNCTION(aves_Hash_removeInternal)
+END_NATIVE_FUNCTION
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Hash_removeInternal)
 {
 	// Args: (key: non-null, hash: Int|UInt)
 	HashInst *inst = _H(THISV);
@@ -263,7 +295,9 @@ AVES_API NATIVE_FUNCTION(aves_Hash_removeInternal)
 			{
 				VM_Push(thread, args[1]);
 				VM_Push(thread, entry->key);
-				if (VM_Equals(thread))
+				bool equals;
+				CHECKED(VM_Equals(thread, &equals));
+				if (equals)
 				{
 					// Key found!
 					if (lastEntry < 0)
@@ -279,7 +313,7 @@ AVES_API NATIVE_FUNCTION(aves_Hash_removeInternal)
 					inst->freeCount++;
 					inst->version++;
 					VM_PushBool(thread, true);
-					return;
+					RETURN_SUCCESS;
 				}
 			}
 			lastEntry = i;
@@ -288,32 +322,39 @@ AVES_API NATIVE_FUNCTION(aves_Hash_removeInternal)
 
 	VM_PushBool(thread, false);
 }
+END_NATIVE_FUNCTION
 
 AVES_API NATIVE_FUNCTION(aves_HashEntry_get_hashCode)
 {
 	HashEntry *e = reinterpret_cast<HashEntry*>(THISV.instance);
 	VM_PushInt(thread, e->hashCode);
+	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_HashEntry_get_nextIndex)
 {
 	HashEntry *e = reinterpret_cast<HashEntry*>(THISV.instance);
 	VM_PushInt(thread, e->next);
+	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_HashEntry_get_key)
 {
 	HashEntry *e = reinterpret_cast<HashEntry*>(THISV.instance);
 	VM_Push(thread, e->key);
+	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_HashEntry_get_value)
 {
 	HashEntry *e = reinterpret_cast<HashEntry*>(THISV.instance);
 	VM_Push(thread, e->value);
+	RETURN_SUCCESS;
 }
 
-AVES_API void InitHashInstance(ThreadHandle thread, HashInst *hash, const int32_t capacity)
+AVES_API int InitHashInstance(ThreadHandle thread, HashInst *hash, const int32_t capacity)
 {
 	if (capacity > 0)
-		InitializeBuckets(thread, hash, capacity);
+		if (!InitializeBuckets(thread, hash, capacity))
+			return OVUM_ERROR_NO_MEMORY;
+	RETURN_SUCCESS;
 }
 
 bool aves_Hash_getReferences(void *basePtr, unsigned int *valc, Value **target, int32_t *state)

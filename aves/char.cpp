@@ -27,6 +27,7 @@ AVES_API NATIVE_FUNCTION(aves_Char_get_length)
 	wuchar ch = (wuchar)THISV.integer;
 
 	VM_PushInt(thread, ch > 0xFFFF ? 2 : 1);
+	RETURN_SUCCESS;
 }
 
 AVES_API NATIVE_FUNCTION(aves_Char_get_category)
@@ -43,6 +44,7 @@ AVES_API NATIVE_FUNCTION(aves_Char_get_category)
 	catValue.integer = unicode::OvumCategoryToAves(cat);
 
 	VM_Push(thread, catValue);
+	RETURN_SUCCESS;
 }
 
 AVES_API NATIVE_FUNCTION(aves_Char_toUpper)
@@ -54,6 +56,7 @@ AVES_API NATIVE_FUNCTION(aves_Char_toUpper)
 	upper.integer = (int32_t)UC_GetCaseMapW(ch).upper;
 
 	VM_Push(thread, upper);
+	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_Char_toLower)
 {
@@ -64,6 +67,7 @@ AVES_API NATIVE_FUNCTION(aves_Char_toLower)
 	lower.integer = (int32_t)UC_GetCaseMapW(ch).lower;
 
 	VM_Push(thread, lower);
+	RETURN_SUCCESS;
 }
 
 AVES_API NATIVE_FUNCTION(aves_Char_getHashCode)
@@ -72,25 +76,31 @@ AVES_API NATIVE_FUNCTION(aves_Char_getHashCode)
 	LitString<2> str = Char::ToLitString(ch);
 
 	VM_PushInt(thread, String_GetHashCode(_S(str)));
+	RETURN_SUCCESS;
 }
-AVES_API NATIVE_FUNCTION(aves_Char_toString)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Char_toString)
 {
 	wuchar ch = (wuchar)THISV.integer;
-	LitString<2> str = Char::ToLitString(ch);
+	LitString<2> litStr = Char::ToLitString(ch);
 
-	VM_PushString(thread, GC_ConstructString(thread, str.length, str.chars));
+	String *str;
+	CHECKED_MEM(str = GC_ConstructString(thread, litStr.length, litStr.chars));
+
+	VM_PushString(thread, str);
+	RETURN_SUCCESS;
 }
+END_NATIVE_FUNCTION
 
-AVES_API NATIVE_FUNCTION(aves_Char_fromCodepoint)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Char_fromCodepoint)
 {
-	IntFromValue(thread, args + 0);
+	CHECKED(IntFromValue(thread, args + 0));
 
 	int64_t cp = args[0].integer;
 	if (cp < 0 || cp > 0x10FFFF)
 	{
 		VM_PushString(thread, strings::cp);
-		GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr);
-		VM_Throw(thread);
+		CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr));
+		return VM_Throw(thread);
 	}
 
 	Value character;
@@ -98,6 +108,7 @@ AVES_API NATIVE_FUNCTION(aves_Char_fromCodepoint)
 	character.integer = cp;
 	VM_Push(thread, character);
 }
+END_NATIVE_FUNCTION
 
 AVES_API NATIVE_FUNCTION(aves_Char_opEquals)
 {
@@ -113,6 +124,7 @@ AVES_API NATIVE_FUNCTION(aves_Char_opEquals)
 		eq = false;
 
 	VM_PushBool(thread, eq);
+	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_Char_opCompare)
 {
@@ -129,36 +141,43 @@ AVES_API NATIVE_FUNCTION(aves_Char_opCompare)
 		VM_ThrowTypeError(thread);
 
 	VM_PushInt(thread, result);
+	RETURN_SUCCESS;
 }
-AVES_API NATIVE_FUNCTION(aves_Char_opMultiply)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Char_opMultiply)
 {
-	IntFromValue(thread, args + 1);
+	CHECKED(IntFromValue(thread, args + 1));
 
 	int64_t times = args[1].integer;
 	if (times == 0)
 	{
 		VM_PushString(thread, strings::Empty);
-		return;
+		RETURN_SUCCESS;
 	}
 
 	LitString<2> str = Char::ToLitString((wuchar)args[0].integer);
-	int64_t length = Int_MultiplyChecked(thread, times, str.length);
+	int64_t length;
+	if (Int_MultiplyChecked(times, str.length, length))
+		return VM_ThrowOverflowError(thread);
 	if (length > INT32_MAX)
 	{
 		VM_PushString(thread, strings::times);
-		GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr);
-		VM_Throw(thread);
+		CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr));
+		return VM_Throw(thread);
 	}
 
-	StringBuffer buf(thread, (int32_t)length);
+	StringBuffer buf;
+	CHECKED_MEM(buf.Init((int32_t)length));
 
 	for (int32_t i = 0; i < (int32_t)length; i++)
-		buf.Append(thread, _S(str));
+		CHECKED_MEM(buf.Append(_S(str)));
 
-	String *result = buf.ToString(thread);
+	String *result;
+	CHECKED_MEM(result = buf.ToString(thread));
 	VM_PushString(thread, result);
 }
+END_NATIVE_FUNCTION
 AVES_API NATIVE_FUNCTION(aves_Char_opPlus)
 {
 	VM_PushInt(thread, args[0].integer);
+	RETURN_SUCCESS;
 }

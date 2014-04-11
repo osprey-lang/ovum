@@ -7,13 +7,13 @@
 
 #include "ov_vm.h"
 
-OVUM_API void IntFromValue(ThreadHandle thread, Value *v);
+OVUM_API int IntFromValue(ThreadHandle thread, Value *v);
 
-OVUM_API void UIntFromValue(ThreadHandle thread, Value *v);
+OVUM_API int UIntFromValue(ThreadHandle thread, Value *v);
 
-OVUM_API void RealFromValue(ThreadHandle thread, Value *v);
+OVUM_API int RealFromValue(ThreadHandle thread, Value *v);
 
-OVUM_API void StringFromValue(ThreadHandle thread, Value *v);
+OVUM_API int StringFromValue(ThreadHandle thread, Value *v);
 
 
 // Checked arithmetics
@@ -22,30 +22,35 @@ OVUM_API void StringFromValue(ThreadHandle thread, Value *v);
 // from SafeInt, albeit with slightly different variable names.
 
 // UINT
-inline uint64_t UInt_AddChecked(ThreadHandle thread, const uint64_t left, const uint64_t right)
+#define RETURN_OVERFLOW  return OVUM_ERROR_OVERFLOW
+#define RETURN_DIV_ZERO  return OVUM_ERROR_DIVIDE_BY_ZERO
+
+inline int UInt_AddChecked(const uint64_t left, const uint64_t right, uint64_t &result)
 {
 	if (UINT64_MAX - left < right)
-		VM_ThrowOverflowError(thread);
+		RETURN_OVERFLOW;
 
-	return left + right;
+	result = left + right;
+	RETURN_SUCCESS;
 }
-inline uint64_t UInt_SubtractChecked(ThreadHandle thread, const uint64_t left, const uint64_t right)
+inline int UInt_SubtractChecked(const uint64_t left, const uint64_t right, uint64_t &result)
 {
 	if (right > left)
-		VM_ThrowOverflowError(thread);
+		RETURN_OVERFLOW;
 
-	return left - right;
+	result = left - right;
+	RETURN_SUCCESS;
 }
-inline uint64_t UInt_MultiplyChecked(ThreadHandle thread, const uint64_t left, const uint64_t right)
+inline int UInt_MultiplyChecked(const uint64_t left, const uint64_t right, uint64_t &result)
 {
 #if USE_INTRINSICS
 	uint64_t high;
-	uint64_t output = _umul128(left, right, &high);
+	result = _umul128(left, right, &high);
 
 	if (high)
-		VM_ThrowOverflowError(thread);
+		RETURN_OVERFLOW;
 
-	return output;
+	RETURN_SUCCESS;
 #else
 	uint32_t leftHigh, leftLow, rightHigh, rightLow;
 
@@ -67,45 +72,48 @@ inline uint64_t UInt_MultiplyChecked(ThreadHandle thread, const uint64_t left, c
 			output = (uint64_t)leftHigh * (uint64_t)rightLow;
 	}
 	else
-		VM_ThrowOverflowError(thread);
+		RETURN_OVERFLOW;
 
 	if (output != 0)
 	{
 		if ((uint32_t)(output >> 32) != 0)
-			VM_ThrowOverflowError(thread);
+			RETURN_OVERFLOW;
 
 		output <<= 32;
 		uint64_t temp = (uint64_t)leftLow * (uint64_t)rightLow;
 		output += temp;
 
 		if (output < temp)
-			VM_ThrowOverflowError(thread);
+			RETURN_OVERFLOW;
 	}
 	else
 		output = (uint64_t)leftLow * (uint64_t)rightLow;
 
-	return output;
+	result = output;
+	RETURN_SUCCESS;
 #endif
 }
-inline uint64_t UInt_DivideChecked(ThreadHandle thread, const uint64_t left, const uint64_t right)
+inline int UInt_DivideChecked(const uint64_t left, const uint64_t right, uint64_t &result)
 {
 	if (right == 0)
-		VM_ThrowDivideByZeroError(thread);
+		RETURN_DIV_ZERO;
 
-	return left / right;
+	result = left / right;
+	RETURN_SUCCESS;
 }
-inline uint64_t UInt_ModuloChecked(ThreadHandle thread, const uint64_t left, const uint64_t right)
+inline int UInt_ModuloChecked(const uint64_t left, const uint64_t right, uint64_t &result)
 {
 	if (right == 0)
-		VM_ThrowDivideByZeroError(thread);
+		RETURN_DIV_ZERO;
 
 	// Note: modulo can never result in an overflow.
 
-	return left % right;
+	result = left % right;
+	RETURN_SUCCESS;
 }
 
 // INT
-inline int64_t Int_AddChecked(ThreadHandle thread, const int64_t left, const int64_t right)
+inline int Int_AddChecked(const int64_t left, const int64_t right, int64_t &result)
 {
 	if ((left ^ right) >= 0)
 	{
@@ -116,12 +124,13 @@ inline int64_t Int_AddChecked(ThreadHandle thread, const int64_t left, const int
 		bool neg = left < 0;
 		if (neg && (left < INT64_MIN - right) ||
 			!neg && (INT64_MAX - left < right))
-			VM_ThrowOverflowError(thread);
+			RETURN_OVERFLOW;
 	}
 
-	return left + right;
+	result = left + right;
+	RETURN_SUCCESS;
 }
-inline int64_t Int_SubtractChecked(ThreadHandle thread, const int64_t left, const int64_t right)
+inline int Int_SubtractChecked(const int64_t left, const int64_t right, int64_t &result)
 {
 	if ((left ^ right) < 0)
 	{
@@ -130,27 +139,28 @@ inline int64_t Int_SubtractChecked(ThreadHandle thread, const int64_t left, cons
 		// > If left is negative (and right is positive), then test  left < INT64_MIN + right
 		if (left > 0 && left > INT64_MAX + right ||
 			left < 0 && left < INT64_MIN + right)
-			VM_ThrowOverflowError(thread);
+			RETURN_OVERFLOW;
 	}
 
-	return left - right;
+	result = left - right;
+	RETURN_SUCCESS;
 }
-inline int64_t Int_MultiplyChecked(ThreadHandle thread, const int64_t left, const int64_t right)
+inline int Int_MultiplyChecked(const int64_t left, const int64_t right, int64_t &result)
 {
 #if USE_INTRINSICS
 	int64_t high;
-	int64_t output = _mul128(left, right, &high);
+	result = _mul128(left, right, &high);
 
 	if ((left ^ right) < 0)
 	{
 		if (!(high == -1 && output < 0 ||
 			high == 0 && output == 0))
-			VM_ThrowOverflowError(thread);
+			RETURN_OVERFLOW;
 	}
 	else if (high == 0 && (uint64_t)output <= INT64_MAX)
-		VM_ThrowOverflowError(thread);
+		RETURN_OVERFLOW;
 
-	return output;
+	RETURN_SUCCESS;
 #else
 	bool leftNeg  = false;
 	bool rightNeg = false;
@@ -170,45 +180,55 @@ inline int64_t Int_MultiplyChecked(ThreadHandle thread, const int64_t left, cons
 		rightCopy = -rightCopy; // Also overflows on INT64_MIN
 	}
 
-	uint64_t temp = UInt_MultiplyChecked(thread, (uint64_t)leftCopy, (uint64_t)rightCopy);
-
-	// If the unsigned multiplication overflowed, the thread would have thrown.
+	uint64_t temp;
+	if (UInt_MultiplyChecked((uint64_t)leftCopy, (uint64_t)rightCopy, temp))
+		RETURN_OVERFLOW;
 
 	if (leftNeg ^ rightNeg)
 	{
 		// result must be negative
 		if (temp <= (uint64_t)INT64_MIN)
-			return -(int64_t)temp;
+		{
+			result = -(int64_t)temp;
+			RETURN_SUCCESS;
+		}
 	}
 	else
 	{
 		// result must be positive
 		if (temp <= (uint64_t)INT64_MAX)
-			return (int64_t)temp;
+		{
+			result = (int64_t)temp;
+			RETURN_SUCCESS;
+		}
 	}
 
-	VM_ThrowOverflowError(thread);
-	return 0; // compilers are not clever enough to realise that VM_ThrowOverflowError() exits the method
+	RETURN_OVERFLOW;
 #endif
 }
-inline int64_t Int_DivideChecked(ThreadHandle thread, const int64_t left, const int64_t right)
+inline int Int_DivideChecked(const int64_t left, const int64_t right, int64_t &result)
 {
 	if (right == 0)
-		VM_ThrowDivideByZeroError(thread);
+		RETURN_DIV_ZERO;
 	if (left == INT64_MIN && right == -1)
-		VM_ThrowOverflowError(thread);
+		RETURN_OVERFLOW;
 
-	return left / right;
+	result = left / right;
+	RETURN_SUCCESS;
 }
-inline int64_t Int_ModuloChecked(ThreadHandle thread, const int64_t left, const int64_t right)
+inline int Int_ModuloChecked(const int64_t left, const int64_t right, int64_t &result)
 {
 	if (right == 0)
-		VM_ThrowDivideByZeroError(thread);
+		RETURN_DIV_ZERO;
 
 	// Note: modulo can never result in an overflow.
 
-	return left % right;
+	result = left % right;
+	RETURN_SUCCESS;
 }
+
+#undef RETURN_OVERFLOW
+#undef RETURN_DIV_ZERO
 
 // HASH HELPERS
 

@@ -30,9 +30,9 @@ namespace io
 	//   pathName:
 	//       The path or file name that caused the error. Not all error codes make
 	//       use of this parameter.
-	void ThrowIOError(ThreadHandle thread, ErrorCode code, String *pathName = nullptr);
+	int ThrowIOError(ThreadHandle thread, ErrorCode code, String *pathName = nullptr);
 
-	bool ReadFileAttributes(ThreadHandle thread, String *fileName, WIN32_FILE_ATTRIBUTE_DATA *data, bool throwOnError);
+	int ReadFileAttributes(ThreadHandle thread, String *fileName, WIN32_FILE_ATTRIBUTE_DATA *data, bool throwOnError, bool &success);
 }
 
 #endif // AVES__IO_H

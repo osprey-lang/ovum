@@ -28,11 +28,11 @@ AVES_API NATIVE_FUNCTION(aves_List_slice1);
 AVES_API NATIVE_FUNCTION(aves_List_slice2);
 AVES_API NATIVE_FUNCTION(aves_List_reverse);
 
-AVES_API void InitListInstance(ThreadHandle thread, ListInst *list, const int32_t capacity);
+AVES_API int InitListInstance(ThreadHandle thread, ListInst *list, const int32_t capacity);
 
-void EnsureMinCapacity(ThreadHandle thread, ListInst *list, const int32_t capacity);
+int EnsureMinCapacity(ThreadHandle thread, ListInst *list, const int32_t capacity);
 
-void SetListCapacity(ThreadHandle thread, ListInst *list, const int32_t capacity);
+int SetListCapacity(ThreadHandle thread, ListInst *list, const int32_t capacity);
 
 bool aves_List_getReferences(void *basePtr, unsigned int *valc, Value **target, int32_t *state);
 
