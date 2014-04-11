@@ -93,7 +93,7 @@ void ModuleReader::Read(void *dest, uint32_t count)
 uint32_t ModuleReader::ReadRaw(void *dest, uint32_t count)
 {
 	DWORD bytesRead;
-	BOOL result = ReadFile(stream, dest, BUFFER_SIZE, &bytesRead, nullptr);
+	BOOL result = ReadFile(stream, dest, count, &bytesRead, nullptr);
 	if (!result)
 		HandleError(GetLastError());
 	if (bytesRead == 0)
