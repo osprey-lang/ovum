@@ -89,11 +89,11 @@ namespace string
 	int32_t IndexOf(const String *str, const String *part);
 	int32_t LastIndexOf(const String *str, const String *part);
 
-	String *Format(ThreadHandle thread, const String *format, ListInst *list);
-	String *Format(ThreadHandle thread, const String *format, Value *hash);
+	int Format(ThreadHandle thread, const String *format, ListInst *list, String *&result);
+	int Format(ThreadHandle thread, const String *format, Value *hash, String *&result);
 
-	String *Replace(ThreadHandle thread, const String *input, const uchar oldChar, const uchar newChar, const int64_t maxTimes);
-	String *Replace(ThreadHandle thread, const String *input, String *oldValue, String *newValue, const int64_t maxTimes);
+	String *Replace(ThreadHandle thread, String *input, const uchar oldChar, const uchar newChar, const int64_t maxTimes);
+	String *Replace(ThreadHandle thread, String *input, String *oldValue, String *newValue, const int64_t maxTimes);
 }
 
 #endif // AVES__STRING_H

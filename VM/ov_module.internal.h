@@ -6,11 +6,11 @@
 #include <cstdio>
 #include <vector>
 #include <string>
+#include <exception>
 #include "ov_vm.internal.h"
-#include "ov_type.internal.h"
+#include "membertable.internal.h"
 
-
-enum class ModuleMemberFlags : uint16_t
+enum class ModuleMemberFlags : uint32_t
 {
 	// Mask for extracting the kind of member (type, function or constant).
 	KIND     = 0x000f,
@@ -25,7 +25,7 @@ enum class ModuleMemberFlags : uint16_t
 	PUBLIC     = 0x0010,
 	INTERNAL   = 0x0020,
 };
-ENUM_OPS(ModuleMemberFlags, uint16_t);
+ENUM_OPS(ModuleMemberFlags, uint32_t);
 
 
 class ModuleMember
@@ -69,11 +69,8 @@ enum ModuleMemberId : uint32_t
 	IDMASK_FIELDREF     = 0x52000000u,
 	IDMASK_METHODREF    = 0x54000000u,
 };
-typedef uint32_t TokenId;
 
-
-class ModuleReader; // Defined below
-
+class ModuleReader; // Defined in modulereader.internal.h
 
 typedef struct ModuleVersion_S ModuleVersion;
 typedef struct ModuleVersion_S
@@ -116,91 +113,6 @@ typedef struct ModuleMeta_S
 	int32_t methodCount;
 	uint32_t methodStart;
 } ModuleMeta;
-
-class Module; // Vorwärts declaration
-
-template<class T>
-class MemberTable
-{
-private:
-	int32_t capacity; // The total number of slots
-	int32_t length; // The total number of entries
-	T *entries;
-
-	inline void Init(const int32_t capacity)
-	{
-		this->capacity = capacity;
-		if (capacity != 0)
-			this->entries = new T[capacity];
-		else
-			this->entries = nullptr;
-	}
-
-	inline void Add(const T item)
-	{
-		entries[length] = item;
-		length++;
-	}
-
-	inline void DeleteEntries()
-	{
-		for (int32_t i = 0; i < length; i++)
-			delete entries[i];
-	}
-
-	inline void FreeEntries()
-	{
-		for (int32_t i = 0; i < length; i++)
-			free(entries[i]);
-	}
-
-public:
-	inline MemberTable(const int32_t capacity)
-		: length(0)
-	{
-		Init(capacity);
-	}
-	inline MemberTable()
-	{
-		Init(0);
-	}
-
-	inline ~MemberTable()
-	{
-#ifdef PRINT_DEBUG_INFO
-		wprintf(L"Destroying member table\n");
-#endif
-		if (this->entries)
-			delete[] this->entries;
-#ifdef PRINT_DEBUG_INFO
-		wprintf(L"Finished destroying member table\n");
-#endif
-	}
-
-	inline T operator[](const int32_t index) const
-	{
-		if (index < 0 || index >= length)
-			return nullptr; // niet gevonden
-		return entries[index];
-	}
-
-	inline const int32_t GetLength() const { return length; }
-	inline const int32_t GetCapacity() const { return capacity; }
-
-	inline T *GetEntryPointer(const int32_t index) { return entries + index; }
-	
-	inline bool HasItem(const int32_t index) const
-	{
-		return index >= 0 && index < length;
-	}
-
-	inline TokenId GetNextId(TokenId mask) const
-	{
-		return (length + 1) | mask;
-	}
-
-	friend class Module;
-};
 
 // And then the actual Module class! Hurrah!
 class Module
@@ -435,7 +347,6 @@ public:
 	}
 };
 
-
 class ModuleIOException : public std::exception
 {
 public:
@@ -443,115 +354,5 @@ public:
 		exception(what)
 	{ }
 };
-
-enum class SeekOrigin
-{
-	BEGIN = 0,
-	CURRENT = 1,
-	END = 2,
-};
-
-class ModuleReader
-{
-private:
-	HANDLE stream;
-
-public:
-	std::wstring fileName;
-
-	ModuleReader();
-	~ModuleReader();
-
-	void Open(const wchar_t *fileName);
-	void Open(const std::wstring &fileName);
-
-	void Read(void *dest, uint32_t count);
-
-	long GetPosition();
-
-	void Seek(long amount, SeekOrigin origin);
-
-	inline int8_t ReadInt8()
-	{
-		int8_t target;
-		Read(&target, sizeof(int8_t));
-		return target;
-	}
-	inline uint8_t ReadUInt8()
-	{
-		uint8_t target;
-		Read(&target, sizeof(uint8_t));
-		return target;
-	}
-
-	// All the reading functions below assume the system is little-endian.
-	// This assumption will be fixed at an unspecified later date.
-
-	inline int16_t ReadInt16()
-	{
-		int16_t target;
-		Read(&target, sizeof(int16_t));
-		return target;
-	}
-	inline uint16_t ReadUInt16()
-	{
-		uint16_t target;
-		Read(&target, sizeof(uint16_t));
-		return target;
-	}
-
-	inline int32_t ReadInt32()
-	{
-		int32_t target;
-		Read(&target, sizeof(int32_t));
-		return target;
-	}
-	inline uint32_t ReadUInt32()
-	{
-		uint32_t target;
-		Read(&target, sizeof(uint32_t));
-		return target;
-	}
-
-	inline int64_t ReadInt64()
-	{
-		int64_t target;
-		Read(&target, sizeof(int64_t));
-		return target;
-	}
-	inline uint64_t ReadUInt64()
-	{
-		uint64_t target;
-		Read(&target, sizeof(uint64_t));
-		return target;
-	}
-
-	inline TokenId ReadToken()
-	{
-		TokenId target;
-		Read(&target, sizeof(TokenId));
-		return target;
-	}
-
-	inline void SkipCollection()
-	{
-		using namespace std;
-		uint32_t size = ReadUInt32();
-		Seek(size, SeekOrigin::CURRENT);
-	}
-
-	String *ReadString();
-	String *ReadStringOrNull();
-	char *ReadCString();
-
-private:
-	String *ReadShortString(const int32_t length);
-	String *ReadLongString(const int32_t length);
-
-	void HandleError(DWORD error);
-
-	static const int MaxShortStringLength = 128;
-};
-
 
 #endif // VM__MODULE_INTERNAL_H

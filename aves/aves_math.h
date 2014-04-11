@@ -19,8 +19,6 @@ AVES_API NATIVE_FUNCTION(aves_math_floor);
 AVES_API NATIVE_FUNCTION(aves_math_logE);
 AVES_API NATIVE_FUNCTION(aves_math_logBase);
 AVES_API NATIVE_FUNCTION(aves_math_log10);
-AVES_API NATIVE_FUNCTION(aves_math_max);
-AVES_API NATIVE_FUNCTION(aves_math_min);
 AVES_API NATIVE_FUNCTION(aves_math_sign);
 AVES_API NATIVE_FUNCTION(aves_math_sin);
 AVES_API NATIVE_FUNCTION(aves_math_sinh);

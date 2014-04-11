@@ -44,7 +44,7 @@ namespace uinteger
 		const int radix, const bool upper, const int minWidth,
 		const int bufferSize, uchar *buf);
 
-	inline const uint64_t Power(ThreadHandle thread, const uint64_t base, const uint64_t exponent)
+	inline int Power(const uint64_t base, const uint64_t exponent, uint64_t &output)
 	{
 		uint64_t a = base;
 		uint64_t b = exponent;
@@ -53,15 +53,18 @@ namespace uinteger
 		while (b > 0)
 		{
 			if ((b & 1) != 0)
-				result = UInt_MultiplyChecked(thread, result, a);
+				if (UInt_MultiplyChecked(result, a, result))
+					return OVUM_ERROR_OVERFLOW;
 			b >>= 1;
 			if (b > 0)
 				// This sometimes overflows for the last iteration, after which
 				// the value is not even be used; specifically, at 2**32 * 2**32
-				a = UInt_MultiplyChecked(thread, a, a);
+				if (UInt_MultiplyChecked(a, a, a))
+					return OVUM_ERROR_OVERFLOW;
 		}
 
-		return result;
+		output = result;
+		RETURN_SUCCESS;
 	}
 }
 

@@ -48,16 +48,10 @@ namespace integer
 		const int radix, const bool upper, const int minWidth,
 		const int bufferSize, uchar *buf);
 
-	void ParseFormatString(ThreadHandle thread, String *str, int *radix, int *minWidth, bool *upper);
+	int ParseFormatString(ThreadHandle thread, String *str, int *radix, int *minWidth, bool *upper);
 
-	inline const int64_t Power(ThreadHandle thread, const int64_t base, const int64_t exponent)
+	inline const int Power(const int64_t base, const int64_t exponent, int64_t &output)
 	{
-		if (exponent < 0)
-		{
-			GC_Construct(thread, Types::ArgumentRangeError, 0, nullptr);
-			VM_Throw(thread);
-		}
-
 		int64_t a = base;
 		int64_t b = exponent;
 
@@ -65,15 +59,18 @@ namespace integer
 		while (b > 0)
 		{
 			if ((b & 1) != 0)
-				result = Int_MultiplyChecked(thread, result, a);
+				if (Int_MultiplyChecked(result, a, result))
+					return OVUM_ERROR_OVERFLOW;
 			b >>= 1;
 			if (b > 0)
 				// This sometimes overflows for the last iteration, after which
 				// the value is not even be used; for example, at 2**32 * 2**32
-				a = Int_MultiplyChecked(thread, a, a);
+				if (Int_MultiplyChecked(a, a, a))
+					return OVUM_ERROR_OVERFLOW;
 		}
 
-		return result;
+		output = result;
+		RETURN_SUCCESS;
 	}
 }
 

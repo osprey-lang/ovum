@@ -6,10 +6,17 @@
 #include "ov_vm.h"
 
 // Constructs an instance of the specified type.
-// The type must not be abstract, static, primitive or aves.String.
-// 'argc' refers to the number of arguments that are on the call stack,
-// which get passed to an appropriate constructor of the type.
-OVUM_API void GC_Construct(ThreadHandle thread, TypeHandle type, const uint16_t argc, Value *output);
+// Parameters:
+//   type:
+//     The type to construct an instance of. This type cannot be abstract,
+//     static, primitive, or aves.String.
+//   argc:
+//     The number of arguments to pass to the constructor. These arguments
+//     must be pushed onto the thread's evaluation stack.
+//   output:
+//     A pointer that receives the constructed value. If null, the value is
+//     pushed onto the stack instead.
+OVUM_API int GC_Construct(ThreadHandle thread, TypeHandle type, const uint16_t argc, Value *output);
 
 // Constructs a string. If 'values' is null, the string is initialized to contain only '\0's.
 // Note: 'length' does NOT include the terminating '\0'!

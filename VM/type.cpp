@@ -124,15 +124,18 @@ Member *Type::FindMember(String *name, Type *fromType) const
 	return nullptr; // not found
 }
 
-Value Type::GetTypeToken(Thread *const thread)
+int Type::GetTypeToken(Thread *const thread, Value *result)
 {
+	int r = OVUM_SUCCESS;
 	if (typeToken == nullptr)
-		this->LoadTypeToken(thread);
+		r = this->LoadTypeToken(thread);
 
-	return typeToken->Read();
+	if (r == OVUM_SUCCESS)
+		typeToken->Read(result);
+	return r;
 }
 
-void Type::LoadTypeToken(Thread *const thread)
+int Type::LoadTypeToken(Thread *const thread)
 {
 	// Type tokens can never be destroyed, so let's create a static
 	// reference to it.
@@ -140,13 +143,16 @@ void Type::LoadTypeToken(Thread *const thread)
 
 	// Note: use GC::Alloc because the aves.Type type may not have
 	// a public constructor. GC::Construct would fail if it didn't.
-	GC::gc->Alloc(thread, VM::vm->types.Type, VM::vm->types.Type->size, typeTkn->GetValuePointer());
+	int r = GC::gc->Alloc(thread, VM::vm->types.Type, VM::vm->types.Type->size, typeTkn->GetValuePointer());
+	if (r != OVUM_SUCCESS) return r;
 
 	// Call the type token initializer with this type and the brand
 	// new allocated instance data thing. Hurrah.
-	VM::vm->functions.initTypeToken(thread, typeTkn->GetValuePointer()->instance, this);
+	r = VM::vm->functions.initTypeToken(thread, typeTkn->GetValuePointer()->instance, this);
+	if (r == OVUM_SUCCESS)
+		typeToken = typeTkn;
 
-	typeToken = typeTkn;
+	return r;
 }
 
 void Type::InitStaticFields()
@@ -265,26 +271,30 @@ Type *Member::GetOriginatingType() const
 		continue
 #define RELEASE_FIELD_LOCK() gco->fieldAccessFlag.clear(std::memory_order_release)
 
-void Field::ReadField(Thread *const thread, Value *instance, Value *dest) const
+int Field::ReadField(Thread *const thread, Value *instance, Value *dest) const
 {
 	if (instance->type == nullptr)
-		thread->ThrowNullReferenceError();
+		return thread->ThrowNullReferenceError();
 	if (!Type::ValueIsType(instance, this->declType))
-		thread->ThrowTypeError();
+		return thread->ThrowTypeError();
 
 	ACQUIRE_FIELD_LOCK(instance->instance);
 	*dest = *reinterpret_cast<Value*>(instance->instance + this->offset);
 	RELEASE_FIELD_LOCK();
+
+	RETURN_SUCCESS;
 }
 
-void Field::ReadFieldFast(Thread *const thread, Value *instance, Value *dest) const
+int Field::ReadFieldFast(Thread *const thread, Value *instance, Value *dest) const
 {
 	if (instance->type == nullptr)
-		thread->ThrowNullReferenceError();
+		return thread->ThrowNullReferenceError();
 
 	ACQUIRE_FIELD_LOCK(instance->instance);
 	*dest = *reinterpret_cast<Value*>(instance->instance + this->offset);
 	RELEASE_FIELD_LOCK();
+
+	RETURN_SUCCESS;
 }
 
 void Field::ReadFieldUnchecked(Value *instance, Value *dest) const
@@ -294,23 +304,30 @@ void Field::ReadFieldUnchecked(Value *instance, Value *dest) const
 	RELEASE_FIELD_LOCK();
 }
 
-void Field::WriteField(Thread *const thread, Value *instanceAndValue) const
+int Field::WriteField(Thread *const thread, Value *instanceAndValue) const
 {
 	if (instanceAndValue[0].type == nullptr)
-		thread->ThrowNullReferenceError();
+		return thread->ThrowNullReferenceError();
 	if (!Type::ValueIsType(instanceAndValue, this->declType))
-		thread->ThrowTypeError();
+		return thread->ThrowTypeError();
 
 	ACQUIRE_FIELD_LOCK(instanceAndValue[0].instance);
 	*reinterpret_cast<Value*>(instanceAndValue[0].instance + this->offset) = instanceAndValue[1];
 	RELEASE_FIELD_LOCK();
+
+	RETURN_SUCCESS;
 }
 
-void Field::WriteFieldFast(Thread *const thread, Value *instanceAndValue) const
+int Field::WriteFieldFast(Thread *const thread, Value *instanceAndValue) const
 {
+	if (instanceAndValue[0].type == nullptr)
+		return thread->ThrowNullReferenceError();
+
 	ACQUIRE_FIELD_LOCK(instanceAndValue[0].instance);
 	*reinterpret_cast<Value*>(instanceAndValue[0].instance + this->offset) = instanceAndValue[1];
 	RELEASE_FIELD_LOCK();
+
+	RETURN_SUCCESS;
 }
 
 void Field::WriteFieldUnchecked(Value *instanceAndValue) const
@@ -509,9 +526,9 @@ OVUM_API MethodHandle Type_GetOperator(TypeHandle type, Operator op)
 {
 	return type->operators[(int)op]->group;
 }
-OVUM_API Value Type_GetTypeToken(ThreadHandle thread, TypeHandle type)
+OVUM_API int Type_GetTypeToken(ThreadHandle thread, TypeHandle type, Value *result)
 {
-	return type->GetTypeToken(thread);
+	return type->GetTypeToken(thread, result);
 }
 
 OVUM_API uint32_t Type_GetFieldOffset(TypeHandle type)

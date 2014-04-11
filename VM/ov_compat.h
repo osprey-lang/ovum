@@ -11,9 +11,9 @@
 #include <cmath>
 
 #define ENUM_OPS(TEnum,TInt) \
-	inline TEnum operator&(const TEnum a, const TEnum b) { return static_cast<TEnum>((TInt)a & (TInt)b); }\
-	inline TEnum operator|(const TEnum a, const TEnum b) { return static_cast<TEnum>((TInt)a | (TInt)b); }\
-	inline TEnum operator^(const TEnum a, const TEnum b) { return static_cast<TEnum>((TInt)a ^ (TInt)b); }\
+	inline TEnum operator&(const TEnum a, const TEnum b) { return static_cast<TEnum>((TInt)a & (TInt)b); } \
+	inline TEnum operator|(const TEnum a, const TEnum b) { return static_cast<TEnum>((TInt)a | (TInt)b); } \
+	inline TEnum operator^(const TEnum a, const TEnum b) { return static_cast<TEnum>((TInt)a ^ (TInt)b); } \
 	inline TEnum &operator&=(TEnum &a, const TEnum b) { a = a & b; return a; } \
 	inline TEnum &operator|=(TEnum &a, const TEnum b) { a = a | b; return a; } \
 	inline TEnum &operator^=(TEnum &a, const TEnum b) { a = a ^ b; return a; } \
@@ -132,7 +132,7 @@ inline int32_t NextPowerOfTwo(int32_t n)
 #define ALIGN_TO(size,alignment)  ((size + (alignment) - 1) / (alignment) * (alignment))
 
 #if defined(_MSC_VER)
-#define NOINLINE  __declspec(noinline)
+#define NOINLINE __declspec(noinline)
 #elif defined(__GNUC__)
 #define NOINLINE __attribute__((noinline))
 #else

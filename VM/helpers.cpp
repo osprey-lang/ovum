@@ -31,55 +31,57 @@ namespace hash_helper
 }
 
 
-OVUM_API void IntFromValue(ThreadHandle thread, Value *v)
+OVUM_API int IntFromValue(ThreadHandle thread, Value *v)
 {
 	if (v->type != VM::vm->types.Int)
 	{
 		if (v->type == VM::vm->types.UInt)
 		{
 			if (v->uinteger > INT64_MAX)
-				thread->ThrowOverflowError();
+				return thread->ThrowOverflowError();
 			v->type = VM::vm->types.Int; // This is safe: v is passed by value.
 		}
 		else if (v->type == VM::vm->types.Real)
 		{
 			// TODO: Verify that this is safe; if not, find another way of doing this.
 			if (v->real > INT64_MAX || v->real < INT64_MIN)
-				thread->ThrowOverflowError();
+				return thread->ThrowOverflowError();
 
 			v->type = VM::vm->types.Int;
 			v->integer = (int64_t)v->real;
 		}
 		else
-			thread->ThrowTypeError(errors::toIntFailed);
+			return thread->ThrowTypeError(errors::toIntFailed);
 	}
+	RETURN_SUCCESS;
 }
 
-OVUM_API void UIntFromValue(ThreadHandle thread, Value *v)
+OVUM_API int UIntFromValue(ThreadHandle thread, Value *v)
 {
 	if (v->type != VM::vm->types.UInt)
 	{
 		if (v->type == VM::vm->types.Int)
 		{
 			if (v->integer < 0) // simple! This is even safe if the architecture doesn't use 2's complement!
-				thread->ThrowOverflowError();
+				return thread->ThrowOverflowError();
 			v->type = VM::vm->types.UInt; // This is safe: v is passed by value
 		}
 		else if (v->type == VM::vm->types.Real)
 		{
 			// TODO: Verify that this is safe; if not, find another way of doing this.
 			if (v->real > UINT64_MAX || v->real < 0)
-				thread->ThrowOverflowError();
+				return thread->ThrowOverflowError();
 
 			v->type = VM::vm->types.UInt;
 			v->uinteger = (uint64_t)v->real;
 		}
 		else
-			thread->ThrowTypeError(errors::toUIntFailed);
+			return thread->ThrowTypeError(errors::toUIntFailed);
 	}
+	RETURN_SUCCESS;
 }
 
-OVUM_API void RealFromValue(ThreadHandle thread, Value *v)
+OVUM_API int RealFromValue(ThreadHandle thread, Value *v)
 {
 	// Note: during this conversion, it's more than possible that the
 	// int or uint value is too large to be precisely represented as
@@ -91,26 +93,29 @@ OVUM_API void RealFromValue(ThreadHandle thread, Value *v)
 		else if (v->type == VM::vm->types.UInt)
 			SetReal_(v, (double)v->uinteger);
 		else
-			thread->ThrowTypeError(errors::toRealFailed);
+			return thread->ThrowTypeError(errors::toRealFailed);
 	}
+	RETURN_SUCCESS;
 }
 
-OVUM_API void StringFromValue(ThreadHandle thread, Value *v)
+OVUM_API int StringFromValue(ThreadHandle thread, Value *v)
 {
 	if (v->type != VM::vm->types.String)
 	{
 		if (v->type == nullptr)
 		{
 			SetString_(v, static_strings::empty);
-			return;
+			RETURN_SUCCESS;
 		}
 
 		thread->Push(*v);
-		thread->InvokeMember(static_strings::toString, 0, v);
+		int r = thread->InvokeMember(static_strings::toString, 0, v);
+		if (r != OVUM_SUCCESS) return r;
 
 		if (v->type != VM::vm->types.String)
-			thread->ThrowTypeError(static_strings::errors::ToStringWrongType);
+			return thread->ThrowTypeError(static_strings::errors::ToStringWrongType);
 	}
+	RETURN_SUCCESS;
 }
 
 // HASH HELPERS

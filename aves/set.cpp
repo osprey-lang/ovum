@@ -11,31 +11,43 @@ AVES_API void aves_Set_init(TypeHandle type)
 	Type_SetFinalizer(type, aves_Set_finalize);
 }
 
-void InitializeBuckets(SetInst *set, const int32_t capacity)
+bool InitializeBuckets(SetInst *set, const int32_t capacity)
 {
+	using namespace std;
+
 	int32_t size = HashHelper_GetPrime(capacity);
 
+	unique_ptr<int32_t[]> buckets(new(std::nothrow) int32_t[size]);
+	if (buckets.get() == nullptr)
+		return false;
+	memset(buckets.get(), -1, size * sizeof(int32_t));
+
+	unique_ptr<SetEntry[]> entries(new(std::nothrow) SetEntry[size]);
+	if (entries.get() == nullptr)
+		return false;
+	memset(entries.get(), 0, size * sizeof(SetEntry));
+
 	set->capacity = size;
-
-	set->buckets = new int32_t[size];
-	memset(set->buckets, -1, size * sizeof(int32_t));
-
-	set->entries = new SetEntry[size];
-	memset(set->entries, 0, size * sizeof(SetEntry));
-
+	set->buckets  = buckets.release();
+	set->entries  = entries.release();
 	set->freeList = -1;
+	return true;
 }
 
-void ResizeSet(ThreadHandle thread, SetInst *set)
+bool ResizeSet(ThreadHandle thread, SetInst *set)
 {
 	using namespace std;
 
 	int32_t newSize = HashHelper_GetPrime(set->count * 2);
 
-	unique_ptr<int32_t[]> newBuckets(new int32_t[newSize]);
+	unique_ptr<int32_t[]> newBuckets(new(std::nothrow) int32_t[newSize]);
+	if (newBuckets.get() == nullptr)
+		return false;
 	memset(newBuckets.get(), -1, newSize * sizeof(int32_t));
 
-	unique_ptr<SetEntry[]> newEntries(new SetEntry[newSize]);
+	unique_ptr<SetEntry[]> newEntries(new(std::nothrow) SetEntry[newSize]);
+	if (newEntries.get() == nullptr)
+		return false;
 	CopyMemoryT(newEntries.get(), set->entries, set->count);
 	
 	SetEntry *e = newEntries.get();
@@ -52,27 +64,30 @@ void ResizeSet(ThreadHandle thread, SetInst *set)
 	set->buckets = newBuckets.release();
 	set->entries = newEntries.release();
 	set->capacity = newSize;
+	return true;
 }
 
-AVES_API NATIVE_FUNCTION(aves_Set_new)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Set_new)
 {
 	SetInst *set = _Set(THISV);
 	int64_t capacity = args[1].integer;
 	if (capacity < 0 || capacity > INT32_MAX)
 	{
 		VM_PushString(thread, strings::capacity);
-		GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr);
-		VM_Throw(thread);
+		CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr));
+		return VM_Throw(thread);
 	}
 
 	if (capacity > 0)
-		InitializeBuckets(set, (int32_t)capacity);
+		CHECKED_MEM(InitializeBuckets(set, (int32_t)capacity));
 }
+END_NATIVE_FUNCTION
 
 AVES_API NATIVE_FUNCTION(aves_Set_get_length)
 {
 	SetInst *set = _Set(THISV);
 	VM_PushInt(thread, set->count - set->freeCount);
+	RETURN_SUCCESS;
 }
 
 AVES_API NATIVE_FUNCTION(aves_Set_clear)
@@ -85,8 +100,9 @@ AVES_API NATIVE_FUNCTION(aves_Set_clear)
 	set->freeCount = 0;
 	set->freeList = -1;
 	set->version++;
+	RETURN_SUCCESS;
 }
-AVES_API NATIVE_FUNCTION(aves_Set_containsInternal)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Set_containsInternal)
 {
 	// Arguments: (item, hash is Int|UInt)
 	Pinned s(THISP);
@@ -103,10 +119,12 @@ AVES_API NATIVE_FUNCTION(aves_Set_containsInternal)
 			{
 				VM_Push(thread, args[1]); // item
 				VM_Push(thread, set->entries[i].value);
-				if (VM_Equals(thread))
+				bool equals;
+				CHECKED(VM_Equals(thread, &equals));
+				if (equals)
 				{
 					VM_PushBool(thread, true);
-					return;
+					RETURN_SUCCESS;
 				}
 			}
 		}
@@ -114,13 +132,14 @@ AVES_API NATIVE_FUNCTION(aves_Set_containsInternal)
 
 	VM_PushBool(thread, false);
 }
-AVES_API NATIVE_FUNCTION(aves_Set_addInternal)
+END_NATIVE_FUNCTION
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Set_addInternal)
 {
 	// Arguments: (item, hash is Int|UInt)
 	Pinned s(THISP);
 	SetInst *set = _Set(THISV);
 	if (set->buckets == nullptr)
-		InitializeBuckets(set, 0);
+		CHECKED_MEM(InitializeBuckets(set, 0));
 
 	int32_t hash = U64_TO_HASH(args[2].uinteger) & INT32_MAX;
 	int32_t bucket = hash % set->capacity;
@@ -131,10 +150,12 @@ AVES_API NATIVE_FUNCTION(aves_Set_addInternal)
 		{
 			VM_Push(thread, args[1]); // item
 			VM_Push(thread, set->entries[i].value);
-			if (VM_Equals(thread))
+			bool equals;
+			CHECKED(VM_Equals(thread, &equals));
+			if (equals)
 			{
 				VM_PushBool(thread, false); // Already in the set!
-				return;
+				RETURN_SUCCESS;
 			}
 		}
 	}
@@ -150,7 +171,7 @@ AVES_API NATIVE_FUNCTION(aves_Set_addInternal)
 	{
 		if (set->count == set->capacity)
 		{
-			ResizeSet(thread, set);
+			CHECKED_MEM(ResizeSet(thread, set));
 			bucket = hash % set->capacity;
 		}
 		index = set->count;
@@ -165,7 +186,8 @@ AVES_API NATIVE_FUNCTION(aves_Set_addInternal)
 
 	VM_PushBool(thread, true); // Added new
 }
-AVES_API NATIVE_FUNCTION(aves_Set_removeInternal)
+END_NATIVE_FUNCTION
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Set_removeInternal)
 {
 	// Arguments: (item, hash is Int|UInt)
 	Pinned s(THISP);
@@ -183,7 +205,9 @@ AVES_API NATIVE_FUNCTION(aves_Set_removeInternal)
 			{
 				VM_Push(thread, args[1]); // item
 				VM_Push(thread, set->entries[i].value);
-				if (VM_Equals(thread))
+				bool equals;
+				CHECKED(VM_Equals(thread, &equals));
+				if (equals)
 				{
 					// Found it!
 					SetEntry *entry = set->entries + i;
@@ -199,7 +223,7 @@ AVES_API NATIVE_FUNCTION(aves_Set_removeInternal)
 					set->freeCount++;
 					set->version++;
 					VM_PushBool(thread, true);
-					return;
+					RETURN_SUCCESS;
 				}
 			}
 			lastEntry = i;
@@ -208,28 +232,33 @@ AVES_API NATIVE_FUNCTION(aves_Set_removeInternal)
 
 	VM_PushBool(thread, false); // not found
 }
+END_NATIVE_FUNCTION
 
 AVES_API NATIVE_FUNCTION(aves_Set_get_version)
 {
 	SetInst *set = _Set(THISV);
 	VM_PushInt(thread, set->version);
+	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_Set_get_entryCount)
 {
 	SetInst *set = _Set(THISV);
 	VM_PushInt(thread, set->count);
+	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_Set_hasEntryAt)
 {
 	SetInst *set = _Set(THISV);
 	int32_t index = (int32_t)args[1].integer;
 	VM_PushBool(thread, set->entries[index].hashCode >= 0);
+	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_Set_getEntryAt)
 {
 	SetInst *set = _Set(THISV);
 	int32_t index = (int32_t)args[1].integer;
 	VM_Push(thread, set->entries[index].value);
+	RETURN_SUCCESS;
 }
 
 bool aves_Set_getReferences(void *basePtr, unsigned int *valc, Value **target, int32_t *state)

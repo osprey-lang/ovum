@@ -68,9 +68,9 @@ public:
 
 	// TODO: File buffering and other fun stuff
 
-	void EnsureOpen(ThreadHandle thread);
+	int EnsureOpen(ThreadHandle thread);
 
-	static void ErrorHandleClosed(ThreadHandle thread);
+	static int ErrorHandleClosed(ThreadHandle thread);
 };
 
 AVES_API void io_FileStream_initType(TypeHandle type);

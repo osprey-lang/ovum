@@ -74,6 +74,7 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <TreatWarningAsError>true</TreatWarningAsError>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -85,6 +86,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="critical_section.internal.h" />
+    <ClInclude Include="membertable.internal.h" />
+    <ClInclude Include="modulereader.internal.h" />
     <ClInclude Include="ov_compat.h" />
     <ClInclude Include="ov_debug_symbols.internal.h" />
     <ClInclude Include="ov_gc.h" />
@@ -125,6 +128,7 @@
     <ClCompile Include="gc.cpp" />
     <ClCompile Include="helpers.cpp" />
     <ClCompile Include="module.cpp" />
+    <ClCompile Include="modulereader.cpp" />
     <ClCompile Include="static_strings.cpp" />
     <ClCompile Include="string.cpp" />
     <ClCompile Include="stringbuffer.cpp" />

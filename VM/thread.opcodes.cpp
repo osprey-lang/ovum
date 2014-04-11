@@ -13,6 +13,9 @@
 #define OFF_ARG(ip,f)  (T_ARG(ip, LocalOffset) + (f))
 #define LOSZ           sizeof(LocalOffset) // For convenience, since it's used a LOT below
 
+// Used in Thread::Evaluate. Semicolon intentionally missing.
+#define CHK(expr) if ((retCode = (expr)) != OVUM_SUCCESS) goto exitMethod
+
 #ifdef THREADED_EVALUATION
 
 #define TARGET(opc)	case opc: TARGET_##opc:
@@ -55,7 +58,7 @@
 		(ptarg)->common.string = svalue; \
 	}
 
-void Thread::Evaluate()
+int Thread::Evaluate()
 {
 #ifdef THREADED_EVALUATION
 	static void *opcodeTargets[256] = {
@@ -63,15 +66,17 @@ void Thread::Evaluate()
 	};
 #endif
 
+	if (shouldSuspendForGC)
+		SuspendForGC();
+
+	int retCode;
+
 	register StackFrame *const f = currentFrame;
 	// this->ip has been set to the entry address
 	register uint8_t *ip = this->ip;
 
 	while (true)
 	{
-		if (shouldSuspendForGC)
-			SuspendForGC();
-
 		this->ip = ip;
 		switch (*ip++) // always skip opcode
 		{
@@ -87,6 +92,7 @@ void Thread::Evaluate()
 			{
 				assert(f->stackCount == 1);
 			}
+			retCode = OVUM_SUCCESS;
 			goto ret;
 
 		TARGET(OPI_RETNULL)
@@ -95,6 +101,7 @@ void Thread::Evaluate()
 				f->evalStack->type = nullptr;
 				f->stackCount++;
 			}
+			retCode = OVUM_SUCCESS;
 			goto ret;
 
 		// mvloc: LocalOffset source, LocalOffset destination
@@ -279,7 +286,7 @@ void Thread::Evaluate()
 				register Type *const type = T_ARG(ip, Type*);
 				ip += sizeof(Type*);
 
-				GC::gc->ConstructLL(this, type, U16_ARG(ip), args, dest);
+				CHK(GC::gc->ConstructLL(this, type, U16_ARG(ip), args, dest));
 
 				// ConstructLL pops the arguments
 				ip += sizeof(uint16_t);
@@ -294,7 +301,7 @@ void Thread::Evaluate()
 				register Type *const type = T_ARG(ip, Type*);
 				ip += sizeof(Type*);
 
-				GC::gc->ConstructLL(this, type, U16_ARG(ip), args, dest);
+				CHK(GC::gc->ConstructLL(this, type, U16_ARG(ip), args, dest));
 
 				ip += sizeof(uint16_t);
 				// ConstructLL pops the arguments
@@ -306,8 +313,8 @@ void Thread::Evaluate()
 		TARGET(OPI_LIST_L)
 			{
 				Value result;
-				GC::gc->Alloc(this, VM::vm->types.List, sizeof(ListInst), &result);
-				VM::vm->functions.initListInstance(this, result.common.list, I32_ARG(ip + LOSZ));
+				CHK(GC::gc->Alloc(this, VM::vm->types.List, sizeof(ListInst), &result));
+				CHK(VM::vm->functions.initListInstance(this, result.common.list, I32_ARG(ip + LOSZ)));
 
 				*OFF_ARG(ip, f) = result;
 				ip += LOSZ + sizeof(int32_t);
@@ -330,8 +337,8 @@ void Thread::Evaluate()
 		TARGET(OPI_HASH_L)
 			{
 				Value result; // Can't put it in dest until it's fully initialized
-				GC::gc->Alloc(this, VM::vm->types.Hash, sizeof(HashInst), &result);
-				VM::vm->functions.initHashInstance(this, result.common.hash, I32_ARG(ip + LOSZ));
+				CHK(GC::gc->Alloc(this, VM::vm->types.Hash, sizeof(HashInst), &result));
+				CHK(VM::vm->functions.initHashInstance(this, result.common.hash, I32_ARG(ip + LOSZ)));
 
 				*OFF_ARG(ip, f) = result;
 
@@ -341,8 +348,8 @@ void Thread::Evaluate()
 		TARGET(OPI_HASH_S)
 			{
 				Value result; // Can't put it in dest until it's fully initialized
-				GC::gc->Alloc(this, VM::vm->types.Hash, sizeof(HashInst), &result);
-				VM::vm->functions.initHashInstance(this, result.common.hash, I32_ARG(ip + LOSZ));
+				CHK(GC::gc->Alloc(this, VM::vm->types.Hash, sizeof(HashInst), &result));
+				CHK(VM::vm->functions.initHashInstance(this, result.common.hash, I32_ARG(ip + LOSZ)));
 
 				*OFF_ARG(ip, f) = result;
 
@@ -358,7 +365,7 @@ void Thread::Evaluate()
 				register Value *const dest = OFF_ARG(ip + LOSZ, f);
 				ip += 2*LOSZ;
 
-				T_ARG(ip, Field*)->ReadField(this, inst, dest);
+				CHK(T_ARG(ip, Field*)->ReadField(this, inst, dest));
 				ip += sizeof(Field*);
 				f->stackCount--;
 			}
@@ -369,7 +376,7 @@ void Thread::Evaluate()
 				register Value *const dest = OFF_ARG(ip + LOSZ, f);
 				ip += 2*LOSZ;
 											
-				T_ARG(ip, Field*)->ReadField(this, inst, dest);
+				CHK(T_ARG(ip, Field*)->ReadField(this, inst, dest));
 				ip += sizeof(Field*);
 			}
 			NEXT_INSTR();
@@ -377,13 +384,13 @@ void Thread::Evaluate()
 		// ldsfld: LocalOffset dest, Field *field
 		TARGET(OPI_LDSFLD_L)
 			{
-				*OFF_ARG(ip, f) = T_ARG(ip + LOSZ, Field*)->staticValue->Read();
+				T_ARG(ip + LOSZ, Field*)->staticValue->Read(OFF_ARG(ip, f));
 				ip += LOSZ + sizeof(Field*);
 			}
 			NEXT_INSTR();
 		TARGET(OPI_LDSFLD_S)
 			{
-				*OFF_ARG(ip, f) = T_ARG(ip + LOSZ, Field*)->staticValue->Read();
+				T_ARG(ip + LOSZ, Field*)->staticValue->Read(OFF_ARG(ip, f));
 				ip += LOSZ + sizeof(Field*);
 				f->stackCount++;
 			}
@@ -392,18 +399,18 @@ void Thread::Evaluate()
 		// ldmem: LocalOffset instance, LocalOffset dest, String *name
 		TARGET(OPI_LDMEM_L)
 			{
-				LoadMemberLL(OFF_ARG(ip, f), // inst
+				CHK(LoadMemberLL(OFF_ARG(ip, f), // inst
 					T_ARG(ip + 2*LOSZ, String*), // name
-					OFF_ARG(ip + LOSZ, f)); // dest
+					OFF_ARG(ip + LOSZ, f))); // dest
 				ip += 2*LOSZ + sizeof(String*);
 				// LoadMemberLL pops the instance
 			}
 			NEXT_INSTR();
 		TARGET(OPI_LDMEM_S)
 			{
-				LoadMemberLL(OFF_ARG(ip, f), // inst
+				CHK(LoadMemberLL(OFF_ARG(ip, f), // inst
 					T_ARG(ip + 2*LOSZ, String*), // name
-					OFF_ARG(ip + LOSZ, f)); // dest
+					OFF_ARG(ip + LOSZ, f))); // dest
 				ip += 2*LOSZ + sizeof(String*);
 				// LoadMemberLL pops the instance
 				f->stackCount++;
@@ -413,18 +420,18 @@ void Thread::Evaluate()
 		// lditer: LocalOffset instance, LocalOffest dest
 		TARGET(OPI_LDITER_L)
 			{
-				InvokeMemberLL(static_strings::_iter, 0,
+				CHK(InvokeMemberLL(static_strings::_iter, 0,
 					OFF_ARG(ip, f), // value
-					OFF_ARG(ip + LOSZ, f)); // result
+					OFF_ARG(ip + LOSZ, f))); // result
 				// InvokeMemberLL pops the instance and all 0 of the arguments
 				ip += 2*LOSZ;
 			}
 			NEXT_INSTR();
 		TARGET(OPI_LDITER_S)
 			{
-				InvokeMemberLL(static_strings::_iter, 0,
+				CHK(InvokeMemberLL(static_strings::_iter, 0,
 					OFF_ARG(ip, f), // value
-					OFF_ARG(ip + LOSZ, f)); // result
+					OFF_ARG(ip + LOSZ, f))); // result
 				// InvokeMemberLL pops the instance and all 0 of the arguments
 				ip += 2*LOSZ;
 				f->stackCount++;
@@ -438,7 +445,7 @@ void Thread::Evaluate()
 				register Value *const dest = OFF_ARG(ip + LOSZ, f);
 
 				if (inst->type)
-					*dest = inst->type->GetTypeToken(this);
+					CHK(inst->type->GetTypeToken(this, dest));
 				else
 					dest->type = nullptr;
 
@@ -452,7 +459,7 @@ void Thread::Evaluate()
 				register Value *const dest = OFF_ARG(ip + LOSZ, f);
 
 				if (inst->type)
-					*dest = inst->type->GetTypeToken(this);
+					CHK(inst->type->GetTypeToken(this, dest));
 				else
 					dest->type = nullptr;
 
@@ -468,7 +475,7 @@ void Thread::Evaluate()
 				register Value *const dest = OFF_ARG(ip + LOSZ, f);
 				ip += 2*LOSZ;
 
-				LoadIndexerLL(U16_ARG(ip), args, dest);
+				CHK(LoadIndexerLL(U16_ARG(ip), args, dest));
 
 				// LoadIndexerLL decrements the stack height by the argument count + instance
 				ip += sizeof(uint16_t);
@@ -480,7 +487,7 @@ void Thread::Evaluate()
 				register Value *const dest = OFF_ARG(ip + LOSZ, f);
 				ip += 2*LOSZ;
 
-				LoadIndexerLL(U16_ARG(ip), args, dest);
+				CHK(LoadIndexerLL(U16_ARG(ip), args, dest));
 
 				// LoadIndexerLL decrements the stack height by the argument count + instance
 				ip += sizeof(uint16_t);
@@ -492,7 +499,7 @@ void Thread::Evaluate()
 		TARGET(OPI_LDSFN_L)
 			{
 				register Value *const dest = OFF_ARG(ip, f);
-				GC::gc->Alloc(this, VM::vm->types.Method, sizeof(MethodInst), dest);
+				CHK(GC::gc->Alloc(this, VM::vm->types.Method, sizeof(MethodInst), dest));
 				ip += LOSZ;
 
 				dest->common.method->method = T_ARG(ip, Method*);
@@ -502,7 +509,7 @@ void Thread::Evaluate()
 		TARGET(OPI_LDSFN_S)
 			{
 				register Value *const dest = OFF_ARG(ip, f);
-				GC::gc->Alloc(this, VM::vm->types.Method, sizeof(MethodInst), dest);
+				CHK(GC::gc->Alloc(this, VM::vm->types.Method, sizeof(MethodInst), dest));
 				ip += LOSZ;
 
 				dest->common.method->method = T_ARG(ip, Method*);
@@ -515,13 +522,13 @@ void Thread::Evaluate()
 		// ldtypetkn: LocalOffset dest, Type *type
 		TARGET(OPI_LDTYPETKN_L)
 			{
-				*OFF_ARG(ip, f) = T_ARG(ip + LOSZ, Type*)->GetTypeToken(this);
+				CHK(T_ARG(ip + LOSZ, Type*)->GetTypeToken(this, OFF_ARG(ip, f)));
 				ip += LOSZ + sizeof(Type*);
 			}
 			NEXT_INSTR();
 		TARGET(OPI_LDTYPETKN_S)
 			{
-				*OFF_ARG(ip, f) = T_ARG(ip + LOSZ, Type*)->GetTypeToken(this);
+				CHK(T_ARG(ip + LOSZ, Type*)->GetTypeToken(this, OFF_ARG(ip, f)));
 				ip += LOSZ + sizeof(Type*);
 				f->stackCount++;
 			}
@@ -534,7 +541,7 @@ void Thread::Evaluate()
 				register Value *const output = OFF_ARG(ip + LOSZ, f);
 				ip += 2*LOSZ;
 
-				InvokeLL(U16_ARG(ip), args, output);
+				CHK(InvokeLL(U16_ARG(ip), args, output));
 
 				ip += sizeof(uint16_t);
 				// InvokeLL pops the arguments
@@ -546,7 +553,7 @@ void Thread::Evaluate()
 				register Value *const output = OFF_ARG(ip + LOSZ, f);
 				ip += 2*LOSZ;
 
-				InvokeLL(U16_ARG(ip), args, output);
+				CHK(InvokeLL(U16_ARG(ip), args, output));
 
 				ip += sizeof(uint16_t);
 				// InvokeLL pops the arguments
@@ -561,8 +568,8 @@ void Thread::Evaluate()
 				register Value *const output = OFF_ARG(ip + LOSZ, f);
 				ip += 2*LOSZ;
 				
-				InvokeMethodOverload(T_ARG(ip + sizeof(uint16_t), Method::Overload*),
-					U16_ARG(ip), args, output);
+				CHK(InvokeMethodOverload(T_ARG(ip + sizeof(uint16_t), Method::Overload*),
+					U16_ARG(ip), args, output));
 
 				ip += sizeof(uint16_t) + sizeof(Method::Overload*);
 			}
@@ -573,8 +580,8 @@ void Thread::Evaluate()
 				register Value *const output = OFF_ARG(ip + LOSZ, f);
 				ip += 2*LOSZ;
 				
-				InvokeMethodOverload(T_ARG(ip + sizeof(uint16_t), Method::Overload*),
-					U16_ARG(ip), args, output);
+				CHK(InvokeMethodOverload(T_ARG(ip + sizeof(uint16_t), Method::Overload*),
+					U16_ARG(ip), args, output));
 
 				ip += sizeof(uint16_t) + sizeof(Method::Overload*);
 				f->stackCount++;
@@ -584,16 +591,16 @@ void Thread::Evaluate()
 		// apply: LocalOffset args, LocalOffset output
 		TARGET(OPI_APPLY_L)
 			{
-				InvokeApplyLL(OFF_ARG(ip, f), // args
-					OFF_ARG(ip + LOSZ, f)); // output
+				CHK(InvokeApplyLL(OFF_ARG(ip, f), // args
+					OFF_ARG(ip + LOSZ, f))); // output
 
 				ip += 2*LOSZ;
 			}
 			NEXT_INSTR();
 		TARGET(OPI_APPLY_S)
 			{
-				InvokeApplyLL(OFF_ARG(ip, f), // args
-					OFF_ARG(ip + LOSZ, f)); // output
+				CHK(InvokeApplyLL(OFF_ARG(ip, f), // args
+					OFF_ARG(ip + LOSZ, f))); // output
 
 				ip += 2*LOSZ;
 				f->stackCount++;
@@ -603,18 +610,18 @@ void Thread::Evaluate()
 		// sapply: LocalOffset args, LocalOffset output, Method *method
 		TARGET(OPI_SAPPLY_L)
 			{
-				InvokeApplyMethodLL(T_ARG(ip + 2*LOSZ, Method*),
+				CHK(InvokeApplyMethodLL(T_ARG(ip + 2*LOSZ, Method*),
 					OFF_ARG(ip, f), // args
-					OFF_ARG(ip + LOSZ, f)); // output
+					OFF_ARG(ip + LOSZ, f))); // output
 
 				ip += 2*LOSZ + sizeof(Method*);
 			}
 			NEXT_INSTR();
 		TARGET(OPI_SAPPLY_S)
 			{
-				InvokeApplyMethodLL(T_ARG(ip + 2*LOSZ, Method*),
+				CHK(InvokeApplyMethodLL(T_ARG(ip + 2*LOSZ, Method*),
 					OFF_ARG(ip, f), // args
-					OFF_ARG(ip + LOSZ, f)); // output
+					OFF_ARG(ip + LOSZ, f))); // output
 
 				ip += 2*LOSZ + sizeof(Method*);
 				f->stackCount++;
@@ -730,7 +737,7 @@ void Thread::Evaluate()
 			{
 				register Value *const value = OFF_ARG(ip, f);
 				if (value->type != VM::vm->types.Int)
-					ThrowTypeError();
+					return ThrowTypeError();
 
 				register int32_t count = U16_ARG(ip + LOSZ);
 				ip += LOSZ + sizeof(uint16_t);
@@ -745,7 +752,7 @@ void Thread::Evaluate()
 			{
 				register Value *const value = OFF_ARG(ip, f);
 				if (value->type != VM::vm->types.Int)
-					ThrowTypeError();
+					return ThrowTypeError();
 
 				register int32_t count = U16_ARG(ip + LOSZ);
 				ip += LOSZ + sizeof(uint16_t);
@@ -794,7 +801,7 @@ void Thread::Evaluate()
 				register Value *const dest = OFF_ARG(ip + LOSZ, f);
 				ip += 2*LOSZ;
 
-				InvokeOperatorLL(args, T_ARG(ip, Operator), dest);
+				CHK(InvokeOperatorLL(args, T_ARG(ip, Operator), dest));
 				ip += sizeof(Operator);
 
 				// InvokeOperatorLL pops arguments off the stack
@@ -806,7 +813,7 @@ void Thread::Evaluate()
 				register Value *const dest = OFF_ARG(ip + LOSZ, f);
 				ip += 2*LOSZ;
 
-				InvokeOperatorLL(args, T_ARG(ip, Operator), dest);
+				CHK(InvokeOperatorLL(args, T_ARG(ip, Operator), dest));
 				ip += sizeof(Operator);
 
 				// InvokeOperatorLL pops arguments off the stack
@@ -817,14 +824,18 @@ void Thread::Evaluate()
 		// eq: LocalOffset args, LocalOffset dest
 		TARGET(OPI_EQ_L)
 			{
-				SetBool_(OFF_ARG(ip + LOSZ, f), EqualsLL(OFF_ARG(ip, f)));
+				bool eq;
+				CHK(EqualsLL(OFF_ARG(ip, f), eq));
+				SetBool_(OFF_ARG(ip + LOSZ, f), eq);
 				ip += 2*LOSZ;
 				// EqualsLL pops arguments off the stack
 			}
 			NEXT_INSTR();
 		TARGET(OPI_EQ_S)
 			{
-				SetBool_(OFF_ARG(ip + LOSZ, f), EqualsLL(OFF_ARG(ip, f)));
+				bool eq;
+				CHK(EqualsLL(OFF_ARG(ip, f), eq));
+				SetBool_(OFF_ARG(ip + LOSZ, f), eq);
 				ip += 2*LOSZ;
 				// EqualsLL pops arguments off the stack
 				f->stackCount++;
@@ -834,14 +845,14 @@ void Thread::Evaluate()
 		// cmp: LocalOffset args, LocalOffset dest
 		TARGET(OPI_CMP_L)
 			{
-				CompareLL(OFF_ARG(ip, f), OFF_ARG(ip + LOSZ, f));
+				CHK(CompareLL(OFF_ARG(ip, f), OFF_ARG(ip + LOSZ, f)));
 				ip += 2*LOSZ;
 				// CompareLL pops arguments off the stack
 			}
 			NEXT_INSTR();
 		TARGET(OPI_CMP_S)
 			{
-				CompareLL(OFF_ARG(ip, f), OFF_ARG(ip + LOSZ, f));
+				CHK(CompareLL(OFF_ARG(ip, f), OFF_ARG(ip + LOSZ, f)));
 				ip += 2*LOSZ;
 				// CompareLL pops arguments off the stack
 				f->stackCount++;
@@ -851,7 +862,8 @@ void Thread::Evaluate()
 		// lt: LocalOffset args, LocalOffset dest
 		TARGET(OPI_LT_L)
 			{
-				register bool result = CompareLessThanLL(OFF_ARG(ip, f));
+				bool result;
+				CHK(CompareLessThanLL(OFF_ARG(ip, f), result));
 				SetBool_(OFF_ARG(ip + LOSZ, f), result);
 				ip += 2*LOSZ;
 				// CompareLL pops arguments off the stack
@@ -859,7 +871,8 @@ void Thread::Evaluate()
 			NEXT_INSTR();
 		TARGET(OPI_LT_S)
 			{
-				register bool result = CompareLessThanLL(OFF_ARG(ip, f));
+				bool result;
+				CHK(CompareLessThanLL(OFF_ARG(ip, f), result));
 				SetBool_(OFF_ARG(ip + LOSZ, f), result);
 				ip += 2*LOSZ;
 				// CompareLL pops arguments off the stack
@@ -870,7 +883,8 @@ void Thread::Evaluate()
 		// gt: LocalOffset args, LocalOffset dest
 		TARGET(OPI_GT_L)
 			{
-				register bool result = CompareGreaterThanLL(OFF_ARG(ip, f));
+				bool result;
+				CHK(CompareGreaterThanLL(OFF_ARG(ip, f), result));
 				SetBool_(OFF_ARG(ip + LOSZ, f), result);
 				ip += 2*LOSZ;
 				// CompareLL pops arguments off the stack
@@ -878,7 +892,8 @@ void Thread::Evaluate()
 			NEXT_INSTR();
 		TARGET(OPI_GT_S)
 			{
-				register bool result = CompareGreaterThanLL(OFF_ARG(ip, f));
+				bool result;
+				CHK(CompareGreaterThanLL(OFF_ARG(ip, f), result));
 				SetBool_(OFF_ARG(ip + LOSZ, f), result);
 				ip += 2*LOSZ;
 				// CompareLL pops arguments off the stack
@@ -889,7 +904,8 @@ void Thread::Evaluate()
 		// lte: LocalOffset args, LocalOffset dest
 		TARGET(OPI_LTE_L)
 			{
-				register bool result = CompareLessEqualsLL(OFF_ARG(ip, f));
+				bool result;
+				CHK(CompareLessEqualsLL(OFF_ARG(ip, f), result));
 				SetBool_(OFF_ARG(ip + LOSZ, f), result);
 				ip += 2*LOSZ;
 				// CompareLL pops arguments off the stack
@@ -897,7 +913,8 @@ void Thread::Evaluate()
 			NEXT_INSTR();
 		TARGET(OPI_LTE_S)
 			{
-				register bool result = CompareLessEqualsLL(OFF_ARG(ip, f));
+				bool result;
+				CHK(CompareLessEqualsLL(OFF_ARG(ip, f), result));
 				SetBool_(OFF_ARG(ip + LOSZ, f), result);
 				ip += 2*LOSZ;
 				// CompareLL pops arguments off the stack
@@ -908,7 +925,8 @@ void Thread::Evaluate()
 		// gte: LocalOffset args, LocalOffset dest
 		TARGET(OPI_GTE_L)
 			{
-				register bool result = CompareGreaterEqualsLL(OFF_ARG(ip, f));
+				bool result;
+				CHK(CompareGreaterEqualsLL(OFF_ARG(ip, f), result));
 				SetBool_(OFF_ARG(ip + LOSZ, f), result);
 				ip += 2*LOSZ;
 				// CompareLL pops arguments off the stack
@@ -916,7 +934,8 @@ void Thread::Evaluate()
 			NEXT_INSTR();
 		TARGET(OPI_GTE_S)
 			{
-				register bool result = CompareGreaterEqualsLL(OFF_ARG(ip, f));
+				bool result;
+				CHK(CompareGreaterEqualsLL(OFF_ARG(ip, f), result));
 				SetBool_(OFF_ARG(ip + LOSZ, f), result);
 				ip += 2*LOSZ;
 				// CompareLL pops arguments off the stack
@@ -927,14 +946,14 @@ void Thread::Evaluate()
 		// concat: LocalOffset args, LocalOffset dest
 		TARGET(OPI_CONCAT_L)
 			{
-				ConcatLL(OFF_ARG(ip, f), OFF_ARG(ip + LOSZ, f));
+				CHK(ConcatLL(OFF_ARG(ip, f), OFF_ARG(ip + LOSZ, f)));
 				ip += 2*LOSZ;
 				// ConcatLL pops arguments off stack
 			}
 			NEXT_INSTR();
 		TARGET(OPI_CONCAT_S)
 			{
-				ConcatLL(OFF_ARG(ip, f), OFF_ARG(ip + LOSZ, f));
+				CHK(ConcatLL(OFF_ARG(ip, f), OFF_ARG(ip + LOSZ, f)));
 				ip += 2*LOSZ;
 				// ConcatLL pops arguments off stack
 				f->stackCount++;
@@ -948,7 +967,7 @@ void Thread::Evaluate()
 				register Value *const dest = OFF_ARG(ip + LOSZ, f);
 				ip += 2*LOSZ;
 
-				InvokeMemberLL(T_ARG(ip, String*), U16_ARG(ip + sizeof(String*)), args, dest);
+				CHK(InvokeMemberLL(T_ARG(ip, String*), U16_ARG(ip + sizeof(String*)), args, dest));
 
 				ip += sizeof(String*) + sizeof(uint16_t);
 			}
@@ -959,7 +978,7 @@ void Thread::Evaluate()
 				register Value *const dest = OFF_ARG(ip + LOSZ, f);
 				ip += 2*LOSZ;
 
-				InvokeMemberLL(T_ARG(ip, String*), U16_ARG(ip + sizeof(String*)), args, dest);
+				CHK(InvokeMemberLL(T_ARG(ip, String*), U16_ARG(ip + sizeof(String*)), args, dest));
 
 				ip += sizeof(String*) + sizeof(uint16_t);
 				f->stackCount++;
@@ -985,7 +1004,7 @@ void Thread::Evaluate()
 		TARGET(OPI_STFLD)
 			{
 				register Value *const values = OFF_ARG(ip, f);
-				T_ARG(ip + LOSZ, Field*)->WriteField(this, values);
+				CHK(T_ARG(ip + LOSZ, Field*)->WriteField(this, values));
 
 				ip += LOSZ + sizeof(Field*);
 				f->stackCount -= 2;
@@ -996,7 +1015,7 @@ void Thread::Evaluate()
 		TARGET(OPI_STMEM)
 			{
 				// StoreMemberLL performs a null check
-				StoreMemberLL(OFF_ARG(ip, f), T_ARG(ip + LOSZ, String*));
+				CHK(StoreMemberLL(OFF_ARG(ip, f), T_ARG(ip + LOSZ, String*)));
 
 				// It also pops the things off the stack
 				ip += LOSZ + sizeof(String*);
@@ -1008,8 +1027,8 @@ void Thread::Evaluate()
 		TARGET(OPI_STIDX)
 			{
 				// StoreIndexerLL performs a null check
-				StoreIndexerLL(U16_ARG(ip + LOSZ), // argCount
-					OFF_ARG(ip, f)); // args
+				CHK(StoreIndexerLL(U16_ARG(ip + LOSZ), // argCount
+					OFF_ARG(ip, f))); // args
 
 				// It also pops things off the stack
 				ip += LOSZ + sizeof(uint16_t);
@@ -1018,21 +1037,21 @@ void Thread::Evaluate()
 
 		TARGET(OPI_THROW)
 			{
-				Throw(/*rethrow:*/ false);
+				retCode = Throw(/*rethrow:*/ false);
 			}
-			NEXT_INSTR();
+			goto exitMethod;
 
 		TARGET(OPI_RETHROW)
 			{
-				Throw(/*rethrow:*/ true);
+				retCode = Throw(/*rethrow:*/ true);
 			}
-			NEXT_INSTR();
+			goto exitMethod;
 
 		TARGET(OPI_ENDFINALLY)
 			// This Evaluate call was reached through FindErrorHandlers or
 			// EvaluateLeave, so we return here and let the thing continue
 			// with its search for more error handlers.
-			goto endfinally;
+			goto exitMethod;
 
 		// ldfldfast: LocalOffset instance, LocalOffset dest, Field *field
 		// This is identical to ldfld except that it does not perform a type check.
@@ -1042,7 +1061,7 @@ void Thread::Evaluate()
 				register Value *const dest = OFF_ARG(ip + LOSZ, f);
 				ip += 2*LOSZ;
 				
-				T_ARG(ip, Field*)->ReadFieldFast(this, inst, dest);
+				CHK(T_ARG(ip, Field*)->ReadFieldFast(this, inst, dest));
 				ip += sizeof(Field*);
 				f->stackCount--;
 			}
@@ -1053,7 +1072,7 @@ void Thread::Evaluate()
 				register Value *const dest = OFF_ARG(ip + LOSZ, f);
 				ip += 2*LOSZ;
 											
-				T_ARG(ip, Field*)->ReadFieldFast(this, inst, dest);
+				CHK(T_ARG(ip, Field*)->ReadFieldFast(this, inst, dest));
 				ip += sizeof(Field*);
 			}
 			NEXT_INSTR();
@@ -1063,7 +1082,7 @@ void Thread::Evaluate()
 		TARGET(OPI_STFLDFAST)
 			{
 				register Value *const values = OFF_ARG(ip, f);
-				T_ARG(ip + LOSZ, Field*)->WriteFieldFast(this, values);
+				CHK(T_ARG(ip + LOSZ, Field*)->WriteFieldFast(this, values));
 
 				ip += LOSZ + sizeof(Field*);
 				f->stackCount -= 2;
@@ -1073,7 +1092,9 @@ void Thread::Evaluate()
 		// breq: LocalOffset args, int32_t offset
 		TARGET(OPI_BREQ)
 			{
-				if (EqualsLL(OFF_ARG(ip, f)))
+				bool eq;
+				CHK(EqualsLL(OFF_ARG(ip, f), eq));
+				if (eq)
 					ip += I32_ARG(ip + LOSZ);
 				ip += LOSZ + sizeof(int32_t);
 			}
@@ -1082,7 +1103,9 @@ void Thread::Evaluate()
 		// brneq: LocalOffset args, int32_t offset
 		TARGET(OPI_BRNEQ)
 			{
-				if (!EqualsLL(OFF_ARG(ip, f)))
+				bool eq;
+				CHK(EqualsLL(OFF_ARG(ip, f), eq));
+				if (!eq)
 					ip += I32_ARG(ip + LOSZ);
 				ip += LOSZ + sizeof(int32_t);
 			}
@@ -1091,7 +1114,8 @@ void Thread::Evaluate()
 		// brlt: LocalOffset args, int32_t offset
 		TARGET(OPI_BRLT)
 			{
-				register bool result = CompareLessThanLL(OFF_ARG(ip, f));
+				bool result;
+				CHK(CompareLessThanLL(OFF_ARG(ip, f), result));
 				if (result)
 					ip += I32_ARG(ip + LOSZ);
 				ip += LOSZ + sizeof(int32_t);
@@ -1101,7 +1125,8 @@ void Thread::Evaluate()
 		// brgt: LocalOffset args, int32_t offset
 		TARGET(OPI_BRGT)
 			{
-				register bool result = CompareGreaterThanLL(OFF_ARG(ip, f));
+				bool result;
+				CHK(CompareGreaterThanLL(OFF_ARG(ip, f), result));
 				if (result)
 					ip += I32_ARG(ip + LOSZ);
 				ip += LOSZ + sizeof(int32_t);
@@ -1111,7 +1136,8 @@ void Thread::Evaluate()
 		// brlte: LocalOffset args, int32_t offset
 		TARGET(OPI_BRLTE)
 			{
-				register bool result = CompareLessEqualsLL(OFF_ARG(ip, f));
+				bool result;
+				CHK(CompareLessEqualsLL(OFF_ARG(ip, f), result));
 				if (result)
 					ip += I32_ARG(ip + LOSZ);
 				ip += LOSZ + sizeof(int32_t);
@@ -1121,7 +1147,8 @@ void Thread::Evaluate()
 		// brgte: LocalOffset args, int32_t offset
 		TARGET(OPI_BRGTE)
 			{
-				register bool result = CompareGreaterEqualsLL(OFF_ARG(ip, f));
+				bool result;
+				CHK(CompareGreaterEqualsLL(OFF_ARG(ip, f), result));
 				if (result)
 					ip += I32_ARG(ip + LOSZ);
 				ip += LOSZ + sizeof(int32_t);
@@ -1133,17 +1160,21 @@ void Thread::Evaluate()
 ret:
 	assert(f->stackCount == 1);
 	// And then we just fall through and return!
-endfinally:
-	return;
+exitMethod:
+	return retCode;
 }
 
-bool Thread::FindErrorHandler()
+int Thread::FindErrorHandler(int32_t maxIndex)
 {
 	typedef Method::TryBlock::TryKind TryKind;
 
 	register StackFrame *frame = currentFrame;
 	Method::Overload *method = frame->method;
 	uint32_t offset = (uint32_t)(this->ip - method->entry);
+
+	if (maxIndex == -1)
+		maxIndex = method->tryBlockCount;
+
 	for (int32_t t = 0; t < method->tryBlockCount; t++)
 	{
 		Method::TryBlock &tryBlock = method->tryBlocks[t];
@@ -1161,7 +1192,7 @@ bool Thread::FindErrorHandler()
 						frame->stackCount = 1;
 						frame->evalStack[0] = currentError;
 						this->ip = method->entry + catchBlock.catchStart;
-						return true;
+						RETURN_SUCCESS; // Got there!
 					}
 				}
 				break;
@@ -1175,12 +1206,24 @@ bool Thread::FindErrorHandler()
 
 					this->ip = method->entry + tryBlock.finallyBlock.finallyStart;
 					enter:
-					try { Evaluate(); }
-					catch (OvumException&)
+					int r = Evaluate();
+					if (r != OVUM_SUCCESS)
 					{
-						if (FindErrorHandler())
-							goto enter;
-						throw;
+						if (r == OVUM_ERROR_THROWN)
+						{
+							// The try blocks in the method are ordered from innermost to
+							// outermost. By passing t as the maxIndex, we ensure that if
+							// an error is thrown in the finally, we don't look for a catch
+							// that is outside the finally. Instead, we simply return the
+							// appropriate status code and let the caller deal with it.
+							// If the caller is InvokeMethodOverload, it will look for an
+							// error handler in the method.
+							int r2 = FindErrorHandler(t);
+							if (r2 == OVUM_SUCCESS)
+								goto enter;
+							r = r2;
+						}
+						return r;
 					}
 					this->ip = method->entry + offset;
 
@@ -1192,10 +1235,11 @@ bool Thread::FindErrorHandler()
 			// There may be another try block that actually handles the error.
 		}
 	}
-	return false;
+	// No error handler found
+	return OVUM_ERROR_THROWN;
 }
 
-void Thread::EvaluateLeave(register StackFrame *frame, const int32_t target)
+int Thread::EvaluateLeave(register StackFrame *frame, const int32_t target)
 {
 	typedef Method::TryBlock::TryKind TryKind;
 
@@ -1223,16 +1267,23 @@ void Thread::EvaluateLeave(register StackFrame *frame, const int32_t target)
 
 			this->ip = method->entry + tryBlock.finallyBlock.finallyStart;
 			enter:
-			try { Evaluate(); }
-			catch (OvumException&)
+			int r = Evaluate();
+			if (r != OVUM_SUCCESS)
 			{
-				if (FindErrorHandler())
-					goto enter;
-				throw;
+				if (r == OVUM_ERROR_THROWN)
+				{
+					int r2 = FindErrorHandler(t);
+					if (r2 == OVUM_SUCCESS)
+						goto enter;
+					r = r2;
+				}
+				return r;
 			}
 			this->ip = prevIp;
 
 			this->currentError = prevError;
 		}
 	}
+
+	RETURN_SUCCESS;
 }

@@ -72,6 +72,7 @@
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>..\VM</AdditionalIncludeDirectories>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <TreatWarningAsError>true</TreatWarningAsError>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

@@ -1,11 +1,10 @@
-﻿#include <wchar.h>
+﻿#include "ov_vm.internal.h"
+#include "ov_module.internal.h"
 #include <fcntl.h>
 #include <io.h>
 #include <cstdio>
 #include <memory>
 #include <Shlwapi.h>
-#include "ov_vm.internal.h"
-#include "ov_module.internal.h"
 
 #ifdef _MSC_VER
 // Microsoft's C++ implementation uses %s to mean wchar_t* in wide functions,
@@ -41,7 +40,16 @@ OVUM_API int VM_Start(VMStartParams *params)
 	Module::Unload();
 	VM::Unload();
 
+#if EXIT_SUCCESS == 0
+	// OVUM_SUCCESS == EXIT_SUCCESS, which also means
+	// the system error codes are != OVUM_SUCCESS, so
+	// let's just pass result on to the system.
 	return result;
+#else
+	// Unlikely case - let's fall back to standard C
+	// exit codes.
+	return result == OVUM_SUCCESS ? EXIT_SUCCESS : EXIT_FAILURE;
+#endif
 }
 
 VM::VM(VMStartParams &params) :
@@ -60,43 +68,33 @@ int VM::Run(VMStartParams &params)
 {
 	int result;
 
-	try
+	Method *main = startupModule->GetMainMethod();
+	if (main == nullptr)
 	{
-		Method *main = startupModule->GetMainMethod();
-		if (main == nullptr)
-		{
-			fwprintf(stdErr, L"Startup error: Startup module does not define a main method.\n");
-			result = EXIT_FAILURE;
-		}
-		else
-		{
-			if (verbose)
-				wprintf(L"<<< Begin program output >>>\n");
+		fwprintf(stdErr, L"Startup error: Startup module does not define a main method.\n");
+		result = OVUM_ERROR_NO_MAIN_METHOD;
+	}
+	else
+	{
+		if (verbose)
+			wprintf(L"<<< Begin program output >>>\n");
 
-			Value returnValue;
-			mainThread->Start(main, returnValue);
+		Value returnValue;
+		result = mainThread->Start(main, returnValue);
 
+		if (result == OVUM_SUCCESS)
+		{
 			if (returnValue.type == types.Int ||
 				returnValue.type == types.UInt)
 				result = (int)returnValue.integer;
 			else if (returnValue.type == types.Real)
 				result = (int)returnValue.real;
-			else
-				result = 0;
-
-			if (verbose)
-				wprintf(L"<<< End program output >>>\n");
 		}
-	}
-	catch (OvumException &e)
-	{
-		PrintOvumException(e);
-		result = EXIT_FAILURE;
-	}
-	catch (MethodInitException &e)
-	{
-		PrintMethodInitException(e);
-		result = EXIT_FAILURE;
+		else if (result == OVUM_ERROR_THROWN)
+			PrintUnhandledError(mainThread->currentError);
+
+		if (verbose)
+			wprintf(L"<<< End program output >>>\n");
 	}
 
 	return result;
@@ -129,9 +127,11 @@ void VM::LoadModules(VMStartParams &params)
 	wchar_t *startupPath = CloneWString(params.startupFile);
 	PathRemoveFileSpecW(startupPath);
 	this->startupPath = String_FromWString(nullptr, startupPath);
+	GCObject::FromInst(this->startupPath)->flags |= GCOFlags::EARLY_STRING;
 	delete[] startupPath;
 
 	this->modulePath = String_FromWString(nullptr, params.modulePath);
+	GCObject::FromInst(this->modulePath)->flags |= GCOFlags::EARLY_STRING;
 
 	// And now we can start opening modules! Hurrah!
 	try
@@ -145,7 +145,7 @@ void VM::LoadModules(VMStartParams &params)
 			fwprintf(stderr, L"Error loading module '%ls': " CSTR L"\n", fileName.c_str(), e.what());
 		else
 			fwprintf(stderr, L"Error loading module: " CSTR L"\n", e.what());
-		exit(EXIT_FAILURE);
+		exit(OVUM_ERROR_MODULE_LOAD);
 	}
 
 	for (unsigned int i = 0; i < std_type_names::StandardTypeCount; i++)
@@ -154,7 +154,7 @@ void VM::LoadModules(VMStartParams &params)
 		if (this->types.*(type.member) == nullptr)	
 		{
 			PrintInternal(stderr, L"Startup error: standard type not loaded: %ls\n", type.name);
-			exit(EXIT_FAILURE);
+			exit(OVUM_ERROR_MODULE_LOAD);
 		}
 	}
 }
@@ -246,19 +246,14 @@ void VM::PrintErrLn(String *str)
 	PrintInternal(stdErr, L"%ls\n", str);
 }
 
-void VM::PrintOvumException(OvumException &e)
+void VM::PrintUnhandledError(Value &error)
 {
-	using namespace std;
-
-	Value error = e.GetError();
 	PrintInternal(stdErr, L"Unhandled error: %ls: ", error.type->fullName);
 	PrintErrLn(error.common.error->message);
 	PrintErrLn(error.common.error->stackTrace);
 }
 void VM::PrintMethodInitException(MethodInitException &e)
 {
-	using namespace std;
-
 	FILE *err = stdErr;
 
 	fwprintf(err, L"An error occurred while initializing the method '");

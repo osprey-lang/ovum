@@ -1,6 +1,5 @@
 #include "ov_stringbuffer.h"
 #include "aves_stringbuffer.h"
-#include <new> // For placement new
 
 #define _SB(v)	reinterpret_cast<StringBuffer*>(v.instance)
 
@@ -14,43 +13,52 @@ AVES_API NATIVE_FUNCTION(aves_StringBuffer_new)
 {
 	StringBuffer *buf = _SB(THISV);
 
-	new(buf) StringBuffer(thread);
+	if (!buf->Init())
+		return VM_ThrowMemoryError(thread);
+	RETURN_SUCCESS;
 }
-AVES_API NATIVE_FUNCTION(aves_StringBuffer_newCap)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_StringBuffer_newCap)
 {
 	StringBuffer *buf = _SB(THISV);
 
-	IntFromValue(thread, args + 1);
+	CHECKED(IntFromValue(thread, args + 1));
 	int64_t capacity = args[1].integer;
 	if (capacity < 0 || capacity > INT32_MAX)
 	{
 		VM_PushString(thread, strings::capacity);
-		GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr);
-		VM_Throw(thread);
+		CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr));
+		return VM_Throw(thread);
 	}
 
-	new(buf) StringBuffer(thread, (int32_t)capacity);
+	if (!buf->Init((int32_t)capacity))
+		return VM_ThrowMemoryError(thread);
+	RETURN_SUCCESS;
 }
+END_NATIVE_FUNCTION
 
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_get_length)
 {
 	StringBuffer *buf = _SB(THISV);
 	VM_PushInt(thread, buf->GetLength());
+	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_get_capacity)
 {
 	StringBuffer *buf = _SB(THISV);
 	VM_PushInt(thread, buf->GetCapacity());
+	RETURN_SUCCESS;
 }
 
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_appendLine)
 {
 	StringBuffer *buf = _SB(THISV);
-	buf->Append(thread, strings::newline);
+	if (!buf->Append(strings::newline))
+		return VM_ThrowMemoryError(thread);
 
 	VM_Push(thread, THISV);
+	RETURN_SUCCESS;
 }
-AVES_API NATIVE_FUNCTION(aves_StringBuffer_appendInternal)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_StringBuffer_appendInternal)
 {
 	// appendInternal(value is String, times is Int)
 	// (The public-facing methods ensure the types are correct)
@@ -59,18 +67,20 @@ AVES_API NATIVE_FUNCTION(aves_StringBuffer_appendInternal)
 	if (times < 0 || times > INT32_MAX)
 	{
 		VM_PushString(thread, strings::times);
-		GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr);
-		VM_Throw(thread);
+		CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr));
+		return VM_Throw(thread);
 	}
 
 	StringBuffer *buf = _SB(THISV);
 	String *str = args[1].common.string;
 
 	for (int32_t i = 0; i < (int32_t)times; i++)
-		buf->Append(thread, str);
+		if (!buf->Append(str))
+			return VM_ThrowMemoryError(thread);
 
 	VM_Push(thread, THISV);
 }
+END_NATIVE_FUNCTION
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_appendCodepointInternal)
 {
 	// appendCodepointInternal(cp is Int)
@@ -84,14 +94,17 @@ AVES_API NATIVE_FUNCTION(aves_StringBuffer_appendCodepointInternal)
 	{
 		// Surrogate pair, whoo!
 		SurrogatePair pair = UC_ToSurrogatePair(codepoint);
-		buf->Append(thread, 2, (uchar*)&pair);
+		if (!buf->Append(2, (uchar*)&pair))
+			return VM_ThrowMemoryError(thread);
 	}
 	else
-		buf->Append(thread, 1, (uchar)codepoint);
+		if (!buf->Append(1, (uchar)codepoint))
+			return VM_ThrowMemoryError(thread);
 
 	VM_Push(thread, THISV);
+	RETURN_SUCCESS;
 }
-AVES_API NATIVE_FUNCTION(aves_StringBuffer_insertInternal)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_StringBuffer_insertInternal)
 {
 	// insertInternal(index is Int, value is String)
 	// (The public-facing methods ensure the types are correct)
@@ -101,23 +114,29 @@ AVES_API NATIVE_FUNCTION(aves_StringBuffer_insertInternal)
 	if (index < 0 || index > buf->GetLength())
 	{
 		VM_PushString(thread, strings::index);
-		GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr);
-		VM_Throw(thread);
+		CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr));
+		return VM_Throw(thread);
 	}
 
-	buf->Insert(thread, (int32_t)index, args[2].common.string);
+	if (!buf->Insert((int32_t)index, args[2].common.string))
+		return VM_ThrowMemoryError(thread);
 
 	VM_Push(thread, THISV);
 }
+END_NATIVE_FUNCTION
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_clear)
 {
 	StringBuffer *buf = _SB(THISV);
 	buf->Clear();
+	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_toString)
 {
-	StringBuffer *buf = _SB(THISV);
-	VM_PushString(thread, buf->ToString(thread));
+	String *result = _SB(THISV)->ToString(thread);
+	if (!result)
+		return VM_ThrowMemoryError(thread);
+	VM_PushString(thread, result);
+	RETURN_SUCCESS;
 }
 
 void aves_StringBuffer_finalize(void *basePtr)

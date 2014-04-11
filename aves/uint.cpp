@@ -6,50 +6,59 @@
 #define LEFT  (args[0])
 #define RIGHT (args[1])
 
-AVES_API NATIVE_FUNCTION(aves_uint)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_uint)
 {
-	UIntFromValue(thread, args);
+	CHECKED(UIntFromValue(thread, args));
 	VM_Push(thread, args[0]);
 }
+END_NATIVE_FUNCTION
 
 AVES_API NATIVE_FUNCTION(aves_UInt_getHashCode)
 {
 	// The Value.uinteger and Value.integer fields overlap, so
 	// instead of casting, we can just use the integer field!
 	VM_PushInt(thread, args[0].integer);
+	RETURN_SUCCESS;
 }
 
-AVES_API NATIVE_FUNCTION(aves_UInt_toString)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_UInt_toString)
 {
-	VM_PushString(thread, uinteger::ToString(thread, THISV.uinteger, 10, 0, false));
+	String *str;
+	CHECKED_MEM(str = uinteger::ToString(thread, THISV.uinteger, 10, 0, false));
+	VM_PushString(thread, str);
 }
-AVES_API NATIVE_FUNCTION(aves_UInt_toStringf)
+END_NATIVE_FUNCTION
+AVES_API BEGIN_NATIVE_FUNCTION(aves_UInt_toStringf)
 {
 	Value *format = args + 1;
 
+	String *str;
 	if (format->type == Types::Int || format->type == Types::UInt)
 	{
 		if (format->integer < 2 || format->integer > 36)
 		{
-			VM_PushString(thread, strings::format);
-			VM_PushString(thread, error_strings::RadixOutOfRange);
-			GC_Construct(thread, Types::ArgumentRangeError, 2, nullptr);
-			VM_Throw(thread);
+			VM_PushString(thread, strings::format); // paramName
+			VM_PushString(thread, error_strings::RadixOutOfRange); // message
+			CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 2, nullptr));
+			return VM_Throw(thread);
 		}
 
-		VM_PushString(thread, uinteger::ToString(thread, THISV.uinteger, (int)format->integer, 0, false));
+		str = uinteger::ToString(thread, THISV.uinteger, (int)format->integer, 0, false);
 	}
 	else if (IsString(format))
 	{
 		int radix, minWidth;
 		bool upper;
-		integer::ParseFormatString(thread, format->common.string, &radix, &minWidth, &upper);
+		CHECKED(integer::ParseFormatString(thread, format->common.string, &radix, &minWidth, &upper));
 
-		VM_PushString(thread, uinteger::ToString(thread, THISV.uinteger, radix, minWidth, upper));
+		str = uinteger::ToString(thread, THISV.uinteger, radix, minWidth, upper);
 	}
 	else
-		VM_ThrowTypeError(thread);
+		return VM_ThrowTypeError(thread);
+	CHECKED_MEM(str);
+	VM_PushString(thread, str);
 }
+END_NATIVE_FUNCTION
 
 // Operators
 
@@ -64,6 +73,7 @@ AVES_API NATIVE_FUNCTION(aves_UInt_opEquals)
 		equals = (double)LEFT.uinteger == RIGHT.real;
 
 	VM_PushBool(thread, equals);
+	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_UInt_opCompare)
 {
@@ -84,8 +94,8 @@ AVES_API NATIVE_FUNCTION(aves_UInt_opCompare)
 			(uint32_t)(left >> 32) > INT32_MAX)
 			result = 1;
 		else
-			result = (uint64_t)left < right ? -1 :
-				(uint64_t)left > right ? 1 :
+			result = left < (uint64_t)right ? -1 :
+				left > (uint64_t)right ? 1 :
 				0;
 	}
 	else if (RIGHT.type == Types::Real)
@@ -97,158 +107,194 @@ AVES_API NATIVE_FUNCTION(aves_UInt_opCompare)
 			0;
 	}
 	else
-		VM_ThrowTypeError(thread);
+		return VM_ThrowTypeError(thread);
 	VM_PushInt(thread, result);
+	RETURN_SUCCESS;
 }
-AVES_API NATIVE_FUNCTION(aves_UInt_opShiftLeft)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_UInt_opShiftLeft)
 {
-	IntFromValue(thread, &RIGHT);
+	CHECKED(IntFromValue(thread, &RIGHT));
 	int64_t amount = RIGHT.integer;
 
 	if (amount < 0)
 	{
-		GC_Construct(thread, Types::ArgumentRangeError, 0, nullptr);
-		VM_Throw(thread);
+		CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 0, nullptr));
+		return VM_Throw(thread);
 	}
 	if (amount > 64)
 	{
 		VM_PushUInt(thread, 0);
-		return;
+		RETURN_SUCCESS;
 	}
 
 	VM_PushUInt(thread, LEFT.uinteger << (int)amount);
 }
-AVES_API NATIVE_FUNCTION(aves_UInt_opShiftRight)
+END_NATIVE_FUNCTION
+AVES_API BEGIN_NATIVE_FUNCTION(aves_UInt_opShiftRight)
 {
-	IntFromValue(thread, &RIGHT);
+	CHECKED(IntFromValue(thread, &RIGHT));
 	int64_t amount = RIGHT.integer;
 
 	if (amount < 0)
 	{
-		GC_Construct(thread, Types::ArgumentRangeError, 0, nullptr);
-		VM_Throw(thread);
+		CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 0, nullptr));
+		return VM_Throw(thread);
 	}
 	if (amount > 64)
 	{
 		VM_PushUInt(thread, 0);
-		return;
+		RETURN_SUCCESS;
 	}
 
 	VM_PushUInt(thread, LEFT.uinteger >> (int)amount);
 }
-AVES_API NATIVE_FUNCTION(aves_UInt_opAdd)
+END_NATIVE_FUNCTION
+AVES_API BEGIN_NATIVE_FUNCTION(aves_UInt_opAdd)
 {
 	if (RIGHT.type != Types::UInt)
 	{
 		if (RIGHT.type == Types::Real)
 		{
 			VM_PushReal(thread, (double)LEFT.uinteger + RIGHT.real);
-			return;
+			RETURN_SUCCESS;
 		}
-		UIntFromValue(thread, &RIGHT);
+		CHECKED(UIntFromValue(thread, &RIGHT));
 	}
 
-	VM_PushUInt(thread, UInt_AddChecked(thread, LEFT.uinteger, RIGHT.uinteger));
+	uint64_t result;
+	if (UInt_AddChecked(LEFT.uinteger, RIGHT.uinteger, result))
+		return VM_ThrowOverflowError(thread);
+	VM_PushUInt(thread, result);
 }
-AVES_API NATIVE_FUNCTION(aves_UInt_opSubtract)
+END_NATIVE_FUNCTION
+AVES_API BEGIN_NATIVE_FUNCTION(aves_UInt_opSubtract)
 {
 	if (RIGHT.type != Types::UInt)
 	{
 		if (RIGHT.type == Types::Real)
 		{
 			VM_PushReal(thread, (double)LEFT.uinteger - RIGHT.real);
-			return;
+			RETURN_SUCCESS;
 		}
-		UIntFromValue(thread, &RIGHT);
+		CHECKED(UIntFromValue(thread, &RIGHT));
 	}
 
-	VM_PushUInt(thread, UInt_SubtractChecked(thread, LEFT.uinteger, RIGHT.uinteger));
+	uint64_t result;
+	if (UInt_SubtractChecked(LEFT.uinteger, RIGHT.uinteger, result))
+		return VM_ThrowOverflowError(thread);
+	VM_PushUInt(thread, result);
 }
+END_NATIVE_FUNCTION
 AVES_API NATIVE_FUNCTION(aves_UInt_opOr)
 {
 	if (RIGHT.type != Types::Int && RIGHT.type != Types::UInt)
-		VM_ThrowTypeError(thread);
+		return VM_ThrowTypeError(thread);
 
 	VM_PushUInt(thread, LEFT.uinteger | RIGHT.uinteger);
+	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_UInt_opXor)
 {
 	if (RIGHT.type != Types::Int && RIGHT.type != Types::UInt)
-		VM_ThrowTypeError(thread);
+		return VM_ThrowTypeError(thread);
 
 	VM_PushUInt(thread, LEFT.uinteger ^ RIGHT.uinteger);
+	RETURN_SUCCESS;
 }
-AVES_API NATIVE_FUNCTION(aves_UInt_opMultiply)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_UInt_opMultiply)
 {
 	if (RIGHT.type != Types::UInt)
 	{
 		if (RIGHT.type == Types::Real)
 		{
 			VM_PushReal(thread, (double)LEFT.uinteger * RIGHT.real);
-			return;
+			RETURN_SUCCESS;
 		}
-		UIntFromValue(thread, &RIGHT);
+		CHECKED(UIntFromValue(thread, &RIGHT));
 	}
 
-	VM_PushUInt(thread, UInt_MultiplyChecked(thread, LEFT.uinteger, RIGHT.uinteger));
+	uint64_t result;
+	if (UInt_MultiplyChecked(LEFT.uinteger, RIGHT.uinteger, result))
+		return VM_ThrowOverflowError(thread);
+	VM_PushUInt(thread, result);
 }
-AVES_API NATIVE_FUNCTION(aves_UInt_opDivide)
+END_NATIVE_FUNCTION
+AVES_API BEGIN_NATIVE_FUNCTION(aves_UInt_opDivide)
 {
 	if (RIGHT.type != Types::UInt)
 	{
 		if (RIGHT.type == Types::Real)
 		{
 			VM_PushReal(thread, (double)LEFT.uinteger / RIGHT.real);
-			return;
+			RETURN_SUCCESS;
 		}
-		UIntFromValue(thread, &RIGHT);
+		CHECKED(UIntFromValue(thread, &RIGHT));
 	}
 
-	VM_PushUInt(thread, UInt_DivideChecked(thread, LEFT.uinteger, RIGHT.uinteger));
+	uint64_t result;
+	int r = UInt_DivideChecked(LEFT.uinteger, RIGHT.uinteger, result);
+	if (r)
+	{
+		if (r == OVUM_ERROR_DIVIDE_BY_ZERO)
+			return VM_ThrowDivideByZeroError(thread);
+		return VM_ThrowOverflowError(thread);
+	}
+	VM_PushUInt(thread, result);
 }
-AVES_API NATIVE_FUNCTION(aves_UInt_opModulo)
+END_NATIVE_FUNCTION
+AVES_API BEGIN_NATIVE_FUNCTION(aves_UInt_opModulo)
 {
 	if (RIGHT.type != Types::UInt)
 	{
 		if (RIGHT.type == Types::Real)
 		{
 			VM_PushReal(thread, fmod((double)LEFT.uinteger, RIGHT.real));
-			return;
+			RETURN_SUCCESS;
 		}
-		UIntFromValue(thread, &RIGHT);
+		CHECKED(UIntFromValue(thread, &RIGHT));
 	}
 
-	VM_PushUInt(thread, UInt_ModuloChecked(thread, LEFT.uinteger, RIGHT.uinteger));
+	uint64_t result;
+	if (UInt_ModuloChecked(LEFT.uinteger, RIGHT.uinteger, result))
+		return VM_ThrowDivideByZeroError(thread);
+	VM_PushUInt(thread, result);
 }
+END_NATIVE_FUNCTION
 AVES_API NATIVE_FUNCTION(aves_UInt_opAnd)
 {
 	if (RIGHT.type != Types::Int && RIGHT.type != Types::UInt)
-		VM_ThrowTypeError(thread);
+		return VM_ThrowTypeError(thread);
 
 	VM_PushUInt(thread, LEFT.uinteger & RIGHT.uinteger);
+	RETURN_SUCCESS;
 }
-AVES_API NATIVE_FUNCTION(aves_UInt_opPower)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_UInt_opPower)
 {
 	if (RIGHT.type != Types::UInt)
 	{
 		if (RIGHT.type == Types::Real)
 		{
 			VM_PushReal(thread, pow((double)LEFT.uinteger, RIGHT.real));
-			return;
+			RETURN_SUCCESS;
 		}
-		UIntFromValue(thread, &RIGHT);
+		CHECKED(UIntFromValue(thread, &RIGHT));
 	}
 
-	uint64_t result = uinteger::Power(thread, LEFT.uinteger, RIGHT.uinteger);
+	uint64_t result;
+	if (uinteger::Power(LEFT.uinteger, RIGHT.uinteger, result))
+		return VM_ThrowOverflowError(thread);
 	VM_PushUInt(thread, result);
 }
+END_NATIVE_FUNCTION
 AVES_API NATIVE_FUNCTION(aves_UInt_opPlus)
 {
 	VM_Push(thread, args[0]);
+	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_UInt_opNot)
 {
 	VM_PushUInt(thread, ~args[0].uinteger);
+	RETURN_SUCCESS;
 }
 
 // Internal methods

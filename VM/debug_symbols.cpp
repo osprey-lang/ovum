@@ -1,5 +1,6 @@
 #include "ov_debug_symbols.internal.h"
 #include "ov_module.internal.h"
+#include "modulereader.internal.h"
 #include <memory>
 #include <stdio.h>
 
@@ -87,7 +88,7 @@ namespace debug
 			output->AttachSymbols();
 			output.release();
 		}
-		catch (ModuleIOException &e)
+		catch (ModuleIOException&)
 		{
 			// Ignore error; reset and return
 			module->debugData = nullptr;
@@ -171,7 +172,7 @@ namespace debug
 
 					unique_ptr<SourceLocation[]> symbols(new SourceLocation[symbolCount]);
 					SourceLocation *symp = symbols.get();
-					for (int32_t s = 0; s < symbolCount; s++, symp++)
+					for (uint32_t s = 0; s < symbolCount; s++, symp++)
 						ReadSourceLocation(reader, target, symp);
 
 					unique_ptr<DebugSymbols> debugSymbols(new DebugSymbols(method->overloads + k, symbolCount, symbols.get()));

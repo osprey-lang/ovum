@@ -170,7 +170,7 @@ namespace instr
 	int32_t MethodBuilder::GetNewOffset(const int32_t index) const
 	{
 		typedef std::vector<InstrDesc>::const_iterator const_iter;
-		if (index >= instructions.size())
+		if (index >= (int32_t)instructions.size())
 		{
 			Instruction *end = (instructions.end() - 1)->instr;
 			return end->offset + end->GetSize();
@@ -182,7 +182,7 @@ namespace instr
 	{
 		typedef std::vector<InstrDesc>::const_iterator const_iter;
 		int32_t offset;
-		if (index >= instructions.size())
+		if (index >= (int32_t)instructions.size())
 		{
 			Instruction *end = (instructions.end() - 1)->instr;
 			offset = end->offset + end->GetSize();
@@ -419,42 +419,50 @@ public:
 	}
 };
 
-void Thread::InitializeMethod(Method::Overload *method)
+int Thread::InitializeMethod(Method::Overload *method)
 {
 	using namespace instr;
 
 	assert(!method->IsInitialized());
 
 	MethodBuilder builder;
-
-	// First, initialize all the instructions based on the original bytecode
-	InitializeInstructions(builder, method);
-
-	// Then, let's find all branch and switch instructions, so we can
-	// update their branch targets. During this step, we also mark said
-	// targets as having incoming branches.
-	InitializeBranchOffsets(builder, method);
-
-	// And now, we assign each instruction input and output offsets,
-	// as appropriate. This step may also rewrite the method somewhat,
-	// removing instructions for optimisation purposes and changing
-	// some LocalOffsets from stack offsets to locals.
-	if (method->maxStack <= SmallStackManager::MaxStack)
+	try
 	{
-		SmallStackManager stack;
-		CalculateStackHeights(builder, method, stack);
+		// First, initialize all the instructions based on the original bytecode
+		InitializeInstructions(builder, method);
+
+		// Then, let's find all branch and switch instructions, so we can
+		// update their branch targets. During this step, we also mark said
+		// targets as having incoming branches.
+		InitializeBranchOffsets(builder, method);
+
+		// And now, we assign each instruction input and output offsets,
+		// as appropriate. This step may also rewrite the method somewhat,
+		// removing instructions for optimisation purposes and changing
+		// some LocalOffsets from stack offsets to locals.
+		if (method->maxStack <= SmallStackManager::MaxStack)
+		{
+			SmallStackManager stack;
+			CalculateStackHeights(builder, method, stack);
+		}
+		else
+		{
+			LargeStackManager stack(method->maxStack);
+			CalculateStackHeights(builder, method, stack);
+		}
+
+		WriteInitializedBody(builder, method);
 	}
-	else
+	catch (MethodInitException &e)
 	{
-		LargeStackManager stack(method->maxStack);
-		CalculateStackHeights(builder, method, stack);
+		VM::PrintMethodInitException(e);
+		abort();
 	}
 
-	WriteInitializedBody(builder, method);
-
-
+	int r = OVUM_SUCCESS;
 	if (builder.GetTypeCount() > 0)
-		CallStaticConstructors(builder);
+		r = CallStaticConstructors(builder);
+	return r;
 }
 
 void Thread::InitializeBranchOffsets(instr::MethodBuilder &builder, Method::Overload *method)
@@ -811,7 +819,7 @@ void Thread::WriteInitializedBody(instr::MethodBuilder &builder, Method::Overloa
 	method->flags |= MethodFlags::INITED;
 }
 
-void Thread::CallStaticConstructors(instr::MethodBuilder &builder)
+int Thread::CallStaticConstructors(instr::MethodBuilder &builder)
 {
 	for (int32_t i = 0; i < builder.GetTypeCount(); i++)
 	{
@@ -829,15 +837,17 @@ void Thread::CallStaticConstructors(instr::MethodBuilder &builder)
 				assert((member->flags & MemberFlags::METHOD) == MemberFlags::METHOD);
 
 				Method::Overload *mo = ((Method*)member)->ResolveOverload(0);
-				if (!mo) ThrowNoOverloadError(0);
+				if (!mo) return ThrowNoOverloadError(0);
 
 				Value ignore;
-				InvokeMethodOverload(mo, 0,
+				int r = InvokeMethodOverload(mo, 0,
 					currentFrame->evalStack + currentFrame->stackCount,
 					&ignore);
+				if (r != OVUM_SUCCESS) return r;
 			}
 		}
 	}
+	RETURN_SUCCESS;
 }
 
 void Thread::InitializeInstructions(instr::MethodBuilder &builder, Method::Overload *method)

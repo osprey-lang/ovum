@@ -5,6 +5,28 @@
 
 #include "ov_vm.h"
 
+#define OVUM_SUCCESS               0  /* EVERYTHING IS FINE. THERE IS NOTHING TO WORRY ABOUT. */
+#define OVUM_ERROR_THROWN          1  /* An error was thrown using the VM_Throw function or Osprey's 'throw' keyword. */
+#define OVUM_ERROR_UNSPECIFIED     2  /* An unspecified error occurred. */
+#define OVUM_ERROR_METHOD_INIT     3  /* A method could not be initialized (e.g. due to an invalid opcode). */
+#define OVUM_ERROR_NO_MEMORY       4  /* A memory allocation failed due to insufficient memory. */
+#define OVUM_ERROR_NO_MAIN_METHOD  5  /* The startup module has no main method. */
+#define OVUM_ERROR_MODULE_LOAD     6  /* A module could not be loaded. */
+#define OVUM_ERROR_OVERFLOW        8  /* Arithmetic overflow. */
+#define OVUM_ERROR_DIVIDE_BY_ZERO  9  /* Integer division by zero. */
+
+// Returns a successful status code. Semicolon intentionally missing.
+#define RETURN_SUCCESS             return OVUM_SUCCESS
+#define BEGIN_NATIVE_FUNCTION(name) \
+	NATIVE_FUNCTION(name) { \
+		int __status;
+#define END_NATIVE_FUNCTION \
+		RETURN_SUCCESS; \
+		__retStatus: return __status; \
+	}
+#define CHECKED(expr) if ((__status = (expr)) != OVUM_SUCCESS) goto __retStatus
+#define CHECKED_MEM(expr) if (!(expr)) { __status = OVUM_ERROR_NO_MEMORY; goto __retStatus; }
+
 OVUM_API void VM_Push(ThreadHandle thread, Value value);
 
 OVUM_API void VM_PushNull(ThreadHandle thread);
@@ -30,7 +52,7 @@ OVUM_API Value *VM_Local(ThreadHandle thread, const uint32_t n);
 //     The number of arguments passed in the invocation, NOT including the instance.
 //   result:
 //     The return value of the invocation. If null, the return value is pushed onto the stack.
-OVUM_API void VM_Invoke(ThreadHandle thread, const uint32_t argCount, Value *result);
+OVUM_API int VM_Invoke(ThreadHandle thread, const uint32_t argCount, Value *result);
 
 // Invokes a member of a value on the evaluation stack.
 // If S[0] is the top value on the stack, then S[argCount] is the value whose member is invoked.
@@ -43,7 +65,7 @@ OVUM_API void VM_Invoke(ThreadHandle thread, const uint32_t argCount, Value *res
 //     The number of arguments to pass to the method, NOT including the instance.
 //   result:
 //     The return value of the invocation. If null, the return value is pushed onto the stack.
-OVUM_API void VM_InvokeMember(ThreadHandle thread, String *name, const uint32_t argCount, Value *result);
+OVUM_API int VM_InvokeMember(ThreadHandle thread, String *name, const uint32_t argCount, Value *result);
 
 // Invokes a specific method with arguments from the evaluation stack.
 //   thread:
@@ -54,7 +76,7 @@ OVUM_API void VM_InvokeMember(ThreadHandle thread, String *name, const uint32_t 
 //     The number of arguments to pass to the method, NOT including the instance.
 //   result:
 //     The return value of the invocation. If null, the return value is pushed onto the stack.
-OVUM_API void VM_InvokeMethod(ThreadHandle thread, MethodHandle method, const uint32_t argCount, Value *result);
+OVUM_API int VM_InvokeMethod(ThreadHandle thread, MethodHandle method, const uint32_t argCount, Value *result);
 // Invokes an operator on one or two values on the evaluation stack.
 //   thread:
 //     The thread on which to invoke the operator.
@@ -63,7 +85,7 @@ OVUM_API void VM_InvokeMethod(ThreadHandle thread, MethodHandle method, const ui
 //     binary operators use two operands; unary operators use one.
 //   result:
 //     The return value of the invocation. If null, the return value is pushed onto the stack.
-OVUM_API void VM_InvokeOperator(ThreadHandle thread, Operator op, Value *result);
+OVUM_API int VM_InvokeOperator(ThreadHandle thread, Operator op, Value *result);
 // Determines whether the top two values on the evaluation stack equal each other,
 // by invoking the == operator.
 //   thread:
@@ -73,7 +95,7 @@ OVUM_API void VM_InvokeOperator(ThreadHandle thread, Operator op, Value *result)
 //     the value whose == operator is invoked.
 //   If no type in the hierarchy all the way up to aves.Object overloads the == operator,
 //     then a reference equality comparison is performed instead (see "IsSameReference").
-OVUM_API bool VM_Equals(ThreadHandle thread);
+OVUM_API int VM_Equals(ThreadHandle thread, bool *result);
 // Performs an ordinal comparison on two values on the stack, by invoking the <=> operator.
 //   thread:
 //     The thread on which to perform the operator invocation.
@@ -82,7 +104,7 @@ OVUM_API bool VM_Equals(ThreadHandle thread);
 //     operator is invoked on the type of S[1].
 //   This method /requires/ the <=> operator to return an instance of aves.Int. If it does not,
 //     a TypeError is thrown.
-OVUM_API int64_t VM_Compare(ThreadHandle thread);
+OVUM_API int VM_Compare(ThreadHandle thread, int64_t *result);
 
 // Loads a member from the top value on the stack. Note that the instance is always popped.
 //   thread:
@@ -92,14 +114,14 @@ OVUM_API int64_t VM_Compare(ThreadHandle thread);
 //     The name of the member to load.
 //   result:
 //     The result of loading the member. If null, this value is pushed onto the stack.
-OVUM_API void VM_LoadMember(ThreadHandle thread, String *member, Value *result);
+OVUM_API int VM_LoadMember(ThreadHandle thread, String *member, Value *result);
 // Stores a member from the top of the stack to the second stack value.
 //   thread:
 //     The thread on which to load the member. If the member is a property with a setter,
 //     then this is the thread on which the setter is executed.
 //   member:
 //     The name of the member to store.
-OVUM_API void VM_StoreMember(ThreadHandle thread, String *member);
+OVUM_API int VM_StoreMember(ThreadHandle thread, String *member);
 
 // Loads the indexer from the top value on the stack.
 //   thread:
@@ -108,13 +130,13 @@ OVUM_API void VM_StoreMember(ThreadHandle thread, String *member);
 //     The number of arguments to invoke the indexer with, not including the instance.
 //   result:
 //     The result of loading the member. If null, this value is pushed onto the stack.
-OVUM_API void VM_LoadIndexer(ThreadHandle thread, const uint32_t argCount, Value *result);
+OVUM_API int VM_LoadIndexer(ThreadHandle thread, const uint32_t argCount, Value *result);
 // Stores the top value on the stack into the indexer of the second stack value.
 //   thread:
 //     The thread on which to execute the indexer setter.
 //   argCount:
 //     The number of arguments to invoke the indexer with, not including the instance or value.
-OVUM_API void VM_StoreIndexer(ThreadHandle thread, const uint32_t argCount);
+OVUM_API int VM_StoreIndexer(ThreadHandle thread, const uint32_t argCount);
 
 // Loads the value of the specified static field.
 //   thread:
@@ -144,15 +166,15 @@ OVUM_API void VM_StoreStaticField(ThreadHandle thread, FieldHandle field);
 //     The thread on which to call toString.
 //   result:
 //     The resulting string value. If null, the value ends up on the stack (as a Value).
-OVUM_API void VM_ToString(ThreadHandle thread, String **result = nullptr);
+OVUM_API int VM_ToString(ThreadHandle thread, String **result = nullptr);
 
-OVUM_API void VM_Throw(ThreadHandle thread);
-OVUM_API void VM_ThrowError(ThreadHandle thread, String *message = nullptr);
-OVUM_API void VM_ThrowTypeError(ThreadHandle thread, String *message = nullptr);
-OVUM_API void VM_ThrowMemoryError(ThreadHandle thread, String *message = nullptr);
-OVUM_API void VM_ThrowOverflowError(ThreadHandle thread, String *message = nullptr);
-OVUM_API void VM_ThrowDivideByZeroError(ThreadHandle thread, String *message = nullptr);
-OVUM_API void VM_ThrowNullReferenceError(ThreadHandle thread, String *message = nullptr);
+OVUM_API int VM_Throw(ThreadHandle thread);
+OVUM_API int VM_ThrowError(ThreadHandle thread, String *message = nullptr);
+OVUM_API int VM_ThrowTypeError(ThreadHandle thread, String *message = nullptr);
+OVUM_API int VM_ThrowMemoryError(ThreadHandle thread, String *message = nullptr);
+OVUM_API int VM_ThrowOverflowError(ThreadHandle thread, String *message = nullptr);
+OVUM_API int VM_ThrowDivideByZeroError(ThreadHandle thread, String *message = nullptr);
+OVUM_API int VM_ThrowNullReferenceError(ThreadHandle thread, String *message = nullptr);
 
 // Informs the thread that it is entering a section of native code
 // which will not interact with the managed runtime in any way.

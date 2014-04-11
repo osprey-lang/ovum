@@ -3,13 +3,11 @@
 #ifndef VM__TYPE_H
 #define VM__TYPE_H
 
-#include <exception>
 #include "ov_vm.h"
 
-
-typedef void (__cdecl *NativeMethod)(ThreadHandle thread, const int argc, Value args[]);
+typedef int (__cdecl *NativeMethod)(ThreadHandle thread, const int argc, Value args[]);
 // Adds the magic parameters 'ThreadHandle thread', 'int argc' and 'Value args[]' to a function definition.
-#define NATIVE_FUNCTION(name)	void __cdecl name(::ThreadHandle thread, const int argc, ::Value args[])
+#define NATIVE_FUNCTION(name)	int __cdecl name(::ThreadHandle thread, const int argc, ::Value args[])
 // The 'this' in a NATIVE_FUNCTION, which is always argument 0.
 #define THISV	(args[0])
 #define THISP   (args + 0)
@@ -93,29 +91,6 @@ OVUM_API bool Field_SetStaticValue(const FieldHandle field, Value value);
 
 OVUM_API MethodHandle Property_GetGetter(const PropertyHandle prop);
 OVUM_API MethodHandle Property_GetSetter(const PropertyHandle prop);
-
-
-class OvumException: public std::exception
-{
-private:
-	Value errorValue;
-
-public:
-	inline OvumException(Value value) :
-		exception("A managed error was thrown. Use GetManagedMessage to retrieve the full error message."),
-		errorValue(value)
-	{ }
-
-	inline Value GetError() const
-	{
-		return errorValue;
-	}
-
-	inline String *GetManagedMessage() const
-	{
-		return errorValue.common.error->message;
-	}
-};
 
 
 // It is VITAL that these are in the same order as the opcodes.
@@ -265,20 +240,20 @@ typedef void (*TypeInitializer)(TypeHandle type);
 // underlying implementation of the aves.List class, and is taken from
 // the main module's exported method "InitListInstance".
 // When called, 'list' is guaranteed to refer to a valid ListInst*.
-typedef void (*ListInitializer)(ThreadHandle thread, ListInst *list, int32_t capacity);
+typedef int (*ListInitializer)(ThreadHandle thread, ListInst *list, int32_t capacity);
 
 // Initializes a HashInst* to a specific capacity.
 // This method is provided to avoid making any assumptions about the
 // underlying implementation of the aves.Hash class, and is taken from
 // the main module's exported method "InitHashInstance".
 // When called, 'hash' is guaranteed to refer to a valid HashInst*.
-typedef void (*HashInitializer)(ThreadHandle thread, HashInst *hash, int32_t capacity);
+typedef int (*HashInitializer)(ThreadHandle thread, HashInst *hash, int32_t capacity);
 
 // Initializes a value of the aves.Type class for a specific underlying
 // TypeHandle. The standard module must expose a method with the name
 // "InitTypeToken", with this signature, so that the VM can create type
 // tokens when they are requested.
-typedef void (*TypeTokenInitializer)(ThreadHandle thread, void *basePtr, TypeHandle type);
+typedef int (*TypeTokenInitializer)(ThreadHandle thread, void *basePtr, TypeHandle type);
 
 OVUM_API TypeFlags Type_GetFlags(TypeHandle type);
 OVUM_API String *Type_GetFullName(TypeHandle type);
@@ -292,7 +267,7 @@ OVUM_API int32_t Type_GetMemberCount(TypeHandle type);
 OVUM_API MemberHandle Type_GetMemberByIndex(TypeHandle type, const int32_t index);
 
 OVUM_API MethodHandle Type_GetOperator(TypeHandle type, Operator op);
-OVUM_API Value Type_GetTypeToken(ThreadHandle thread, TypeHandle type);
+OVUM_API int Type_GetTypeToken(ThreadHandle thread, TypeHandle type, Value *result);
 
 OVUM_API uint32_t Type_GetFieldOffset(TypeHandle type);
 OVUM_API uint32_t Type_GetInstanceSize(TypeHandle type);

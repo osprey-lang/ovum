@@ -17,19 +17,19 @@ namespace io_errors
 	static String *SeekFailed   = _S(_SeekFailed);
 }
 
-void io::ThrowIOError(ThreadHandle thread, ErrorCode code, String *pathName)
+int io::ThrowIOError(ThreadHandle thread, ErrorCode code, String *pathName)
 {
 	String *message = nullptr;
 
+	int r = OVUM_SUCCESS;
 #ifdef _WIN32
 	switch (code)
 	{
 	case ERROR_FILE_NOT_FOUND:
 	case ERROR_PATH_NOT_FOUND:
 		VM_PushString(thread, pathName);
-		GC_Construct(thread, Types::FileNotFoundError, 1, nullptr);
-		VM_Throw(thread);
-		return;
+		r = GC_Construct(thread, Types::FileNotFoundError, 1, nullptr);
+		goto throwError;
 	case ERROR_ACCESS_DENIED:
 		message = io_errors::AccessDenied;
 		break;
@@ -52,6 +52,9 @@ void io::ThrowIOError(ThreadHandle thread, ErrorCode code, String *pathName)
 		VM_PushNull(thread);
 	else
 		VM_PushString(thread, message);
-	GC_Construct(thread, Types::IOError, 1, nullptr);
-	VM_Throw(thread);
+	r = GC_Construct(thread, Types::IOError, 1, nullptr);
+throwError:
+	if (r == OVUM_SUCCESS)
+		r = VM_Throw(thread);
+	return r;
 }

@@ -1,7 +1,7 @@
 #include <cmath>
 #include "aves_math.h"
 
-#define GET_REAL_VALUE()	RealFromValue(thread, args); double value = args[0].real;
+#define GET_REAL_VALUE() CHECKED(RealFromValue(thread, args)); double value = args[0].real;
 
 AVES_API NATIVE_FUNCTION(aves_math_abs)
 {
@@ -14,27 +14,25 @@ AVES_API NATIVE_FUNCTION(aves_math_abs)
 	else if (IsInt(value))
 	{
 		if (value.integer == INT64_MIN)
-			VM_ThrowOverflowError(thread);
-		VM_PushInt(thread, abs(value.integer));
+			return VM_ThrowOverflowError(thread);
+		if (value.integer < 0)
+			value.integer = -value.integer;
+		VM_PushInt(thread, value.integer);
 	}
 	else
-		VM_ThrowTypeError(thread);
+		return VM_ThrowTypeError(thread);
+	RETURN_SUCCESS;
 }
 
-AVES_API NATIVE_FUNCTION(aves_math_acos)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_math_acos)
 {
 	GET_REAL_VALUE();
-
-	//if (value < -1 || value > 1)
-	//{
-	//	GC_Construct(thread, ArgumentRangeError, 0, nullptr);
-	//	VM_Throw(thread);
-	//}
-
+	
 	VM_PushReal(thread, acos(value));
 }
+END_NATIVE_FUNCTION
 
-AVES_API NATIVE_FUNCTION(aves_math_asin)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_math_asin)
 {
 	GET_REAL_VALUE();
 
@@ -46,30 +44,34 @@ AVES_API NATIVE_FUNCTION(aves_math_asin)
 
 	VM_PushReal(thread, asin(value));
 }
+END_NATIVE_FUNCTION
 
-AVES_API NATIVE_FUNCTION(aves_math_atan)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_math_atan)
 {
 	GET_REAL_VALUE();
 
 	VM_PushReal(thread, atan(value));
 }
+END_NATIVE_FUNCTION
 
-AVES_API NATIVE_FUNCTION(aves_math_atan2)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_math_atan2)
 {
-	RealFromValue(thread, args + 0);
-	RealFromValue(thread, args + 1);
+	CHECKED(RealFromValue(thread, args + 0));
+	CHECKED(RealFromValue(thread, args + 1));
 	double y = args[0].real;
 	double x = args[1].real;
 
 	VM_PushReal(thread, atan2(y, x));
 }
+END_NATIVE_FUNCTION
 
-AVES_API NATIVE_FUNCTION(aves_math_cbrt)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_math_cbrt)
 {
 	GET_REAL_VALUE();
 
 	VM_PushReal(thread, pow(value, 1.0/3.0));
 }
+END_NATIVE_FUNCTION
 
 AVES_API NATIVE_FUNCTION(aves_math_ceil)
 {
@@ -80,29 +82,33 @@ AVES_API NATIVE_FUNCTION(aves_math_ceil)
 	else if (IsReal(value))
 		VM_PushReal(thread, ceil(value.real));
 	else
-		VM_ThrowTypeError(thread);
+		return VM_ThrowTypeError(thread);
+	RETURN_SUCCESS;
 }
 
-AVES_API NATIVE_FUNCTION(aves_math_cos)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_math_cos)
 {
 	GET_REAL_VALUE();
 
 	VM_PushReal(thread, cos(value));
 }
+END_NATIVE_FUNCTION
 
-AVES_API NATIVE_FUNCTION(aves_math_cosh)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_math_cosh)
 {
 	GET_REAL_VALUE();
 
 	VM_PushReal(thread, cosh(value));
 }
+END_NATIVE_FUNCTION
 
-AVES_API NATIVE_FUNCTION(aves_math_exp)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_math_exp)
 {
 	GET_REAL_VALUE();
 
 	VM_PushReal(thread, exp(value));
 }
+END_NATIVE_FUNCTION
 
 AVES_API NATIVE_FUNCTION(aves_math_floor)
 {
@@ -113,54 +119,38 @@ AVES_API NATIVE_FUNCTION(aves_math_floor)
 	else if (IsReal(value))
 		VM_PushReal(thread, floor(value.real));
 	else
-		VM_ThrowTypeError(thread);
+		return VM_ThrowTypeError(thread);
+	RETURN_SUCCESS;
 }
 
-AVES_API NATIVE_FUNCTION(aves_math_logE)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_math_logE)
 {
 	GET_REAL_VALUE();
 
 	VM_PushReal(thread, log(value));
 }
+END_NATIVE_FUNCTION
 
-AVES_API NATIVE_FUNCTION(aves_math_logBase)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_math_logBase)
 {
 	GET_REAL_VALUE();
 
-	RealFromValue(thread, args + 1);
+	CHECKED(RealFromValue(thread, args + 1));
 	double base = args[1].real;
 
 	// log x to base b = ln x / ln b
 
 	VM_PushReal(thread, log(value) / log(base));
 }
+END_NATIVE_FUNCTION
 
-AVES_API NATIVE_FUNCTION(aves_math_log10)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_math_log10)
 {
 	GET_REAL_VALUE();
 
 	VM_PushReal(thread, log10(value));
 }
-
-AVES_API NATIVE_FUNCTION(aves_math_max)
-{
-	VM_Push(thread, args[1]); // b
-	VM_Push(thread, args[0]); // a
-	if (VM_Compare(thread) > 0) // b > a
-		VM_Push(thread, args[1]); // b
-	else
-		VM_Push(thread, args[0]); // a
-}
-
-AVES_API NATIVE_FUNCTION(aves_math_min)
-{
-	VM_Push(thread, args[1]); // b
-	VM_Push(thread, args[0]); // a
-	if (VM_Compare(thread) < 0) // b < a
-		VM_Push(thread, args[1]); // b
-	else
-		VM_Push(thread, args[0]); // a
-}
+END_NATIVE_FUNCTION
 
 AVES_API NATIVE_FUNCTION(aves_math_sign)
 {
@@ -184,40 +174,46 @@ AVES_API NATIVE_FUNCTION(aves_math_sign)
 			0); // includes NaN
 	}
 	else
-		VM_ThrowTypeError(thread);
+		return VM_ThrowTypeError(thread);
+	RETURN_SUCCESS;
 }
 
-AVES_API NATIVE_FUNCTION(aves_math_sin)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_math_sin)
 {
 	GET_REAL_VALUE();
 
 	VM_PushReal(thread, sin(value));
 }
+END_NATIVE_FUNCTION
 
-AVES_API NATIVE_FUNCTION(aves_math_sinh)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_math_sinh)
 {
 	GET_REAL_VALUE();
 
 	VM_PushReal(thread, sinh(value));
 }
+END_NATIVE_FUNCTION
 
-AVES_API NATIVE_FUNCTION(aves_math_sqrt)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_math_sqrt)
 {
 	GET_REAL_VALUE();
 
 	VM_PushReal(thread, sqrt(value));
 }
+END_NATIVE_FUNCTION
 
-AVES_API NATIVE_FUNCTION(aves_math_tan)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_math_tan)
 {
 	GET_REAL_VALUE();
 
 	VM_PushReal(thread, tan(value));
 }
+END_NATIVE_FUNCTION
 
-AVES_API NATIVE_FUNCTION(aves_math_tanh)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_math_tanh)
 {
 	GET_REAL_VALUE();
 
 	VM_PushReal(thread, tanh(value));
 }
+END_NATIVE_FUNCTION

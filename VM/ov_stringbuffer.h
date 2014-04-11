@@ -3,6 +3,8 @@
 #ifndef VM__STRINGBUFFER_H
 #define VM__STRINGBUFFER_H
 
+#include <memory>
+
 #include "ov_vm.h"
 #include "ov_unicode.h"
 
@@ -20,11 +22,9 @@ private:
 	static const size_t DefaultCapacity = 128;
 
 public:
-	inline StringBuffer(ThreadHandle thread, const int32_t capacity = StringBuffer::DefaultCapacity)
+	inline StringBuffer()
 		 : length(0), data(nullptr)
-	{
-		SetCapacity(thread, capacity);
-	}
+	{ }
 	inline ~StringBuffer()
 	{
 		// Note: don't use delete; data was allocated with realloc, not new
@@ -35,33 +35,38 @@ public:
 		}
 	}
 
+	inline bool Init(const int32_t capacity = DefaultCapacity)
+	{
+		return SetCapacity(capacity);
+	}
+
 	inline int32_t GetLength()   { return this->length; }
 	inline int32_t GetCapacity() { return this->capacity; }
-	inline int32_t SetCapacity(ThreadHandle thread, const int32_t newCapacity)
+	inline bool SetCapacity(const int32_t newCapacity)
 	{
 		int32_t newCap = newCapacity;
 		if (newCap < this->length)
 			newCap = this->length;
 
 		if (newCap > SIZE_MAX / sizeof(uchar))
-			VM_ThrowMemoryError(thread);
+			return false;
 
 		uchar *newData = reinterpret_cast<uchar*>(realloc(data, sizeof(uchar) * newCap));
 		if (newData == nullptr)
-			VM_ThrowMemoryError(thread);
+			return false;
 
 		this->data = newData;
 		this->capacity = newCap;
-		return newCap;
+		return true;
 	}
 
-	inline void Append(ThreadHandle thread, const uchar ch)
+	inline bool Append(const uchar ch)
 	{
-		Append(thread, 1, &ch);
+		return Append(1, &ch);
 	}
-	inline void Append(ThreadHandle thread, const int32_t count, const uchar ch)
+	inline bool Append(const int32_t count, const uchar ch)
 	{
-		EnsureMinCapacity(thread, count);
+		if (!EnsureMinCapacity(count)) return false;
 
 		uchar *chp = this->data + this->length;
 		for (int32_t i = 0; i < count; i++)
@@ -70,22 +75,24 @@ public:
 			chp++;
 		}
 		this->length += count;
+		return true;
 	}
-	inline void Append(ThreadHandle thread, const int32_t length, const uchar data[])
+	inline bool Append(const int32_t length, const uchar data[])
 	{
-		EnsureMinCapacity(thread, length);
+		if (!EnsureMinCapacity(length)) return false;
 
 		CopyMemoryT(this->data + this->length, data, length);
 		this->length += length;
+		return true;
 	}
-	inline void Append(ThreadHandle thread, String *str)
+	inline bool Append(String *str)
 	{
-		Append(thread, str->length, &str->firstChar);
+		return Append(str->length, &str->firstChar);
 	}
 
-	inline void Append(ThreadHandle thread, const int32_t length, const char data[])
+	inline bool Append(const int32_t length, const char data[])
 	{
-		EnsureMinCapacity(thread, length);
+		if (!EnsureMinCapacity(length)) return false;
 
 		uchar *chp = this->data + this->length;
 		for (int32_t i = 0; i < length; i++)
@@ -94,38 +101,14 @@ public:
 			chp++;
 		}
 		this->length += length;
-	}
-	inline void Append(ThreadHandle thread, const int32_t length, const wchar_t data[])
-	{
-		if (sizeof(wchar_t) == sizeof(uchar))
-			// Assume wchar_t is UTF-16 (or at least UCS-2)
-			Append(thread, length, (uchar*)data);
-		else if (sizeof(wchar_t) == sizeof(wuchar))
-		{
-			// Assume wchar_t is UTF-32
-			EnsureMinCapacity(thread, length);
-
-			for (int32_t i = 0; i < length; i++)
-			{
-				const wuchar ch = (wuchar)data[i];
-				if (UC_NeedsSurrogatePair(ch))
-				{
-					const SurrogatePair surr = UC_ToSurrogatePair(ch);
-					Append(thread, 2, (uchar*)&surr);
-				}
-				else
-					Append(thread, 1, (uchar*)&ch);
-			}
-		}
-		else
-			VM_ThrowError(thread);
+		return true;
 	}
 
-	inline void Insert(ThreadHandle thread, const int32_t index, const int32_t length, const uchar data[])
+	inline bool Insert(const int32_t index, const int32_t length, const uchar data[])
 	{
 		if (length > 0)
 		{
-			EnsureMinCapacity(thread, length);
+			if (!EnsureMinCapacity(length)) return false;
 
 			uchar *destp = this->data + this->length + length - 1;
 			const uchar *srcp = this->data + this->length - 1;
@@ -136,24 +119,21 @@ public:
 
 			CopyMemoryT(this->data + index, data, length);
 		}
+		return true;
 	}
-	inline void Insert(ThreadHandle thread, const int32_t index, const uchar data)
+	inline bool Insert(const int32_t index, const uchar data)
 	{
-		Insert(thread, index, 1, &data);
+		return Insert(index, 1, &data);
 	}
-	inline void Insert(ThreadHandle thread, const int32_t index, String *str)
+	inline bool Insert(const int32_t index, String *str)
 	{
-		Insert(thread, index, str->length, &str->firstChar);
+		return Insert(index, str->length, &str->firstChar);
 	}
 
 	// Clears the buffer's contents without changing the capacity.
 	inline void Clear()
 	{
-		if (this->length)
-		{
-			memset(this->data, 0, sizeof(uchar) * this->capacity);
-			this->length = 0;
-		}
+		this->length = 0;
 	}
 
 	inline bool StartsWith(const uchar ch)
@@ -242,10 +222,10 @@ public:
 	}
 
 private:
-	inline void EnsureMinCapacity(ThreadHandle thread, int32_t newAmount)
+	inline bool EnsureMinCapacity(int32_t newAmount)
 	{
 		if (INT32_MAX - newAmount < this->length)
-			VM_ThrowOverflowError(thread);
+			return false;
 
 		if (this->length + newAmount > this->capacity)
 		{
@@ -253,8 +233,9 @@ private:
 			int32_t newLength = this->length << 1;
 			if (newLength < this->length + newAmount)
 				newLength += newAmount;
-			SetCapacity(thread, newLength);
+			return SetCapacity(newLength);
 		}
+		return true;
 	}
 };
 

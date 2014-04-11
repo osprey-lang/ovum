@@ -13,20 +13,20 @@ private:
 	uchar *data;
 
 public:
-	StringBuffer(Thread *const thread, const int32_t capacity = StringBuffer::DefaultCapacity);
+	StringBuffer(const int32_t capacity = StringBuffer::DefaultCapacity);
 	~StringBuffer();
 
 	inline int32_t GetLength()   { return this->length; }
 	inline int32_t GetCapacity() { return this->capacity; }
-	int32_t SetCapacity(Thread *const thread, const int32_t newCapacity);
+	int32_t SetCapacity(const int32_t newCapacity);
 
-	void Append(Thread *const thread, const uchar ch);
-	void Append(Thread *const thread, const int32_t count, const uchar ch);
-	void Append(Thread *const thread, const int32_t length, const uchar data[]);
-	void Append(Thread *const thread, String *str);
+	void Append(const uchar ch);
+	void Append(const int32_t count, const uchar ch);
+	void Append(const int32_t length, const uchar data[]);
+	void Append(String *str);
 
-	void Append(Thread *const thread, const int32_t length, const char data[]);
-	void Append(Thread *const thread, const int32_t length, const wchar_t data[]);
+	void Append(const int32_t length, const char data[]);
+	void Append(const int32_t length, const wchar_t data[]);
 
 	// Clears the buffer's contents without changing the capacity.
 	void Clear();
@@ -47,7 +47,7 @@ public:
 	const int ToWString(wchar_t *buf);
 
 private:
-	void EnsureMinCapacity(Thread *const thread, int32_t newAmount);
+	void EnsureMinCapacity(int32_t newAmount);
 
 	static const size_t DefaultCapacity = 128;
 };

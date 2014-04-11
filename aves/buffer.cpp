@@ -1,4 +1,5 @@
 #include "aves_buffer.h"
+#include <new>
 
 TypeHandle BufferType;
 
@@ -10,14 +11,14 @@ AVES_API void aves_Buffer_init(TypeHandle type)
 	Type_SetFinalizer(type, aves_Buffer_finalize);
 }
 
-AVES_API NATIVE_FUNCTION(aves_Buffer_new)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_new)
 {
-	IntFromValue(thread, args + 1);
+	CHECKED(IntFromValue(thread, args + 1));
 	int64_t size64 = args[1].integer;
 	if (size64 < 0 || size64 > UINT32_MAX)
 	{
-		GC_Construct(thread, Types::ArgumentRangeError, 0, nullptr);
-		VM_Throw(thread);
+		CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 0, nullptr));
+		CHECKED(VM_Throw(thread));
 	}
 
 	Buffer *buf = (Buffer*)THISV.instance;
@@ -25,198 +26,252 @@ AVES_API NATIVE_FUNCTION(aves_Buffer_new)
 	buf->size = (uint32_t)size64;
 	if (buf->size > 0)
 	{
-		buf->bytes = new uint8_t[buf->size];
+		CHECKED_MEM(buf->bytes = new(std::nothrow) uint8_t[buf->size]);
 		memset(buf->bytes, 0, buf->size);
 	}
 }
+END_NATIVE_FUNCTION
 
 AVES_API NATIVE_FUNCTION(aves_Buffer_get_size)
 {
 	Buffer *buf = (Buffer*)THISV.instance;
 	VM_PushInt(thread, buf->size);
+	RETURN_SUCCESS;
 }
 
-unsigned int GetBufferIndex(ThreadHandle thread, Buffer *buf, Value indexValue, int valueSize)
+int GetBufferIndex(ThreadHandle thread, Buffer *buf, Value indexValue, int valueSize, unsigned int &index)
 {
-	IntFromValue(thread, &indexValue);
+	int r;
+	if ((r = IntFromValue(thread, &indexValue)) != OVUM_SUCCESS) return r;
 	int64_t index64 = indexValue.integer;
 	if (index64 < 0 || index64 >= buf->size / valueSize)
 	{
 		VM_PushString(thread, strings::index);
-		GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr);
-		VM_Throw(thread);
+		if ((r = GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr)) != OVUM_SUCCESS) return r;
+		return VM_Throw(thread);
 	}
 
-	return (unsigned int)index64;
+	index = (unsigned int)index64;
+	RETURN_SUCCESS;
 }
 
-AVES_API NATIVE_FUNCTION(aves_Buffer_readByte)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_readByte)
 {
 	Buffer *buf = (Buffer*)THISV.instance;
-	unsigned int index = GetBufferIndex(thread, buf, args[1], 1);
+	unsigned int index;
+	CHECKED(GetBufferIndex(thread, buf, args[1], 1, index));
+
 	VM_PushUInt(thread, buf->bytes[index]);
 }
-AVES_API NATIVE_FUNCTION(aves_Buffer_readSbyte)
+END_NATIVE_FUNCTION
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_readSbyte)
 {
 	Buffer *buf = (Buffer*)THISV.instance;
-	unsigned int index = GetBufferIndex(thread, buf, args[1], 1);
+	unsigned int index;
+	CHECKED(GetBufferIndex(thread, buf, args[1], 1, index));
+
 	VM_PushInt(thread, buf->sbytes[index]);
 }
-AVES_API NATIVE_FUNCTION(aves_Buffer_readInt16)
+END_NATIVE_FUNCTION
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_readInt16)
 {
 	Buffer *buf = (Buffer*)THISV.instance;
-	unsigned int index = GetBufferIndex(thread, buf, args[1], 2);
+	unsigned int index;
+	CHECKED(GetBufferIndex(thread, buf, args[1], 2, index));
+
 	VM_PushInt(thread, buf->int16s[index]);
 }
-AVES_API NATIVE_FUNCTION(aves_Buffer_readInt32)
+END_NATIVE_FUNCTION
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_readInt32)
 {
 	Buffer *buf = (Buffer*)THISV.instance;
-	unsigned int index = GetBufferIndex(thread, buf, args[1], 4);
+	unsigned int index;
+	CHECKED(GetBufferIndex(thread, buf, args[1], 4, index));
+
 	VM_PushInt(thread, buf->int32s[index]);
 }
-AVES_API NATIVE_FUNCTION(aves_Buffer_readInt64)
+END_NATIVE_FUNCTION
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_readInt64)
 {
 	Buffer *buf = (Buffer*)THISV.instance;
-	unsigned int index = GetBufferIndex(thread, buf, args[1], 8);
+	unsigned int index;
+	CHECKED(GetBufferIndex(thread, buf, args[1], 8, index));
+
 	VM_PushInt(thread, buf->int64s[index]);
 }
-AVES_API NATIVE_FUNCTION(aves_Buffer_readUInt16)
+END_NATIVE_FUNCTION
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_readUInt16)
 {
 	Buffer *buf = (Buffer*)THISV.instance;
-	unsigned int index = GetBufferIndex(thread, buf, args[1], 2);
+	unsigned int index;
+	CHECKED(GetBufferIndex(thread, buf, args[1], 2, index));
+
 	VM_PushUInt(thread, buf->uint16s[index]);
 }
-AVES_API NATIVE_FUNCTION(aves_Buffer_readUInt32)
+END_NATIVE_FUNCTION
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_readUInt32)
 {
 	Buffer *buf = (Buffer*)THISV.instance;
-	unsigned int index = GetBufferIndex(thread, buf, args[1], 4);
+	unsigned int index;
+	CHECKED(GetBufferIndex(thread, buf, args[1], 4, index));
+
 	VM_PushUInt(thread, buf->uint32s[index]);
 }
-AVES_API NATIVE_FUNCTION(aves_Buffer_readUInt64)
+END_NATIVE_FUNCTION
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_readUInt64)
 {
 	Buffer *buf = (Buffer*)THISV.instance;
-	unsigned int index = GetBufferIndex(thread, buf, args[1], 8);
+	unsigned int index;
+	CHECKED(GetBufferIndex(thread, buf, args[1], 8, index));
+
 	VM_PushUInt(thread, buf->uint64s[index]);
 }
-AVES_API NATIVE_FUNCTION(aves_Buffer_readFloat32)
+END_NATIVE_FUNCTION
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_readFloat32)
 {
 	Buffer *buf = (Buffer*)THISV.instance;
-	unsigned int index = GetBufferIndex(thread, buf, args[1], 4);
+	unsigned int index;
+	CHECKED(GetBufferIndex(thread, buf, args[1], 4, index));
+
 	VM_PushReal(thread, buf->floats[index]);
 }
-AVES_API NATIVE_FUNCTION(aves_Buffer_readFloat64)
+END_NATIVE_FUNCTION
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_readFloat64)
 {
 	Buffer *buf = (Buffer*)THISV.instance;
-	unsigned int index = GetBufferIndex(thread, buf, args[1], 8);
+	unsigned int index;
+	CHECKED(GetBufferIndex(thread, buf, args[1], 8, index));
+
 	VM_PushReal(thread, buf->doubles[index]);
 }
+END_NATIVE_FUNCTION
 
-AVES_API NATIVE_FUNCTION(aves_Buffer_writeByte)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_writeByte)
 {
 	Buffer *buf = (Buffer*)THISV.instance;
-	unsigned int index = GetBufferIndex(thread, buf, args[1], 1);
+	unsigned int index;
+	CHECKED(GetBufferIndex(thread, buf, args[1], 1, index));
+
+	if (args[2].type != Types::Int && args[2].type != Types::UInt)
+		return VM_ThrowTypeError(thread);
+
+	buf->bytes[index] = (uint8_t)args[2].uinteger;
+}
+END_NATIVE_FUNCTION
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_writeSByte)
+{
+	Buffer *buf = (Buffer*)THISV.instance;
+	unsigned int index;
+	CHECKED(GetBufferIndex(thread, buf, args[1], 1, index));
+
+	if (args[2].type != Types::Int && args[2].type != Types::UInt)
+		return VM_ThrowTypeError(thread);
+
+	buf->sbytes[index] = (int8_t)args[2].integer;
+}
+END_NATIVE_FUNCTION
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_writeInt16)
+{
+	Buffer *buf = (Buffer*)THISV.instance;
+	unsigned int index;
+	CHECKED(GetBufferIndex(thread, buf, args[1], 2, index));
+
+	if (args[2].type != Types::Int && args[2].type != Types::UInt)
+		return VM_ThrowTypeError(thread);
+
+	buf->int16s[index] = (int16_t)args[2].integer;
+}
+END_NATIVE_FUNCTION
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_writeInt32)
+{
+	Buffer *buf = (Buffer*)THISV.instance;
+	unsigned int index;
+	CHECKED(GetBufferIndex(thread, buf, args[1], 4, index));
+
+	if (args[2].type != Types::Int && args[2].type != Types::UInt)
+		return VM_ThrowTypeError(thread);
+
+	buf->int32s[index] = (int32_t)args[2].integer;
+}
+END_NATIVE_FUNCTION
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_writeInt64)
+{
+	Buffer *buf = (Buffer*)THISV.instance;
+	unsigned int index;
+	CHECKED(GetBufferIndex(thread, buf, args[1], 8, index));
+
+	if (args[2].type != Types::Int && args[2].type != Types::UInt)
+		return VM_ThrowTypeError(thread);
+
+	buf->int64s[index] = args[2].integer;
+}
+END_NATIVE_FUNCTION
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_writeUInt16)
+{
+	Buffer *buf = (Buffer*)THISV.instance;
+	unsigned int index;
+	CHECKED(GetBufferIndex(thread, buf, args[1], 2, index));
+
 	if (args[2].type != Types::Int && args[2].type != Types::UInt)
 		VM_ThrowTypeError(thread);
-	uint64_t value = args[2].uinteger;
 
-	buf->bytes[index] = (uint8_t)value;
+	buf->uint16s[index] = (uint16_t)args[2].uinteger;
 }
-AVES_API NATIVE_FUNCTION(aves_Buffer_writeSByte)
+END_NATIVE_FUNCTION
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_writeUInt32)
 {
 	Buffer *buf = (Buffer*)THISV.instance;
-	unsigned int index = GetBufferIndex(thread, buf, args[1], 1);
+	unsigned int index;
+	CHECKED(GetBufferIndex(thread, buf, args[1], 4, index));
+
 	if (args[2].type != Types::Int && args[2].type != Types::UInt)
 		VM_ThrowTypeError(thread);
-	int64_t value = args[2].integer;
 
-	buf->sbytes[index] = (int8_t)value;
+	buf->uint32s[index] = (uint32_t)args[2].uinteger;
 }
-AVES_API NATIVE_FUNCTION(aves_Buffer_writeInt16)
+END_NATIVE_FUNCTION
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_writeUInt64)
 {
 	Buffer *buf = (Buffer*)THISV.instance;
-	unsigned int index = GetBufferIndex(thread, buf, args[1], 2);
+	unsigned int index;
+	CHECKED(GetBufferIndex(thread, buf, args[1], 8, index));
+
 	if (args[2].type != Types::Int && args[2].type != Types::UInt)
 		VM_ThrowTypeError(thread);
-	int64_t value = args[2].integer;
 
-	buf->int16s[index] = (int16_t)value;
+	buf->uint64s[index] = args[2].uinteger;
 }
-AVES_API NATIVE_FUNCTION(aves_Buffer_writeInt32)
+END_NATIVE_FUNCTION
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_writeFloat32)
 {
 	Buffer *buf = (Buffer*)THISV.instance;
-	unsigned int index = GetBufferIndex(thread, buf, args[1], 4);
-	if (args[2].type != Types::Int && args[2].type != Types::UInt)
-		VM_ThrowTypeError(thread);
-	int64_t value = args[2].integer;
+	unsigned int index;
+	CHECKED(GetBufferIndex(thread, buf, args[1], 4, index));
 
-	buf->int32s[index] = (int32_t)value;
-}
-AVES_API NATIVE_FUNCTION(aves_Buffer_writeInt64)
-{
-	Buffer *buf = (Buffer*)THISV.instance;
-	unsigned int index = GetBufferIndex(thread, buf, args[1], 8);
-	if (args[2].type != Types::Int && args[2].type != Types::UInt)
-		VM_ThrowTypeError(thread);
-	int64_t value = args[2].integer;
-
-	buf->int64s[index] = value;
-}
-AVES_API NATIVE_FUNCTION(aves_Buffer_writeUInt16)
-{
-	Buffer *buf = (Buffer*)THISV.instance;
-	unsigned int index = GetBufferIndex(thread, buf, args[1], 2);
-	if (args[2].type != Types::Int && args[2].type != Types::UInt)
-		VM_ThrowTypeError(thread);
-	uint64_t value = args[2].uinteger;
-
-	buf->uint16s[index] = (uint16_t)value;
-}
-AVES_API NATIVE_FUNCTION(aves_Buffer_writeUInt32)
-{
-	Buffer *buf = (Buffer*)THISV.instance;
-	unsigned int index = GetBufferIndex(thread, buf, args[1], 4);
-	if (args[2].type != Types::Int && args[2].type != Types::UInt)
-		VM_ThrowTypeError(thread);
-	uint64_t value = args[2].uinteger;
-
-	buf->uint32s[index] = (uint32_t)value;
-}
-AVES_API NATIVE_FUNCTION(aves_Buffer_writeUInt64)
-{
-	Buffer *buf = (Buffer*)THISV.instance;
-	unsigned int index = GetBufferIndex(thread, buf, args[1], 8);
-	if (args[2].type != Types::Int && args[2].type != Types::UInt)
-		VM_ThrowTypeError(thread);
-	uint64_t value = args[2].uinteger;
-
-	buf->uint64s[index] = value;
-}
-AVES_API NATIVE_FUNCTION(aves_Buffer_writeFloat32)
-{
-	Buffer *buf = (Buffer*)THISV.instance;
-	unsigned int index = GetBufferIndex(thread, buf, args[1], 4);
 	if (args[2].type != Types::Real)
 		VM_ThrowTypeError(thread);
-	double value = args[2].real;
 
-	buf->floats[index] = (float)value;
+	buf->floats[index] = (float)args[2].real;
 }
-AVES_API NATIVE_FUNCTION(aves_Buffer_writeFloat64)
+END_NATIVE_FUNCTION
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_writeFloat64)
 {
 	Buffer *buf = (Buffer*)THISV.instance;
-	unsigned int index = GetBufferIndex(thread, buf, args[1], 8);
+	unsigned int index;
+	CHECKED(GetBufferIndex(thread, buf, args[1], 8, index));
+
 	if (args[2].type != Types::Real)
 		VM_ThrowTypeError(thread);
-	double value = args[2].real;
 
-	buf->doubles[index] = value;
+	buf->doubles[index] = args[2].real;
 }
+END_NATIVE_FUNCTION
 
 void aves_Buffer_finalize(void *basePtr)
 {
 	Buffer *buf = reinterpret_cast<Buffer*>(basePtr);
 	buf->size = 0;
-	delete[] buf->bytes;
+	free(buf->bytes);
 }
 
 AVES_API uint8_t *aves_Buffer_getDataPointer(Value *buffer, uint32_t *bufferSize)
@@ -238,140 +293,32 @@ AVES_API void aves_BufferView_init(TypeHandle type)
 	Type_SetReferenceGetter(type, aves_BufferView_getReferences);
 }
 
-AVES_API NATIVE_FUNCTION(aves_BufferView_new)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_BufferView_new)
 {
 	if (!IsType(args + 1, BufferType))
-		VM_ThrowTypeError(thread);
+		return VM_ThrowTypeError(thread);
 	if (!IsType(args + 2, Types::BufferViewKind))
-		VM_ThrowTypeError(thread);
+		return VM_ThrowTypeError(thread);
 	if (args[2].integer < BufferView::BYTE ||
 		args[2].integer > BufferView::FLOAT64)
 	{
 		VM_PushString(thread, strings::kind);
-		GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr);
-		VM_Throw(thread);
+		CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr));
+		return VM_Throw(thread);
 	}
 
 	BufferView *view = (BufferView*)THISV.instance;
 	view->buffer = args[1];
 	view->kind = (BufferView::BufferViewKind)args[2].integer;
 }
+END_NATIVE_FUNCTION
 
-AVES_API NATIVE_FUNCTION(aves_BufferView_get_item)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_BufferView_get_item)
 {
 	BufferView *view = (BufferView*)THISV.instance;
 	Buffer *buf = (Buffer*)view->buffer.instance;
 
-	unsigned int index;
-	switch (view->kind)
-	{
-	case BufferView::BYTE:
-		index = GetBufferIndex(thread, buf, args[1], 1);
-		VM_PushUInt(thread, buf->bytes[index]);
-		break;
-	case BufferView::SBYTE:
-		index = GetBufferIndex(thread, buf, args[1], 1);
-		VM_PushInt(thread, buf->sbytes[index]);
-		break;
-	case BufferView::INT16:
-		index = GetBufferIndex(thread, buf, args[1], 2);
-		VM_PushInt(thread, buf->int16s[index]);
-		break;
-	case BufferView::INT32:
-		index = GetBufferIndex(thread, buf, args[1], 4);
-		VM_PushInt(thread, buf->int32s[index]);
-		break;
-	case BufferView::INT64:
-		index = GetBufferIndex(thread, buf, args[1], 8);
-		VM_PushInt(thread, buf->int64s[index]);
-		break;
-	case BufferView::UINT16:
-		index = GetBufferIndex(thread, buf, args[1], 2);
-		VM_PushUInt(thread, buf->uint16s[index]);
-		break;
-	case BufferView::UINT32:
-		index = GetBufferIndex(thread, buf, args[1], 4);
-		VM_PushUInt(thread, buf->uint32s[index]);
-		break;
-	case BufferView::UINT64:
-		index = GetBufferIndex(thread, buf, args[1], 8);
-		VM_PushUInt(thread, buf->uint64s[index]);
-		break;
-	case BufferView::FLOAT32:
-		index = GetBufferIndex(thread, buf, args[1], sizeof(float));
-		VM_PushReal(thread, buf->floats[index]);
-		break;
-	case BufferView::FLOAT64:
-		index = GetBufferIndex(thread, buf, args[1], sizeof(double));
-		VM_PushReal(thread, buf->doubles[index]);
-		break;
-	}
-}
-AVES_API NATIVE_FUNCTION(aves_BufferView_set_item)
-{
-	BufferView *view = (BufferView*)THISV.instance;
-	Buffer *buf = (Buffer*)view->buffer.instance;
-
-	if (view->kind >= BufferView::BYTE && view->kind <= BufferView::UINT64)
-	{
-		if (args[2].type != Types::Int && args[2].type != Types::UInt)
-			VM_ThrowTypeError(thread);
-	}
-	else if (args[2].type != Types::Real)
-		VM_ThrowTypeError(thread);
-
-	unsigned int index;
-	switch (view->kind)
-	{
-	case BufferView::BYTE:
-		index = GetBufferIndex(thread, buf, args[1], 1);
-		buf->bytes[index] = (uint8_t)args[2].integer;
-		break;
-	case BufferView::SBYTE:
-		index = GetBufferIndex(thread, buf, args[1], 1);
-		buf->sbytes[index] = (int8_t)args[2].integer;
-		break;
-	case BufferView::INT16:
-		index = GetBufferIndex(thread, buf, args[1], 2);
-		buf->int16s[index] = (int16_t)args[2].integer;
-		break;
-	case BufferView::INT32:
-		index = GetBufferIndex(thread, buf, args[1], 4);
-		buf->int32s[index] = (int32_t)args[2].integer;
-		break;
-	case BufferView::INT64:
-		index = GetBufferIndex(thread, buf, args[1], 8);
-		buf->int64s[index] = args[2].integer;
-		break;
-	case BufferView::UINT16:
-		index = GetBufferIndex(thread, buf, args[1], 2);
-		buf->uint16s[index] = (uint16_t)args[2].uinteger;
-		break;
-	case BufferView::UINT32:
-		index = GetBufferIndex(thread, buf, args[1], 4);
-		buf->uint32s[index] = (uint32_t)args[2].uinteger;
-		break;
-	case BufferView::UINT64:
-		index = GetBufferIndex(thread, buf, args[1], 8);
-		buf->uint64s[index] = args[2].uinteger;
-		break;
-	case BufferView::FLOAT32:
-		index = GetBufferIndex(thread, buf, args[1], sizeof(float));
-		buf->floats[index] = (float)args[2].real;
-		break;
-	case BufferView::FLOAT64:
-		index = GetBufferIndex(thread, buf, args[1], sizeof(double));
-		buf->doubles[index] = args[2].real;
-		break;
-	}
-}
-
-AVES_API NATIVE_FUNCTION(aves_BufferView_get_length)
-{
-	BufferView *view = (BufferView*)THISV.instance;
-	Buffer *buf = (Buffer*)view->buffer.instance;
-
-	int valueSize;
+	int valueSize = -1;
 	switch (view->kind)
 	{
 	case BufferView::BYTE:
@@ -392,18 +339,158 @@ AVES_API NATIVE_FUNCTION(aves_BufferView_get_length)
 	case BufferView::FLOAT64:
 		valueSize = 8;
 		break;
-	default:
-		valueSize = -1; // wtf, this isn't supposed to happen
+	}
+
+	unsigned int index;
+	CHECKED(GetBufferIndex(thread, buf, args[1], valueSize, index));
+
+	switch (view->kind)
+	{
+	case BufferView::BYTE:
+		VM_PushUInt(thread, buf->bytes[index]);
+		break;
+	case BufferView::SBYTE:
+		VM_PushInt(thread, buf->sbytes[index]);
+		break;
+	case BufferView::INT16:
+		VM_PushInt(thread, buf->int16s[index]);
+		break;
+	case BufferView::INT32:
+		VM_PushInt(thread, buf->int32s[index]);
+		break;
+	case BufferView::INT64:
+		VM_PushInt(thread, buf->int64s[index]);
+		break;
+	case BufferView::UINT16:
+		VM_PushUInt(thread, buf->uint16s[index]);
+		break;
+	case BufferView::UINT32:
+		VM_PushUInt(thread, buf->uint32s[index]);
+		break;
+	case BufferView::UINT64:
+		VM_PushUInt(thread, buf->uint64s[index]);
+		break;
+	case BufferView::FLOAT32:
+		VM_PushReal(thread, buf->floats[index]);
+		break;
+	case BufferView::FLOAT64:
+		VM_PushReal(thread, buf->doubles[index]);
+		break;
+	}
+}
+END_NATIVE_FUNCTION
+AVES_API BEGIN_NATIVE_FUNCTION(aves_BufferView_set_item)
+{
+	BufferView *view = (BufferView*)THISV.instance;
+	Buffer *buf = (Buffer*)view->buffer.instance;
+
+	if (view->kind >= BufferView::BYTE && view->kind <= BufferView::UINT64)
+	{
+		if (args[2].type != Types::Int && args[2].type != Types::UInt)
+			return VM_ThrowTypeError(thread);
+	}
+	else if (args[2].type != Types::Real)
+		return VM_ThrowTypeError(thread);
+
+	int valueSize = -1;
+	switch (view->kind)
+	{
+	case BufferView::BYTE:
+	case BufferView::SBYTE:
+		valueSize = 1;
+		break;
+	case BufferView::INT16:
+	case BufferView::UINT16:
+		valueSize = 2;
+		break;
+	case BufferView::INT32:
+	case BufferView::UINT32:
+	case BufferView::FLOAT32:
+		valueSize = 4;
+		break;
+	case BufferView::INT64:
+	case BufferView::UINT64:
+	case BufferView::FLOAT64:
+		valueSize = 8;
+		break;
+	}
+
+	unsigned int index;
+	CHECKED(GetBufferIndex(thread, buf, args[1], 1, index));
+
+	switch (view->kind)
+	{
+	case BufferView::BYTE:
+		buf->bytes[index] = (uint8_t)args[2].integer;
+		break;
+	case BufferView::SBYTE:
+		buf->sbytes[index] = (int8_t)args[2].integer;
+		break;
+	case BufferView::INT16:
+		buf->int16s[index] = (int16_t)args[2].integer;
+		break;
+	case BufferView::INT32:
+		buf->int32s[index] = (int32_t)args[2].integer;
+		break;
+	case BufferView::INT64:
+		buf->int64s[index] = args[2].integer;
+		break;
+	case BufferView::UINT16:
+		buf->uint16s[index] = (uint16_t)args[2].uinteger;
+		break;
+	case BufferView::UINT32:
+		buf->uint32s[index] = (uint32_t)args[2].uinteger;
+		break;
+	case BufferView::UINT64:
+		buf->uint64s[index] = args[2].uinteger;
+		break;
+	case BufferView::FLOAT32:
+		buf->floats[index] = (float)args[2].real;
+		break;
+	case BufferView::FLOAT64:
+		buf->doubles[index] = args[2].real;
+		break;
+	}
+}
+END_NATIVE_FUNCTION
+
+AVES_API NATIVE_FUNCTION(aves_BufferView_get_length)
+{
+	BufferView *view = (BufferView*)THISV.instance;
+	Buffer *buf = (Buffer*)view->buffer.instance;
+
+	int valueSize = -1;
+	switch (view->kind)
+	{
+	case BufferView::BYTE:
+	case BufferView::SBYTE:
+		valueSize = 1;
+		break;
+	case BufferView::INT16:
+	case BufferView::UINT16:
+		valueSize = 2;
+		break;
+	case BufferView::INT32:
+	case BufferView::UINT32:
+	case BufferView::FLOAT32:
+		valueSize = 4;
+		break;
+	case BufferView::INT64:
+	case BufferView::UINT64:
+	case BufferView::FLOAT64:
+		valueSize = 8;
 		break;
 	}
 
 	VM_PushInt(thread, buf->size / valueSize);
+	RETURN_SUCCESS;
 }
 
 AVES_API NATIVE_FUNCTION(aves_BufferView_get_buffer)
 {
 	BufferView *view = (BufferView*)THISV.instance;
 	VM_Push(thread, view->buffer);
+	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_BufferView_get_kind)
 {
@@ -412,6 +499,7 @@ AVES_API NATIVE_FUNCTION(aves_BufferView_get_kind)
 	kind.type = Types::BufferViewKind;
 	kind.integer = view->kind;
 	VM_Push(thread, kind);
+	RETURN_SUCCESS;
 }
 
 bool aves_BufferView_getReferences(void *basePtr, unsigned int *valc, Value **target, int32_t *state)
