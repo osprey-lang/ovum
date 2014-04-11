@@ -16,7 +16,25 @@ enum class SeekOrigin
 class ModuleReader
 {
 private:
+	static const size_t BUFFER_SIZE = 65536;
+
 	HANDLE stream;
+
+	// The file position of the first byte in the buffer
+	uint32_t bufferPosition;
+	// The current position within our buffer
+	uint32_t bufferIndex;
+	// The number of bytes read into our buffer in the last
+	// read operation
+	uint32_t bufferDataSize;
+	// Note: do not make this a fixed array. We don't want to
+	// fill up the call stack too much.
+	uint8_t *buffer;
+
+	// Gets the real position of the file pointer
+	unsigned long GetFilePosition();
+	void FillBuffer();
+	uint32_t ReadRaw(void *dest, uint32_t count);
 
 public:
 	std::wstring fileName;
@@ -29,7 +47,7 @@ public:
 
 	void Read(void *dest, uint32_t count);
 
-	long GetPosition();
+	unsigned long GetPosition();
 
 	void Seek(long amount, SeekOrigin origin);
 
