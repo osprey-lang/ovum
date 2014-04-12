@@ -76,17 +76,12 @@ public static class File
 	{
 		// Can't simply call the other overload - we need to open the file
 		// to see how big it is before we even construct the buffer.
-		var f, buf;
-		try
+		var buf;
+		with f = new FileStream(fileName, FileMode.open, FileAccess.read, FileShare.read)
 		{
-			f = new FileStream(fileName, FileMode.open, FileAccess.read, FileShare.read);
 			var length = f.length;
 			buf = new Buffer(length);
 			f.readInto(buf, 0, length);
-		}
-		finally
-		{
-			f?.close();
 		}
 
 		return buf;
@@ -107,16 +102,11 @@ public static class File
 		if offset < 0 or offset > buf.size:
 			throw new ArgumentRangeError("offset");
 
-		var f, length;
-		try
+		var length;
+		with f = new FileStream(fileName, FileMode.open, FileAccess.read, FileShare.read)
 		{
-			f = new FileStream(fileName, FileMode.open, FileAccess.read, FileShare.read);
 			length = f.length;
 			f.readInto(buf, offset, length);
-		}
-		finally
-		{
-			f?.close();
 		}
 
 		return length;
@@ -137,11 +127,9 @@ public static class File
 		// readAllTextHelper. Otherwise, we back up to the beginning
 		// of the stream, and use Encoding.utf8.
 
-		var result, stream = null;
-		try
+		var result;
+		with stream = openRead(fileName)
 		{
-			stream = openRead(fileName);
-
 			var b1 = stream.readByte();
 			if b1 == -1:
 				// Empty file? Empty string.
@@ -171,10 +159,6 @@ public static class File
 				result = readAllTextHelper(stream, encoding);
 			}
 		}
-		finally
-		{
-			stream?.close();
-		}
 
 		return result;
 	}
@@ -188,15 +172,10 @@ public static class File
 			throw new TypeError("The encoding must be an aves.Encoding instance.");
 		fileName = string(fileName);
 
-		var result, stream = null;
-		try
+		var result;
+		with stream = openRead(fileName)
 		{
-			stream = openRead(fileName);
 			result = readAllTextHelper(stream, encoding);
-		}
-		finally
-		{
-			stream?.close();
 		}
 
 		return result;
@@ -228,15 +207,9 @@ public static class File
 		else if buf is not Buffer:
 			throw new TypeError("buf must be an aves.Buffer.");
 
-		var f;
-		try
+		with f = new FileStream(fileName, FileMode.create, FileAccess.write, FileShare.none)
 		{
-			f = new FileStream(fileName, FileMode.create, FileAccess.write, FileShare.none);
 			f.write(buf, 0, buf.size);
-		}
-		finally
-		{
-			f?.close();
 		}
 	}
 
@@ -255,11 +228,8 @@ public static class File
 		contents = string(contents);
 		fileName = string(fileName);
 
-		var f;
-		try
+		with f = create(fileName)
 		{
-			f = create(fileName);
-
 			if encoding is Utf16Encoding:
 				// Emit UTF-16 identifier specially for UTF-16, U+FEFF
 				if encoding.bigEndian
@@ -275,10 +245,6 @@ public static class File
 
 			var buf = encoding.getBytes(contents);
 			f.write(buf, 0, buf.size);
-		}
-		finally
-		{
-			f?.close();
 		}
 	}
 }
