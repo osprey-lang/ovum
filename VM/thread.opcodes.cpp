@@ -1175,7 +1175,7 @@ int Thread::FindErrorHandler(int32_t maxIndex)
 	if (maxIndex == -1)
 		maxIndex = method->tryBlockCount;
 
-	for (int32_t t = 0; t < method->tryBlockCount; t++)
+	for (int32_t t = 0; t < maxIndex; t++)
 	{
 		Method::TryBlock &tryBlock = method->tryBlocks[t];
 		if (offset >= tryBlock.tryStart && offset <= tryBlock.tryEnd)
