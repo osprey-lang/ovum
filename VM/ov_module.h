@@ -21,7 +21,7 @@ OVUM_API TypeHandle Module_FindType(ModuleHandle module, String *name, bool incl
 // this method returns null.
 OVUM_API MethodHandle Module_FindGlobalFunction(ModuleHandle module, String *name, bool includeInternal);
 
-OVUM_API const bool Module_FindConstant(ModuleHandle module, String *name, bool includeInternal, Value &result);
+OVUM_API bool Module_FindConstant(ModuleHandle module, String *name, bool includeInternal, Value &result);
 
 // Locates the entry point with the specified name in the native library
 // of the given module. If the module has no native library or the entry

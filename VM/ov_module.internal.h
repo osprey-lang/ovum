@@ -118,25 +118,25 @@ typedef struct ModuleMeta_S
 class Module
 {
 public:
-	Module(ModuleMeta &meta);
+	Module(uint32_t fileFormatVersion, ModuleMeta &meta);
 	~Module();
 
 	String *name;
 	ModuleVersion version;
 
-	Type       *FindType(String *name, bool includeInternal) const;
-	Method     *FindGlobalFunction(String *name, bool includeInternal) const;
-	const bool  FindConstant(String *name, bool includeInternal, Value &result) const;
+	Type   *FindType(String *name, bool includeInternal) const;
+	Method *FindGlobalFunction(String *name, bool includeInternal) const;
+	bool    FindConstant(String *name, bool includeInternal, Value &result) const;
 
-	Module     *FindModuleRef(TokenId token) const;
-	Type       *FindType(TokenId token) const;
-	Method     *FindMethod(TokenId token) const;
-	Field      *FindField(TokenId token) const;
-	String     *FindString(TokenId token) const;
+	Module *FindModuleRef(TokenId token) const;
+	Type   *FindType(TokenId token) const;
+	Method *FindMethod(TokenId token) const;
+	Field  *FindField(TokenId token) const;
+	String *FindString(TokenId token) const;
 
-	Method     *GetMainMethod() const;
+	Method *GetMainMethod() const;
 
-	void       *FindNativeFunction(const char *name);
+	void   *FindNativeFunction(const char *name);
 
 	static Module *Find(String *name);
 	static Module *Open(const wchar_t *fileName);
@@ -235,6 +235,9 @@ private:
 	                  // If a module depends on another module with this set to false,
 	                  // then there's a circular dependency issue.
 
+	// The version number of the file format that the module was saved with.
+	uint32_t fileFormatVersion;
+
 	MemberTable<Type  *> types;     // Types defined in the module
 	MemberTable<Method*> functions; // Global functions defined in the module
 	MemberTable<Value  > constants; // Global constants defined in the module
@@ -265,8 +268,6 @@ private:
 	static const char *const NativeModuleIniterName;
 
 private:
-	//static void ThrowFileNotFound(const wchar_t *fileName);
-
 	static void VerifyMagicNumber(ModuleReader &reader);
 
 	static void ReadModuleMeta(ModuleReader &reader, ModuleMeta &target);

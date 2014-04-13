@@ -13,15 +13,22 @@ const char *const Module::NativeModuleIniterName = "OvumModuleMain";
 namespace module_file
 {
 	// The magic number that must be present in all Ovum modules.
-	const char magicNumber[] = { 'O', 'V', 'M', 'M' };
+	const char MagicNumber[] = { 'O', 'V', 'M', 'M' };
 
 	// The start of the "real" data in the module.
-	const unsigned int dataStart = 16;
+	const unsigned int DataStart = 16;
+
+	// The minimum supported file format version
+	const uint32_t MinFileFormatVersion = 0x00000100u;
+
+	// The maximum supported file format version
+	const uint32_t MaxFileFormatVersion = 0x00000100u;
 }
 
 
-Module::Module(ModuleMeta &meta) :
+Module::Module(uint32_t fileFormatVersion, ModuleMeta &meta) :
 	// This initializer list is kind of silly
+	fileFormatVersion(fileFormatVersion),
 	name(meta.name), version(meta.version), fullyOpened(false),
 	// defs
 	functions(meta.functionCount),
@@ -95,7 +102,7 @@ Method *Module::FindGlobalFunction(String *name, bool includeInternal) const
 	return member.function;
 }
 
-const bool Module::FindConstant(String *name, bool includeInternal, Value &result) const
+bool Module::FindConstant(String *name, bool includeInternal, Value &result) const
 {
 	ModuleMember member;
 	if (!members.Get(name, member))
@@ -207,8 +214,12 @@ Module *Module::Open(const wchar_t *fileName)
 		ModuleReader reader; // This SHOULD not fail. but it's C++, so who knows.
 		reader.Open(fileName);
 		VerifyMagicNumber(reader);
+		uint32_t fileFormatVersion = reader.ReadUInt32();
+		if (fileFormatVersion < module_file::MinFileFormatVersion ||
+			fileFormatVersion > module_file::MaxFileFormatVersion)
+			throw ModuleLoadException(fileName, "Unsupported module file format version.");
 
-		reader.Seek(module_file::dataStart, SeekOrigin::BEGIN);
+		reader.Seek(module_file::DataStart, SeekOrigin::BEGIN);
 
 		ModuleMeta meta;
 		ReadModuleMeta(reader, meta);
@@ -217,7 +228,7 @@ Module *Module::Open(const wchar_t *fileName)
 		// and add it to the list of loaded modules.
 		// It's not fully loaded yet, but we add it specifically so that we can detect
 		// circular dependencies.
-		unique_ptr<Module> output(new Module(meta));
+		unique_ptr<Module> output(new Module(fileFormatVersion, meta));
 		loadedModules->Add(output.get());
 
 		if (meta.nativeLib)
@@ -394,7 +405,7 @@ void Module::VerifyMagicNumber(ModuleReader &reader)
 	char magicNumber[4];
 	reader.Read(magicNumber, 4);
 	for (int i = 0; i < 4; i++)
-		if (magicNumber[i] != module_file::magicNumber[i])
+		if (magicNumber[i] != module_file::MagicNumber[i])
 			throw ModuleLoadException(reader.fileName, "Invalid magic number in file.");
 }
 
@@ -1307,7 +1318,7 @@ OVUM_API MethodHandle Module_FindGlobalFunction(ModuleHandle module, String *nam
 	return module->FindGlobalFunction(name, includeInternal);
 }
 
-OVUM_API const bool Module_FindConstant(ModuleHandle module, String *name, bool includeInternal, Value &result)
+OVUM_API bool Module_FindConstant(ModuleHandle module, String *name, bool includeInternal, Value &result)
 {
 	return module->FindConstant(name, includeInternal, result);
 }
