@@ -154,9 +154,10 @@ public:
 	enum FailureKind
 	{
 		GENERAL = 0, // no extra information
-		INCONSISTENT_STACK_HEIGHT,
+		INCONSISTENT_STACK,
 		INVALID_BRANCH_OFFSET,
 		INSUFFICIENT_STACK_HEIGHT,
+		STACK_HAS_REFS,
 		INACCESSIBLE_MEMBER,
 		FIELD_STATIC_MISMATCH,
 		UNRESOLVED_TOKEN_ID,
@@ -372,14 +373,14 @@ private:
 	void AppendSourceLocation(StringBuffer &buf, Method::Overload *method, uint8_t *ip);
 
 	// argCount DOES NOT include the value to be invoked, but value does.
-	int InvokeLL(unsigned int argCount, Value *value, Value *result);
+	int InvokeLL(unsigned int argCount, Value *value, Value *result, uint32_t refSignature);
 	// args DOES include the instance, argCount DOES NOT
 	int InvokeMethodOverload(Method::Overload *mo, unsigned int argCount, Value *args, Value *result);
 
 	int InvokeApplyLL(Value *args, Value *result);
 	int InvokeApplyMethodLL(Method *method, Value *args, Value *result);
 
-	int InvokeMemberLL(String *name, uint32_t argCount, Value *value, Value *result);
+	int InvokeMemberLL(String *name, uint32_t argCount, Value *value, Value *result, uint32_t refSignature);
 
 	int LoadMemberLL(Value *instance, String *member, Value *result);
 	int StoreMemberLL(Value *instance, String *member);
@@ -388,6 +389,9 @@ private:
 	int LoadIndexerLL(uint32_t argCount, Value *args, Value *dest);
 	// argCount DOES NOT include the instance or the value being assigned, but args DOES
 	int StoreIndexerLL(uint32_t argCount, Value *args);
+
+	int LoadFieldRefLL(Value *inst, Field *field);
+	int LoadMemberRefLL(Value *inst, String *member);
 
 	int InvokeOperatorLL(Value *args, Operator op, Value *result);
 	int EqualsLL(Value *args, bool &result);

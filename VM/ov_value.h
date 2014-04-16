@@ -90,6 +90,8 @@ typedef struct MethodInst_S MethodInst;
 // (that is, (type->flags & TYPE_PRIMITIVE) != TYPE_NONE), then
 // the integer, uinteger or real fields contain the instance data.
 // Otherwise, the instance field contains a pointer to the instance.
+// If the value is a reference (IS_REFERENCE(value)), then the
+// reference field points to the referent's storage location.
 typedef struct Value_S Value;
 struct Value_S
 {
@@ -111,8 +113,11 @@ struct Value_S
 			ErrorInst *error;
 			MethodInst *method;
 		} common;
+		void *reference;
 	};
 };
+
+#define IS_REFERENCE(value) (((uintptr_t)(value).type & 1) == 1)
 
 
 typedef struct ListInst_S
@@ -255,6 +260,10 @@ inline bool IsReal(Value value)   { return IsReal(&value); }
 
 OVUM_API bool IsString(Value *value);
 inline bool IsString(Value value) { return IsString(&value); }
+
+OVUM_API void ReadReference(Value *ref, Value *target);
+
+OVUM_API void WriteReference(Value *ref, Value *value);
 
 
 template<typename T>

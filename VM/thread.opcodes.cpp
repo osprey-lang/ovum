@@ -422,7 +422,8 @@ int Thread::Evaluate()
 			{
 				CHK(InvokeMemberLL(static_strings::_iter, 0,
 					OFF_ARG(ip, f), // value
-					OFF_ARG(ip + LOSZ, f))); // result
+					OFF_ARG(ip + LOSZ, f), // result
+					0));
 				// InvokeMemberLL pops the instance and all 0 of the arguments
 				ip += 2*LOSZ;
 			}
@@ -431,7 +432,8 @@ int Thread::Evaluate()
 			{
 				CHK(InvokeMemberLL(static_strings::_iter, 0,
 					OFF_ARG(ip, f), // value
-					OFF_ARG(ip + LOSZ, f))); // result
+					OFF_ARG(ip + LOSZ, f), // result
+					0));
 				// InvokeMemberLL pops the instance and all 0 of the arguments
 				ip += 2*LOSZ;
 				f->stackCount++;
@@ -541,7 +543,7 @@ int Thread::Evaluate()
 				register Value *const output = OFF_ARG(ip + LOSZ, f);
 				ip += 2*LOSZ;
 
-				CHK(InvokeLL(U16_ARG(ip), args, output));
+				CHK(InvokeLL(U16_ARG(ip), args, output, 0));
 
 				ip += sizeof(uint16_t);
 				// InvokeLL pops the arguments
@@ -553,7 +555,7 @@ int Thread::Evaluate()
 				register Value *const output = OFF_ARG(ip + LOSZ, f);
 				ip += 2*LOSZ;
 
-				CHK(InvokeLL(U16_ARG(ip), args, output));
+				CHK(InvokeLL(U16_ARG(ip), args, output, 0));
 
 				ip += sizeof(uint16_t);
 				// InvokeLL pops the arguments
@@ -967,7 +969,7 @@ int Thread::Evaluate()
 				register Value *const dest = OFF_ARG(ip + LOSZ, f);
 				ip += 2*LOSZ;
 
-				CHK(InvokeMemberLL(T_ARG(ip, String*), U16_ARG(ip + sizeof(String*)), args, dest));
+				CHK(InvokeMemberLL(T_ARG(ip, String*), U16_ARG(ip + sizeof(String*)), args, dest, 0));
 
 				ip += sizeof(String*) + sizeof(uint16_t);
 			}
@@ -978,7 +980,7 @@ int Thread::Evaluate()
 				register Value *const dest = OFF_ARG(ip + LOSZ, f);
 				ip += 2*LOSZ;
 
-				CHK(InvokeMemberLL(T_ARG(ip, String*), U16_ARG(ip + sizeof(String*)), args, dest));
+				CHK(InvokeMemberLL(T_ARG(ip, String*), U16_ARG(ip + sizeof(String*)), args, dest, 0));
 
 				ip += sizeof(String*) + sizeof(uint16_t);
 				f->stackCount++;
@@ -1152,6 +1154,211 @@ int Thread::Evaluate()
 				if (result)
 					ip += I32_ARG(ip + LOSZ);
 				ip += LOSZ + sizeof(int32_t);
+			}
+			NEXT_INSTR();
+
+		// ldlocref: LocalOffset local
+		TARGET(OPI_LDLOCREF)
+			{
+				register Value *const local = OFF_ARG(ip, f);
+				register Value *const dest = f->evalStack + f->stackCount++;
+				ip += LOSZ;
+				dest->type = (Type*)LOCAL_REFERENCE;
+				dest->reference = local;
+			}
+			NEXT_INSTR();
+
+		// ldmemref: LocalOffset inst, String *member
+		TARGET(OPI_LDMEMREF_L) // Instance in local
+			{
+				register Value *const inst = OFF_ARG(ip, f);
+				register String *const member = T_ARG(ip + LOSZ, String*);
+				CHK(LoadMemberRefLL(inst, member));
+				ip += LOSZ + sizeof(String*);
+			}
+			NEXT_INSTR();
+		TARGET(OPI_LDMEMREF_S) // Instance on stack
+			{
+				register Value *const inst = OFF_ARG(ip, f);
+				register String *const member = T_ARG(ip + LOSZ, String*);
+				f->stackCount--;
+				CHK(LoadMemberRefLL(inst, member));
+				ip += LOSZ + sizeof(String*);
+			}
+			NEXT_INSTR();
+
+		// ldfldref: LocalOffset inst, Field *field
+		TARGET(OPI_LDFLDREF_L) // Instance in local
+			{
+				register Value *const inst = OFF_ARG(ip, f);
+				register Field *const field = T_ARG(ip + LOSZ, Field*);
+				CHK(LoadFieldRefLL(inst, field));
+				ip += LOSZ + sizeof(Field*);
+			}
+			NEXT_INSTR();
+		TARGET(OPI_LDFLDREF_S) // Instance on stack
+			{
+				register Value *const inst = OFF_ARG(ip, f);
+				register Field *const field = T_ARG(ip + LOSZ, Field*);
+				f->stackCount--;
+				CHK(LoadFieldRefLL(inst, field));
+				ip += LOSZ + sizeof(Field*);
+			}
+			NEXT_INSTR();
+
+		// ldsfldref: Field *field
+		TARGET(OPI_LDSFLDREF)
+			{
+				register Field *const field = T_ARG(ip, Field*);
+				ip += sizeof(Field*);
+
+				register Value *const dest = f->evalStack + f->stackCount++;
+				dest->type = (Type*)STATIC_REFERENCE;
+				dest->reference = field->staticValue;
+			}
+			NEXT_INSTR();
+
+		// mvloc_rr: LocalOffset source, LocalOffset dest
+		TARGET(OPI_MVLOC_RL) // Reference -> local
+			{
+				register Value *const source = OFF_ARG(ip, f);
+				register Value *const dest = OFF_ARG(ip + LOSZ, f);
+				ip += 2 * LOSZ;
+
+				if ((uintptr_t)source->type == LOCAL_REFERENCE)
+					*dest = *reinterpret_cast<Value*>(source->reference);
+				else if ((uintptr_t)source->type == STATIC_REFERENCE)
+					reinterpret_cast<StaticRef*>(source->reference)->Read(dest);
+				else
+				{
+					uintptr_t offset = ~(uintptr_t)source->type;
+					GCObject *gco = reinterpret_cast<GCObject*>((char*)source->reference - offset);
+					while (gco->fieldAccessFlag.test_and_set(std::memory_order_acquire))
+						;
+					*dest = *reinterpret_cast<Value*>(source->reference);
+					gco->fieldAccessFlag.clear(std::memory_order_release);
+				}
+			}
+			NEXT_INSTR();
+		TARGET(OPI_MVLOC_RS) // Reference -> stack
+			{
+				register Value *const source = OFF_ARG(ip, f);
+				register Value *const dest = OFF_ARG(ip + LOSZ, f);
+				ip += 2 * LOSZ;
+
+				if ((uintptr_t)source->type == LOCAL_REFERENCE)
+					*dest = *reinterpret_cast<Value*>(source->reference);
+				else if ((uintptr_t)source->type == STATIC_REFERENCE)
+					reinterpret_cast<StaticRef*>(source->reference)->Read(dest);
+				else
+				{
+					uintptr_t offset = ~(uintptr_t)source->type;
+					GCObject *gco = reinterpret_cast<GCObject*>((char*)source->reference - offset);
+					while (gco->fieldAccessFlag.test_and_set(std::memory_order_acquire))
+						;
+					*dest = *reinterpret_cast<Value*>(source->reference);
+					gco->fieldAccessFlag.clear(std::memory_order_release);
+				}
+				f->stackCount++;
+			}
+			NEXT_INSTR();
+		TARGET(OPI_MVLOC_LR) // Local -> reference
+			{
+				register Value *const source = OFF_ARG(ip, f);
+				register Value *const dest = OFF_ARG(ip + LOSZ, f);
+				ip += 2 * LOSZ;
+
+				if ((uintptr_t)dest->type == LOCAL_REFERENCE)
+					*reinterpret_cast<Value*>(dest->reference) = *source;
+				else if ((uintptr_t)dest->type == STATIC_REFERENCE)
+					reinterpret_cast<StaticRef*>(dest->reference)->Write(source);
+				else
+				{
+					uint32_t offset = ~(uint32_t)dest->type;
+					GCObject *gco = reinterpret_cast<GCObject*>(dest->instance - offset);
+					while (gco->fieldAccessFlag.test_and_set(std::memory_order_acquire))
+						;
+					*reinterpret_cast<Value*>(dest->instance) = *source;
+					gco->fieldAccessFlag.clear(std::memory_order_release);
+				}
+			}
+			NEXT_INSTR();
+		TARGET(OPI_MVLOC_SR) // Stack -> reference
+			{
+				register Value *const source = OFF_ARG(ip, f);
+				register Value *const dest = OFF_ARG(ip + LOSZ, f);
+				ip += 2 * LOSZ;
+
+				if ((uintptr_t)dest->type == LOCAL_REFERENCE)
+					*reinterpret_cast<Value*>(dest->reference) = *source;
+				else if ((uintptr_t)dest->type == STATIC_REFERENCE)
+					reinterpret_cast<StaticRef*>(dest->reference)->Write(source);
+				else
+				{
+					uintptr_t offset = ~(uintptr_t)dest->type;
+					GCObject *gco = reinterpret_cast<GCObject*>((char*)dest->reference - offset);
+					while (gco->fieldAccessFlag.test_and_set(std::memory_order_acquire))
+						;
+					*reinterpret_cast<Value*>(dest->reference) = *source;
+					gco->fieldAccessFlag.clear(std::memory_order_release);
+				}
+				f->stackCount--;
+			}
+			NEXT_INSTR();
+
+		// callr: LocalOffset args, LocalOffset output, uint16_t argc, uint32_t refSignature
+		TARGET(OPI_CALLR_L)
+			{
+				register Value *const args   = OFF_ARG(ip, f);
+				register Value *const output = OFF_ARG(ip + LOSZ, f);
+				ip += 2*LOSZ;
+
+				CHK(InvokeLL(U16_ARG(ip), args, output, U32_ARG(ip + sizeof(uint16_t))));
+
+				ip += sizeof(uint16_t) + sizeof(uint32_t);
+				// InvokeLL pops the arguments
+			}
+			NEXT_INSTR();
+		TARGET(OPI_CALLR_S)
+			{
+				register Value *const args   = OFF_ARG(ip, f);
+				register Value *const output = OFF_ARG(ip + LOSZ, f);
+				ip += 2*LOSZ;
+
+				CHK(InvokeLL(U16_ARG(ip), args, output, U32_ARG(ip + sizeof(uint16_t))));
+
+				ip += sizeof(uint16_t) + sizeof(uint32_t);
+				// InvokeLL pops the arguments
+				f->stackCount++;
+			}
+			NEXT_INSTR();
+
+		// callmemr: LocalOffset args, LocalOffset dest, String *member, uint16_t argCount, uint32_t refSignature
+		TARGET(OPI_CALLMEMR_L)
+			{
+				register Value *const args = OFF_ARG(ip, f);
+				register Value *const dest = OFF_ARG(ip + LOSZ, f);
+				ip += 2*LOSZ;
+
+				String *name = T_ARG(ip, String*);
+				ip += sizeof(String*);
+				CHK(InvokeMemberLL(name, U16_ARG(ip), args, dest, U32_ARG(ip + sizeof(uint16_t))));
+
+				ip += sizeof(uint16_t) + sizeof(uint32_t);
+			}
+			NEXT_INSTR();
+		TARGET(OPI_CALLMEMR_S)
+			{
+				register Value *const args = OFF_ARG(ip, f);
+				register Value *const dest = OFF_ARG(ip + LOSZ, f);
+				ip += 2*LOSZ;
+
+				String *name = T_ARG(ip, String*);
+				ip += sizeof(String*);
+				CHK(InvokeMemberLL(name, U16_ARG(ip), args, dest, U32_ARG(ip + sizeof(uint16_t))));
+
+				ip += sizeof(uint16_t) + sizeof(uint32_t);
+				f->stackCount++;
 			}
 			NEXT_INSTR();
 		}

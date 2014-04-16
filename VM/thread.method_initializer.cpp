@@ -2,10 +2,13 @@
 #include "ov_thread.opcodes.h"
 #include "ov_module.internal.h"
 #include "ov_debug_symbols.internal.h"
+#include "refsignature.internal.h"
 #include <vector>
 #include <queue>
 #include <memory>
 #include <string>
+
+RefSignature::Pool *RefSignature::pool = nullptr;
 
 #define I16_ARG(ip)  *reinterpret_cast<int16_t *>(ip)
 #define I32_ARG(ip)  *reinterpret_cast<int32_t *>(ip)
@@ -24,7 +27,7 @@ namespace instr
 			delete i->instr;
 	}
 
-	void MethodBuilder::Append(const uint32_t originalOffset, const uint32_t originalSize, Instruction *instr)
+	void MethodBuilder::Append(uint32_t originalOffset, uint32_t originalSize, Instruction *instr)
 	{
 		instructions.push_back(InstrDesc(originalOffset, originalSize, instr));
 		instr->offset = lastOffset;
@@ -32,7 +35,7 @@ namespace instr
 		hasBranches = hasBranches || instr->IsBranch() || instr->IsSwitch();
 	}
 
-	int32_t MethodBuilder::FindIndex(const uint32_t originalOffset) const
+	int32_t MethodBuilder::FindIndex(uint32_t originalOffset) const
 	{
 		int32_t iMin = 0; // inclusive
 		int32_t iMax = (int32_t)instructions.size() - 1; // inclusive
@@ -54,7 +57,7 @@ namespace instr
 		return (int32_t)instructions.size(); // aw
 	}
 
-	void MethodBuilder::MarkForRemoval(const int32_t index)
+	void MethodBuilder::MarkForRemoval(int32_t index)
 	{
 		// Note: it is okay to remove instructions that have incoming branches;
 		// the branch is simply forwarded to the next instruction.
@@ -65,7 +68,7 @@ namespace instr
 		instructions[index].removed = true;
 	}
 
-	bool MethodBuilder::IsMarkedForRemoval(const int32_t index) const
+	bool MethodBuilder::IsMarkedForRemoval(int32_t index) const
 	{
 		return instructions[index].removed;
 	}
@@ -167,7 +170,7 @@ namespace instr
 		}
 	}
 
-	int32_t MethodBuilder::GetNewOffset(const int32_t index) const
+	int32_t MethodBuilder::GetNewOffset(int32_t index) const
 	{
 		typedef std::vector<InstrDesc>::const_iterator const_iter;
 		if (index >= (int32_t)instructions.size())
@@ -178,7 +181,7 @@ namespace instr
 		return instructions[index].instr->offset;
 	}
 
-	int32_t MethodBuilder::GetNewOffset(const int32_t index, const Instruction *relativeTo) const
+	int32_t MethodBuilder::GetNewOffset(int32_t index, const Instruction *relativeTo) const
 	{
 		typedef std::vector<InstrDesc>::const_iterator const_iter;
 		int32_t offset;
@@ -221,12 +224,13 @@ public:
 		{
 			IN_USE   = 1,
 			THIS_ARG = 2,
+			IS_REF   = 4,
 		} flags;
 	} StackEntry;
 
 	inline virtual ~StackManager() { }
 
-	virtual uint32_t GetStackHeight() = 0;
+	virtual uint32_t GetStackHeight() const = 0;
 
 	// Adds a branch to the end of the queue, with stack slots copied from the current branch.
 	// All stack slots retain their flags.
@@ -239,7 +243,13 @@ public:
 	// the index of the first instruction in the branch.
 	virtual int32_t DequeueBranch() = 0;
 
-	virtual bool ApplyStackChange(instr::StackChange change) = 0;
+	virtual bool ApplyStackChange(instr::StackChange change, bool pushRef) = 0;
+
+	virtual bool HasRefs(uint32_t argCount) const = 0;
+
+	virtual bool IsRef(uint32_t stackSlot) const = 0;
+
+	virtual uint32_t GetRefSignature(uint32_t argCount) const = 0;
 };
 
 class SmallStackManager : public StackManager
@@ -265,7 +275,7 @@ public:
 		branches.push(Branch());
 	}
 
-	virtual uint32_t GetStackHeight()
+	virtual uint32_t GetStackHeight() const
 	{
 		return branches.front().stackHeight;
 	}
@@ -297,19 +307,57 @@ public:
 			return -1;
 	}
 
-	virtual bool ApplyStackChange(instr::StackChange change)
+	virtual bool ApplyStackChange(instr::StackChange change, bool pushRef)
 	{
+		typedef StackEntry::StackEntryFlags EntryFlags;
+
 		Branch &cur = branches.front();
-		assert(cur.stackHeight - change.removed + change.added <= 8);
+		assert(cur.stackHeight - change.removed + change.added <= MaxStack);
 		if (cur.stackHeight < change.removed)
 			return false; // Not enough values on stack
 
 		cur.stackHeight -= change.removed;
+		EntryFlags newFlags = (EntryFlags)(StackEntry::IN_USE | (pushRef ? StackEntry::IS_REF : 0));
 		for (int i = 0; i < change.added; i++)
-			cur.stack[cur.stackHeight + i].flags = StackEntry::IN_USE;
+			cur.stack[cur.stackHeight + i].flags = newFlags;
 		cur.stackHeight += change.added;
 
 		return true; // Yay!
+	}
+
+	virtual bool HasRefs(uint32_t argCount) const
+	{
+		const Branch &cur = branches.front();
+		assert(cur.stackHeight >= argCount && argCount <= MaxStack);
+
+		for (uint32_t i = 1; i <= argCount; i++)
+			if (cur.stack[cur.stackHeight - i].flags & StackEntry::IS_REF)
+				return true;
+
+		return false;
+	}
+
+	virtual bool IsRef(uint32_t stackSlot) const
+	{
+		const Branch &cur = branches.front();
+		assert(stackSlot < MaxStack);
+		StackEntry::StackEntryFlags flags = cur.stack[cur.stackHeight - 1 - stackSlot].flags;
+		return (flags & StackEntry::IS_REF) == StackEntry::IS_REF;
+	}
+
+	virtual uint32_t GetRefSignature(uint32_t argCount) const
+	{
+		const Branch &cur = branches.front();
+		assert(cur.stackHeight >= argCount && argCount <= MaxStack);
+
+		RefSignatureBuilder refBuilder(argCount);
+
+		uint32_t origin = cur.stackHeight - argCount;
+		for (uint32_t i = 0; i < argCount; i++)
+			if (cur.stack[origin + i].flags & StackEntry::IS_REF)
+				refBuilder.SetParam(i, true);
+
+		return refBuilder.Commit();
 	}
 };
 
@@ -375,7 +423,7 @@ public:
 		branches.push(Branch());
 	}
 
-	virtual uint32_t GetStackHeight()
+	virtual uint32_t GetStackHeight() const
 	{
 		return branches.front().stackHeight;
 	}
@@ -403,19 +451,54 @@ public:
 			return -1;
 	}
 
-	virtual bool ApplyStackChange(instr::StackChange change)
+	virtual bool ApplyStackChange(instr::StackChange change, bool pushRef)
 	{
+		typedef StackEntry::StackEntryFlags EntryFlags;
+
 		Branch &cur = branches.front();
 		assert(cur.stackHeight - change.removed + change.added <= maxStack);
 		if (cur.stackHeight < change.removed)
 			return false; // Not enough values on stack
 
 		cur.stackHeight -= change.removed;
+		EntryFlags newFlags = (EntryFlags)(StackEntry::IN_USE | (pushRef ? StackEntry::IS_REF : 0));
 		for (int i = 0; i < change.added; i++)
-			cur.stack[cur.stackHeight + i].flags = StackEntry::IN_USE;
+			cur.stack[cur.stackHeight + i].flags = newFlags;
 		cur.stackHeight += change.added;
 
 		return true; // Yay!
+	}
+
+	virtual bool HasRefs(uint32_t argCount) const
+	{
+		const Branch &cur = branches.front();
+
+		for (uint32_t i = 1; i <= argCount; i++)
+			if (cur.stack[cur.stackHeight - i].flags & StackEntry::IS_REF)
+				return true;
+
+		return false;
+	}
+
+	virtual bool IsRef(uint32_t stackSlot) const
+	{
+		const Branch &cur = branches.front();
+		StackEntry::StackEntryFlags flags = cur.stack[cur.stackHeight - 1 - stackSlot].flags;
+		return (flags & StackEntry::IS_REF) == StackEntry::IS_REF;
+	}
+
+	virtual uint32_t GetRefSignature(uint32_t argCount) const
+	{
+		const Branch &cur = branches.front();
+
+		RefSignatureBuilder refBuilder(argCount);
+
+		uint32_t origin = cur.stackHeight - argCount;
+		for (uint32_t i = 0; i < argCount; i++)
+			if (cur.stack[origin + i].flags & StackEntry::IS_REF)
+				refBuilder.SetParam(i, true);
+
+		return refBuilder.Commit();
 	}
 };
 
@@ -570,16 +653,26 @@ void Thread::CalculateStackHeights(instr::MethodBuilder &builder, Method::Overlo
 			Instruction *instr = builder[index];
 			if (builder.GetStackHeight(index) >= 0)
 			{
-				if (builder.GetStackHeight(index) != stack.GetStackHeight())
+				uint32_t stackHeight = stack.GetStackHeight();
+				if (builder.GetStackHeight(index) != stackHeight)
 					throw MethodInitException("Instruction reached with different stack heights.",
-						method, index, MethodInitException::INCONSISTENT_STACK_HEIGHT);
+						method, index, MethodInitException::INCONSISTENT_STACK);
+				if (builder.GetRefSignature(index) != stack.GetRefSignature(stackHeight))
+					throw MethodInitException("Instruction reached with different referencenesses of stack slots.",
+						method, index, MethodInitException::INCONSISTENT_STACK);
 				break; // This branch has already been visited!
 				// Note: the instruction may have been marked for removal. The branch is
 				// still perfectly safe to skip, because the only way to get an instruction
 				// considered for removal is to visit it.
 			}
 			else
-				builder.SetStackHeight(index, stack.GetStackHeight());
+			{
+				uint32_t stackHeight = stack.GetStackHeight();
+				builder.SetStackHeight(index, stackHeight);
+				if (instr->HasBranches())
+					// Only calculmacate this if necessary
+					builder.SetRefSignature(index, stack.GetRefSignature(stackHeight));
+			}
 
 			{ // Update input/output
 				StackChange sc = instr->GetStackChange();
@@ -668,7 +761,20 @@ void Thread::CalculateStackHeights(instr::MethodBuilder &builder, Method::Overlo
 					instr->UpdateOutput(method->GetStackOffset(stack.GetStackHeight() - sc.removed), true);
 				}
 
-				if (!stack.ApplyStackChange(sc))
+				if (sc.removed > 0 && stack.GetStackHeight() >= sc.removed)
+				{
+					if (instr->AcceptsRefs())
+					{
+						if (instr->SetReferenceSignature(stack) != -1)
+							throw MethodInitException("Incorrect referenceness of stack arguments.",
+								method, index, MethodInitException::INCONSISTENT_STACK);
+					}
+					else if (stack.HasRefs(sc.removed))
+						throw MethodInitException("The instruction does not take references on the stack.",
+							method, index, MethodInitException::STACK_HAS_REFS);
+				}
+
+				if (!stack.ApplyStackChange(sc, instr->PushesRef()))
 					throw MethodInitException("There are not enough values on the stack.",
 						method, index, MethodInitException::INSUFFICIENT_STACK_HEIGHT);
 			} // End update input/output
@@ -854,6 +960,8 @@ void Thread::InitializeInstructions(instr::MethodBuilder &builder, Method::Overl
 {
 	using namespace instr;
 
+	RefSignature refs(method->refSignature);
+
 	register uint8_t *ip = method->entry;
 	uint8_t *end = method->entry + method->length;
 
@@ -880,26 +988,35 @@ void Thread::InitializeInstructions(instr::MethodBuilder &builder, Method::Overl
 		case OPC_LDARG_1:
 		case OPC_LDARG_2:
 		case OPC_LDARG_3:
-			instr = new LoadLocal(method->GetArgumentOffset(*opc - OPC_LDARG_0));
+			{
+				uint16_t arg = *opc - OPC_LDARG_0;
+				instr = new LoadLocal(method->GetArgumentOffset(arg), refs.IsParamRef(arg));
+			}
 			break;
 		case OPC_LDARG_S: // ub:n
-			instr = new LoadLocal(method->GetArgumentOffset(*ip++));
+			{
+				uint16_t arg = *ip++;
+				instr = new LoadLocal(method->GetArgumentOffset(arg), refs.IsParamRef(arg));
+			}
 			break;
 		case OPC_LDARG: // u2:n
 			{
 				uint16_t arg = U16_ARG(ip);
 				ip += sizeof(uint16_t);
-				instr = new LoadLocal(method->GetArgumentOffset(arg));
+				instr = new LoadLocal(method->GetArgumentOffset(arg), refs.IsParamRef(arg));
 			}
 			break;
 		case OPC_STARG_S: // ub:n
-			instr = new StoreLocal(method->GetArgumentOffset(*ip++));
+			{
+				uint16_t arg = *ip++;
+				instr = new StoreLocal(method->GetArgumentOffset(arg), refs.IsParamRef(arg));
+			}
 			break;
 		case OPC_STARG: // u2:n
 			{
 				uint16_t arg = U16_ARG(ip);
 				ip += sizeof(uint16_t);
-				instr = new StoreLocal(method->GetArgumentOffset(arg));
+				instr = new StoreLocal(method->GetArgumentOffset(arg), refs.IsParamRef(arg));
 			}
 			break;
 		// Locals
@@ -907,32 +1024,32 @@ void Thread::InitializeInstructions(instr::MethodBuilder &builder, Method::Overl
 		case OPC_LDLOC_1:
 		case OPC_LDLOC_2:
 		case OPC_LDLOC_3:
-			instr = new LoadLocal(method->GetLocalOffset(*opc - OPC_LDLOC_0));
+			instr = new LoadLocal(method->GetLocalOffset(*opc - OPC_LDLOC_0), false);
 			break;
 		case OPC_STLOC_0:
 		case OPC_STLOC_1:
 		case OPC_STLOC_2:
 		case OPC_STLOC_3:
-			instr = new StoreLocal(method->GetLocalOffset(*opc - OPC_STLOC_0));
+			instr = new StoreLocal(method->GetLocalOffset(*opc - OPC_STLOC_0), false);
 			break;
 		case OPC_LDLOC_S: // ub:n
-			instr = new LoadLocal(method->GetLocalOffset(*ip++));
+			instr = new LoadLocal(method->GetLocalOffset(*ip++), false);
 			break;
 		case OPC_LDLOC: // u2:n
 			{
 				uint16_t loc = U16_ARG(ip);
 				ip += sizeof(uint16_t);
-				instr = new LoadLocal(method->GetLocalOffset(loc));
+				instr = new LoadLocal(method->GetLocalOffset(loc), false);
 			}
 			break;
 		case OPC_STLOC_S: // ub:n
-			instr = new StoreLocal(method->GetLocalOffset(*ip++));
+			instr = new StoreLocal(method->GetLocalOffset(*ip++), false);
 			break;
 		case OPC_STLOC: // u2:n
 			{
 				uint16_t loc = U16_ARG(ip);
 				ip += sizeof(uint16_t);
-				instr = new StoreLocal(method->GetLocalOffset(loc));
+				instr = new StoreLocal(method->GetLocalOffset(loc), false);
 			}
 			break;
 		// Values and object initialisation
@@ -1100,7 +1217,7 @@ void Thread::InitializeInstructions(instr::MethodBuilder &builder, Method::Overl
 		case OPC_BRTRUE_S: // sb:trg
 			instr = new ConditionalBranch(*(int8_t*)ip++, ConditionalBranch::IF_TRUE);
 			break;
-		case OPC_BRREF_S: // sb:trg		(even)
+		case OPC_BRREF_S:  // sb:trg	(even)
 		case OPC_BRNREF_S: // sb:trg	(odd)
 			instr = new BranchIfReference(*(int8_t*)ip++, /*branchIfSame:*/ (*opc & 1) == 0);
 			break;
@@ -1371,6 +1488,68 @@ void Thread::InitializeInstructions(instr::MethodBuilder &builder, Method::Overl
 				ip += sizeof(uint16_t);
 			}
 			break;
+		// References
+		case OPC_LDMEMREF: // u4:name
+			{
+				String *name = StringFromToken(method, U32_ARG(ip));
+				ip += sizeof(uint32_t);
+				instr = new LoadMemberRef(name);
+			}
+			break;
+		case OPC_LDARGREF_S: // ub:n
+			{
+				uint16_t arg = *ip++;
+				if (refs.IsParamRef(arg))
+				{
+					instr = new LoadLocal(method->GetArgumentOffset(arg), false);
+					instr->flags |= InstrFlags::PUSHES_REF;
+				}
+				else
+					instr = new LoadLocalRef(method->GetArgumentOffset(arg));
+			}
+			break;
+		case OPC_LDARGREF: // u2:n
+			{
+				uint16_t arg = U16_ARG(ip);
+				ip += sizeof(uint16_t);
+				if (refs.IsParamRef(arg))
+				{
+					instr = new LoadLocal(method->GetArgumentOffset(arg), false);
+					instr->flags |= InstrFlags::PUSHES_REF;
+				}
+				else
+					instr = new LoadLocalRef(method->GetArgumentOffset(arg));
+			}
+			break;
+		case OPC_LDLOCREF_S: // ub:n
+			{
+				uint16_t loc = *ip++;
+				instr = new LoadLocalRef(method->GetLocalOffset(loc));
+			}
+			break;
+		case OPC_LDLOCREF: // u2:n
+			{
+				uint16_t loc = U16_ARG(ip);
+				ip += sizeof(uint16_t);
+				instr = new LoadLocalRef(method->GetLocalOffset(loc));
+			}
+			break;
+		case OPC_LDFLDREF: // u4:field
+			{
+				Field *field = FieldFromToken(method, U32_ARG(ip), false);
+				ip += sizeof(uint32_t);
+				instr = new LoadFieldRef(field);
+			}
+			break;
+		case OPC_LDSFLDREF: // u4:field
+			{
+				Field *field = FieldFromToken(method, U32_ARG(ip), true);
+				ip += sizeof(uint32_t);
+				instr = new LoadStaticFieldRef(field);
+
+				builder.AddTypeToInitialize(field->declType);
+			}
+			break;
 		default:
 			throw MethodInitException("Invalid opcode encountered.", method);
 		}
@@ -1479,4 +1658,50 @@ void Thread::EnsureConstructible(Type *type, uint32_t argCount, Method::Overload
 	if (!type->instanceCtor->ResolveOverload(argCount))
 		throw MethodInitException("The instance constructor does not take the specified number of arguments.",
 			fromMethod, type->instanceCtor, argCount, MethodInitException::NO_MATCHING_OVERLOAD);
+}
+
+int instr::NewObject::SetReferenceSignature(const StackManager &stack)
+{
+	// We have to treat the stack as if it contained an invisible extra
+	// item before the first argument. That's where the instance will
+	// go when the constructor is invoked.
+	RefSignatureBuilder refBuilder(argCount + 1);
+
+	for (int i = 1; i <= argCount; i++)
+		if (stack.IsRef(argCount - i))
+			refBuilder.SetParam(i, true);
+
+	refSignature = refBuilder.Commit();
+
+	Method::Overload *ctor = type->instanceCtor->ResolveOverload(argCount);
+	if (this->refSignature != ctor->refSignature)
+		// VerifyRefSignature does NOT include the instance in the argCount
+		return ctor->VerifyRefSignature(this->refSignature, argCount);
+	return -1;
+}
+
+int instr::Call::SetReferenceSignature(const StackManager &stack)
+{
+	refSignature = stack.GetRefSignature(argCount + 1);
+	if (refSignature)
+		opcode = (IntermediateOpcode)(OPI_CALLR_L | opcode & 1);
+	return -1;
+}
+
+int instr::CallMember::SetReferenceSignature(const StackManager &stack)
+{
+	refSignature = stack.GetRefSignature(argCount + 1);
+	if (refSignature)
+		opcode = (IntermediateOpcode)(OPI_CALLMEMR_L | opcode & 1);
+	return -1;
+}
+
+int instr::StaticCall::SetReferenceSignature(const StackManager &stack)
+{
+	refSignature = stack.GetRefSignature(argCount + method->InstanceOffset());
+
+	if (this->refSignature != method->refSignature)
+		// VerifyRefSignature does NOT include the instance in the argCount
+		return method->VerifyRefSignature(this->refSignature, argCount);
+	return -1;
 }

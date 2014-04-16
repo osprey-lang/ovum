@@ -4,11 +4,11 @@ public class StringBuffer
 {
 	__init_type("aves_StringBuffer_init");
 
-	public new()							__extern("aves_StringBuffer_new");
-	public new(capacity)					__extern("aves_StringBuffer_newCap");
+	public new()										__extern("aves_StringBuffer_new");
+	public new(capacity)								__extern("aves_StringBuffer_newCap");
 
-	public get length						__extern("aves_StringBuffer_get_length");
-	public get capacity						__extern("aves_StringBuffer_get_capacity");
+	public get length									__extern("aves_StringBuffer_get_length");
+	public get capacity									__extern("aves_StringBuffer_get_capacity");
 
 	public append(value)
 	{
@@ -19,7 +19,7 @@ public class StringBuffer
 		return appendInternal(string(value), int(times));
 	}
 
-	public appendLine()						__extern("aves_StringBuffer_appendLine");
+	public appendLine()									__extern("aves_StringBuffer_appendLine");
 	public appendLine(value)
 	{
 		appendInternal(string(value), 1);
@@ -34,16 +34,29 @@ public class StringBuffer
 		return appendCodepointInternal(codepoint);
 	}
 
+	public appendSubstr(str, index, count)
+	{
+		str = string(str);
+		index = int(index);
+		count = int(count);
+		if index < 0:
+			throw new ArgumentRangeError("index");
+		if index + count > str.length:
+			throw new ArgumentError("The end of the range is outside of the string.");
+		return appendSubstrInternal(str, index, count);
+	}
+
 	public insert(index, value)
 	{
 		return insertInternal(int(index), string(value));
 	}
 
-	public clear()							__extern("aves_StringBuffer_clear");
+	public clear()										__extern("aves_StringBuffer_clear");
 
-	override toString()						__extern("aves_StringBuffer_toString");
+	override toString()									__extern("aves_StringBuffer_toString");
 
-	private appendInternal(value, times)	__extern("aves_StringBuffer_appendInternal");
-	private appendCodepointInternal(cp)		__extern("aves_StringBuffer_appendCodepointInternal");
-	private insertInternal(index, value)	__extern("aves_StringBuffer_insertInternal");
+	private appendInternal(value, times)				__extern("aves_StringBuffer_appendInternal");
+	private appendCodepointInternal(cp)					__extern("aves_StringBuffer_appendCodepointInternal");
+	private appendSubstrInternal(str, index, count)		__extern("aves_StringBuffer_appendSubstrInternal");
+	private insertInternal(index, value)				__extern("aves_StringBuffer_insertInternal");
 }

@@ -104,6 +104,22 @@ AVES_API NATIVE_FUNCTION(aves_StringBuffer_appendCodepointInternal)
 	VM_Push(thread, THISV);
 	RETURN_SUCCESS;
 }
+AVES_API NATIVE_FUNCTION(aves_StringBuffer_appendSubstrInternal)
+{
+	// appendSubstrInternal(str is String, index is Int, count is Int)
+	// The public-facing method also range-checks the values
+
+	StringBuffer *buf = _SB(THISV);
+	String *str   = args[1].common.string;
+	int32_t index = (int32_t)args[2].integer;
+	int32_t count = (int32_t)args[3].integer;
+
+	if (!buf->Append(count, &str->firstChar + index))
+		return VM_ThrowMemoryError(thread);
+
+	VM_Push(thread, THISV);
+	RETURN_SUCCESS;
+}
 AVES_API BEGIN_NATIVE_FUNCTION(aves_StringBuffer_insertInternal)
 {
 	// insertInternal(index is Int, value is String)

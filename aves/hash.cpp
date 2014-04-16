@@ -276,6 +276,25 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Hash_hasValue)
 	VM_PushBool(thread, false);
 }
 END_NATIVE_FUNCTION
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Hash_tryGetInternal)
+{
+	// tryGetInternal(key: non-null, hash: Int|UInt, ref value)
+	int32_t hashCode = U64_TO_HASH(args[2].uinteger);
+	int32_t index;
+	{ Pinned h(THISP);
+		HashInst *hash = _H(THISV);
+		CHECKED(FindEntry(thread, hash, args + 1, hashCode, index));
+
+		if (index >= 0)
+		{
+			HashEntry *entry = hash->entries + index;
+			WriteReference(args + 3, &entry->value);
+		}
+	}
+
+	VM_PushBool(thread, index >= 0);
+}
+END_NATIVE_FUNCTION
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Hash_removeInternal)
 {
 	// Args: (key: non-null, hash: Int|UInt)

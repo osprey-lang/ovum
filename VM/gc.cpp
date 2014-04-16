@@ -293,12 +293,6 @@ String *GC::ConstructString(Thread *const thread, const int32_t length, const uc
 	int r = Alloc(thread, VM::vm->types.String, sizeof(String) + length*sizeof(uchar), &gco);
 	if (r != OVUM_SUCCESS) return nullptr;
 
-	// We're not supposed to use ConstructString until after all the modules
-	// have been loaded, so we should never have to worry about not having
-	// the String type available. In other words, gco->type should not be null,
-	// and we never set the EARLY_STRING flag.
-	assert(gco->type != nullptr);
-
 	MutableString *str = reinterpret_cast<MutableString*>(gco->InstanceBase());
 	str->length = length;
 	// Note: Alloc() initializes the bytes to 0. The default values of
@@ -556,11 +550,11 @@ void GC::MarkRootSet()
 		// Does the method have any parameters?
 		unsigned int paramCount = method->GetEffectiveParamCount();
 		if (paramCount)
-			ProcessFields(paramCount, (Value*)frame - paramCount, &hasGen0Refs);
+			ProcessLocalValues(paramCount, (Value*)frame - paramCount);
 		// By design, the locals and the eval stack are adjacent in memory.
 		// Hence, the following is safe:
 		if (method->locals || frame->stackCount)
-			ProcessFields(method->locals + frame->stackCount, frame->Locals(), &hasGen0Refs);
+			ProcessLocalValues(method->locals + frame->stackCount, frame->Locals());
 
 		frame = frame->prevFrame;
 	}
@@ -876,10 +870,10 @@ void GC::UpdateRootSet()
 		Method::Overload *method = frame->method;
 		unsigned int paramCount = method->GetEffectiveParamCount();
 		if (paramCount)
-			UpdateFields(paramCount, (Value*)frame - paramCount);
+			UpdateLocals(paramCount, (Value*)frame - paramCount);
 
 		if (method->locals || frame->stackCount)
-			UpdateFields(method->locals + frame->stackCount, frame->Locals());
+			UpdateLocals(method->locals + frame->stackCount, frame->Locals());
 
 		frame = frame->prevFrame;
 	}

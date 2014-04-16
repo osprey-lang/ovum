@@ -169,7 +169,7 @@
 		</Expand>
 	</Type>
 
-	<Type Name="StackFrame_S">
+	<Type Name="StackFrame">
 		<DisplayString>{{stackCount={stackCount} argc={argc} method={method}}}</DisplayString>
 		<Expand>
 			<Synthetic Name="[eval stack]" Condition="stackCount == 0">
