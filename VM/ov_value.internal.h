@@ -6,9 +6,8 @@
 #include "ov_vm.internal.h"
 #include "ov_type.internal.h"
 
-
-#define VALUE_FIELDS(v,t)   reinterpret_cast<::Value*>((v).instance  + _Tp(t)->fieldsOffset)
-#define VALUE_FIELDS_P(v,t) reinterpret_cast<::Value*>((v)->instance + _Tp(t)->fieldsOffset)
+static const uintptr_t LOCAL_REFERENCE = (uintptr_t)-1;
+static const uintptr_t STATIC_REFERENCE = (uintptr_t)-3;
 
 // These access VM::vm->types directly, instead of calling the various GetType_* methods.
 

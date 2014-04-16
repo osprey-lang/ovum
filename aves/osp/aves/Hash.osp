@@ -117,6 +117,24 @@ public inheritable Hash
 	/// Returns: True if the hash table contains the specified value; otherwise, false.
 	public hasValue(value)						__extern("aves_Hash_hasValue");
 
+	/// Summary: Tries to read the specified key from the hash table. If successful,
+	///          {value} is updated to contain the value, and the method returns true.
+	///          Otherwise, the method returns false.
+	/// Param key:   The key to look up.
+	/// Param value: (ref) A variable that receives the value of the key, if the key
+	///              exists in the hash table.
+	/// Returns: True if the hash table contains the specified key; otherwise, false.
+	/// Remarks: Calling this method usually performs better than first calling
+	///          {hasKey} and then indexing into the hash table.
+	///
+	///          If the hash table does not contain the specified key, {value} is not
+	///          modified.
+	public tryGet(key, ref value)
+	{
+		return tryGetInternal(key, getHash(key), ref value);
+	}
+	private tryGetInternal(key, hash, ref value)	__extern("aves_Hash_tryGetInternal");
+
 	/// Summary: Removes the entry at the specified index from the hash table.
 	/// Param key: The key to remove.
 	/// Returns: True if the key was in the hash table; otherwise, false.

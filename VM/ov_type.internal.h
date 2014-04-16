@@ -210,6 +210,7 @@ public:
 		MethodFlags flags;
 
 		String **paramNames;
+		uint32_t refSignature;
 
 		int32_t tryBlockCount;
 		TryBlock *tryBlocks;
@@ -231,7 +232,7 @@ public:
 		// The type that declares the overload
 		Type *declType;
 
-		inline const bool Accepts(const uint16_t argc) const
+		inline const bool Accepts(uint16_t argc) const
 		{
 			if ((flags & MethodFlags::VARIADIC) != MethodFlags::NONE)
 				return argc >= paramCount - 1;
@@ -268,6 +269,9 @@ public:
 		int32_t GetLocalOffset(uint16_t local) const;
 		int32_t GetStackOffset(uint16_t stackSlot) const;
 
+		// argCount does NOT include the instance.
+		int VerifyRefSignature(uint32_t signature, uint16_t argCount) const;
+
 		inline ~Overload()
 		{
 			delete[] paramNames;
@@ -303,7 +307,7 @@ public:
 		delete[] overloads;
 	}
 
-	inline const bool Accepts(const uint16_t argCount) const
+	inline const bool Accepts(uint16_t argCount) const
 	{
 		const Method *m = this;
 		do
@@ -315,7 +319,7 @@ public:
 		return false;
 	}
 
-	inline Overload *ResolveOverload(const uint16_t argCount) const
+	inline Overload *ResolveOverload(uint16_t argCount) const
 	{
 		const Method *method = this;
 		do

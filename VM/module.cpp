@@ -2,6 +2,7 @@
 #include "modulereader.internal.h"
 #include "ov_stringbuffer.internal.h"
 #include "ov_debug_symbols.internal.h"
+#include "refsignature.internal.h"
 #include <memory>
 #include <shlwapi.h>
 
@@ -1117,10 +1118,21 @@ Method *Module::ReadSingleMethod(ModuleReader &reader, Module *module)
 		uint16_t paramCount = reader.ReadUInt16();
 		ov->paramCount = paramCount;
 		ov->paramNames = new String*[paramCount];
-		for (int p = 0; p < paramCount; p++)
 		{
-			TokenId paramNameId = reader.ReadToken();
-			ov->paramNames[p] = module->FindString(paramNameId);
+			int instOffset = methodFlags & FM_INSTANCE ? 1 : 0;
+			RefSignatureBuilder refBuilder(paramCount + instOffset);
+
+			for (int p = 0; p < paramCount; p++)
+			{
+				enum ParamFlags : uint16_t { PF_BY_REF = 0x0001 };
+				TokenId paramNameId = reader.ReadToken();
+				ParamFlags paramFlags = (ParamFlags)reader.ReadUInt16();
+				ov->paramNames[p] = module->FindString(paramNameId);
+				if (paramFlags == PF_BY_REF)
+					refBuilder.SetParam(p + instOffset, true);
+			}
+
+			ov->refSignature = refBuilder.Commit();
 		}
 
 		// Flags

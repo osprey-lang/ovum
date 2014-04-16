@@ -484,6 +484,31 @@ private:
 			// Otherwise, mark it for processing!
 			TryMarkForProcessing(fields + i, hasGen0Refs);
 	}
+	inline void ProcessLocalValues(unsigned int count, Value values[])
+	{
+		bool _;
+		for (unsigned int i = 0; i < count; i++)
+		{
+			Value *v = values + i;
+			if ((uintptr_t)v->type & 1)
+			{
+				// There is no need to examine local or static field references;
+				// we'll get to the underlying storage locations when we examine
+				// the root set. Instance field references do need to be looked
+				// at, because the instance is still alive and we may have the
+				// only remaining reference to it.
+				if ((uintptr_t)v->type != LOCAL_REFERENCE &&
+					(uintptr_t)v->type != STATIC_REFERENCE)
+				{
+					GCObject *gco = reinterpret_cast<GCObject*>((char*)v->reference - ~(uintptr_t)v->type);
+					if ((gco->flags & GCOFlags::MARK) == GCO_COLLECT(currentCollectMark))
+						MarkForProcessing(gco);
+				}
+			}
+			else
+				TryMarkForProcessing(v, &_);
+		}
+	}
 
 	void MoveGen0Survivors();
 	void AddPinnedObject(GCObject *gco);
@@ -524,6 +549,27 @@ private:
 	{
 		for (unsigned int i = 0; i < fieldCount; i++)
 			TryUpdateRef(fields + i);
+	}
+	static inline void UpdateLocals(unsigned int count, Value values[])
+	{
+		for (unsigned int i = 0; i < count; i++)
+		{
+			Value *v = values + i;
+			if ((uintptr_t)v->type & 1)
+			{
+				// Local and static refs are immovable, but field refs are not.
+				if ((uintptr_t)v->type != LOCAL_REFERENCE &&
+					(uintptr_t)v->type != STATIC_REFERENCE)
+				{
+					uintptr_t offset = ~(uintptr_t)v->type;
+					GCObject *gco = reinterpret_cast<GCObject*>((char*)v->reference - offset);
+					if ((gco->flags & GCOFlags::MOVED) == GCOFlags::MOVED)
+						v->reference = (char*)gco->newAddress + offset;
+				}
+			}
+			else
+				TryUpdateRef(v);
+		}
 	}
 
 public:

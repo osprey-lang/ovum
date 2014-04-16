@@ -268,9 +268,10 @@ void VM::PrintMethodInitException(MethodInitException &e)
 
 	switch (e.GetFailureKind())
 	{
-	case MethodInitException::INCONSISTENT_STACK_HEIGHT:
+	case MethodInitException::INCONSISTENT_STACK:
 	case MethodInitException::INVALID_BRANCH_OFFSET:
 	case MethodInitException::INSUFFICIENT_STACK_HEIGHT:
+	case MethodInitException::STACK_HAS_REFS:
 		fwprintf(err, L"Instruction index: %d\n", e.GetInstructionIndex());
 		break;
 	case MethodInitException::INACCESSIBLE_MEMBER:

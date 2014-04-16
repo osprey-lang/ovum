@@ -18,6 +18,7 @@ AVES_API NATIVE_FUNCTION(aves_Hash_getEntry);
 AVES_API NATIVE_FUNCTION(aves_Hash_insert);
 AVES_API NATIVE_FUNCTION(aves_Hash_hasKeyInternal);
 AVES_API NATIVE_FUNCTION(aves_Hash_hasValue);
+AVES_API NATIVE_FUNCTION(aves_Hash_tryGetInternal);
 AVES_API NATIVE_FUNCTION(aves_Hash_removeInternal);
 
 AVES_API NATIVE_FUNCTION(aves_HashEntry_get_hashCode);

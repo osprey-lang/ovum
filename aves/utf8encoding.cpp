@@ -1,17 +1,17 @@
 #include "aves_utf8encoding.h"
 #include "ov_unicode.h"
 
-AVES_API NATIVE_FUNCTION(aves_Utf8Encoding_getByteCount)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Utf8Encoding_getByteCount)
 {
-	StringFromValue(thread, args + 1);
+	CHECKED(StringFromValue(thread, args + 1));
 
 	Utf8Encoder enc;
 	enc.Reset();
 	int32_t byteCount = enc.GetByteCount(thread, args[1].common.string, true);
 
 	VM_PushInt(thread, byteCount);
-	RETURN_SUCCESS;
 }
+END_NATIVE_FUNCTION
 AVES_API NATIVE_FUNCTION(aves_Utf8Encoding_getBytesInternal)
 {
 	// getBytesInternal(str is String, buf is Buffer, offset is Int)

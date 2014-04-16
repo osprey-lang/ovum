@@ -47,3 +47,37 @@ OVUM_API bool IsString(Value *value)
 {
 	return value->type == VM::vm->types.String;
 }
+
+OVUM_API void ReadReference(Value *ref, Value *target)
+{
+	if ((uintptr_t)ref->type == LOCAL_REFERENCE)
+		*target = *reinterpret_cast<Value*>(ref->reference);
+	else if ((uintptr_t)ref->type == STATIC_REFERENCE)
+		reinterpret_cast<StaticRef*>(ref->reference)->Read(target);
+	else
+	{
+		uintptr_t offset = ~(uintptr_t)ref->type;
+		GCObject *gco = reinterpret_cast<GCObject*>((char*)ref->reference - offset);
+		while (gco->fieldAccessFlag.test_and_set(std::memory_order_acquire))
+			;
+		*target = *reinterpret_cast<Value*>(ref->reference);
+		gco->fieldAccessFlag.clear(std::memory_order_release);
+	}
+}
+
+OVUM_API void WriteReference(Value *ref, Value *value)
+{
+	if ((uintptr_t)ref->type == LOCAL_REFERENCE)
+		*reinterpret_cast<Value*>(ref->reference) = *value;
+	else if ((uintptr_t)ref->type == STATIC_REFERENCE)
+		reinterpret_cast<StaticRef*>(ref->reference)->Write(value);
+	else
+	{
+		uintptr_t offset = ~(uintptr_t)ref->type;
+		GCObject *gco = reinterpret_cast<GCObject*>((char*)ref->reference - offset);
+		while (gco->fieldAccessFlag.test_and_set(std::memory_order_acquire))
+			;
+		*reinterpret_cast<Value*>(ref->reference) = *value;
+		gco->fieldAccessFlag.clear(std::memory_order_release);
+	}
+}

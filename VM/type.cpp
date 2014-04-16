@@ -1,5 +1,6 @@
 #include "ov_vm.internal.h"
 #include "ov_string.h"
+#include "refsignature.internal.h"
 #ifdef PRINT_DEBUG_INFO
 #include <cstdio>
 #endif
@@ -339,6 +340,80 @@ void Field::WriteFieldUnchecked(Value *instanceAndValue) const
 
 #undef ACQUIRE_FIELD_LOCK
 #undef RELEASE_FIELD_LOCK
+
+int Method::Overload::VerifyRefSignature(uint32_t signature, uint16_t argCount) const
+{
+	RefSignature methodSignature(refSignature);
+	RefSignature argSignature(signature);
+
+	int im = 0, // index into methodSignature
+		ia = 0; // and into argSignature
+	if (this->IsInstanceMethod())
+	{
+		// Note: argCount does NOT include the instance, but the signature does.
+		// The instance is never passed by ref
+		if (argSignature.IsParamRef(0))
+			return 0;
+		im++;
+		ia++;
+	}
+
+	int paramCount = (int)this->GetEffectiveParamCount();
+	if ((this->flags & MethodFlags::VARIADIC) != MethodFlags::NONE)
+	{
+		if ((this->flags & MethodFlags::VAR_START) != MethodFlags::NONE)
+		{
+			// Test each argument to be packed, making sure none of them are by ref
+			int packed = argCount - this->paramCount + 1;
+			while (packed-- > 0)
+			{
+				if (argSignature.IsParamRef(ia))
+					return ia;
+				ia++;
+			}
+			im++; // Skip the first parameter (it's variadic)
+			// And then test each required parameter against its argument
+			while (im < paramCount)
+			{
+				if (methodSignature.IsParamRef(im) != argSignature.IsParamRef(ia))
+					return ia;
+				im++;
+				ia++;
+			}
+		}
+		else
+		{
+			// Test each required parameter against its argument
+			while (im < paramCount - 1)
+			{
+				if (methodSignature.IsParamRef(im) != argSignature.IsParamRef(ia))
+					return ia;
+				im++;
+				ia++;
+			}
+			// And then make sure every remaining argument is not by ref;
+			// these will be packed into a list
+			while (ia < argCount)
+			{
+				if (argSignature.IsParamRef(ia))
+					return ia;
+				ia++;
+			}
+		}
+	}
+	else
+	{
+		// Test each parameter against its corresponding argument
+		while (im < paramCount)
+		{
+			if (methodSignature.IsParamRef(im) != argSignature.IsParamRef(ia))
+				return ia;
+			im++;
+			ia++;
+		}
+	}
+	return -1;
+}
 
 OVUM_API void GetStandardTypes(StandardTypes *target, size_t targetSize)
 {

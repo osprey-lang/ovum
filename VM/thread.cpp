@@ -17,6 +17,8 @@ namespace thread_errors
 		LitString<38> _SettingReadonlyProperty     = LitString<38>::FromCString("Cannot assign to a read-only property.");
 		LitString<71> _WrongApplyArgsType          = LitString<71>::FromCString("The arguments list in a function application must be of type aves.List.");
 		LitString<62> _NoIndexerFound              = LitString<62>::FromCString("The type does not contain an indexer, or it is not accessible.");
+		LitString<93> _IncorrectReferenceness      = LitString<93>::FromCString("One or more arguments has the wrong referenceness (should be a ref but isn't, or vice versa).");
+		LitString<36> _MemberIsNotAField           = LitString<36>::FromCString("The specified member is not a field.");
 	}
 
 	String *ConcatTypes                 = _S(_ConcatTypes);
@@ -31,6 +33,8 @@ namespace thread_errors
 	String *SettingReadonlyProperty     = _S(_SettingReadonlyProperty);
 	String *WrongApplyArgsType          = _S(_WrongApplyArgsType);
 	String *NoIndexerFound              = _S(_NoIndexerFound);
+	String *IncorrectReferenceness      = _S(_IncorrectReferenceness);
+	String *MemberIsNotAField           = _S(_MemberIsNotAField);
 }
 
 
@@ -153,10 +157,10 @@ int Thread::Invoke(unsigned int argCount, Value *result)
 	int r;
 	Value *value = currentFrame->evalStack + currentFrame->stackCount - argCount - 1;
 	if (result != nullptr)
-		r = InvokeLL(argCount, value, result);
+		r = InvokeLL(argCount, value, result, 0);
 	else
 	{
-		r = InvokeLL(argCount, value, value);
+		r = InvokeLL(argCount, value, value, 0);
 		if (r == OVUM_SUCCESS)
 			currentFrame->stackCount++;
 	}
@@ -164,7 +168,7 @@ int Thread::Invoke(unsigned int argCount, Value *result)
 }
 
 // Note: argCount does NOT include the instance, but value does
-int Thread::InvokeLL(unsigned int argCount, Value *value, Value *result)
+int Thread::InvokeLL(unsigned int argCount, Value *value, Value *result, uint32_t refSignature)
 {
 	if (IS_NULL(*value))
 		return ThrowNullReferenceError();
@@ -199,7 +203,10 @@ int Thread::InvokeLL(unsigned int argCount, Value *value, Value *result)
 
 	if (!mo)
 		return ThrowNoOverloadError(argCount);
-
+	
+	if (refSignature != mo->refSignature &&
+		mo->VerifyRefSignature(refSignature, argCount) != -1)
+		return ThrowNoOverloadError(argCount, thread_errors::IncorrectReferenceness);
 	// We've now found a method overload to invoke, omg!
 	// So let's just pass it into InvokeMethodOverload.
 	return InvokeMethodOverload(mo, argCount, value, result);
@@ -229,17 +236,17 @@ int Thread::InvokeMember(String *name, unsigned int argCount, Value *result)
 	int r;
 	Value *value = currentFrame->evalStack + currentFrame->stackCount - argCount - 1;
 	if (result)
-		r = InvokeMemberLL(name, argCount, value, result);
+		r = InvokeMemberLL(name, argCount, value, result, 0);
 	else
 	{
-		r = InvokeMemberLL(name, argCount, value, value);
+		r = InvokeMemberLL(name, argCount, value, value, 0);
 		if (r == OVUM_SUCCESS)
 			currentFrame->stackCount++;
 	}
 	return r;
 }
 
-int Thread::InvokeMemberLL(String *name, uint32_t argCount, Value *value, Value *result)
+int Thread::InvokeMemberLL(String *name, uint32_t argCount, Value *value, Value *result, uint32_t refSignature)
 {
 	if (IS_NULL(*value))
 		return ThrowNullReferenceError();
@@ -254,7 +261,7 @@ int Thread::InvokeMemberLL(String *name, uint32_t argCount, Value *value, Value 
 		{
 		case MemberFlags::FIELD:
 			((Field*)member)->ReadFieldUnchecked(value, value);
-			return InvokeLL(argCount, value, result);
+			return InvokeLL(argCount, value, result, refSignature);
 			break;
 		case MemberFlags::PROPERTY:
 			{
@@ -273,7 +280,7 @@ int Thread::InvokeMemberLL(String *name, uint32_t argCount, Value *value, Value 
 				if (r != OVUM_SUCCESS) return r;
 
 				// And then invoke the result of that call (which is in 'value')
-				return InvokeLL(argCount, value, result);
+				return InvokeLL(argCount, value, result, refSignature);
 			}
 			break;
 		default: // method
@@ -281,6 +288,9 @@ int Thread::InvokeMemberLL(String *name, uint32_t argCount, Value *value, Value 
 				Method::Overload *mo = ((Method*)member)->ResolveOverload(argCount);
 				if (!mo)
 					return ThrowNoOverloadError(argCount);
+				if (refSignature != mo->refSignature &&
+					mo->VerifyRefSignature(refSignature, argCount) != -1)
+					return ThrowNoOverloadError(argCount, thread_errors::IncorrectReferenceness);
 				return InvokeMethodOverload(mo, argCount, value, result);
 			}
 		}
@@ -430,7 +440,7 @@ int Thread::InvokeApplyLL(Value *args, Value *result)
 	CopyMemoryT(currentFrame->evalStack + currentFrame->stackCount, argsList->values, argsList->length);
 	currentFrame->stackCount += argsList->length;
 
-	return InvokeLL(argsList->length, args, result);
+	return InvokeLL(argsList->length, args, result, 0);
 }
 
 int Thread::InvokeApplyMethod(Method *method, Value *result)
@@ -841,6 +851,43 @@ int Thread::StoreIndexerLL(uint32_t argCount, Value *args)
 	return InvokeMethodOverload(method, argCount + 1, args, args);
 }
 
+int Thread::LoadFieldRefLL(Value *inst, Field *field)
+{
+	if (IS_NULL(*inst))
+		return ThrowNullReferenceError();
+	if (!Type::ValueIsType(inst, field->declType))
+		return ThrowTypeError();
+
+	Value fieldRef;
+	fieldRef.type = (Type*)~(field->offset + GCO_SIZE);
+	fieldRef.reference = inst->instance + field->offset;
+	currentFrame->Push(fieldRef);
+
+	RETURN_SUCCESS;
+}
+
+int Thread::LoadMemberRefLL(Value *inst, String *member)
+{
+	if (IS_NULL(*inst))
+		return ThrowNullReferenceError();
+
+	Member *m = inst->type->FindMember(member, currentFrame->method->declType);
+	if (m == nullptr)
+		return ThrowMemberNotFoundError(member);
+	if ((m->flags & MemberFlags::INSTANCE) == MemberFlags::NONE)
+		return ThrowTypeError(thread_errors::StaticMemberThroughInstance);
+	if ((m->flags & MemberFlags::FIELD) == MemberFlags::NONE)
+		return ThrowTypeError(thread_errors::MemberIsNotAField);
+
+	Field *field = static_cast<Field*>(m);
+	Value fieldRef;
+	fieldRef.type = (Type*)~(field->offset + GCO_SIZE);
+	fieldRef.reference = inst->instance + field->offset;
+	currentFrame->Push(fieldRef);
+
+	RETURN_SUCCESS;
+}
+
 void Thread::LoadStaticField(Field *field, Value *result)
 {
 	if (result)
@@ -1245,6 +1292,15 @@ void Thread::AppendArgumentType(StringBuffer &buf, Value *arg)
 		buf.Append(4, "null");
 	else
 	{
+		if ((uintptr_t)type & 1)
+		{
+			buf.Append(4, "ref ");
+			if ((uintptr_t)type == STATIC_REFERENCE)
+				type = reinterpret_cast<StaticRef*>(arg->reference)->GetValuePointer()->type;
+			else
+				type = reinterpret_cast<Value*>(arg->reference)->type;
+		}
+
 		buf.Append(type->fullName);
 
 		if (type == VM::vm->types.Method)

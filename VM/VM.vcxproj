@@ -99,6 +99,7 @@
     <ClInclude Include="ov_string.h" />
     <ClInclude Include="ov_stringbuffer.h" />
     <ClInclude Include="ov_stringbuffer.internal.h" />
+    <ClInclude Include="refsignature.internal.h" />
     <ClInclude Include="string_table.internal.h" />
     <ClInclude Include="ov_thread.h" />
     <ClInclude Include="ov_thread.internal.h" />
