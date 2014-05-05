@@ -5,7 +5,7 @@ namespace io;
 public static class Path
 {
 	public static get directorySeparator				__extern("io_Path_get_directorySeparator");
-	public static get directorySeparator2				__extern("io_Path_get_directorySeparator2");
+	public static get altDirectorySeparator				__extern("io_Path_get_altDirectorySeparator");
 
 	public static getInvalidPathChars()
 	{

@@ -14,7 +14,7 @@
 #define LOSZ           sizeof(LocalOffset) // For convenience, since it's used a LOT below
 
 // Used in Thread::Evaluate. Semicolon intentionally missing.
-#define CHK(expr) if ((retCode = (expr)) != OVUM_SUCCESS) goto exitMethod
+#define CHK(expr) do { if ((retCode = (expr)) != OVUM_SUCCESS) goto exitMethod; } while (0)
 
 #ifdef THREADED_EVALUATION
 
@@ -642,7 +642,7 @@ int Thread::Evaluate()
 		TARGET(OPI_LEAVE)
 			{
 				register const int32_t offset = I32_ARG(ip);
-				EvaluateLeave(f, offset);
+				CHK(EvaluateLeave(f, offset));
 				ip += sizeof(int32_t) + offset;
 			}
 			NEXT_INSTR();
@@ -1053,6 +1053,7 @@ int Thread::Evaluate()
 			// This Evaluate call was reached through FindErrorHandlers or
 			// EvaluateLeave, so we return here and let the thing continue
 			// with its search for more error handlers.
+			retCode = OVUM_SUCCESS;
 			goto exitMethod;
 
 		// ldfldfast: LocalOffset instance, LocalOffset dest, Field *field

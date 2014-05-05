@@ -24,8 +24,8 @@
 		RETURN_SUCCESS; \
 		__retStatus: return __status; \
 	}
-#define CHECKED(expr) if ((__status = (expr)) != OVUM_SUCCESS) goto __retStatus
-#define CHECKED_MEM(expr) if (!(expr)) { __status = OVUM_ERROR_NO_MEMORY; goto __retStatus; }
+#define CHECKED(expr) do { if ((__status = (expr)) != OVUM_SUCCESS) goto __retStatus; } while (0)
+#define CHECKED_MEM(expr) do { if (!(expr)) { __status = OVUM_ERROR_NO_MEMORY; goto __retStatus; } } while (0)
 
 OVUM_API void VM_Push(ThreadHandle thread, Value value);
 

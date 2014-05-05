@@ -137,7 +137,7 @@ AVES_API NATIVE_FUNCTION(io_Path_get_directorySeparator)
 	RETURN_SUCCESS;
 }
 
-AVES_API NATIVE_FUNCTION(io_Path_get_directorySeparator2)
+AVES_API NATIVE_FUNCTION(io_Path_get_altDirectorySeparator)
 {
 	String *str = GC_ConstructString(thread, 1, &Path::AltDirSeparator);
 	if (!str) return OVUM_ERROR_NO_MEMORY;

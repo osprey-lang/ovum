@@ -322,14 +322,14 @@ public:
 
 	// Throw helpers!
 
-	int ThrowError(String *message = nullptr);
-	int ThrowTypeError(String *message = nullptr);
-	int ThrowMemoryError(String *message = nullptr);
-	int ThrowOverflowError(String *message = nullptr);
-	int ThrowDivideByZeroError(String *message = nullptr);
-	int ThrowNullReferenceError(String *message = nullptr);
-	int ThrowMemberNotFoundError(String *member);
-	int ThrowNoOverloadError(const uint32_t argCount, String *message = nullptr);
+	NOINLINE int ThrowError(String *message = nullptr);
+	NOINLINE int ThrowTypeError(String *message = nullptr);
+	NOINLINE int ThrowMemoryError(String *message = nullptr);
+	NOINLINE int ThrowOverflowError(String *message = nullptr);
+	NOINLINE int ThrowDivideByZeroError(String *message = nullptr);
+	NOINLINE int ThrowNullReferenceError(String *message = nullptr);
+	NOINLINE int ThrowMemberNotFoundError(String *member);
+	NOINLINE int ThrowNoOverloadError(const uint32_t argCount, String *message = nullptr);
 
 	bool IsSuspendedForGC() const;
 
