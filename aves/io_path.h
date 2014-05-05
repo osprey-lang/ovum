@@ -37,7 +37,7 @@ public:
 };
 
 AVES_API NATIVE_FUNCTION(io_Path_get_directorySeparator);
-AVES_API NATIVE_FUNCTION(io_Path_get_directorySeparator2);
+AVES_API NATIVE_FUNCTION(io_Path_get_altDirectorySeparator);
 
 AVES_API NATIVE_FUNCTION(io_Path_getInvalidPathCharsString);
 AVES_API NATIVE_FUNCTION(io_Path_getInvalidFileNameCharsString);

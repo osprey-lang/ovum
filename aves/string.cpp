@@ -266,7 +266,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_format)
 		else
 			return VM_ThrowTypeError(thread, error_strings::FormatValueType);
 	}
-	CHECKED_MEM(result)
+	CHECKED_MEM(result);
 
 	VM_PushString(thread, result);
 }

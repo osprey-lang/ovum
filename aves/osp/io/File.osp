@@ -213,11 +213,11 @@ public static class File
 		}
 	}
 
-	public static writeAllText(contents, fileName)
+	public static writeAllText(fileName, contents)
 	{
-		writeAllText(contents, fileName, Encoding.utf8);
+		writeAllText(fileName, contents, Encoding.utf8);
 	}
-	public static writeAllText(contents, fileName, encoding)
+	public static writeAllText(fileName, contents, encoding)
 	{
 		if fileName is null:
 			throw new ArgumentNullError("fileName");

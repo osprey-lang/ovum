@@ -1698,7 +1698,20 @@ int instr::CallMember::SetReferenceSignature(const StackManager &stack)
 
 int instr::StaticCall::SetReferenceSignature(const StackManager &stack)
 {
-	refSignature = stack.GetRefSignature(argCount + method->InstanceOffset());
+	if (method->group->IsStatic())
+	{
+		RefSignatureBuilder refBuilder(argCount + 1);
+
+		for (int i = 1; i <= argCount; i++)
+			if (stack.IsRef(argCount - i))
+				refBuilder.SetParam(i, true);
+
+		refSignature = refBuilder.Commit();
+	}
+	else
+	{
+		refSignature = stack.GetRefSignature(argCount + 1);
+	}
 
 	if (this->refSignature != method->refSignature)
 		// VerifyRefSignature does NOT include the instance in the argCount

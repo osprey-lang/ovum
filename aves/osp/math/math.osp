@@ -100,6 +100,13 @@ namespace math
 	///          If {α} is NaN, this function returns NaN.
 	public function cosh(α)			__extern("aves_math_cosh");
 
+	public function distance(x1, y1, x2, y2)
+	{
+		var dx = x2 - x1;
+		var dy = y2 - y1;
+		return sqrt(dx * dx + dy * dy);
+	}
+
 	/// Summary: Returns the quotient and remainder of the specified values.
 	/// Param a: The dividend of the operation.
 	/// Param b: The divisor of the operation.

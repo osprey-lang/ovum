@@ -1119,8 +1119,9 @@ Method *Module::ReadSingleMethod(ModuleReader &reader, Module *module)
 		ov->paramCount = paramCount;
 		ov->paramNames = new String*[paramCount];
 		{
-			int instOffset = methodFlags & FM_INSTANCE ? 1 : 0;
-			RefSignatureBuilder refBuilder(paramCount + instOffset);
+			// The +1 is to make sure that we always reserve space for the instance,
+			// even if there isn't any
+			RefSignatureBuilder refBuilder(paramCount + 1);
 
 			for (int p = 0; p < paramCount; p++)
 			{
@@ -1129,7 +1130,7 @@ Method *Module::ReadSingleMethod(ModuleReader &reader, Module *module)
 				ParamFlags paramFlags = (ParamFlags)reader.ReadUInt16();
 				ov->paramNames[p] = module->FindString(paramNameId);
 				if (paramFlags == PF_BY_REF)
-					refBuilder.SetParam(p + instOffset, true);
+					refBuilder.SetParam(p + 1, true);
 			}
 
 			ov->refSignature = refBuilder.Commit();

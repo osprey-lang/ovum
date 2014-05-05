@@ -6,7 +6,7 @@ AVES_API NATIVE_FUNCTION(aves_Enum_getHashCode)
 	VM_PushInt(thread, THISV.integer);
 	RETURN_SUCCESS;
 }
-AVES_API NATIVE_FUNCTION(aves_Enum_toString)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Enum_toString)
 {
 	// Try to find a field in the instance's type whose value
 	// matches the instance's value, and return its name.
@@ -28,9 +28,10 @@ AVES_API NATIVE_FUNCTION(aves_Enum_toString)
 
 	// Nothing found, stringify the integer value instead
 	VM_PushInt(thread, THISV.integer);
-	VM_InvokeMember(thread, strings::toString, 0, nullptr);
+	CHECKED(VM_InvokeMember(thread, strings::toString, 0, nullptr));
 	RETURN_SUCCESS;
 }
+END_NATIVE_FUNCTION
 
 AVES_API NATIVE_FUNCTION(aves_Enum_opEquals)
 {
@@ -70,7 +71,7 @@ AVES_API NATIVE_FUNCTION(aves_EnumSet_hasFlag)
 AVES_API BEGIN_NATIVE_FUNCTION(aves_EnumSet_toString)
 {
 	StringBuffer buf;
-	CHECKED(buf.Init(256));
+	CHECKED_MEM(buf.Init(256));
 
 	int64_t remainingFlags = THISV.integer;
 	bool foundField = false;
