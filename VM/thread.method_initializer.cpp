@@ -961,6 +961,10 @@ void Thread::InitializeInstructions(instr::MethodBuilder &builder, Method::Overl
 	using namespace instr;
 
 	RefSignature refs(method->refSignature);
+	// An offset that is added to param/arg indexes when calling refs.IsParamRef.
+	// The ref signature always reserves space for the instance at the very beginning,
+	// so for static methods, we have to skip it.
+	unsigned int argRefOffset = +method->group->IsStatic();
 
 	register uint8_t *ip = method->entry;
 	uint8_t *end = method->entry + method->length;
@@ -990,33 +994,33 @@ void Thread::InitializeInstructions(instr::MethodBuilder &builder, Method::Overl
 		case OPC_LDARG_3:
 			{
 				uint16_t arg = *opc - OPC_LDARG_0;
-				instr = new LoadLocal(method->GetArgumentOffset(arg), refs.IsParamRef(arg));
+				instr = new LoadLocal(method->GetArgumentOffset(arg), refs.IsParamRef(arg + argRefOffset));
 			}
 			break;
 		case OPC_LDARG_S: // ub:n
 			{
 				uint16_t arg = *ip++;
-				instr = new LoadLocal(method->GetArgumentOffset(arg), refs.IsParamRef(arg));
+				instr = new LoadLocal(method->GetArgumentOffset(arg), refs.IsParamRef(arg + argRefOffset));
 			}
 			break;
 		case OPC_LDARG: // u2:n
 			{
 				uint16_t arg = U16_ARG(ip);
 				ip += sizeof(uint16_t);
-				instr = new LoadLocal(method->GetArgumentOffset(arg), refs.IsParamRef(arg));
+				instr = new LoadLocal(method->GetArgumentOffset(arg), refs.IsParamRef(arg + argRefOffset));
 			}
 			break;
 		case OPC_STARG_S: // ub:n
 			{
 				uint16_t arg = *ip++;
-				instr = new StoreLocal(method->GetArgumentOffset(arg), refs.IsParamRef(arg));
+				instr = new StoreLocal(method->GetArgumentOffset(arg), refs.IsParamRef(arg + argRefOffset));
 			}
 			break;
 		case OPC_STARG: // u2:n
 			{
 				uint16_t arg = U16_ARG(ip);
 				ip += sizeof(uint16_t);
-				instr = new StoreLocal(method->GetArgumentOffset(arg), refs.IsParamRef(arg));
+				instr = new StoreLocal(method->GetArgumentOffset(arg), refs.IsParamRef(arg + argRefOffset));
 			}
 			break;
 		// Locals
@@ -1499,7 +1503,7 @@ void Thread::InitializeInstructions(instr::MethodBuilder &builder, Method::Overl
 		case OPC_LDARGREF_S: // ub:n
 			{
 				uint16_t arg = *ip++;
-				if (refs.IsParamRef(arg))
+				if (refs.IsParamRef(arg + argRefOffset))
 				{
 					instr = new LoadLocal(method->GetArgumentOffset(arg), false);
 					instr->flags |= InstrFlags::PUSHES_REF;
@@ -1512,7 +1516,7 @@ void Thread::InitializeInstructions(instr::MethodBuilder &builder, Method::Overl
 			{
 				uint16_t arg = U16_ARG(ip);
 				ip += sizeof(uint16_t);
-				if (refs.IsParamRef(arg))
+				if (refs.IsParamRef(arg + argRefOffset))
 				{
 					instr = new LoadLocal(method->GetArgumentOffset(arg), false);
 					instr->flags |= InstrFlags::PUSHES_REF;

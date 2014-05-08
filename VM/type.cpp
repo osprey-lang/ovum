@@ -346,17 +346,13 @@ int Method::Overload::VerifyRefSignature(uint32_t signature, uint16_t argCount) 
 	RefSignature methodSignature(refSignature);
 	RefSignature argSignature(signature);
 
-	int im = 0, // index into methodSignature
-		ia = 0; // and into argSignature
-	if (this->IsInstanceMethod())
-	{
-		// Note: argCount does NOT include the instance, but the signature does.
-		// The instance is never passed by ref
-		if (argSignature.IsParamRef(0))
-			return 0;
-		im++;
-		ia++;
-	}
+	// Signatures always include extra space for the instance, even if the method
+	// is static. Argument 0 should never be by ref.
+	if (argSignature.IsParamRef(0))
+		return 0;
+
+	int im = 1, // index into methodSignature
+		ia = 1; // and into argSignature
 
 	int paramCount = (int)this->GetEffectiveParamCount();
 	if ((this->flags & MethodFlags::VARIADIC) != MethodFlags::NONE)

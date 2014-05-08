@@ -28,7 +28,7 @@ public inheritable Stack
 	public pop()
 	{
 		if list is null or list.isEmpty:
-			throw new InvalidStateError("There are no items on the stack.");
+			throw new InvalidStateError(emptyStack);
 
 		var value = list[-1];
 		list.removeAt(-1);
@@ -39,7 +39,7 @@ public inheritable Stack
 	public peek()
 	{
 		if list is null or list.isEmpty:
-			throw new InvalidStateError("There are no items on the stack.");
+			throw new InvalidStateError(emptyStack);
 		return list[-1];
 	}
 
@@ -58,4 +58,6 @@ public inheritable Stack
 			yield list[-i];
 		}
 	}
+    
+    private const emptyStack = "There are no items on the stack.";
 }
