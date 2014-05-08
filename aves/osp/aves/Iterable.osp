@@ -45,7 +45,7 @@ public inheritable Iterable
 		if func is null:
 			throw new ArgumentNullError("func");
 
-		return new EachIterable(this, func);
+        this.iter.each(func);
 	}
 
 	public filter(predicate)
@@ -86,6 +86,32 @@ public inheritable Iterable
 	public join(sep)
 	{
 		return this.iter.join(sep);
+	}
+
+	public group(func)
+	{
+		if func is null:
+			throw new ArgumentNullError("func");
+
+		return new GroupIterable(this, func);
+	}
+	public group(keyFunc, valueFunc)
+	{
+		if keyFunc is null:
+			throw new ArgumentNullError("keyFunc");
+		if valueFunc is null:
+			throw new ArgumentNullError("valueFunc");
+
+		return new GroupIterable(this, keyFunc, valueFunc);
+	}
+
+	public groupEvery(frequency)
+	{
+		frequency = int(frequency);
+		if frequency < 0:
+			throw new ArgumentRangeError("frequency");
+
+		return new GroupEveryIterable(this, frequency);
 	}
 
 	public intersperse(value)
@@ -133,17 +159,15 @@ public inheritable Iterable
 			return Iterator.empty;
 		return collection.iter;
 	}
-}
 
-private class EachIterable is Iterable
-{
-	public new(this.inner, this.func);
-
-	private inner, func;
-
-	iter
+	public static range(start, count)
 	{
-		return inner.iter.each(func);
+		start = int(start);
+		count = int(count);
+		if count < 0:
+			throw new ArgumentRangeError("count");
+
+		return new RangeIterable(start, count);
 	}
 }
 
@@ -185,5 +209,50 @@ private class IntersperseIterable is Iterable
 			return i.intersperse(value, frequency);
 		else
 			return i.intersperse(value);
+	}
+}
+
+private class GroupIterable is Iterable
+{
+	public new(this.inner, this.keyFunc);
+	public new(this.inner, this.keyFunc, this.valueFunc);
+
+	private inner, keyFunc, valueFunc;
+
+	iter
+	{
+		if valueFunc is not null:
+			return inner.iter.group(keyFunc, valueFunc);
+		return inner.iter.group(keyFunc);
+	}
+}
+
+private class GroupEveryIterable is Iterable
+{
+	public new(this.inner, this.frequency);
+
+	private inner, frequency;
+
+	iter
+	{
+		return inner.iter.groupEvery(frequency);
+	}
+}
+
+private class RangeIterable is Iterable
+{
+	public new(this.start, this.count);
+
+	private start, count;
+
+	iter
+	{
+		var i = start;
+		var end = start + count;
+		while i < end
+		{
+			yield i;
+			i += 1;
+		}
 	}
 }
