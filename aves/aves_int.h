@@ -50,7 +50,7 @@ namespace integer
 
 	int ParseFormatString(ThreadHandle thread, String *str, int *radix, int *minWidth, bool *upper);
 
-	inline const int Power(const int64_t base, const int64_t exponent, int64_t &output)
+	inline int Power(const int64_t base, const int64_t exponent, int64_t &output)
 	{
 		int64_t a = base;
 		int64_t b = exponent;

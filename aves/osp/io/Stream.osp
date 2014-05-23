@@ -29,10 +29,6 @@ namespace io;
 ///          `    // ... use stream ...` \
 ///          `}`
 ///
-///          Note the use of the safe access operator, `?.`, which
-///          closes the stream only if it was created correctly
-///          (if not, the `stream` variable is null).
-///
 ///          Once a stream has been closed, it is no longer possible
 ///          to read from, write to or seek within it. Attempting to do
 ///          so throws an {InvalidStateError}.
