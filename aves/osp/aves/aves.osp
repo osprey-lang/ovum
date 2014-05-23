@@ -41,6 +41,7 @@ use "UInt.osp";
 use "UnicodeCategory.osp";
 use "Utf16Encoding.osp";
 use "Utf8Encoding.osp";
+use "Version.osp";
 
 namespace aves;
 
