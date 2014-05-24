@@ -90,6 +90,7 @@
     <ClInclude Include="aves_enum.h" />
     <ClInclude Include="aves_env.h" />
     <ClInclude Include="aves_error.h" />
+    <ClInclude Include="aves_gc.h" />
     <ClInclude Include="aves_hash.h" />
     <ClInclude Include="aves_helpers.h" />
     <ClInclude Include="aves_io.h" />
@@ -147,6 +148,7 @@
     <ClCompile Include="real.cpp" />
     <ClCompile Include="set.cpp" />
     <ClCompile Include="shared_strings.cpp" />
+    <ClCompile Include="gc.cpp" />
     <ClCompile Include="string.cpp" />
     <ClCompile Include="stringbuffer.cpp" />
     <ClCompile Include="type.cpp" />

@@ -90,6 +90,4 @@ AVES_API NATIVE_FUNCTION(aves_BufferView_get_length);
 AVES_API NATIVE_FUNCTION(aves_BufferView_get_buffer);
 AVES_API NATIVE_FUNCTION(aves_BufferView_get_kind);
 
-bool aves_BufferView_getReferences(void *basePtr, unsigned int *valc, Value **target, int32_t *state);
-
 #endif // AVES__BUFFER_H

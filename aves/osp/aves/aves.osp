@@ -16,6 +16,7 @@ use "Encoding.osp";
 use "Enum.osp";
 use "Env.osp";
 use "Error.osp";
+use "GC.osp";
 use "Hash.osp";
 use "Int.osp";
 use "InvalidStateError.osp";

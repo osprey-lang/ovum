@@ -61,6 +61,8 @@ public class FileStream is Stream
 	override get position = seekInternal(0, SeekOrigin.current); // seekInternal always returns the new position in the stream
 	override set position { seekInternal(value, SeekOrigin.start); }
 
+	public get fileName							__extern("io_FileStream_get_fileName");
+
 	private init(fileName, mode, access, share)	__extern("io_FileStream_init");
 
 	override readByte()							__extern("io_FileStream_readByte");

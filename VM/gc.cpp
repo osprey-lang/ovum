@@ -218,6 +218,36 @@ int GC::Alloc(Thread *const thread, Type *type, size_t size, GCObject **output)
 	RETURN_SUCCESS;
 }
 
+int GC::AllocArray(Thread *const thread, uint32_t length, size_t itemSize, void **output)
+{
+	if (length > SIZE_MAX / itemSize)
+		return thread->ThrowOverflowError();
+
+	GCObject *gco;
+	int r = Alloc(thread, nullptr, length * itemSize, &gco);
+	if (r != OVUM_SUCCESS) return r;
+
+	gco->flags |= GCOFlags::ARRAY;
+	*output = gco->InstanceBase();
+
+	RETURN_SUCCESS;
+}
+
+int GC::AllocValueArray(Thread *const thread, uint32_t length, Value **output)
+{
+	if (length > SIZE_MAX / sizeof(Value))
+		return thread->ThrowOverflowError();
+
+	GCObject *gco;
+	int r = Alloc(thread, (Type*)GC_VALUE_ARRAY, length * sizeof(Value), &gco);
+	if (r != OVUM_SUCCESS) return r;
+
+	gco->flags |= GCOFlags::ARRAY;
+	*output = gco->FieldsBase();
+
+	RETURN_SUCCESS;
+}
+
 void GC::BeginAlloc(Thread *const thread)
 {
 	if (!allocSection.TryEnter())
@@ -381,14 +411,13 @@ void GC::Release(GCObject *gco)
 {
 	assert((gco->flags & GCOFlags::MARK) == GCO_COLLECT(currentCollectMark));
 
-	if ((gco->flags & GCOFlags::EARLY_STRING) != GCOFlags::NONE ||
-		gco->type == VM::vm->types.String)	
+	if (gco->IsEarlyString() || gco->type == VM::vm->types.String)	
 	{
 		String *str = reinterpret_cast<String*>(gco->InstanceBase());
 		if ((str->flags & StringFlags::INTERN) != StringFlags::NONE)
 			strings.RemoveIntern(str);
 	}
-	else if (gco->type->HasFinalizer())
+	else if (!gco->IsArray() && gco->type->HasFinalizer())
 	{
 		Type *type = gco->type;
 		do
@@ -590,10 +619,8 @@ void GC::MarkRootSet()
 	}
 
 	// Let's also take care of the startup path and module path
-	if (VM::vm->startupPath)
-		TryMarkStringForProcessing(VM::vm->startupPath, &hasGen0Refs);
-	if (VM::vm->modulePath)
-		TryMarkStringForProcessing(VM::vm->modulePath, &hasGen0Refs);
+	TryMarkStringForProcessing(VM::vm->startupPath, &hasGen0Refs);
+	TryMarkStringForProcessing(VM::vm->modulePath, &hasGen0Refs);
 
 	// And then we have all the beautiful, lovely static references.
 	StaticRefBlock *staticRefs = this->staticRefs;
@@ -613,14 +640,24 @@ void GC::MarkForProcessing(GCObject *gco)
 	assert((gco->flags & GCOFlags::MARK) == GCO_COLLECT(currentCollectMark));
 
 	gco->RemoveFromList(gco == pinnedBase ? &pinnedBase : &collectBase);
-	if ((gco->flags & GCOFlags::EARLY_STRING) == GCOFlags::NONE &&
-		gco->type->size > 0) // may have fields
+	// If gco->type is null, then the gco must be an EARLY_STRING or an ARRAY;
+	// in both cases, we couldn't possibly have any instance fields. If the
+	// type is GC_VALUE_ARRAY or has a size greater than zero, we might find
+	// some fields after all.
+	assert(gco->IsEarlyString() ? gco->type == nullptr :
+		gco->IsArray() ? gco->type == nullptr || gco->type == (Type*)GC_VALUE_ARRAY :
+		gco->type != nullptr);
+	bool couldHaveFields = gco->type != nullptr &&
+		(gco->type == (Type*)GC_VALUE_ARRAY || gco->type->size > 0);
+
+	if (couldHaveFields)
 	{
 		gco->InsertIntoList(&processBase);
 		gco->Mark(GCO_PROCESS(currentCollectMark));
 	}
-	else // no chance of instance fields, so nothing to process
+	else
 	{
+		// No chance of instance fields, so nothing to process
 		AddSurvivor(gco);
 		gco->Mark(GCO_KEEP(currentCollectMark));
 	}
@@ -629,8 +666,7 @@ void GC::MarkForProcessing(GCObject *gco)
 void GC::AddSurvivor(GCObject *gco)
 {
 	GCObject **list;
-	GCOFlags flags = gco->flags;
-	if ((flags & GCOFlags::GEN_0) == GCOFlags::GEN_0)
+	if ((gco->flags & GCOFlags::GEN_0) == GCOFlags::GEN_0)
 		list = &survivors->gen0;
 	else
 	{
@@ -648,8 +684,8 @@ void GC::ProcessObjectAndFields(GCObject *gco)
 {
 	// The object is not supposed to be anything but GCO_PROCESS at this point.
 	assert((gco->flags & GCOFlags::MARK) == GCO_PROCESS(currentCollectMark));
-	// It's also not supposed to be a value type.
-	assert(!gco->type || !gco->type->IsPrimitive());
+	// It's also not supposed to be a value type, but could be a GC value array.
+	assert(!gco->type || gco->type == (Type*)GC_VALUE_ARRAY || !gco->type->IsPrimitive());
 
 	// Do this first, so that objects referencing this object will not
 	// attempt to re-mark it for processing
@@ -657,14 +693,21 @@ void GC::ProcessObjectAndFields(GCObject *gco)
 
 	bool hasGen0Refs = false;
 	Type *type = gco->type;
-	while (type)
+	if (type == (Type*)GC_VALUE_ARRAY)
 	{
-		if ((type->flags & TypeFlags::CUSTOMPTR) != TypeFlags::NONE)
-			ProcessCustomFields(type, gco->InstanceBase(), &hasGen0Refs);
-		else if (type->fieldCount)
-			ProcessFields(type->fieldCount, gco->FieldsBase(type), &hasGen0Refs);
+		ProcessFields((gco->size - GCO_SIZE) / sizeof(Value), gco->FieldsBase(), &hasGen0Refs);
+	}
+	else
+	{
+		while (type)
+		{
+			if ((type->flags & TypeFlags::CUSTOMPTR) != TypeFlags::NONE)
+				ProcessCustomFields(type, gco->InstanceBase(), &hasGen0Refs);
+			else if (type->fieldCount)
+				ProcessFields(type->fieldCount, gco->FieldsBase(type), &hasGen0Refs);
 
-		type = type->baseType;
+			type = type->baseType;
+		}
 	}
 
 	if (hasGen0Refs)
@@ -677,29 +720,50 @@ void GC::ProcessObjectAndFields(GCObject *gco)
 
 void GC::ProcessCustomFields(Type *type, void *instBase, bool *hasGen0Refs)
 {
+	// Process native fields first
+	for (int i = 0; i < type->fieldCount; i++)
+	{
+		Type::NativeField field = type->nativeFields[i];
+		void *fieldPtr = (char*)instBase + field.offset;
+		switch (field.type)
+		{
+		case NativeFieldType::VALUE:
+			TryMarkForProcessing(reinterpret_cast<Value*>(fieldPtr), hasGen0Refs);
+			break;
+		case NativeFieldType::VALUE_PTR:
+			TryMarkForProcessing(*reinterpret_cast<Value**>(fieldPtr), hasGen0Refs);
+			break;
+		case NativeFieldType::STRING:
+			TryMarkStringForProcessing(*reinterpret_cast<String**>(fieldPtr), hasGen0Refs);
+			break;
+		case NativeFieldType::GC_ARRAY:
+			if (*(void**)fieldPtr)
+			{
+				GCObject *gco = GCObject::FromInst(*(void**)fieldPtr);
+				GCOFlags flags = gco->flags;
+				if ((flags & GCOFlags::GEN_0) == GCOFlags::GEN_0 &&
+					(flags & GCOFlags::PINNED) == GCOFlags::NONE)
+					*hasGen0Refs = true;
+				if ((flags & GCOFlags::MARK) == GCO_COLLECT(currentCollectMark))
+					MarkForProcessing(gco);
+			}
+			break;
+		}
+	}
+
 	if (type == VM::vm->types.Hash)
 	{
-		ProcessHash((HashInst*)instBase, hasGen0Refs);
-	}
-	else if (type == VM::vm->types.List)
-	{
-		ListInst *list = (ListInst*)instBase;
-		ProcessFields(list->length, list->values, hasGen0Refs);
-	}
-	else if (type == VM::vm->types.Method)
-	{
-		MethodInst *minst = (MethodInst*)instBase;
-		if (minst->instance.type)
-			TryMarkForProcessing(&minst->instance, hasGen0Refs);
-	}
-	else if (type == VM::vm->types.Error)
-	{
-		ErrorInst *error = (ErrorInst*)instBase;
-		if (error->message)
-			TryMarkStringForProcessing(error->message, hasGen0Refs);
-		if (error->stackTrace)
-			TryMarkStringForProcessing(error->stackTrace, hasGen0Refs);
-		TryMarkForProcessing(&error->innerError, hasGen0Refs);
+		HashInst *hash = (HashInst*)instBase;
+		int32_t entryCount = hash->count;
+		HashEntry *entries = hash->entries;
+
+		for (int32_t i = 0; i < entryCount; i++)
+			if (entries[i].hashCode >= 0)
+			{
+				HashEntry *entry = entries + i;
+				TryMarkForProcessing(&entry->key, hasGen0Refs);
+				TryMarkForProcessing(&entry->value, hasGen0Refs);
+			}
 	}
 	else if (type->getReferences) // If the type has no reference getter, assume it has no managed references
 	{
@@ -715,20 +779,6 @@ void GC::ProcessCustomFields(Type *type, void *instBase, bool *hasGen0Refs)
 			ProcessFields(fieldCount, fields, hasGen0Refs);
 		} while (cont);
 	}
-}
-
-void GC::ProcessHash(HashInst *hash, bool *hasGen0Refs)
-{
-	int32_t entryCount = hash->count;
-	HashEntry *entries = hash->entries;
-
-	for (int32_t i = 0; i < entryCount; i++)
-		if (entries[i].hashCode >= 0)
-		{
-			HashEntry *entry = entries + i;
-			TryMarkForProcessing(&entry->key, hasGen0Refs);
-			TryMarkForProcessing(&entry->value, hasGen0Refs);
-		}
 }
 
 void GC::MoveGen0Survivors()
@@ -884,10 +934,8 @@ void GC::UpdateRootSet()
 	// Module strings do not have any gen0 references
 
 	// Startup and module path
-	if (VM::vm->startupPath)
-		TryUpdateStringRef(&VM::vm->startupPath);
-	if (VM::vm->modulePath)
-		TryUpdateStringRef(&VM::vm->modulePath);
+	TryUpdateStringRef(&VM::vm->startupPath);
+	TryUpdateStringRef(&VM::vm->modulePath);
 
 	// Static references
 	StaticRefBlock *staticRefs = this->staticRefs;
@@ -906,14 +954,21 @@ void GC::UpdateRootSet()
 void GC::UpdateObjectFields(GCObject *gco)
 {
 	Type *type = gco->type;
-	while (type)
+	if (type == (Type*)GC_VALUE_ARRAY)
 	{
-		if ((type->flags & TypeFlags::CUSTOMPTR) != TypeFlags::NONE)
-			UpdateCustomFields(type, gco->InstanceBase());
-		else if (type->fieldCount)
-			UpdateFields(type->fieldCount, gco->FieldsBase(type));
+		UpdateFields((gco->size - GCO_SIZE) / sizeof(Value), gco->FieldsBase());
+	}
+	else
+	{
+		while (type)
+		{
+			if ((type->flags & TypeFlags::CUSTOMPTR) != TypeFlags::NONE)
+				UpdateCustomFields(type, gco->InstanceBase());
+			else if (type->fieldCount)
+				UpdateFields(type->fieldCount, gco->FieldsBase(type));
 
-		type = type->baseType;
+			type = type->baseType;
+		}
 	}
 
 	gco->flags &= ~GCOFlags::HAS_GEN0_REFS;
@@ -921,31 +976,48 @@ void GC::UpdateObjectFields(GCObject *gco)
 
 void GC::UpdateCustomFields(Type *type, void *instBase)
 {
+	// Update native fields first
+	for (int i = 0; i < type->fieldCount; i++)
+	{
+		Type::NativeField field = type->nativeFields[i];
+		void *fieldPtr = (char*)instBase + field.offset;
+		switch (field.type)
+		{
+		case NativeFieldType::VALUE:
+			TryUpdateRef(reinterpret_cast<Value*>(fieldPtr));
+			break;
+		case NativeFieldType::VALUE_PTR:
+			TryUpdateRef(*reinterpret_cast<Value**>(fieldPtr));
+			break;
+		case NativeFieldType::STRING:
+			TryUpdateStringRef(reinterpret_cast<String**>(fieldPtr));
+			break;
+		case NativeFieldType::GC_ARRAY:
+			if (*(void**)fieldPtr)
+			{
+				GCObject *gco = GCObject::FromInst(*(void**)fieldPtr);
+				if (gco->IsMoved())
+					*(void**)fieldPtr = gco->newAddress->InstanceBase();
+			}
+			break;
+		}
+	}
+
 	if (type == VM::vm->types.Hash)
 	{
-		UpdateHash((HashInst*)instBase);
+		HashInst *hash = (HashInst*)instBase;
+		int32_t entryCount = hash->count;
+		HashEntry *entries = hash->entries;
+
+		for (int32_t i = 0; i < entryCount; i++)
+			if (entries[i].hashCode >= 0)
+			{
+				HashEntry *entry = entries + i;
+				TryUpdateRef(&entry->key);
+				TryUpdateRef(&entry->value);
+			}
 	}
-	else if (type == VM::vm->types.List)
-	{
-		ListInst *list = (ListInst*)instBase;
-		UpdateFields(list->length, list->values);
-	}
-	else if (type == VM::vm->types.Method)
-	{
-		MethodInst *minst = (MethodInst*)instBase;
-		if (minst->instance.type)
-			TryUpdateRef(&minst->instance);
-	}
-	else if (type == VM::vm->types.Error)
-	{
-		ErrorInst *error = (ErrorInst*)instBase;
-		if (error->message)
-			TryUpdateStringRef(&error->message);
-		if (error->stackTrace)
-			TryUpdateStringRef(&error->stackTrace);
-		TryUpdateRef(&error->innerError);
-	}
-	else if (type->getReferences) // If the type has no reference getter, assume it has no managed references
+	else if (type->getReferences)
 	{
 		bool cont;
 		int32_t state = 0;
@@ -959,20 +1031,7 @@ void GC::UpdateCustomFields(Type *type, void *instBase)
 			UpdateFields(fieldCount, fields);
 		} while (cont);
 	}
-}
-
-void GC::UpdateHash(HashInst *hash)
-{
-	int32_t entryCount = hash->count;
-	HashEntry *entries = hash->entries;
-
-	for (int32_t i = 0; i < entryCount; i++)
-		if (entries[i].hashCode >= 0)
-		{
-			HashEntry *entry = entries + i;
-			TryUpdateRef(&entry->key);
-			TryUpdateRef(&entry->value);
-		}
+	// Otherwise, if the type has no reference getter, assume it has no managed references
 }
 
 
@@ -989,6 +1048,16 @@ OVUM_API String *GC_ConstructString(ThreadHandle thread, const int32_t length, c
 OVUM_API String *GC_ConvertString(ThreadHandle thread, const char *string)
 {
 	return GC::gc->ConvertString(thread, string);
+}
+
+OVUM_API int GC_AllocArray(ThreadHandle thread, uint32_t length, size_t itemSize, void **output)
+{
+	return GC::gc->AllocArray(thread, length, itemSize, output);
+}
+
+OVUM_API int GC_AllocValueArray(ThreadHandle thread, uint32_t length, Value **output)
+{
+	return GC::gc->AllocValueArray(thread, length, output);
 }
 
 OVUM_API void GC_AddMemoryPressure(ThreadHandle thread, const size_t size)
@@ -1009,6 +1078,29 @@ OVUM_API Value *GC_AddStaticReference(Value initialValue)
 OVUM_API void GC_Collect(ThreadHandle thread)
 {
 	GC::gc->Collect(thread, false);
+}
+
+OVUM_API uint32_t GC_GetCollectCount()
+{
+	return GC::gc->GetCollectCount();
+}
+
+OVUM_API int GC_GetGeneration(Value *value)
+{
+	if (value->type->IsPrimitive())
+		return -1;
+
+	GCObject *gco = GCObject::FromValue(value);
+	switch (gco->flags & GCOFlags::GENERATION)
+	{
+	case GCOFlags::GEN_0:
+		return 0;
+	case GCOFlags::GEN_1:
+	case GCOFlags::LARGE_OBJECT:
+		return 1;
+	default:
+		return -1;
+	}
 }
 
 OVUM_API uint32_t GC_GetObjectHashCode(Value *value)
@@ -1047,12 +1139,45 @@ OVUM_API void GC_Pin(Value *value)
 	}
 }
 
+OVUM_API void GC_PinInst(void *value)
+{
+	using namespace std;
+	if (value)
+	{
+		GCObject *gco = GCObject::FromInst(value);
+		// We must synchronise access to these two fields.
+		// Let's just reuse the field access flag.
+		while (gco->fieldAccessFlag.test_and_set(memory_order_acquire))
+			;
+		gco->pinCount++;
+		gco->flags |= GCOFlags::PINNED;
+		gco->fieldAccessFlag.clear(memory_order_release);
+	}
+}
+
 OVUM_API void GC_Unpin(Value *value)
 {
 	using namespace std;
 	if (value->type != nullptr && !value->type->IsPrimitive())
 	{
 		GCObject *gco = GCObject::FromValue(value);
+		// We must synchronise access to these two fields.
+		// Let's just reuse the field access flag.
+		while (gco->fieldAccessFlag.test_and_set(memory_order_acquire))
+			;
+		gco->pinCount--;
+		if (gco->pinCount == 0)
+			gco->flags &= ~GCOFlags::PINNED;
+		gco->fieldAccessFlag.clear(memory_order_release);
+	}
+}
+
+OVUM_API void GC_UnpinInst(void *value)
+{
+	using namespace std;
+	if (value)
+	{
+		GCObject *gco = GCObject::FromInst(value);
 		// We must synchronise access to these two fields.
 		// Let's just reuse the field access flag.
 		while (gco->fieldAccessFlag.test_and_set(memory_order_acquire))

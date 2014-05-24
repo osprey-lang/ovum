@@ -1,5 +1,5 @@
 #include "aves_set.h"
-#include <memory>
+#include <cstddef>
 
 #define _Set(value)         reinterpret_cast<::SetInst*>((value).instance)
 #define U64_TO_HASH(value)  ((int32_t)(value) ^ (int32_t)((value) >> 32))
@@ -8,49 +8,42 @@ AVES_API void aves_Set_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(SetInst));
 	Type_SetReferenceGetter(type, aves_Set_getReferences);
-	Type_SetFinalizer(type, aves_Set_finalize);
+	
+	Type_AddNativeField(type, offsetof(SetInst, buckets), NativeFieldType::GC_ARRAY);
+	Type_AddNativeField(type, offsetof(SetInst, entries), NativeFieldType::GC_ARRAY);
 }
 
-bool InitializeBuckets(SetInst *set, const int32_t capacity)
+int InitializeBuckets(ThreadHandle thread, SetInst *set, const int32_t capacity)
 {
-	using namespace std;
-
 	int32_t size = HashHelper_GetPrime(capacity);
 
-	unique_ptr<int32_t[]> buckets(new(std::nothrow) int32_t[size]);
-	if (buckets.get() == nullptr)
-		return false;
-	memset(buckets.get(), -1, size * sizeof(int32_t));
+	int r = GC_AllocArrayT(thread, size, &set->buckets);
+	if (r != OVUM_SUCCESS) return r;
+	memset(set->buckets, -1, size * sizeof(int32_t));
 
-	unique_ptr<SetEntry[]> entries(new(std::nothrow) SetEntry[size]);
-	if (entries.get() == nullptr)
-		return false;
-	memset(entries.get(), 0, size * sizeof(SetEntry));
+	r = GC_AllocArrayT(thread, size, &set->entries);
+	if (r != OVUM_SUCCESS) return r;
 
 	set->capacity = size;
-	set->buckets  = buckets.release();
-	set->entries  = entries.release();
 	set->freeList = -1;
-	return true;
+	RETURN_SUCCESS;
 }
 
-bool ResizeSet(ThreadHandle thread, SetInst *set)
+int ResizeSet(ThreadHandle thread, SetInst *set)
 {
-	using namespace std;
-
 	int32_t newSize = HashHelper_GetPrime(set->count * 2);
 
-	unique_ptr<int32_t[]> newBuckets(new(std::nothrow) int32_t[newSize]);
-	if (newBuckets.get() == nullptr)
-		return false;
-	memset(newBuckets.get(), -1, newSize * sizeof(int32_t));
+	int32_t *newBuckets;
+	int r = GC_AllocArrayT(thread, newSize, &newBuckets);
+	if (r != OVUM_SUCCESS) return r;
+	memset(newBuckets, -1, newSize * sizeof(int32_t));
 
-	unique_ptr<SetEntry[]> newEntries(new(std::nothrow) SetEntry[newSize]);
-	if (newEntries.get() == nullptr)
-		return false;
-	CopyMemoryT(newEntries.get(), set->entries, set->count);
+	SetEntry *newEntries;
+	r = GC_AllocArrayT(thread, newSize, &newEntries);
+	if (r != OVUM_SUCCESS) return r;
+	CopyMemoryT(newEntries, set->entries, set->count);
 	
-	SetEntry *e = newEntries.get();
+	SetEntry *e = newEntries;
 	for (int32_t i = 0; i < set->count; i++, e++)
 	{
 		int32_t bucket = e->hashCode % newSize;
@@ -58,13 +51,10 @@ bool ResizeSet(ThreadHandle thread, SetInst *set)
 		newBuckets[bucket] = i;
 	}
 
-	delete[] set->buckets;
-	delete[] set->entries;
-
-	set->buckets = newBuckets.release();
-	set->entries = newEntries.release();
+	set->buckets = newBuckets;
+	set->entries = newEntries;
 	set->capacity = newSize;
-	return true;
+	RETURN_SUCCESS;
 }
 
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Set_new)
@@ -79,7 +69,10 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Set_new)
 	}
 
 	if (capacity > 0)
-		CHECKED_MEM(InitializeBuckets(set, (int32_t)capacity));
+	{
+		Pinned s(THISP);
+		CHECKED(InitializeBuckets(thread, set, (int32_t)capacity));
+	}
 }
 END_NATIVE_FUNCTION
 
@@ -95,7 +88,7 @@ AVES_API NATIVE_FUNCTION(aves_Set_clear)
 	SetInst *set = _Set(THISV);
 
 	memset(set->buckets, -1, set->capacity * sizeof(int32_t*));
-	memset(set->entries, 0, set->capacity * sizeof(SetEntry));
+	memset(set->entries, 0, set->count * sizeof(SetEntry));
 	set->count = 0;
 	set->freeCount = 0;
 	set->freeList = -1;
@@ -139,7 +132,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Set_addInternal)
 	Pinned s(THISP);
 	SetInst *set = _Set(THISV);
 	if (set->buckets == nullptr)
-		CHECKED_MEM(InitializeBuckets(set, 0));
+		CHECKED(InitializeBuckets(thread, set, 0));
 
 	int32_t hash = U64_TO_HASH(args[2].uinteger) & INT32_MAX;
 	int32_t bucket = hash % set->capacity;
@@ -171,7 +164,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Set_addInternal)
 	{
 		if (set->count == set->capacity)
 		{
-			CHECKED_MEM(ResizeSet(thread, set));
+			CHECKED(ResizeSet(thread, set));
 			bucket = hash % set->capacity;
 		}
 		index = set->count;
@@ -218,7 +211,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Set_removeInternal)
 
 					entry->hashCode = -1;
 					entry->next = set->freeList;
-					entry->value = NULL_VALUE;
+					entry->value.type = nullptr;
 					set->freeList = i;
 					set->freeCount++;
 					set->version++;
@@ -277,17 +270,4 @@ bool aves_Set_getReferences(void *basePtr, unsigned int *valc, Value **target, i
 		i++;
 	}
 	return false;
-}
-
-void aves_Set_finalize(void *basePtr)
-{
-	SetInst *set = reinterpret_cast<SetInst*>(basePtr);
-
-	delete[] set->buckets;
-	delete[] set->entries;
-	set->capacity  = 0;
-	set->count     = 0;
-	set->freeCount = 0;
-	set->freeList  = -1;
-	set->version   = -1;
 }

@@ -120,6 +120,9 @@
     <ClInclude Include="aves_char.h">
       <Filter>Header Files\aves</Filter>
     </ClInclude>
+    <ClInclude Include="aves_gc.h">
+      <Filter>Header Files\aves</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="aves.cpp">
@@ -210,6 +213,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="char.cpp">
+      <Filter>Source Files\aves</Filter>
+    </ClCompile>
+    <ClCompile Include="gc.cpp">
       <Filter>Source Files\aves</Filter>
     </ClCompile>
   </ItemGroup>

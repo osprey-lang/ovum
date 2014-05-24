@@ -71,7 +71,9 @@ int32_t Method::Overload::GetStackOffset(uint16_t stackSlot) const
 
 Type::Type(int32_t memberCount) :
 	members(memberCount), typeToken(nullptr),
-	size(0), fieldCount(0), getReferences(nullptr), finalizer(nullptr)
+	size(0), fieldCount(0),
+	getReferences(nullptr), finalizer(nullptr),
+	nativeFieldCapacity(0), nativeFields(nullptr)
 {
 	memset(operators, 0, sizeof(Method::Overload*) * OPERATOR_COUNT);
 }
@@ -89,6 +91,10 @@ Type::~Type()
 		if (VM::vm->types.*(type.member) == this)
 			VM::vm->types.*(type.member) = nullptr;
 	}
+
+	// If there are any native fields, destroy them
+	// (Allocated with realloc)
+	free(nativeFields);
 }
 
 void Type::InitOperators()
@@ -168,6 +174,19 @@ void Type::InitStaticFields()
 			static_cast<Field*>(m)->staticValue = GC::gc->AddStaticReference(NULL_VALUE);
 		}
 	}
+}
+
+void Type::AddNativeField(size_t offset, NativeFieldType fieldType)
+{
+	if (fieldCount == nativeFieldCapacity)
+	{
+		uint32_t newCap = nativeFieldCapacity ? 2 * nativeFieldCapacity : 4;
+		nativeFields = reinterpret_cast<NativeField*>(realloc(nativeFields, sizeof(NativeField) * newCap));
+	}
+
+	NativeField *field = nativeFields + fieldCount++;
+	field->offset = offset;
+	field->type = fieldType;
 }
 
 // Determines whether a member is accessible from a given type.
@@ -637,4 +656,10 @@ OVUM_API void Type_SetReferenceGetter(TypeHandle type, ReferenceGetter getter)
 {
 	if ((type->flags & TypeFlags::INITED) == TypeFlags::NONE)
 		type->getReferences = getter;
+}
+
+OVUM_API void Type_AddNativeField(TypeHandle type, size_t offset, NativeFieldType fieldType)
+{
+	if ((type->flags & TypeFlags::INITED) == TypeFlags::NONE)
+		type->AddNativeField(offset, fieldType);
 }

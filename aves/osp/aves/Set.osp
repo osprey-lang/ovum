@@ -4,7 +4,10 @@ public inheritable Set
 {
 	__init_type("aves_Set_init");
 
-	public new();
+	public new()
+	{
+		new this(0);
+	}
 	public new(capacity)					__extern("aves_Set_new");
 
 	public get length						__extern("aves_Set_get_length");

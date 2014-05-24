@@ -1,0 +1,29 @@
+namespace aves;
+
+public static class GC
+{
+	/// Summary: Gets a value indicating how many times the garbage
+	///          collector has collected garbage.
+	/// Returns: The number of times the GC has run a cycle, as an Int.
+	public static get collectCount			__extern("aves_GC_get_collectCount");
+
+	/// Summary: Forces an immediate garbage collection.
+	/// Remarks: The runtime normally decides when to collect garbage based
+	///          on a variety of factors, including memory allocation of objects
+	///          as well as the amount of garbage in each generation. Due to
+	///          the relative cost of walking through allocated objects, this
+	///          method should be called sparingly.
+	///
+	///          However, under some circumstances, for example if the last
+	///          reference to a particularly large object has recently been
+	///          abandoned, it may be advantageous to call {collect} to ensure
+	///          that it is cleaned up as soon as possible.
+	///
+	///          This method returns after the GC cycle has ended.
+	public static collect()					__extern("aves_GC_collect");
+
+	/// Summary: Gets the current generation of a specified object.
+	/// Returns: An Int that represents the current generation that {object}
+	///          is in (0 or 1), or -1 if the object is of a value type.
+	public static getGeneration(object)		__extern("aves_GC_getGeneration");
+}

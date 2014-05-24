@@ -64,7 +64,7 @@ public:
 	// Cached, so that canRead and canWrite are fast.
 	FileAccess access;
 
-	Value fileName; // String
+	String *fileName;
 
 	// TODO: File buffering and other fun stuff
 
@@ -82,6 +82,8 @@ AVES_API NATIVE_FUNCTION(io_FileStream_get_canWrite);
 AVES_API NATIVE_FUNCTION(io_FileStream_get_canSeek);
 
 AVES_API NATIVE_FUNCTION(io_FileStream_get_length);
+
+AVES_API NATIVE_FUNCTION(io_FileStream_get_fileName);
 
 AVES_API NATIVE_FUNCTION(io_FileStream_readByte);
 AVES_API NATIVE_FUNCTION(io_FileStream_readMaxInternal);

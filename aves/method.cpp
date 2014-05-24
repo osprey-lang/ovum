@@ -1,12 +1,14 @@
 #include <limits.h>
 #include "aves_method.h"
+#include <cstddef>
 
 #define _M(value)	((value).common.method)
 
 AVES_API void aves_Method_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(MethodInst));
-	Type_SetReferenceGetter(type, aves_Method_getReferences);
+
+	Type_AddNativeField(type, offsetof(MethodInst, instance), NativeFieldType::VALUE);
 }
 
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Method_new)
@@ -69,20 +71,4 @@ AVES_API NATIVE_FUNCTION(aves_Method_opEquals)
 	VM_PushBool(thread, a->method == b->method &&
 		IsSameReference(&a->instance, &b->instance));
 	RETURN_SUCCESS;
-}
-
-bool aves_Method_getReferences(void *basePtr, unsigned int *valc, Value **target, int32_t *state)
-{
-	MethodInst *method = reinterpret_cast<MethodInst*>(basePtr);
-	if (!IS_NULL(method->instance))
-	{
-		*valc = 1;
-		*target = &method->instance;
-	}
-	else
-	{
-		valc = 0;
-	}
-
-	return false;
 }

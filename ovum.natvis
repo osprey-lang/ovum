@@ -250,4 +250,21 @@
 		<DisplayString Condition="stackHeight == -1">{{instr={instr}, unvisited}}</DisplayString>
 		<DisplayString>{{instr={instr}, stackHeight={stackHeight}}}</DisplayString>
 	</Type>
+
+	<Type Name="ListInst_S">
+		<DisplayString>{{List length={length} capacity={capacity}}}</DisplayString>
+		<Expand>
+			<Item Name="[length]">length</Item>
+			<Item Name="[capacity]">capacity</Item>
+			<Synthetic Name="[values]">
+				<DisplayString>Expand to view list values</DisplayString>
+				<Expand>
+					<ArrayItems Condition="capacity &gt; 0">
+						<Size>capacity</Size>
+						<ValuePointer>values</ValuePointer>
+					</ArrayItems>
+				</Expand>
+			</Synthetic>
+		</Expand>
+	</Type>
 </AutoVisualizer>

@@ -40,6 +40,5 @@ AVES_API NATIVE_FUNCTION(aves_Set_hasEntryAt);
 AVES_API NATIVE_FUNCTION(aves_Set_getEntryAt);
 
 bool aves_Set_getReferences(void *basePtr, unsigned int *valc, Value **target, int32_t *state);
-void aves_Set_finalize(void *basePtr);
 
 #endif // AVES__SET_H
