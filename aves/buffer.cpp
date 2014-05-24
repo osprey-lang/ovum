@@ -290,7 +290,8 @@ AVES_API uint8_t *aves_Buffer_getDataPointer(Value *buffer, uint32_t *bufferSize
 AVES_API void aves_BufferView_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(BufferView));
-	Type_SetReferenceGetter(type, aves_BufferView_getReferences);
+
+	Type_AddNativeField(type, offsetof(BufferView, buffer), NativeFieldType::VALUE);
 }
 
 AVES_API BEGIN_NATIVE_FUNCTION(aves_BufferView_new)
@@ -500,12 +501,4 @@ AVES_API NATIVE_FUNCTION(aves_BufferView_get_kind)
 	kind.integer = view->kind;
 	VM_Push(thread, kind);
 	RETURN_SUCCESS;
-}
-
-bool aves_BufferView_getReferences(void *basePtr, unsigned int *valc, Value **target, int32_t *state)
-{
-	BufferView *view = (BufferView*)basePtr;
-	*valc = 1;
-	*target = &view->buffer;
-	return false;
 }

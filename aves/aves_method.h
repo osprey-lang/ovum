@@ -12,6 +12,4 @@ AVES_API NATIVE_FUNCTION(aves_Method_get_hasInstance);
 AVES_API NATIVE_FUNCTION(aves_Method_accepts);
 AVES_API NATIVE_FUNCTION(aves_Method_opEquals);
 
-bool aves_Method_getReferences(void *basePtr, unsigned int *valc, Value **target, int32_t *state);
-
 #endif // AVES__METHOD_H

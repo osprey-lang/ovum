@@ -50,6 +50,11 @@ enum class GCOFlags : uint32_t
 	// The GCObject has been moved to generation 1. The newAddress
 	// field contains the new address.
 	MOVED         = 0x0100,
+
+	// The GCObject is a GC-managed array. If GCObject::type is
+	// GC_VALUE_ARRAY, then the array contains Values. Otherwise,
+	// we have no idea what it contains.
+	ARRAY         = 0x0200,
 };
 ENUM_OPS(GCOFlags, uint32_t);
 
@@ -67,7 +72,7 @@ public:
 	uint32_t pinCount;
 	uint32_t hashCode;
 
-	GCObject *prev; // Pointer to the previous GC object in the object's list (collect, process or keep).
+	GCObject *prev; // Pointer to the previous GC object in the object's list.
 	GCObject *next; // Pointer to the next GC object in the object's list.
 
 	// A flag that is set while a thread is reading from or writing to
@@ -93,8 +98,11 @@ public:
 		flags = flags & ~GCOFlags::MARK | mark;
 	}
 
-	inline bool IsPinned()    { return (flags & GCOFlags::PINNED) == GCOFlags::PINNED; }
-	inline bool HasGen0Refs() { return (flags & GCOFlags::HAS_GEN0_REFS) == GCOFlags::HAS_GEN0_REFS; }
+	inline bool IsEarlyString() const { return (flags & GCOFlags::EARLY_STRING) == GCOFlags::EARLY_STRING; }
+	inline bool IsArray()       const { return (flags & GCOFlags::ARRAY) == GCOFlags::ARRAY; }
+	inline bool IsPinned()      const { return (flags & GCOFlags::PINNED) == GCOFlags::PINNED; }
+	inline bool HasGen0Refs()   const { return (flags & GCOFlags::HAS_GEN0_REFS) == GCOFlags::HAS_GEN0_REFS; }
+	inline bool IsMoved()       const { return (flags & GCOFlags::MOVED) == GCOFlags::MOVED; }
 
 	uint8_t *InstanceBase();
 	uint8_t *InstanceBase(Type *type);
@@ -292,6 +300,7 @@ private:
 	// If there is more than this amount of dead memory in gen1,
 	// that generation is always collected.
 	static const size_t GEN1_DEAD_OBJECTS_THRESHOLD = 768 * 1024;
+	static const intptr_t GC_VALUE_ARRAY = (intptr_t)1;
 
 	typedef struct
 	{
@@ -367,6 +376,11 @@ public:
 	GC();
 	~GC();
 
+	inline uint32_t GetCollectCount() const
+	{
+		return collectCount;
+	}
+
 	int Alloc(Thread *const thread, Type *type, size_t size, GCObject **output);
 	inline int Alloc(Thread *const thread, Type *type, size_t size, Value *output)
 	{
@@ -379,6 +393,9 @@ public:
 		}
 		return r;
 	}
+
+	int AllocArray(Thread *const thread, uint32_t length, uint32_t itemSize, void **output);
+	int AllocValueArray(Thread *const thread, uint32_t length, Value **output);
 
 	String *ConstructString(Thread *const thread, const int32_t length, const uchar value[]);
 	String *ConvertString(Thread *const thread, const char *string);
@@ -463,7 +480,7 @@ private:
 	}
 	inline void TryMarkStringForProcessing(String *str, bool *hasGen0Refs)
 	{
-		if ((str->flags & StringFlags::STATIC) == StringFlags::NONE)
+		if (str && (str->flags & StringFlags::STATIC) == StringFlags::NONE)
 		{
 			GCObject *gco = GCObject::FromInst(str);
 			if ((gco->flags & GCOFlags::GEN_0) == GCOFlags::GEN_0)
@@ -475,7 +492,6 @@ private:
 
 	void ProcessObjectAndFields(GCObject *gco);
 	void ProcessCustomFields(Type *type, void *instBase, bool *hasGen0Refs);
-	void ProcessHash(HashInst *hash, bool *hasGen0Refs);
 	inline void ProcessFields(unsigned int fieldCount, Value fields[], bool *hasGen0Refs)
 	{
 		for (unsigned int i = 0; i < fieldCount; i++)
@@ -518,7 +534,6 @@ private:
 	void UpdateRootSet();
 	static void UpdateObjectFields(GCObject *gco);
 	static void UpdateCustomFields(Type *type, void *instBase);
-	static void UpdateHash(HashInst *hash);
 
 	static inline bool ShouldUpdateRef(Value *val)
 	{
@@ -529,7 +544,7 @@ private:
 			(val->common.string->flags & StringFlags::STATIC) == StringFlags::STATIC)
 			return false;
 
-		return (GCObject::FromValue(val)->flags & GCOFlags::MOVED) == GCOFlags::MOVED;
+		return GCObject::FromValue(val)->IsMoved();
 	}
 	static inline void TryUpdateRef(Value *value)
 	{
@@ -538,10 +553,10 @@ private:
 	}
 	static inline void TryUpdateStringRef(String **str)
 	{
-		if (((*str)->flags & StringFlags::STATIC) == StringFlags::NONE)
+		if (*str && ((*str)->flags & StringFlags::STATIC) == StringFlags::NONE)
 		{
 			GCObject *gco = GCObject::FromInst(*str);
-			if ((gco->flags & GCOFlags::MOVED) == GCOFlags::MOVED)
+			if (gco->IsMoved())
 				*str = (String*)gco->newAddress->InstanceBase();
 		}
 	}
@@ -563,7 +578,7 @@ private:
 				{
 					uintptr_t offset = ~(uintptr_t)v->type;
 					GCObject *gco = reinterpret_cast<GCObject*>((char*)v->reference - offset);
-					if ((gco->flags & GCOFlags::MOVED) == GCOFlags::MOVED)
+					if (gco->IsMoved())
 						v->reference = (char*)gco->newAddress + offset;
 				}
 			}

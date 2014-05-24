@@ -390,6 +390,26 @@ public abstract class Iterator
 		return new MapIterator(this, func);
 	}
 
+	public take(count)
+	{
+		count = int(count);
+		if count < 0:
+			throw new ArgumentRangeError("count");
+		if count == 0:
+			return empty;
+
+		return new TakeIterator(this, count);
+	}
+
+	public skip(count)
+	{
+		count = int(count);
+		if count < 0:
+			throw new ArgumentRangeError("count");
+
+		return new SkipIterator(this, count);
+	}
+
 	public toList()
 	{
 		var output = [];
@@ -412,24 +432,17 @@ private class FilterIterator is Iterator
 {
 	public new(this.inner, this.predicate);
 
-	private inner, predicate, cur, ended = false;
+	private inner, predicate, ended = false;
 
-	override get current = cur;
+	override get current = inner.current;
 	override moveNext()
 	{
 		if not ended
 		{
-			while inner.moveNext()
-			{
-				var value = inner.current;
-				if predicate(value)
-				{
-					cur = value;
+			while inner.moveNext():
+				if predicate(inner.current):
 					return true;
-				}
-			}
 
-			cur = null;
 			ended = true;
 		}
 
@@ -458,6 +471,56 @@ private class MapIterator is Iterator
 			ended = true;
 		}
 
+		return false;
+	}
+}
+
+private class TakeIterator is Iterator
+{
+	public new(this.inner, this.count);
+
+	private inner, count;
+
+	override get current = inner.current;
+	override moveNext()
+	{
+		if count > 0
+		{
+			if inner.moveNext()
+			{
+				count -= 1;
+				return true;
+			}
+
+			count = 0;
+		}
+		return false;
+	}
+}
+
+private class SkipIterator is Iterator
+{
+	public new(this.inner, this.count);
+
+	private inner, count, hasMore = true;
+
+	override get current = inner.current;
+	override moveNext()
+	{
+		if hasMore
+		{
+			while count > 0
+			{
+				if not inner.moveNext()
+				{
+					hasMore = true;
+					return false;
+				}
+				count -= 1;
+			}
+
+			return hasMore = inner.moveNext();
+		}
 		return false;
 	}
 }

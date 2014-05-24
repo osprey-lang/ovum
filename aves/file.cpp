@@ -121,6 +121,8 @@ AVES_API void io_FileStream_initType(TypeHandle type)
 {
 	Type_SetInstanceSize(type, (uint32_t)sizeof(FileStream));
 	Type_SetFinalizer(type, io_FileStream_finalize);
+
+	Type_AddNativeField(type, offsetof(FileStream, fileName), NativeFieldType::STRING);
 }
 
 AVES_API BEGIN_NATIVE_FUNCTION(io_FileStream_init)
@@ -203,6 +205,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(io_FileStream_init)
 	FileStream *stream = _FS(THISV);
 	stream->handle = handle;
 	stream->access = (FileAccess)args[3].integer;
+	stream->fileName = fileName;
 }
 END_NATIVE_FUNCTION
 
@@ -257,6 +260,13 @@ AVES_API BEGIN_NATIVE_FUNCTION(io_FileStream_get_length)
 	VM_PushInt(thread, size.QuadPart);
 }
 END_NATIVE_FUNCTION
+
+AVES_API NATIVE_FUNCTION(io_FileStream_get_fileName)
+{
+	FileStream *stream = _FS(THISV);
+	VM_PushString(thread, stream->fileName);
+	RETURN_SUCCESS;
+}
 
 AVES_API BEGIN_NATIVE_FUNCTION(io_FileStream_readByte)
 {

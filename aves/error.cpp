@@ -1,6 +1,7 @@
 #include "ov_string.h"
 #include "ov_stringbuffer.h"
 #include "aves_error.h"
+#include <cstddef>
 
 #define _E(value)	((value).common.error)
 
@@ -10,7 +11,11 @@ String *DefaultErrorMessage = _S(_DefaultErrorMessage);
 AVES_API void aves_Error_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(ErrorInst));
-	Type_SetReferenceGetter(type, aves_Error_getReferences);
+
+	Type_AddNativeField(type, offsetof(ErrorInst, message),    NativeFieldType::STRING);
+	Type_AddNativeField(type, offsetof(ErrorInst, stackTrace), NativeFieldType::STRING);
+	Type_AddNativeField(type, offsetof(ErrorInst, innerError), NativeFieldType::VALUE);
+	Type_AddNativeField(type, offsetof(ErrorInst, data),       NativeFieldType::VALUE);
 }
 
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Error_new)
@@ -62,14 +67,4 @@ AVES_API NATIVE_FUNCTION(aves_Error_get_data)
 	ErrorInst *err = _E(THISV);
 	VM_Push(thread, err->data);
 	RETURN_SUCCESS;
-}
-
-bool aves_Error_getReferences(void *basePtr, unsigned int *valc, Value **target, int32_t *state)
-{
-	ErrorInst *err = reinterpret_cast<ErrorInst*>(basePtr);
-
-	*valc = 2;
-	*target = &err->innerError;
-
-	return false;
 }

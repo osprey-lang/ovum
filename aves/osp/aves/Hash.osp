@@ -148,10 +148,13 @@ public inheritable Hash
 	}
 	private removeInternal(key, hash)			__extern("aves_Hash_removeInternal");
 
+	private pinEntries()						__extern("aves_Hash_pinEntries");
+	private unpinEntries()						__extern("aves_Hash_unpinEntries");
+
 	// Higher-order functions!
 
 	/// Summary: Determines whether all the entries in the hash table match the specified
-	////         predicate.
+	///          predicate.
 	/// Param predicate: An invokable value that accepts two arguments (the key and the
 	///                  value) for each entry, and returns a truthy value if the entry
 	///                  matches some condition, and a falsy value otherwise.
@@ -164,14 +167,22 @@ public inheritable Hash
 	{
 		var startVersion = version;
 
-		for i in [0 to entryCount - 1]
+		try
 		{
-			if startVersion != version:
-				throw new InvalidStateError(HashUtils.hashHasChanged);
-			var entry = getEntry(i);
-			if entry is not null and
-				not predicate(entry.key, entry.value):
-				return false;
+			pinEntries();
+			for i in [0 to entryCount - 1]
+			{
+				if startVersion != version:
+					throw new InvalidStateError(HashUtils.hashHasChanged);
+				var entry = getEntry(i);
+				if entry is not null and
+					not predicate(entry.key, entry.value):
+					return false;
+			}
+		}
+		finally
+		{
+			unpinEntries();
 		}
 
 		return true;
@@ -191,14 +202,22 @@ public inheritable Hash
 	{
 		var startVersion = version;
 
-		for i in [0 to entryCount - 1]
+		try
 		{
-			if startVersion != version:
-				throw new InvalidStateError(HashUtils.hashHasChanged);
-			var entry = getEntry(i);
-			if entry is not null and
-				predicate(entry.key, entry.value):
-				return true;
+			pinEntries();
+			for i in [0 to entryCount - 1]
+			{
+				if startVersion != version:
+					throw new InvalidStateError(HashUtils.hashHasChanged);
+				var entry = getEntry(i);
+				if entry is not null and
+					predicate(entry.key, entry.value):
+					return true;
+			}
+		}
+		finally
+		{
+			unpinEntries();
 		}
 
 		return false;
@@ -208,13 +227,21 @@ public inheritable Hash
 	{
 		var startVersion = version;
 
-		for i in [0 to entryCount - 1]
+		try
 		{
-			if startVersion != version:
-				throw new InvalidStateError(HashUtils.hashHasChanged);
-			var entry =	getEntry(i);
-			if entry is not null:
-				func(entry.key, entry.value);
+			pinEntries();
+			for i in [0 to entryCount - 1]
+			{
+				if startVersion != version:
+					throw new InvalidStateError(HashUtils.hashHasChanged);
+				var entry =	getEntry(i);
+				if entry is not null:
+					func(entry.key, entry.value);
+			}
+		}
+		finally
+		{
+			unpinEntries();
 		}
 
 		return this;
@@ -225,13 +252,21 @@ public inheritable Hash
 		var output = new Hash(length);
 		var startVersion = version;
 
-		for i in [0 to entryCount - 1]
+		try
 		{
-			if startVersion != version:
-				throw new InvalidStateError(HashUtils.hashHasChanged);
-			var entry = getEntry(i);
-			if entry is not null and predicate(entry.key, entry.value):
-				output.add(entry.key, entry.value);
+			pinEntries();
+			for i in [0 to entryCount - 1]
+			{
+				if startVersion != version:
+					throw new InvalidStateError(HashUtils.hashHasChanged);
+				var entry = getEntry(i);
+				if entry is not null and predicate(entry.key, entry.value):
+					output.add(entry.key, entry.value);
+			}
+		}
+		finally
+		{
+			unpinEntries();
 		}
 
 		return output;
@@ -242,13 +277,21 @@ public inheritable Hash
 		var output = new Hash(length);
 		var startVersion = version;
 
-		for i in [0 to entryCount - 1]
+		try
 		{
-			if startVersion != version:
-				throw new InvalidStateError(HashUtils.hashHasChanged);
-			var entry = getEntry(i);
-			if entry is not null:
-				output.add(func(entry.key, entry.value), entry.value);
+			pinEntries();
+			for i in [0 to entryCount - 1]
+			{
+				if startVersion != version:
+					throw new InvalidStateError(HashUtils.hashHasChanged);
+				var entry = getEntry(i);
+				if entry is not null:
+					output.add(func(entry.key, entry.value), entry.value);
+			}
+		}
+		finally
+		{
+			unpinEntries();
 		}
 
 		return output;
@@ -259,13 +302,21 @@ public inheritable Hash
 		var output = new Hash(length);
 		var startVersion = version;
 
-		for i in [0 to entryCount - 1]
+		try
 		{
-			if startVersion != version:
-				throw new InvalidStateError(HashUtils.hashHasChanged);
-			var entry = getEntry(i);
-			if entry is not null:
-				output.add(entry.key, func(entry.key, entry.value));
+			pinEntries();
+			for i in [0 to entryCount - 1]
+			{
+				if startVersion != version:
+					throw new InvalidStateError(HashUtils.hashHasChanged);
+				var entry = getEntry(i);
+				if entry is not null:
+					output.add(entry.key, func(entry.key, entry.value));
+			}
+		}
+		finally
+		{
+			unpinEntries();
 		}
 
 		return output;
@@ -310,7 +361,7 @@ public inheritable Hash
 		if object is null:
 			throw new ArgumentNullError("object");
 
-		var output = {};
+		var output = new Hash(keys.length);
 		for k in keys
 		{
 			if k is null:
@@ -344,7 +395,9 @@ public inheritable Hash
 // NOTE: Instances of HashEntry MUST NOT leave the code of methods inside
 // Hash or HashIterator. Do not return values of this type, as the hash
 // itself may be released at any point by the GC, and there is no reference
-// back to it.
+// back to it. You must also pin the entries array (see Hash.pin/unpinEntries)
+// for as long as you have a HashEntry,  or a GC cycle could make the array
+// move and then this pointer would be invalidated.
 private class HashEntry __primitive
 {
 	public get hashCode		__extern("aves_HashEntry_get_hashCode");
@@ -374,11 +427,19 @@ private class HashIterator is Iterator
 		while i < HashUtils.getEntryCount(hash) - 1
 		{
 			i += 1;
-			var entry = HashUtils.getEntry(hash, i);
-			if entry is not null
+			try
 			{
-				cur = [entry.key, entry.value];
-				return true;
+				HashUtils.pinEntries(hash);
+				var entry = HashUtils.getEntry(hash, i);
+				if entry is not null
+				{
+					cur = [entry.key, entry.value];
+					return true;
+				}
+			}
+			finally
+			{
+				HashUtils.unpinEntries(hash);
 			}
 		}
 
@@ -420,11 +481,19 @@ private class KeyOrValueIterator is Iterator
 		while i < HashUtils.getEntryCount(hash) - 1
 		{
 			i += 1;
-			var entry = HashUtils.getEntry(hash, i);
-			if entry is not null
+			try
 			{
-				cur = useKey ? entry.key : entry.value;
-				return true;
+				HashUtils.pinEntries(hash);
+				var entry = HashUtils.getEntry(hash, i);
+				if entry is not null
+				{
+					cur = useKey ? entry.key : entry.value;
+					return true;
+				}
+			}
+			finally
+			{
+				HashUtils.unpinEntries(hash);
 			}
 		}
 
@@ -439,4 +508,7 @@ private static class HashUtils
 	public static getVersion(hash)				__extern("aves_Hash_get_version");
 	public static getEntryCount(hash)			__extern("aves_Hash_get_entryCount");
 	public static getEntry(hash, index)			__extern("aves_Hash_getEntry");
+
+	public static pinEntries(hash)				__extern("aves_Hash_pinEntries");
+	public static unpinEntries(hash)			__extern("aves_Hash_unpinEntries");
 }

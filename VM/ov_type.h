@@ -180,7 +180,7 @@ ENUM_OPS(TypeFlags, uint32_t);
 //
 // The value of 'state' is preserved across calls to the same reference getter
 // on the same object during the same GC cycle, and starts out at zero. This is
-// to permit implementations of native types to containnon-adjacent Values. For
+// to permit implementations of native types to contain non-adjacent Values. For
 // example, aves.Set keeps its values in a special native struct alongside other
 // data, and the state is used as a numeric index into the entries.
 //
@@ -201,6 +201,9 @@ ENUM_OPS(TypeFlags, uint32_t);
 // the Values adjacent in memory. That way, you can just give target the
 // address of the first Value and set valc to the appropriate length, thus
 // removing the need for repeatedly calling the reference getter.
+//
+// Also, whenever possible, use native fields (see Type_AddNativeField) and
+// GC-allocated arrays (GC_AllocArray, GC_AllocValueArray).
 //
 // NOTENOTENOTE: basePtr is NOT relative to where the instance begins
 // in memory, but is rather instancePtr + type->fieldsOffset.
@@ -274,6 +277,52 @@ OVUM_API uint32_t Type_GetInstanceSize(TypeHandle type);
 OVUM_API void Type_SetFinalizer(TypeHandle type, Finalizer finalizer);
 OVUM_API void Type_SetInstanceSize(TypeHandle type, uint32_t size);
 OVUM_API void Type_SetReferenceGetter(TypeHandle type, ReferenceGetter getter);
+
+enum class NativeFieldType : int
+{
+	// The native field is a single Value.
+	VALUE = 0,
+	// The native field is a single Value* or nullptr.
+	VALUE_PTR = 1,
+	// The native field contains a String* or nullptr.
+	STRING = 2,
+	// The native field contains an array of arbitrary values,
+	// allocated by GC_AllocArray or GC_AllocValueArray.
+	//
+	// NOTE: Do not use this field type for arrays allocated in
+	// any other way. The GC won't be able to examine a native
+	// array's contents, as it has no way of knowing what it
+	// contains, nor can it obtain the length of such an array.
+	// If the array contains managed references, you generally
+	// have to implement a ReferenceGetter in addition to adding
+	// a native field of this type. The GC only uses this field
+	// type to keep the array alive.
+	GC_ARRAY = 3,
+};
+// Adds a native field to a type that does not use regular Ovum fields
+// for its instance data. Native fields added through this method can
+// only contain references to managed data, and are used by the GC during
+// a cycle to mark those references as alive.
+//
+// In some cases, it may be preferable or necessary to implement a
+// ReferenceGetter instead of or in addition to using native fields.
+//
+// Parameters:
+//   type:
+//     The type to add a native field to.
+//   offset:
+//     The offset of the field, in bytes, relative to the start of the instance.
+//     If the field is contained in a native struct or class, consider using the
+//     offsetof() macro to obtain its offset, e.g. offsetof(MyType, field).
+//   fieldType:
+//     The type of the data contained in the field. See the NativeFieldType enum
+//     values for more information. The type must ensure that only data of the
+//     given type is written to the native field, or the GC will probably crash
+//     the program when it examines the field.
+//
+// NOTE: Ovum does not verify that your native fields are non-overlapping. It is
+// entirely up to you to lay them out sensibly.
+OVUM_API void Type_AddNativeField(TypeHandle type, size_t offset, NativeFieldType fieldType);
 
 
 // Standard types are required by the VM (because they implement special

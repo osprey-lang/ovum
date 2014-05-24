@@ -153,6 +153,24 @@ public inheritable Iterable
 		return new MapIterable(this, func);
 	}
 
+	public take(count)
+	{
+		count = int(count);
+		if count < 0:
+			throw new ArgumentRangeError("count");
+
+		return new TakeIterable(this, count);
+	}
+
+	public skip(count)
+	{
+		count = int(count);
+		if count < 0:
+			throw new ArgumentRangeError("count");
+
+		return new SkipIterable(this, count);
+	}
+
 	iter
 	{
 		if collection is null:
@@ -236,6 +254,30 @@ private class GroupEveryIterable is Iterable
 	iter
 	{
 		return inner.iter.groupEvery(frequency);
+	}
+}
+
+private class TakeIterable is Iterable
+{
+	public new(this.inner, this.count);
+
+	private inner, count;
+
+	iter
+	{
+		return inner.iter.take(count);
+	}
+}
+
+private class SkipIterable is Iterable
+{
+	public new(this.inner, this.count);
+
+	private inner, count;
+
+	iter
+	{
+		return inner.iter.skip(count);
 	}
 }
 
