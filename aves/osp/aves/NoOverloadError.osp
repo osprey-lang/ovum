@@ -25,5 +25,7 @@ public inheritable NoOverloadError is Error
 	///          that the method was attempted to be invoked with.
 	public get argCount = _argCount;
 
+	overridable override get message = "{0} (argCount: {1})".format([base.message, argCount]);
+
 	private const defaultMessage = "Could not find an overload.";
 }

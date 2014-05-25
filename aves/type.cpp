@@ -2,20 +2,19 @@
 
 #define _T(val)		reinterpret_cast<TypeInst*>((val).instance)
 
-AVES_API void aves_Type_init(TypeHandle type)
+AVES_API void aves_reflection_Type_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(TypeInst));
-	Type_SetReferenceGetter(type, aves_Type_getReferences);
 }
 
-AVES_API NATIVE_FUNCTION(aves_Type_get_fullName)
+AVES_API NATIVE_FUNCTION(aves_reflection_Type_get_fullName)
 {
 	TypeInst *inst = _T(THISV);
 	VM_PushString(thread, Type_GetFullName(inst->type));
 	RETURN_SUCCESS;
 }
 
-AVES_API BEGIN_NATIVE_FUNCTION(aves_Type_get_baseType)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Type_get_baseType)
 {
 	TypeInst *inst = _T(THISV);
 
@@ -32,7 +31,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Type_get_baseType)
 }
 END_NATIVE_FUNCTION
 
-AVES_API NATIVE_FUNCTION(aves_Type_inheritsFromInternal)
+AVES_API NATIVE_FUNCTION(aves_reflection_Type_inheritsFromInternal)
 {
 	// This is written in native code so we don't have
 	// to construct type tokens for every base type
@@ -52,10 +51,4 @@ AVES_API int InitTypeToken(ThreadHandle thread, void *basePtr, TypeHandle type)
 	TypeInst *inst = reinterpret_cast<TypeInst*>(basePtr);
 	inst->type = type;
 	RETURN_SUCCESS;
-}
-
-bool aves_Type_getReferences(void *basePtr, unsigned int *valc, Value **target, int32_t *state)
-{
-	*valc = 0;
-	return false;
 }

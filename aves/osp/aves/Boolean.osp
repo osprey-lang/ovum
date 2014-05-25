@@ -15,8 +15,21 @@ public class Boolean __primitive
 	}
 	override toString()
 	{
-		return this ? "true" : "false";
+		return this ? trueString : falseString;
 	}
+
+	public static parse(str)
+	{
+		str = string(str).trim();
+		if str.equalsIgnoreCase(trueString):
+			return true;
+		if str.equalsIgnoreCase(falseString):
+			return false;
+		return null;
+	}
+
+	private const trueString = "true";
+	private const falseString = "false";
 
 	public const min = false;
 	public const max = true;
