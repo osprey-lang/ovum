@@ -1045,11 +1045,6 @@ OVUM_API String *GC_ConstructString(ThreadHandle thread, const int32_t length, c
 	return GC::gc->ConstructString(thread, length, values);
 }
 
-OVUM_API String *GC_ConvertString(ThreadHandle thread, const char *string)
-{
-	return GC::gc->ConvertString(thread, string);
-}
-
 OVUM_API int GC_AllocArray(ThreadHandle thread, uint32_t length, size_t itemSize, void **output)
 {
 	return GC::gc->AllocArray(thread, length, itemSize, output);

@@ -5,16 +5,6 @@
 
 #include "ov_vm.h"
 
-/* Available string hash algorithm implementations:
- *   1 – shameless .NET Framework steal, basically
- *   2 – shameless Mono steal, mostly
- *   3 – FNV-1a
- * If you do not select an algorithm, you'll get the lose-lose algorithm,
- * which will ensure huge numbers of collisions, and you have no one to
- * blame but yourself for not reading properly.
- */
-#define STRING_HASH_ALGORITHM  3
-
 OVUM_API int32_t String_GetHashCode(String *str);
 
 OVUM_API bool String_Equals(const String *a, const String *b);
@@ -62,12 +52,11 @@ OVUM_API String *String_ConcatRange(ThreadHandle thread, const unsigned int coun
 //     including the terminating \0.
 //
 // NOTE: the source string may contain \0 characters. These are NOT stripped!
-OVUM_API const int String_ToWString(wchar_t *dest, const String *source);
+OVUM_API int32_t String_ToWString(wchar_t *dest, const String *source);
 
 // Converts a zero-terminated char* string to a String*.
 //   thread:
-//     A handle to the thread on which to throw errors if they occur.
-//     If this is null, errors will be thrown using C++ 'throw'.
+//     A handle to the current thread.
 //
 //   source:
 //     The source string.
@@ -80,8 +69,7 @@ OVUM_API String *String_FromCString(ThreadHandle thread, const char *source);
 
 // Converts a zero-terminated wchar_t* string to a String*.
 //   thread:
-//     A handle to the thread on which to throw errors if they occur.
-//     If this is null, errors will be thrown using C++ 'throw'.
+//     A handle to the current thread.
 //
 //   source:
 //     The source string.
