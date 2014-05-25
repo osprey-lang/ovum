@@ -85,40 +85,40 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="critical_section.internal.h" />
-    <ClInclude Include="membertable.internal.h" />
-    <ClInclude Include="modulereader.internal.h" />
-    <ClInclude Include="ov_compat.h" />
-    <ClInclude Include="ov_debug_symbols.internal.h" />
-    <ClInclude Include="ov_gc.h" />
-    <ClInclude Include="ov_gc.internal.h" />
-    <ClInclude Include="ov_helpers.h" />
-    <ClInclude Include="ov_module.h" />
-    <ClInclude Include="ov_module.internal.h" />
-    <ClInclude Include="ov_static_strings.internal.h" />
-    <ClInclude Include="ov_string.h" />
-    <ClInclude Include="ov_stringbuffer.h" />
-    <ClInclude Include="ov_stringbuffer.internal.h" />
-    <ClInclude Include="refsignature.internal.h" />
-    <ClInclude Include="string_table.internal.h" />
-    <ClInclude Include="ov_thread.h" />
-    <ClInclude Include="ov_thread.internal.h" />
-    <ClInclude Include="ov_type.internal.h" />
-    <ClInclude Include="ov_thread.opcodes.h" />
-    <ClInclude Include="string_hash.internal.h" />
-    <ClInclude Include="targetver.h" />
-    <ClInclude Include="ov_type.h" />
-    <ClInclude Include="ov_unicode.h" />
-    <ClInclude Include="ov_unicode.internal.h" />
-    <ClInclude Include="ov_value.h" />
-    <ClInclude Include="ov_value.internal.h" />
-    <ClInclude Include="ov_vm.h" />
-    <ClInclude Include="ov_vm.internal.h" />
-    <ClInclude Include="thread.opcode_targets.h" />
+    <ClInclude Include="src\critical_section.internal.h" />
+    <ClInclude Include="src\membertable.internal.h" />
+    <ClInclude Include="src\modulereader.internal.h" />
+    <ClInclude Include="inc\ov_compat.h" />
+    <ClInclude Include="src\ov_debug_symbols.internal.h" />
+    <ClInclude Include="inc\ov_gc.h" />
+    <ClInclude Include="src\ov_gc.internal.h" />
+    <ClInclude Include="inc\ov_helpers.h" />
+    <ClInclude Include="inc\ov_module.h" />
+    <ClInclude Include="src\ov_module.internal.h" />
+    <ClInclude Include="src\ov_static_strings.internal.h" />
+    <ClInclude Include="inc\ov_string.h" />
+    <ClInclude Include="inc\ov_stringbuffer.h" />
+    <ClInclude Include="src\ov_stringbuffer.internal.h" />
+    <ClInclude Include="src\refsignature.internal.h" />
+    <ClInclude Include="src\string_table.internal.h" />
+    <ClInclude Include="inc\ov_thread.h" />
+    <ClInclude Include="src\ov_thread.internal.h" />
+    <ClInclude Include="src\ov_type.internal.h" />
+    <ClInclude Include="src\ov_thread.opcodes.h" />
+    <ClInclude Include="src\string_hash.internal.h" />
+    <ClInclude Include="windows\windows.h" />
+    <ClInclude Include="inc\ov_type.h" />
+    <ClInclude Include="inc\ov_unicode.h" />
+    <ClInclude Include="src\ov_unicode.internal.h" />
+    <ClInclude Include="inc\ov_value.h" />
+    <ClInclude Include="src\ov_value.internal.h" />
+    <ClInclude Include="inc\ov_vm.h" />
+    <ClInclude Include="src\ov_vm.internal.h" />
+    <ClInclude Include="src\thread.opcode_targets.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="debug_symbols.cpp" />
-    <ClCompile Include="dllmain.cpp">
+    <ClCompile Include="src\debug_symbols.cpp" />
+    <ClCompile Include="windows\dllmain.cpp">
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</CompileAsManaged>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
       </PrecompiledHeader>
@@ -126,22 +126,22 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
       </PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="gc.cpp" />
-    <ClCompile Include="helpers.cpp" />
-    <ClCompile Include="module.cpp" />
-    <ClCompile Include="modulereader.cpp" />
-    <ClCompile Include="static_strings.cpp" />
-    <ClCompile Include="string.cpp" />
-    <ClCompile Include="stringbuffer.cpp" />
-    <ClCompile Include="string_table.cpp" />
-    <ClCompile Include="thread.cpp" />
-    <ClCompile Include="thread.method_initializer.cpp" />
-    <ClCompile Include="thread.opcodes.cpp" />
-    <ClCompile Include="type.cpp" />
-    <ClCompile Include="unicode.cpp" />
-    <ClCompile Include="unicode.data.cpp" />
-    <ClCompile Include="value.cpp" />
-    <ClCompile Include="vm.cpp" />
+    <ClCompile Include="src\gc.cpp" />
+    <ClCompile Include="src\helpers.cpp" />
+    <ClCompile Include="src\module.cpp" />
+    <ClCompile Include="src\modulereader.cpp" />
+    <ClCompile Include="src\static_strings.cpp" />
+    <ClCompile Include="src\string.cpp" />
+    <ClCompile Include="src\stringbuffer.cpp" />
+    <ClCompile Include="src\string_table.cpp" />
+    <ClCompile Include="src\thread.cpp" />
+    <ClCompile Include="src\thread.method_initializer.cpp" />
+    <ClCompile Include="src\thread.opcodes.cpp" />
+    <ClCompile Include="src\type.cpp" />
+    <ClCompile Include="src\unicode.cpp" />
+    <ClCompile Include="src\unicode.data.cpp" />
+    <ClCompile Include="src\value.cpp" />
+    <ClCompile Include="src\vm.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

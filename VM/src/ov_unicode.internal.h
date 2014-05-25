@@ -4,7 +4,7 @@
 #define VM__UNICODE_INTERNAL_H
 
 #include "ov_vm.internal.h"
-#include "ov_unicode.h"
+#include "../inc/ov_unicode.h"
 
 struct CaseOffsets
 {
