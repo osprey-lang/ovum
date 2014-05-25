@@ -99,7 +99,7 @@ public:
 	VM(VMStartParams &params);
 	~VM();
 
-	int Run(VMStartParams &params);
+	int Run();
 
 	NOINLINE static void Init(VMStartParams &params);
 	NOINLINE static void Unload();

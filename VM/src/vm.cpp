@@ -33,7 +33,7 @@ OVUM_API int VM_Start(VMStartParams *params)
 	Module::Init();
 	VM::Init(*params); // Also takes care of loading modules
 
-	int result = VM::vm->Run(*params);
+	int result = VM::vm->Run();
 
 	// done!
 	GC::Unload();
@@ -64,7 +64,7 @@ VM::~VM()
 	delete[] argValues;
 }
 
-int VM::Run(VMStartParams &params)
+int VM::Run()
 {
 	int result;
 
