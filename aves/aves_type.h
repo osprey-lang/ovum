@@ -10,16 +10,14 @@ typedef struct TypeInst_S
 	TypeHandle type;
 } TypeInst;
 
-AVES_API void aves_Type_init(TypeHandle type);
+AVES_API void aves_reflection_Type_init(TypeHandle type);
 
-AVES_API NATIVE_FUNCTION(aves_Type_get_fullName);
+AVES_API NATIVE_FUNCTION(aves_reflection_Type_get_fullName);
 
-AVES_API NATIVE_FUNCTION(aves_Type_get_baseType);
+AVES_API NATIVE_FUNCTION(aves_reflection_Type_get_baseType);
 
-AVES_API NATIVE_FUNCTION(aves_Type_inheritsFromInternal);
+AVES_API NATIVE_FUNCTION(aves_reflection_Type_inheritsFromInternal);
 
 AVES_API int InitTypeToken(ThreadHandle thread, void *basePtr, TypeHandle type);
-
-bool aves_Type_getReferences(void *basePtr, unsigned int *valc, Value **target, int32_t *state);
 
 #endif // AVES__TYPE_H

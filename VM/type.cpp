@@ -26,7 +26,7 @@ namespace std_type_names
 	LitString<9>  _Hash                = {  9, 0, SFS, AVES,'H','a','s','h',0 };
 	LitString<11> _Method              = { 11, 0, SFS, AVES,'M','e','t','h','o','d',0 };
 	LitString<13> _Iterator            = { 13, 0, SFS, AVES,'I','t','e','r','a','t','o','r',0 };
-	LitString<9>  _Type                = {  9, 0, SFS, AVES,'T','y','p','e',0 };
+	LitString<20> _Type                = { 20, 0, SFS, AVES,'r','e','f','l','e','c','t','i','o','n','.','T','y','p','e',0 };
 	LitString<10> _Error               = { 10, 0, SFS, AVES,'E','r','r','o','r',0 };
 	LitString<14> _TypeError           = { 14, 0, SFS, AVES,'T','y','p','e','E','r','r','o','r',0 };
 	LitString<16> _MemoryError         = { 16, 0, SFS, AVES,'M','e','m','o','r','y','E','r','r','o','r',0 };

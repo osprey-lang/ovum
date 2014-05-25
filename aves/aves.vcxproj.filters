@@ -25,6 +25,12 @@
     <Filter Include="Source Files\io">
       <UniqueIdentifier>{02adfbd2-1117-4163-8e89-fe37abd2594d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\aves\reflection">
+      <UniqueIdentifier>{b14bb0a4-d7bb-4f24-90a2-90bb94d8bd97}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\aves\reflection">
+      <UniqueIdentifier>{fbc194d0-0d31-40aa-92d7-5ff5e4949bee}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="targetver.h">
@@ -90,9 +96,6 @@
     <ClInclude Include="aves_stringbuffer.h">
       <Filter>Header Files\aves</Filter>
     </ClInclude>
-    <ClInclude Include="aves_type.h">
-      <Filter>Header Files\aves</Filter>
-    </ClInclude>
     <ClInclude Include="aves.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -122,6 +125,9 @@
     </ClInclude>
     <ClInclude Include="aves_gc.h">
       <Filter>Header Files\aves</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_type.h">
+      <Filter>Header Files\aves\reflection</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -179,9 +185,6 @@
     <ClCompile Include="stringbuffer.cpp">
       <Filter>Source Files\aves</Filter>
     </ClCompile>
-    <ClCompile Include="type.cpp">
-      <Filter>Source Files\aves</Filter>
-    </ClCompile>
     <ClCompile Include="uint.cpp">
       <Filter>Source Files\aves</Filter>
     </ClCompile>
@@ -217,6 +220,9 @@
     </ClCompile>
     <ClCompile Include="gc.cpp">
       <Filter>Source Files\aves</Filter>
+    </ClCompile>
+    <ClCompile Include="type.cpp">
+      <Filter>Source Files\aves\reflection</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

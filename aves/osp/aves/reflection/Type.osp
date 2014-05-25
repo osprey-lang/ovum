@@ -1,8 +1,8 @@
-namespace aves;
+namespace aves.reflection;
 
 public class Type
 {
-	__init_type("aves_Type_init");
+	__init_type("aves_reflection_Type_init");
 
 	private new();
 
@@ -19,9 +19,9 @@ public class Type
 		return fullName.substr(i + 1);
 	}
 
-	public get fullName						__extern("aves_Type_get_fullName");
+	public get fullName						__extern("aves_reflection_Type_get_fullName");
 
-	public get baseType						__extern("aves_Type_get_baseType");
+	public get baseType						__extern("aves_reflection_Type_get_baseType");
 
 	public inheritsFrom(type)
 	{
@@ -29,7 +29,7 @@ public class Type
 			throw new TypeError("type must be an instance of aves.Type.");
 		return inheritsFromInternal(type);
 	}
-	private inheritsFromInternal(type)		__extern("aves_Type_inheritsFromInternal");
+	private inheritsFromInternal(type)		__extern("aves_reflection_Type_inheritsFromInternal");
 
 	override toString()
 	{
