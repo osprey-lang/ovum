@@ -25,14 +25,6 @@ OVUM_API int GC_Construct(ThreadHandle thread, TypeHandle type, const uint16_t a
 // NOTE: 'length' does NOT include the terminating '\0'.
 OVUM_API String *GC_ConstructString(ThreadHandle thread, const int32_t length, const uchar *values);
 
-// Converts a C string to an Ovum string. The return value of this method should probably be cached
-// in a managed field of some kind, to avoid allocating memory every time the string is needed.
-//
-// Returns null if the string could not be constructed.
-//
-// NOTE: Uses the standard-library strlen() to get the length of the string.
-OVUM_API String *GC_ConvertString(ThreadHandle thread, const char *string);
-
 // Allocates a non-resizable GC-managed array of arbitrary values. This value should be put
 // in a native field of type NativeFieldType::GC_ARRAY, to ensure that the value is reachable
 // by the GC while the owning instance is alive. See Type_AddNativeField for more details.

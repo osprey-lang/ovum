@@ -8,6 +8,16 @@ inline const bool IsHashed(const String *const str)
 	return (str->flags & StringFlags::HASHED) != StringFlags::NONE;
 }
 
+/* Available string hash algorithm implementations:
+ *   1 – shameless .NET Framework steal, basically
+ *   2 – shameless Mono steal, mostly
+ *   3 – FNV-1a
+ * If you do not select an algorithm, you'll get the lose-lose algorithm,
+ * which will ensure huge numbers of collisions, and you have no one to
+ * blame but yourself for not reading properly.
+ */
+#define STRING_HASH_ALGORITHM  3
+
 inline int32_t String_GetHashCode(const int32_t length, const uchar *s)
 {
 #if STRING_HASH_ALGORITHM == 1
@@ -481,12 +491,12 @@ OVUM_API String *String_ConcatRange(ThreadHandle thread, const unsigned int coun
 	return output;
 }
 
-OVUM_API const int String_ToWString(wchar_t *dest, const String *source)
+OVUM_API int32_t String_ToWString(wchar_t *dest, const String *source)
 {
 	if (sizeof(wchar_t) == sizeof(uchar))
 	{
 		// assume wchar_t is UTF-16 (or at least UCS-2, but hopefully surrogates won't break things too much)
-		int outputLength = source->length + 1; // Include the \0
+		int32_t outputLength = source->length + 1; // Include the \0
 
 		if (dest)
 			memcpy(dest, &source->firstChar, outputLength * sizeof(uchar));
@@ -500,7 +510,7 @@ OVUM_API const int String_ToWString(wchar_t *dest, const String *source)
 		// First, iterate over the string to find out how many surrogate pairs there are,
 		// if any. These consume only one UTF-32 character.
 		// We use this to calculate the length of the output (including the \0).
-		int outputLength = 0;
+		int32_t outputLength = 0;
 
 		int32_t strLen = source->length + 1; // let's include the \0
 		const uchar *strp = &source->firstChar;
@@ -544,7 +554,7 @@ OVUM_API const int String_ToWString(wchar_t *dest, const String *source)
 
 OVUM_API String *String_FromCString(ThreadHandle thread, const char *source)
 {
-	return GC_ConvertString(thread, source);
+	return GC::gc->ConvertString(thread, source);
 }
 
 OVUM_API String *String_FromWString(ThreadHandle thread, const wchar_t *source)
