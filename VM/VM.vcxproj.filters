@@ -13,11 +13,17 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Header Files\Internal">
+      <UniqueIdentifier>{881751af-5e7b-496f-8455-89f965ab3ee3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Windows">
+      <UniqueIdentifier>{27816d3d-e0e9-4c1c-8128-ebb93b0400b5}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Header Files\Unicode">
       <UniqueIdentifier>{da4e806e-c0b1-477a-8bd7-cc807e860309}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Internal">
-      <UniqueIdentifier>{881751af-5e7b-496f-8455-89f965ab3ee3}</UniqueIdentifier>
+    <Filter Include="Source Files\Windows">
+      <UniqueIdentifier>{3e12c8b4-40d9-40ed-b034-36fd00fc4cfe}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -109,7 +115,7 @@
       <Filter>Header Files\Internal</Filter>
     </ClInclude>
     <ClInclude Include="windows\windows.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Windows</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -165,7 +171,7 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="windows\dllmain.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Windows</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
