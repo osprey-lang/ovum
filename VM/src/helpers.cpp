@@ -1,5 +1,5 @@
 #include "ov_vm.internal.h"
-#include "ov_helpers.h"
+#include "../inc/ov_helpers.h"
 
 namespace errors
 {

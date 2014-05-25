@@ -1,5 +1,5 @@
 #include "ov_vm.internal.h"
-#include "ov_string.h"
+#include "../inc/ov_string.h"
 #include "refsignature.internal.h"
 #ifdef PRINT_DEBUG_INFO
 #include <cstdio>

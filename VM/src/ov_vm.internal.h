@@ -1,30 +1,31 @@
 #pragma once
 
+// This file includes all the internal features of the VM, which are not visible
+// if you just include "ov_vm.h". These are not supposed to be visible to users
+// of the VM API.
+//
+// You should only ever include this from within CPP files of the VM project, or
+// from within other internal header files.
+
 #ifndef VM__VM_INTERNAL_H
 #define VM__VM_INTERNAL_H
 
 //#define PRINT_DEBUG_INFO
 
-#if defined(_WIN32) && !defined(UNICODE)
-#error You are not supposed to compile Ovum without Unicode support.
-#endif
-
 #ifndef VM_EXPORTS
 #error You're not supposed to include this file from outside the VM project!
 #endif
 
-// This file includes all the internal features of the VM, which are not visible
-// if you just include "ov_vm.h". These are not /supposed/ to be visible to users
-// of the VM DLL API.
-//
-// You should probably only include this from within CPP files of the VM project,
-// or from within other internal header files.
+#ifdef _WIN32
+#ifndef UNICODE
+#error You are not supposed to compile Ovum without Unicode support.
+#endif
 
-#include "targetver.h"
+#include "../windows/windows.h"
 
-#define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
-// Windows header files
-#include <windows.h>
+#else
+#error Ovum does not support the target operating system.
+#endif
 
 class Thread;
 class Type;
@@ -51,7 +52,7 @@ typedef Method   *MethodHandle;
 typedef Field    *FieldHandle;
 typedef Property *PropertyHandle;
 
-#include "ov_vm.h"
+#include "../inc/ov_vm.h"
 #include <cstdio>
 
 typedef uint32_t TokenId;

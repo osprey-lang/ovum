@@ -7,7 +7,7 @@
 #include <cstdio>
 #endif
 #include "ov_vm.internal.h"
-#include "ov_string.h"
+#include "../inc/ov_string.h"
 
 // This file contains a StringHash template class, because these are commonly needed in the VM.
 // A StringHash maps a String* to any type, using a relatively naïve implementation.

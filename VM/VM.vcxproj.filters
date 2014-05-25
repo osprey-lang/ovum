@@ -21,150 +21,150 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="targetver.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="src\modulereader.internal.h">
+      <Filter>Header Files\Internal</Filter>
     </ClInclude>
-    <ClInclude Include="ov_string.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="src\membertable.internal.h">
+      <Filter>Header Files\Internal</Filter>
     </ClInclude>
-    <ClInclude Include="ov_compat.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="src\critical_section.internal.h">
+      <Filter>Header Files\Internal</Filter>
     </ClInclude>
-    <ClInclude Include="ov_type.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="src\ov_debug_symbols.internal.h">
+      <Filter>Header Files\Internal</Filter>
     </ClInclude>
-    <ClInclude Include="ov_value.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="src\ov_module.internal.h">
+      <Filter>Header Files\Internal</Filter>
     </ClInclude>
-    <ClInclude Include="ov_unicode.h">
+    <ClInclude Include="src\ov_static_strings.internal.h">
+      <Filter>Header Files\Internal</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ov_stringbuffer.internal.h">
+      <Filter>Header Files\Internal</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ov_thread.internal.h">
+      <Filter>Header Files\Internal</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ov_unicode.internal.h">
       <Filter>Header Files\Unicode</Filter>
     </ClInclude>
-    <ClInclude Include="ov_unicode.internal.h">
+    <ClInclude Include="src\ov_thread.opcodes.h">
+      <Filter>Header Files\Internal</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ov_type.internal.h">
+      <Filter>Header Files\Internal</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ov_value.internal.h">
+      <Filter>Header Files\Internal</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ov_vm.internal.h">
+      <Filter>Header Files\Internal</Filter>
+    </ClInclude>
+    <ClInclude Include="src\refsignature.internal.h">
+      <Filter>Header Files\Internal</Filter>
+    </ClInclude>
+    <ClInclude Include="src\string_hash.internal.h">
+      <Filter>Header Files\Internal</Filter>
+    </ClInclude>
+    <ClInclude Include="src\string_table.internal.h">
+      <Filter>Header Files\Internal</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thread.opcode_targets.h">
+      <Filter>Header Files\Internal</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\ov_vm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\ov_compat.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\ov_gc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\ov_helpers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\ov_module.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\ov_string.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\ov_stringbuffer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\ov_thread.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\ov_type.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\ov_unicode.h">
       <Filter>Header Files\Unicode</Filter>
     </ClInclude>
-    <ClInclude Include="ov_vm.h">
+    <ClInclude Include="inc\ov_value.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ov_thread.h">
+    <ClInclude Include="src\ov_gc.internal.h">
+      <Filter>Header Files\Internal</Filter>
+    </ClInclude>
+    <ClInclude Include="windows\windows.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ov_gc.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ov_module.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ov_gc.internal.h">
-      <Filter>Header Files\Internal</Filter>
-    </ClInclude>
-    <ClInclude Include="ov_static_strings.internal.h">
-      <Filter>Header Files\Internal</Filter>
-    </ClInclude>
-    <ClInclude Include="ov_thread.internal.h">
-      <Filter>Header Files\Internal</Filter>
-    </ClInclude>
-    <ClInclude Include="ov_type.internal.h">
-      <Filter>Header Files\Internal</Filter>
-    </ClInclude>
-    <ClInclude Include="ov_value.internal.h">
-      <Filter>Header Files\Internal</Filter>
-    </ClInclude>
-    <ClInclude Include="ov_module.internal.h">
-      <Filter>Header Files\Internal</Filter>
-    </ClInclude>
-    <ClInclude Include="string_hash.internal.h">
-      <Filter>Header Files\Internal</Filter>
-    </ClInclude>
-    <ClInclude Include="ov_vm.internal.h">
-      <Filter>Header Files\Internal</Filter>
-    </ClInclude>
-    <ClInclude Include="ov_thread.opcodes.h">
-      <Filter>Header Files\Internal</Filter>
-    </ClInclude>
-    <ClInclude Include="ov_stringbuffer.internal.h">
-      <Filter>Header Files\Internal</Filter>
-    </ClInclude>
-    <ClInclude Include="ov_helpers.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ov_stringbuffer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="string_table.internal.h">
-      <Filter>Header Files\Internal</Filter>
-    </ClInclude>
-    <ClInclude Include="thread.opcode_targets.h">
-      <Filter>Header Files\Internal</Filter>
-    </ClInclude>
-    <ClInclude Include="ov_debug_symbols.internal.h">
-      <Filter>Header Files\Internal</Filter>
-    </ClInclude>
-    <ClInclude Include="critical_section.internal.h">
-      <Filter>Header Files\Internal</Filter>
-    </ClInclude>
-    <ClInclude Include="membertable.internal.h">
-      <Filter>Header Files\Internal</Filter>
-    </ClInclude>
-    <ClInclude Include="modulereader.internal.h">
-      <Filter>Header Files\Internal</Filter>
-    </ClInclude>
-    <ClInclude Include="refsignature.internal.h">
-      <Filter>Header Files\Internal</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="dllmain.cpp">
+    <ClCompile Include="src\module.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="vm.cpp">
+    <ClCompile Include="src\modulereader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="value.cpp">
+    <ClCompile Include="src\debug_symbols.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="type.cpp">
+    <ClCompile Include="src\gc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="unicode.data.cpp">
+    <ClCompile Include="src\helpers.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="unicode.cpp">
+    <ClCompile Include="src\string_table.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="string.cpp">
+    <ClCompile Include="src\string.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="gc.cpp">
+    <ClCompile Include="src\static_strings.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="thread.cpp">
+    <ClCompile Include="src\stringbuffer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="static_strings.cpp">
+    <ClCompile Include="src\thread.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="module.cpp">
+    <ClCompile Include="src\thread.method_initializer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="thread.opcodes.cpp">
+    <ClCompile Include="src\thread.opcodes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="stringbuffer.cpp">
+    <ClCompile Include="src\type.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="helpers.cpp">
+    <ClCompile Include="src\unicode.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="string_table.cpp">
+    <ClCompile Include="src\unicode.data.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="thread.method_initializer.cpp">
+    <ClCompile Include="src\value.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="debug_symbols.cpp">
+    <ClCompile Include="src\vm.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="modulereader.cpp">
+    <ClCompile Include="windows\dllmain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
