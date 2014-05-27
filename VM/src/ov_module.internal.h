@@ -142,7 +142,7 @@ public:
 	static Module *Open(const wchar_t *fileName);
 	static Module *OpenByName(String *name);
 
-	NOINLINE static void Init();
+	NOINLINE static int Init();
 	NOINLINE static void Unload();
 
 private:
@@ -156,10 +156,10 @@ private:
 		void Init(int capacity)
 		{
 			capacity = max(capacity, 4);
+
 			data = new Module*[capacity];
-#if !NDEBUG
 			memset(data, 0, sizeof(Module*) * capacity);
-#endif
+
 			this->capacity = capacity;
 		}
 
@@ -168,19 +168,19 @@ private:
 			int newCap = capacity * 2;
 
 			Module **newData = new Module*[newCap];
-			CopyMemoryT(newData, data, capacity);
+			CopyMemoryT(newData, this->data, capacity);
 
 			capacity = newCap;
-			delete[] data;
-			data = newData;
+			delete[] this->data;
+			this->data = newData;
 		}
 
 	public:
-		inline Pool() : length(0)
+		inline Pool() : capacity(0), length(0), data(nullptr)
 		{
 			Init(0);
 		}
-		inline Pool(int capacity) : length(0)
+		inline Pool(int capacity) : capacity(0), length(0), data(nullptr)
 		{
 			Init(capacity);
 		}

@@ -14,9 +14,9 @@
 #define CSTR  L"%s"
 #endif
 
-VM *VM::vm;
-FILE *VM::stdOut;
-FILE *VM::stdErr;
+VM *VM::vm = nullptr;
+FILE *VM::stdOut = nullptr;
+FILE *VM::stdErr = nullptr;
 
 wchar_t *CloneWString(const wchar_t *source)
 {
@@ -29,13 +29,23 @@ wchar_t *CloneWString(const wchar_t *source)
 
 OVUM_API int VM_Start(VMStartParams *params)
 {
-	GC::Init(); // We must call this before VM::Init(), because VM::Init relies on the GC
-	Module::Init();
-	VM::Init(*params); // Also takes care of loading modules
-
-	int result = VM::vm->Run();
+	int r;
+	// VM::Init depends on both GC::Init and Module::Init,
+	// so call those first.
+	if ((r = GC::Init()) == OVUM_SUCCESS &&
+		(r = Module::Init()) == OVUM_SUCCESS &&
+		// VM::Init also takes care of loading modules
+		(r = VM::Init(*params)) == OVUM_SUCCESS)
+		r = VM::vm->Run();
 
 	// done!
+	// We have to unload the GC first, because the GC relies on data in
+	// modules to perform cleanup, such as examining managed types and
+	// calling finalizers in native types. If we clean up modules first,
+	// then the GC will be very unhappy.
+	//
+	// Note that the Unload methods are safe to call even if the Init
+	// method hasn't been called, e.g. if a previous Init call failed.
 	GC::Unload();
 	Module::Unload();
 	VM::Unload();
@@ -44,11 +54,11 @@ OVUM_API int VM_Start(VMStartParams *params)
 	// OVUM_SUCCESS == EXIT_SUCCESS, which also means
 	// the system error codes are != OVUM_SUCCESS, so
 	// let's just pass result on to the system.
-	return result;
+	return r;
 #else
 	// Unlikely case - let's fall back to standard C
 	// exit codes.
-	return result == OVUM_SUCCESS ? EXIT_SUCCESS : EXIT_FAILURE;
+	return r == OVUM_SUCCESS ? EXIT_SUCCESS : EXIT_FAILURE;
 #endif
 }
 
@@ -100,7 +110,7 @@ int VM::Run()
 	return result;
 }
 
-void VM::Init(VMStartParams &params)
+int VM::Init(VMStartParams &params)
 {
 	VM::stdOut = stdout;
 	VM::stdErr = stderr;
@@ -116,12 +126,16 @@ void VM::Init(VMStartParams &params)
 		wprintf(L"Argument count: %d\n",  params.argc);
 	}
 
-	vm = new VM(params);
-	vm->LoadModules(params);
-	vm->InitArgs(params.argc, params.argv);
+	vm = new(std::nothrow) VM(params);
+	if (!vm) return OVUM_ERROR_NO_MEMORY;
+	int r;
+	r = vm->LoadModules(params);
+	if (r == OVUM_SUCCESS)
+		r = vm->InitArgs(params.argc, params.argv);
+	return r;
 }
 
-void VM::LoadModules(VMStartParams &params)
+int VM::LoadModules(VMStartParams &params)
 {
 	// Set up some stuff first
 	wchar_t *startupPath = CloneWString(params.startupFile);
@@ -145,7 +159,7 @@ void VM::LoadModules(VMStartParams &params)
 			fwprintf(stderr, L"Error loading module '%ls': " CSTR L"\n", fileName.c_str(), e.what());
 		else
 			fwprintf(stderr, L"Error loading module: " CSTR L"\n", e.what());
-		exit(OVUM_ERROR_MODULE_LOAD);
+		return OVUM_ERROR_MODULE_LOAD;
 	}
 
 	for (unsigned int i = 0; i < std_type_names::StandardTypeCount; i++)
@@ -154,21 +168,34 @@ void VM::LoadModules(VMStartParams &params)
 		if (this->types.*(type.member) == nullptr)	
 		{
 			PrintInternal(stderr, L"Startup error: standard type not loaded: %ls\n", type.name);
-			exit(OVUM_ERROR_MODULE_LOAD);
+			return OVUM_ERROR_MODULE_LOAD;
 		}
 	}
+
+	RETURN_SUCCESS;
 }
 
-void VM::InitArgs(int argCount, const wchar_t *args[])
+int VM::InitArgs(int argCount, const wchar_t *args[])
 {
 	// Convert command-line arguments to String*s.
-	std::unique_ptr<Value*[]> argValues(new Value*[argCount]);
+	std::unique_ptr<Value*[]> argValues(new(std::nothrow) Value*[argCount]);
+	if (!argValues.get()) return OVUM_ERROR_NO_MEMORY;
+
 	for (int i = 0; i < argCount; i++)
 	{
 		const wchar_t *arg = args[i];
+
+		String *argString = String_FromWString(nullptr, args[i]);
+		if (!argString) return OVUM_ERROR_NO_MEMORY;
+
 		Value argValue;
-		SetString_(argValue, String_FromWString(nullptr, args[i]));
-		argValues[i] = GC::gc->AddStaticReference(argValue)->GetValuePointer();
+		argValue.type = types.String;
+		argValue.common.string = argString;
+
+		StaticRef *ref = GC::gc->AddStaticReference(argValue);
+		if (!ref) return OVUM_ERROR_NO_MEMORY;
+
+		argValues[i] = ref->GetValuePointer();
 
 		if (this->verbose)
 		{
@@ -178,6 +205,7 @@ void VM::InitArgs(int argCount, const wchar_t *args[])
 	}
 
 	this->argValues = argValues.release();
+	RETURN_SUCCESS;
 }
 
 void VM::Unload()
