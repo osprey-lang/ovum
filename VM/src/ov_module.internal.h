@@ -121,9 +121,6 @@ public:
 	Module(uint32_t fileFormatVersion, ModuleMeta &meta);
 	~Module();
 
-	String *name;
-	ModuleVersion version;
-
 	Type   *FindType(String *name, bool includeInternal) const;
 	Method *FindGlobalFunction(String *name, bool includeInternal) const;
 	bool    FindConstant(String *name, bool includeInternal, Value &result) const;
@@ -231,6 +228,11 @@ private:
 		{ }
 	};
 
+public:
+	String *name;
+	ModuleVersion version;
+
+private:
 	bool fullyOpened; // Set to true when the module file has been fully loaded
 	                  // If a module depends on another module with this set to false,
 	                  // then there's a circular dependency issue.
@@ -238,9 +240,15 @@ private:
 	// The version number of the file format that the module was saved with.
 	uint32_t fileFormatVersion;
 
+	uint32_t methodStart; // The start offset of the method block in the file (set to 0 after opening)
+	Method *mainMethod;
+
+	HMODULE nativeLib; // Handle to native library (null if not loaded)
+
+	debug::ModuleDebugData *debugData;
+
 	MemberTable<Type  *> types;     // Types defined in the module
 	MemberTable<Method*> functions; // Global functions defined in the module
-	MemberTable<Value  > constants; // Global constants defined in the module
 	MemberTable<Field *> fields;    // Fields, both instance and static
 	MemberTable<Method*> methods;   // Class methods defined in the module
 	MemberTable<String*> strings;   // String table
@@ -252,16 +260,9 @@ private:
 	MemberTable<Field *> fieldRefs;    // Field references
 	MemberTable<Method*> methodRefs;   // Class method references
 
-	uint32_t methodStart; // The start offset of the method block in the file (set to 0 after opening)
-	Method *mainMethod;
-
-	HMODULE nativeLib; // Handle to native library (null if not loaded)
-
 	void LoadNativeLibrary(String *nativeFileName, const wchar_t *path);
 	void *FindNativeEntryPoint(const char *name);
 	void FreeNativeLibrary();
-
-	debug::ModuleDebugData *debugData;
 
 	static Pool *loadedModules;
 	typedef void (*NativeModuleMain)(ModuleHandle module);
@@ -286,7 +287,7 @@ private:
 
 	static void ReadTypeDefs(ModuleReader &reader, Module *module);
 	static void ReadFunctionDefs(ModuleReader &reader, Module *module);
-	static void ReadConstantDefs(ModuleReader &reader, Module *module);
+	static void ReadConstantDefs(ModuleReader &reader, Module *module, int32_t headerConstantCount);
 
 	static Type *ReadSingleType(ModuleReader &reader, Module *module, const TokenId typeId, std::vector<FieldConstData> &unresolvedConstants);
 	static void ReadFields(ModuleReader &reader, Module *targetModule, Type *targetType, std::vector<FieldConstData> &unresolvedConstants);

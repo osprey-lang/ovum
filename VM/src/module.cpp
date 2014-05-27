@@ -46,7 +46,6 @@ Module::Module(uint32_t fileFormatVersion, ModuleMeta &meta) :
 	// defs
 	functions(meta.functionCount),
 	types(meta.typeCount),
-	constants(meta.constantCount),
 	fields(meta.fieldCount),
 	methods(meta.methodCount),
 	strings(0), // for now, initialized with stuff later
@@ -256,7 +255,7 @@ Module *Module::Open(const wchar_t *fileName)
 
 		ReadTypeDefs(reader, output.get());     // types
 		ReadFunctionDefs(reader, output.get()); // functions
-		ReadConstantDefs(reader, output.get()); // constants
+		ReadConstantDefs(reader, output.get(), meta.constantCount); // constants
 
 		TokenId mainMethodId = reader.ReadToken();
 		if (mainMethodId != 0)
@@ -699,18 +698,18 @@ void Module::ReadFunctionDefs(ModuleReader &reader, Module *module)
 	CHECKPOS_AFTER(FunctionDef);
 }
 
-void Module::ReadConstantDefs(ModuleReader &reader, Module *module)
+void Module::ReadConstantDefs(ModuleReader &reader, Module *module, int32_t headerConstantCount)
 {
 	CHECKPOS_BEFORE();
 
 	int32_t length = reader.ReadInt32();
-	if (length != module->constants.GetCapacity())
+	if (length != headerConstantCount)
 		throw ModuleLoadException(reader.fileName, "Length of ConstantDef table differs from constantCount in module header.");
 
 	for (int32_t i = 0; i < length; i++)
 	{
 		TokenId id = reader.ReadToken();
-		if (id != module->constants.GetNextId(IDMASK_CONSTANTDEF))
+		if (id != (IDMASK_CONSTANTDEF | (i + 1)))
 			throw ModuleLoadException(reader.fileName, "Invalid ConstantDef token ID.");
 
 		enum ConstantFlags { CONST_PUBLIC = 0x01, CONST_PRIVATE = 0x02 };
@@ -742,7 +741,6 @@ void Module::ReadConstantDefs(ModuleReader &reader, Module *module)
 		else
 			constant.integer = value;
 
-		module->constants.Add(constant);
 		module->members.Add(name, ModuleMember(constant, (flags & CONST_PRIVATE) == CONST_PRIVATE));
 	}
 
