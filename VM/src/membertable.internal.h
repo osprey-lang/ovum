@@ -15,6 +15,9 @@ private:
 
 	inline void Init(const int32_t capacity)
 	{
+		// Init should only be called with a non-zero capacity once
+		assert(this->capacity == 0);
+
 		this->capacity = capacity;
 		if (capacity != 0)
 			this->entries = new T[capacity];
@@ -42,25 +45,17 @@ private:
 
 public:
 	inline MemberTable(const int32_t capacity)
-		: length(0)
+		: capacity(0), length(0), entries(nullptr)
 	{
 		Init(capacity);
 	}
 	inline MemberTable()
-	{
-		Init(0);
-	}
+		: capacity(0), length(0), entries(nullptr)
+	{ }
 
 	inline ~MemberTable()
 	{
-#ifdef PRINT_DEBUG_INFO
-		wprintf(L"Destroying member table\n");
-#endif
-		if (this->entries)
-			delete[] this->entries;
-#ifdef PRINT_DEBUG_INFO
-		wprintf(L"Finished destroying member table\n");
-#endif
+		delete[] this->entries;
 	}
 
 	inline T operator[](const int32_t index) const

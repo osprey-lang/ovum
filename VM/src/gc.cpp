@@ -14,15 +14,21 @@ namespace gc_strings
 	String *CStringTooBig = _S(_CStringTooBig);
 }
 
-GC *GC::gc;
+GC *GC::gc = nullptr;
 
-void GC::Init()
+int GC::Init()
 {
-	GC::gc = new GC();
+	GC::gc = new(std::nothrow) GC();
+	if (!GC::gc)
+		return OVUM_ERROR_NO_MEMORY;
+	if (!GC::gc->InitializeHeaps())
+		return OVUM_ERROR_NO_MEMORY;
+	RETURN_SUCCESS;
 }
 
 void GC::Unload()
 {
+	// This field may be null, but delete can handle that just fine.
 	delete GC::gc;
 }
 
@@ -34,9 +40,7 @@ GC::GC() :
 	gen0Base(nullptr), gen0Current(nullptr), gen0End(nullptr),
 	survivors(nullptr),
 	allocSection(5000)
-{
-	InitializeHeaps();
-}
+{ }
 
 GC::~GC()
 {
@@ -72,20 +76,29 @@ GC::~GC()
 	DestroyHeaps();
 }
 
-void GC::InitializeHeaps()
+bool GC::InitializeHeaps()
 {
 	// Create the mainHeap with enough initial memory for the gen0 chunk
 	mainHeap = HeapCreate(0, GEN0_SIZE, 0);
+	if (!mainHeap)
+		return false;
 
 	// The LOH has no initial size
 	largeObjectHeap = HeapCreate(0, 0, 0);
-	if (mainHeap == nullptr || largeObjectHeap == nullptr)
-		abort(); // Not enough memory for the heap
+	if (!largeObjectHeap)
+		return false;
 
 	// Allocate gen0
 	gen0Base = HeapAlloc(mainHeap, HEAP_GENERATE_EXCEPTIONS, GEN0_SIZE);
+	if (!gen0Base)
+		// This shouldn't happen since mainHeap is initialized with
+		// a size that should be enough for gen0, but let's check
+		// for it anyway.
+		return false;
 	gen0End = (char*)gen0Base + GEN0_SIZE;
 	gen0Current = (char*)gen0Base;
+
+	return true;
 }
 
 void GC::DestroyHeaps()
@@ -400,7 +413,12 @@ StaticRef *GC::AddStaticReference(Value value)
 {
 	if (staticRefs == nullptr ||
 		staticRefs->count == StaticRefBlock::BLOCK_SIZE)
-		staticRefs = new StaticRefBlock(staticRefs);
+	{
+		StaticRefBlock *newBlock = new(std::nothrow) StaticRefBlock(staticRefs);
+		if (!newBlock)
+			return nullptr; // No moar memory
+		staticRefs = newBlock;
+	}
 
 	StaticRef *output = staticRefs->values + staticRefs->count++;
 	output->Init(value);
@@ -1067,7 +1085,10 @@ OVUM_API void GC_RemoveMemoryPressure(ThreadHandle thread, const size_t size)
 
 OVUM_API Value *GC_AddStaticReference(Value initialValue)
 {
-	return GC::gc->AddStaticReference(initialValue)->GetValuePointer();
+	StaticRef *ref = GC::gc->AddStaticReference(initialValue);
+	if (ref == nullptr)
+		return nullptr;
+	return ref->GetValuePointer();
 }
 
 OVUM_API void GC_Collect(ThreadHandle thread)

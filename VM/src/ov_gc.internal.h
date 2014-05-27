@@ -349,7 +349,7 @@ private:
 	GCObject *AllocRawGen1(size_t size);
 	void ReleaseRaw(GCObject *gco);
 
-	void InitializeHeaps();
+	bool InitializeHeaps();
 	void DestroyHeaps();
 
 	// Acquires exclusive access to the allocation lock.
@@ -369,7 +369,7 @@ private:
 
 public:
 	// Initializes the garbage collector.
-	NOINLINE static void Init();
+	NOINLINE static int Init();
 	// Unloads the garbage collector.
 	NOINLINE static void Unload();
 

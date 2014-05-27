@@ -438,7 +438,7 @@ public:
 	}
 
 	void InitOperators();
-	void InitStaticFields();
+	bool InitStaticFields();
 
 	void AddNativeField(size_t offset, NativeFieldType fieldType);
 

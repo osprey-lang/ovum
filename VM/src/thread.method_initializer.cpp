@@ -935,7 +935,8 @@ int Thread::CallStaticConstructors(instr::MethodBuilder &builder)
 		if ((type->flags & TypeFlags::STATIC_CTOR_RUN) == TypeFlags::NONE)
 		{
 			type->flags |= TypeFlags::STATIC_CTOR_RUN; // prevent infinite recursion
-			type->InitStaticFields(); // Get some storage locations for the static fields
+			if (!type->InitStaticFields()) // Get some storage locations for the static fields
+				return ThrowMemoryError();
 			Member *member = type->GetMember(static_strings::_init);
 			if (member)
 			{

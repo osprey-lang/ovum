@@ -84,8 +84,8 @@ private:
 
 	Module *startupModule;
 
-	void LoadModules(VMStartParams &params);
-	void InitArgs(int argCount, const wchar_t *args[]);
+	int LoadModules(VMStartParams &params);
+	int InitArgs(int argCount, const wchar_t *args[]);
 
 	static FILE *stdOut;
 	static FILE *stdErr;
@@ -101,7 +101,7 @@ public:
 
 	int Run();
 
-	NOINLINE static void Init(VMStartParams &params);
+	NOINLINE static int Init(VMStartParams &params);
 	NOINLINE static void Unload();
 
 	static void Print(String *str);

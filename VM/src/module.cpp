@@ -26,6 +26,18 @@ namespace module_file
 	const uint32_t MaxFileFormatVersion = 0x00000100u;
 }
 
+int Module::Init()
+{
+	assert(loadedModules == nullptr);
+	loadedModules = new(std::nothrow) Pool();
+	if (!loadedModules) return OVUM_ERROR_NO_MEMORY;
+	RETURN_SUCCESS;
+}
+
+void Module::Unload()
+{
+	delete loadedModules;
+}
 
 Module::Module(uint32_t fileFormatVersion, ModuleMeta &meta) :
 	// This initializer list is kind of silly
@@ -200,8 +212,6 @@ void *Module::FindNativeFunction(const char *name)
 
 Module *Module::Find(String *name)
 {
-	using namespace std;
-
 	return loadedModules->Get(name);
 }
 
@@ -343,19 +353,6 @@ Module *Module::OpenByName(String *name)
 		VM::Printf(L"Successfully loaded module '%ls'\n", name);
 
 	return output;
-}
-
-void Module::Init()
-{
-	if (loadedModules == nullptr)
-		loadedModules = new Pool();
-}
-
-void Module::Unload()
-{
-	using namespace std;
-
-	delete loadedModules;
 }
 
 void Module::LoadNativeLibrary(String *nativeFileName, const wchar_t *path)
@@ -647,7 +644,8 @@ void Module::ReadTypeDefs(ModuleReader &reader, Module *module)
 	CHECKPOS_BEFORE();
 
 	int32_t length = reader.ReadInt32();
-	module->types.Init(length);
+	if (length != module->types.GetCapacity())
+		throw ModuleLoadException(reader.fileName, "Length of TypeDef table differs from typeCount in module header.");
 
 	vector<FieldConstData> unresolvedConstants;
 
@@ -678,7 +676,8 @@ void Module::ReadFunctionDefs(ModuleReader &reader, Module *module)
 	CHECKPOS_BEFORE();
 
 	int32_t length = reader.ReadInt32();
-	module->functions.Init(length);
+	if (length != module->functions.GetCapacity())
+		throw ModuleLoadException(reader.fileName, "Length of FunctionDef table differs from functionCount in module header.");
 
 	for (int32_t i = 0; i < length; i++)
 	{
@@ -705,7 +704,8 @@ void Module::ReadConstantDefs(ModuleReader &reader, Module *module)
 	CHECKPOS_BEFORE();
 
 	int32_t length = reader.ReadInt32();
-	module->constants.Init(length);
+	if (length != module->constants.GetCapacity())
+		throw ModuleLoadException(reader.fileName, "Length of ConstantDef table differs from constantCount in module header.");
 
 	for (int32_t i = 0; i < length; i++)
 	{
@@ -1070,6 +1070,8 @@ void Module::SetConstantFieldValue(ModuleReader &reader, Module *module, Field *
 		constantValue.integer = value;
 
 	field->staticValue = GC::gc->AddStaticReference(constantValue);
+	if (!field->staticValue)
+		throw ModuleLoadException(reader.fileName, "Not enough memory to allocate field reference.");
 }
 
 Method *Module::ReadSingleMethod(ModuleReader &reader, Module *module)

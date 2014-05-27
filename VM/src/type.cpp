@@ -147,6 +147,8 @@ int Type::LoadTypeToken(Thread *const thread)
 	// Type tokens can never be destroyed, so let's create a static
 	// reference to it.
 	StaticRef *typeTkn = GC::gc->AddStaticReference(NULL_VALUE);
+	if (typeTkn == nullptr)
+		return thread->ThrowMemoryError();
 
 	// Note: use GC::Alloc because the aves.Type type may not have
 	// a public constructor. GC::Construct would fail if it didn't.
@@ -162,7 +164,7 @@ int Type::LoadTypeToken(Thread *const thread)
 	return r;
 }
 
-void Type::InitStaticFields()
+bool Type::InitStaticFields()
 {
 	for (int32_t i = 0; i < members.count; i++)
 	{
@@ -171,9 +173,14 @@ void Type::InitStaticFields()
 			(m->flags & MemberFlags::INSTANCE) == MemberFlags::NONE &&
 			static_cast<Field*>(m)->staticValue == nullptr)
 		{
-			static_cast<Field*>(m)->staticValue = GC::gc->AddStaticReference(NULL_VALUE);
+			Field *f = static_cast<Field*>(m);
+			f->staticValue = GC::gc->AddStaticReference(NULL_VALUE);
+			if (f->staticValue == nullptr)
+				return false;
 		}
 	}
+
+	return true;
 }
 
 void Type::AddNativeField(size_t offset, NativeFieldType fieldType)
