@@ -73,32 +73,6 @@ enum ModuleMemberId : uint32_t
 
 class ModuleReader; // Defined in modulereader.internal.h
 
-typedef struct ModuleVersion_S ModuleVersion;
-struct ModuleVersion_S
-{
-	int32_t major;
-	int32_t minor;
-	int32_t build;
-	int32_t revision;
-
-	static inline const int Compare(ModuleVersion &a, ModuleVersion &b)
-	{
-		if (a.major != b.major)
-			return a.major < b.major ? -1 : 1;
-
-		if (a.minor != b.minor)
-			return a.minor < b.minor ? -1 : 1;
-
-		if (a.build != b.build)
-			return a.build < b.build ? -1 : 1;
-
-		if (a.revision != b.revision)
-			return a.revision < b.revision ? -1 : 1;
-
-		return 0; // equal
-	}
-};
-
 // Types that are specific to module loading
 typedef struct ModuleMeta_S
 {
@@ -119,7 +93,7 @@ typedef struct ModuleMeta_S
 class Module
 {
 public:
-	Module(uint32_t fileFormatVersion, ModuleMeta &meta);
+	Module(uint32_t fileFormatVersion, ModuleMeta &meta, const PathName &fileName);
 	~Module();
 
 	Type   *FindType(String *name, bool includeInternal) const;
@@ -243,6 +217,7 @@ private:
 public:
 	String *name;
 	ModuleVersion version;
+	const PathName fileName;
 
 private:
 	bool fullyOpened; // Set to true when the module file has been fully loaded
@@ -273,7 +248,7 @@ private:
 	MemberTable<Method*> methodRefs;   // Class method references
 
 	void LoadNativeLibrary(String *nativeFileName, const PathName &path);
-	void *FindNativeEntryPoint(const char *name);
+	void *FindNativeEntryPoint(const char *name) const;
 	void FreeNativeLibrary();
 
 	static Pool *loadedModules;
@@ -315,6 +290,23 @@ private:
 	static Method::TryBlock *ReadTryBlocks(ModuleReader &reader, Module *targetModule, int32_t &tryCount);
 
 	static void TryRegisterStandardType(Type *type, Module *fromModule, ModuleReader &reader);
+
+	static inline int CompareVersion(const ModuleVersion &a, const ModuleVersion &b)
+	{
+		if (a.major != b.major)
+			return a.major < b.major ? -1 : 1;
+
+		if (a.minor != b.minor)
+			return a.minor < b.minor ? -1 : 1;
+
+		if (a.build != b.build)
+			return a.build < b.build ? -1 : 1;
+
+		if (a.revision != b.revision)
+			return a.revision < b.revision ? -1 : 1;
+
+		return 0; // equal
+	}
 
 	enum FileMethodFlags : uint32_t
 	{

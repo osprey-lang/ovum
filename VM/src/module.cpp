@@ -38,10 +38,12 @@ void Module::Unload()
 	delete loadedModules;
 }
 
-Module::Module(uint32_t fileFormatVersion, ModuleMeta &meta) :
+Module::Module(uint32_t fileFormatVersion, ModuleMeta &meta, const PathName &fileName) :
 	// This initializer list is kind of silly
 	fileFormatVersion(fileFormatVersion),
-	name(meta.name), version(meta.version), fullyOpened(false),
+	name(meta.name), version(meta.version),
+	fileName(fileName),
+	fullyOpened(false),
 	// defs
 	functions(meta.functionCount),
 	types(meta.typeCount),
@@ -220,7 +222,7 @@ Module *Module::Open(const PathName &fileName)
 
 	try
 	{
-		ModuleReader reader; // This SHOULD not fail. but it's C++, so who knows.
+		ModuleReader reader;
 		reader.Open(fileName);
 		VerifyMagicNumber(reader);
 		uint32_t fileFormatVersion = reader.ReadUInt32();
@@ -237,7 +239,7 @@ Module *Module::Open(const PathName &fileName)
 		// and add it to the list of loaded modules.
 		// It's not fully loaded yet, but we add it specifically so that we can detect
 		// circular dependencies.
-		unique_ptr<Module> output(new Module(fileFormatVersion, meta));
+		unique_ptr<Module> output(new Module(fileFormatVersion, meta, fileName));
 		loadedModules->Add(output.get());
 
 		if (meta.nativeLib)
@@ -375,7 +377,7 @@ void Module::LoadNativeLibrary(String *nativeFileName, const PathName &path)
 		throw ModuleLoadException(path, "Could not load native library file.");
 }
 
-void *Module::FindNativeEntryPoint(const char *name)
+void *Module::FindNativeEntryPoint(const char *name) const
 {
 	return GetProcAddress(this->nativeLib, name);
 }
@@ -473,7 +475,7 @@ void Module::ReadModuleRefs(ModuleReader &reader, Module *module)
 		Module *ref = OpenByName(modName);
 		if (!ref->fullyOpened)
 			throw ModuleLoadException(reader.fileName, "Circular dependency detected.");
-		if (ModuleVersion::Compare(ref->version, minVer) < 0)
+		if (CompareVersion(ref->version, minVer) < 0)
 			throw ModuleLoadException(reader.fileName, "Dependent module has insufficient version.");
 
 		module->moduleRefs.Add(ref);
@@ -1321,6 +1323,21 @@ void Module::TryRegisterStandardType(Type *type, Module *fromModule, ModuleReade
 OVUM_API ModuleHandle FindModule(String *name)
 {
 	return Module::Find(name);
+}
+
+OVUM_API String *Module_GetName(ModuleHandle module)
+{
+	return module->name;
+}
+
+OVUM_API void Module_GetVersion(ModuleHandle module, ModuleVersion *version)
+{
+	*version = module->version;
+}
+
+OVUM_API String *Module_GetFileName(ThreadHandle thread, ModuleHandle module)
+{
+	return module->fileName.ToManagedString(thread);
 }
 
 OVUM_API TypeHandle Module_FindType(ModuleHandle module, String *name, bool includeInternal)
