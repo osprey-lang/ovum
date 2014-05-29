@@ -593,6 +593,4 @@ public:
 	friend class VM;
 };
 
-static const size_t GC_SIZE = sizeof(GC);
-
 #endif // VM__GC_INTERNAL_H

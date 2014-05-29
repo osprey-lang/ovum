@@ -16,16 +16,26 @@
 #error You're not supposed to include this file from outside the VM project!
 #endif
 
+#define TARGET_UNIX    0
+#define TARGET_WINDOWS 1
+
 #ifdef _WIN32
+
+#define TARGET_OS TARGET_WINDOWS
+
 #ifndef UNICODE
 #error You are not supposed to compile Ovum without Unicode support.
 #endif
 
 #include "../windows/windows.h"
 
-#else
+#else // _WIN32
+
+#define TARGET_OS TARGET_UNIX
+
 #error Ovum does not support the target operating system.
-#endif
+
+#endif // _WIN32
 
 class Thread;
 class Type;
@@ -37,6 +47,8 @@ class Property;
 class StaticRef;
 
 class MethodInitException;
+
+class PathName;
 
 namespace debug
 {
@@ -76,9 +88,9 @@ private:
 	// Command-line argument values.
 	Value **argValues;
 	// The path (sans file name) of the startup file.
-	String *startupPath;
+	PathName *startupPath;
 	// The directory from which modules are loaded.
-	String *modulePath;
+	PathName *modulePath;
 	// Whether the VM describes the startup process.
 	bool verbose;
 

@@ -117,6 +117,9 @@
     <ClInclude Include="windows\windows.h">
       <Filter>Header Files\Windows</Filter>
     </ClInclude>
+    <ClInclude Include="src\pathname.internal.h">
+      <Filter>Header Files\Internal</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\module.cpp">
@@ -172,6 +175,9 @@
     </ClCompile>
     <ClCompile Include="windows\dllmain.cpp">
       <Filter>Source Files\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="src\pathname.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
