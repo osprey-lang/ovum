@@ -5,6 +5,7 @@
 
 #include <string>
 #include "ov_vm.internal.h"
+#include "pathname.internal.h"
 
 enum class SeekOrigin
 {
@@ -37,13 +38,13 @@ private:
 	uint32_t ReadRaw(void *dest, uint32_t count);
 
 public:
-	std::wstring fileName;
+	PathName fileName;
 
 	ModuleReader();
 	~ModuleReader();
 
 	void Open(const wchar_t *fileName);
-	void Open(const std::wstring &fileName);
+	void Open(const PathName &fileName);
 
 	void Read(void *dest, uint32_t count);
 

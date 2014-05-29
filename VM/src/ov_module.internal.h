@@ -9,6 +9,7 @@
 #include <exception>
 #include "ov_vm.internal.h"
 #include "membertable.internal.h"
+#include "pathname.internal.h"
 
 enum class ModuleMemberFlags : uint32_t
 {
@@ -73,7 +74,7 @@ enum ModuleMemberId : uint32_t
 class ModuleReader; // Defined in modulereader.internal.h
 
 typedef struct ModuleVersion_S ModuleVersion;
-typedef struct ModuleVersion_S
+struct ModuleVersion_S
 {
 	int32_t major;
 	int32_t minor;
@@ -96,7 +97,7 @@ typedef struct ModuleVersion_S
 
 		return 0; // equal
 	}
-} ModuleVersion;
+};
 
 // Types that are specific to module loading
 typedef struct ModuleMeta_S
@@ -136,7 +137,7 @@ public:
 	void   *FindNativeFunction(const char *name);
 
 	static Module *Find(String *name);
-	static Module *Open(const wchar_t *fileName);
+	static Module *Open(const PathName &fileName);
 	static Module *OpenByName(String *name);
 
 	NOINLINE static int Init();
@@ -260,7 +261,7 @@ private:
 	MemberTable<Field *> fieldRefs;    // Field references
 	MemberTable<Method*> methodRefs;   // Class method references
 
-	void LoadNativeLibrary(String *nativeFileName, const wchar_t *path);
+	void LoadNativeLibrary(String *nativeFileName, const PathName &path);
 	void *FindNativeEntryPoint(const char *name);
 	void FreeNativeLibrary();
 
@@ -269,6 +270,8 @@ private:
 	static const char *const NativeModuleIniterName;
 
 private:
+	static bool FileExists(const PathName &path);
+
 	static void VerifyMagicNumber(ModuleReader &reader);
 
 	static void ReadModuleMeta(ModuleReader &reader, ModuleMeta &target);
@@ -329,21 +332,21 @@ private:
 class ModuleLoadException : public std::exception
 {
 private:
-	std::wstring fileName;
+	const PathName fileName;
 
 public:
-	inline ModuleLoadException(std::wstring &fileName)
+	inline ModuleLoadException(const PathName &fileName)
 		: fileName(fileName), exception("Module could not be loaded")
 	{ }
-	inline ModuleLoadException(std::wstring &fileName, const char *message)
+	inline ModuleLoadException(const PathName &fileName, const char *message)
 		: fileName(fileName), exception(message)
 	{ }
 
-	inline ModuleLoadException(const wchar_t *fileName, const char *message) :
+	inline ModuleLoadException(const pathchar_t *fileName, const char *message) :
 		fileName(fileName), exception(message)
 	{ }
 
-	inline const std::wstring &GetFileName() const throw()
+	inline const PathName &GetFileName() const throw()
 	{
 		return this->fileName;
 	}

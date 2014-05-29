@@ -3,7 +3,7 @@
 #include "ov_module.internal.h"
 
 ModuleReader::ModuleReader()
-	: fileName(), stream(nullptr),
+	: fileName(256), stream(nullptr),
 	buffer(nullptr), bufferPosition(0),
 	bufferIndex(0), bufferDataSize(0)
 { }
@@ -14,7 +14,7 @@ ModuleReader::~ModuleReader()
 	free(buffer);
 }
 
-void ModuleReader::Open(const wchar_t *fileName)
+void ModuleReader::Open(const pathchar_t *fileName)
 {
 	if (!buffer)
 	{
@@ -22,16 +22,16 @@ void ModuleReader::Open(const wchar_t *fileName)
 		if (!buffer)
 			throw ModuleLoadException(fileName, "Not enough memory for file buffer.");
 	}
-	this->fileName.append(fileName);
+	this->fileName.Append(fileName);
 
 	stream = CreateFileW(fileName, GENERIC_READ, FILE_SHARE_READ,
 		nullptr, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, nullptr);
 	if (stream == INVALID_HANDLE_VALUE)
 		HandleError(GetLastError());
 }
-void ModuleReader::Open(const std::wstring &fileName)
+void ModuleReader::Open(const PathName &fileName)
 {
-	Open(fileName.c_str());
+	Open(fileName.GetDataPointer());
 }
 
 void ModuleReader::Read(void *dest, uint32_t count)

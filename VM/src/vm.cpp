@@ -1,10 +1,10 @@
 ﻿#include "ov_vm.internal.h"
 #include "ov_module.internal.h"
+#include "pathname.internal.h"
 #include <fcntl.h>
 #include <io.h>
 #include <cstdio>
 #include <memory>
-#include <Shlwapi.h>
 
 #ifdef _MSC_VER
 // Microsoft's C++ implementation uses %s to mean wchar_t* in wide functions,
@@ -71,6 +71,8 @@ VM::VM(VMStartParams &params) :
 VM::~VM()
 {
 	delete mainThread;
+	delete startupPath;
+	delete modulePath;
 	delete[] argValues;
 }
 
@@ -137,29 +139,33 @@ int VM::Init(VMStartParams &params)
 
 int VM::LoadModules(VMStartParams &params)
 {
-	// Set up some stuff first
-	wchar_t *startupPath = CloneWString(params.startupFile);
-	PathRemoveFileSpecW(startupPath);
-	this->startupPath = String_FromWString(nullptr, startupPath);
-	GCObject::FromInst(this->startupPath)->flags |= GCOFlags::EARLY_STRING;
-	delete[] startupPath;
-
-	this->modulePath = String_FromWString(nullptr, params.modulePath);
-	GCObject::FromInst(this->modulePath)->flags |= GCOFlags::EARLY_STRING;
-
-	// And now we can start opening modules! Hurrah!
 	try
 	{
-		this->startupModule = Module::Open(params.startupFile);
+		// Set up some stuff first
+		this->startupPath = new PathName(params.startupFile);
+		this->startupPath->RemoveFileName();
+
+		this->modulePath = new PathName(params.modulePath);
+
+		// And now we can start opening modules! Hurrah!
+
+		PathName startupFile(params.startupFile, std::nothrow);
+		if (!startupFile.IsValid())
+			return OVUM_ERROR_NO_MEMORY;
+		this->startupModule = Module::Open(startupFile);
 	}
 	catch (ModuleLoadException &e)
 	{
-		const std::wstring &fileName = e.GetFileName();
-		if (!fileName.empty())
-			fwprintf(stderr, L"Error loading module '%ls': " CSTR L"\n", fileName.c_str(), e.what());
+		const PathName &fileName = e.GetFileName();
+		if (fileName.GetLength() > 0)
+			fwprintf(stderr, L"Error loading module '" PATHNWF L"': " CSTR L"\n", fileName.GetDataPointer(), e.what());
 		else
 			fwprintf(stderr, L"Error loading module: " CSTR L"\n", e.what());
 		return OVUM_ERROR_MODULE_LOAD;
+	}
+	catch (std::bad_alloc&)
+	{
+		return OVUM_ERROR_NO_MEMORY;
 	}
 
 	for (unsigned int i = 0; i < std_type_names::StandardTypeCount; i++)

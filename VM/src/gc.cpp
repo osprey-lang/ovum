@@ -636,10 +636,6 @@ void GC::MarkRootSet()
 		assert(!hasGen0Refs);
 	}
 
-	// Let's also take care of the startup path and module path
-	TryMarkStringForProcessing(VM::vm->startupPath, &hasGen0Refs);
-	TryMarkStringForProcessing(VM::vm->modulePath, &hasGen0Refs);
-
 	// And then we have all the beautiful, lovely static references.
 	StaticRefBlock *staticRefs = this->staticRefs;
 	while (staticRefs)
@@ -950,10 +946,6 @@ void GC::UpdateRootSet()
 	TryUpdateRef(&mainThread->currentError);
 
 	// Module strings do not have any gen0 references
-
-	// Startup and module path
-	TryUpdateStringRef(&VM::vm->startupPath);
-	TryUpdateStringRef(&VM::vm->modulePath);
 
 	// Static references
 	StaticRefBlock *staticRefs = this->staticRefs;

@@ -99,6 +99,7 @@
     <ClInclude Include="inc\ov_string.h" />
     <ClInclude Include="inc\ov_stringbuffer.h" />
     <ClInclude Include="src\ov_stringbuffer.internal.h" />
+    <ClInclude Include="src\pathname.internal.h" />
     <ClInclude Include="src\refsignature.internal.h" />
     <ClInclude Include="src\string_table.internal.h" />
     <ClInclude Include="inc\ov_thread.h" />
@@ -118,6 +119,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\debug_symbols.cpp" />
+    <ClCompile Include="src\pathname.cpp" />
     <ClCompile Include="windows\dllmain.cpp">
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</CompileAsManaged>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">

@@ -1,6 +1,7 @@
 #include "ov_debug_symbols.internal.h"
 #include "ov_module.internal.h"
 #include "modulereader.internal.h"
+#include "pathname.internal.h"
 #include <memory>
 #include <stdio.h>
 
@@ -61,15 +62,15 @@ namespace debug
 		delete[] symbols;
 	}
 
-	void ModuleDebugData::TryLoad(const wchar_t *moduleFile, Module *module)
+	void ModuleDebugData::TryLoad(const PathName &moduleFile, Module *module)
 	{
 		using namespace std;
 
 		try
 		{
 			ModuleReader reader;
-			wstring fileName(moduleFile);
-			fileName.append(L".dbg");
+			PathName fileName(moduleFile);
+			fileName.Append(_Path(".dbg"));
 			reader.Open(fileName);
 
 			char magicNumber[4];

@@ -4,7 +4,6 @@
 #include "ov_debug_symbols.internal.h"
 #include "refsignature.internal.h"
 #include <memory>
-#include <shlwapi.h>
 
 using namespace std;
 
@@ -215,7 +214,7 @@ Module *Module::Find(String *name)
 }
 
 
-Module *Module::Open(const wchar_t *fileName)
+Module *Module::Open(const PathName &fileName)
 {
 	Module *outputModule = nullptr;
 
@@ -286,11 +285,11 @@ Module *Module::Open(const wchar_t *fileName)
 	}
 	catch (ModuleIOException &ioError)
 	{
-		throw ModuleLoadException(wstring(fileName), ioError.what());
+		throw ModuleLoadException(fileName, ioError.what());
 	}
 	catch (std::bad_alloc&)
 	{
-		throw ModuleLoadException(wstring(fileName), "Out of memory");
+		throw ModuleLoadException(fileName, "Out of memory");
 	}
 
 	outputModule->fullyOpened = true;
@@ -300,53 +299,42 @@ Module *Module::Open(const wchar_t *fileName)
 
 Module *Module::OpenByName(String *name)
 {
-	Module *mod;
-	if (mod = Find(name))
-		return mod;
+	Module *output;
+	if (output = Find(name))
+		return output;
 	
-	StringBuffer moduleFileName(max(VM::vm->startupPath->length, VM::vm->modulePath->length) + name->length + 16);
+	PathName moduleFileName(256);
 
 	const int pathCount = 2;
-	String *paths[pathCount] = { VM::vm->startupPath, VM::vm->modulePath };
+	PathName *paths[pathCount] = { VM::vm->startupPath, VM::vm->modulePath };
 
-	unique_ptr<wchar_t[]> filePath;
-
+	bool found = false;
 	for (int i = 0; i < pathCount; i++)
 	{
-		moduleFileName.Clear();
+		moduleFileName.ReplaceWith(*paths[i]);
+		moduleFileName.Join(name);
+		moduleFileName.Append(_Path(".ovm"));
 
-		moduleFileName.Append(paths[i]);
-		if (!moduleFileName.EndsWith('\\'))
-			moduleFileName.Append('\\');
-		moduleFileName.Append(name);
-		moduleFileName.Append(4, ".ovm");
-
-		const int filePathLength = moduleFileName.ToWString(nullptr);
-		filePath = unique_ptr<wchar_t[]>(new wchar_t[filePathLength]);
-		moduleFileName.ToWString(filePath.get());
-
-		DWORD attrs = GetFileAttributesW(filePath.get());
-		if (attrs != INVALID_FILE_ATTRIBUTES && !(attrs & FILE_ATTRIBUTE_DIRECTORY))
-			break; // we've found our file! \o/
-
-		filePath.reset();
+		if (FileExists(moduleFileName))
+		{
+			found = true;
+			break;
+		}
 	}
 
-	if (filePath.get() == nullptr) // not found
+	if (!found)
 	{
-		const int moduleNameLength = String_ToWString(nullptr, name);
-		unique_ptr<wchar_t[]> wname(new wchar_t[moduleNameLength]);
-		String_ToWString(wname.get(), name);
-		throw ModuleLoadException(wstring(wname.get()), "Could not locate the module file.");
+		moduleFileName.ReplaceWith(name);
+		throw ModuleLoadException(moduleFileName, "Could not locate the module file.");
 	}
 
 	if (VM::vm->verbose)
 	{
 		VM::Printf(L"Loading module '%ls' ", name);
-		wprintf(L"from file '%ls'\n", filePath.get());
+		wprintf(L"from file '" PATHNWF L"'\n", moduleFileName.GetDataPointer());
 	}
 
-	Module *output = Open(filePath.get());
+	output = Open(moduleFileName);
 
 	if (VM::vm->verbose)
 		VM::Printf(L"Successfully loaded module '%ls'\n", name);
@@ -354,33 +342,23 @@ Module *Module::OpenByName(String *name)
 	return output;
 }
 
-void Module::LoadNativeLibrary(String *nativeFileName, const wchar_t *path)
+void Module::LoadNativeLibrary(String *nativeFileName, const PathName &path)
 {
 	// Native library files are ALWAYS loaded from the same folder
 	// as the module file. Immer & mindig. 'path' contains the full
 	// path and file name of the module file, so we strip the module
 	// file name and append nativeFileName! Simple!
-	size_t pathLen = wcslen(path);
-	unique_ptr<wchar_t[]> pathBufTemp(new wchar_t[max(MAX_PATH, pathLen) + 1]);
-	wchar_t *pathBuf = pathBufTemp.get();
-	pathBuf[pathLen] = L'\0';
-	CopyMemoryT(pathBuf, path, pathLen);
-	PathRemoveFileSpecW(pathBuf); // get the actual path!
 
-	{
-		const int fileNameWLen = String_ToWString(nullptr, nativeFileName);
-		unique_ptr<wchar_t[]> fileNameW(new wchar_t[fileNameWLen]);
-		String_ToWString(fileNameW.get(), nativeFileName);
+	PathName fileName(path);
+	fileName.RemoveFileName();
+	fileName.Join(nativeFileName);
 
-		PathAppendW(pathBuf, PathFindFileNameW(fileNameW.get()));
-	}
-
-	// pathBuf should now contain a full path to the native module
-	this->nativeLib = LoadLibraryW(pathBuf);
+	// fileName should now contain a full path to the native module
+	this->nativeLib = LoadLibraryW(fileName.GetDataPointer());
 
 	// If this->nativeLib is null, then the library could not be loaded.
 	if (!this->nativeLib)
-		throw ModuleLoadException(wstring(path), "Could not load native library file.");
+		throw ModuleLoadException(path, "Could not load native library file.");
 }
 
 void *Module::FindNativeEntryPoint(const char *name)
@@ -395,6 +373,16 @@ void Module::FreeNativeLibrary()
 		FreeLibrary(this->nativeLib);
 		this->nativeLib = nullptr;
 	}
+}
+
+bool Module::FileExists(const PathName &path)
+{
+#if TARGET_OS == TARGET_WINDOWS
+	DWORD attrs = GetFileAttributesW(path.GetDataPointer());
+	return attrs != INVALID_FILE_ATTRIBUTES && (attrs & FILE_ATTRIBUTE_DIRECTORY) == 0;
+#else
+#error Not implemented
+#endif
 }
 
 void Module::VerifyMagicNumber(ModuleReader &reader)
