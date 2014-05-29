@@ -305,14 +305,28 @@ Module *Module::OpenByName(String *name)
 	
 	PathName moduleFileName(256);
 
-	const int pathCount = 2;
-	PathName *paths[pathCount] = { VM::vm->startupPath, VM::vm->modulePath };
+	static const int pathCount = 3;
+	const PathName *paths[pathCount] = {
+		VM::vm->startupPathLib,
+		VM::vm->startupPath,
+		VM::vm->modulePath,
+	};
 
 	bool found = false;
 	for (int i = 0; i < pathCount; i++)
 	{
 		moduleFileName.ReplaceWith(*paths[i]);
+		uint32_t length = moduleFileName.Join(name);
 		moduleFileName.Join(name);
+		moduleFileName.Append(_Path(".ovm"));
+
+		if (FileExists(moduleFileName))
+		{
+			found = true;
+			break;
+		}
+
+		moduleFileName.ClipTo(0, length);
 		moduleFileName.Append(_Path(".ovm"));
 
 		if (FileExists(moduleFileName))

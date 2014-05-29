@@ -206,6 +206,33 @@ public:
 #endif
 	}
 
+	// Clips the path name to the specified substring, removing
+	// characters that are outside that range.
+	// Returns: The length of the string after clipping.
+	inline uint32_t ClipTo(uint32_t index, uint32_t length)
+	{
+		if (index >= this->length || length == 0)
+		{
+			this->Clear();
+		}
+		else if (index == 0)
+		{
+			this->length = min(this->length, length);
+			data[this->length] = ZERO;
+		}
+		else
+		{
+			length = min(this->length - index, length);
+			// Copy one character at a time instead of using CopyMemoryT,
+			// to avoid potential problems with overlapping characters.
+			for (uint32_t i = 0; i < length; i++)
+				data[i] = data[index + i];
+			data[length] = ZERO;
+			this->length = length;
+		}
+		return this->length;
+	}
+
 private:
 	void Init(uint32_t capacity);
 	void Init(uint32_t capacity, std::nothrow_t);
