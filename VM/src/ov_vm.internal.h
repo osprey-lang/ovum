@@ -89,6 +89,9 @@ private:
 	Value **argValues;
 	// The path (sans file name) of the startup file.
 	PathName *startupPath;
+	// The path to the 'lib' subdirectory in the directory
+	// of the startup file.
+	PathName *startupPathLib;
 	// The directory from which modules are loaded.
 	PathName *modulePath;
 	// Whether the VM describes the startup process.

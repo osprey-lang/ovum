@@ -138,6 +138,17 @@ public:
 
 	static Module *Find(String *name);
 	static Module *Open(const PathName &fileName);
+	// Module name resolution for a module named $name is performed by
+	// looking for the following files, in the order written:
+	//   $startupPath/lib/$name/$name.ovm
+	//   $startupPath/lib/$name.ovm
+	//   $startupPath/$name/$name.ovm
+	//   $startupPath/$name.ovm
+	//   $modulePath/$name/$name.ovm
+	//   $modulePath/$name.ovm
+	// where
+	//   $startupPath = VM::vm->startupPath
+	//   $modulePath = VM::vm->modulePath
 	static Module *OpenByName(String *name);
 
 	NOINLINE static int Init();

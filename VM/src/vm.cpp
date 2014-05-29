@@ -18,15 +18,6 @@ VM *VM::vm = nullptr;
 FILE *VM::stdOut = nullptr;
 FILE *VM::stdErr = nullptr;
 
-wchar_t *CloneWString(const wchar_t *source)
-{
-	size_t outputLength = wcslen(source);
-	std::unique_ptr<wchar_t[]> output(new wchar_t[outputLength + 1]); // +1 for the \0
-	memcpy(output.get(), source, outputLength * sizeof(wchar_t));
-	output[outputLength] = L'\0';
-	return output.release();
-}
-
 OVUM_API int VM_Start(VMStartParams *params)
 {
 	int r;
@@ -65,13 +56,14 @@ OVUM_API int VM_Start(VMStartParams *params)
 VM::VM(VMStartParams &params) :
 	argCount(params.argc), verbose(params.verbose),
 	types(), functions(), mainThread(new Thread()),
-	startupPath(nullptr), modulePath(nullptr)
+	startupPath(nullptr), startupPathLib(nullptr), modulePath(nullptr)
 { }
 
 VM::~VM()
 {
 	delete mainThread;
 	delete startupPath;
+	delete startupPathLib;
 	delete modulePath;
 	delete[] argValues;
 }
@@ -144,6 +136,9 @@ int VM::LoadModules(VMStartParams &params)
 		// Set up some stuff first
 		this->startupPath = new PathName(params.startupFile);
 		this->startupPath->RemoveFileName();
+
+		this->startupPathLib = new PathName(*this->startupPath);
+		this->startupPathLib->Join(_Path("lib"));
 
 		this->modulePath = new PathName(params.modulePath);
 

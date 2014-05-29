@@ -48,12 +48,10 @@ typedef struct VMStartParams_S
 	// the way Windows deals with current working directories.
 	// If it is a relative path, expect strange behaviour.
 	const wchar_t *startupFile;
-	// And this is the path to the directory that contains the
-	// module library. Modules are located by first looking in
-	// the startup file's directory, and if it can't be found
-	// there, the VM examines this modulePath.
-	// NO OTHER DIRECTORIES ARE CONSIDERED. The VM does NOT care
-	// about PATH or any other environment variables. At all.
+	// The path to the directory containing the module library.
+	// For details on how module names are resolved, see the
+	// comments in ov_module.internal.h/Module::OpenByName.
+	// This will be moved to proper documentation eventually.
 	const wchar_t *modulePath;
 	// Make the VM be more explicit about what it's doing during startup.
 	bool verbose;
