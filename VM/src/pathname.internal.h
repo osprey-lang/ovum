@@ -233,6 +233,8 @@ public:
 		return this->length;
 	}
 
+	String *ToManagedString(ThreadHandle thread) const;
+
 private:
 	void Init(uint32_t capacity);
 	void Init(uint32_t capacity, std::nothrow_t);

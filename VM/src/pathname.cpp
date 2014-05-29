@@ -88,6 +88,15 @@ PathName::~PathName()
 	delete[] this->data;
 }
 
+String *PathName::ToManagedString(ThreadHandle thread) const
+{
+#if TARGET_OS == TARGET_WINDOWS
+	return GC::gc->ConstructString(thread, length, reinterpret_cast<const uchar*>(data));
+#else
+#error Not implemented
+#endif
+}
+
 void PathName::Init(uint32_t capacity)
 {
 	this->data = new pathchar_t[capacity + 1]; // +1 for \0

@@ -63,7 +63,7 @@ public:
 		declModule(declModule), flags(flags)
 	{ }
 
-	inline ~Member()
+	inline virtual ~Member()
 	{
 #ifdef PRINT_DEBUG_INFO
 		if ((flags & MemberFlags::FIELD) == MemberFlags::FIELD)
@@ -302,7 +302,7 @@ public:
 		overloadCount(0), overloads(nullptr), baseMethod(nullptr)
 	{ }
 
-	inline ~Method()
+	inline virtual ~Method()
 	{
 		delete[] overloads;
 	}
