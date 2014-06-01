@@ -40,6 +40,37 @@ public inheritable Iterable
 		return this.iter.all(predicate);
 	}
 
+	/// Summary: Counts the items in the collection.
+	/// Returns: The number of items in the collection, as an Int.
+	public count()
+	{
+		var length = 0;
+		var iterator = this.iter;
+		while iterator.moveNext():
+			length += 1;
+		return length;
+	}
+	/// Summary: Counts all the items in the collection that match the
+	///          the specified predicate.
+	/// Param predicate: An invokable value that takes one argument
+	///          (the current element) and returns a truthy value if
+	///          the element matches the predicate, or a falsy value
+	///          otherwise.
+	/// Returns: The number of items that match {predicate}, as an Int.
+	/// Throws ArgumentNullError: {predicate} is null.
+	public count(predicate)
+	{
+		if predicate is null:
+			throw new ArgumentNullError("predicate");
+
+		var length = 0;
+		var iterator = this.iter;
+		while iterator.moveNext():
+			if predicate(iterator.current):
+				length += 1;
+		return length;
+	}
+
 	public each(func)
 	{
 		if func is null:
@@ -259,38 +290,38 @@ private class GroupEveryIterable is Iterable
 
 private class TakeIterable is Iterable
 {
-	public new(this.inner, this.count);
+	public new(this.inner, this.takeCount);
 
-	private inner, count;
+	private inner, takeCount;
 
 	iter
 	{
-		return inner.iter.take(count);
+		return inner.iter.take(takeCount);
 	}
 }
 
 private class SkipIterable is Iterable
 {
-	public new(this.inner, this.count);
+	public new(this.inner, this.skipCount);
 
-	private inner, count;
+	private inner, skipCount;
 
 	iter
 	{
-		return inner.iter.skip(count);
+		return inner.iter.skip(skipCount);
 	}
 }
 
 private class RangeIterable is Iterable
 {
-	public new(this.start, this.count);
+	public new(this.start, this.rangeCount);
 
-	private start, count;
+	private start, rangeCount;
 
 	iter
 	{
 		var i = start;
-		var end = start + count;
+		var end = start + rangeCount;
 		while i < end
 		{
 			yield i;
