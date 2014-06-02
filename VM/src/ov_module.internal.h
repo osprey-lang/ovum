@@ -326,6 +326,23 @@ private:
 		OV_VIRTUAL     = 0x10,
 		OV_ABSTRACT    = 0x20,
 	};
+	enum ParamFlags : uint16_t
+	{
+		PF_BY_REF = 0x0001,
+	};
+	enum FieldFlags : uint32_t
+	{
+		FIELD_PUBLIC    = 0x01,
+		FIELD_PRIVATE   = 0x02,
+		FIELD_PROTECTED = 0x04,
+		FIELD_INSTANCE  = 0x08,
+		FIELD_HASVALUE  = 0x10,
+	};
+	enum ConstantFlags : uint32_t
+	{
+		CONST_PUBLIC  = 0x01,
+		CONST_PRIVATE = 0x02,
+	};
 
 	friend class ModuleReader;
 	friend class GC;
