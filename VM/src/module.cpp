@@ -716,8 +716,7 @@ void Module::ReadConstantDefs(ModuleReader &reader, Module *module, int32_t head
 		if (id != (IDMASK_CONSTANTDEF | (i + 1)))
 			throw ModuleLoadException(reader.fileName, "Invalid ConstantDef token ID.");
 
-		enum ConstantFlags { CONST_PUBLIC = 0x01, CONST_PRIVATE = 0x02 };
-		ConstantFlags flags = (ConstantFlags)reader.ReadUInt32();
+		ConstantFlags flags = reader.Read<ConstantFlags>();
 
 		String *name = module->FindString(reader.ReadToken());
 		if (name == nullptr)
@@ -753,7 +752,7 @@ void Module::ReadConstantDefs(ModuleReader &reader, Module *module, int32_t head
 
 Type *Module::ReadSingleType(ModuleReader &reader, Module *module, const TokenId typeId, vector<FieldConstData> &unresolvedConstants)
 {
-	TypeFlags flags = (TypeFlags)reader.ReadUInt32();
+	TypeFlags flags = reader.Read<TypeFlags>();
 	String *name = module->FindString(reader.ReadToken());
 	if (name == nullptr)
 		throw ModuleLoadException(reader.fileName, "Could not resolve string ID in TypeDef name.");
@@ -835,15 +834,7 @@ void Module::ReadFields(ModuleReader &reader, Module *module, Type *type, vector
 		if (id != module->fields.GetNextId(IDMASK_FIELDDEF))
 			throw ModuleLoadException(reader.fileName, "Invalid FieldDef token ID.");
 
-		enum FieldFlags
-		{
-			FIELD_PUBLIC    = 0x01,
-			FIELD_PRIVATE   = 0x02,
-			FIELD_PROTECTED = 0x04,
-			FIELD_INSTANCE  = 0x08,
-			FIELD_HASVALUE  = 0x10,
-		};
-		FieldFlags fieldFlags = (FieldFlags)reader.ReadInt32();
+		FieldFlags fieldFlags = reader.Read<FieldFlags>();
 		if ((fieldFlags & FIELD_HASVALUE) && (fieldFlags & FIELD_INSTANCE))
 			throw ModuleLoadException(reader.fileName, "The field flags hasValue and instance cannot be used together.");
 		MemberFlags flags = MemberFlags::NONE;
@@ -1028,7 +1019,7 @@ void Module::ReadOperators(ModuleReader &reader, Module *module, Type *type)
 	{
 		for (int32_t i = 0; i < length; i++)
 		{
-			Operator op = (Operator)reader.ReadUInt8();
+			Operator op = reader.Read<Operator>();
 			TokenId methodId = reader.ReadToken();
 
 			if ((methodId & IDMASK_MEMBERKIND) != IDMASK_METHODDEF)
@@ -1078,7 +1069,7 @@ void Module::SetConstantFieldValue(ModuleReader &reader, Module *module, Field *
 
 Method *Module::ReadSingleMethod(ModuleReader &reader, Module *module)
 {
-	FileMethodFlags methodFlags = (FileMethodFlags)reader.ReadUInt32();
+	FileMethodFlags methodFlags = reader.Read<FileMethodFlags>();
 
 	String *name = module->FindString(reader.ReadToken());
 	if (name == nullptr)
@@ -1113,7 +1104,7 @@ Method *Module::ReadSingleMethod(ModuleReader &reader, Module *module)
 
 	for (int32_t i = 0; i < overloadCount; i++)
 	{
-		OverloadFlags flags = (OverloadFlags)reader.ReadUInt32();
+		OverloadFlags flags = reader.Read<OverloadFlags>();
 
 		Method::Overload *ov = overloads.get() + i;
 		ov->group = method.get();
@@ -1129,9 +1120,8 @@ Method *Module::ReadSingleMethod(ModuleReader &reader, Module *module)
 
 			for (int p = 0; p < paramCount; p++)
 			{
-				enum ParamFlags : uint16_t { PF_BY_REF = 0x0001 };
 				TokenId paramNameId = reader.ReadToken();
-				ParamFlags paramFlags = (ParamFlags)reader.ReadUInt16();
+				ParamFlags paramFlags = reader.Read<ParamFlags>();
 				ov->paramNames[p] = module->FindString(paramNameId);
 				if (paramFlags == PF_BY_REF)
 					refBuilder.SetParam(p + 1, true);
@@ -1233,7 +1223,7 @@ Method::TryBlock *Module::ReadTryBlocks(ModuleReader &reader, Module *module, in
 
 	for (int32_t i = 0; i < length; i++)
 	{
-		Method::TryBlock::TryKind kind = (Method::TryBlock::TryKind)reader.ReadUInt8();
+		Method::TryBlock::TryKind kind = reader.Read<Method::TryBlock::TryKind>();
 		uint32_t tryStart = reader.ReadUInt32();
 		uint32_t tryEnd   = reader.ReadUInt32();
 

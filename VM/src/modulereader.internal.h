@@ -48,21 +48,25 @@ public:
 
 	void Read(void *dest, uint32_t count);
 
+	template<typename T>
+	inline T Read()
+	{
+		T value;
+		Read(&value, sizeof(T));
+		return value;
+	}
+
 	unsigned long GetPosition();
 
 	void Seek(long amount, SeekOrigin origin);
 
 	inline int8_t ReadInt8()
 	{
-		int8_t target;
-		Read(&target, sizeof(int8_t));
-		return target;
+		return Read<int8_t>();
 	}
 	inline uint8_t ReadUInt8()
 	{
-		uint8_t target;
-		Read(&target, sizeof(uint8_t));
-		return target;
+		return Read<uint8_t>();
 	}
 
 	// All the reading functions below assume the system is little-endian.
@@ -70,48 +74,34 @@ public:
 
 	inline int16_t ReadInt16()
 	{
-		int16_t target;
-		Read(&target, sizeof(int16_t));
-		return target;
+		return Read<int16_t>();
 	}
 	inline uint16_t ReadUInt16()
 	{
-		uint16_t target;
-		Read(&target, sizeof(uint16_t));
-		return target;
+		return Read<uint16_t>();
 	}
 
 	inline int32_t ReadInt32()
 	{
-		int32_t target;
-		Read(&target, sizeof(int32_t));
-		return target;
+		return Read<int32_t>();
 	}
 	inline uint32_t ReadUInt32()
 	{
-		uint32_t target;
-		Read(&target, sizeof(uint32_t));
-		return target;
+		return Read<uint32_t>();
 	}
 
 	inline int64_t ReadInt64()
 	{
-		int64_t target;
-		Read(&target, sizeof(int64_t));
-		return target;
+		return Read<int64_t>();
 	}
 	inline uint64_t ReadUInt64()
 	{
-		uint64_t target;
-		Read(&target, sizeof(uint64_t));
-		return target;
+		return Read<uint64_t>();
 	}
 
 	inline TokenId ReadToken()
 	{
-		TokenId target;
-		Read(&target, sizeof(TokenId));
-		return target;
+		return Read<TokenId>();
 	}
 
 	inline void SkipCollection()
