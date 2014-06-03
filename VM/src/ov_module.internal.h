@@ -11,24 +11,6 @@
 #include "membertable.internal.h"
 #include "pathname.internal.h"
 
-enum class ModuleMemberFlags : uint32_t
-{
-	// Mask for extracting the kind of member (type, function or constant).
-	KIND     = 0x000f,
-
-	NONE     = 0x0000,
-
-	TYPE     = 0x0001,
-	FUNCTION = 0x0002,
-	CONSTANT = 0x0003,
-
-	PROTECTION = 0x00f0,
-	PUBLIC     = 0x0010,
-	INTERNAL   = 0x0020,
-};
-ENUM_OPS(ModuleMemberFlags, uint32_t);
-
-
 class ModuleMember
 {
 public:
@@ -96,6 +78,7 @@ public:
 	Module(uint32_t fileFormatVersion, ModuleMeta &meta, const PathName &fileName);
 	~Module();
 
+	bool    FindMember(String *name, bool includeInternal, ModuleMember &result) const;
 	Type   *FindType(String *name, bool includeInternal) const;
 	Method *FindGlobalFunction(String *name, bool includeInternal) const;
 	bool    FindConstant(String *name, bool includeInternal, Value &result) const;
@@ -111,19 +94,35 @@ public:
 	void   *FindNativeFunction(const char *name);
 
 	static Module *Find(String *name);
-	static Module *Open(const PathName &fileName);
-	// Module name resolution for a module named $name is performed by
-	// looking for the following files, in the order written:
-	//   $startupPath/lib/$name/$name.ovm
-	//   $startupPath/lib/$name.ovm
-	//   $startupPath/$name/$name.ovm
-	//   $startupPath/$name.ovm
-	//   $modulePath/$name/$name.ovm
-	//   $modulePath/$name.ovm
-	// where
-	//   $startupPath = VM::vm->startupPath
-	//   $modulePath = VM::vm->modulePath
-	static Module *OpenByName(String *name);
+	static Module *Find(String *name, ModuleVersion *version);
+	/* Module name resolution for a module named $name is performed by
+	 * looking for the following files, in the order written:
+	 *    $startupPath/lib/$name-$version/$name.ovm
+	 *    $startupPath/lib/$name-$version.ovm
+	 *    $startupPath/lib/$name/$name.ovm
+	 *    $startupPath/lib/$name.ovm
+	 *
+	 *    $startupPath/$name-$version/$name.ovm
+	 *    $startupPath/$name-$version.ovm
+	 *    $startupPath/$name/$name.ovm
+	 *    $startupPath/$name.ovm
+	 *
+	 *    $modulePath/$name-$version/$name.ovm
+	 *    $modulePath/$name-$version.ovm
+	 *    $modulePath/$name/$name.ovm
+	 *    $modulePath/$name.ovm
+	 * where
+	 *    $version = requiredVersion, in the format "major.minor.build.revision",
+	 *               e.g. "4.2.7.3"
+	 *    $startupPath = VM::vm->startupPath
+	 *    $modulePath = VM::vm->modulePath
+	 * This is 12 files that we may need to check for, yes, but FileExists is
+	 * relatively cheap. Some simple tests on a mid-range desktop computer from
+	 * 2011 can do about 40,000 calls a second (with a different file name each
+	 * time, to counteract caching).
+	 */
+	static Module *OpenByName(String *name, ModuleVersion *requiredVersion);
+	static Module *Open(const PathName &fileName, ModuleVersion *requiredVersion);
 
 	NOINLINE static int Init();
 	NOINLINE static void Unload();
@@ -174,17 +173,27 @@ private:
 			delete[] data;
 		}
 
-		inline int GetLength() { return length; }
+		inline int GetLength() const { return length; }
 
-		inline Module *Get(int index)
+		inline Module *Get(int index) const
 		{
 			return data[index];
 		}
-		inline Module *Get(String *name)
+		inline Module *Get(String *name) const
 		{
 			for (int i = 0; i < length; i++)
 				if (String_Equals(data[i]->name, name))
 					return data[i];
+			return nullptr;
+		}
+		inline Module *Get(String *name, ModuleVersion *version) const
+		{
+			for (int i = 0; i < length; i++)
+			{
+				Module *module = data[i];
+				if (String_Equals(module->name, name) && module->version == *version)
+					return module;
+			}
 			return nullptr;
 		}
 
@@ -307,6 +316,7 @@ private:
 
 		return 0; // equal
 	}
+	static void AppendVersionString(PathName &path, ModuleVersion &version);
 
 	enum FileMethodFlags : uint32_t
 	{

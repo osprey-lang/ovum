@@ -13,16 +13,19 @@ const char *const Module::NativeModuleIniterName = "OvumModuleMain";
 namespace module_file
 {
 	// The magic number that must be present in all Ovum modules.
-	const char MagicNumber[] = { 'O', 'V', 'M', 'M' };
+	static const char MagicNumber[] = { 'O', 'V', 'M', 'M' };
 
 	// The start of the "real" data in the module.
-	const unsigned int DataStart = 16;
+	static const unsigned int DataStart = 16;
 
 	// The minimum supported file format version
-	const uint32_t MinFileFormatVersion = 0x00000100u;
+	static const uint32_t MinFileFormatVersion = 0x00000100u;
 
 	// The maximum supported file format version
-	const uint32_t MaxFileFormatVersion = 0x00000100u;
+	static const uint32_t MaxFileFormatVersion = 0x00000100u;
+
+	// The file extension
+	static const pathchar_t *const Extension = _Path(".ovm");
 }
 
 int Module::Init()
@@ -85,6 +88,19 @@ Module::~Module()
 
 	if (debugData != nullptr)
 		delete debugData;
+}
+
+bool Module::FindMember(String *name, bool includeInternal, ModuleMember &result) const
+{
+	ModuleMember member;
+	if (!members.Get(name, member))
+		return false;
+	
+	if (!includeInternal && (member.flags & ModuleMemberFlags::PROTECTION) == ModuleMemberFlags::INTERNAL)
+		return false;
+
+	result = member;
+	return true;
 }
 
 Type *Module::FindType(String *name, bool includeInternal) const
@@ -214,9 +230,16 @@ Module *Module::Find(String *name)
 {
 	return loadedModules->Get(name);
 }
+Module *Module::Find(String *name, ModuleVersion *version)
+{
+	if (version)
+		return loadedModules->Get(name, version);
+	else
+		return loadedModules->Get(name);
+}
 
 
-Module *Module::Open(const PathName &fileName)
+Module *Module::Open(const PathName &fileName, ModuleVersion *requiredVersion)
 {
 	Module *outputModule = nullptr;
 
@@ -234,6 +257,11 @@ Module *Module::Open(const PathName &fileName)
 
 		ModuleMeta meta;
 		ReadModuleMeta(reader, meta);
+
+		// Check whether we have the right version before allocating the Module object.
+		// If the version doesn't match, we don't actually need to continue reading.
+		if (requiredVersion && meta.version != *requiredVersion)
+			throw ModuleLoadException(fileName, "Dependent module has the wrong version.");
 
 		// ReadModuleMeta gives us just enough information to initialize the output module
 		// and add it to the list of loaded modules.
@@ -299,12 +327,16 @@ Module *Module::Open(const PathName &fileName)
 	return outputModule;
 }
 
-Module *Module::OpenByName(String *name)
+Module *Module::OpenByName(String *name, ModuleVersion *requiredVersion)
 {
 	Module *output;
-	if (output = Find(name))
+	if (output = Find(name, requiredVersion))
 		return output;
 	
+	PathName versionNumber(32);
+	if (requiredVersion)
+		AppendVersionString(versionNumber, *requiredVersion);
+
 	PathName moduleFileName(256);
 
 	static const int pathCount = 3;
@@ -318,24 +350,45 @@ Module *Module::OpenByName(String *name)
 	for (int i = 0; i < pathCount; i++)
 	{
 		moduleFileName.ReplaceWith(*paths[i]);
-		uint32_t length = moduleFileName.Join(name);
+		uint32_t simpleName = moduleFileName.Join(name);
+		// Versioned names first:
+		//    path/$name-$version/$name.ovm
+		//    path/$name-$version.ovm
+		if (requiredVersion) {
+			moduleFileName.Append(_Path("-"));
+			// The length for path/$name-$version
+			uint32_t versionedName = moduleFileName.Append(versionNumber);
+
+			// path/$name-version/$name.ovm
+			moduleFileName.Join(name);
+			moduleFileName.Append(module_file::Extension);
+			if (found = FileExists(moduleFileName))
+				break;
+
+			// path/$name-$version.ovm
+			moduleFileName.ClipTo(0, versionedName);
+			moduleFileName.Append(module_file::Extension);
+			if (found = FileExists(moduleFileName))
+				break;
+		}
+
+		// Then, unversioned names:
+		//    path/$name/$name.ovm
+		//    path/$name.ovm
+		// simpleName contains the length for path/$name
+
+		// path/$name/$name.ovm
+		moduleFileName.ClipTo(0, simpleName);
 		moduleFileName.Join(name);
-		moduleFileName.Append(_Path(".ovm"));
-
-		if (FileExists(moduleFileName))
-		{
-			found = true;
+		moduleFileName.Append(module_file::Extension);
+		if (found = FileExists(moduleFileName))
 			break;
-		}
 
-		moduleFileName.ClipTo(0, length);
-		moduleFileName.Append(_Path(".ovm"));
-
-		if (FileExists(moduleFileName))
-		{
-			found = true;
+		// path/$name.ovm
+		moduleFileName.ClipTo(0, simpleName);
+		moduleFileName.Append(module_file::Extension);
+		if (found = FileExists(moduleFileName))
 			break;
-		}
 	}
 
 	if (!found)
@@ -350,7 +403,7 @@ Module *Module::OpenByName(String *name)
 		wprintf(L"from file '" PATHNWF L"'\n", moduleFileName.GetDataPointer());
 	}
 
-	output = Open(moduleFileName);
+	output = Open(moduleFileName, requiredVersion);
 
 	if (VM::vm->verbose)
 		VM::Printf(L"Successfully loaded module '%ls'\n", name);
@@ -465,18 +518,20 @@ void Module::ReadModuleRefs(ModuleReader &reader, Module *module)
 		TokenId id = reader.ReadToken();
 		if (id != module->moduleRefs.GetNextId(IDMASK_MODULEREF))
 			throw ModuleLoadException(reader.fileName, "Invalid ModuleRef token ID.");
-		// Module reference has a name followed by a minimum version
+
+		// Module reference has a name followed by a version
 		String *modName = module->FindString(reader.ReadToken());
 		if (modName == nullptr)
 			throw ModuleLoadException(reader.fileName, "Could not resolve string ID for ModuleRef name.");
-		ModuleVersion minVer;
-		ReadVersion(reader, minVer);
 
-		Module *ref = OpenByName(modName);
+		ModuleVersion version;
+		ReadVersion(reader, version);
+
+		Module *ref = OpenByName(modName, &version);
 		if (!ref->fullyOpened)
 			throw ModuleLoadException(reader.fileName, "Circular dependency detected.");
-		if (CompareVersion(ref->version, minVer) < 0)
-			throw ModuleLoadException(reader.fileName, "Dependent module has insufficient version.");
+		if (ref->version != version)
+			throw ModuleLoadException(reader.fileName, "Dependent module has the wrong version.");
 
 		module->moduleRefs.Add(ref);
 	}
@@ -1307,12 +1362,46 @@ void Module::TryRegisterStandardType(Type *type, Module *fromModule, ModuleReade
 	}
 }
 
+void Module::AppendVersionString(PathName &path, ModuleVersion &version)
+{
+	typedef int32_t (ModuleVersion::*ModuleField);
+	static const int fieldCount = 4;
+	static ModuleField fields[] = {
+		&ModuleVersion::major,
+		&ModuleVersion::minor,
+		&ModuleVersion::build,
+		&ModuleVersion::revision,
+	};
+
+	for (int f = 0; f < fieldCount; f++)
+	{
+		if (f > 0)
+			path.Append(_Path("."));
+
+		int32_t value = version.*(fields[f]);
+
+		// The max value of int32_t is 4,294,967,295, which is 10 characters.
+		static const int charCount = 15;
+		pathchar_t chars[charCount + 1];
+		pathchar_t *pch = chars + charCount;
+		// pch points to where we want \0
+		*pch = _Path('\0');
+		do
+		{
+			*--pch = (pathchar_t)(_Path('0') + value % 10);
+			value /= 10;
+		} while (value != 0);
+
+		path.Append(pch);
+	}
+}
+
 
 // Paper thin API wrapper functions, whoo!
 
-OVUM_API ModuleHandle FindModule(String *name)
+OVUM_API ModuleHandle FindModule(String *name, ModuleVersion *version)
 {
-	return Module::Find(name);
+	return Module::Find(name, version);
 }
 
 OVUM_API String *Module_GetName(ModuleHandle module)
@@ -1328,6 +1417,30 @@ OVUM_API void Module_GetVersion(ModuleHandle module, ModuleVersion *version)
 OVUM_API String *Module_GetFileName(ThreadHandle thread, ModuleHandle module)
 {
 	return module->fileName.ToManagedString(thread);
+}
+
+OVUM_API bool Module_GetGlobalMember(ModuleHandle module, String *name, bool includeInternal, GlobalMember *result)
+{
+	ModuleMember member;
+	if (module->FindMember(name, includeInternal, member))
+	{
+		result->flags = member.flags;
+		result->name = name;
+		switch (member.flags & ModuleMemberFlags::KIND)
+		{
+		case ModuleMemberFlags::TYPE:
+			result->type = member.type;
+			break;
+		case ModuleMemberFlags::FUNCTION:
+			result->function = member.function;
+			break;
+		case ModuleMemberFlags::CONSTANT:
+			result->constant = member.constant;
+			break;
+		}
+		return true;
+	}
+	return false;
 }
 
 OVUM_API TypeHandle Module_FindType(ModuleHandle module, String *name, bool includeInternal)
