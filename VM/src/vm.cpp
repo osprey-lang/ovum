@@ -147,7 +147,7 @@ int VM::LoadModules(VMStartParams &params)
 		PathName startupFile(params.startupFile, std::nothrow);
 		if (!startupFile.IsValid())
 			return OVUM_ERROR_NO_MEMORY;
-		this->startupModule = Module::Open(startupFile);
+		this->startupModule = Module::Open(startupFile, nullptr);
 	}
 	catch (ModuleLoadException &e)
 	{
