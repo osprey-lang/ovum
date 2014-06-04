@@ -206,8 +206,24 @@ private:
 		{
 			if (length == capacity)
 				Resize();
-			data[length++] = value;
-			return length;
+			int index = length++;
+			data[index] = value;
+			return index;
+		}
+
+		inline bool Remove(Module *value)
+		{
+			bool found = false;
+			for (int i = 0; i < length; i++)
+			{
+				if (found)
+					data[i - 1] = data[i];
+				else
+					found = data[i] == value;
+			}
+			if (found)
+				length--;
+			return found;
 		}
 	};
 

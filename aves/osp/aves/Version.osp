@@ -34,7 +34,7 @@ public class Version
 
 	// Note: unspecified fields contain -1 rather than null,
 	// because we want such fields to compare less than all
-	// other values. 
+	// other values.
 	private _major, _minor, _build, _revision;
 
 	/// Summary: Gets the major component of the version number.

@@ -54,7 +54,8 @@ OVUM_API int VM_Start(VMStartParams *params)
 }
 
 VM::VM(VMStartParams &params) :
-	argCount(params.argc), verbose(params.verbose),
+	verbose(params.verbose),
+	argCount(params.argc), argValues(nullptr),
 	types(), functions(), mainThread(new Thread()),
 	startupPath(nullptr), startupPathLib(nullptr), modulePath(nullptr)
 { }

@@ -86,8 +86,12 @@ Module::~Module()
 
 	FreeNativeLibrary();
 
-	if (debugData != nullptr)
-		delete debugData;
+	delete debugData;
+
+	// If the module is not fullyOpened, then the module is being deallocated from
+	// an exception in Module::Open, so we must remove it from the pool again.
+	if (!fullyOpened)
+		loadedModules->Remove(this);
 }
 
 bool Module::FindMember(String *name, bool includeInternal, ModuleMember &result) const
@@ -276,13 +280,13 @@ Module *Module::Open(const PathName &fileName, ModuleVersion *requiredVersion)
 		ReadStringTable(reader, output.get());  // strings
 
 		// And these must be called in exactly this order!
-		ReadModuleRefs(reader, output.get());   // moduleRefs
-		ReadTypeRefs(reader, output.get());     // typeRefs
+		ReadModuleRefs(reader,   output.get()); // moduleRefs
+		ReadTypeRefs(reader,     output.get()); // typeRefs
 		ReadFunctionRefs(reader, output.get()); // functionRefs
-		ReadFieldRefs(reader, output.get());    // fieldRefs
-		ReadMethodRefs(reader, output.get());   // methodRefs
+		ReadFieldRefs(reader,    output.get()); // fieldRefs
+		ReadMethodRefs(reader,   output.get()); // methodRefs
 
-		ReadTypeDefs(reader, output.get());     // types
+		ReadTypeDefs(reader,     output.get()); // types
 		ReadFunctionDefs(reader, output.get()); // functions
 		ReadConstantDefs(reader, output.get(), meta.constantCount); // constants
 
