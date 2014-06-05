@@ -1,9 +1,6 @@
 #include "ov_vm.internal.h"
 #include "../inc/ov_string.h"
 #include "refsignature.internal.h"
-#ifdef PRINT_DEBUG_INFO
-#include <cstdio>
-#endif
 
 namespace std_type_names
 {
@@ -80,10 +77,6 @@ Type::Type(int32_t memberCount) :
 
 Type::~Type()
 {
-#ifdef PRINT_DEBUG_INFO
-	VM::Printf(L"Releasing type: %ls\n", this->fullName);
-#endif
-
 	// If this is a standard type, unregister it
 	for (unsigned int i = 0; i < std_type_names::StandardTypeCount; i++)
 	{

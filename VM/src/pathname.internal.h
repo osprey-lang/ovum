@@ -30,7 +30,7 @@
 // Note: PATH_SEP[C][_ALT] are macros so that they can be used to concatenate
 // string literals, if it should ever be necessary.
 
-#if TARGET_OS == TARGET_WINDOWS
+#if OVUM_TARGET == OVUM_WINDOWS
 
 typedef WCHAR pathchar_t;
 
@@ -136,7 +136,7 @@ public:
 	}
 	inline uint32_t Append(String *path)
 	{
-#if TARGET_OS == TARGET_WINDOWS
+#if OVUM_TARGET == OVUM_WINDOWS
 		return AppendInner(path->length, reinterpret_cast<const pathchar_t*>(&path->firstChar));
 #else
 #error Not implemented
@@ -160,7 +160,7 @@ public:
 	}
 	inline uint32_t Join(String *path)
 	{
-#if TARGET_OS == TARGET_WINDOWS
+#if OVUM_TARGET == OVUM_WINDOWS
 		return JoinInner(path->length, reinterpret_cast<const pathchar_t*>(&path->firstChar));
 #else
 #error Not implemented
@@ -199,7 +199,7 @@ public:
 	inline void ReplaceWith(String *path)
 	{
 		Clear();
-#if TARGET_OS == TARGET_WINDOWS
+#if OVUM_TARGET == OVUM_WINDOWS
 		ReplaceWith(path->length, reinterpret_cast<const pathchar_t*>(&path->firstChar));
 #else
 #error Not implemented

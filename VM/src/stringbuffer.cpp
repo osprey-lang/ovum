@@ -103,26 +103,28 @@ void StringBuffer::Append(const int32_t length, const char data[])
 
 void StringBuffer::Append(const int32_t length, const wchar_t data[])
 {
-	if (sizeof(wchar_t) == sizeof(uchar))
-		// Assume wchar_t is UTF-16 (or at least UCS-2)
-		Append(length, (uchar*)data);
-	else if (sizeof(wchar_t) == sizeof(wuchar))
-	{
-		// Assume wchar_t is UTF-32
-		EnsureMinCapacity(length);
+#if OVUM_WCHAR_SIZE == 2
+	// UTF-16 (or at least UCS-2)
+	Append(length, (uchar*)data);
+#elif OVUM_WCHAR_SIZE == 4
+	// UTF-32
 
-		for (int32_t i = 0; i < length; i++)
+	EnsureMinCapacity(length);
+
+	for (int32_t i = 0; i < length; i++)
+	{
+		const wuchar ch = (wuchar)data[i];
+		if (UC_NeedsSurrogatePair(ch))
 		{
-			const wuchar ch = (wuchar)data[i];
-			if (UC_NeedsSurrogatePair(ch))
-			{
-				const SurrogatePair surr = UC_ToSurrogatePair(ch);
-				Append(2, (uchar*)&surr);
-			}
-			else
-				Append(1, (uchar*)&ch);
+			const SurrogatePair surr = UC_ToSurrogatePair(ch);
+			Append(2, (uchar*)&surr);
 		}
+		else
+			Append(1, (uchar*)&ch);
 	}
+#else
+#error Not supported
+#endif
 }
 
 void StringBuffer::Clear()
@@ -138,68 +140,65 @@ String *StringBuffer::ToString(Thread *const thread)
 const int StringBuffer::ToWString(wchar_t *buf)
 {
 	// This is basically copied straight from String_ToWString, but optimized for StringBuffer.
+#if OVUM_WCHAR_SIZE == 2
+	// UTF-16 (or at least UCS-2, but hopefully surrogates won't break things too much)
 
-	if (sizeof(wchar_t) == sizeof(uchar))
+	int outputLength = this->length; // Do NOT include the \0
+
+	if (buf)
 	{
-		// assume wchar_t is UTF-16 (or at least UCS-2, but hopefully surrogates won't break things too much)
-		int outputLength = this->length; // Do NOT include the \0
-
-		if (buf)
-		{
-			memcpy(buf, this->data, outputLength * sizeof(uchar));
-			*(buf + outputLength) = L'\0'; // Add the \0
-		}
-
-		return outputLength + 1; // Do include \0
+		memcpy(buf, this->data, outputLength * sizeof(uchar));
+		*(buf + outputLength) = L'\0'; // Add the \0
 	}
-	else if (sizeof(wchar_t) == sizeof(wuchar))
+
+	return outputLength + 1; // Do include \0
+#elif OVUM_WCHAR_SIZE == 4
+	// UTF-32
+
+	// First, iterate over the string to find out how many surrogate pairs there are,
+	// if any. These consume only one UTF-32 character.
+	// We use this to calculate the length of the output (including the \0).
+	int outputLength = 0;
+
+	int32_t strLen = this->length; // let's NOT include the \0
+	const uchar *strp = this->data;
+	for (int32_t i = 0; i < strLen; i++)
 	{
-		// assume sizeof(wchar_t) == 4, which is probably UTF-32
+		if (UC_IsSurrogateLead(*strp) && UC_IsSurrogateTrail(*(strp + 1)))
+		{
+			i++; // skip one extra character; surrogate pair still only makes one wchar_t
+			strp++;
+		}
+		outputLength++;
+		strp++;
+	}
 
-		// First, iterate over the string to find out how many surrogate pairs there are,
-		// if any. These consume only one UTF-32 character.
-		// We use this to calculate the length of the output (including the \0).
-		int outputLength = 0;
+	if (buf)
+	{
+		// And now we can copy things to the destination, yay
+		strp = this->data;
 
-		int32_t strLen = this->length; // let's NOT include the \0
-		const uchar *strp = this->data;
-		for (int32_t i = 0; i < strLen; i++)
+		wchar_t *outp = buf;
+		for (int i = 0; i < outputLength; i++)
 		{
 			if (UC_IsSurrogateLead(*strp) && UC_IsSurrogateTrail(*(strp + 1)))
 			{
-				i++; // skip one extra character; surrogate pair still only makes one wchar_t
-				strp++;
+				*outp = UC_ToWide(*strp, *(strp + 1));
+				strp++; // skip one extra character in source
 			}
-			outputLength++;
+			else
+				*outp = *strp;
+
 			strp++;
+			outp++;
 		}
 
-		if (buf)
-		{
-			// And now we can copy things to the destination, yay
-			strp = this->data;
-
-			wchar_t *outp = buf;
-			for (int i = 0; i < outputLength; i++)
-			{
-				if (UC_IsSurrogateLead(*strp) && UC_IsSurrogateTrail(*(strp + 1)))
-				{
-					*outp = UC_ToWide(*strp, *(strp + 1));
-					strp++; // skip one extra character in source
-				}
-				else
-					*outp = *strp;
-
-				strp++;
-				outp++;
-			}
-
-			// outp is now one character beyond the end of the string
-			*outp = L'\0'; // and add \0
-		}
-
-		return outputLength + 1; // Do include \0
+		// outp is now one character beyond the end of the string
+		*outp = L'\0'; // and add \0
 	}
-	else
-		return -1; // not supported
+
+	return outputLength + 1; // Do include \0
+#else
+#error Not supported
+#endif
 }

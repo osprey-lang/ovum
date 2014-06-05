@@ -24,7 +24,7 @@ PathName::PathName(uint32_t capacity)
 PathName::PathName(String *path)
 	: data(nullptr), length(0), capacity(0)
 {
-#if TARGET_OS == TARGET_WINDOWS
+#if OVUM_TARGET == OVUM_WINDOWS
 	Init(path->length);
 	this->length = path->length;
 	CopyMemoryT(this->data, reinterpret_cast<const pathchar_t*>(&path->firstChar), path->length);
@@ -61,7 +61,7 @@ PathName::PathName(uint32_t capacity, std::nothrow_t)
 PathName::PathName(String *path, std::nothrow_t)
 	: data(nullptr), length(0), capacity(0)
 {
-#if TARGET_OS == TARGET_WINDOWS
+#if OVUM_TARGET == OVUM_WINDOWS
 	Init(path->length, std::nothrow);
 	if (IsValid())
 	{
@@ -90,7 +90,7 @@ PathName::~PathName()
 
 String *PathName::ToManagedString(ThreadHandle thread) const
 {
-#if TARGET_OS == TARGET_WINDOWS
+#if OVUM_TARGET == OVUM_WINDOWS
 	return GC::gc->ConstructString(thread, length, reinterpret_cast<const uchar*>(data));
 #else
 #error Not implemented
@@ -145,7 +145,7 @@ bool PathName::IsRooted(uint32_t length, const pathchar_t *path)
 	if (length > 0 && IsPathSep(path[0]))
 		return true;
 
-#if TARGET_OS == TARGET_WINDOWS
+#if OVUM_TARGET == OVUM_WINDOWS
 	// Windows only: volume label + colon, e.g. C:\One or C:Two
 	if (length >= 2 && path[1] == _Path(':'))
 		return true;
@@ -158,7 +158,7 @@ uint32_t PathName::GetRootLength(uint32_t length, const pathchar_t *path)
 {
 	uint32_t index = 0;
 
-#if TARGET_OS == TARGET_WINDOWS
+#if OVUM_TARGET == OVUM_WINDOWS
 	if (length > 1 && IsPathSep(path[0]))
 	{
 		index = 1;
@@ -180,7 +180,7 @@ uint32_t PathName::GetRootLength(uint32_t length, const pathchar_t *path)
 
 uint32_t PathName::StringLength(const pathchar_t *const str)
 {
-#if TARGET_OS == TARGET_WINDOWS
+#if OVUM_TARGET == OVUM_WINDOWS
 	return (uint32_t)wcslen(str);
 #else
 	return (uint32_t)strlen(str);

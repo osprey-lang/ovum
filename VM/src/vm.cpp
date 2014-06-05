@@ -336,7 +336,7 @@ void VM::PrintMethodInitException(MethodInitException &e)
 	}
 }
 
-int VM::GetArgs(const int destLength, String *dest[])
+int VM::GetArgs(int destLength, String *dest[])
 {
 	const int maxIndex = min(destLength, argCount);
 
@@ -345,7 +345,7 @@ int VM::GetArgs(const int destLength, String *dest[])
 
 	return maxIndex;
 }
-int VM::GetArgValues(const int destLength, Value dest[])
+int VM::GetArgValues(int destLength, Value dest[])
 {
 	const int maxIndex = min(destLength, argCount);
 
