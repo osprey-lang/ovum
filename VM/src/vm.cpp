@@ -221,33 +221,28 @@ void VM::PrintInternal(FILE *f, const wchar_t *format, String *str)
 {
 	using namespace std;
 
-	if (sizeof(uchar) == sizeof(wchar_t))
-	{
-		// Assume wchar_t is UTF-16, or at least USC-2, and just cast it.
-		fwprintf(f, format, (const wchar_t*)&str->firstChar);
-	}
-	else if (sizeof(wchar_t) == sizeof(uint32_t))
-	{
-		// Assume wchar_t is UTF-32, and use our own conversion function to convert
-		const int length = String_ToWString(nullptr, str);
+#if OVUM_WCHAR_SIZE == 2
+	// UTF-16, or at least USC-2.
+	fwprintf(f, format, (const wchar_t*)&str->firstChar);
+#elif OVUM_WCHAR_SIZE == 4
+	// UTF-32, use our own conversion function to convert
+	const int length = String_ToWString(nullptr, str);
 
-		if (length <= 128)
-		{
-			wchar_t buffer[128];
-			String_ToWString(buffer, str);
-			fwprintf(f, format, buffer);
-		}
-		else
-		{
-			unique_ptr<wchar_t[]> buffer(new wchar_t[length]);
-			String_ToWString(buffer.get(), str);
-			fwprintf(f, format, buffer.get());
-		}
+	if (length <= 128)
+	{
+		wchar_t buffer[128];
+		String_ToWString(buffer, str);
+		fwprintf(f, format, buffer);
 	}
 	else
 	{
-		throw L"Can't print! Implement a fallback, dammit.";
+		unique_ptr<wchar_t[]> buffer(new wchar_t[length]);
+		String_ToWString(buffer.get(), str);
+		fwprintf(f, format, buffer.get());
 	}
+#else
+#error Not supported
+#endif
 }
 
 void VM::Print(String *str)
