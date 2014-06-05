@@ -1447,7 +1447,7 @@ int Thread::FindErrorHandler(int32_t maxIndex)
 	return OVUM_ERROR_THROWN;
 }
 
-int Thread::EvaluateLeave(register StackFrame *frame, const int32_t target)
+int Thread::EvaluateLeave(register StackFrame *frame, int32_t target)
 {
 	typedef Method::TryBlock::TryKind TryKind;
 

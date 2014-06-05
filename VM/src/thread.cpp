@@ -1005,7 +1005,7 @@ int Thread::ThrowNullReferenceError(String *message)
 	return r;
 }
 
-int Thread::ThrowNoOverloadError(const uint32_t argCount, String *message)
+int Thread::ThrowNoOverloadError(uint32_t argCount, String *message)
 {
 	currentFrame->PushInt(argCount);
 	if (message == nullptr)
@@ -1098,7 +1098,7 @@ void Thread::DisposeCallStack()
 
 // Note: argCount and args DO include the instance here!
 template<bool First>
-void Thread::PushStackFrame(const uint32_t argCount, Value *args, Method::Overload *method)
+void Thread::PushStackFrame(uint32_t argCount, Value *args, Method::Overload *method)
 {
 	if (First)
 	{
@@ -1143,7 +1143,7 @@ void Thread::PushStackFrame(const uint32_t argCount, Value *args, Method::Overlo
 	//return currentFrame = newFrame;
 }
 
-int Thread::PrepareVariadicArgs(const MethodFlags flags, const uint32_t argCount, const uint32_t paramCount, StackFrame *frame)
+int Thread::PrepareVariadicArgs(MethodFlags flags, uint32_t argCount, uint32_t paramCount, StackFrame *frame)
 {
 	int32_t count = argCount >= paramCount - 1 ? argCount - paramCount + 1 : 0;
 
@@ -1367,19 +1367,19 @@ OVUM_API void VM_PushNull(ThreadHandle thread)
 	thread->PushNull();
 }
 
-OVUM_API void VM_PushBool(ThreadHandle thread, const bool value)
+OVUM_API void VM_PushBool(ThreadHandle thread, bool value)
 {
 	thread->PushBool(value);
 }
-OVUM_API void VM_PushInt(ThreadHandle thread, const int64_t value)
+OVUM_API void VM_PushInt(ThreadHandle thread, int64_t value)
 {
 	thread->PushInt(value);
 }
-OVUM_API void VM_PushUInt(ThreadHandle thread, const uint64_t value)
+OVUM_API void VM_PushUInt(ThreadHandle thread, uint64_t value)
 {
 	thread->PushUInt(value);
 }
-OVUM_API void VM_PushReal(ThreadHandle thread, const double value)
+OVUM_API void VM_PushReal(ThreadHandle thread, double value)
 {
 	thread->PushReal(value);
 }
@@ -1392,7 +1392,7 @@ OVUM_API Value VM_Pop(ThreadHandle thread)
 {
 	return thread->Pop();
 }
-OVUM_API void VM_PopN(ThreadHandle thread, const uint32_t n)
+OVUM_API void VM_PopN(ThreadHandle thread, uint32_t n)
 {
 	thread->Pop(n);
 }
@@ -1402,20 +1402,20 @@ OVUM_API void VM_Dup(ThreadHandle thread)
 	thread->Dup();
 }
 
-OVUM_API Value *VM_Local(ThreadHandle thread, const uint32_t n)
+OVUM_API Value *VM_Local(ThreadHandle thread, uint32_t n)
 {
 	return thread->Local(n);
 }
 
-OVUM_API int VM_Invoke(ThreadHandle thread, const uint32_t argCount, Value *result)
+OVUM_API int VM_Invoke(ThreadHandle thread, uint32_t argCount, Value *result)
 {
 	return thread->Invoke(argCount, result);
 }
-OVUM_API int VM_InvokeMember(ThreadHandle thread, String *name, const uint32_t argCount, Value *result)
+OVUM_API int VM_InvokeMember(ThreadHandle thread, String *name, uint32_t argCount, Value *result)
 {
 	return thread->InvokeMember(name, argCount, result);
 }
-OVUM_API int VM_InvokeMethod(ThreadHandle thread, MethodHandle method, const uint32_t argCount, Value *result)
+OVUM_API int VM_InvokeMethod(ThreadHandle thread, MethodHandle method, uint32_t argCount, Value *result)
 {
 	return thread->InvokeMethod(method, argCount, result);
 }
@@ -1441,11 +1441,11 @@ OVUM_API int VM_StoreMember(ThreadHandle thread, String *member)
 	return thread->StoreMember(member);
 }
 
-OVUM_API int VM_LoadIndexer(ThreadHandle thread, const uint32_t argCount, Value *result)
+OVUM_API int VM_LoadIndexer(ThreadHandle thread, uint32_t argCount, Value *result)
 {
 	return thread->LoadIndexer(argCount, result);
 }
-OVUM_API int VM_StoreIndexer(ThreadHandle thread, const uint32_t argCount)
+OVUM_API int VM_StoreIndexer(ThreadHandle thread, uint32_t argCount)
 {
 	return thread->StoreIndexer(argCount);
 }
