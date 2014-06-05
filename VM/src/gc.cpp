@@ -529,9 +529,6 @@ void GC::Collect(Thread *const thread, bool collectGen1)
 	// Finalize any collectible dead objects with finalizers, and release the
 	// memory. We only collect gen1 if collectGen1 is true, or if there are
 	// enough dead objects in it.
-#ifdef PRINT_DEBUG_INFO
-	wprintf(L"Preparing to collect #: %d\n", LinkedListLength(collectBase));
-#endif
 	if (!collectGen1)
 		collectGen1 = gen1Size - survivors.gen1SurvivorSize >= GEN1_DEAD_OBJECTS_THRESHOLD;
 	{

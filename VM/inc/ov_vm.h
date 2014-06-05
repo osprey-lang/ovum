@@ -3,11 +3,46 @@
 #ifndef VM__VM_H
 #define VM__VM_H
 
-#ifdef VM_EXPORTS
-#define _OVUM_API __declspec(dllexport)
+#define OVUM_UNIX    0
+#define OVUM_WINDOWS 1
+
+#ifdef _WIN32
+
+# define OVUM_TARGET OVUM_WINDOWS
+
 #else
-#pragma comment(lib, "VM.lib")
-#define _OVUM_API __declspec(dllimport)
+
+# define OVUM_TARGET OVUM_UNIX
+
+# error Ovum does not support the target operating system.
+
+#endif
+
+
+// Define an OVUM_WCHAR_SIZE macro for text functions
+#if defined(__SIZEOF_WCHAR_T__)
+# define OVUM_WCHAR_SIZE __SIZEOF_WCHAR_T__
+#elif defined(__WCHAR_MAX__)
+# if __WCHAR_MAX__ > 0xFFFF
+#  define OVUM_WCHAR_SIZE 4
+#else
+#  define OVUM_WCHAR_SIZE 2
+#endif
+#else
+# if OVUM_TARGET == OVUM_WINDOWS
+// wchar_t is UTF-16 on Windows
+#  define OVUM_WCHAR_SIZE 2
+# else
+// TODO: Figure out size of wchar_t
+#  error Don't know the size of wchar_t
+# endif
+#endif
+
+#ifdef VM_EXPORTS
+# define _OVUM_API __declspec(dllexport)
+#else
+# pragma comment(lib, "VM.lib")
+# define _OVUM_API __declspec(dllimport)
 #endif
 
 #define OVUM_API	extern "C" _OVUM_API

@@ -68,10 +68,6 @@ Module::Module(uint32_t fileFormatVersion, ModuleMeta &meta, const PathName &fil
 
 Module::~Module()
 {
-#ifdef PRINT_DEBUG_INFO
-	std::wcout << L"Releasing module: ";
-	VM::PrintLn(this->name);
-#endif
 	// Note: Don't touch any of the string values.
 	// They're managed by the GC, so we let her clean it up.
 
@@ -450,7 +446,7 @@ void Module::FreeNativeLibrary()
 
 bool Module::FileExists(const PathName &path)
 {
-#if TARGET_OS == TARGET_WINDOWS
+#if OVUM_TARGET == OVUM_WINDOWS
 	DWORD attrs = GetFileAttributesW(path.GetDataPointer());
 	return attrs != INVALID_FILE_ATTRIBUTES && (attrs & FILE_ATTRIBUTE_DIRECTORY) == 0;
 #else

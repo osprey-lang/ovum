@@ -4,9 +4,6 @@
 #define VM__TYPE_INTERNAL_H
 
 #include "ov_vm.internal.h"
-#ifdef PRINT_DEBUG_INFO
-#include <cstdio>
-#endif
 #include <cassert>
 
 // forward declarations
@@ -63,23 +60,7 @@ public:
 		declModule(declModule), flags(flags)
 	{ }
 
-	inline virtual ~Member()
-	{
-#ifdef PRINT_DEBUG_INFO
-		if ((flags & MemberFlags::FIELD) == MemberFlags::FIELD)
-			wprintf(L"Releasing field: ");
-		else if ((flags & MemberFlags::METHOD) == MemberFlags::METHOD)
-			wprintf(L"Releasing method: ");
-		else
-			wprintf(L"Releasing property: ");
-		if (declType)
-		{
-			VM::Print(declType->fullName);
-			wprintf(L".");
-		}
-		VM::PrintLn(this->name);
-#endif
-	}
+	inline virtual ~Member() { }
 
 	inline bool IsStatic() const
 	{

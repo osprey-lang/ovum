@@ -493,63 +493,61 @@ OVUM_API String *String_ConcatRange(ThreadHandle thread, const unsigned int coun
 
 OVUM_API int32_t String_ToWString(wchar_t *dest, const String *source)
 {
-	if (sizeof(wchar_t) == sizeof(uchar))
+#if OVUM_WCHAR_SIZE == 2
+	// UTF-16 (or at least UCS-2, but hopefully surrogates won't break things too much)
+
+	int32_t outputLength = source->length + 1; // Include the \0
+
+	if (dest)
+		memcpy(dest, &source->firstChar, outputLength * sizeof(uchar));
+
+	return outputLength; // Do include \0
+#elif OVUM_WCHAR_SIZE == 4
+	// UTF-32
+
+	// First, iterate over the string to find out how many surrogate pairs there are,
+	// if any. These consume only one UTF-32 character.
+	// We use this to calculate the length of the output (including the \0).
+	int32_t outputLength = 0;
+
+	int32_t strLen = source->length + 1; // let's include the \0
+	const uchar *strp = &source->firstChar;
+	for (int32_t i = 0; i < strLen; i++)
 	{
-		// assume wchar_t is UTF-16 (or at least UCS-2, but hopefully surrogates won't break things too much)
-		int32_t outputLength = source->length + 1; // Include the \0
-
-		if (dest)
-			memcpy(dest, &source->firstChar, outputLength * sizeof(uchar));
-
-		return outputLength; // Do include \0
+		if (UC_IsSurrogateLead(*strp) && UC_IsSurrogateTrail(*(strp + 1)))
+		{
+			i++; // skip one extra character; surrogate pair still only makes one wchar_t
+			strp++;
+		}
+		outputLength++;
+		strp++;
 	}
-	else if (sizeof(wchar_t) == sizeof(wuchar))
+
+	if (dest)
 	{
-		// sizeof(wchar_t) == 4, which is probably UTF-32
+		// And now we can copy things to the destination, yay
+		strp = &source->firstChar;
 
-		// First, iterate over the string to find out how many surrogate pairs there are,
-		// if any. These consume only one UTF-32 character.
-		// We use this to calculate the length of the output (including the \0).
-		int32_t outputLength = 0;
-
-		int32_t strLen = source->length + 1; // let's include the \0
-		const uchar *strp = &source->firstChar;
-		for (int32_t i = 0; i < strLen; i++)
+		wchar_t *outp = dest;
+		for (int i = 0; i < outputLength; i++)
 		{
 			if (UC_IsSurrogateLead(*strp) && UC_IsSurrogateTrail(*(strp + 1)))
 			{
-				i++; // skip one extra character; surrogate pair still only makes one wchar_t
-				strp++;
+				*outp = UC_ToWide(*strp, *(strp + 1));
+				strp++; // skip one extra character in source
 			}
-			outputLength++;
+			else
+				*outp = *strp;
+
 			strp++;
+			outp++;
 		}
-
-		if (dest)
-		{
-			// And now we can copy things to the destination, yay
-			strp = &source->firstChar;
-
-			wchar_t *outp = dest;
-			for (int i = 0; i < outputLength; i++)
-			{
-				if (UC_IsSurrogateLead(*strp) && UC_IsSurrogateTrail(*(strp + 1)))
-				{
-					*outp = UC_ToWide(*strp, *(strp + 1));
-					strp++; // skip one extra character in source
-				}
-				else
-					*outp = *strp;
-
-				strp++;
-				outp++;
-			}
-		}
-
-		return outputLength; // Do include \0
 	}
-	else
-		return -1; // not supported
+
+	return outputLength; // Do include \0
+#else
+#error Not supported
+#endif
 }
 
 OVUM_API String *String_FromCString(ThreadHandle thread, const char *source)
@@ -559,54 +557,53 @@ OVUM_API String *String_FromCString(ThreadHandle thread, const char *source)
 
 OVUM_API String *String_FromWString(ThreadHandle thread, const wchar_t *source)
 {
-	if (sizeof(wchar_t) == sizeof(uchar))
+#if OVUM_WCHAR_SIZE == 2
+	// UTF-16 (or at least UCS-2)
+
+	size_t length = wcslen(source);
+
+	String *output = GC::gc->ConstructString(thread, length, (const uchar*)source);
+
+	return output;
+#elif OVUM_WCHAR_SIZE == 4
+	// UTF-32
+
+	int32_t outLength = 0;
+
+	const wchar_t *strp = source;
+	while (*strp)
 	{
-		// assume wchar_t is UTF-16 (or at least UCS-2)
-		size_t length = wcslen(source);
-
-		String *output = GC::gc->ConstructString(thread, length, (const uchar*)source);
-
-		return output;
+		if (UC_NeedsSurrogatePair((const wuchar)*strp))
+			outLength += 2;
+		else
+			outLength++;
+		strp++;
 	}
-	else if (sizeof(wchar_t) == sizeof(wuchar))
+
+	std::unique_ptr<uchar[]> buffer(new uchar[outLength]);
+
+	strp = source;
+	uchar *outp = buffer.get();
+	while (*strp)
 	{
-		// assume wchar_t is UTF-32
-		int32_t outLength = 0;
-
-		const wchar_t *strp = source;
-		while (*strp)
+		const wuchar ch = (const wuchar)*strp;
+		if (UC_NeedsSurrogatePair(ch))
 		{
-			if (UC_NeedsSurrogatePair((const wuchar)*strp))
-				outLength += 2;
-			else
-				outLength++;
-			strp++;
-		}
-
-		std::unique_ptr<uchar[]> buffer(new uchar[outLength]);
-
-		strp = source;
-		uchar *outp = buffer.get();
-		while (*strp)
-		{
-			const wuchar ch = (const wuchar)*strp;
-			if (UC_NeedsSurrogatePair(ch))
-			{
-				const SurrogatePair surr = UC_ToSurrogatePair(ch);
-				*outp = surr.lead;
-				outp++;
-				*outp = surr.trail;
-			}
-			else
-				*outp = (uchar)ch;
-
+			const SurrogatePair surr = UC_ToSurrogatePair(ch);
+			*outp = surr.lead;
 			outp++;
+			*outp = surr.trail;
 		}
+		else
+			*outp = (uchar)ch;
 
-		String *output = GC::gc->ConstructString(thread, outLength, buffer.get());
-
-		return output;
+		outp++;
 	}
-	else
-		return nullptr; /// not supported :(
+
+	String *output = GC::gc->ConstructString(thread, outLength, buffer.get());
+
+	return output;
+#else
+#error Not supported
+#endif
 }

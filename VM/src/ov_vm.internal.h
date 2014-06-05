@@ -10,32 +10,9 @@
 #ifndef VM__VM_INTERNAL_H
 #define VM__VM_INTERNAL_H
 
-//#define PRINT_DEBUG_INFO
-
 #ifndef VM_EXPORTS
 #error You're not supposed to include this file from outside the VM project!
 #endif
-
-#define TARGET_UNIX    0
-#define TARGET_WINDOWS 1
-
-#ifdef _WIN32
-
-#define TARGET_OS TARGET_WINDOWS
-
-#ifndef UNICODE
-#error You are not supposed to compile Ovum without Unicode support.
-#endif
-
-#include "../windows/windows.h"
-
-#else // _WIN32
-
-#define TARGET_OS TARGET_UNIX
-
-#error Ovum does not support the target operating system.
-
-#endif // _WIN32
 
 class Thread;
 class Type;
@@ -65,6 +42,11 @@ typedef Field    *FieldHandle;
 typedef Property *PropertyHandle;
 
 #include "../inc/ov_vm.h"
+
+#if OVUM_TARGET == OVUM_WINDOWS
+# include "../windows/windows.h"
+#endif
+
 #include <cstdio>
 
 typedef uint32_t TokenId;
@@ -128,8 +110,8 @@ public:
 	static void PrintErrLn(String *str);
 
 	inline int GetArgCount() { return argCount; }
-	int GetArgs(const int destLength, String *dest[]);
-	int GetArgValues(const int destLength, Value dest[]);
+	int GetArgs(int destLength, String *dest[]);
+	int GetArgValues(int destLength, Value dest[]);
 
 	static void PrintUnhandledError(Value &error);
 	static void PrintMethodInitException(MethodInitException &e);

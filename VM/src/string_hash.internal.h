@@ -3,9 +3,6 @@
 #ifndef VM__STRING_HASH_INTERNAL_H
 #define VM__STRING_HASH_INTERNAL_H
 
-#ifdef PRINT_DEBUG_INFO
-#include <cstdio>
-#endif
 #include "ov_vm.internal.h"
 #include "../inc/ov_string.h"
 
@@ -80,9 +77,6 @@ StringHash<T>::StringHash(int32_t capacity)
 template<class T>
 StringHash<T>::~StringHash()
 {
-#ifdef PRINT_DEBUG_INFO
-	wprintf(L"Deleting string table\n");
-#endif
 	if (buckets)
 	{
 		capacity = 0;
