@@ -30,19 +30,19 @@
 OVUM_API void VM_Push(ThreadHandle thread, Value value);
 
 OVUM_API void VM_PushNull(ThreadHandle thread);
-OVUM_API void VM_PushBool(ThreadHandle thread, const bool value);
-OVUM_API void VM_PushInt(ThreadHandle thread, const int64_t value);
-OVUM_API void VM_PushUInt(ThreadHandle thread, const uint64_t value);
-OVUM_API void VM_PushReal(ThreadHandle thread, const double value);
+OVUM_API void VM_PushBool(ThreadHandle thread, bool value);
+OVUM_API void VM_PushInt(ThreadHandle thread, int64_t value);
+OVUM_API void VM_PushUInt(ThreadHandle thread, uint64_t value);
+OVUM_API void VM_PushReal(ThreadHandle thread, double value);
 OVUM_API void VM_PushString(ThreadHandle thread, String *str);
 
 // Pops a single value off the top of the evaluation stack.
 OVUM_API Value VM_Pop(ThreadHandle thread);
-OVUM_API void VM_PopN(ThreadHandle thread, const uint32_t n);
+OVUM_API void VM_PopN(ThreadHandle thread, uint32_t n);
 
 OVUM_API void VM_Dup(ThreadHandle thread);
 
-OVUM_API Value *VM_Local(ThreadHandle thread, const uint32_t n);
+OVUM_API Value *VM_Local(ThreadHandle thread, uint32_t n);
 
 // Invokes a value on the evaluation stack.
 // If S[0] is the top value on the stack, then S[argCount] is the value that is invoked.
@@ -52,7 +52,7 @@ OVUM_API Value *VM_Local(ThreadHandle thread, const uint32_t n);
 //     The number of arguments passed in the invocation, NOT including the instance.
 //   result:
 //     The return value of the invocation. If null, the return value is pushed onto the stack.
-OVUM_API int VM_Invoke(ThreadHandle thread, const uint32_t argCount, Value *result);
+OVUM_API int VM_Invoke(ThreadHandle thread, uint32_t argCount, Value *result);
 
 // Invokes a member of a value on the evaluation stack.
 // If S[0] is the top value on the stack, then S[argCount] is the value whose member is invoked.
@@ -65,7 +65,7 @@ OVUM_API int VM_Invoke(ThreadHandle thread, const uint32_t argCount, Value *resu
 //     The number of arguments to pass to the method, NOT including the instance.
 //   result:
 //     The return value of the invocation. If null, the return value is pushed onto the stack.
-OVUM_API int VM_InvokeMember(ThreadHandle thread, String *name, const uint32_t argCount, Value *result);
+OVUM_API int VM_InvokeMember(ThreadHandle thread, String *name, uint32_t argCount, Value *result);
 
 // Invokes a specific method with arguments from the evaluation stack.
 //   thread:
@@ -76,7 +76,7 @@ OVUM_API int VM_InvokeMember(ThreadHandle thread, String *name, const uint32_t a
 //     The number of arguments to pass to the method, NOT including the instance.
 //   result:
 //     The return value of the invocation. If null, the return value is pushed onto the stack.
-OVUM_API int VM_InvokeMethod(ThreadHandle thread, MethodHandle method, const uint32_t argCount, Value *result);
+OVUM_API int VM_InvokeMethod(ThreadHandle thread, MethodHandle method, uint32_t argCount, Value *result);
 // Invokes an operator on one or two values on the evaluation stack.
 //   thread:
 //     The thread on which to invoke the operator.
@@ -130,13 +130,13 @@ OVUM_API int VM_StoreMember(ThreadHandle thread, String *member);
 //     The number of arguments to invoke the indexer with, not including the instance.
 //   result:
 //     The result of loading the member. If null, this value is pushed onto the stack.
-OVUM_API int VM_LoadIndexer(ThreadHandle thread, const uint32_t argCount, Value *result);
+OVUM_API int VM_LoadIndexer(ThreadHandle thread, uint32_t argCount, Value *result);
 // Stores the top value on the stack into the indexer of the second stack value.
 //   thread:
 //     The thread on which to execute the indexer setter.
 //   argCount:
 //     The number of arguments to invoke the indexer with, not including the instance or value.
-OVUM_API int VM_StoreIndexer(ThreadHandle thread, const uint32_t argCount);
+OVUM_API int VM_StoreIndexer(ThreadHandle thread, uint32_t argCount);
 
 // Loads the value of the specified static field.
 //   thread:

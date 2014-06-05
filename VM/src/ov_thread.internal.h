@@ -102,7 +102,7 @@ public:
 		return evalStack[stackCount - n - 1].common.string;
 	}
 
-	inline void Shift(const uint16_t offset)
+	inline void Shift(uint16_t offset)
 	{
 		Value *stackPointer = evalStack + stackCount - offset - 1;
 		for (int i = 0; i < offset; i++)
@@ -289,7 +289,7 @@ public:
 		*(ptr + 1) = *ptr;
 	}
 
-	inline Value *Local(const unsigned int n) { return currentFrame->Locals() + n; }
+	inline Value *Local(unsigned int n) { return currentFrame->Locals() + n; }
 
 	// argCount does NOT include the instance.
 	int Invoke(uint32_t argCount, Value *result);
@@ -329,7 +329,7 @@ public:
 	NOINLINE int ThrowDivideByZeroError(String *message = nullptr);
 	NOINLINE int ThrowNullReferenceError(String *message = nullptr);
 	NOINLINE int ThrowMemberNotFoundError(String *member);
-	NOINLINE int ThrowNoOverloadError(const uint32_t argCount, String *message = nullptr);
+	NOINLINE int ThrowNoOverloadError(uint32_t argCount, String *message = nullptr);
 
 	bool IsSuspendedForGC() const;
 
@@ -351,9 +351,9 @@ private:
 	//   method:
 	//     The overload that is being invoked in the stack frame.
 	template<bool First>
-	void PushStackFrame(const uint32_t argCount, Value *args, Method::Overload *method);
+	void PushStackFrame(uint32_t argCount, Value *args, Method::Overload *method);
 
-	int PrepareVariadicArgs(const MethodFlags flags, const uint32_t argCount, const uint32_t paramCount, StackFrame *frame);
+	int PrepareVariadicArgs(MethodFlags flags, uint32_t argCount, uint32_t paramCount, StackFrame *frame);
 
 	// Tells the thread to suspend itself as soon as possible.
 	// Thread::IsSuspendedForGC() returns true when this is done.
@@ -366,7 +366,7 @@ private:
 
 	int Evaluate();
 	int FindErrorHandler(int32_t maxIndex);
-	int EvaluateLeave(register StackFrame *frame, const int32_t target);
+	int EvaluateLeave(register StackFrame *frame, int32_t target);
 
 	String *GetStackTrace();
 	void AppendArgumentType(StringBuffer &buf, Value *arg);
