@@ -41,6 +41,8 @@ typedef Method   *MethodHandle;
 typedef Field    *FieldHandle;
 typedef Property *PropertyHandle;
 
+#define OVUM_HANDLES_DEFINED
+
 #include "../inc/ov_vm.h"
 
 #if OVUM_TARGET == OVUM_WINDOWS

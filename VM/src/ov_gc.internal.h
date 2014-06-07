@@ -289,7 +289,7 @@ public:
 	StaticRef values[BLOCK_SIZE];
 
 	inline StaticRefBlock() : next(nullptr), count(0), hasGen0Refs(false) { }
-	inline StaticRefBlock(StaticRefBlock *next) : next(next), count(0), hasGen0Refs(0) { }
+	inline StaticRefBlock(StaticRefBlock *next) : next(next), count(0), hasGen0Refs(false) { }
 };
 
 class GC
@@ -343,6 +343,9 @@ private:
 	StringTable strings;
 	StaticRefBlock *staticRefs;
 
+	// Critical section that must be entered any time a function modifies
+	// or accesses GC data that could interfere with a GC cycle, such as
+	// Alloc or AddStaticReference.
 	CriticalSection allocSection;
 
 	GCObject *AllocRaw(size_t size);
@@ -421,7 +424,7 @@ public:
 	void AddMemoryPressure(Thread *const thread, const size_t size);
 	void RemoveMemoryPressure(Thread *const thread, const size_t size);
 
-	StaticRef *AddStaticReference(Value value);
+	StaticRef *AddStaticReference(Thread *const thread, Value value);
 
 	void Collect(Thread *const thread, bool collectGen1);
 
@@ -430,19 +433,6 @@ private:
 	void EndCycle(Thread *const thread);
 
 	void Release(GCObject *gco);
-
-	static inline unsigned int LinkedListLength(GCObject *first)
-	{
-		unsigned int count = 0;
-
-		while (first)
-		{
-			count++;
-			first = first->next;
-		}
-
-		return count;
-	}
 
 	void MarkForProcessing(GCObject *gco);
 	void AddSurvivor(GCObject *gco);

@@ -656,7 +656,7 @@ int32_t Utf8Decoder::GetChars(ThreadHandle thread, Buffer *buf, int32_t offset, 
 					// a multibyte sequence, which is not okay.
 					b = ReplacementChar;
 				if (!sb->Append((uchar)b))
-					return ~OVUM_ERROR_NO_MEMORY;;
+					return ~OVUM_ERROR_NO_MEMORY;
 				charCount++;
 				break;
 			}
