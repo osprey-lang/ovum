@@ -80,4 +80,23 @@ OVUM_API String *String_FromCString(ThreadHandle thread, const char *source);
 //     from collecting the string if a GC cycle is triggered.
 OVUM_API String *String_FromWString(ThreadHandle thread, const wchar_t *source);
 
+// Gets the VM's interned reference to the specified string value, or null
+// if the string is not interned.
+//   thread:
+//     A handle to the current thread.
+//
+//  str:
+//    The string value to look for in the intern table.
+OVUM_API String *String_GetInterned(ThreadHandle thread, String *str);
+
+// Interns the specified string. If a string with this value is already in
+// the intern table, that instance is returned. Otherwise, the string is
+// added to the intern table, and the same instance is returned.
+//   thread:
+//     A handle to the current thread.
+//
+//   str:
+//     The string to intern.
+OVUM_API String *String_Intern(ThreadHandle thread, String *str);
+
 #endif // VM__STRING_H

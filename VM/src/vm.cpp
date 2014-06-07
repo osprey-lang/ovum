@@ -185,8 +185,6 @@ int VM::InitArgs(int argCount, const wchar_t *args[])
 
 	for (int i = 0; i < argCount; i++)
 	{
-		const wchar_t *arg = args[i];
-
 		String *argString = String_FromWString(nullptr, args[i]);
 		if (!argString) return OVUM_ERROR_NO_MEMORY;
 
@@ -219,11 +217,9 @@ void VM::Unload()
 
 void VM::PrintInternal(FILE *f, const wchar_t *format, String *str)
 {
-	using namespace std;
-
 #if OVUM_WCHAR_SIZE == 2
 	// UTF-16, or at least USC-2.
-	fwprintf(f, format, (const wchar_t*)&str->firstChar);
+	fwprintf(f, format, &str->firstChar);
 #elif OVUM_WCHAR_SIZE == 4
 	// UTF-32, use our own conversion function to convert
 	const int length = String_ToWString(nullptr, str);
@@ -236,7 +232,7 @@ void VM::PrintInternal(FILE *f, const wchar_t *format, String *str)
 	}
 	else
 	{
-		unique_ptr<wchar_t[]> buffer(new wchar_t[length]);
+		std::unique_ptr<wchar_t[]> buffer(new wchar_t[length]);
 		String_ToWString(buffer.get(), str);
 		fwprintf(f, format, buffer.get());
 	}

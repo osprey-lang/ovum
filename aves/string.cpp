@@ -53,6 +53,13 @@ AVES_API NATIVE_FUNCTION(aves_String_get_length)
 	RETURN_SUCCESS;
 }
 
+AVES_API NATIVE_FUNCTION(aves_String_get_isInterned)
+{
+	String *str = THISV.common.string;
+	VM_PushBool(thread, (str->flags & StringFlags::INTERN) == StringFlags::INTERN);
+	RETURN_SUCCESS;
+}
+
 AVES_API NATIVE_FUNCTION(aves_String_equalsIgnoreCase)
 {
 	bool eq;
@@ -466,6 +473,23 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_isSurrogatePair)
 		UC_IsSurrogateTrail((&str->firstChar)[index + 1]));
 }
 END_NATIVE_FUNCTION
+
+AVES_API NATIVE_FUNCTION(aves_String_getInterned)
+{
+	String *str = THISV.common.string;
+	str = String_GetInterned(thread, str);
+	if (str == nullptr)
+		VM_PushNull(thread);
+	else
+		VM_PushString(thread, str);
+	RETURN_SUCCESS;
+}
+AVES_API NATIVE_FUNCTION(aves_String_intern)
+{
+	String *str = THISV.common.string;
+	VM_PushString(thread, String_Intern(thread, str));
+	RETURN_SUCCESS;
+}
 
 AVES_API NATIVE_FUNCTION(aves_String_getHashCode)
 {

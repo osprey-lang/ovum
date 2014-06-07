@@ -320,11 +320,11 @@ private:
 	// This changes every GC cycle.
 	int currentCollectMark;
 
-	HANDLE mainHeap;
-	HANDLE largeObjectHeap;
+	char *gen0Current;
 	void *gen0Base;
 	void *gen0End;
-	char *gen0Current;
+	HANDLE mainHeap;
+	HANDLE largeObjectHeap;
 	
 	GCObject *collectBase;
 	GCObject *processBase;
@@ -405,17 +405,26 @@ public:
 
 	String *ConstructModuleString(Thread *const thread, const int32_t length, const uchar value[]);
 
-	inline String *GetInternedString(String *value)
+	inline String *GetInternedString(Thread *const thread, String *value)
 	{
-		return strings.GetInterned(value);
+		BeginAlloc(thread);
+		String *result = strings.GetInterned(value);
+		EndAlloc();
+		return result;
 	}
-	inline bool HasInternedString(String *value)
+	inline bool HasInternedString(Thread *const thread, String *value)
 	{
-		return strings.HasInterned(value);
+		BeginAlloc(thread);
+		bool result = strings.HasInterned(value);
+		EndAlloc();
+		return result;
 	}
-	inline String *InternString(String *value)
+	inline String *InternString(Thread *const thread, String *value)
 	{
-		return strings.Intern(value);
+		BeginAlloc(thread);
+		String *result = strings.Intern(value);
+		EndAlloc();
+		return result;
 	}
 
 	int Construct(Thread *const thread, Type *type, const uint16_t argc, Value *output);
@@ -429,6 +438,7 @@ public:
 	void Collect(Thread *const thread, bool collectGen1);
 
 private:
+	void RunCycle(Thread *const thread, bool collectGen1);
 	void BeginCycle(Thread *const thread);
 	void EndCycle(Thread *const thread);
 

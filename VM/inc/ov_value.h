@@ -7,10 +7,15 @@
 #include "ov_compat.h"
 
 
-// All Osprey strings are UTF-16, guaranteed. Unfortunately, wchar_t isn't.
-// Note that a "character" in an Osprey string may be part of a surrogate
-// pair; it does not have to represent a single Unicode character.
+// All Osprey strings are UTF-16, guaranteed.
+#if OVUM_WCHAR_SIZE == 2
+// If sizeof(wchar_t) is 2, we assume it's UTF-16, and
+// define uchar to be of that type.
+typedef wchar_t uchar;
+#else
+// Otherwise, we have to fall back to uint16_t.
 typedef uint16_t uchar;
+#endif
 
 enum class StringFlags : uint32_t
 {

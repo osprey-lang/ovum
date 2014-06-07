@@ -6,60 +6,9 @@
 #include "ov_vm.internal.h"
 #include <new>
 
-// This header file exports the following members:
-//   pathchar_t:
-//      Represents a character used in a path name.
-//   PathName:
-//      A mutable sequence of pathchar_t, with methods to manipulate the value
-//      in various useful ways.
-//   _Path:
-//      A macro to turn a string literal into an appropriate path literal,
-//      e.g. _Path("a" PATH_SEP "b" PATH_SEP "c.txt")
-//   PATH_SEP, PATH_SEP_ALT:
-//      String literals containing the primary and secondary path separators,
-//      as determined by the OS, of a type suitable for pathchar_t and PathName.
-//      E.g. on Windows, they expand to L"\\" and L"/".
-//      These values may be identical.
-//   PATH_SEPC, PATH_SEPC_ALT:
-//      Character versions of the previous.
-//   PATHNF:
-//      Format placeholder for pathchar_t* in printf, as a string literal.
-//   PATHNWF:
-//      Format placeholder for pathchar_t* in wprintf, as a wide-char string literal.
-//
-// Note: PATH_SEP[C][_ALT] are macros so that they can be used to concatenate
-// string literals, if it should ever be necessary.
-
-#if OVUM_TARGET == OVUM_WINDOWS
-
-typedef WCHAR pathchar_t;
-
-#define __Path(x)     L ## x
-#define _Path(x)      __Path(x)
-
-#define PATH_SEP      _Path("\\")
-#define PATH_SEP_ALT  _Path("/")
-#define PATH_SEPC     _Path('\\')
-#define PATH_SEPC_ALT _Path('/')
-
-#define PATHNF        "%s"
-#define PATHNWF       L"%ls"
-
-#else
-
-typedef char pathchar_t;
-
-#define _Path(x)      x
-
-#define PATH_SEP      _Path("/")
-#define PATH_SEP_ALT  _Path("\\")
-#define PATH_SEPC     _Path('/')
-#define PATH_SEPC_ALT _Path('\\')
-
-#define PATHCF        "%s"
-#define PATHCWF       L"%s"
-
-#endif
+// This header file exports a class PathName, which
+// is a mutable sequence of pathchar_t. It supports
+// various path name manipulation methods.
 
 class PathName
 {

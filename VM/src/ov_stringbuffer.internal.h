@@ -26,7 +26,9 @@ public:
 	void Append(String *str);
 
 	void Append(const int32_t length, const char data[]);
+#if OVUM_WCHAR_SIZE != 2
 	void Append(const int32_t length, const wchar_t data[]);
+#endif
 
 	// Clears the buffer's contents without changing the capacity.
 	void Clear();
@@ -44,7 +46,7 @@ public:
 
 	// If buf is null, returns only the size of the resulting string,
 	// including the terminating \0.
-	const int ToWString(wchar_t *buf);
+	int ToWString(wchar_t *buf);
 
 private:
 	void EnsureMinCapacity(int32_t newAmount);
