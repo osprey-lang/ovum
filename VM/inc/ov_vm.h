@@ -20,21 +20,26 @@
 
 
 // Define an OVUM_WCHAR_SIZE macro for text functions
-#if defined(__SIZEOF_WCHAR_T__)
+#if OVUM_TARGET == OVUM_WINDOWS
+// wchar_t is UTF-16 on Windows
+# define OVUM_WCHAR_SIZE 2
+#elif defined(__SIZEOF_WCHAR_T__)
 # define OVUM_WCHAR_SIZE __SIZEOF_WCHAR_T__
 #elif defined(__WCHAR_MAX__)
 # if __WCHAR_MAX__ > 0xFFFF
 #  define OVUM_WCHAR_SIZE 4
-#else
-#  define OVUM_WCHAR_SIZE 2
-#endif
-#else
-# if OVUM_TARGET == OVUM_WINDOWS
-// wchar_t is UTF-16 on Windows
-#  define OVUM_WCHAR_SIZE 2
 # else
-// TODO: Figure out size of wchar_t
-#  error Don't know the size of wchar_t
+#  define OVUM_WCHAR_SIZE 2
+# endif
+#else
+# include <wchar.h>
+# ifndef WCHAR_MAX
+#  error Problem with wchar.h: doesn't define WCHAR_MAX!
+# endif
+# if WCHAR_MAX > 0xFFFF
+#  define OVUM_WCHAR_SIZE 4
+# else
+#  define OVUM_WCHAR_SIZE 2
 # endif
 #endif
 
@@ -47,7 +52,7 @@
 
 #define OVUM_API	extern "C" _OVUM_API
 
-#ifndef VM_EXPORTS
+#ifndef OVUM_HANDLES_DEFINED
 // Represents a handle to a specific thread.
 typedef void *const ThreadHandle;
 // Represents a handle to a specific type.
@@ -63,6 +68,7 @@ typedef void *FieldHandle;
 // Represents a handle to a property.
 typedef void *PropertyHandle;
 // (These are defined here because they're used in a lot of places.)
+#define OVUM_HANDLES_DEFINED
 #endif
 
 // Some header files!

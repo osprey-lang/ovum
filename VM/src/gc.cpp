@@ -409,19 +409,28 @@ void GC::RemoveMemoryPressure(Thread *const thread, const size_t size)
 }
 
 
-StaticRef *GC::AddStaticReference(Value value)
+StaticRef *GC::AddStaticReference(Thread *const thread, Value value)
 {
+	BeginAlloc(thread);
+
+	StaticRef *output;
 	if (staticRefs == nullptr ||
 		staticRefs->count == StaticRefBlock::BLOCK_SIZE)
 	{
 		StaticRefBlock *newBlock = new(std::nothrow) StaticRefBlock(staticRefs);
 		if (!newBlock)
-			return nullptr; // No moar memory
+		{
+			output = nullptr; // No moar memory
+			goto done;
+		}
 		staticRefs = newBlock;
 	}
 
-	StaticRef *output = staticRefs->values + staticRefs->count++;
+	output = staticRefs->values + staticRefs->count++;
 	output->Init(value);
+
+done:
+	EndAlloc();
 	return output;
 }
 
@@ -1072,9 +1081,9 @@ OVUM_API void GC_RemoveMemoryPressure(ThreadHandle thread, const size_t size)
 	GC::gc->RemoveMemoryPressure(thread, size);
 }
 
-OVUM_API Value *GC_AddStaticReference(Value initialValue)
+OVUM_API Value *GC_AddStaticReference(ThreadHandle thread, Value initialValue)
 {
-	StaticRef *ref = GC::gc->AddStaticReference(initialValue);
+	StaticRef *ref = GC::gc->AddStaticReference(thread, initialValue);
 	if (ref == nullptr)
 		return nullptr;
 	return ref->GetValuePointer();

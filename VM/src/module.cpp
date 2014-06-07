@@ -1117,7 +1117,7 @@ void Module::SetConstantFieldValue(ModuleReader &reader, Module *module, Field *
 	else
 		constantValue.integer = value;
 
-	field->staticValue = GC::gc->AddStaticReference(constantValue);
+	field->staticValue = GC::gc->AddStaticReference(nullptr, constantValue);
 	if (!field->staticValue)
 		throw ModuleLoadException(reader.fileName, "Not enough memory to allocate field reference.");
 }

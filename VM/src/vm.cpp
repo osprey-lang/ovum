@@ -194,7 +194,7 @@ int VM::InitArgs(int argCount, const wchar_t *args[])
 		argValue.type = types.String;
 		argValue.common.string = argString;
 
-		StaticRef *ref = GC::gc->AddStaticReference(argValue);
+		StaticRef *ref = GC::gc->AddStaticReference(nullptr, argValue);
 		if (!ref) return OVUM_ERROR_NO_MEMORY;
 
 		argValues[i] = ref->GetValuePointer();

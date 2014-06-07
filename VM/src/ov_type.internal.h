@@ -419,7 +419,7 @@ public:
 	}
 
 	void InitOperators();
-	bool InitStaticFields();
+	bool InitStaticFields(Thread *const thread);
 
 	void AddNativeField(size_t offset, NativeFieldType fieldType);
 

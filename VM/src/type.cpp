@@ -139,7 +139,7 @@ int Type::LoadTypeToken(Thread *const thread)
 {
 	// Type tokens can never be destroyed, so let's create a static
 	// reference to it.
-	StaticRef *typeTkn = GC::gc->AddStaticReference(NULL_VALUE);
+	StaticRef *typeTkn = GC::gc->AddStaticReference(thread, NULL_VALUE);
 	if (typeTkn == nullptr)
 		return thread->ThrowMemoryError();
 
@@ -157,7 +157,7 @@ int Type::LoadTypeToken(Thread *const thread)
 	return r;
 }
 
-bool Type::InitStaticFields()
+bool Type::InitStaticFields(Thread *const thread)
 {
 	for (int32_t i = 0; i < members.count; i++)
 	{
@@ -167,7 +167,7 @@ bool Type::InitStaticFields()
 			static_cast<Field*>(m)->staticValue == nullptr)
 		{
 			Field *f = static_cast<Field*>(m);
-			f->staticValue = GC::gc->AddStaticReference(NULL_VALUE);
+			f->staticValue = GC::gc->AddStaticReference(thread, NULL_VALUE);
 			if (f->staticValue == nullptr)
 				return false;
 		}
