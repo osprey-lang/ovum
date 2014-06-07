@@ -33,9 +33,6 @@
     <ClInclude Include="src\membertable.internal.h">
       <Filter>Header Files\Internal</Filter>
     </ClInclude>
-    <ClInclude Include="src\critical_section.internal.h">
-      <Filter>Header Files\Internal</Filter>
-    </ClInclude>
     <ClInclude Include="src\ov_debug_symbols.internal.h">
       <Filter>Header Files\Internal</Filter>
     </ClInclude>
@@ -122,6 +119,9 @@
     </ClInclude>
     <ClInclude Include="inc\ov_pathchar.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\sync.internal.h">
+      <Filter>Header Files\Internal</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

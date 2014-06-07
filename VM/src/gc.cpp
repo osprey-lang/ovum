@@ -1157,12 +1157,11 @@ OVUM_API void GC_Pin(Value *value)
 	{
 		GCObject *gco = GCObject::FromValue(value);
 		// We must synchronise access to these two fields.
-		// Let's just reuse the field access flag.
-		while (gco->fieldAccessFlag.test_and_set(memory_order_acquire))
-			;
+		// Let's just reuse the field access lock.
+		gco->fieldAccessLock.Enter();
 		gco->pinCount++;
 		gco->flags |= GCOFlags::PINNED;
-		gco->fieldAccessFlag.clear(memory_order_release);
+		gco->fieldAccessLock.Leave();
 	}
 }
 
@@ -1173,12 +1172,11 @@ OVUM_API void GC_PinInst(void *value)
 	{
 		GCObject *gco = GCObject::FromInst(value);
 		// We must synchronise access to these two fields.
-		// Let's just reuse the field access flag.
-		while (gco->fieldAccessFlag.test_and_set(memory_order_acquire))
-			;
+		// Let's just reuse the field access lock.
+		gco->fieldAccessLock.Enter();
 		gco->pinCount++;
 		gco->flags |= GCOFlags::PINNED;
-		gco->fieldAccessFlag.clear(memory_order_release);
+		gco->fieldAccessLock.Leave();
 	}
 }
 
@@ -1189,13 +1187,12 @@ OVUM_API void GC_Unpin(Value *value)
 	{
 		GCObject *gco = GCObject::FromValue(value);
 		// We must synchronise access to these two fields.
-		// Let's just reuse the field access flag.
-		while (gco->fieldAccessFlag.test_and_set(memory_order_acquire))
-			;
+		// Let's just reuse the field access lock.
+		gco->fieldAccessLock.Enter();
 		gco->pinCount--;
 		if (gco->pinCount == 0)
 			gco->flags &= ~GCOFlags::PINNED;
-		gco->fieldAccessFlag.clear(memory_order_release);
+		gco->fieldAccessLock.Leave();
 	}
 }
 
@@ -1206,12 +1203,11 @@ OVUM_API void GC_UnpinInst(void *value)
 	{
 		GCObject *gco = GCObject::FromInst(value);
 		// We must synchronise access to these two fields.
-		// Let's just reuse the field access flag.
-		while (gco->fieldAccessFlag.test_and_set(memory_order_acquire))
-			;
+		// Let's just reuse the field access lock.
+		gco->fieldAccessLock.Enter();
 		gco->pinCount--;
 		if (gco->pinCount == 0)
 			gco->flags &= ~GCOFlags::PINNED;
-		gco->fieldAccessFlag.clear(memory_order_release);
+		gco->fieldAccessLock.Leave();
 	}
 }

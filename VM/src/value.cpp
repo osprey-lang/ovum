@@ -58,10 +58,9 @@ OVUM_API void ReadReference(Value *ref, Value *target)
 	{
 		uintptr_t offset = ~(uintptr_t)ref->type;
 		GCObject *gco = reinterpret_cast<GCObject*>((char*)ref->reference - offset);
-		while (gco->fieldAccessFlag.test_and_set(std::memory_order_acquire))
-			;
+		gco->fieldAccessLock.Enter();
 		*target = *reinterpret_cast<Value*>(ref->reference);
-		gco->fieldAccessFlag.clear(std::memory_order_release);
+		gco->fieldAccessLock.Leave();
 	}
 }
 
@@ -75,9 +74,8 @@ OVUM_API void WriteReference(Value *ref, Value *value)
 	{
 		uintptr_t offset = ~(uintptr_t)ref->type;
 		GCObject *gco = reinterpret_cast<GCObject*>((char*)ref->reference - offset);
-		while (gco->fieldAccessFlag.test_and_set(std::memory_order_acquire))
-			;
+		gco->fieldAccessLock.Enter();
 		*reinterpret_cast<Value*>(ref->reference) = *value;
-		gco->fieldAccessFlag.clear(std::memory_order_release);
+		gco->fieldAccessLock.Leave();
 	}
 }

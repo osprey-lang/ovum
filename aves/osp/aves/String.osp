@@ -427,53 +427,43 @@ public class String
 	public isSurrogatePair(i)				__extern("aves_String_isSurrogatePair");
 	public isControl(i)
 	{
-		return getCategory(i) == UnicodeCategory.control;
+		return getCharacter(i).isControl;
 	}
 	public isDigit(i)
 	{
-		return getCategory(i) == UnicodeCategory.decimalNumber;
+		return getCharacter(i).isDigit;
 	}
 	public isLetter(i)
 	{
-		return getCategory(i) & UnicodeCategory.letter != UnicodeCategory.none;
+		return getCharacter(i).isLetter;
 	}
 	public isLower(i)
 	{
-		return getCategory(i) == UnicodeCategory.lowercaseLetter;
+		return getCharacter(i).isLower;
 	}
 	public isUpper(i)
 	{
-		return getCategory(i) == UnicodeCategory.uppercaseLetter;
+		return getCharacter(i).isUpper;
 	}
 	public isNumber(i)
 	{
-		return getCategory(i) & UnicodeCategory.number != UnicodeCategory.none;
+		return getCharacter(i).isNumber;
 	}
 	public isPunct(i)
 	{
-		return getCategory(i) & UnicodeCategory.punct != UnicodeCategory.none;
+		return getCharacter(i).isPunct;
 	}
 	public isSymbol(i)
 	{
-		return getCategory(i) & UnicodeCategory.symbol != UnicodeCategory.none;
+		return getCharacter(i).isSymbol;
 	}
 	public isAssigned(i)
 	{
-		return getCategory(i) != UnicodeCategory.unassigned;
+		return getCharacter(i).isAssigned;
 	}
 	public isWhiteSpace(i)
 	{
-		var cp = getCodepoint(i);
-		// The following code points are considered white space,
-		// even though they are categorised as control characters:
-		//   U+0009  Character Tabulation (\t)
-		//   U+000A  Line Feed (\n)
-		//   U+000B  Line Tabulation
-		//   U+000C  Form Feed
-		//   U+000D  Carriage Return (\r)
-		//   U+0085  Next Line
-		return cp >= 0x0009 and cp <= 0x000D or cp == 0x0085 or
-			getCategory(i) & UnicodeCategory.separator != UnicodeCategory.none;
+		return getCharacter(i).isWhiteSpace;
 	}
 
 	/// Summary: Gets the system's reference to an interned string with the same

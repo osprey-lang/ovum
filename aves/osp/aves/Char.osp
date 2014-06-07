@@ -27,7 +27,6 @@ public class Char __primitive
 	public get isWhiteSpace
 	{
 		var cp = +this;
-		// (Copied from String.osp)
 		// The following code points are considered white space,
 		// even though they are categorised as control characters:
 		//   U+0009  Character Tabulation (\t)

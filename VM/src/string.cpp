@@ -83,6 +83,8 @@ OVUM_API int32_t String_GetHashCode(String *str)
 	if (IsHashed(str))
 		return str->hashCode;
 
+	// Note: always set hashCode first, to avoid race conditions
+	// in case another thread hashes the string at the same time.
 	str->hashCode = String_GetHashCode(str->length, &str->firstChar);
 	str->flags |= StringFlags::HASHED;
 

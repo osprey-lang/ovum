@@ -7,7 +7,7 @@
 #include <exception>
 #include "ov_vm.internal.h"
 #include "ov_stringbuffer.internal.h"
-#include "critical_section.internal.h"
+#include "sync.internal.h"
 
 #ifdef THREADED_EVALUATION
 #ifndef __GNUC__
