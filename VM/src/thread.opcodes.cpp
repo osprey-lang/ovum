@@ -1234,10 +1234,9 @@ int Thread::Evaluate()
 				{
 					uintptr_t offset = ~(uintptr_t)source->type;
 					GCObject *gco = reinterpret_cast<GCObject*>((char*)source->reference - offset);
-					while (gco->fieldAccessFlag.test_and_set(std::memory_order_acquire))
-						;
+					gco->fieldAccessLock.Enter();
 					*dest = *reinterpret_cast<Value*>(source->reference);
-					gco->fieldAccessFlag.clear(std::memory_order_release);
+					gco->fieldAccessLock.Leave();
 				}
 			}
 			NEXT_INSTR();
@@ -1255,10 +1254,9 @@ int Thread::Evaluate()
 				{
 					uintptr_t offset = ~(uintptr_t)source->type;
 					GCObject *gco = reinterpret_cast<GCObject*>((char*)source->reference - offset);
-					while (gco->fieldAccessFlag.test_and_set(std::memory_order_acquire))
-						;
+					gco->fieldAccessLock.Enter();
 					*dest = *reinterpret_cast<Value*>(source->reference);
-					gco->fieldAccessFlag.clear(std::memory_order_release);
+					gco->fieldAccessLock.Leave();
 				}
 				f->stackCount++;
 			}
@@ -1277,10 +1275,9 @@ int Thread::Evaluate()
 				{
 					uint32_t offset = ~(uint32_t)dest->type;
 					GCObject *gco = reinterpret_cast<GCObject*>(dest->instance - offset);
-					while (gco->fieldAccessFlag.test_and_set(std::memory_order_acquire))
-						;
+					gco->fieldAccessLock.Enter();
 					*reinterpret_cast<Value*>(dest->instance) = *source;
-					gco->fieldAccessFlag.clear(std::memory_order_release);
+					gco->fieldAccessLock.Leave();
 				}
 			}
 			NEXT_INSTR();
@@ -1298,10 +1295,9 @@ int Thread::Evaluate()
 				{
 					uintptr_t offset = ~(uintptr_t)dest->type;
 					GCObject *gco = reinterpret_cast<GCObject*>((char*)dest->reference - offset);
-					while (gco->fieldAccessFlag.test_and_set(std::memory_order_acquire))
-						;
+					gco->fieldAccessLock.Enter();
 					*reinterpret_cast<Value*>(dest->reference) = *source;
-					gco->fieldAccessFlag.clear(std::memory_order_release);
+					gco->fieldAccessLock.Leave();
 				}
 				f->stackCount--;
 			}

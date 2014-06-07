@@ -86,7 +86,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="inc\ov_pathchar.h" />
-    <ClInclude Include="src\critical_section.internal.h" />
+    <ClInclude Include="src\sync.internal.h" />
     <ClInclude Include="src\membertable.internal.h" />
     <ClInclude Include="src\modulereader.internal.h" />
     <ClInclude Include="inc\ov_compat.h" />

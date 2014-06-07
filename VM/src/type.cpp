@@ -285,12 +285,6 @@ Type *Member::GetOriginatingType() const
 	return method->declType;
 }
 
-#define ACQUIRE_FIELD_LOCK(inst) \
-	GCObject *gco = GCObject::FromInst(inst); \
-	while (gco->fieldAccessFlag.test_and_set(std::memory_order_acquire)) \
-		continue
-#define RELEASE_FIELD_LOCK() gco->fieldAccessFlag.clear(std::memory_order_release)
-
 int Field::ReadField(Thread *const thread, Value *instance, Value *dest) const
 {
 	if (instance->type == nullptr)
@@ -298,9 +292,10 @@ int Field::ReadField(Thread *const thread, Value *instance, Value *dest) const
 	if (!Type::ValueIsType(instance, this->declType))
 		return thread->ThrowTypeError();
 
-	ACQUIRE_FIELD_LOCK(instance->instance);
+	GCObject *gco = GCObject::FromInst(instance->instance);
+	gco->fieldAccessLock.Enter();
 	*dest = *reinterpret_cast<Value*>(instance->instance + this->offset);
-	RELEASE_FIELD_LOCK();
+	gco->fieldAccessLock.Leave();
 
 	RETURN_SUCCESS;
 }
@@ -310,18 +305,20 @@ int Field::ReadFieldFast(Thread *const thread, Value *instance, Value *dest) con
 	if (instance->type == nullptr)
 		return thread->ThrowNullReferenceError();
 
-	ACQUIRE_FIELD_LOCK(instance->instance);
+	GCObject *gco = GCObject::FromInst(instance->instance);
+	gco->fieldAccessLock.Enter();
 	*dest = *reinterpret_cast<Value*>(instance->instance + this->offset);
-	RELEASE_FIELD_LOCK();
+	gco->fieldAccessLock.Leave();
 
 	RETURN_SUCCESS;
 }
 
 void Field::ReadFieldUnchecked(Value *instance, Value *dest) const
 {
-	ACQUIRE_FIELD_LOCK(instance->instance);
+	GCObject *gco = GCObject::FromInst(instance->instance);
+	gco->fieldAccessLock.Enter();
 	*dest = *reinterpret_cast<Value*>(instance->instance + this->offset);
-	RELEASE_FIELD_LOCK();
+	gco->fieldAccessLock.Leave();
 }
 
 int Field::WriteField(Thread *const thread, Value *instanceAndValue) const
@@ -331,9 +328,10 @@ int Field::WriteField(Thread *const thread, Value *instanceAndValue) const
 	if (!Type::ValueIsType(instanceAndValue, this->declType))
 		return thread->ThrowTypeError();
 
-	ACQUIRE_FIELD_LOCK(instanceAndValue[0].instance);
+	GCObject *gco = GCObject::FromInst(instanceAndValue[0].instance);
+	gco->fieldAccessLock.Enter();
 	*reinterpret_cast<Value*>(instanceAndValue[0].instance + this->offset) = instanceAndValue[1];
-	RELEASE_FIELD_LOCK();
+	gco->fieldAccessLock.Leave();
 
 	RETURN_SUCCESS;
 }
@@ -343,22 +341,21 @@ int Field::WriteFieldFast(Thread *const thread, Value *instanceAndValue) const
 	if (instanceAndValue[0].type == nullptr)
 		return thread->ThrowNullReferenceError();
 
-	ACQUIRE_FIELD_LOCK(instanceAndValue[0].instance);
+	GCObject *gco = GCObject::FromInst(instanceAndValue[0].instance);
+	gco->fieldAccessLock.Enter();
 	*reinterpret_cast<Value*>(instanceAndValue[0].instance + this->offset) = instanceAndValue[1];
-	RELEASE_FIELD_LOCK();
+	gco->fieldAccessLock.Leave();
 
 	RETURN_SUCCESS;
 }
 
 void Field::WriteFieldUnchecked(Value *instanceAndValue) const
 {
-	ACQUIRE_FIELD_LOCK(instanceAndValue[0].instance);
+	GCObject *gco = GCObject::FromInst(instanceAndValue[0].instance);
+	gco->fieldAccessLock.Enter();
 	*reinterpret_cast<Value*>(instanceAndValue[0].instance + this->offset) = instanceAndValue[1];
-	RELEASE_FIELD_LOCK();
+	gco->fieldAccessLock.Leave();
 }
-
-#undef ACQUIRE_FIELD_LOCK
-#undef RELEASE_FIELD_LOCK
 
 int Method::Overload::VerifyRefSignature(uint32_t signature, uint16_t argCount) const
 {

@@ -4,10 +4,9 @@
 #define VM__GC_INTERNAL_H
 
 #include <cassert>
-#include <atomic>
 #include "ov_vm.internal.h"
 #include "string_table.internal.h"
-#include "critical_section.internal.h"
+#include "sync.internal.h"
 
 enum class GCOFlags : uint32_t
 {
@@ -75,11 +74,11 @@ public:
 	GCObject *prev; // Pointer to the previous GC object in the object's list.
 	GCObject *next; // Pointer to the next GC object in the object's list.
 
-	// A flag that is set while a thread is reading from or writing to
+	// A lock that is entered while a thread is reading from or writing to
 	// a field of this instance. No other threads can read from or write
-	// to any field of the instance while this flag is set. This is to
+	// to any field of the instance while this lock is held. This is to
 	// prevent race conditions, as Value cannot be read or written atomically.
-	std::atomic_flag fieldAccessFlag;
+	SpinLock fieldAccessLock;
 
 	union
 	{
@@ -216,7 +215,7 @@ typedef struct MutableString_S
 class StaticRef
 {
 private:
-	std::atomic_flag accessFlag;
+	SpinLock accessLock;
 	Value value;
 
 public:
@@ -226,7 +225,7 @@ public:
 	// This should only be called ONCE per static reference.
 	inline void Init(Value value)
 	{
-		accessFlag = std::atomic_flag();
+		accessLock = SpinLock();
 		this->value = value;
 	}
 
@@ -234,37 +233,33 @@ public:
 	inline Value Read()
 	{
 		using namespace std;
-		while (accessFlag.test_and_set(memory_order_acquire))
-			;
+		accessLock.Enter();
 		Value result = value;
-		accessFlag.clear(memory_order_release);
+		accessLock.Leave();
 		return result;
 	}
 	inline void Read(Value *target)
 	{
 		using namespace std;
-		while (accessFlag.test_and_set(memory_order_acquire))
-			;
+		accessLock.Enter();
 		*target = value;
-		accessFlag.clear(memory_order_release);
+		accessLock.Leave();
 	}
 
 	// Atomically updates the value of the static reference.
 	inline void Write(Value value)
 	{
 		using namespace std;
-		while (accessFlag.test_and_set(memory_order_acquire))
-			;
+		accessLock.Enter();
 		this->value = value;
-		accessFlag.clear(memory_order_release);
+		accessLock.Leave();
 	}
 	inline void Write(Value *value)
 	{
 		using namespace std;
-		while (accessFlag.test_and_set(memory_order_acquire))
-			;
+		accessLock.Enter();
 		this->value = *value;
-		accessFlag.clear(memory_order_release);
+		accessLock.Leave();
 	}
 
 	inline Value *GetValuePointer()
