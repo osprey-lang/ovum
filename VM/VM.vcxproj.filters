@@ -120,6 +120,9 @@
     <ClInclude Include="src\pathname.internal.h">
       <Filter>Header Files\Internal</Filter>
     </ClInclude>
+    <ClInclude Include="inc\ov_pathchar.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\module.cpp">

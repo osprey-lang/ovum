@@ -10,6 +10,8 @@ AVES_API NATIVE_FUNCTION(aves_String_get_item);
 
 AVES_API NATIVE_FUNCTION(aves_String_get_length);
 
+AVES_API NATIVE_FUNCTION(aves_String_get_isInterned);
+
 AVES_API NATIVE_FUNCTION(aves_String_equalsIgnoreCase);
 AVES_API NATIVE_FUNCTION(aves_String_contains);
 AVES_API NATIVE_FUNCTION(aves_String_startsWith);
@@ -32,6 +34,9 @@ AVES_API NATIVE_FUNCTION(aves_String_getCodepoint);
 
 AVES_API NATIVE_FUNCTION(aves_String_getCategory);
 AVES_API NATIVE_FUNCTION(aves_String_isSurrogatePair);
+
+AVES_API NATIVE_FUNCTION(aves_String_getInterned);
+AVES_API NATIVE_FUNCTION(aves_String_intern);
 
 AVES_API NATIVE_FUNCTION(aves_String_getHashCode);
 

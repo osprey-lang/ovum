@@ -152,7 +152,7 @@ public:
 
 	// If buf is null, returns only the size of the resulting string,
 	// including the terminating \0.
-	inline const int ToWString(wchar_t *buf)
+	inline int ToWString(wchar_t *buf)
 	{
 		// This is basically copied straight from String_ToWString, but optimized for StringBuffer.
 #if OVUM_WCHAR_SIZE == 2

@@ -6,19 +6,16 @@
 #define OVUM_UNIX    0
 #define OVUM_WINDOWS 1
 
+#ifndef OVUM_TARGET
 #ifdef _WIN32
-
 # define OVUM_TARGET OVUM_WINDOWS
-
 #else
-
 # define OVUM_TARGET OVUM_UNIX
-
 # error Ovum does not support the target operating system.
-
+#endif
 #endif
 
-
+#ifndef OVUM_WCHAR_SIZE
 // Define an OVUM_WCHAR_SIZE macro for text functions
 #if OVUM_TARGET == OVUM_WINDOWS
 // wchar_t is UTF-16 on Windows
@@ -41,6 +38,7 @@
 # else
 #  define OVUM_WCHAR_SIZE 2
 # endif
+#endif
 #endif
 
 #ifdef VM_EXPORTS
@@ -77,6 +75,7 @@ typedef void *PropertyHandle;
 #include "ov_gc.h"
 #include "ov_module.h"
 #include "ov_helpers.h"
+#include "ov_pathchar.h"
 
 typedef struct VMStartParams_S
 {
@@ -88,12 +87,12 @@ typedef struct VMStartParams_S
 	// This must be a full path, because of peculiarities in
 	// the way Windows deals with current working directories.
 	// If it is a relative path, expect strange behaviour.
-	const wchar_t *startupFile;
+	const pathchar_t *startupFile;
 	// The path to the directory containing the module library.
 	// For details on how module names are resolved, see the
 	// comments in ov_module.internal.h/Module::OpenByName.
 	// This will be moved to proper documentation eventually.
-	const wchar_t *modulePath;
+	const pathchar_t *modulePath;
 	// Make the VM be more explicit about what it's doing during startup.
 	bool verbose;
 } VMStartParams;

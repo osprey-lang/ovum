@@ -607,3 +607,13 @@ OVUM_API String *String_FromWString(ThreadHandle thread, const wchar_t *source)
 #error Not supported
 #endif
 }
+
+OVUM_API String *String_GetInterned(ThreadHandle thread, String *str)
+{
+	return GC::gc->GetInternedString(thread, str);
+}
+
+OVUM_API String *String_Intern(ThreadHandle thread, String *str)
+{
+	return GC::gc->InternString(thread, str);
+}

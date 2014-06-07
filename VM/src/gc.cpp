@@ -210,7 +210,10 @@ int GC::Alloc(Thread *const thread, Type *type, size_t size, GCObject **output)
 
 	if (!gco) // Allocation failed (we're probably out of memory)
 	{
-		Collect(thread, size >= LARGE_OBJECT_SIZE);  // Try to free some memory...
+		RunCycle(thread, size >= LARGE_OBJECT_SIZE);  // Try to free some memory...
+		// Note: call RunCycle instead of Collect, because Collect calls
+		// BeginAlloc to protect instance members. We've already called
+		// that method, so we don't need to do it again.
 
 		gco = AllocRaw(size); // ... And allocate again
 
@@ -233,7 +236,7 @@ int GC::Alloc(Thread *const thread, Type *type, size_t size, GCObject **output)
 
 int GC::AllocArray(Thread *const thread, uint32_t length, size_t itemSize, void **output)
 {
-	if (length > SIZE_MAX / itemSize)
+	if (itemSize > 0 && length > SIZE_MAX / itemSize)
 		return thread->ThrowOverflowError();
 
 	GCObject *gco;
@@ -397,6 +400,29 @@ String *GC::ConstructModuleString(Thread *const thread, const int32_t length, co
 	return reinterpret_cast<String*>(str);
 }
 
+void GC::Release(GCObject *gco)
+{
+	assert((gco->flags & GCOFlags::MARK) == GCO_COLLECT(currentCollectMark));
+
+	if (gco->IsEarlyString() || gco->type == VM::vm->types.String)	
+	{
+		String *str = reinterpret_cast<String*>(gco->InstanceBase());
+		if ((str->flags & StringFlags::INTERN) != StringFlags::NONE)
+			strings.RemoveIntern(str);
+	}
+	else if (!gco->IsArray() && gco->type->HasFinalizer())
+	{
+		Type *type = gco->type;
+		do
+		{
+			if (type->finalizer)
+				type->finalizer(gco->InstanceBase(type));
+		} while (type = type->baseType);
+	}
+
+	ReleaseRaw(gco); // goodbye, dear pointer.
+}
+
 
 void GC::AddMemoryPressure(Thread *const thread, const size_t size)
 {
@@ -434,30 +460,17 @@ done:
 	return output;
 }
 
-void GC::Release(GCObject *gco)
+void GC::Collect(Thread *const thread, bool collectGen1)
 {
-	assert((gco->flags & GCOFlags::MARK) == GCO_COLLECT(currentCollectMark));
+	// Make sure nothing else touches the instance during the cycle
+	BeginAlloc(thread);
 
-	if (gco->IsEarlyString() || gco->type == VM::vm->types.String)	
-	{
-		String *str = reinterpret_cast<String*>(gco->InstanceBase());
-		if ((str->flags & StringFlags::INTERN) != StringFlags::NONE)
-			strings.RemoveIntern(str);
-	}
-	else if (!gco->IsArray() && gco->type->HasFinalizer())
-	{
-		Type *type = gco->type;
-		do
-		{
-			if (type->finalizer)
-				type->finalizer(gco->InstanceBase(type));
-		} while (type = type->baseType);
-	}
+	RunCycle(thread, collectGen1);
 
-	ReleaseRaw(gco); // goodbye, dear pointer.
+	EndAlloc();
 }
 
-void GC::Collect(Thread *const thread, bool collectGen1)
+void GC::RunCycle(Thread *const thread, bool collectGen1)
 {
 	BeginCycle(thread);
 

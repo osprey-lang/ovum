@@ -101,12 +101,10 @@ void StringBuffer::Append(const int32_t length, const char data[])
 	this->length += length;
 }
 
+#if OVUM_WCHAR_SIZE != 2
 void StringBuffer::Append(const int32_t length, const wchar_t data[])
 {
-#if OVUM_WCHAR_SIZE == 2
-	// UTF-16 (or at least UCS-2)
-	Append(length, (uchar*)data);
-#elif OVUM_WCHAR_SIZE == 4
+#if OVUM_WCHAR_SIZE == 4
 	// UTF-32
 
 	EnsureMinCapacity(length);
@@ -126,6 +124,7 @@ void StringBuffer::Append(const int32_t length, const wchar_t data[])
 #error Not supported
 #endif
 }
+#endif
 
 void StringBuffer::Clear()
 {
@@ -137,7 +136,7 @@ String *StringBuffer::ToString(Thread *const thread)
 	return GC::gc->ConstructString(thread, this->length, this->data);
 }
 
-const int StringBuffer::ToWString(wchar_t *buf)
+int StringBuffer::ToWString(wchar_t *buf)
 {
 	// This is basically copied straight from String_ToWString, but optimized for StringBuffer.
 #if OVUM_WCHAR_SIZE == 2

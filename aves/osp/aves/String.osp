@@ -56,6 +56,10 @@ public class String
 	/// Summary: Gets a Boolean indicating whether the string is empty (its length is 0).
 	public get isEmpty = length == 0;
 
+	/// Summary: Gets a Boolean indicating whether the string instance is
+	//           in the intern table.
+	public get isInterned					__extern("aves_String_get_isInterned");
+
 	/// Summary: Determines whether this string equals another value.
 	/// Param value: The value to compare against.
 	/// Returns: If {value} is not a string, the return value is false.
@@ -471,6 +475,18 @@ public class String
 		return cp >= 0x0009 and cp <= 0x000D or cp == 0x0085 or
 			getCategory(i) & UnicodeCategory.separator != UnicodeCategory.none;
 	}
+
+	/// Summary: Gets the system's reference to an interned string with the same
+	///          value as this string.
+	/// Returns: The system's reference to the interned string with the same value
+	///          as this string, or null if the string is not interned.
+	public getInterned()					__extern("aves_String_getInterned");
+	/// Summary: Interns the current string. If the intern table already contains
+	///          a string with this value, that string is returned. Otherwise, the
+	///          current string is added to the intern table and returned.
+	/// Returns: The system's reference to the interned string with the same value
+	///          as this string.
+	public intern()							__extern("aves_String_intern");
 
 	override getHashCode()					__extern("aves_String_getHashCode");
 	override toString()

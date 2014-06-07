@@ -201,12 +201,12 @@ String *ModuleReader::ReadShortString(const int32_t length)
 	// Fill the buffer with contents from the file
 	Read(const_cast<uchar*>(buf.chars), sizeof(uchar) * length);
 
-	String *intern = GC::gc->GetInternedString(_S(buf));
+	String *intern = GC::gc->GetInternedString(nullptr, _S(buf));
 	if (intern == nullptr)
 	{
 		// Not interned, have to allocate!
 		intern = GC::gc->ConstructModuleString(nullptr, length, buf.chars);
-		GC::gc->InternString(intern);
+		GC::gc->InternString(nullptr, intern);
 	}
 
 	return intern;
@@ -224,7 +224,7 @@ String *ModuleReader::ReadLongString(const int32_t length)
 	// If we have that string, GC::InternString does nothing; if we don't, we have
 	// a brand new string and interning it actually interns it.
 	String *string = GC::gc->ConstructModuleString(nullptr, length, data.get());
-	string = GC::gc->InternString(string);
+	string = GC::gc->InternString(nullptr, string);
 
 	return string;
 }
