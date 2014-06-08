@@ -108,7 +108,7 @@ OVUM_API int StringFromValue(ThreadHandle thread, Value *v)
 			RETURN_SUCCESS;
 		}
 
-		thread->Push(*v);
+		thread->Push(v);
 		int r = thread->InvokeMember(static_strings::toString, 0, v);
 		if (r != OVUM_SUCCESS) return r;
 

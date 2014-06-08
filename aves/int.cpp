@@ -9,14 +9,14 @@
 AVES_API BEGIN_NATIVE_FUNCTION(aves_int)
 {
 	CHECKED(IntFromValue(thread, args));
-	VM_Push(thread, args[0]);
+	VM_Push(thread, args + 0);
 	RETURN_SUCCESS;
 }
 END_NATIVE_FUNCTION
 
 AVES_API NATIVE_FUNCTION(aves_Int_getHashCode)
 {
-	VM_Push(thread, THISV);
+	VM_Push(thread, THISP);
 	RETURN_SUCCESS;
 }
 
@@ -295,7 +295,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Int_opPower)
 END_NATIVE_FUNCTION
 AVES_API NATIVE_FUNCTION(aves_Int_opPlus)
 {
-	VM_Push(thread, args[0]);
+	VM_Push(thread, args + 0);
 	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_Int_opNegate)

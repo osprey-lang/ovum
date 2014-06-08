@@ -10,7 +10,7 @@
 #define OVUM_ERROR_UNSPECIFIED     2  /* An unspecified error occurred. */
 #define OVUM_ERROR_METHOD_INIT     3  /* A method could not be initialized (e.g. due to an invalid opcode). */
 #define OVUM_ERROR_NO_MEMORY       4  /* A memory allocation failed due to insufficient memory. */
-#define OVUM_ERROR_NO_MAIN_METHOD  5  /* The startup module has no main method. */
+#define OVUM_ERROR_NO_MAIN_METHOD  5  /* The startup module has no main method, or the main method is invalid. */
 #define OVUM_ERROR_MODULE_LOAD     6  /* A module could not be loaded. */
 #define OVUM_ERROR_OVERFLOW        8  /* Arithmetic overflow. */
 #define OVUM_ERROR_DIVIDE_BY_ZERO  9  /* Integer division by zero. */
@@ -27,7 +27,7 @@
 #define CHECKED(expr) do { if ((__status = (expr)) != OVUM_SUCCESS) goto __retStatus; } while (0)
 #define CHECKED_MEM(expr) do { if (!(expr)) { __status = OVUM_ERROR_NO_MEMORY; goto __retStatus; } } while (0)
 
-OVUM_API void VM_Push(ThreadHandle thread, Value value);
+OVUM_API void VM_Push(ThreadHandle thread, Value *value);
 
 OVUM_API void VM_PushNull(ThreadHandle thread);
 OVUM_API void VM_PushBool(ThreadHandle thread, bool value);

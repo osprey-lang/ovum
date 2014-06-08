@@ -98,7 +98,7 @@ public:
 	StandardTypes types;
 	IniterFunctions functions;
 
-	VM(VMStartParams &params);
+	VM(VMStartParams &params, int &status);
 	~VM();
 
 	int Run();
@@ -118,7 +118,7 @@ public:
 	int GetArgs(int destLength, String *dest[]);
 	int GetArgValues(int destLength, Value dest[]);
 
-	static void PrintUnhandledError(Value &error);
+	static void PrintUnhandledError(Thread *const thread);
 	static void PrintMethodInitException(MethodInitException &e);
 
 	static VM *vm;

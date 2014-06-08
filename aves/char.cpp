@@ -43,7 +43,7 @@ AVES_API NATIVE_FUNCTION(aves_Char_get_category)
 	catValue.type = Types::UnicodeCategory;
 	catValue.integer = unicode::OvumCategoryToAves(cat);
 
-	VM_Push(thread, catValue);
+	VM_Push(thread, &catValue);
 	RETURN_SUCCESS;
 }
 
@@ -55,7 +55,7 @@ AVES_API NATIVE_FUNCTION(aves_Char_toUpper)
 	upper.type = Types::Char;
 	upper.integer = (int32_t)UC_GetCaseMapW(ch).upper;
 
-	VM_Push(thread, upper);
+	VM_Push(thread, &upper);
 	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_Char_toLower)
@@ -66,7 +66,7 @@ AVES_API NATIVE_FUNCTION(aves_Char_toLower)
 	lower.type = Types::Char;
 	lower.integer = (int32_t)UC_GetCaseMapW(ch).lower;
 
-	VM_Push(thread, lower);
+	VM_Push(thread, &lower);
 	RETURN_SUCCESS;
 }
 
@@ -106,7 +106,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Char_fromCodepoint)
 	Value character;
 	character.type = Types::Char;
 	character.integer = cp;
-	VM_Push(thread, character);
+	VM_Push(thread, &character);
 }
 END_NATIVE_FUNCTION
 

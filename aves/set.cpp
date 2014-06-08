@@ -110,8 +110,8 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Set_containsInternal)
 		{
 			if (set->entries[i].hashCode == hash)
 			{
-				VM_Push(thread, args[1]); // item
-				VM_Push(thread, set->entries[i].value);
+				VM_Push(thread, args + 1); // item
+				VM_Push(thread, &set->entries[i].value);
 				bool equals;
 				CHECKED(VM_Equals(thread, &equals));
 				if (equals)
@@ -141,8 +141,8 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Set_addInternal)
 	{
 		if (set->entries[i].hashCode == hash)
 		{
-			VM_Push(thread, args[1]); // item
-			VM_Push(thread, set->entries[i].value);
+			VM_Push(thread, args + 1); // item
+			VM_Push(thread, &set->entries[i].value);
 			bool equals;
 			CHECKED(VM_Equals(thread, &equals));
 			if (equals)
@@ -196,8 +196,8 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Set_removeInternal)
 		{
 			if (set->entries[i].hashCode == hash)
 			{
-				VM_Push(thread, args[1]); // item
-				VM_Push(thread, set->entries[i].value);
+				VM_Push(thread, args + 1); // item
+				VM_Push(thread, &set->entries[i].value);
 				bool equals;
 				CHECKED(VM_Equals(thread, &equals));
 				if (equals)
@@ -250,7 +250,7 @@ AVES_API NATIVE_FUNCTION(aves_Set_getEntryAt)
 {
 	SetInst *set = _Set(THISV);
 	int32_t index = (int32_t)args[1].integer;
-	VM_Push(thread, set->entries[index].value);
+	VM_Push(thread, &set->entries[index].value);
 	RETURN_SUCCESS;
 }
 

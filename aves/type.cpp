@@ -27,7 +27,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Type_get_baseType)
 
 	Value result;
 	CHECKED(Type_GetTypeToken(thread, baseType, &result));
-	VM_Push(thread, result);
+	VM_Push(thread, &result);
 }
 END_NATIVE_FUNCTION
 

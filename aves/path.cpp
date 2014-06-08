@@ -198,7 +198,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(io_Path_join)
 		}
 	}
 
-	VM_Push(thread, *output);
+	VM_Push(thread, output);
 }
 END_NATIVE_FUNCTION
 
@@ -273,7 +273,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(io_Path_changeExtension)
 		SetString(retval, retString);
 	}
 
-	VM_Push(thread, *retval);
+	VM_Push(thread, retval);
 }
 END_NATIVE_FUNCTION
 

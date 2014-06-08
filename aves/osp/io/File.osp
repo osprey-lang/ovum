@@ -90,13 +90,7 @@ public static class File
 	{
 		// Stream.readInto performs the same checks, but
 		// let's do this before actually opening the file.
-		if buf is null:
-			throw new ArgumentNullError("buf");
-		else if buf is BufferView:
-			buf = buf.buffer;
-		else if buf is not Buffer:
-			throw new TypeError("buf must be an aves.Buffer.");
-
+		buf = Buffer.fromValue(buf);
 		offset = int(offset);
 
 		if offset < 0 or offset > buf.size:

@@ -610,7 +610,7 @@ void GC::MarkRootSet()
 	// Mark stack frames first.
 	StackFrame *frame = mainThread->currentFrame;
 	// Frames are marked top-to-bottom.
-	while (frame)
+	while (frame && frame->method)
 	{
 		Method::Overload *method = frame->method;
 		// Does the method have any parameters?
@@ -948,7 +948,7 @@ void GC::UpdateRootSet()
 
 	// Update stack frames first
 	StackFrame *frame = mainThread->currentFrame;
-	while (frame)
+	while (frame && frame->method)
 	{
 		Method::Overload *method = frame->method;
 		unsigned int paramCount = method->GetEffectiveParamCount();

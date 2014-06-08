@@ -46,9 +46,9 @@ public:
 	// to obtain the name of the method.
 	Method::Overload *method;
 
-	inline void Push      (Value value)
+	inline void Push      (Value *value)
 	{
-		evalStack[stackCount++] = value;
+		evalStack[stackCount++] = *value;
 	}
 	inline void PushBool  (bool value)
 	{
@@ -229,10 +229,10 @@ private:
 	static const size_t CALL_STACK_SIZE = 1024 * 1024;
 
 public:
-	Thread();
+	Thread(int &status);
 	~Thread();
 
-	int Start(Method *method, Value &result);
+	int Start(unsigned int argCount, Method::Overload *mo, Value &result);
 
 private:
 	// The current instruction pointer. This should always be the first field in the class.
@@ -272,7 +272,7 @@ private:
 	CriticalSection gcCycleSection;
 
 public:
-	inline void Push      (Value    value) { currentFrame->Push(value);       }
+	inline void Push      (Value   *value) { currentFrame->Push(value);       }
 	inline void PushBool  (bool     value) { currentFrame->PushBool(value);   }
 	inline void PushInt   (int64_t  value) { currentFrame->PushInt(value);    }
 	inline void PushUInt  (uint64_t value) { currentFrame->PushUInt(value);   }
@@ -341,16 +341,18 @@ public:
 	}
 
 private:
-	void InitCallStack();
+	int InitCallStack();
 	void DisposeCallStack();
 	
+	void PushFirstStackFrame();
 	// Pushes a new stack frame onto the call stack representing a call
 	// to the specified method.
 	//   argCount:
 	//     The number of arguments passed to the method, INCLUDING the instance.
+	//   args:
+	//     Pointer to the first argument, which must be on the stack.
 	//   method:
 	//     The overload that is being invoked in the stack frame.
-	template<bool First>
 	void PushStackFrame(uint32_t argCount, Value *args, Method::Overload *method);
 
 	int PrepareVariadicArgs(MethodFlags flags, uint32_t argCount, uint32_t paramCount, StackFrame *frame);

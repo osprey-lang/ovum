@@ -38,14 +38,14 @@ namespace thread_errors
 }
 
 
-Thread::Thread() :
+Thread::Thread(int &status) :
 	currentFrame(nullptr), state(ThreadState::CREATED),
 	currentError(NULL_VALUE), ip(nullptr),
 	shouldSuspendForGC(false),
 	flags(ThreadFlags::NONE),
 	gcCycleSection(4000)
 {
-	InitCallStack();
+	status = InitCallStack();
 }
 
 Thread::~Thread()
@@ -53,54 +53,16 @@ Thread::~Thread()
 	DisposeCallStack();
 }
 
-int Thread::Start(Method *method, Value &result)
+int Thread::Start(unsigned int argCount, Method::Overload *mo, Value &result)
 {
+	assert(mo != nullptr);
 	assert(this->state == ThreadState::CREATED);
 	assert((method->flags & MemberFlags::INSTANCE) == MemberFlags::NONE);
 
 	state = ThreadState::RUNNING;
-	Method::Overload *mo = method->ResolveOverload(0);
-	assert(mo != nullptr);
-	assert((mo->flags & MethodFlags::VARIADIC) == MethodFlags::NONE);
 
-	PushStackFrame<true>(0, nullptr, mo);
-
-	int r;
-	if ((mo->flags & MethodFlags::NATIVE) == MethodFlags::NATIVE)
-	{
-		r = mo->nativeEntry(this, 0, (Value*)currentFrame);
-		if (r == OVUM_SUCCESS && currentFrame->stackCount == 0)
-			currentFrame->evalStack[0].type = nullptr;
-	}
-	else
-	{
-		if (!mo->IsInitialized())
-		{
-			r = InitializeMethod(mo);
-			if (r != OVUM_SUCCESS) goto restore;
-		}
-		this->ip = mo->entry;
-		entry:
-		r = Evaluate();
-		if (r == OVUM_ERROR_THROWN)
-		{
-			int r2 = FindErrorHandler(-1);
-			if (r2 == OVUM_SUCCESS)
-				goto entry;
-			r = r2;
-		}
-#ifndef NDEBUG
-		else
-		{
-			assert(currentFrame->stackCount == 1);
-		}
-#endif
-	}
-
-	restore:
-	result = currentFrame->evalStack[0];
-	currentFrame = nullptr;
-	ip = nullptr;
+	Value *args = currentFrame->evalStack + currentFrame->stackCount - argCount;
+	int r = InvokeMethodOverload(mo, 0, args, &result);
 
 	state = ThreadState::STOPPED;
 
@@ -273,7 +235,7 @@ int Thread::InvokeMemberLL(String *name, uint32_t argCount, Value *value, Value 
 				// Call the property getter!
 				// We do need to copy the instance, because the property getter
 				// would otherwise overwrite the arguments already on the stack.
-				currentFrame->Push(*value);
+				currentFrame->Push(value);
 				int r = InvokeMethodOverload(mo, 0,
 					currentFrame->evalStack + currentFrame->stackCount - 1,
 					value);
@@ -316,7 +278,7 @@ int Thread::InvokeMethodOverload(Method::Overload *mo, unsigned int argCount,
 
 	// And now we can push the new stack frame!
 	// Note: this updates currentFrame
-	PushStackFrame<false>(argCount, args, mo);
+	PushStackFrame(argCount, args, mo);
 
 	if ((flags & MethodFlags::NATIVE) == MethodFlags::NATIVE)
 	{
@@ -861,7 +823,7 @@ int Thread::LoadFieldRefLL(Value *inst, Field *field)
 	Value fieldRef;
 	fieldRef.type = (Type*)~(field->offset + GCO_SIZE);
 	fieldRef.reference = inst->instance + field->offset;
-	currentFrame->Push(fieldRef);
+	currentFrame->Push(&fieldRef);
 
 	RETURN_SUCCESS;
 }
@@ -883,7 +845,7 @@ int Thread::LoadMemberRefLL(Value *inst, String *member)
 	Value fieldRef;
 	fieldRef.type = (Type*)~(field->offset + GCO_SIZE);
 	fieldRef.reference = inst->instance + field->offset;
-	currentFrame->Push(fieldRef);
+	currentFrame->Push(&fieldRef);
 
 	RETURN_SUCCESS;
 }
@@ -893,7 +855,10 @@ void Thread::LoadStaticField(Field *field, Value *result)
 	if (result)
 		field->staticValue->Read(result);
 	else
-		currentFrame->Push(field->staticValue->Read());
+	{
+		Value value = field->staticValue->Read();
+		currentFrame->Push(&value);
+	}
 }
 
 void Thread::StoreStaticField(Field *field)
@@ -1074,12 +1039,14 @@ int Thread::ThrowMissingOperatorError(Operator op)
 	return r;
 }
 
-void Thread::InitCallStack()
+int Thread::InitCallStack()
 {
 	callStack = (unsigned char*)VirtualAlloc(nullptr,
 		CALL_STACK_SIZE + 256,
 		MEM_RESERVE | MEM_COMMIT,
 		PAGE_READWRITE);
+	if (callStack == nullptr)
+		return OVUM_ERROR_NO_MEMORY;
 
 	// Make sure the page following the call stack will cause an instant segfault,
 	// as a very dirty way of signalling a stack overflow.
@@ -1088,40 +1055,51 @@ void Thread::InitCallStack()
 
 	// The call stack should never be swapped out.
 	VirtualLock(callStack, CALL_STACK_SIZE);
+
+	// Push a "fake" stack frame onto the stack, so that we can
+	// push values onto the evaluation stack before invoking the
+	// main method of the thread.
+	PushFirstStackFrame();
+
+	RETURN_SUCCESS;
 }
 
 void Thread::DisposeCallStack()
 {
-	VirtualFree(callStack, 0, MEM_RELEASE);
+	if (callStack)
+		VirtualFree(callStack, 0, MEM_RELEASE);
 }
 
 
+void Thread::PushFirstStackFrame()
+{
+	register StackFrame *frame = reinterpret_cast<StackFrame*>(callStack);
+	frame->stackCount = 0;
+	frame->argc       = 0;
+	frame->evalStack  = reinterpret_cast<Value*>((char*)frame + STACK_FRAME_SIZE);
+	frame->prevInstr  = nullptr;
+	frame->prevFrame  = nullptr;
+	frame->method     = nullptr;
+
+	currentFrame = frame;
+}
+
 // Note: argCount and args DO include the instance here!
-template<bool First>
 void Thread::PushStackFrame(uint32_t argCount, Value *args, Method::Overload *method)
 {
-	if (First)
-	{
-		assert(currentFrame == nullptr);
-		if (argCount)
-			CopyMemoryT(reinterpret_cast<Value*>(callStack), args, argCount);
-	}
-	else
-	{
-		assert(currentFrame->stackCount >= argCount);
-		currentFrame->stackCount -= argCount; // pop the arguments (including the instance) off the current frame
-	}
+	assert(currentFrame->stackCount >= argCount);
+	currentFrame->stackCount -= argCount; // pop the arguments (including the instance) off the current frame
 
 	register uint32_t paramCount = method->GetEffectiveParamCount();
 	register uint32_t localCount = method->locals;
-	register StackFrame *newFrame = reinterpret_cast<StackFrame*>((First ? (Value*)callStack : args) + paramCount);
+	register StackFrame *newFrame = reinterpret_cast<StackFrame*>(args + paramCount);
 
 	newFrame->stackCount = 0;
-	newFrame->argc = argCount;
-	newFrame->evalStack = newFrame->Locals() + localCount;
-	newFrame->prevInstr = First ? nullptr : ip;
-	newFrame->prevFrame = First ? nullptr : currentFrame;
-	newFrame->method = method;
+	newFrame->argc       = argCount;
+	newFrame->evalStack  = newFrame->Locals() + localCount;
+	newFrame->prevInstr  = ip;
+	newFrame->prevFrame  = currentFrame;
+	newFrame->method     = method;
 	
 	// initialize missing arguments to null
 	if (argCount != paramCount)
@@ -1140,7 +1118,6 @@ void Thread::PushStackFrame(uint32_t argCount, Value *args, Method::Overload *me
 	}
 
 	currentFrame = newFrame;
-	//return currentFrame = newFrame;
 }
 
 int Thread::PrepareVariadicArgs(MethodFlags flags, uint32_t argCount, uint32_t paramCount, StackFrame *frame)
@@ -1232,7 +1209,7 @@ String *Thread::GetStackTrace()
 
 		StackFrame *frame = currentFrame;
 		uint8_t *ip = this->ip;
-		while (frame)
+		while (frame && frame->method)
 		{
 			Method::Overload *method = frame->method;
 			Method *group = method->group;
@@ -1357,7 +1334,7 @@ void Thread::AppendSourceLocation(StringBuffer &buf, Method::Overload *method, u
 
 // API functions, which are really just wrappers for the fun stuff.
 
-OVUM_API void VM_Push(ThreadHandle thread, Value value)
+OVUM_API void VM_Push(ThreadHandle thread, Value *value)
 {
 	thread->Push(value);
 }

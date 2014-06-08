@@ -16,7 +16,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Env_get_args)
 		EnvArgsField->common.list->length = argCount;
 	}
 
-	VM_Push(thread, *EnvArgsField);
+	VM_Push(thread, EnvArgsField);
 }
 END_NATIVE_FUNCTION
 

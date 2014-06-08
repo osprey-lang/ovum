@@ -91,7 +91,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_List_get_item)
 	int32_t index;
 	CHECKED(GetIndex(thread, list, args[1], false, index));
 
-	VM_Push(thread, list->values[index]);
+	VM_Push(thread, &list->values[index]);
 	RETURN_SUCCESS;
 }
 END_NATIVE_FUNCTION
@@ -171,7 +171,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_List_slice1)
 	CHECKED(SliceList(thread, *list, startIndex, list->length, output));
 
 	// Return the new list
-	VM_Push(thread, *output);
+	VM_Push(thread, output);
 }
 END_NATIVE_FUNCTION
 AVES_API BEGIN_NATIVE_FUNCTION(aves_List_slice2)
@@ -189,7 +189,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_List_slice2)
 	CHECKED(SliceList(thread, *list, startIndex, endIndex, output));
 
 	// Return the new list
-	VM_Push(thread, *output);
+	VM_Push(thread, output);
 }
 END_NATIVE_FUNCTION
 AVES_API NATIVE_FUNCTION(aves_List_reverse)
@@ -279,7 +279,7 @@ int SliceList(ThreadHandle thread, ListInst *list, int32_t startIndex, int32_t e
 	}
 
 	// Return the new list
-	VM_Push(thread, *output);
+	VM_Push(thread, output);
 
 	__status = OVUM_SUCCESS;
 __retStatus:

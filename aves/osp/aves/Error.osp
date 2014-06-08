@@ -26,6 +26,10 @@ public inheritable Error
 	public new(message, innerError)		__extern("aves_Error_new");
 
 	/// Summary: Gets the error message (String) associated with this error.
+	/// Remarks: This member is overridable. Classes derived from {Error} are
+	///          free to override this property if they need to attach additional
+	///          information to the message. For example, {ArgumentError} appends
+	///          the name of the parameter that caused the error, if specified.
 	public overridable get message		__extern("aves_Error_get_message");
 	/// Summary: Gets a stack trace (String) containing information about the call
 	///          stack at the time when the error was thrown. If the error has been

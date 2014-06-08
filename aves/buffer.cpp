@@ -490,7 +490,7 @@ AVES_API NATIVE_FUNCTION(aves_BufferView_get_length)
 AVES_API NATIVE_FUNCTION(aves_BufferView_get_buffer)
 {
 	BufferView *view = (BufferView*)THISV.instance;
-	VM_Push(thread, view->buffer);
+	VM_Push(thread, &view->buffer);
 	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_BufferView_get_kind)
@@ -499,6 +499,6 @@ AVES_API NATIVE_FUNCTION(aves_BufferView_get_kind)
 	Value kind;
 	kind.type = Types::BufferViewKind;
 	kind.integer = view->kind;
-	VM_Push(thread, kind);
+	VM_Push(thread, &kind);
 	RETURN_SUCCESS;
 }

@@ -66,11 +66,11 @@ int FindEntry(ThreadHandle thread, HashInst *inst, Value *key, const int32_t has
 		int32_t hashCode2 = hashCode & INT32_MAX;
 		for (int32_t i = inst->buckets[hashCode2 % inst->capacity]; i >= 0; i = inst->entries[i].next)
 		{
-			HashEntry entry = inst->entries[i];
-			if (entry.hashCode == hashCode2)
+			HashEntry *entry = inst->entries + i;
+			if (entry->hashCode == hashCode2)
 			{
-				VM_Push(thread, *key);
-				VM_Push(thread, entry.key);
+				VM_Push(thread, key);
+				VM_Push(thread, &entry->key);
 				bool equals;
 				int r = VM_Equals(thread, &equals);
 				if (r != OVUM_SUCCESS) return r;
@@ -141,7 +141,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Hash_getItemInternal)
 		CHECKED(FindEntry(thread, inst, args + 1, hashCode, index));
 		if (index >= 0)
 		{
-			VM_Push(thread, inst->entries[index].value);
+			VM_Push(thread, &inst->entries[index].value);
 			RETURN_SUCCESS;
 		}
 	}
@@ -166,7 +166,7 @@ AVES_API NATIVE_FUNCTION(aves_Hash_getEntry)
 		entry.type = Types::HashEntry;
 		entry.instance = reinterpret_cast<uint8_t*>(entryPointer);
 
-		VM_Push(thread, entry); // yay
+		VM_Push(thread, &entry); // yay
 	}
 	else
 		VM_PushNull(thread);
@@ -191,8 +191,8 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Hash_insert)
 		HashEntry *entry = inst->entries + i;
 		if (entry->hashCode == hashCode)
 		{
-			VM_Push(thread, args[1]); // key
-			VM_Push(thread, entry->key);
+			VM_Push(thread, args + 1); // key
+			VM_Push(thread, &entry->key);
 			bool equals;
 			CHECKED(VM_Equals(thread, &equals));
 			if (equals)
@@ -261,8 +261,8 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Hash_hasValue)
 	for (int32_t i = 0; i < inst->count; i++)
 		if (inst->entries[i].hashCode >= 0)
 		{
-			VM_Push(thread, args[1]); // value
-			VM_Push(thread, inst->entries[i].value);
+			VM_Push(thread, args + 1); // value
+			VM_Push(thread, &inst->entries[i].value);
 			bool equals;
 			CHECKED(VM_Equals(thread, &equals));
 			if (equals)
@@ -311,8 +311,8 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Hash_removeInternal)
 			HashEntry *entry = inst->entries + i;
 			if (entry->hashCode == hashCode)
 			{
-				VM_Push(thread, args[1]);
-				VM_Push(thread, entry->key);
+				VM_Push(thread, args + 1);
+				VM_Push(thread, &entry->key);
 				bool equals;
 				CHECKED(VM_Equals(thread, &equals));
 				if (equals)
@@ -369,13 +369,13 @@ AVES_API NATIVE_FUNCTION(aves_HashEntry_get_nextIndex)
 AVES_API NATIVE_FUNCTION(aves_HashEntry_get_key)
 {
 	HashEntry *e = reinterpret_cast<HashEntry*>(THISV.instance);
-	VM_Push(thread, e->key);
+	VM_Push(thread, &e->key);
 	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_HashEntry_get_value)
 {
 	HashEntry *e = reinterpret_cast<HashEntry*>(THISV.instance);
-	VM_Push(thread, e->value);
+	VM_Push(thread, &e->value);
 	RETURN_SUCCESS;
 }
 

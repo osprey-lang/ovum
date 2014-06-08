@@ -144,7 +144,7 @@ AVES_API NATIVE_FUNCTION(aves_EnumSet_opOr)
 	Value output;
 	output.type = args[0].type;
 	output.integer = args[0].integer | args[1].integer;
-	VM_Push(thread, output);
+	VM_Push(thread, &output);
 	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_EnumSet_opXor)
@@ -155,7 +155,7 @@ AVES_API NATIVE_FUNCTION(aves_EnumSet_opXor)
 	Value output;
 	output.type = args[0].type;
 	output.integer = args[0].integer ^ args[1].integer;
-	VM_Push(thread, output);
+	VM_Push(thread, &output);
 	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_EnumSet_opAnd)
@@ -166,7 +166,7 @@ AVES_API NATIVE_FUNCTION(aves_EnumSet_opAnd)
 	Value output;
 	output.type = args[0].type;
 	output.integer = args[0].integer & args[1].integer;
-	VM_Push(thread, output);
+	VM_Push(thread, &output);
 	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_EnumSet_opNot)
@@ -174,6 +174,6 @@ AVES_API NATIVE_FUNCTION(aves_EnumSet_opNot)
 	Value output;
 	output.type = args[0].type;
 	output.integer = ~args[0].integer;
-	VM_Push(thread, output);
+	VM_Push(thread, &output);
 	RETURN_SUCCESS;
 }

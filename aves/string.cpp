@@ -22,8 +22,9 @@ int GetIndex(ThreadHandle thread, String *str, Value *arg, int32_t &result)
 	int64_t index = arg->integer;
 	if (index < 0 || index >= str->length)
 	{
-		VM_PushString(thread, error_strings::IndexOutOfRange);
-		r = GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr);
+		VM_PushString(thread, strings::index); // paramName
+		VM_PushString(thread, error_strings::IndexOutOfRange); // message
+		r = GC_Construct(thread, Types::ArgumentRangeError, 2, nullptr);
 		if (r == OVUM_SUCCESS)
 			r = VM_Throw(thread);
 		return r;
@@ -43,7 +44,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_get_item)
 	Value output;
 	output.type = Types::Char;
 	output.integer = (&str->firstChar)[index];
-	VM_Push(thread, output);
+	VM_Push(thread, &output);
 }
 END_NATIVE_FUNCTION
 
@@ -199,7 +200,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_reverse)
 		srcp++;
 	}
 
-	VM_Push(thread, *output);
+	VM_Push(thread, output);
 }
 END_NATIVE_FUNCTION
 AVES_API BEGIN_NATIVE_FUNCTION(aves_String_substr1)
@@ -332,7 +333,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_split)
 		int32_t remaining = str->length;
 		while (remaining-- > 0)
 		{
-			VM_Push(thread, *output);
+			VM_Push(thread, output);
 			VM_PushString(thread, GC_ConstructString(thread, 1, chp++));
 			CHECKED(VM_InvokeMember(thread, strings::add, 1, &ignore));
 		}
@@ -355,7 +356,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_split)
 					// We mound a fatch! I mean, we found a match!
 					// Copy characters from chStart to chp into the output,
 					// and be aware that chp is inclusive.
-					VM_Push(thread, *output);
+					VM_Push(thread, output);
 					if (chp == chStart)
 						VM_PushString(thread, strings::Empty);
 					else
@@ -376,7 +377,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_split)
 		}
 
 		// And add the last bit of the string, too
-		VM_Push(thread, *output);
+		VM_Push(thread, output);
 		String *rest;
 		if (chStart == &str->firstChar)
 			// No match found, just add the entire string
@@ -389,7 +390,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_split)
 		CHECKED(VM_InvokeMember(thread, strings::add, 1, &ignore));
 	}
 
-	VM_Push(thread, *output);
+	VM_Push(thread, output);
 }
 END_NATIVE_FUNCTION
 
@@ -425,7 +426,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_getCharacter)
 	Value character;
 	character.type = Types::Char;
 	character.integer = result;
-	VM_Push(thread, character);
+	VM_Push(thread, &character);
 }
 END_NATIVE_FUNCTION
 AVES_API BEGIN_NATIVE_FUNCTION(aves_String_getCodepoint)
@@ -460,7 +461,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_getCategory)
 	Value output;
 	output.type = Types::UnicodeCategory;
 	output.integer = unicode::OvumCategoryToAves(cat);
-	VM_Push(thread, output);
+	VM_Push(thread, &output);
 }
 END_NATIVE_FUNCTION
 AVES_API BEGIN_NATIVE_FUNCTION(aves_String_isSurrogatePair)
@@ -507,7 +508,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_fromCodepoint)
 
 	if (cp64 < 0 || cp64 > 0x10FFFF)
 	{
-		VM_PushString(thread, strings::cp);
+		VM_PushString(thread, strings::cp); // paramName
 		CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr));
 		return VM_Throw(thread);
 	}
@@ -579,7 +580,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_opMultiply)
 		return VM_ThrowOverflowError(thread);
 	if (length > INT32_MAX)
 	{
-		VM_PushString(thread, strings::times);
+		VM_PushString(thread, strings::times); // paramName
 		CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr));
 		return VM_Throw(thread);
 	}
@@ -928,8 +929,8 @@ int string::Format(ThreadHandle thread, const String *format, Value *hash, Strin
 
 				// Load the value using the hash's indexer
 				Value *value = VM_Local(thread, 0);
-				VM_Push(thread, *hash);
-				VM_Push(thread, phKey);
+				VM_Push(thread, hash);
+				VM_Push(thread, &phKey);
 				CHECKED_F(VM_LoadIndexer(thread, 1, value));
 				// Convert it to a string
 				CHECKED_F(StringFromValue(thread, value));
