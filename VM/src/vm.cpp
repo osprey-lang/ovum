@@ -53,12 +53,16 @@ OVUM_API int VM_Start(VMStartParams *params)
 #endif
 }
 
-VM::VM(VMStartParams &params) :
+VM::VM(VMStartParams &params, int &status) :
 	verbose(params.verbose),
 	argCount(params.argc), argValues(nullptr),
-	types(), functions(), mainThread(new Thread()),
+	types(), functions(), mainThread(nullptr),
 	startupPath(nullptr), startupPathLib(nullptr), modulePath(nullptr)
-{ }
+{
+	mainThread = new(std::nothrow) Thread(status);
+	if (mainThread == nullptr)
+		status = OVUM_ERROR_NO_MEMORY;
+}
 
 VM::~VM()
 {
@@ -67,6 +71,45 @@ VM::~VM()
 	delete startupPathLib;
 	delete modulePath;
 	delete[] argValues;
+}
+
+int GetMainMethodOverload(VM *vm, Thread *const thread, Method *method,
+                          unsigned int &argc, Method::Overload *&overload)
+{
+	overload = method->ResolveOverload(argc = 1);
+	if (overload)
+	{
+		// If there is a one-argument overload, try to create an aves.List
+		// and put the argument values in it.
+		GCObject *listGco;
+		int r = GC::gc->Alloc(thread, vm->types.List, vm->types.List->size, &listGco);
+		if (r != OVUM_SUCCESS) return r;
+
+		ListInst *argsList = reinterpret_cast<ListInst*>(listGco->InstanceBase());
+		r = vm->functions.initListInstance(thread, argsList, vm->GetArgCount());
+		if (r != OVUM_SUCCESS) return r;
+
+		assert(argsList->capacity >= vm->GetArgCount());
+
+		vm->GetArgValues(vm->GetArgCount(), argsList->values);
+
+		Value argsValue;
+		argsValue.type = vm->types.List;
+		argsValue.instance = reinterpret_cast<uint8_t*>(argsList);
+		thread->Push(&argsValue);
+	}
+	else
+	{
+		overload = method->ResolveOverload(argc = 0);
+	}
+
+	if (overload == nullptr || overload->IsInstanceMethod())
+	{
+		fwprintf(stderr, L"Startup error: Main method must take 1 or 0 arguments, and cannot be an instance method.\n");
+		return OVUM_ERROR_NO_MAIN_METHOD;
+	}
+
+	RETURN_SUCCESS;
 }
 
 int VM::Run()
@@ -81,11 +124,17 @@ int VM::Run()
 	}
 	else
 	{
+		unsigned int argc;
+		Method::Overload *mo;
+		result = GetMainMethodOverload(this, mainThread, main, argc, mo);
+		if (result != OVUM_SUCCESS)
+			goto done;
+
 		if (verbose)
 			wprintf(L"<<< Begin program output >>>\n");
 
 		Value returnValue;
-		result = mainThread->Start(main, returnValue);
+		result = mainThread->Start(0, mo, returnValue);
 
 		if (result == OVUM_SUCCESS)
 		{
@@ -96,12 +145,13 @@ int VM::Run()
 				result = (int)returnValue.real;
 		}
 		else if (result == OVUM_ERROR_THROWN)
-			PrintUnhandledError(mainThread->currentError);
+			PrintUnhandledError(mainThread);
 
 		if (verbose)
 			wprintf(L"<<< End program output >>>\n");
 	}
 
+done:
 	return result;
 }
 
@@ -121,12 +171,16 @@ int VM::Init(VMStartParams &params)
 		wprintf(L"Argument count: %d\n",  params.argc);
 	}
 
-	vm = new(std::nothrow) VM(params);
-	if (!vm) return OVUM_ERROR_NO_MEMORY;
 	int r;
-	r = vm->LoadModules(params);
-	if (r == OVUM_SUCCESS)
-		r = vm->InitArgs(params.argc, params.argv);
+	vm = new(std::nothrow) VM(params, r);
+	if (!vm)
+		r = OVUM_ERROR_NO_MEMORY;
+	else if (r == OVUM_SUCCESS)
+	{
+		r = vm->LoadModules(params);
+		if (r == OVUM_SUCCESS)
+			r = vm->InitArgs(params.argc, params.argv);
+	}
 	return r;
 }
 
@@ -267,11 +321,36 @@ void VM::PrintErrLn(String *str)
 	PrintInternal(stdErr, L"%ls\n", str);
 }
 
-void VM::PrintUnhandledError(Value &error)
+void VM::PrintUnhandledError(Thread *const thread)
 {
+	Value &error = thread->currentError;
 	PrintInternal(stdErr, L"Unhandled error: %ls: ", error.type->fullName);
-	PrintErrLn(error.common.error->message);
-	PrintErrLn(error.common.error->stackTrace);
+
+	String *message = nullptr;
+	// If the member exists and is a readable instance property,
+	// we can actually try to invoke the 'message' getter!
+	Member *msgMember = error.type->FindMember(static_strings::message, nullptr);
+	if (msgMember && !msgMember->IsStatic() &&
+		(msgMember->flags & MemberFlags::KIND) == MemberFlags::PROPERTY)
+	{
+		Property *msgProp = static_cast<Property*>(msgMember);
+		if (msgProp->getter != nullptr)
+		{
+			thread->Push(&error);
+
+			Value result;
+			int r = thread->InvokeMethod(msgProp->getter, 0, &result);
+			if (r == OVUM_SUCCESS && result.type == vm->types.String)
+				message = result.common.string;
+		}
+	}
+	if (message == nullptr)
+		message = error.common.error->message;
+	if (message != nullptr)
+		PrintErrLn(message);
+
+	if (error.common.error->stackTrace)
+		PrintErrLn(error.common.error->stackTrace);
 }
 void VM::PrintMethodInitException(MethodInitException &e)
 {

@@ -17,7 +17,7 @@
 AVES_API BEGIN_NATIVE_FUNCTION(aves_real)
 {
 	CHECKED(RealFromValue(thread, args));
-	VM_Push(thread, args[0]);
+	VM_Push(thread, args + 0);
 }
 END_NATIVE_FUNCTION
 
@@ -254,7 +254,7 @@ AVES_API NATIVE_FUNCTION(aves_Real_opPower)
 }
 AVES_API NATIVE_FUNCTION(aves_Real_opPlus)
 {
-	VM_Push(thread, LEFT);
+	VM_Push(thread, &LEFT);
 	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_Real_opNegate)

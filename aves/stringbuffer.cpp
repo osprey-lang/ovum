@@ -55,7 +55,7 @@ AVES_API NATIVE_FUNCTION(aves_StringBuffer_appendLine)
 	if (!buf->Append(strings::newline))
 		return VM_ThrowMemoryError(thread);
 
-	VM_Push(thread, THISV);
+	VM_Push(thread, THISP);
 	RETURN_SUCCESS;
 }
 AVES_API BEGIN_NATIVE_FUNCTION(aves_StringBuffer_appendInternal)
@@ -78,7 +78,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_StringBuffer_appendInternal)
 		if (!buf->Append(str))
 			return VM_ThrowMemoryError(thread);
 
-	VM_Push(thread, THISV);
+	VM_Push(thread, THISP);
 }
 END_NATIVE_FUNCTION
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_appendCodepointInternal)
@@ -101,7 +101,7 @@ AVES_API NATIVE_FUNCTION(aves_StringBuffer_appendCodepointInternal)
 		if (!buf->Append(1, (uchar)codepoint))
 			return VM_ThrowMemoryError(thread);
 
-	VM_Push(thread, THISV);
+	VM_Push(thread, THISP);
 	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_appendSubstrInternal)
@@ -117,7 +117,7 @@ AVES_API NATIVE_FUNCTION(aves_StringBuffer_appendSubstrInternal)
 	if (!buf->Append(count, &str->firstChar + index))
 		return VM_ThrowMemoryError(thread);
 
-	VM_Push(thread, THISV);
+	VM_Push(thread, THISP);
 	RETURN_SUCCESS;
 }
 AVES_API BEGIN_NATIVE_FUNCTION(aves_StringBuffer_insertInternal)
@@ -137,13 +137,14 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_StringBuffer_insertInternal)
 	if (!buf->Insert((int32_t)index, args[2].common.string))
 		return VM_ThrowMemoryError(thread);
 
-	VM_Push(thread, THISV);
+	VM_Push(thread, THISP);
 }
 END_NATIVE_FUNCTION
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_clear)
 {
 	StringBuffer *buf = _SB(THISV);
 	buf->Clear();
+	VM_Push(thread, THISP);
 	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_toString)

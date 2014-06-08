@@ -171,15 +171,14 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_readKey)
 		Value charValue;
 		charValue.type = Types::Char;
 		charValue.integer = (uint32_t)ir.Event.KeyEvent.uChar.UnicodeChar;
+		VM_Push(thread, &charValue);
 
 		Value keyCodeValue;
 		keyCodeValue.type = Types::ConsoleKeyCode;
 		keyCodeValue.integer = ir.Event.KeyEvent.wVirtualKeyCode;
+		VM_Push(thread, &keyCodeValue);
 
 		DWORD state = ir.Event.KeyEvent.dwControlKeyState;
-
-		VM_Push(thread, charValue);
-		VM_Push(thread, keyCodeValue);
 		VM_PushBool(thread, (state & SHIFT_PRESSED) != 0);
 		VM_PushBool(thread, (state & (LEFT_ALT_PRESSED | RIGHT_ALT_PRESSED)) != 0);
 		VM_PushBool(thread, (state & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED)) != 0);
@@ -345,7 +344,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_get_textColor)
 	result.type = Types::ConsoleColor;
 	// Foreground color occupies the lowest 4 bits
 	result.integer = currentAttrs & 0x0f;
-	VM_Push(thread, result);
+	VM_Push(thread, &result);
 }
 END_NATIVE_FUNCTION
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_set_textColor)
@@ -369,7 +368,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_get_backColor)
 	result.type = Types::ConsoleColor;
 	// Background color occupies bits 4–7
 	result.integer = (currentAttrs & 0xf0) >> 4;
-	VM_Push(thread, result);
+	VM_Push(thread, &result);
 }
 END_NATIVE_FUNCTION
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_set_backColor)

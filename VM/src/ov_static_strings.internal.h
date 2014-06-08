@@ -19,6 +19,7 @@ namespace static_strings
 	extern String *_init;	// ".init"
 	extern String *_item;   // ".item"
 
+	extern String *message; // "message"
 	extern String *toString; // "toString"
 
 	namespace errors

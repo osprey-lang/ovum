@@ -9,7 +9,7 @@
 AVES_API BEGIN_NATIVE_FUNCTION(aves_uint)
 {
 	CHECKED(UIntFromValue(thread, args));
-	VM_Push(thread, args[0]);
+	VM_Push(thread, args + 0);
 }
 END_NATIVE_FUNCTION
 
@@ -288,7 +288,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_UInt_opPower)
 END_NATIVE_FUNCTION
 AVES_API NATIVE_FUNCTION(aves_UInt_opPlus)
 {
-	VM_Push(thread, args[0]);
+	VM_Push(thread, args + 0);
 	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_UInt_opNot)

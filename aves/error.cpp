@@ -59,12 +59,12 @@ AVES_API NATIVE_FUNCTION(aves_Error_get_stackTrace)
 AVES_API NATIVE_FUNCTION(aves_Error_get_innerError)
 {
 	ErrorInst *err = _E(THISV);
-	VM_Push(thread, err->innerError);
+	VM_Push(thread, &err->innerError);
 	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_Error_get_data)
 {
 	ErrorInst *err = _E(THISV);
-	VM_Push(thread, err->data);
+	VM_Push(thread, &err->data);
 	RETURN_SUCCESS;
 }
