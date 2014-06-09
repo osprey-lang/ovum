@@ -254,20 +254,17 @@ AVES_API NATIVE_FUNCTION(aves_Set_getEntryAt)
 	RETURN_SUCCESS;
 }
 
-bool aves_Set_getReferences(void *basePtr, unsigned int *valc, Value **target, int32_t *state)
+int aves_Set_getReferences(void *basePtr, ReferenceVisitor callback, void *cbState)
 {
 	SetInst *set = reinterpret_cast<SetInst*>(basePtr);
-	int32_t i = *state;
-	while (i < set->count)
+	for (int32_t i = 0; i < set->count; i++)
 	{
-		if (set->entries[i].hashCode != -1)
+		SetEntry *e = set->entries + i;
+		if (e->hashCode >= 0)
 		{
-			*valc = 1;
-			*target = &set->entries[i].value;
-			*state = i + 1;
-			return true;
+			int r = callback(cbState, 1, &e->value);
+			if (r != OVUM_SUCCESS) return r;
 		}
-		i++;
 	}
-	return false;
+	RETURN_SUCCESS;
 }

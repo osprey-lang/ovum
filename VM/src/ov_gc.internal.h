@@ -439,6 +439,12 @@ private:
 
 	void Release(GCObject *gco);
 
+	typedef struct
+	{
+		GC *gc;
+		bool *hasGen0Refs;
+	} FieldProcessState;
+
 	void MarkForProcessing(GCObject *gco);
 	void AddSurvivor(GCObject *gco);
 
@@ -520,6 +526,7 @@ private:
 				TryMarkForProcessing(v, &_);
 		}
 	}
+	static int ProcessFieldsCallback(void *state, unsigned int count, Value *values);
 
 	void MoveGen0Survivors();
 	void AddPinnedObject(GCObject *gco);
@@ -529,6 +536,7 @@ private:
 	void UpdateRootSet();
 	static void UpdateObjectFields(GCObject *gco);
 	static void UpdateCustomFields(Type *type, void *instBase);
+	static int UpdateFieldsCallback(void *state, unsigned int count, Value *values);
 
 	static inline bool ShouldUpdateRef(Value *val)
 	{

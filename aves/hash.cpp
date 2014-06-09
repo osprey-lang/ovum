@@ -391,20 +391,18 @@ AVES_API int InitHashInstance(ThreadHandle thread, HashInst *hash, const int32_t
 	RETURN_SUCCESS;
 }
 
-bool aves_Hash_getReferences(void *basePtr, unsigned int *valc, Value **target, int32_t *state)
+int aves_Hash_getReferences(void *basePtr, ReferenceVisitor callback, void *cbState)
 {
 	HashInst *hash = (HashInst*)basePtr;
-	int32_t i = *state;
-	while (i < hash->count)
+	for (int32_t i = 0; i < hash->count; i++)
 	{
-		if (hash->entries[i].hashCode != -1)
+		HashEntry *e = hash->entries + i;
+		if (e->hashCode >= 0)
 		{
-			*valc = 2;
-			*target = &hash->entries[i].key;
-			*state = i + 1;
-			return true;
+			// Key and value are adjacent, with the key first
+			int r = callback(cbState, 2, &e->key);
+			if (r != OVUM_SUCCESS) return r;
 		}
-		i++;
 	}
-	return false;
+	RETURN_SUCCESS;
 }

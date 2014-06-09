@@ -784,34 +784,22 @@ void GC::ProcessCustomFields(Type *type, void *instBase, bool *hasGen0Refs)
 		}
 	}
 
-	if (type == VM::vm->types.Hash)
+	// If the type has no reference getter, assume it has no managed references
+	if (type->getReferences)
 	{
-		HashInst *hash = (HashInst*)instBase;
-		int32_t entryCount = hash->count;
-		HashEntry *entries = hash->entries;
-
-		for (int32_t i = 0; i < entryCount; i++)
-			if (entries[i].hashCode >= 0)
-			{
-				HashEntry *entry = entries + i;
-				TryMarkForProcessing(&entry->key, hasGen0Refs);
-				TryMarkForProcessing(&entry->value, hasGen0Refs);
-			}
+		FieldProcessState state;
+		state.gc = this;
+		state.hasGen0Refs = hasGen0Refs;
+		type->getReferences((char*)instBase + type->fieldsOffset,
+			ProcessFieldsCallback, &state);
 	}
-	else if (type->getReferences) // If the type has no reference getter, assume it has no managed references
-	{
-		bool cont;
-		int32_t state = 0;
-		do
-		{
-			unsigned int fieldCount = 0;
-			Value *fields = nullptr;
-			cont = type->getReferences((char*)instBase + type->fieldsOffset,
-				&fieldCount, &fields, &state);
+}
 
-			ProcessFields(fieldCount, fields, hasGen0Refs);
-		} while (cont);
-	}
+int GC::ProcessFieldsCallback(void *state, unsigned int count, Value *values)
+{
+	FieldProcessState *fps = reinterpret_cast<FieldProcessState*>(state);
+	fps->gc->ProcessFields(count, values, fps->hasGen0Refs);
+	RETURN_SUCCESS;
 }
 
 void GC::MoveGen0Survivors()
@@ -1032,35 +1020,16 @@ void GC::UpdateCustomFields(Type *type, void *instBase)
 		}
 	}
 
-	if (type == VM::vm->types.Hash)
-	{
-		HashInst *hash = (HashInst*)instBase;
-		int32_t entryCount = hash->count;
-		HashEntry *entries = hash->entries;
+	// If the type has no reference getter, assume it has no managed references
+	if (type->getReferences)
+		type->getReferences((char*)instBase + type->fieldsOffset,
+			UpdateFieldsCallback, nullptr);
+}
 
-		for (int32_t i = 0; i < entryCount; i++)
-			if (entries[i].hashCode >= 0)
-			{
-				HashEntry *entry = entries + i;
-				TryUpdateRef(&entry->key);
-				TryUpdateRef(&entry->value);
-			}
-	}
-	else if (type->getReferences)
-	{
-		bool cont;
-		int32_t state = 0;
-		do
-		{
-			unsigned int fieldCount = 0;
-			Value *fields = nullptr;
-			cont = type->getReferences((char*)instBase + type->fieldsOffset,
-				&fieldCount, &fields, &state);
-
-			UpdateFields(fieldCount, fields);
-		} while (cont);
-	}
-	// Otherwise, if the type has no reference getter, assume it has no managed references
+int GC::UpdateFieldsCallback(void *state, unsigned int count, Value *values)
+{
+	UpdateFields(count, values);
+	RETURN_SUCCESS;
 }
 
 

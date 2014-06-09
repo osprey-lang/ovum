@@ -175,39 +175,59 @@ enum class TypeFlags : uint32_t
 };
 ENUM_OPS(TypeFlags, uint32_t);
 
-// A ReferenceGetter produces an array of Values from a basePtr. This function
-// is called repeatedly for the same object until false is returned.
+// A ReferenceVisitor receives a set of zero or more managed references stored
+// in an object with a native implementation.
 //
-// The value of 'state' is preserved across calls to the same reference getter
-// on the same object during the same GC cycle, and starts out at zero. This is
-// to permit implementations of native types to contain non-adjacent Values. For
-// example, aves.Set keeps its values in a special native struct alongside other
-// data, and the state is used as a numeric index into the entries.
+// If a ReferenceVisitor returns a value other than OVUM_SUCCESS, the ReferenceGetter
+// that invoked the callback must return that value and not call the callback
+// again.
+//
+// Parameters:
+//   cbState:
+//     The state paseed into the ReferenceGetter. This must not be modified
+//     in any way.
+//   count:
+//     The number of values contained in 'values'. May be zero.
+//   values:
+//     An array of zero or more managed references.
+typedef int (*ReferenceVisitor)(void *cbState, unsigned int count, Value *values);
+
+// A ReferenceGetter produces an array of Values from a basePtr. This function
+// is called by the GC for two reasons:
+//   * To mark referenced objects as alive;
+//   * To update references to objects that may have moved.
+//
+// A method that implements ReferenceGetter must call the given ReferenceVisitor
+// for each available set of managed references in the object, and MUST pass the
+// value of the 'cbState' as the first argument to 'callback'.
+//
+// If 'callback' returns any value other than OVUM_SUCCESS, it must be returned
+// from the ReferenceGetter, and the callback must not be called again. If the
+// ReferenceGetter call succeeds, it must return OVUM_SUCCESS.
 //
 // Parameters:
 //   basePtr:
-//     The base of the fields for a value of the type that
-//     implements the ReferenceGetter.
-//   valc:
-//     Receives the total number of Values the instance
-//     of the type references.
-//   target:
-//     Receives a pointer to the first Value in an array of values.
-//   state:
-//     Keeps track of the enumeration state. Types that do not need a state
-//     are free to ignore this value.
+//     The base of the fields for a value of the type that implements
+//     the ReferenceGetter. This is the instance pointer plus the field
+//     offset of the type.
+//   callback:
+//     A function that is called for each set of managed references in
+//     the object. See the documentation of ReferenceVisitor.
+//   cbState:
+//     A value that must be passed entirely unmodified as the first argument
+//     to the callback.
 //
 // If your type has both Value fields and non-Value fields, consider making
-// the Values adjacent in memory. That way, you can just give target the
-// address of the first Value and set valc to the appropriate length, thus
-// removing the need for repeatedly calling the reference getter.
+// the Values adjacent in memory. That way, you can just give 'callback' the
+// address of the first Value and pass an appropriate length into 'count',
+// thus  removing the need for repeatedly calling the callback.
 //
 // Also, whenever possible, use native fields (see Type_AddNativeField) and
 // GC-allocated arrays (GC_AllocArray, GC_AllocValueArray).
 //
 // NOTENOTENOTE: basePtr is NOT relative to where the instance begins
 // in memory, but is rather instancePtr + type->fieldsOffset.
-typedef bool (*ReferenceGetter)(void *basePtr, unsigned int *valc, Value **target, int32_t *state);
+typedef int (*ReferenceGetter)(void *basePtr, ReferenceVisitor callback, void *cbState);
 
 // A Finalizer is called when the object is about to be deleted.
 // If the type has the flag TYPE_CUSTOMPTR, it may have to supply

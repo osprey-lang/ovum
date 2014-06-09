@@ -39,6 +39,6 @@ AVES_API NATIVE_FUNCTION(aves_Set_get_entryCount);
 AVES_API NATIVE_FUNCTION(aves_Set_hasEntryAt);
 AVES_API NATIVE_FUNCTION(aves_Set_getEntryAt);
 
-bool aves_Set_getReferences(void *basePtr, unsigned int *valc, Value **target, int32_t *state);
+int aves_Set_getReferences(void *basePtr, ReferenceVisitor callback, void *cbState);
 
 #endif // AVES__SET_H
