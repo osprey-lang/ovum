@@ -30,6 +30,6 @@ AVES_API NATIVE_FUNCTION(aves_HashEntry_get_value);
 
 AVES_API int InitHashInstance(ThreadHandle thread, HashInst *hash, const int32_t capacity);
 
-bool aves_Hash_getReferences(void *basePtr, unsigned int *valc, Value **target, int32_t *state);
+int aves_Hash_getReferences(void *basePtr, ReferenceVisitor callback, void *cbState);
 
 #endif // AVES__HASH_H
