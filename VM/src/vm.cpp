@@ -92,6 +92,7 @@ int GetMainMethodOverload(VM *vm, Thread *const thread, Method *method,
 		assert(argsList->capacity >= vm->GetArgCount());
 
 		vm->GetArgValues(vm->GetArgCount(), argsList->values);
+		argsList->length = vm->GetArgCount();
 
 		Value argsValue;
 		argsValue.type = vm->types.List;
@@ -134,7 +135,7 @@ int VM::Run()
 			wprintf(L"<<< Begin program output >>>\n");
 
 		Value returnValue;
-		result = mainThread->Start(0, mo, returnValue);
+		result = mainThread->Start(argc, mo, returnValue);
 
 		if (result == OVUM_SUCCESS)
 		{

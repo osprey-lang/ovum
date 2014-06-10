@@ -62,7 +62,7 @@ int Thread::Start(unsigned int argCount, Method::Overload *mo, Value &result)
 	state = ThreadState::RUNNING;
 
 	Value *args = currentFrame->evalStack + currentFrame->stackCount - argCount;
-	int r = InvokeMethodOverload(mo, 0, args, &result);
+	int r = InvokeMethodOverload(mo, argCount, args, &result);
 
 	state = ThreadState::STOPPED;
 
