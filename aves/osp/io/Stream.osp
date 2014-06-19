@@ -24,10 +24,12 @@ namespace io;
 ///          and so on are properly closed. To ensure proper cleanup,
 ///          consider using the `with` keyword, as in this example:
 ///
-///          `with stream = getStream(...)` \
-///          `{` \
-///          `    // ... use stream ...` \
-///          `}`
+///          ``` \
+///          with stream = getStream(...) \
+///          { \
+///              // ... use stream ... \
+///          } \
+///          ```
 ///
 ///          Once a stream has been closed, it is no longer possible
 ///          to read from, write to or seek within it. Attempting to do
@@ -41,13 +43,15 @@ namespace io;
 ///          verify that the offset and count are actually within the buffer.
 ///          For example,
 ///
-///          `override readMax(buf, offset, count) {`\
-///          `   buf = Buffer.fromValue(buf);`\
-///          `   offset = int(offset);`\
-///          `   count = int(count);`\
-///          `   buf.verifyRange(offset, count);`\
-///          `   // ... rest of method ...`\
-///          `}`
+///          ``` \
+///          override readMax(buf, offset, count) { \
+///             buf = Buffer.fromValue(buf); \
+///             offset = int(offset); \
+///             count = int(count); \
+///             buf.verifyRange(offset, count); \
+///             // ... rest of method ... \
+///          } \
+///          ```
 public abstract class Stream
 {
 	public new();
@@ -311,7 +315,7 @@ public abstract class Stream
 	///          underlying byte sequence.
 	/// Param amount: The distance (in number of bytes) to seek, relative
 	///               to the seek origin. (Int, UInt or Real)
-	/// Param origin: A {SeekOrigin} that determines which “end” of the
+	/// Param origin: A {SeekOrigin} that determines which position in the
 	///               stream the seek amount is relative to.
 	/// Returns: The new position of the stream cursor after seeking,
 	///          as an Int.

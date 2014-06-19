@@ -64,7 +64,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_readByte)
 	VM_PushUInt(thread, buf->bytes[index]);
 }
 END_NATIVE_FUNCTION
-AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_readSbyte)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_readSByte)
 {
 	Buffer *buf = (Buffer*)THISV.instance;
 	unsigned int index;
@@ -266,6 +266,27 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_writeFloat64)
 	buf->doubles[index] = args[2].real;
 }
 END_NATIVE_FUNCTION
+
+AVES_API NATIVE_FUNCTION(aves_Buffer_copyInternal)
+{
+	// copyInternal(source is Buffer, sourceIndex is Int, dest is Buffer, destIndex is Int, count is Int)
+	// The public-facing method checks all the types and also
+	// range-checks the indexes and count.
+	Buffer *src = (Buffer*)args[0].instance;
+	Buffer *dest = (Buffer*)args[2].instance;
+	int32_t srcIndex = (int32_t)args[1].integer;
+	int32_t destIndex = (int32_t)args[3].integer;
+	int32_t count = (int32_t)args[4].integer;
+
+	// Copying the data could take a while if there's a lot to copy,
+	// so let's enter an unmanaged region during the copying, so we
+	// don't block the GC if it decides to run.
+	VM_EnterUnmanagedRegion(thread);
+	memcpy(dest->bytes + destIndex, src->bytes + srcIndex, count);
+	VM_LeaveUnmanagedRegion(thread);
+
+	RETURN_SUCCESS;
+}
 
 void aves_Buffer_finalize(void *basePtr)
 {
