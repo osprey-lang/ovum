@@ -12,7 +12,7 @@ public class Buffer
 	public get size							__extern("aves_Buffer_get_size");
 
 	public readByte(index)					__extern("aves_Buffer_readByte");
-	public readSByte(index)					__extern("aves_Buffer_readSbyte");
+	public readSByte(index)					__extern("aves_Buffer_readSByte");
 	public readInt16(index)					__extern("aves_Buffer_readInt16");
 	public readInt32(index)					__extern("aves_Buffer_readInt32");
 	public readInt64(index)					__extern("aves_Buffer_readInt64");
@@ -73,12 +73,52 @@ public class Buffer
 	{
 		if buf is null:
 			throw new ArgumentNullError("buf");
-		else if buf is BufferView:
+		if buf is BufferView:
 			buf = buf.buffer;
 		else if buf is not Buffer:
 			throw new TypeError("buf must be an aves.Buffer or aves.BufferView.");
 		return buf;
 	}
+
+	public static resize(ref buf, newSize)
+	{
+		if buf is not null and buf is not Buffer:
+			throw new TypeError("buf must be an aves.Buffer");
+		newSize = int(newSize);
+		if newSize < 0:
+			throw new ArgumentRangeError("newSize");
+
+		if buf is null or newSize != buf.size
+		{
+			var newBuf = new Buffer(newSize);
+			if buf is not null:
+				copyInternal(buf, 0, newBuf, 0, math.min(buf.size, newSize));
+			buf = newBuf;
+		}
+	}
+
+	public static copy(source, destination, count)
+	{
+		copy(source, 0, destination, 0, count);
+	}
+	public static copy(source, sourceIndex, dest, destIndex, count)
+	{
+		source = fromValue(source);
+		sourceIndex = int(sourceIndex);
+		dest = fromValue(dest);
+		destIndex = int(destIndex);
+		count = int(count);
+		if sourceIndex < 0 or destIndex < 0:
+			throw new ArgumentRangeError(sourceIndex < 0 ? "sourceIndex" : "destIndex");
+		if sourceIndex + count > source.size:
+			throw new ArgumentRangeError("sourceIndex + count is outside of the source buffer.");
+		if destIndex + count > dest.size:
+			throw new ArgumentRangeError("destIndex + count is outside of the destination buffer.");
+
+		copyInternal(source, sourceIndex, dest, destIndex, count);
+	}
+	private static copyInternal(source, sourceIndex, dest, destIndex, count)
+		__extern("aves_Buffer_copyInternal");
 
 	iter
 	{

@@ -30,7 +30,7 @@ AVES_API NATIVE_FUNCTION(aves_Buffer_new);
 AVES_API NATIVE_FUNCTION(aves_Buffer_get_size);
 
 AVES_API NATIVE_FUNCTION(aves_Buffer_readByte);
-AVES_API NATIVE_FUNCTION(aves_Buffer_readSbyte);
+AVES_API NATIVE_FUNCTION(aves_Buffer_readSByte);
 AVES_API NATIVE_FUNCTION(aves_Buffer_readInt16);
 AVES_API NATIVE_FUNCTION(aves_Buffer_readInt32);
 AVES_API NATIVE_FUNCTION(aves_Buffer_readInt64);
@@ -50,6 +50,8 @@ AVES_API NATIVE_FUNCTION(aves_Buffer_writeUInt32);
 AVES_API NATIVE_FUNCTION(aves_Buffer_writeUInt64);
 AVES_API NATIVE_FUNCTION(aves_Buffer_writeFloat32);
 AVES_API NATIVE_FUNCTION(aves_Buffer_writeFloat64);
+
+AVES_API NATIVE_FUNCTION(aves_Buffer_copyInternal);
 
 void aves_Buffer_finalize(void *basePtr);
 
