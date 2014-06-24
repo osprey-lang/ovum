@@ -73,87 +73,45 @@ VM::~VM()
 	delete[] argValues;
 }
 
-int GetMainMethodOverload(VM *vm, Thread *const thread, Method *method,
-                          unsigned int &argc, Method::Overload *&overload)
-{
-	overload = method->ResolveOverload(argc = 1);
-	if (overload)
-	{
-		// If there is a one-argument overload, try to create an aves.List
-		// and put the argument values in it.
-		GCObject *listGco;
-		int r = GC::gc->Alloc(thread, vm->types.List, vm->types.List->size, &listGco);
-		if (r != OVUM_SUCCESS) return r;
-
-		ListInst *argsList = reinterpret_cast<ListInst*>(listGco->InstanceBase());
-		r = vm->functions.initListInstance(thread, argsList, vm->GetArgCount());
-		if (r != OVUM_SUCCESS) return r;
-
-		assert(argsList->capacity >= vm->GetArgCount());
-
-		vm->GetArgValues(vm->GetArgCount(), argsList->values);
-		argsList->length = vm->GetArgCount();
-
-		Value argsValue;
-		argsValue.type = vm->types.List;
-		argsValue.instance = reinterpret_cast<uint8_t*>(argsList);
-		thread->Push(&argsValue);
-	}
-	else
-	{
-		overload = method->ResolveOverload(argc = 0);
-	}
-
-	if (overload == nullptr || overload->IsInstanceMethod())
-	{
-		fwprintf(stderr, L"Startup error: Main method must take 1 or 0 arguments, and cannot be an instance method.\n");
-		return OVUM_ERROR_NO_MAIN_METHOD;
-	}
-
-	RETURN_SUCCESS;
-}
-
 int VM::Run()
 {
-	int result;
+	int r;
 
 	Method *main = startupModule->GetMainMethod();
 	if (main == nullptr)
 	{
 		fwprintf(stdErr, L"Startup error: Startup module does not define a main method.\n");
-		result = OVUM_ERROR_NO_MAIN_METHOD;
+		r = OVUM_ERROR_NO_MAIN_METHOD;
 	}
 	else
 	{
 		unsigned int argc;
-		Method::Overload *mo;
-		result = GetMainMethodOverload(this, mainThread, main, argc, mo);
-		if (result != OVUM_SUCCESS)
-			goto done;
+		MethodOverload *mo;
+		r = GetMainMethodOverload(main, argc, mo);
+		if (r != OVUM_SUCCESS) return r;
 
 		if (verbose)
 			wprintf(L"<<< Begin program output >>>\n");
 
 		Value returnValue;
-		result = mainThread->Start(argc, mo, returnValue);
+		r = mainThread->Start(argc, mo, returnValue);
 
-		if (result == OVUM_SUCCESS)
+		if (r == OVUM_SUCCESS)
 		{
 			if (returnValue.type == types.Int ||
 				returnValue.type == types.UInt)
-				result = (int)returnValue.integer;
+				r = (int)returnValue.integer;
 			else if (returnValue.type == types.Real)
-				result = (int)returnValue.real;
+				r = (int)returnValue.real;
 		}
-		else if (result == OVUM_ERROR_THROWN)
+		else if (r == OVUM_ERROR_THROWN)
 			PrintUnhandledError(mainThread);
 
 		if (verbose)
 			wprintf(L"<<< End program output >>>\n");
 	}
 
-done:
-	return result;
+	return r;
 }
 
 int VM::Init(VMStartParams &params)
@@ -263,6 +221,45 @@ int VM::InitArgs(int argCount, const wchar_t *args[])
 	RETURN_SUCCESS;
 }
 
+int VM::GetMainMethodOverload(Method *method, unsigned int &argc, MethodOverload *&overload)
+{
+	overload = method->ResolveOverload(argc = 1);
+	if (overload)
+	{
+		// If there is a one-argument overload, try to create an aves.List
+		// and put the argument values in it.
+		GCObject *listGco;
+		int r = GC::gc->Alloc(mainThread, types.List, types.List->size, &listGco);
+		if (r != OVUM_SUCCESS) return r;
+
+		ListInst *argsList = reinterpret_cast<ListInst*>(listGco->InstanceBase());
+		r = functions.initListInstance(mainThread, argsList, this->argCount);
+		if (r != OVUM_SUCCESS) return r;
+
+		assert(argsList->capacity >= this->argCount);
+
+		GetArgValues(this->argCount, argsList->values);
+		argsList->length = this->argCount;
+
+		Value argsValue;
+		argsValue.type = vm->types.List;
+		argsValue.instance = reinterpret_cast<uint8_t*>(argsList);
+		mainThread->Push(&argsValue);
+	}
+	else
+	{
+		overload = method->ResolveOverload(argc = 0);
+	}
+
+	if (overload == nullptr || overload->IsInstanceMethod())
+	{
+		fwprintf(stdErr, L"Startup error: Main method must take 1 or 0 arguments, and cannot be an instance method.\n");
+		return OVUM_ERROR_NO_MAIN_METHOD;
+	}
+
+	RETURN_SUCCESS;
+}
+
 void VM::Unload()
 {
 	VM::stdOut = nullptr;
@@ -359,7 +356,7 @@ void VM::PrintMethodInitException(MethodInitException &e)
 
 	fwprintf(err, L"An error occurred while initializing the method '");
 
-	Method::Overload *method = e.GetMethod();
+	MethodOverload *method = e.GetMethod();
 	if (method->declType)
 		PrintInternal(err, L"%ls.", method->declType->fullName);
 	PrintErr(method->group->name);

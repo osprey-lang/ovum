@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef VM__WINDOWS_H
-#define VM__WINDOWS_H
+#ifndef AVES__WINDOWS_H
+#define AVES__WINDOWS_H
 
 #include <WinSDKVer.h>
 #define _WIN32_WINNT _WIN32_WINNT_WIN7
@@ -14,4 +14,4 @@
 // Windows header files
 #include <windows.h>
 
-#endif // VM__WINDOWS_H
+#endif // AVES__WINDOWS_H

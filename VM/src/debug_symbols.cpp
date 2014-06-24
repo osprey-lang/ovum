@@ -12,7 +12,7 @@ namespace debug_file
 
 namespace debug
 {
-	DebugSymbols::DebugSymbols(Method::Overload *overload, int32_t symbolCount, SourceLocation *symbols)
+	DebugSymbols::DebugSymbols(MethodOverload *overload, int32_t symbolCount, SourceLocation *symbols)
 		: overload(overload), symbolCount(symbolCount), symbols(symbols)
 	{ }
 

@@ -52,7 +52,7 @@ TypeHandle Types::FileNotFoundError;
 
 
 // Note: This is not declared in any header file. Only in this source file.
-AVES_API void OvumModuleMain(ModuleHandle module)
+AVES_API void CDECL OvumModuleMain(ModuleHandle module)
 {
 	Types::Int                = Module_FindType(module, _S(type_names::Int),                true);
 	Types::UInt               = Module_FindType(module, _S(type_names::UInt),               true);

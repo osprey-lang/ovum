@@ -2,7 +2,7 @@
 
 #define _T(val)		reinterpret_cast<TypeInst*>((val).instance)
 
-AVES_API void aves_reflection_Type_init(TypeHandle type)
+AVES_API void CDECL aves_reflection_Type_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(TypeInst));
 }
@@ -46,7 +46,7 @@ AVES_API NATIVE_FUNCTION(aves_reflection_Type_inheritsFromInternal)
 	RETURN_SUCCESS;
 }
 
-AVES_API int InitTypeToken(ThreadHandle thread, void *basePtr, TypeHandle type)
+AVES_API int CDECL InitTypeToken(ThreadHandle thread, void *basePtr, TypeHandle type)
 {
 	TypeInst *inst = reinterpret_cast<TypeInst*>(basePtr);
 	inst->type = type;

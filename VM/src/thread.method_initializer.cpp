@@ -73,7 +73,7 @@ namespace instr
 		return instructions[index].removed;
 	}
 
-	void MethodBuilder::PerformRemovals(Method::Overload *method)
+	void MethodBuilder::PerformRemovals(MethodOverload *method)
 	{
 		using namespace std;
 		const int SmallBufferSize = 64;
@@ -90,9 +90,9 @@ namespace instr
 		}
 	}
 
-	void MethodBuilder::PerformRemovalsInternal(int32_t newIndices[], Method::Overload *method)
+	void MethodBuilder::PerformRemovalsInternal(int32_t newIndices[], MethodOverload *method)
 	{
-		typedef Method::TryBlock::TryKind TryKind;
+		typedef MethodOverload::TryBlock::TryKind TryKind;
 		this->lastOffset = 0; // Must recalculate byte offsets as well
 
 		int32_t oldIndex = 0, newIndex = 0;
@@ -137,7 +137,7 @@ namespace instr
 
 		for (int32_t t = 0; t < method->tryBlockCount; t++)
 		{
-			Method::TryBlock *tryBlock = method->tryBlocks + t;
+			MethodOverload::TryBlock *tryBlock = method->tryBlocks + t;
 			tryBlock->tryStart = newIndices[tryBlock->tryStart];
 			tryBlock->tryEnd = newIndices[tryBlock->tryEnd];
 
@@ -146,7 +146,7 @@ namespace instr
 			case TryKind::CATCH:
 				for (int32_t c = 0; c < tryBlock->catches.count; c++)
 				{
-					Method::CatchBlock *catchBlock = tryBlock->catches.blocks + c;
+					MethodOverload::CatchBlock *catchBlock = tryBlock->catches.blocks + c;
 					catchBlock->catchStart = newIndices[catchBlock->catchStart];
 					catchBlock->catchEnd = newIndices[catchBlock->catchEnd];
 				}
@@ -502,7 +502,7 @@ public:
 	}
 };
 
-int Thread::InitializeMethod(Method::Overload *method)
+int Thread::InitializeMethod(MethodOverload *method)
 {
 	using namespace instr;
 
@@ -548,10 +548,10 @@ int Thread::InitializeMethod(Method::Overload *method)
 	return r;
 }
 
-void Thread::InitializeBranchOffsets(instr::MethodBuilder &builder, Method::Overload *method)
+void Thread::InitializeBranchOffsets(instr::MethodBuilder &builder, MethodOverload *method)
 {
 	using namespace instr;
-	typedef Method::TryBlock::TryKind TryKind;
+	typedef MethodOverload::TryBlock::TryKind TryKind;
 
 	if (builder.HasBranches())
 		for (int32_t i = 0; i < builder.GetLength(); i++)
@@ -583,7 +583,7 @@ void Thread::InitializeBranchOffsets(instr::MethodBuilder &builder, Method::Over
 
 	for (int32_t i = 0; i < method->tryBlockCount; i++)
 	{
-		Method::TryBlock &tryBlock = method->tryBlocks[i];
+		MethodOverload::TryBlock &tryBlock = method->tryBlocks[i];
 		tryBlock.tryStart = builder.FindIndex(tryBlock.tryStart);
 		tryBlock.tryEnd = builder.FindIndex(tryBlock.tryEnd);
 
@@ -592,7 +592,7 @@ void Thread::InitializeBranchOffsets(instr::MethodBuilder &builder, Method::Over
 		case TryKind::CATCH:
 			for (int32_t c = 0; c < tryBlock.catches.count; c++)
 			{
-				Method::CatchBlock &catchBlock = tryBlock.catches.blocks[c];
+				MethodOverload::CatchBlock &catchBlock = tryBlock.catches.blocks[c];
 				if (catchBlock.caughtType == nullptr)
 					catchBlock.caughtType = TypeFromToken(method, catchBlock.caughtTypeId);
 				catchBlock.catchStart = builder.FindIndex(catchBlock.catchStart);
@@ -621,10 +621,10 @@ void Thread::InitializeBranchOffsets(instr::MethodBuilder &builder, Method::Over
 	}
 }
 
-void Thread::CalculateStackHeights(instr::MethodBuilder &builder, Method::Overload *method, StackManager &stack)
+void Thread::CalculateStackHeights(instr::MethodBuilder &builder, MethodOverload *method, StackManager &stack)
 {
 	using namespace instr;
-	typedef Method::TryBlock::TryKind TryKind;
+	typedef MethodOverload::TryBlock::TryKind TryKind;
 
 	// The first instruction is always reachable
 	stack.EnqueueBranch(0, 0);
@@ -634,7 +634,7 @@ void Thread::CalculateStackHeights(instr::MethodBuilder &builder, Method::Overlo
 	// reached by fallthrough or branching.
 	for (int32_t i = 0; i < method->tryBlockCount; i++)
 	{
-		Method::TryBlock &tryBlock = method->tryBlocks[i];
+		MethodOverload::TryBlock &tryBlock = method->tryBlocks[i];
 		if (tryBlock.kind == TryKind::CATCH)
 		{
 			for (int32_t c = 0; c < tryBlock.catches.count; c++)
@@ -866,10 +866,10 @@ void Thread::CalculateStackHeights(instr::MethodBuilder &builder, Method::Overlo
 	builder.PerformRemovals(method);
 }
 
-void Thread::WriteInitializedBody(instr::MethodBuilder &builder, Method::Overload *method)
+void Thread::WriteInitializedBody(instr::MethodBuilder &builder, MethodOverload *method)
 {
 	using namespace instr;
-	typedef Method::TryBlock::TryKind TryKind;
+	typedef MethodOverload::TryBlock::TryKind TryKind;
 
 	// Let's allocate a buffer for the output, yay!
 	std::unique_ptr<uint8_t[]> buffer(new uint8_t[builder.GetByteSize()]);
@@ -883,7 +883,7 @@ void Thread::WriteInitializedBody(instr::MethodBuilder &builder, Method::Overloa
 
 	for (int32_t t = 0; t < method->tryBlockCount; t++)
 	{
-		Method::TryBlock &tryBlock = method->tryBlocks[t];
+		MethodOverload::TryBlock &tryBlock = method->tryBlocks[t];
 		
 		tryBlock.tryStart = builder.GetNewOffset(tryBlock.tryStart);
 		tryBlock.tryEnd = builder.GetNewOffset(tryBlock.tryEnd);
@@ -893,7 +893,7 @@ void Thread::WriteInitializedBody(instr::MethodBuilder &builder, Method::Overloa
 		case TryKind::CATCH:
 			for (int32_t c = 0; c < tryBlock.catches.count; c++)
 			{
-				Method::CatchBlock &catchBlock = tryBlock.catches.blocks[c];
+				MethodOverload::CatchBlock &catchBlock = tryBlock.catches.blocks[c];
 				catchBlock.catchStart = builder.GetNewOffset(catchBlock.catchStart);
 				catchBlock.catchEnd = builder.GetNewOffset(catchBlock.catchEnd);
 			}
@@ -943,7 +943,7 @@ int Thread::CallStaticConstructors(instr::MethodBuilder &builder)
 				// If there is a member '.init', it must be a method!
 				assert((member->flags & MemberFlags::METHOD) == MemberFlags::METHOD);
 
-				Method::Overload *mo = ((Method*)member)->ResolveOverload(0);
+				MethodOverload *mo = ((Method*)member)->ResolveOverload(0);
 				if (!mo) return ThrowNoOverloadError(0);
 
 				Value ignore;
@@ -957,7 +957,7 @@ int Thread::CallStaticConstructors(instr::MethodBuilder &builder)
 	RETURN_SUCCESS;
 }
 
-void Thread::InitializeInstructions(instr::MethodBuilder &builder, Method::Overload *method)
+void Thread::InitializeInstructions(instr::MethodBuilder &builder, MethodOverload *method)
 {
 	using namespace instr;
 
@@ -1174,7 +1174,7 @@ void Thread::InitializeInstructions(instr::MethodBuilder &builder, Method::Overl
 				
 				uint16_t argCount = *ip++;
 
-				Method::Overload *mo = MethodOverloadFromToken(method, funcId, argCount);
+				MethodOverload *mo = MethodOverloadFromToken(method, funcId, argCount);
 				instr = new StaticCall(argCount - mo->InstanceOffset(), mo);
 			}
 			break;
@@ -1186,7 +1186,7 @@ void Thread::InitializeInstructions(instr::MethodBuilder &builder, Method::Overl
 				uint16_t argCount = U16_ARG(ip);
 				ip += sizeof(uint16_t);
 
-				Method::Overload *mo = MethodOverloadFromToken(method, funcId, argCount);
+				MethodOverload *mo = MethodOverloadFromToken(method, funcId, argCount);
 				instr = new StaticCall(argCount - mo->InstanceOffset(), mo);
 			}
 			break;
@@ -1562,7 +1562,7 @@ void Thread::InitializeInstructions(instr::MethodBuilder &builder, Method::Overl
 	}
 }
 
-Type *Thread::TypeFromToken(Method::Overload *fromMethod, uint32_t token)
+Type *Thread::TypeFromToken(MethodOverload *fromMethod, uint32_t token)
 {
 	Type *result = fromMethod->group->declModule->FindType(token);
 	if (!result)
@@ -1577,7 +1577,7 @@ Type *Thread::TypeFromToken(Method::Overload *fromMethod, uint32_t token)
 	return result;
 }
 
-String *Thread::StringFromToken(Method::Overload *fromMethod, uint32_t token)
+String *Thread::StringFromToken(MethodOverload *fromMethod, uint32_t token)
 {
 	String *result = fromMethod->group->declModule->FindString(token);
 	if (!result)
@@ -1587,7 +1587,7 @@ String *Thread::StringFromToken(Method::Overload *fromMethod, uint32_t token)
 	return result;
 }
 
-Method *Thread::MethodFromToken(Method::Overload *fromMethod, uint32_t token)
+Method *Thread::MethodFromToken(MethodOverload *fromMethod, uint32_t token)
 {
 	Method *result = fromMethod->group->declModule->FindMethod(token);
 	if (!result)
@@ -1615,13 +1615,13 @@ Method *Thread::MethodFromToken(Method::Overload *fromMethod, uint32_t token)
 	return result;
 }
 
-Method::Overload *Thread::MethodOverloadFromToken(Method::Overload *fromMethod, uint32_t token, uint32_t argCount)
+MethodOverload *Thread::MethodOverloadFromToken(MethodOverload *fromMethod, uint32_t token, uint32_t argCount)
 {
 	Method *method = MethodFromToken(fromMethod, token);
 
 	argCount -= (int)(method->flags & MemberFlags::INSTANCE) >> 10;
 
-	Method::Overload *overload = method->ResolveOverload(argCount);
+	MethodOverload *overload = method->ResolveOverload(argCount);
 	if (!overload)
 		throw MethodInitException("Could not find a overload that takes the specified number of arguments.",
 			fromMethod, method, argCount, MethodInitException::NO_MATCHING_OVERLOAD);
@@ -1629,7 +1629,7 @@ Method::Overload *Thread::MethodOverloadFromToken(Method::Overload *fromMethod, 
 	return overload;
 }
 
-Field *Thread::FieldFromToken(Method::Overload *fromMethod, uint32_t token, bool shouldBeStatic)
+Field *Thread::FieldFromToken(MethodOverload *fromMethod, uint32_t token, bool shouldBeStatic)
 {
 	Field *field = fromMethod->group->declModule->FindField(token);
 	if (!field)
@@ -1647,7 +1647,7 @@ Field *Thread::FieldFromToken(Method::Overload *fromMethod, uint32_t token, bool
 	return field;
 }
 
-void Thread::EnsureConstructible(Type *type, uint32_t argCount, Method::Overload *fromMethod)
+void Thread::EnsureConstructible(Type *type, uint32_t argCount, MethodOverload *fromMethod)
 {
 	if (type->IsPrimitive() ||
 		(type->flags & TypeFlags::ABSTRACT) == TypeFlags::ABSTRACT ||
@@ -1678,7 +1678,7 @@ int instr::NewObject::SetReferenceSignature(const StackManager &stack)
 
 	refSignature = refBuilder.Commit();
 
-	Method::Overload *ctor = type->instanceCtor->ResolveOverload(argCount);
+	MethodOverload *ctor = type->instanceCtor->ResolveOverload(argCount);
 	if (this->refSignature != ctor->refSignature)
 		// VerifyRefSignature does NOT include the instance in the argCount
 		return ctor->VerifyRefSignature(this->refSignature, argCount);

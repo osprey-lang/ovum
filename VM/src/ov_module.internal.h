@@ -5,7 +5,6 @@
 
 #include <cstdio>
 #include <vector>
-#include <string>
 #include <exception>
 #include "ov_vm.internal.h"
 #include "membertable.internal.h"
@@ -277,7 +276,6 @@ private:
 	void FreeNativeLibrary();
 
 	static Pool *loadedModules;
-	typedef void (*NativeModuleMain)(ModuleHandle module);
 	static const char *const NativeModuleIniterName;
 
 private:
@@ -312,7 +310,7 @@ private:
 	static void SetConstantFieldValue(ModuleReader &reader, Module *module, Field *field, Type *constantType, const int64_t value);
 
 	static Method *ReadSingleMethod(ModuleReader &reader, Module *module);
-	static Method::TryBlock *ReadTryBlocks(ModuleReader &reader, Module *targetModule, int32_t &tryCount);
+	static MethodOverload::TryBlock *ReadTryBlocks(ModuleReader &reader, Module *targetModule, int32_t &tryCount);
 
 	static void TryRegisterStandardType(Type *type, Module *fromModule, ModuleReader &reader);
 
@@ -333,6 +331,8 @@ private:
 		return 0; // equal
 	}
 	static void AppendVersionString(PathName &path, ModuleVersion &version);
+
+	typedef void (CDECL *NativeModuleMain)(ModuleHandle module);
 
 	enum FileMethodFlags : uint32_t
 	{

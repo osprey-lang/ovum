@@ -487,7 +487,7 @@ namespace instr
 
 		void MarkForRemoval(int32_t index);
 		bool IsMarkedForRemoval(int32_t index) const;
-		void PerformRemovals(Method::Overload *method);
+		void PerformRemovals(MethodOverload *method);
 
 		inline Instruction *operator[](int32_t index) const
 		{
@@ -509,7 +509,7 @@ namespace instr
 		}
 
 	private:
-		void PerformRemovalsInternal(int32_t newIndices[], Method::Overload *method);
+		void PerformRemovalsInternal(int32_t newIndices[], MethodOverload *method);
 	};
 
 	enum class InstrFlags : uint32_t
@@ -1525,10 +1525,10 @@ namespace instr
 		LocalOffset args; // must be on stack
 		LocalOffset output;
 		uint16_t argCount;
-		Method::Overload *method;
+		MethodOverload *method;
 		uint32_t refSignature; // Not output
 
-		inline StaticCall(uint16_t argCount, Method::Overload *method) :
+		inline StaticCall(uint16_t argCount, MethodOverload *method) :
 			Instruction(InstrFlags::HAS_INOUT | InstrFlags::INPUT_ON_STACK | InstrFlags::ACCEPTS_REFS, OPI_SCALL_S),
 			args(0), output(0), argCount(argCount), method(method), refSignature(0)
 		{ }
@@ -1564,7 +1564,7 @@ namespace instr
 			buffer += sizeof(LocalOffset);
 			*(uint16_t*)buffer = argCount;
 			buffer += sizeof(uint16_t);
-			*(Method::Overload**)buffer = method;
+			*(MethodOverload**)buffer = method;
 		}
 	};
 

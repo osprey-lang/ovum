@@ -57,11 +57,11 @@ namespace std_type_names
 	};
 }
 
-int32_t Method::Overload::GetLocalOffset(uint16_t local) const
+int32_t MethodOverload::GetLocalOffset(uint16_t local) const
 {
 	return (int32_t)(STACK_FRAME_SIZE + local * sizeof(Value));
 }
-int32_t Method::Overload::GetStackOffset(uint16_t stackSlot) const
+int32_t MethodOverload::GetStackOffset(uint16_t stackSlot) const
 {
 	return (int32_t)(STACK_FRAME_SIZE + (locals + stackSlot) * sizeof(Value));
 }
@@ -72,7 +72,7 @@ Type::Type(int32_t memberCount) :
 	getReferences(nullptr), finalizer(nullptr),
 	nativeFieldCapacity(0), nativeFields(nullptr)
 {
-	memset(operators, 0, sizeof(Method::Overload*) * OPERATOR_COUNT);
+	memset(operators, 0, sizeof(MethodOverload*) * OPERATOR_COUNT);
 }
 
 Type::~Type()
@@ -357,7 +357,7 @@ void Field::WriteFieldUnchecked(Value *instanceAndValue) const
 	gco->fieldAccessLock.Leave();
 }
 
-int Method::Overload::VerifyRefSignature(uint32_t signature, uint16_t argCount) const
+int MethodOverload::VerifyRefSignature(uint32_t signature, uint16_t argCount) const
 {
 	RefSignature methodSignature(refSignature);
 	RefSignature argSignature(signature);
@@ -454,12 +454,12 @@ OVUM_API TypeHandle GetType_DivideByZeroError()   { return VM::vm->types.DivideB
 OVUM_API TypeHandle GetType_NullReferenceError()  { return VM::vm->types.NullReferenceError; }
 OVUM_API TypeHandle GetType_MemberNotFoundError() { return VM::vm->types.MemberNotFoundError; }
 
-OVUM_API String *Member_GetName(const MemberHandle member)
+OVUM_API String *Member_GetName(MemberHandle member)
 {
 	return member->name;
 }
 
-OVUM_API MemberKind Member_GetKind(const MemberHandle member)
+OVUM_API MemberKind Member_GetKind(MemberHandle member)
 {
 	switch (member->flags & MemberFlags::KIND)
 	{
@@ -469,7 +469,7 @@ OVUM_API MemberKind Member_GetKind(const MemberHandle member)
 		default:                    return MemberKind::INVALID;
 	}
 }
-OVUM_API MemberAccess Member_GetAccessLevel(const MemberHandle member)
+OVUM_API MemberAccess Member_GetAccessLevel(MemberHandle member)
 {
 	switch (member->flags & MemberFlags::ACCESS_LEVEL)
 	{
@@ -483,37 +483,37 @@ OVUM_API MemberAccess Member_GetAccessLevel(const MemberHandle member)
 		return MemberAccess::INVALID;
 	}
 }
-OVUM_API TypeHandle Member_GetDeclType(const MemberHandle member)
+OVUM_API TypeHandle Member_GetDeclType(MemberHandle member)
 {
 	return member->declType;
 }
 
-OVUM_API bool Member_IsStatic(const MemberHandle member)
+OVUM_API bool Member_IsStatic(MemberHandle member)
 {
 	return member->IsStatic();
 }
-OVUM_API bool Member_IsImpl(const MemberHandle member)
+OVUM_API bool Member_IsImpl(MemberHandle member)
 {
 	return (member->flags & MemberFlags::IMPL) == MemberFlags::IMPL;
 }
-OVUM_API bool Member_IsAccessible(const MemberHandle member, TypeHandle instType, TypeHandle fromType)
+OVUM_API bool Member_IsAccessible(MemberHandle member, TypeHandle instType, TypeHandle fromType)
 {
 	return member->IsAccessible(instType, fromType);
 }
 
-OVUM_API MethodHandle Member_ToMethod(const MemberHandle member)
+OVUM_API MethodHandle Member_ToMethod(MemberHandle member)
 {
 	if ((member->flags & MemberFlags::METHOD) == MemberFlags::METHOD)
 		return (MethodHandle)member;
 	return nullptr;
 }
-OVUM_API FieldHandle Member_ToField(const MemberHandle member)
+OVUM_API FieldHandle Member_ToField(MemberHandle member)
 {
 	if ((member->flags & MemberFlags::FIELD) == MemberFlags::FIELD)
 		return (FieldHandle)member;
 	return nullptr;
 }
-OVUM_API PropertyHandle Member_ToProperty(const MemberHandle member)
+OVUM_API PropertyHandle Member_ToProperty(MemberHandle member)
 {
 	if ((member->flags & MemberFlags::PROPERTY) == MemberFlags::PROPERTY)
 		return (PropertyHandle)member;
@@ -521,38 +521,73 @@ OVUM_API PropertyHandle Member_ToProperty(const MemberHandle member)
 }
 
 
-OVUM_API int32_t Method_GetOverloadCount(const MethodHandle method)
+OVUM_API int32_t Method_GetOverloadCount(MethodHandle method)
 {
 	return method->overloadCount;
 }
-OVUM_API MethodFlags Method_GetFlags(const MethodHandle method, int overloadIndex)
+OVUM_API MethodFlags Method_GetFlags(MethodHandle method, int overloadIndex)
 {
 	return method->overloads[overloadIndex].flags;
 }
-OVUM_API MethodHandle Method_GetBaseMethod(const MethodHandle method)
+OVUM_API MethodHandle Method_GetBaseMethod(MethodHandle method)
 {
 	return method->baseMethod;
 }
 
-OVUM_API bool Method_Accepts(const MethodHandle method, int argc)
+OVUM_API bool Method_Accepts(MethodHandle method, int argc)
 {
 	return method->Accepts(argc);
 }
+OVUM_API OverloadHandle Method_FindOverload(MethodHandle method, int argc)
+{
+	if (argc < 0 || argc > UINT16_MAX)
+		return nullptr;
+	return method->ResolveOverload((uint16_t)argc);
+}
 
 
-OVUM_API uint32_t Field_GetOffset(const FieldHandle field)
+OVUM_API int32_t Overload_GetParamCount(OverloadHandle overload)
+{
+	return overload->paramCount;
+}
+OVUM_API int32_t Overload_GetParamInfo(OverloadHandle overload, int32_t destSize, ParamInfo *dest)
+{
+	int32_t count = overload->paramCount;
+	if (count > destSize)
+		count = destSize;
+
+	RefSignature refs(overload->refSignature);
+	for (int32_t i = 0; i < count; i++)
+	{
+		ParamInfo *pi = dest + i;
+		pi->name = overload->paramNames[i];
+		// +1 because the reference signature always reserves
+		// the first slot for the instance, even if this method
+		// is static
+		pi->isByRef = refs.IsParamRef(i + 1);
+	}
+
+	return count;
+}
+OVUM_API MethodHandle Overload_GetMethod(OverloadHandle overload)
+{
+	return overload->group;
+}
+
+
+OVUM_API uint32_t Field_GetOffset(FieldHandle field)
 {
 	return field->offset;
 }
 
-OVUM_API bool Field_GetStaticValue(const FieldHandle field, Value *result)
+OVUM_API bool Field_GetStaticValue(FieldHandle field, Value *result)
 {
 	if (field->staticValue)
 		field->staticValue->Read(result);
 	return field->staticValue != nullptr;
 }
 
-OVUM_API bool Field_SetStaticValue(const FieldHandle field, Value value)
+OVUM_API bool Field_SetStaticValue(FieldHandle field, Value value)
 {
 	if (field->staticValue != nullptr)
 		field->staticValue->Write(value);
@@ -560,12 +595,12 @@ OVUM_API bool Field_SetStaticValue(const FieldHandle field, Value value)
 }
 
 
-OVUM_API MethodHandle Property_GetGetter(const PropertyHandle prop)
+OVUM_API MethodHandle Property_GetGetter(PropertyHandle prop)
 {
 	return prop->getter;
 }
 
-OVUM_API MethodHandle Property_GetSetter(const PropertyHandle prop)
+OVUM_API MethodHandle Property_GetSetter(PropertyHandle prop)
 {
 	return prop->setter;
 }

@@ -563,17 +563,17 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// scall: LocalOffset args, LocalOffset output, uint16_t argc, Method::Overload *method
+		// scall: LocalOffset args, LocalOffset output, uint16_t argc, MethodOverload *method
 		TARGET(OPI_SCALL_L)
 			{
 				register Value *const args   = OFF_ARG(ip, f);
 				register Value *const output = OFF_ARG(ip + LOSZ, f);
 				ip += 2*LOSZ;
 				
-				CHK(InvokeMethodOverload(T_ARG(ip + sizeof(uint16_t), Method::Overload*),
+				CHK(InvokeMethodOverload(T_ARG(ip + sizeof(uint16_t), MethodOverload*),
 					U16_ARG(ip), args, output));
 
-				ip += sizeof(uint16_t) + sizeof(Method::Overload*);
+				ip += sizeof(uint16_t) + sizeof(MethodOverload*);
 			}
 			NEXT_INSTR();
 		TARGET(OPI_SCALL_S)
@@ -582,10 +582,10 @@ int Thread::Evaluate()
 				register Value *const output = OFF_ARG(ip + LOSZ, f);
 				ip += 2*LOSZ;
 				
-				CHK(InvokeMethodOverload(T_ARG(ip + sizeof(uint16_t), Method::Overload*),
+				CHK(InvokeMethodOverload(T_ARG(ip + sizeof(uint16_t), MethodOverload*),
 					U16_ARG(ip), args, output));
 
-				ip += sizeof(uint16_t) + sizeof(Method::Overload*);
+				ip += sizeof(uint16_t) + sizeof(MethodOverload*);
 				f->stackCount++;
 			}
 			NEXT_INSTR();
@@ -1370,10 +1370,10 @@ exitMethod:
 
 int Thread::FindErrorHandler(int32_t maxIndex)
 {
-	typedef Method::TryBlock::TryKind TryKind;
+	typedef MethodOverload::TryBlock::TryKind TryKind;
 
 	register StackFrame *frame = currentFrame;
-	Method::Overload *method = frame->method;
+	MethodOverload *method = frame->method;
 	uint32_t offset = (uint32_t)(this->ip - method->entry);
 
 	if (maxIndex == -1)
@@ -1381,7 +1381,7 @@ int Thread::FindErrorHandler(int32_t maxIndex)
 
 	for (int32_t t = 0; t < maxIndex; t++)
 	{
-		Method::TryBlock &tryBlock = method->tryBlocks[t];
+		MethodOverload::TryBlock &tryBlock = method->tryBlocks[t];
 		if (offset >= tryBlock.tryStart && offset <= tryBlock.tryEnd)
 		{
 			// The ip is inside a try block! Let's find a catch or finally.
@@ -1390,7 +1390,7 @@ int Thread::FindErrorHandler(int32_t maxIndex)
 			case TryKind::CATCH:
 				for (int32_t c = 0; c < tryBlock.catches.count; c++)
 				{
-					Method::CatchBlock &catchBlock = tryBlock.catches.blocks[c];
+					MethodOverload::CatchBlock &catchBlock = tryBlock.catches.blocks[c];
 					if (Type::ValueIsType(&currentError, catchBlock.caughtType))
 					{
 						frame->stackCount = 1;
@@ -1445,18 +1445,18 @@ int Thread::FindErrorHandler(int32_t maxIndex)
 
 int Thread::EvaluateLeave(register StackFrame *frame, int32_t target)
 {
-	typedef Method::TryBlock::TryKind TryKind;
+	typedef MethodOverload::TryBlock::TryKind TryKind;
 
 	// Note: the IP currently points to the leave instruction.
 	// We must add sizeof(IntermediateOpcode) + sizeof(int32_t) to get
 	// the right ipOffset and tOffset.
 
-	Method::Overload *method = frame->method;
+	MethodOverload *method = frame->method;
 	const uint32_t ipOffset = (uint32_t)(this->ip + sizeof(IntermediateOpcode) + sizeof(int32_t) - method->entry);
 	const uint32_t tOffset  = ipOffset + target;
 	for (int32_t t = 0; t < method->tryBlockCount; t++)
 	{
-		Method::TryBlock &tryBlock = method->tryBlocks[t];
+		MethodOverload::TryBlock &tryBlock = method->tryBlocks[t];
 		if (tryBlock.kind == TryKind::FINALLY &&
 			ipOffset >= tryBlock.tryStart && ipOffset <= tryBlock.tryEnd &&
 			(tOffset < tryBlock.tryStart || tOffset >= tryBlock.tryEnd) &&

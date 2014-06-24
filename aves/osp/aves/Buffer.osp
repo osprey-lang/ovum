@@ -97,9 +97,24 @@ public class Buffer
 		}
 	}
 
+	public static copy(source, destination)
+	{
+		source = fromValue(source);
+		destination = fromValue(destination);
+		if destination.size < source.size:
+			throw new ArgumentError("The destination buffer is too small for the source buffer.");
+
+		copyInternal(source, 0, destination, 0, source.size);
+	}
 	public static copy(source, destination, count)
 	{
-		copy(source, 0, destination, 0, count);
+		source = fromValue(source);
+		destination = fromValue(destination);
+		count = int(count);
+		if count < 0 or count > destination.size:
+			throw new ArgumentRangeError("count");
+
+		copyInternal(source, 0, destination, 0, count);
 	}
 	public static copy(source, sourceIndex, dest, destIndex, count)
 	{
@@ -111,9 +126,9 @@ public class Buffer
 		if sourceIndex < 0 or destIndex < 0:
 			throw new ArgumentRangeError(sourceIndex < 0 ? "sourceIndex" : "destIndex");
 		if sourceIndex + count > source.size:
-			throw new ArgumentRangeError("sourceIndex + count is outside of the source buffer.");
+			throw new ArgumentError("sourceIndex + count is outside of the source buffer.");
 		if destIndex + count > dest.size:
-			throw new ArgumentRangeError("destIndex + count is outside of the destination buffer.");
+			throw new ArgumentError("destIndex + count is outside of the destination buffer.");
 
 		copyInternal(source, sourceIndex, dest, destIndex, count);
 	}

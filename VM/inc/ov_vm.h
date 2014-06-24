@@ -59,13 +59,15 @@ typedef void *TypeHandle;
 typedef void *ModuleHandle;
 // Represents a handle to a member of a type.
 typedef void *MemberHandle;
-// Represents a handle to a method.
+// Represents a handle to a method, with one or more overloads.
 typedef void *MethodHandle;
+// Represents a handle to a single method overload.
+typedef void *OverloadHandle;
 // Represents a handle to a field.
 typedef void *FieldHandle;
 // Represents a handle to a property.
 typedef void *PropertyHandle;
-// (These are defined here because they're used in a lot of places.)
+
 #define OVUM_HANDLES_DEFINED
 #endif
 
