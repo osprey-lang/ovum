@@ -4,7 +4,7 @@
 #define _Set(value)         reinterpret_cast<::SetInst*>((value).instance)
 #define U64_TO_HASH(value)  ((int32_t)(value) ^ (int32_t)((value) >> 32))
 
-AVES_API void aves_Set_init(TypeHandle type)
+AVES_API void CDECL aves_Set_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(SetInst));
 	Type_SetReferenceGetter(type, aves_Set_getReferences);
@@ -254,7 +254,7 @@ AVES_API NATIVE_FUNCTION(aves_Set_getEntryAt)
 	RETURN_SUCCESS;
 }
 
-int aves_Set_getReferences(void *basePtr, ReferenceVisitor callback, void *cbState)
+int CDECL aves_Set_getReferences(void *basePtr, ReferenceVisitor callback, void *cbState)
 {
 	SetInst *set = reinterpret_cast<SetInst*>(basePtr);
 	for (int32_t i = 0; i < set->count; i++)

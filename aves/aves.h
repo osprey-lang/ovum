@@ -15,15 +15,14 @@
 
 #define AVES_API	extern "C" _AVES_API
 
-#include "targetver.h"
-
-#define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
-
-// Windows header files
-#include <windows.h>
-
 // Ovum
 #include "ov_vm.h"
+
+#if OVUM_TARGET == OVUM_WINDOWS
+# include "windows/windows.h"
+#else
+# error aves does not support the target operating system
+#endif
 
 // Project headers
 #include "aves_ns.h"

@@ -612,7 +612,7 @@ void GC::MarkRootSet()
 	// Frames are marked top-to-bottom.
 	while (frame && frame->method)
 	{
-		Method::Overload *method = frame->method;
+		MethodOverload *method = frame->method;
 		// Does the method have any parameters?
 		unsigned int paramCount = method->GetEffectiveParamCount();
 		if (paramCount)
@@ -938,7 +938,7 @@ void GC::UpdateRootSet()
 	StackFrame *frame = mainThread->currentFrame;
 	while (frame && frame->method)
 	{
-		Method::Overload *method = frame->method;
+		MethodOverload *method = frame->method;
 		unsigned int paramCount = method->GetEffectiveParamCount();
 		if (paramCount)
 			UpdateLocals(paramCount, (Value*)frame - paramCount);

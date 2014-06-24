@@ -31,11 +31,14 @@
     <Filter Include="Source Files\aves\reflection">
       <UniqueIdentifier>{fbc194d0-0d31-40aa-92d7-5ff5e4949bee}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Windows">
+      <UniqueIdentifier>{fe639808-8420-43c4-ba42-e9c06a50535f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Windows">
+      <UniqueIdentifier>{30545b8a-5f2a-49bf-b5f9-be15b84c5ab3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="targetver.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="aves_math.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -129,6 +132,9 @@
     <ClInclude Include="aves_type.h">
       <Filter>Header Files\aves\reflection</Filter>
     </ClInclude>
+    <ClInclude Include="windows\windows.h">
+      <Filter>Header Files\Windows</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="aves.cpp">
@@ -212,9 +218,6 @@
     <ClCompile Include="directory.cpp">
       <Filter>Source Files\io</Filter>
     </ClCompile>
-    <ClCompile Include="dllmain.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="char.cpp">
       <Filter>Source Files\aves</Filter>
     </ClCompile>
@@ -223,6 +226,9 @@
     </ClCompile>
     <ClCompile Include="type.cpp">
       <Filter>Source Files\aves\reflection</Filter>
+    </ClCompile>
+    <ClCompile Include="windows\dllmain.cpp">
+      <Filter>Source Files\Windows</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

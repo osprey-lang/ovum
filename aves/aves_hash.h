@@ -5,7 +5,7 @@
 
 #include "aves.h"
 
-AVES_API void aves_Hash_init(TypeHandle type);
+AVES_API void CDECL aves_Hash_init(TypeHandle type);
 
 AVES_API NATIVE_FUNCTION(aves_Hash_get_length);
 AVES_API NATIVE_FUNCTION(aves_Hash_get_capacity);
@@ -28,8 +28,8 @@ AVES_API NATIVE_FUNCTION(aves_HashEntry_get_nextIndex);
 AVES_API NATIVE_FUNCTION(aves_HashEntry_get_key);
 AVES_API NATIVE_FUNCTION(aves_HashEntry_get_value);
 
-AVES_API int InitHashInstance(ThreadHandle thread, HashInst *hash, const int32_t capacity);
+AVES_API int CDECL InitHashInstance(ThreadHandle thread, HashInst *hash, const int32_t capacity);
 
-int aves_Hash_getReferences(void *basePtr, ReferenceVisitor callback, void *cbState);
+int CDECL aves_Hash_getReferences(void *basePtr, ReferenceVisitor callback, void *cbState);
 
 #endif // AVES__HASH_H

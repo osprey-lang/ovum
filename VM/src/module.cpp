@@ -1086,7 +1086,7 @@ void Module::ReadOperators(ModuleReader &reader, Module *module, Type *type)
 				throw ModuleLoadException(reader.fileName, "Operator method must be in the same type as the property.");
 			if (type->operators[(int)op] != nullptr)
 				throw ModuleLoadException(reader.fileName, "Duplicate operator declaration.");
-			Method::Overload *mo = method->ResolveOverload(Arity(op));
+			MethodOverload *mo = method->ResolveOverload(Arity(op));
 			if (!mo)
 				throw ModuleLoadException(reader.fileName, "Operator method must have an overload for the operator.");
 
@@ -1154,14 +1154,14 @@ Method *Module::ReadSingleMethod(ModuleReader &reader, Module *module)
 
 	unique_ptr<Method> method(new Method(name, module, memberFlags));
 
-	unique_ptr<Method::Overload[]> overloads(new Method::Overload[overloadCount]);
-	memset(overloads.get(), 0, overloadCount * sizeof(Method::Overload));
+	// Note: do not memset these to 0; MethodOverload has a default ctor now
+	unique_ptr<MethodOverload[]> overloads(new MethodOverload[overloadCount]);
 
 	for (int32_t i = 0; i < overloadCount; i++)
 	{
 		OverloadFlags flags = reader.Read<OverloadFlags>();
 
-		Method::Overload *ov = overloads.get() + i;
+		MethodOverload *ov = overloads.get() + i;
 		ov->group = method.get();
 
 		// Parameter count & names
@@ -1203,7 +1203,7 @@ Method *Module::ReadSingleMethod(ModuleReader &reader, Module *module)
 		// Header
 		{
 			int32_t tryCount = 0;
-			unique_ptr<Method::TryBlock[]> tries(nullptr);
+			unique_ptr<MethodOverload::TryBlock[]> tries(nullptr);
 			if (flags & OV_SHORTHEADER)
 			{
 				ov->optionalParamCount = ov->locals = 0;
@@ -1214,7 +1214,7 @@ Method *Module::ReadSingleMethod(ModuleReader &reader, Module *module)
 				ov->optionalParamCount = reader.ReadUInt16();
 				ov->locals = reader.ReadUInt16();
 				ov->maxStack = reader.ReadUInt16();
-				tries = unique_ptr<Method::TryBlock[]>(ReadTryBlocks(reader, module, tryCount));
+				tries = unique_ptr<MethodOverload::TryBlock[]>(ReadTryBlocks(reader, module, tryCount));
 			}
 
 			ov->tryBlockCount = tryCount;
@@ -1264,26 +1264,26 @@ Method *Module::ReadSingleMethod(ModuleReader &reader, Module *module)
 	return method.release();
 }
 
-Method::TryBlock *Module::ReadTryBlocks(ModuleReader &reader, Module *module, int32_t &tryCount)
+MethodOverload::TryBlock *Module::ReadTryBlocks(ModuleReader &reader, Module *module, int32_t &tryCount)
 {
-	typedef Method::TryBlock::TryKind TryKind;
-	unique_ptr<Method::TryBlock[]> output(nullptr);
+	typedef MethodOverload::TryBlock::TryKind TryKind;
+	unique_ptr<MethodOverload::TryBlock[]> output(nullptr);
 
 	CHECKPOS_BEFORE();
 
 	const int32_t length = reader.ReadInt32();
 
-	output = unique_ptr<Method::TryBlock[]>(new Method::TryBlock[length]);
-	Method::TryBlock *tries = output.get();
+	output = unique_ptr<MethodOverload::TryBlock[]>(new MethodOverload::TryBlock[length]);
+	MethodOverload::TryBlock *tries = output.get();
 
 	for (int32_t i = 0; i < length; i++)
 	{
-		Method::TryBlock::TryKind kind = reader.Read<Method::TryBlock::TryKind>();
+		TryKind kind = reader.Read<TryKind>();
 		uint32_t tryStart = reader.ReadUInt32();
 		uint32_t tryEnd   = reader.ReadUInt32();
 
-		Method::TryBlock *curTry = tries + i;
-		*curTry = Method::TryBlock(kind, tryStart, tryEnd);
+		MethodOverload::TryBlock *curTry = tries + i;
+		*curTry = MethodOverload::TryBlock(kind, tryStart, tryEnd);
 
 		switch (kind)
 		{
@@ -1297,11 +1297,11 @@ Method::TryBlock *Module::ReadTryBlocks(ModuleReader &reader, Module *module, in
 				if (catchSize != 0)
 				{
 					int32_t catchLength = reader.ReadInt32();
-					unique_ptr<Method::CatchBlock[]> catches(new Method::CatchBlock[catchLength]);
+					unique_ptr<MethodOverload::CatchBlock[]> catches(new MethodOverload::CatchBlock[catchLength]);
 
 					for (int32_t i = 0; i < catchLength; i++)
 					{
-						Method::CatchBlock *curCatch = catches.get() + i;
+						MethodOverload::CatchBlock *curCatch = catches.get() + i;
 
 						curCatch->caughtTypeId = reader.ReadToken();
 						// Try to resolve the type right away. If it fails, do it when the method

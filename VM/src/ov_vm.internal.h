@@ -19,6 +19,7 @@ class Type;
 class Module;
 class Member;
 class Method;
+class MethodOverload;
 class Field;
 class Property;
 class StaticRef;
@@ -34,12 +35,13 @@ namespace debug
 }
 
 typedef Thread *const ThreadHandle;
-typedef Type     *TypeHandle;
-typedef Module   *ModuleHandle;
-typedef Member   *MemberHandle;
-typedef Method   *MethodHandle;
-typedef Field    *FieldHandle;
-typedef Property *PropertyHandle;
+typedef Type           *TypeHandle;
+typedef Module         *ModuleHandle;
+typedef Member         *MemberHandle;
+typedef Method         *MethodHandle;
+typedef MethodOverload *OverloadHandle;
+typedef Field          *FieldHandle;
+typedef Property       *PropertyHandle;
 
 #define OVUM_HANDLES_DEFINED
 
@@ -88,6 +90,7 @@ private:
 
 	int LoadModules(VMStartParams &params);
 	int InitArgs(int argCount, const wchar_t *args[]);
+	int GetMainMethodOverload(Method *method, unsigned int &argc, MethodOverload *&overload);
 
 	static FILE *stdOut;
 	static FILE *stdErr;

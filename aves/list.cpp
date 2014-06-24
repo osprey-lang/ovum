@@ -4,7 +4,7 @@
 
 #define _L(value)    ((value).common.list)
 
-AVES_API void aves_List_init(TypeHandle type)
+AVES_API void CDECL aves_List_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(ListInst));
 
@@ -201,7 +201,7 @@ AVES_API NATIVE_FUNCTION(aves_List_reverse)
 	RETURN_SUCCESS;
 }
 
-AVES_API int InitListInstance(ThreadHandle thread, ListInst *list, const int32_t capacity)
+AVES_API int CDECL InitListInstance(ThreadHandle thread, ListInst *list, const int32_t capacity)
 {
 	list->capacity = capacity;
 	list->length = 0;

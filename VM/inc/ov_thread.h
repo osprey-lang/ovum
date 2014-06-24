@@ -211,4 +211,13 @@ OVUM_API void VM_Sleep(ThreadHandle thread, unsigned int milliseconds);
 // functions that are included are those invoked by the VM.
 OVUM_API String *VM_GetStackTrace(ThreadHandle thread);
 
+// Gets the current depth of the call stack; that is, the number
+// of stack frames currently on the call stack.
+//
+// This function runs in O(n) time, where n is the stack depth.
+OVUM_API int VM_GetStackDepth(ThreadHandle thread);
+
+// Gets a handle to the currently executing method overload.
+OVUM_API OverloadHandle VM_GetCurrentOverload(ThreadHandle thread);
+
 #endif // VM__THREAD_H

@@ -44,7 +44,7 @@ public:
 	// This is used when accessing members by name, to determine
 	// whether they are accessible, and when generating a stack trace,
 	// to obtain the name of the method.
-	Method::Overload *method;
+	MethodOverload *method;
 
 	inline void Push      (Value *value)
 	{
@@ -168,7 +168,7 @@ public:
 
 private:
 	FailureKind kind;
-	Method::Overload *method;
+	MethodOverload *method;
 
 	union {
 		int32_t instrIndex;
@@ -182,27 +182,27 @@ private:
 	};
 
 public:
-	inline MethodInitException(const char *const message, Method::Overload *method) :
+	inline MethodInitException(const char *const message, MethodOverload *method) :
 		exception(message), method(method), kind(GENERAL)
 	{ }
 
-	inline MethodInitException(const char *const message, Method::Overload *method, int32_t instrIndex, FailureKind kind) :
+	inline MethodInitException(const char *const message, MethodOverload *method, int32_t instrIndex, FailureKind kind) :
 		exception(message), method(method), kind(kind), instrIndex(instrIndex)
 	{ }
 
-	inline MethodInitException(const char *const message, Method::Overload *method, Member *member, FailureKind kind) :
+	inline MethodInitException(const char *const message, MethodOverload *method, Member *member, FailureKind kind) :
 		exception(message), method(method), kind(kind), member(member)
 	{ }
 
-	inline MethodInitException(const char *const message, Method::Overload *method, Type *type, FailureKind kind) :
+	inline MethodInitException(const char *const message, MethodOverload *method, Type *type, FailureKind kind) :
 		exception(message), method(method), kind(kind), type(type)
 	{ }
 
-	inline MethodInitException(const char *const message, Method::Overload *method, uint32_t tokenId, FailureKind kind) :
+	inline MethodInitException(const char *const message, MethodOverload *method, uint32_t tokenId, FailureKind kind) :
 		exception(message), method(method), kind(kind), tokenId(tokenId)
 	{ }
 
-	inline MethodInitException(const char *const message, Method::Overload *method,
+	inline MethodInitException(const char *const message, MethodOverload *method,
 		Method *methodGroup, uint32_t argCount, FailureKind kind) :
 		exception(message), method(method), kind(kind)
 	{
@@ -212,7 +212,7 @@ public:
 
 	inline FailureKind GetFailureKind() const { return kind; }
 
-	inline Method::Overload *GetMethod() const { return method; }
+	inline MethodOverload *GetMethod() const { return method; }
 
 	inline int32_t GetInstructionIndex() const { return instrIndex; }
 	inline Member *GetMember() const { return member; }
@@ -232,7 +232,7 @@ public:
 	Thread(int &status);
 	~Thread();
 
-	int Start(unsigned int argCount, Method::Overload *mo, Value &result);
+	int Start(unsigned int argCount, MethodOverload *mo, Value &result);
 
 private:
 	// The current instruction pointer. This should always be the first field in the class.
@@ -353,7 +353,7 @@ private:
 	//     Pointer to the first argument, which must be on the stack.
 	//   method:
 	//     The overload that is being invoked in the stack frame.
-	void PushStackFrame(uint32_t argCount, Value *args, Method::Overload *method);
+	void PushStackFrame(uint32_t argCount, Value *args, MethodOverload *method);
 
 	int PrepareVariadicArgs(MethodFlags flags, uint32_t argCount, uint32_t paramCount, StackFrame *frame);
 
@@ -372,12 +372,12 @@ private:
 
 	String *GetStackTrace();
 	void AppendArgumentType(StringBuffer &buf, Value *arg);
-	void AppendSourceLocation(StringBuffer &buf, Method::Overload *method, uint8_t *ip);
+	void AppendSourceLocation(StringBuffer &buf, MethodOverload *method, uint8_t *ip);
 
 	// argCount DOES NOT include the value to be invoked, but value does.
 	int InvokeLL(unsigned int argCount, Value *value, Value *result, uint32_t refSignature);
 	// args DOES include the instance, argCount DOES NOT
-	int InvokeMethodOverload(Method::Overload *mo, unsigned int argCount, Value *args, Value *result);
+	int InvokeMethodOverload(MethodOverload *mo, unsigned int argCount, Value *args, Value *result);
 
 	int InvokeApplyLL(Value *args, Value *result);
 	int InvokeApplyMethodLL(Method *method, Value *args, Value *result);
@@ -408,26 +408,28 @@ private:
 
 	int ThrowMissingOperatorError(Operator op);
 
-	int InitializeMethod(Method::Overload *method);
-	static void InitializeInstructions(instr::MethodBuilder &builder, Method::Overload *method);
-	static void InitializeBranchOffsets(instr::MethodBuilder &builder, Method::Overload *method);
-	static void CalculateStackHeights(instr::MethodBuilder &builder, Method::Overload *method, StackManager &stack);
-	static void WriteInitializedBody(instr::MethodBuilder &builder, Method::Overload *method);
+	int InitializeMethod(MethodOverload *method);
+	static void InitializeInstructions(instr::MethodBuilder &builder, MethodOverload *method);
+	static void InitializeBranchOffsets(instr::MethodBuilder &builder, MethodOverload *method);
+	static void CalculateStackHeights(instr::MethodBuilder &builder, MethodOverload *method, StackManager &stack);
+	static void WriteInitializedBody(instr::MethodBuilder &builder, MethodOverload *method);
 	int CallStaticConstructors(instr::MethodBuilder &builder);
 
 	// These are used by the initializer
-	static Type *TypeFromToken(Method::Overload *fromMethod, uint32_t token);
-	static String *StringFromToken(Method::Overload *fromMethod, uint32_t token);
-	static Method *MethodFromToken(Method::Overload *fromMethod, uint32_t token);
-	static Method::Overload *MethodOverloadFromToken(Method::Overload *fromMethod, uint32_t token, uint32_t argCount);
-	static Field *FieldFromToken(Method::Overload *fromMethod, uint32_t token, bool shouldBeStatic);
-	static void EnsureConstructible(Type *type, uint32_t argCount, Method::Overload *fromMethod);
+	static Type *TypeFromToken(MethodOverload *fromMethod, uint32_t token);
+	static String *StringFromToken(MethodOverload *fromMethod, uint32_t token);
+	static Method *MethodFromToken(MethodOverload *fromMethod, uint32_t token);
+	static MethodOverload *MethodOverloadFromToken(MethodOverload *fromMethod, uint32_t token, uint32_t argCount);
+	static Field *FieldFromToken(MethodOverload *fromMethod, uint32_t token, bool shouldBeStatic);
+	static void EnsureConstructible(Type *type, uint32_t argCount, MethodOverload *fromMethod);
 
-	static void GetHashIndexerSetter(Method::Overload **target);
+	static void GetHashIndexerSetter(MethodOverload **target);
 
 	friend class GC;
 	friend class VM;
 	friend String *VM_GetStackTrace(ThreadHandle);
+	friend int VM_GetStackDepth(ThreadHandle);
+	friend OverloadHandle VM_GetCurrentOverload(ThreadHandle);
 };
 
 #endif // VM__THREAD_INTERNAL_H

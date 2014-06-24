@@ -22,10 +22,10 @@
 // For checked multiplication only
 // (uses the _mul128 function if available)
 #if !defined(__GNUC__) && defined(_M_AMD64)
-#include <intrin.h>
-#define USE_INTRINSICS 1
+# include <intrin.h>
+# define USE_INTRINSICS 1
 #else
-#define USE_INTRINSICS 0
+# define USE_INTRINSICS 0
 #endif
 
 
@@ -132,12 +132,19 @@ inline int32_t NextPowerOfTwo(int32_t n)
 #define ALIGN_TO(size,alignment)  ((size + (alignment) - 1) / (alignment) * (alignment))
 
 #if defined(_MSC_VER)
-#define NOINLINE __declspec(noinline)
+# define NOINLINE __declspec(noinline)
+// Note: the Windows headers define a CDECL macro,
+// so we must define it conditionally here.
+# ifndef CDECL
+#  define CDECL    __cdecl
+# endif
 #elif defined(__GNUC__)
-#define NOINLINE __attribute__((noinline))
+# define NOINLINE __attribute__((noinline))
+# define CDECL    __attribute__((cdecl))
 #else
-// Disable the feature
-#define NOINLINE
+// Disable the features
+# define NOINLINE
+# define CDECL
 #endif
 
 #endif // VM__COMPAT_H

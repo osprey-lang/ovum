@@ -5,15 +5,15 @@
 
 #include "ov_vm.h"
 
-typedef int (__cdecl *NativeMethod)(ThreadHandle thread, const int argc, Value args[]);
+typedef int (CDECL *NativeMethod)(ThreadHandle thread, const int argc, Value args[]);
 // Adds the magic parameters 'ThreadHandle thread', 'int argc' and 'Value args[]' to a function definition.
-#define NATIVE_FUNCTION(name)	int __cdecl name(::ThreadHandle thread, const int argc, ::Value args[])
+#define NATIVE_FUNCTION(name)	int CDECL name(::ThreadHandle thread, const int argc, ::Value args[])
 // The 'this' in a NATIVE_FUNCTION, which is always argument 0.
 #define THISV	(args[0])
 #define THISP   (args + 0)
 
 
-OVUM_API String *Member_GetName(const MemberHandle member);
+OVUM_API String *Member_GetName(MemberHandle member);
 
 enum class MemberKind
 {
@@ -30,17 +30,17 @@ enum class MemberAccess
 	PRIVATE   = 2,
 };
 
-OVUM_API MemberKind Member_GetKind(const MemberHandle member);
-OVUM_API MemberAccess Member_GetAccessLevel(const MemberHandle member);
-OVUM_API TypeHandle Member_GetDeclType(const MemberHandle member);
+OVUM_API MemberKind Member_GetKind(MemberHandle member);
+OVUM_API MemberAccess Member_GetAccessLevel(MemberHandle member);
+OVUM_API TypeHandle Member_GetDeclType(MemberHandle member);
 
-OVUM_API bool Member_IsStatic(const MemberHandle member);
-OVUM_API bool Member_IsImpl(const MemberHandle member);
-OVUM_API bool Member_IsAccessible(const MemberHandle member, TypeHandle instType, TypeHandle fromType);
+OVUM_API bool Member_IsStatic(MemberHandle member);
+OVUM_API bool Member_IsImpl(MemberHandle member);
+OVUM_API bool Member_IsAccessible(MemberHandle member, TypeHandle instType, TypeHandle fromType);
 
-OVUM_API MethodHandle Member_ToMethod(const MemberHandle member);
-OVUM_API FieldHandle Member_ToField(const MemberHandle member);
-OVUM_API PropertyHandle Member_ToProperty(const MemberHandle member);
+OVUM_API MethodHandle Member_ToMethod(MemberHandle member);
+OVUM_API FieldHandle Member_ToField(MemberHandle member);
+OVUM_API PropertyHandle Member_ToProperty(MemberHandle member);
 
 
 enum class MethodFlags : int32_t
@@ -75,22 +75,50 @@ enum class MethodFlags : int32_t
 };
 ENUM_OPS(MethodFlags, int32_t);
 
-OVUM_API int32_t Method_GetOverloadCount(const MethodHandle method);
-OVUM_API MethodFlags Method_GetFlags(const MethodHandle method, int overloadIndex);
-OVUM_API MethodHandle Method_GetBaseMethod(const MethodHandle method);
+OVUM_API int32_t Method_GetOverloadCount(MethodHandle method);
+OVUM_API int32_t Method_GetOverloads(MethodHandle method, int32_t destSize, OverloadHandle *dest);
+OVUM_API MethodFlags Method_GetFlags(MethodHandle method, int overloadIndex);
+OVUM_API MethodHandle Method_GetBaseMethod(MethodHandle method);
 
 // Determines whether any overload in the method accepts the given number of arguments.
 // For instance methods, this does NOT include the instance.
-OVUM_API bool Method_Accepts(const MethodHandle method, int argc);
+OVUM_API bool Method_Accepts(MethodHandle method, int argc);
+OVUM_API OverloadHandle Method_FindOverload(MethodHandle method, int argc);
 
 
-OVUM_API uint32_t Field_GetOffset(const FieldHandle field);
-OVUM_API bool Field_GetStaticValue(const FieldHandle field, Value *result);
-OVUM_API bool Field_SetStaticValue(const FieldHandle field, Value value);
+typedef struct ParamInfo_S
+{
+	String *name;
+	bool isByRef;
+} ParamInfo;
+
+// Gets the total number of named parameters the overload has.
+// The count does not include the 'this' parameter if the overload
+// is in an instance method.
+OVUM_API int32_t Overload_GetParamCount(OverloadHandle overload);
+// Gets metadata about the parameters in the specified overload.
+//
+// Returns the number of ParamInfo items that were written into 'dest'.
+//
+// Parameters:
+//   overload:
+//     The method overload to get parameter info from.
+//   destSize:
+//     The size of the destination buffer, in number of ParamInfo items.
+//   dest:
+//     The destination buffer.
+OVUM_API int32_t Overload_GetParamInfo(OverloadHandle overload, int32_t destSize, ParamInfo *dest);
+// Gets a handle to an overload's containing method.
+OVUM_API MethodHandle Overload_GetMethod(OverloadHandle overload);
 
 
-OVUM_API MethodHandle Property_GetGetter(const PropertyHandle prop);
-OVUM_API MethodHandle Property_GetSetter(const PropertyHandle prop);
+OVUM_API uint32_t Field_GetOffset(FieldHandle field);
+OVUM_API bool Field_GetStaticValue(FieldHandle field, Value *result);
+OVUM_API bool Field_SetStaticValue(FieldHandle field, Value value);
+
+
+OVUM_API MethodHandle Property_GetGetter(PropertyHandle prop);
+OVUM_API MethodHandle Property_GetSetter(PropertyHandle prop);
 
 
 // It is VITAL that these are in the same order as the opcodes.
@@ -190,7 +218,7 @@ ENUM_OPS(TypeFlags, uint32_t);
 //     The number of values contained in 'values'. May be zero.
 //   values:
 //     An array of zero or more managed references.
-typedef int (*ReferenceVisitor)(void *cbState, unsigned int count, Value *values);
+typedef int (CDECL *ReferenceVisitor)(void *cbState, unsigned int count, Value *values);
 
 // A ReferenceGetter produces an array of Values from a basePtr. This function
 // is called by the GC for two reasons:
@@ -227,7 +255,7 @@ typedef int (*ReferenceVisitor)(void *cbState, unsigned int count, Value *values
 //
 // NOTENOTENOTE: basePtr is NOT relative to where the instance begins
 // in memory, but is rather instancePtr + type->fieldsOffset.
-typedef int (*ReferenceGetter)(void *basePtr, ReferenceVisitor callback, void *cbState);
+typedef int (CDECL *ReferenceGetter)(void *basePtr, ReferenceVisitor callback, void *cbState);
 
 // A Finalizer is called when the object is about to be deleted.
 // If the type has the flag TYPE_CUSTOMPTR, it may have to supply
@@ -251,32 +279,32 @@ typedef int (*ReferenceGetter)(void *basePtr, ReferenceVisitor callback, void *c
 // that is about to be deleted, the GC WILL NOT CARE and will delete
 // the object anyway. Malicious native-code modules may freely insert
 // memory leaks here.
-typedef void (*Finalizer)(void *basePtr);
+typedef void (CDECL *Finalizer)(void *basePtr);
 
 // Initializes a single type, which may involve setting flags or the size
 // of the instance. Type initializers should only be used for types with
 // native implementations.
-typedef void (*TypeInitializer)(TypeHandle type);
+typedef void (CDECL *TypeInitializer)(TypeHandle type);
 
 // Initializes a ListInst* to a specific capacity.
 // This method is provided to avoid making any assumptions about the
 // underlying implementation of the aves.List class, and is taken from
 // the main module's exported method "InitListInstance".
 // When called, 'list' is guaranteed to refer to a valid ListInst*.
-typedef int (*ListInitializer)(ThreadHandle thread, ListInst *list, int32_t capacity);
+typedef int (CDECL *ListInitializer)(ThreadHandle thread, ListInst *list, int32_t capacity);
 
 // Initializes a HashInst* to a specific capacity.
 // This method is provided to avoid making any assumptions about the
 // underlying implementation of the aves.Hash class, and is taken from
 // the main module's exported method "InitHashInstance".
 // When called, 'hash' is guaranteed to refer to a valid HashInst*.
-typedef int (*HashInitializer)(ThreadHandle thread, HashInst *hash, int32_t capacity);
+typedef int (CDECL *HashInitializer)(ThreadHandle thread, HashInst *hash, int32_t capacity);
 
 // Initializes a value of the aves.Type class for a specific underlying
 // TypeHandle. The standard module must expose a method with the name
 // "InitTypeToken", with this signature, so that the VM can create type
 // tokens when they are requested.
-typedef int (*TypeTokenInitializer)(ThreadHandle thread, void *basePtr, TypeHandle type);
+typedef int (CDECL *TypeTokenInitializer)(ThreadHandle thread, void *basePtr, TypeHandle type);
 
 OVUM_API TypeFlags Type_GetFlags(TypeHandle type);
 OVUM_API String *Type_GetFullName(TypeHandle type);

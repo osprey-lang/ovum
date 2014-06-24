@@ -113,7 +113,7 @@
     <ClInclude Include="io_directory.h" />
     <ClInclude Include="io_file.h" />
     <ClInclude Include="io_path.h" />
-    <ClInclude Include="targetver.h" />
+    <ClInclude Include="windows\windows.h" />
     <ClInclude Include="aves_utf8encoding.h" />
   </ItemGroup>
   <ItemGroup>
@@ -123,7 +123,7 @@
     <ClCompile Include="char.cpp" />
     <ClCompile Include="console.cpp" />
     <ClCompile Include="directory.cpp" />
-    <ClCompile Include="dllmain.cpp">
+    <ClCompile Include="windows\dllmain.cpp">
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</CompileAsManaged>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
       </PrecompiledHeader>

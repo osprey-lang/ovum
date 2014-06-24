@@ -4,7 +4,7 @@
 
 #define _M(value)	((value).common.method)
 
-AVES_API void aves_Method_init(TypeHandle type)
+AVES_API void CDECL aves_Method_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(MethodInst));
 

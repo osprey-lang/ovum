@@ -6,11 +6,6 @@
 #include "ov_vm.internal.h"
 #include <cassert>
 
-// forward declarations
-class Module;
-class Member;
-class Method;
-
 enum class MemberFlags : uint32_t
 {
 	NONE      = 0x0000,
@@ -23,11 +18,11 @@ enum class MemberFlags : uint32_t
 	PROPERTY  = 0x0004,
 
 	// The member is public.
-	PUBLIC    = 0x0008,
+	PUBLIC    = 0x0010,
 	// The member is protected.
-	PROTECTED = 0x0010,
+	PROTECTED = 0x0020,
 	// The member is private.
-	PRIVATE   = 0x0020,
+	PRIVATE   = 0x0040,
 
 	// The member is an instance member.
 	INSTANCE  = 0x0400,
@@ -38,9 +33,9 @@ enum class MemberFlags : uint32_t
 	IMPL      = 0x0800,
 
 	// A mask for extracting the access level of a member.
-	ACCESS_LEVEL = PUBLIC | PROTECTED | PRIVATE,
+	ACCESS_LEVEL = 0x00f0,
 	// A mask for extracting the kind of a member.
-	KIND = FIELD | METHOD | PROPERTY,
+	KIND = 0x000f,
 };
 ENUM_OPS(MemberFlags, uint32_t);
 
@@ -50,7 +45,6 @@ public:
 	MemberFlags flags;
 
 	String *name;
-	//Member *next;
 	Type *declType;
 	Module *declModule;
 
@@ -113,8 +107,7 @@ public:
 	void WriteFieldUnchecked(Value *instanceAndValue) const;
 };
 
-
-class Method : public Member
+class MethodOverload
 {
 public:
 	typedef struct
@@ -174,105 +167,116 @@ public:
 		}
 	};
 
-	class Overload
+	// The number of parameters the method has, EXCLUDING the instance
+	// if it is an instance method.
+	uint16_t paramCount;
+	// The number of optional parameters the method has.
+	uint16_t optionalParamCount;
+	// The number of local variables the method uses.
+	uint16_t locals;
+	// The maximum stack size to reserve for the method. If this requirement
+	// cannot be met, a stack overflow condition occurs.
+	uint16_t maxStack;
+	// Flags associated with the method.
+	MethodFlags flags;
+
+	String **paramNames;
+	uint32_t refSignature;
+
+	int32_t tryBlockCount;
+	TryBlock *tryBlocks;
+
+	debug::DebugSymbols *debugSymbols;
+
+	union
 	{
-	public:
-		// The number of parameters the method has, EXCLUDING the instance
-		// if it is an instance method.
-		uint16_t paramCount;
-		// The number of optional parameters the method has.
-		uint16_t optionalParamCount;
-		// The number of local variables the method uses.
-		uint16_t locals;
-		// The maximum stack size to reserve for the method. If this requirement
-		// cannot be met, a stack overflow condition occurs.
-		uint16_t maxStack;
-		// Flags associated with the method.
-		MethodFlags flags;
-
-		String **paramNames;
-		uint32_t refSignature;
-
-		int32_t tryBlockCount;
-		TryBlock *tryBlocks;
-
-		debug::DebugSymbols *debugSymbols;
-
-		union
+		struct
 		{
-			struct
-			{
-				uint8_t *entry;
-				uint32_t length; // The length of the method body, in bytes.
-			};
-			NativeMethod nativeEntry;
+			uint8_t *entry;
+			uint32_t length; // The length of the method body, in bytes.
 		};
-
-		// The group to which the overload belongs
-		Method *group;
-		// The type that declares the overload
-		Type *declType;
-
-		inline const bool Accepts(uint16_t argc) const
-		{
-			if ((flags & MethodFlags::VARIADIC) != MethodFlags::NONE)
-				return argc >= paramCount - 1;
-			else
-				return argc >= paramCount - optionalParamCount &&
-					argc <= paramCount;
-		}
-
-		inline int InstanceOffset() const
-		{
-			return ((int)(flags & MethodFlags::INSTANCE) >> 3);
-		}
-
-		// Gets the effective parameter count, which is paramCount + instance (if any).
-		inline unsigned int GetEffectiveParamCount() const
-		{
-			return paramCount + InstanceOffset();
-		}
-
-		inline bool IsInstanceMethod() const
-		{
-			return (flags & MethodFlags::INSTANCE) == MethodFlags::INSTANCE;
-		}
-
-		inline bool IsInitialized() const
-		{
-			return (flags & MethodFlags::INITED) == MethodFlags::INITED;
-		}
-
-		inline int32_t GetArgumentOffset(uint16_t arg) const
-		{
-			return (int32_t)(arg - GetEffectiveParamCount()) * sizeof(Value);
-		}
-		int32_t GetLocalOffset(uint16_t local) const;
-		int32_t GetStackOffset(uint16_t stackSlot) const;
-
-		// argCount does NOT include the instance.
-		int VerifyRefSignature(uint32_t signature, uint16_t argCount) const;
-
-		inline ~Overload()
-		{
-			delete[] paramNames;
-
-			if ((flags & (MethodFlags::NATIVE | MethodFlags::ABSTRACT)) == MethodFlags::NONE)
-				delete[] entry;
-
-			if (tryBlockCount > 0)
-			{
-				delete[] tryBlocks;
-				tryBlocks = nullptr;
-				tryBlockCount = 0;
-			}
-		}
+		NativeMethod nativeEntry;
 	};
 
+	// The group to which the overload belongs
+	Method *group;
+	// The type that declares the overload
+	Type *declType;
+
+	// Simply initializes all members to their default values.
+	// We need a default constructor so we can use the type in
+	// an array.
+	inline MethodOverload() :
+		paramCount(0), optionalParamCount(0),
+		locals(0), maxStack(0),
+		flags(MethodFlags::NONE),
+		paramNames(nullptr),
+		refSignature(0),
+		tryBlockCount(0),
+		tryBlocks(nullptr),
+		debugSymbols(nullptr),
+		group(nullptr),
+		declType(nullptr)
+	{ }
+
+	inline ~MethodOverload()
+	{
+		delete[] paramNames;
+
+		if ((flags & (MethodFlags::NATIVE | MethodFlags::ABSTRACT)) == MethodFlags::NONE)
+			delete[] entry;
+
+		delete[] tryBlocks;
+	}
+
+	inline const bool Accepts(uint16_t argc) const
+	{
+		if ((flags & MethodFlags::VARIADIC) != MethodFlags::NONE)
+			return argc >= paramCount - 1;
+		else
+			return argc >= paramCount - optionalParamCount &&
+				argc <= paramCount;
+	}
+
+	inline int InstanceOffset() const
+	{
+		return ((int)(flags & MethodFlags::INSTANCE) >> 3);
+	}
+
+	// Gets the effective parameter count, which is paramCount + instance (if any).
+	inline unsigned int GetEffectiveParamCount() const
+	{
+		return paramCount + InstanceOffset();
+	}
+
+	inline bool IsInstanceMethod() const
+	{
+		return (flags & MethodFlags::INSTANCE) == MethodFlags::INSTANCE;
+	}
+
+	inline bool IsInitialized() const
+	{
+		return (flags & MethodFlags::INITED) == MethodFlags::INITED;
+	}
+
+	inline int32_t GetArgumentOffset(uint16_t arg) const
+	{
+		return (int32_t)(arg - GetEffectiveParamCount()) * sizeof(Value);
+	}
+	int32_t GetLocalOffset(uint16_t local) const;
+	int32_t GetStackOffset(uint16_t stackSlot) const;
+
+	// argCount does NOT include the instance.
+	int VerifyRefSignature(uint32_t signature, uint16_t argCount) const;
+};
+
+class Method : public Member
+{
+public:
 	// The number of overloads in the method.
 	int32_t overloadCount;
 	// The overloads of the method.
-	Overload *overloads;
+	MethodOverload *overloads;
 	// If this method is not a global function and the base type declares
 	// a method with the same name as this one, then this pointer refers
 	// to that method, plus some rules about accessibility.
@@ -300,14 +304,14 @@ public:
 		return false;
 	}
 
-	inline Overload *ResolveOverload(uint16_t argCount) const
+	inline MethodOverload *ResolveOverload(uint16_t argCount) const
 	{
 		const Method *method = this;
 		do
 		{
 			for (int i = 0; i < method->overloadCount; i++)
 			{
-				Method::Overload *mo = method->overloads + i;
+				MethodOverload *mo = method->overloads + i;
 				if (mo->Accepts(argCount))
 					return mo;
 			}
@@ -405,7 +409,7 @@ public:
 	static const int OPERATOR_COUNT = 18;
 	// Operator implementations. If an operator implementation is null,
 	// then the type does not implement that operator.
-	Method::Overload *operators[OPERATOR_COUNT];
+	MethodOverload *operators[OPERATOR_COUNT];
 
 	int GetTypeToken(Thread *const thread, Value *result);
 

@@ -15,10 +15,10 @@ namespace debug
 	class DebugSymbols
 	{
 	public:
-		DebugSymbols(Method::Overload *overload, int32_t symbolCount, SourceLocation *symbols);
+		DebugSymbols(MethodOverload *overload, int32_t symbolCount, SourceLocation *symbols);
 		~DebugSymbols();
 
-		Method::Overload *overload;
+		MethodOverload *overload;
 		int32_t symbolCount;
 		SourceLocation *symbols;
 
