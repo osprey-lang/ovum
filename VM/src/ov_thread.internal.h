@@ -9,6 +9,10 @@
 #include "ov_stringbuffer.internal.h"
 #include "sync.internal.h"
 
+#if OVUM_TARGET == OVUM_UNIX
+#include <pthread.h>
+#endif
+
 #ifdef THREADED_EVALUATION
 #ifndef __GNUC__
 #error You must compile with gcc for threaded evaluation
@@ -124,6 +128,13 @@ inline Value *StackFrame::Locals() const
 	return reinterpret_cast<Value*>((char*)this + STACK_FRAME_SIZE);
 }
 
+enum class ThreadRequest
+{
+	// The thread has no particular request associated with it.
+	NONE = 0,
+	// The thread should suspend for the GC as soon as it can.
+	SUSPEND_FOR_GC = 1,
+};
 
 enum class ThreadState : int
 {
@@ -244,8 +255,17 @@ private:
 	// the base of said pointer.
 	StackFrame *currentFrame;
 
-	// Set to true if the GC has asked the thread to suspend itself.
-	volatile bool shouldSuspendForGC;
+	// If another thread is waiting for this thread to perform a specific action, this field
+	// is set to an appropriate request.
+	// Note: Only one request can be active at a time. Currently this field is only used by
+	// the GC, but that may change in the future.
+	volatile ThreadRequest pendingRequest;
+
+#if OVUM_TARGET == OVUM_WINDOWS
+	DWORD nativeId;
+#else
+	pthread_t nativeId;
+#endif
 
 	// The current state of the thread. And what a state it's in. Tsk tsk tsk.
 	ThreadState state;
@@ -357,12 +377,14 @@ private:
 
 	int PrepareVariadicArgs(MethodFlags flags, uint32_t argCount, uint32_t paramCount, StackFrame *frame);
 
+	NOINLINE void HandleRequest();
+
 	// Tells the thread to suspend itself as soon as possible.
 	// Thread::IsSuspendedForGC() returns true when this is done.
 	NOINLINE void PleaseSuspendForGCAsap();
 	// Tells the thread it doesn't have to suspend itself anymore,
 	// because the GC cycle has ended. This happens when the thread
-	// spends the entire GC cycle in a fully native section.
+	// spends the entire GC cycle in an unmanaged region.
 	NOINLINE void EndGCSuspension();
 	NOINLINE void SuspendForGC();
 

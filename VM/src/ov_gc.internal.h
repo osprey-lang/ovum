@@ -12,12 +12,11 @@ enum class GCOFlags : uint32_t
 {
 	NONE          = 0x0000,
 	// The mark occupies the lowest two bits.
-	// Collectible objects are marked with currentCollectMark,
-	// which changes each cycle.
-	// To obtain the marks of the current cycle, use these macros:
-	//   GCO_COLLECT(currentCollectMark)
-	//   GCO_PROCESS(currentCollectMark)
-	//   GCO_KEEP(currentCollectMark)
+	// Objects are marked according to what list they belong to:
+	// the Collect list uses GC::currentCollectMark, Process
+	// uses GCOFlags::PROCESS (invariant), and the Keep list uses
+	// GC::currentKeepMark.
+	PROCESS       = 0x0002, // The object is in the Process list.
 	MARK          = 0x0003, // Mask for extracting the mark.
 
 	// The GCObject represents a string allocated before the
@@ -56,11 +55,6 @@ enum class GCOFlags : uint32_t
 	ARRAY         = 0x0200,
 };
 ENUM_OPS(GCOFlags, uint32_t);
-
-// These GCO marks are always in the range 1–3
-#define GCO_COLLECT(ccm) ((::GCOFlags)((ccm) + 1))
-#define GCO_PROCESS(ccm) ((::GCOFlags)(((ccm) + 1) % 3 + 1))
-#define GCO_KEEP(ccm)    ((::GCOFlags)(((ccm) + 2) % 3 + 1))
 
 class GCObject
 {
@@ -299,21 +293,29 @@ private:
 
 	typedef struct
 	{
-		// All survivors from generation 0.
-		GCObject *gen0;
-		// All survivors with references to gen0 objects.
-		// Initially only contains survivors from gen1 and
-		// the large object heap, but is later updated to
-		// include gen0 survivors with gen0 refs.
-		GCObject *withGen0Refs;
-		// Total size of gen1 survivors. This does NOT
-		// include objects from the large object heap.
-		size_t gen1SurvivorSize;
-	} Survivors;
+		GCObject *process;
+		GCObject *keep;
+		struct
+		{
+			// All survivors from generation 0.
+			GCObject *gen0;
+			// All survivors with references to gen0 objects.
+			// Initially only contains survivors from gen1 and
+			// the large object heap, but is later updated to
+			// include gen0 survivors with gen0 refs.
+			GCObject *withGen0Refs;
+			// Total size of gen1 survivors. This does NOT
+			// include objects from the large object heap.
+			size_t gen1SurvivorSize;
+		} survivors;
+	} TempLists;
 
-	// The current bit pattern used for marking an object as "collect".
-	// This changes every GC cycle.
-	int currentCollectMark;
+	// The current bit pattern used for marking an object as "collect",
+	// and "keep", respectively. These start out as 1 and 3, respectively,
+	// and are swapped after each GC cycle.
+	// The value GCOFlags::PROCESS is also used, and does not change.
+	GCOFlags currentCollectMark;
+	GCOFlags currentKeepMark;
 
 	char *gen0Current;
 	void *gen0Base;
@@ -321,14 +323,12 @@ private:
 	HANDLE mainHeap;
 	HANDLE largeObjectHeap;
 	
-	GCObject *collectBase;
-	GCObject *processBase;
-	GCObject *keepBase;
-	GCObject *pinnedBase;
+	GCObject *collectList;
+	GCObject *pinnedList;
 	// This field is only assigned during a GC cycle, and points to
 	// a location on the call stack. It should be set to null in all
 	// other situations.
-	Survivors *survivors;
+	TempLists *gcoLists;
 
 	// The total size of generation 1, not including unmanaged data.
 	size_t gen1Size;
@@ -472,7 +472,7 @@ private:
 			(flags & GCOFlags::PINNED) == GCOFlags::NONE)
 			*hasGen0Refs = true;
 
-		return (flags & GCOFlags::MARK) == GCO_COLLECT(currentCollectMark);
+		return (flags & GCOFlags::MARK) == currentCollectMark;
 	}
 	inline void TryMarkForProcessing(Value *value, bool *hasGen0Refs)
 	{
@@ -486,7 +486,7 @@ private:
 			GCObject *gco = GCObject::FromInst(str);
 			if ((gco->flags & GCOFlags::GEN_0) == GCOFlags::GEN_0)
 				*hasGen0Refs = true;
-			if ((gco->flags & GCOFlags::MARK) == GCO_COLLECT(currentCollectMark))
+			if ((gco->flags & GCOFlags::MARK) == currentCollectMark)
 				MarkForProcessing(gco);
 		}
 	}
@@ -518,7 +518,7 @@ private:
 					(uintptr_t)v->type != STATIC_REFERENCE)
 				{
 					GCObject *gco = reinterpret_cast<GCObject*>((char*)v->reference - ~(uintptr_t)v->type);
-					if ((gco->flags & GCOFlags::MARK) == GCO_COLLECT(currentCollectMark))
+					if ((gco->flags & GCOFlags::MARK) == currentCollectMark)
 						MarkForProcessing(gco);
 				}
 			}

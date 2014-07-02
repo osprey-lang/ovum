@@ -66,8 +66,8 @@ int Thread::Evaluate()
 	};
 #endif
 
-	if (shouldSuspendForGC)
-		SuspendForGC();
+	if (pendingRequest != ThreadRequest::NONE)
+		HandleRequest();
 
 	int retCode;
 
