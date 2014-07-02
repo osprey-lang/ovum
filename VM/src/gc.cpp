@@ -33,35 +33,37 @@ void GC::Unload()
 }
 
 GC::GC() :
-	collectBase(nullptr), processBase(nullptr), keepBase(nullptr), pinnedBase(nullptr),
-	currentCollectMark(0), gen1Size(0),
+	collectList(nullptr), pinnedList(nullptr),
+	currentCollectMark((GCOFlags)1),
+	currentKeepMark((GCOFlags)3),
+	gen1Size(0),
 	collectCount(0), strings(32), staticRefs(nullptr),
 	mainHeap(nullptr), largeObjectHeap(nullptr),
 	gen0Base(nullptr), gen0Current(nullptr), gen0End(nullptr),
-	survivors(nullptr),
+	gcoLists(nullptr),
 	allocSection(5000)
 { }
 
 GC::~GC()
 {
 	// Clean up all objects
-	GCObject *gco = collectBase;
+	GCObject *gco = collectList;
 	while (gco)
 	{
 		GCObject *next = gco->next;
 		Release(gco);
 		gco = next;
 	}
-	collectBase = nullptr;
+	collectList = nullptr;
 
-	gco = pinnedBase;
+	gco = pinnedList;
 	while (gco)
 	{
 		GCObject *next = gco->next;
 		Release(gco);
 		gco = next;
 	}
-	pinnedBase = nullptr;
+	pinnedList = nullptr;
 
 	// And delete static reference blocks, too
 	StaticRefBlock *refs = staticRefs;
@@ -129,9 +131,9 @@ GCObject *GC::AllocRaw(size_t size)
 		// any pinned object. If so, we position the gen0Current
 		// pointer behind the last pinned object where space is
 		// available.
-		if (pinnedBase)
+		if (pinnedList)
 		{
-			GCObject *pinned = pinnedBase;
+			GCObject *pinned = pinnedList;
 			// Given the ranges [a, b) and [c, d), e.g.:
 			//      a         b
 			//      [---------)
@@ -152,12 +154,12 @@ GCObject *GC::AllocRaw(size_t size)
 				// it is not necessary to call RemoveFromList first.
 				// InsertIntoList updates the prev and next pointers
 				// on the GCObject.
-				pinned->InsertIntoList(&collectBase);
+				pinned->InsertIntoList(&collectList);
 				gen0Current = (char*)pinned + ALIGN_TO(pinned->size, 8);
 
 				pinned = next;
 			}
-			pinnedBase = pinned;
+			pinnedList = pinned;
 		}
 
 		result = (GCObject*)gen0Current;
@@ -224,8 +226,8 @@ int GC::Alloc(Thread *const thread, Type *type, size_t size, GCObject **output)
 	// AllocRaw zeroes the memory, so DO NOT do that here.
 	gco->size = size;
 	gco->type = type;
-	gco->flags |= GCO_COLLECT(currentCollectMark);
-	gco->InsertIntoList(&collectBase);
+	gco->flags |= currentCollectMark;
+	gco->InsertIntoList(&collectList);
 
 	*output = gco;
 
@@ -387,11 +389,11 @@ String *GC::ConstructModuleString(Thread *const thread, const int32_t length, co
 	// the GC to compact gen1
 	gco->size = size;
 	gco->type = VM::vm->types.String;
-	gco->flags |= GCO_COLLECT(currentCollectMark) | GCOFlags::PINNED;
+	gco->flags |= currentCollectMark | GCOFlags::PINNED;
 	if (gco->type == nullptr)
 		gco->flags |= GCOFlags::EARLY_STRING;
 	gco->pinCount++;
-	gco->InsertIntoList(&collectBase);
+	gco->InsertIntoList(&collectList);
 
 	MutableString *str = reinterpret_cast<MutableString*>(gco->InstanceBase());
 	str->length = length;
@@ -402,7 +404,7 @@ String *GC::ConstructModuleString(Thread *const thread, const int32_t length, co
 
 void GC::Release(GCObject *gco)
 {
-	assert((gco->flags & GCOFlags::MARK) == GCO_COLLECT(currentCollectMark));
+	assert((gco->flags & GCOFlags::MARK) == currentCollectMark);
 
 	if (gco->IsEarlyString() || gco->type == VM::vm->types.String)	
 	{
@@ -476,48 +478,48 @@ void GC::RunCycle(Thread *const thread, bool collectGen1)
 
 	collectCount++;
 
-	// Upon entering this method, all objects are in collectBase and pinnedBase.
-	// The pinnedBase list is usually empty when we enter here, but a cycle can
-	// be triggered when the pinned objects take up too much space or leave gaps
+	// Upon entering this method, all objects are in collectList and pinnedList.
+	// The pinned list is usually empty when we enter here, but a cycle can be
+	// triggered when the pinned objects take up too much space or leave gaps
 	// too small to fit an object into, or when a large object can't be allocated.
 	//
 	// Let's start by copying all pinned objects into the Collect list. During
 	// the cycle, we'll rebuild the pinned list anyway.
-	if (pinnedBase)
+	if (pinnedList)
 	{
-		GCObject *pinned = pinnedBase;
+		GCObject *pinned = pinnedList;
 		while (pinned)
 		{
 			GCObject *next = pinned->next;
 			// No need to call RemoveFromList first;
 			// we're accessing the items sequentially,
 			// and nothing else will touch the list.
-			pinned->InsertIntoList(&collectBase);
+			pinned->InsertIntoList(&collectList);
 			pinned = next;
 		}
-		pinnedBase = nullptr;
+		pinnedList = nullptr;
 	}
 
-	Survivors survivors = { nullptr, nullptr, 0 };
-	this->survivors = &survivors;
+	TempLists gcoLists = { }; // initialize everything to zero
+	this->gcoLists = &gcoLists;
 	// Step 1: Move all the root objects to the Process list.
 	MarkRootSet();
 
 	// Step 2: Examine all objects in the Process list.
 	// Objects are grouped into one of the following:
 	// * Gen0 survivors (including pinned objects)
-	//     => survivors->gen0
+	//     => gcoLists->survivors.gen0
 	// * Survivors (from gen1 or LOH) with refs to non-pinned gen0 objects;
 	//   that is, any non-gen0 object that needs updating later
-	//     => survivors->withGen0Refs
+	//     => gcoLists->survivors.withGen0Refs
 	// * All other survivors
-	//     => keepBase
-	// During this step, we also update survivors->gen1SurvivorSize,
+	//     => gcoLists->keep
+	// During this step, we also update gcoLists->survivors.gen1SurvivorSize,
 	// which will later help us determine whether gen1 has enough dead
 	// objects to warrant cleaning it up this cycle.
-	while (processBase)
+	while (gcoLists.process)
 	{
-		GCObject *item = processBase;
+		GCObject *item = gcoLists.process;
 		do
 		{
 			GCObject *next = item->next;
@@ -525,7 +527,7 @@ void GC::RunCycle(Thread *const thread, bool collectGen1)
 			item = next;
 		} while (item);
 	}
-	assert(processBase == nullptr);
+	assert(gcoLists.process == nullptr);
 
 	// Step 3: Process gen0 survivors.
 	// For each object:
@@ -535,26 +537,27 @@ void GC::RunCycle(Thread *const thread, bool collectGen1)
 	// * Then, if the object has gen0 refs, add it to the list of such objects;
 	//   otherwise, move it to the Keep list (nothing more to process).
 	MoveGen0Survivors();
-	assert(survivors.gen0 == nullptr);
+	assert(gcoLists.survivors.gen0 == nullptr);
 
 	// Step 4: Update objects with gen0 references.
 	// An astute reader may have noticed that pinned objects with gen0 refs
-	// are not actually in the survivors->withGen0Refs list, but in pinnedBase.
+	// are not actually in gcoLists->survivors.withGen0Refs, but in pinnedList.
 	// For this reason, we walk through those here as well. The number of
 	// pinned objects is likely to be small.
 	// We must also not forget to update root references; unfortunately,
 	// this means we have to walk through the entire root set.
 	UpdateGen0References();
-	assert(survivors.withGen0Refs == nullptr);
+	assert(gcoLists.survivors.withGen0Refs == nullptr);
 
 	// Step 5: Collect garbage.
 	// Finalize any collectible dead objects with finalizers, and release the
 	// memory. We only collect gen1 if collectGen1 is true, or if there are
 	// enough dead objects in it.
 	if (!collectGen1)
-		collectGen1 = gen1Size - survivors.gen1SurvivorSize >= GEN1_DEAD_OBJECTS_THRESHOLD;
+		collectGen1 = gen1Size - gcoLists.survivors.gen1SurvivorSize >= GEN1_DEAD_OBJECTS_THRESHOLD;
+
 	{
-		GCObject *item = collectBase;
+		GCObject *item = collectList;
 		while (item)
 		{
 			GCObject *next = item->next;
@@ -564,30 +567,30 @@ void GC::RunCycle(Thread *const thread, bool collectGen1)
 			else
 			{
 				// Uncollectible gen1 object, will be collected in the future
-				item->InsertIntoList(&keepBase);
+				item->InsertIntoList(&gcoLists.keep);
 				// Make sure it's marked GCO_COLLECT next cycle
-				item->Mark(GCO_KEEP(currentCollectMark));
+				item->Mark(currentKeepMark);
 			}
 
 			item = next;
 		}
-		collectBase = nullptr;
+		collectList = nullptr;
 	}
 
 	// The Keep and Pinned lists should contain all the live objects now,
 	// and all other lists should be empty.
-	this->survivors = nullptr;
-	assert(survivors.gen0         == nullptr);
-	assert(survivors.withGen0Refs == nullptr);
-	assert(collectBase            == nullptr);
-	assert(processBase            == nullptr);
+	assert(gcoLists.survivors.gen0         == nullptr);
+	assert(gcoLists.survivors.withGen0Refs == nullptr);
+	assert(gcoLists.process                == nullptr);
+	assert(collectList                     == nullptr);
 
-	// Step 6: Increment currentCollectMark for next cycle
-	// and set current Keep list to Collect.
-	currentCollectMark = (currentCollectMark + 2) % 3;
-	collectBase = keepBase;
-	keepBase = nullptr;
+	// Step 6: Swap currentCollectMark and currentKeepMark for
+	// next cycle and set current Keep list to Collect.
+	std::swap(currentCollectMark, currentKeepMark);
+	collectList = gcoLists.keep;
 	gen0Current = (char*)gen0Base;
+	// And reset this to null
+	this->gcoLists = nullptr;
 
 	EndCycle(thread);
 }
@@ -659,10 +662,8 @@ void GC::MarkRootSet()
 	StaticRefBlock *staticRefs = this->staticRefs;
 	while (staticRefs)
 	{
-		hasGen0Refs = false;
 		for (unsigned int i = 0; i < staticRefs->count; i++)
-			TryMarkForProcessing(&staticRefs->values[i].value, &hasGen0Refs);
-		staticRefs->hasGen0Refs = hasGen0Refs;
+			TryMarkForProcessing(&staticRefs->values[i].value, &staticRefs->hasGen0Refs);
 		staticRefs = staticRefs->next;
 	}
 }
@@ -670,9 +671,9 @@ void GC::MarkRootSet()
 void GC::MarkForProcessing(GCObject *gco)
 {
 	// Must move from collect to process.
-	assert((gco->flags & GCOFlags::MARK) == GCO_COLLECT(currentCollectMark));
+	assert((gco->flags & GCOFlags::MARK) == currentCollectMark);
 
-	gco->RemoveFromList(gco == pinnedBase ? &pinnedBase : &collectBase);
+	gco->RemoveFromList(gco == pinnedList ? &pinnedList : &collectList);
 	// If gco->type is null, then the gco must be an EARLY_STRING or an ARRAY;
 	// in both cases, we couldn't possibly have any instance fields. If the
 	// type is GC_VALUE_ARRAY or has a size greater than zero, we might find
@@ -685,44 +686,44 @@ void GC::MarkForProcessing(GCObject *gco)
 
 	if (couldHaveFields)
 	{
-		gco->InsertIntoList(&processBase);
-		gco->Mark(GCO_PROCESS(currentCollectMark));
+		gco->InsertIntoList(&gcoLists->process);
+		gco->Mark(GCOFlags::PROCESS);
 	}
 	else
 	{
 		// No chance of instance fields, so nothing to process
 		AddSurvivor(gco);
-		gco->Mark(GCO_KEEP(currentCollectMark));
+		gco->Mark(currentKeepMark);
 	}
 }
 
 void GC::AddSurvivor(GCObject *gco)
 {
 	GCObject **list;
-	if ((gco->flags & GCOFlags::GEN_0) == GCOFlags::GEN_0)
-		list = &survivors->gen0;
+	if ((gco->flags & GCOFlags::GENERATION) == GCOFlags::GEN_0)
+		list = &gcoLists->survivors.gen0;
 	else
 	{
 		if (gco->HasGen0Refs())
-			list = &survivors->withGen0Refs;
+			list = &gcoLists->survivors.withGen0Refs;
 		else
-			list = &keepBase;
-		if ((gco->flags & GCOFlags::GEN_1) == GCOFlags::GEN_1)
-			survivors->gen1SurvivorSize += gco->size;
+			list = &gcoLists->keep;
+		if ((gco->flags & GCOFlags::GENERATION) == GCOFlags::GEN_1)
+			gcoLists->survivors.gen1SurvivorSize += gco->size;
 	}
 	gco->InsertIntoList(list);
 }
 
 void GC::ProcessObjectAndFields(GCObject *gco)
 {
-	// The object is not supposed to be anything but GCO_PROCESS at this point.
-	assert((gco->flags & GCOFlags::MARK) == GCO_PROCESS(currentCollectMark));
+	// The object is not supposed to be anything but GCOFlags::PROCESS at this point.
+	assert((gco->flags & GCOFlags::MARK) == GCOFlags::PROCESS);
 	// It's also not supposed to be a value type, but could be a GC value array.
 	assert(!gco->type || gco->type == (Type*)GC_VALUE_ARRAY || !gco->type->IsPrimitive());
 
 	// Do this first, so that objects referencing this object will not
 	// attempt to re-mark it for processing
-	gco->Mark(GCO_KEEP(currentCollectMark));
+	gco->Mark(currentKeepMark);
 
 	bool hasGen0Refs = false;
 	Type *type = gco->type;
@@ -746,7 +747,7 @@ void GC::ProcessObjectAndFields(GCObject *gco)
 	if (hasGen0Refs)
 		gco->flags |= GCOFlags::HAS_GEN0_REFS;
 
-	gco->RemoveFromList(&processBase);
+	gco->RemoveFromList(&gcoLists->process);
 	// Insert into the appropriate survivor list
 	AddSurvivor(gco);
 }
@@ -777,7 +778,7 @@ void GC::ProcessCustomFields(Type *type, void *instBase, bool *hasGen0Refs)
 				if ((flags & GCOFlags::GEN_0) == GCOFlags::GEN_0 &&
 					(flags & GCOFlags::PINNED) == GCOFlags::NONE)
 					*hasGen0Refs = true;
-				if ((flags & GCOFlags::MARK) == GCO_COLLECT(currentCollectMark))
+				if ((flags & GCOFlags::MARK) == currentCollectMark)
 					MarkForProcessing(gco);
 			}
 			break;
@@ -804,8 +805,8 @@ int GC::ProcessFieldsCallback(void *state, unsigned int count, Value *values)
 
 void GC::MoveGen0Survivors()
 {
-	GCObject **list = &survivors->gen0;
-	size_t *gen1SurvivorSize = &survivors->gen1SurvivorSize;
+	GCObject **list = &gcoLists->survivors.gen0;
+	size_t *gen1SurvivorSize = &gcoLists->survivors.gen1SurvivorSize;
 
 	GCObject *obj = *list;
 	while (obj)
@@ -824,7 +825,7 @@ void GC::MoveGen0Survivors()
 
 			memcpy(newAddress, obj, obj->size);
 			newAddress->flags = (newAddress->flags & ~GCOFlags::GENERATION) | GCOFlags::GEN_1;
-			newAddress->InsertIntoList(newAddress->HasGen0Refs() ? &survivors->withGen0Refs : &keepBase);
+			newAddress->InsertIntoList(newAddress->HasGen0Refs() ? &gcoLists->survivors.withGen0Refs : &gcoLists->keep);
 			gen1Size += newAddress->size;
 			*gen1SurvivorSize += newAddress->size;
 
@@ -847,10 +848,10 @@ void GC::MoveGen0Survivors()
 		obj = next;
 	}
 
-	if (pinnedBase)
+	if (pinnedList)
 	{
 		GCObject *lastPinned; // ignored
-		pinnedBase = FlattenPinnedTree(pinnedBase, &lastPinned);
+		pinnedList = FlattenPinnedTree(pinnedList, &lastPinned);
 	}
 }
 
@@ -866,7 +867,7 @@ void GC::AddPinnedObject(GCObject *gco)
 	// 'next' as the right (numerically greater than the GCO).
 	gco->prev = gco->next = nullptr;
 
-	GCObject **root = &pinnedBase;
+	GCObject **root = &pinnedList;
 	while (true)
 	{
 		if (!*root)
@@ -909,19 +910,19 @@ void GC::UpdateGen0References()
 {
 	UpdateRootSet();
 
-	GCObject *gco = survivors->withGen0Refs;
+	GCObject *gco = gcoLists->survivors.withGen0Refs;
 	while (gco)
 	{
 		GCObject *next = gco->next;
 
-		gco->RemoveFromList(&survivors->withGen0Refs);
-		gco->InsertIntoList(&keepBase);
+		gco->RemoveFromList(&gcoLists->survivors.withGen0Refs);
+		gco->InsertIntoList(&gcoLists->keep);
 		UpdateObjectFields(gco);
 
 		gco = next;
 	}
 
-	gco = pinnedBase;
+	gco = pinnedList;
 	while (gco)
 	{
 		if (gco->HasGen0Refs())

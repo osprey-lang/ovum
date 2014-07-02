@@ -5,12 +5,15 @@
 
 #include "ov_vm.internal.h"
 #include <atomic>
+#if OVUM_TARGET == OVUM_UNIX
+#include <pthread.h>
+#endif
 
 // CriticalSection works like a recursive mutex: it can be entered
 // by one thread at a time, but that thread can enter the critical
 // section any number of times. When the owning thread has called
-// Leave() as many times as it has called Enter(), it enables other
-// threads to enter the same section.
+// Leave() as many times as it has called Enter(), other threads
+// are free to enter the same section.
 //
 // DO NOT copy CriticalSection instances by value, only ever by
 // reference or pointer. Critical sections should usually only be
@@ -18,18 +21,34 @@
 class CriticalSection
 {
 private:
+#if OVUM_TARGET == OVUM_WINDOWS
 	CRITICAL_SECTION section;
+#else
+	pthread_mutex_t mutex;
+#endif
 
 public:
 	inline CriticalSection(uint32_t spinCount)
 	{
+#if OVUM_TARGET == OVUM_WINDOWS
 		InitializeCriticalSectionEx(&section, spinCount,
 			CRITICAL_SECTION_NO_DEBUG_INFO);
+#else
+		pthread_mutexattr_t attr;
+		pthread_mutexattr_init(&attr);
+		pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
+		pthread_mutex_init(&mutex, &attr);
+		pthread_mutexattr_destroy(&attr);
+#endif
 	}
 
 	inline ~CriticalSection()
 	{
+#if OVUM_TARGET == OVUM_WINDOWS
 		DeleteCriticalSection(&section);
+#else
+		pthread_mutex_destroy(&mutex);
+#endif
 	}
 
 	// Enters the critical section. If another thread has
@@ -37,7 +56,11 @@ public:
 	// the section becomes available.
 	inline void Enter()
 	{
+#if OVUM_TARGET == OVUM_WINDOWS
 		EnterCriticalSection(&section);
+#else
+		pthread_mutex_lock(&mutex);
+#endif
 	}
 
 	// Tries to enter the critical section. This method
@@ -47,14 +70,22 @@ public:
 	// already entered the section, and false is returned.
 	inline bool TryEnter()
 	{
+#if OVUM_TARGET == OVUM_WINDOWS
 		return TryEnterCriticalSection(&section) != 0;
+#else
+		return pthread_mutex_trylock(&mutex) == 0;
+#endif
 	}
 
 	// Leaves the critical section. Other threads are now
 	// free to enter it.
 	inline void Leave()
 	{
+#if OVUM_TARGET == OVUM_WINDOWS
 		LeaveCriticalSection(&section);
+#else
+		pthread_mutex_unlock(&mutex);
+#endif
 	}
 };
 
@@ -63,6 +94,10 @@ public:
 // to spin, that is, repeatedly try to acquire the lock in a loop.
 //
 // Spinlocks should only be held for a very short amount of time.
+//
+// Spinlocks are NOT recursive: it is not possible to enter the same
+// lock multiple times on the same thread. Attempting to do so will
+// result in a deadlock.
 //
 // DO NOT copy SpinLock instances by value, only ever by reference
 // or pointer. Spinlocks should usually only be accessed directly

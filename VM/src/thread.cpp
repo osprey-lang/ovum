@@ -1,5 +1,8 @@
 #include "ov_vm.internal.h"
 #include "ov_debug_symbols.internal.h"
+#if OVUM_TARGET == OVUM_UNIX
+#include <time.h>
+#endif
 
 namespace thread_errors
 {
@@ -41,11 +44,19 @@ namespace thread_errors
 Thread::Thread(int &status) :
 	currentFrame(nullptr), state(ThreadState::CREATED),
 	currentError(NULL_VALUE), ip(nullptr),
-	shouldSuspendForGC(false),
+	pendingRequest(ThreadRequest::NONE),
 	flags(ThreadFlags::NONE),
 	gcCycleSection(4000)
 {
 	status = InitCallStack();
+	if (status == OVUM_SUCCESS)
+	{
+#if OVUM_TARGET == OVUM_WINDOWS
+		nativeId = GetCurrentThreadId();
+#else
+		nativeId = pthread_self();
+#endif
+	}
 }
 
 Thread::~Thread()
@@ -57,7 +68,7 @@ int Thread::Start(unsigned int argCount, MethodOverload *mo, Value &result)
 {
 	assert(mo != nullptr);
 	assert(this->state == ThreadState::CREATED);
-	assert((method->flags & MemberFlags::INSTANCE) == MemberFlags::NONE);
+	assert((mo->flags & MethodFlags::INSTANCE) == MethodFlags::NONE);
 
 	state = ThreadState::RUNNING;
 
@@ -71,26 +82,36 @@ int Thread::Start(unsigned int argCount, MethodOverload *mo, Value &result)
 }
 
 
+void Thread::HandleRequest()
+{
+	switch (pendingRequest)
+	{
+	case ThreadRequest::SUSPEND_FOR_GC:
+		SuspendForGC();
+		break;
+	}
+}
+
 void Thread::PleaseSuspendForGCAsap()
 {
-	shouldSuspendForGC = true;
+	pendingRequest = ThreadRequest::SUSPEND_FOR_GC;
 }
 
 void Thread::EndGCSuspension()
 {
-	shouldSuspendForGC = false;
+	pendingRequest = ThreadRequest::NONE;
 }
 
 void Thread::SuspendForGC()
 {
-	assert(shouldSuspendForGC == true);
+	assert(pendingRequest == ThreadRequest::SUSPEND_FOR_GC);
 
 	state = ThreadState::SUSPENDED_BY_GC;
 	// Do nothing here. Just wait for the GC to finish.
 	gcCycleSection.Enter();
 
 	state = ThreadState::RUNNING;
-	shouldSuspendForGC = false;
+	pendingRequest = ThreadRequest::NONE;
 	// Resume normal operations!
 	gcCycleSection.Leave();
 }
@@ -104,8 +125,8 @@ void Thread::EnterUnmanagedRegion()
 void Thread::LeaveUnmanagedRegion()
 {
 	flags &= ~ThreadFlags::IN_UNMANAGED_REGION;
-	if (shouldSuspendForGC)
-		SuspendForGC();
+	if (pendingRequest != ThreadRequest::NONE)
+		HandleRequest();
 }
 
 bool Thread::IsSuspendedForGC() const
@@ -282,8 +303,8 @@ int Thread::InvokeMethodOverload(MethodOverload *mo, unsigned int argCount,
 
 	if ((flags & MethodFlags::NATIVE) == MethodFlags::NATIVE)
 	{
-		if (shouldSuspendForGC)
-			SuspendForGC();
+		if (pendingRequest != ThreadRequest::NONE)
+			HandleRequest();
 		r = mo->nativeEntry(this, argCount, args);
 		// Native methods are not required to return with one value on the stack, but if
 		// they have more than one, only the lowest one is used.
@@ -1487,7 +1508,14 @@ OVUM_API void VM_Sleep(ThreadHandle thread, unsigned int milliseconds)
 {
 	thread->EnterUnmanagedRegion();
 
+#if OVUM_TARGET == OVUM_WINDOWS
 	Sleep(milliseconds);
+#else
+	timespec time;
+	time.tv_sec  = milliseconds / 1000;
+	time.tv_nsec = (milliseconds % 1000) * 1000000;
+	nanosleep(&time, nullptr);
+#endif
 
 	thread->LeaveUnmanagedRegion();
 }
