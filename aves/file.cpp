@@ -173,7 +173,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(io_FileStream_init)
 			return VM_Throw(thread);
 		}
 		// access is now updated to FILE_APPEND_DATA; mode remains the same.
-		// It seems that no other access flags for appending.
+		// It seems that no other access flags are needed for appending.
 		access = FILE_APPEND_DATA;
 	}
 
@@ -201,6 +201,14 @@ AVES_API BEGIN_NATIVE_FUNCTION(io_FileStream_init)
 
 	if (handle == INVALID_HANDLE_VALUE)
 		return io::ThrowIOError(thread, GetLastError(), fileName);
+	// Verify that the handle refers to a file on disk.
+	DWORD fileType = GetFileType(handle);
+	if (fileType != FILE_TYPE_DISK)
+	{
+		VM_PushString(thread, error_strings::FileStreamWithNonFile);
+		CHECKED(GC_Construct(thread, Types::NotSupportedError, 1, nullptr));
+		return VM_Throw(thread);
+	}
 
 	FileStream *stream = _FS(THISV);
 	stream->handle = handle;

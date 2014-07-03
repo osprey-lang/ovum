@@ -32,8 +32,23 @@ public static class Path
 			throw new ArgumentNullError("path");
 		return getFullPathInternal(string(path));
 	}
-
 	private static getFullPathInternal(path)			__extern("io_Path_getFullPath");
+
+	public static getFileName(path)
+	{
+		if path is null:
+			throw new ArgumentNullError("path");
+		return getFileNameInternal(string(path));
+	}
+	private static getFileNameInternal(path)			__extern("io_Path_getFileName");
+
+	public static getDirectory(path)
+	{
+		if path is null:
+			throw new ArgumentNullError("path");
+		return getDirectoryInternal(string(path));
+	}
+	private static getDirectoryInternal(path)			__extern("io_Path_getDirectory");
 
 	public static getExtension(path)
 	{

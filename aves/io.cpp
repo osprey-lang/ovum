@@ -22,7 +22,7 @@ int io::ThrowIOError(ThreadHandle thread, ErrorCode code, String *pathName)
 	String *message = nullptr;
 
 	int r = OVUM_SUCCESS;
-#ifdef _WIN32
+#if OVUM_TARGET == OVUM_WINDOWS
 	switch (code)
 	{
 	case ERROR_FILE_NOT_FOUND:
@@ -40,6 +40,13 @@ int io::ThrowIOError(ThreadHandle thread, ErrorCode code, String *pathName)
 	case ERROR_DISK_QUOTA_EXCEEDED:
 		message = io_errors::DiskFull;
 		break;
+	}
+
+	if (message == nullptr)
+	{
+		message = win32_helpers::GetSystemErrorMessage(thread, code);
+		if (message == nullptr)
+			return OVUM_ERROR_NO_MEMORY;
 	}
 #else
 	// TODO: POSIX error codes

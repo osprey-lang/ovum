@@ -9,7 +9,7 @@ class Path
 {
 public:
 
-#ifdef _WIN32
+#if OVUM_TARGET == OVUM_WINDOWS
 	static const uchar DirSeparator = '\\';
 	static const uchar AltDirSeparator = '/';
 	static const uchar VolumeSeparator = ':';
@@ -27,11 +27,18 @@ public:
 	static const int InvalidFileNameCharsCount;
 	static const uchar InvalidFileNameChars[];
 
+	inline static bool IsPathSep(uchar ch)
+	{
+		return ch == DirSeparator || ch == AltDirSeparator;
+	}
+
 	static int32_t GetExtensionIndex(String *path);
 
 	static bool IsAbsolute(String *path);
 
 	static int GetFullPath(ThreadHandle thread, String *path, String **result);
+
+	static int32_t GetRootLength(String *path);
 
 	static int ValidatePath(ThreadHandle thread, String *path, bool checkWildcards);
 };
@@ -47,6 +54,9 @@ AVES_API NATIVE_FUNCTION(io_Path_isAbsolute);
 AVES_API NATIVE_FUNCTION(io_Path_join);
 
 AVES_API NATIVE_FUNCTION(io_Path_getFullPath);
+
+AVES_API NATIVE_FUNCTION(io_Path_getFileName);
+AVES_API NATIVE_FUNCTION(io_Path_getDirectory);
 
 AVES_API NATIVE_FUNCTION(io_Path_getExtension);
 AVES_API NATIVE_FUNCTION(io_Path_hasExtension);

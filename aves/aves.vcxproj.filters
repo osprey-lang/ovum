@@ -230,5 +230,8 @@
     <ClCompile Include="windows\dllmain.cpp">
       <Filter>Source Files\Windows</Filter>
     </ClCompile>
+    <ClCompile Include="windows\windows.cpp">
+      <Filter>Source Files\Windows</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

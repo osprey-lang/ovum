@@ -21,6 +21,7 @@ public:
 	static TypeHandle ArgumentRangeError;
 	static TypeHandle DuplicateKeyError;
 	static TypeHandle InvalidStateError;
+	static TypeHandle NotSupportedError;
 	static TypeHandle UnicodeCategory;
 	static TypeHandle BufferViewKind;
 	static TypeHandle HashEntry;

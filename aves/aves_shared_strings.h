@@ -49,6 +49,7 @@ namespace error_strings
 	extern String *FileHandleClosed;
 	extern String *AppendMustBeWriteOnly;
 	extern String *CannotFlushReadOnlyStream;
+	extern String *FileStreamWithNonFile;
 	extern String *EncodingBufferOverrun;
 	extern String *ValueNotInvokable;
 }

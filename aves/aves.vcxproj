@@ -155,6 +155,7 @@
     <ClCompile Include="uint.cpp" />
     <ClCompile Include="utf16encoding.cpp" />
     <ClCompile Include="utf8encoding.cpp" />
+    <ClCompile Include="windows\windows.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

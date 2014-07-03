@@ -3,14 +3,11 @@
 #ifndef AVES__AVES_H
 #define AVES__AVES_H
 
-#ifndef AVES_EXPORTS
-#pragma comment(lib, "aves.lib")
-#endif
-
 #ifdef AVES_EXPORTS
 #define _AVES_API __declspec(dllexport)
 #else
 #define _AVES_API __declspec(dllimport)
+#pragma comment(lib, "aves.lib")
 #endif
 
 #define AVES_API	extern "C" _AVES_API

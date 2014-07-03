@@ -53,8 +53,8 @@ bool Path::IsAbsolute(String *path)
 	const int32_t length = path->length;
 	// If the path begins with a directory separator, or (on Windows) volume name + ':',
 	// the path is considered absolute.
-	if (length >= 1 && (chp[0] == Path::DirSeparator || chp[0] == Path::AltDirSeparator)
-#ifdef _WIN32
+	if (length >= 1 && IsPathSep(chp[0])
+#if OVUM_TARGET == OVUM_WINDOWS
 		|| length >= 2 && chp[1] == Path::VolumeSeparator
 #endif
 		)
@@ -92,6 +92,32 @@ int Path::GetFullPath(ThreadHandle thread, String *path, String **result)
 	} while (retry);
 
 	return *result ? OVUM_SUCCESS : OVUM_ERROR_NO_MEMORY;
+}
+
+int32_t Path::GetRootLength(String *path)
+{
+	int32_t index = 0;
+	int32_t length = path->length;
+	const uchar *chp = &path->firstChar;
+
+#if OVUM_TARGET == OVUM_WINDOWS
+	if (length >= 1 && IsPathSep(chp[0]))
+	{
+		index = 1;
+	}
+	else if (length >= 2 && chp[1] == ':')
+	{
+		// Volume label + ':'
+		index = 2;
+		if (length >= 3 && IsPathSep(chp[2]))
+			index++;
+	}
+#else
+	if (length >= 1 && IsPathSep(chp[0]))
+		index = 1;
+#endif
+
+	return index;
 }
 
 int Path::ValidatePath(ThreadHandle thread, String *path, bool checkWildcards)
@@ -182,14 +208,17 @@ AVES_API BEGIN_NATIVE_FUNCTION(io_Path_join)
 
 		String *path = args[i].common.string;
 		CHECKED(Path::ValidatePath(thread, path, false));
-		if (Path::IsAbsolute(path))
+		if (i == 0 || Path::IsAbsolute(path))
 			SetString(output, path);
 		else
 		{
 			String *outputStr;
 			uchar lastChar = (&output->common.string->firstChar)[output->common.string->length - 1];
-			if (lastChar == Path::DirSeparator ||
-				lastChar == Path::AltDirSeparator)
+			if (Path::IsPathSep(lastChar)
+#if OVUM_TARGET == OVUM_WINDOWS
+				|| lastChar == Path::VolumeSeparator
+#endif
+				)
 				outputStr = String_Concat(thread, output->common.string, path);
 			else
 				outputStr = String_Concat3(thread, output->common.string, _S(Path::DirSeparatorString), path);
@@ -210,6 +239,50 @@ AVES_API BEGIN_NATIVE_FUNCTION(io_Path_getFullPath)
 	String *fullPath;
 	CHECKED(Path::GetFullPath(thread, path, &fullPath));
 	VM_PushString(thread, fullPath);
+}
+END_NATIVE_FUNCTION
+
+AVES_API BEGIN_NATIVE_FUNCTION(io_Path_getFileName)
+{
+	String *path = args[0].common.string;
+	CHECKED(Path::ValidatePath(thread, path, false));
+
+	const uchar *chp = &path->firstChar;
+	for (int32_t i = path->length; --i >= 0; )
+	{
+		uchar ch = chp[i];
+		if (Path::IsPathSep(ch) || ch == Path::VolumeSeparator)
+		{
+			CHECKED_MEM(path = GC_ConstructString(thread, path->length - i - 1, chp + i + 1));
+			VM_PushString(thread, path);
+			RETURN_SUCCESS;
+		}
+	}
+
+	VM_PushString(thread, strings::Empty);
+}
+END_NATIVE_FUNCTION
+
+AVES_API BEGIN_NATIVE_FUNCTION(io_Path_getDirectory)
+{
+	String *path = args[0].common.string;
+	CHECKED(Path::ValidatePath(thread, path, false));
+
+	int32_t root = Path::GetRootLength(path);
+	const uchar *chp = &path->firstChar;
+
+	int32_t i = path->length;
+	if (i > root)
+	{
+		while (i > root && !Path::IsPathSep(chp[--i]))
+			;
+
+		// i points to the path separator; use GC_ConstructString to make
+		// a substring up to (but not including) the path separator
+		CHECKED_MEM(path = GC_ConstructString(thread, i, chp));
+	}
+
+	VM_PushString(thread, path);
 }
 END_NATIVE_FUNCTION
 
