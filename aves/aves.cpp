@@ -19,6 +19,7 @@ namespace type_names
 	LitString<23> ArgumentRangeError = { 23, 0, SFS, AVES,'A','r','g','u','m','e','n','t','R','a','n','g','e','E','r','r','o','r',0 };
 	LitString<22> DuplicateKeyError  = { 22, 0, SFS, AVES,'D','u','p','l','i','c','a','t','e','K','e','y','E','r','r','o','r',0 };
 	LitString<22> InvalidStateError  = { 22, 0, SFS, AVES,'I','n','v','a','l','i','d','S','t','a','t','e','E','r','r','o','r',0 };
+	LitString<22> NotSupportedError  = { 22, 0, SFS, AVES,'N','o','t','S','u','p','p','o','r','t','e','d','E','r','r','o','r',0 };
 	LitString<20> UnicodeCategory    = { 20, 0, SFS, AVES,'U','n','i','c','o','d','e','C','a','t','e','g','o','r','y',0 };
 	LitString<19> BufferViewKind     = { 19, 0, SFS, AVES,'B','u','f','f','e','r','V','i','e','w','K','i','n','d',0 };
 	LitString<14> HashEntry          = { 14, 0, SFS, AVES,'H','a','s','h','E','n','t','r','y',0 };
@@ -40,6 +41,7 @@ TypeHandle Types::ArgumentNullError;
 TypeHandle Types::ArgumentRangeError;
 TypeHandle Types::DuplicateKeyError;
 TypeHandle Types::InvalidStateError;
+TypeHandle Types::NotSupportedError;
 TypeHandle Types::UnicodeCategory;
 TypeHandle Types::BufferViewKind;
 TypeHandle Types::HashEntry;
@@ -64,6 +66,7 @@ AVES_API void CDECL OvumModuleMain(ModuleHandle module)
 	Types::ArgumentRangeError = Module_FindType(module, _S(type_names::ArgumentRangeError), true);
 	Types::DuplicateKeyError  = Module_FindType(module, _S(type_names::DuplicateKeyError),  true);
 	Types::InvalidStateError  = Module_FindType(module, _S(type_names::InvalidStateError),  true);
+	Types::NotSupportedError  = Module_FindType(module, _S(type_names::NotSupportedError),  true);
 	Types::UnicodeCategory    = Module_FindType(module, _S(type_names::UnicodeCategory),    true);
 	Types::BufferViewKind     = Module_FindType(module, _S(type_names::BufferViewKind),     true);
 	Types::HashEntry          = Module_FindType(module, _S(type_names::HashEntry),          true);

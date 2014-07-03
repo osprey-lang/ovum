@@ -63,7 +63,7 @@ namespace strings
 	String *origin   = _S(_origin);
 	String *_call    = _S(__call);
 
-#ifdef _WIN32
+#if OVUM_TARGET == OVUM_WINDOWS
 	LitString<2> _newline = { 2, 0, SFS, '\r','\n',0 };
 #else
 	LitString<1> _newline = { 1, 0, SFS, '\n',0 };
@@ -81,6 +81,7 @@ namespace error_strings
 	LitString<32> _FileHandleClosed = LitString<32>::FromCString("The file handle has been closed.");
 	LitString<54> _AppendMustBeWriteOnly = LitString<54>::FromCString("A file opened for appending must use FileAccess.write.");
 	LitString<32> _CannotFlushReadOnlyStream = LitString<32>::FromCString("Cannot flush a read-only stream.");
+	LitString<63> _FileStreamWithNonFile = LitString<63>::FromCString("A FileStream cannot be used to open a file that is not on disk.");
 	LitString<42> _EncodingBufferOverrun = LitString<42>::FromCString("Cannot write beyond the end of the buffer.");
 	LitString<37> _ValueNotInvokable = LitString<37>::FromCString("The specified value is not invokable.");
 
@@ -91,6 +92,7 @@ namespace error_strings
 	String *FileHandleClosed          = _S(_FileHandleClosed);
 	String *AppendMustBeWriteOnly     = _S(_AppendMustBeWriteOnly);
 	String *CannotFlushReadOnlyStream = _S(_CannotFlushReadOnlyStream);
+	String *FileStreamWithNonFile     = _S(_FileStreamWithNonFile);
 	String *EncodingBufferOverrun     = _S(_EncodingBufferOverrun);
 	String *ValueNotInvokable         = _S(_ValueNotInvokable);
 }

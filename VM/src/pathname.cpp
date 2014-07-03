@@ -159,7 +159,7 @@ uint32_t PathName::GetRootLength(uint32_t length, const pathchar_t *path)
 	uint32_t index = 0;
 
 #if OVUM_TARGET == OVUM_WINDOWS
-	if (length > 1 && IsPathSep(path[0]))
+	if (length >= 1 && IsPathSep(path[0]))
 	{
 		index = 1;
 	}
@@ -171,7 +171,7 @@ uint32_t PathName::GetRootLength(uint32_t length, const pathchar_t *path)
 			index++;
 	}
 #else
-	if (length > 0 && (path[0] == PATH_SEPC || path[0] == PATH_SEPC_ALT))
+	if (length > 0 && IsPathSep(path[0]))
 		index = 1;
 #endif
 

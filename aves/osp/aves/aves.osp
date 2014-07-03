@@ -27,6 +27,7 @@ use "MemoryError.osp";
 use "Method.osp";
 use "MethodIterable.osp";
 use "NoOverloadError.osp";
+use "NotSupportedError.osp";
 use "NullReferenceError.osp";
 use "Object.osp";
 use "OverflowError.osp";

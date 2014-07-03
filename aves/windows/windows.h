@@ -3,6 +3,9 @@
 #ifndef AVES__WINDOWS_H
 #define AVES__WINDOWS_H
 
+// Required by helper functions
+#include <ov_vm.h>
+
 #include <WinSDKVer.h>
 #define _WIN32_WINNT _WIN32_WINNT_WIN7
 
@@ -13,5 +16,12 @@
 
 // Windows header files
 #include <windows.h>
+
+// Helper functions
+namespace win32_helpers
+{
+	String *GetSystemErrorMessage(ThreadHandle thread, DWORD error);
+	String *GetSystemHResultMessage(ThreadHandle thread, HRESULT hr);
+}
 
 #endif // AVES__WINDOWS_H
