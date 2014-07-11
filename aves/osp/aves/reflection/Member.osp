@@ -1,0 +1,35 @@
+namespace aves.reflection;
+
+/// Summary: Represents a single member in a module. The member can be global
+///          or contained within a type; it can be a type, method, field, property,
+///          or other kind of member. The {kind} property can be used to determine
+///          what you are dealing with.
+public abstract class Member
+{
+	/// Summary: Gets the kind of member that is represented by this instance.
+	/// Returns: The member kind, as a {MemberKind}.
+	public abstract get kind;
+
+	/// Summary: Gets the access level of the member.
+	/// Returns: The access level of the member, as an {AccessLevel}.
+	public abstract get accessLevel;
+
+	/// Summary: Gets the name of the member, without qualifying path.
+	/// Returns: The name of the member, as a String.
+	public abstract get name;
+
+	/// Summary: Gets the fully qualified name of the member.
+	/// Returns: The fully qualified name of the member, as a String.
+	public abstract get fullName;
+
+	/// Summary: Gets the type that declares the member, or null if this
+	///          is a global member (such as a global function, global
+	///          constant or type).
+	/// Returns: The type that declares the member, as a {Type}, or null
+	///          if it’s a global member.
+	public abstract get declaringType;
+
+	/// Summary: Gets the module in which the member is declared.
+	/// Returns: The module in which the member is declared, as a {Module}.
+	public abstract get declaringModule;
+}

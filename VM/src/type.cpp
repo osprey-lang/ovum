@@ -70,7 +70,8 @@ Type::Type(int32_t memberCount) :
 	members(memberCount), typeToken(nullptr),
 	size(0), fieldCount(0),
 	getReferences(nullptr), finalizer(nullptr),
-	nativeFieldCapacity(0), nativeFields(nullptr)
+	nativeFieldCapacity(0), nativeFields(nullptr),
+	staticCtorLock(8000)
 {
 	memset(operators, 0, sizeof(MethodOverload*) * OPERATOR_COUNT);
 }
@@ -174,6 +175,63 @@ bool Type::InitStaticFields(Thread *const thread)
 	}
 
 	return true;
+}
+
+int Type::RunStaticCtor(Thread *const thread)
+{
+	int r;
+	staticCtorLock.Enter();
+	// If we've entered this critcal section while the static ctor is running, it can
+	// only mean it's running on this thread, since all other threads are locked out.
+	// This call must have been triggered by one of these conditions:
+	//  1. The static constructor is being initialized (it will likely reference static
+	//     fields of the type).
+	//  2. The static constructor of this type called a method that depends on a static
+	//     field of this type, such as another type's static constructor. In this case,
+	//     the other method will see null fields, which is acceptable; you should never
+	//     expose static fields directly anyway, and generally should avoid cross-deps
+	//     between static members of different types.
+	// In both cases, it's safe to return immediately.
+	if (!HasStaticCtorRun() && !IsStaticCtorRunning())
+	{
+		flags |= TypeFlags::STATIC_CTOR_RUNNING; // prevent infinite recursion
+		if (!InitStaticFields(thread)) // Get some storage locations for the static fields
+		{
+			r = thread->ThrowMemoryError();
+			flags &= ~TypeFlags::STATIC_CTOR_RUNNING;
+			goto leave;
+		}
+		Member *member = GetMember(static_strings::_init);
+		if (member)
+		{
+			// If there is a member '.init', it must be a method!
+			assert((member->flags & MemberFlags::METHOD) == MemberFlags::METHOD);
+
+			MethodOverload *mo = ((Method*)member)->ResolveOverload(0);
+			if (!mo)
+			{
+				r = thread->ThrowNoOverloadError(0);
+				flags &= ~TypeFlags::STATIC_CTOR_RUNNING;
+				goto leave;
+			}
+
+			Value ignore;
+			r = thread->InvokeMethodOverload(mo, 0,
+				thread->currentFrame->evalStack + thread->currentFrame->stackCount,
+				&ignore);
+			if (r != OVUM_SUCCESS)
+			{
+				flags &= ~TypeFlags::STATIC_CTOR_RUNNING;
+				goto leave;
+			}
+		}
+		flags &= ~TypeFlags::STATIC_CTOR_RUNNING;
+		flags |= TypeFlags::STATIC_CTOR_RUN;
+	}
+	r = OVUM_SUCCESS;
+leave:
+	staticCtorLock.Leave();
+	return r;
 }
 
 void Type::AddNativeField(size_t offset, NativeFieldType fieldType)
@@ -371,7 +429,7 @@ int MethodOverload::VerifyRefSignature(uint32_t signature, uint16_t argCount) co
 		ia = 1; // and into argSignature
 
 	int paramCount = (int)this->GetEffectiveParamCount();
-	if ((this->flags & MethodFlags::VARIADIC) != MethodFlags::NONE)
+	if (this->IsVariadic())
 	{
 		if ((this->flags & MethodFlags::VAR_START) != MethodFlags::NONE)
 		{
@@ -487,6 +545,10 @@ OVUM_API TypeHandle Member_GetDeclType(MemberHandle member)
 {
 	return member->declType;
 }
+OVUM_API ModuleHandle Member_GetDeclModule(MemberHandle member)
+{
+	return member->declModule;
+}
 
 OVUM_API bool Member_IsStatic(MemberHandle member)
 {
@@ -521,13 +583,31 @@ OVUM_API PropertyHandle Member_ToProperty(MemberHandle member)
 }
 
 
+OVUM_API bool Method_IsConstructor(MethodHandle method)
+{
+	return (method->flags & MemberFlags::CTOR) == MemberFlags::CTOR;
+}
 OVUM_API int32_t Method_GetOverloadCount(MethodHandle method)
 {
 	return method->overloadCount;
 }
-OVUM_API MethodFlags Method_GetFlags(MethodHandle method, int overloadIndex)
+OVUM_API OverloadHandle Method_GetOverload(MethodHandle method, int32_t index)
 {
-	return method->overloads[overloadIndex].flags;
+	if (index < 0 || index >= method->overloadCount)
+		return nullptr;
+
+	return method->overloads + index;
+}
+OVUM_API int32_t Method_GetOverloads(MethodHandle method, int32_t destSize, OverloadHandle *dest)
+{
+	int32_t count = method->overloadCount;
+	if (count > destSize)
+		count = destSize;
+
+	for (int32_t i = 0; i < count; i++)
+		dest[i] = method->overloads + i;
+
+	return count;
 }
 OVUM_API MethodHandle Method_GetBaseMethod(MethodHandle method)
 {
@@ -546,24 +626,58 @@ OVUM_API OverloadHandle Method_FindOverload(MethodHandle method, int argc)
 }
 
 
+OVUM_API MethodFlags Overload_GetFlags(OverloadHandle overload)
+{
+	return overload->flags;
+}
 OVUM_API int32_t Overload_GetParamCount(OverloadHandle overload)
 {
 	return overload->paramCount;
 }
-OVUM_API int32_t Overload_GetParamInfo(OverloadHandle overload, int32_t destSize, ParamInfo *dest)
+OVUM_API bool Overload_GetParameter(OverloadHandle overload, int32_t index, ParamInfo *dest)
+{
+	if (index < 0 || index >= overload->paramCount)
+		return false;
+
+	dest->name = overload->paramNames[index];
+
+	dest->isOptional = index >= overload->paramCount - overload->optionalParamCount;
+	if (overload->IsVariadic())
+		dest->isVariadic = (overload->flags & MethodFlags::VAR_START) != MethodFlags::NONE ?
+			index == 0 :
+			index == overload->paramCount - 1;
+	else
+		dest->isVariadic = false;
+	RefSignature refs(overload->refSignature);
+	// +1 because the reference signature always reserves the first
+	// slot for the instance, even if the method is static.
+	dest->isByRef = refs.IsParamRef(index + 1);
+
+	return true;
+}
+OVUM_API int32_t Overload_GetAllParameters(OverloadHandle overload, int32_t destSize, ParamInfo *dest)
 {
 	int32_t count = overload->paramCount;
 	if (count > destSize)
 		count = destSize;
+
+	bool isVariadic = overload->IsVariadic();
 
 	RefSignature refs(overload->refSignature);
 	for (int32_t i = 0; i < count; i++)
 	{
 		ParamInfo *pi = dest + i;
 		pi->name = overload->paramNames[i];
-		// +1 because the reference signature always reserves
-		// the first slot for the instance, even if this method
-		// is static
+
+		pi->isOptional = i >= count - overload->optionalParamCount;
+		if (isVariadic)
+			pi->isVariadic = (overload->flags & MethodFlags::VAR_START) != MethodFlags::NONE ?
+				i == 0 :
+				i == count - 1;
+		else
+			pi->isVariadic = false;
+		// +1 because the reference signature always reserves the first
+		// slot for the instance, even if this method is static.
 		pi->isByRef = refs.IsParamRef(i + 1);
 	}
 
@@ -580,26 +694,11 @@ OVUM_API uint32_t Field_GetOffset(FieldHandle field)
 	return field->offset;
 }
 
-OVUM_API bool Field_GetStaticValue(FieldHandle field, Value *result)
-{
-	if (field->staticValue)
-		field->staticValue->Read(result);
-	return field->staticValue != nullptr;
-}
-
-OVUM_API bool Field_SetStaticValue(FieldHandle field, Value value)
-{
-	if (field->staticValue != nullptr)
-		field->staticValue->Write(value);
-	return field->staticValue != nullptr;
-}
-
 
 OVUM_API MethodHandle Property_GetGetter(PropertyHandle prop)
 {
 	return prop->getter;
 }
-
 OVUM_API MethodHandle Property_GetSetter(PropertyHandle prop)
 {
 	return prop->setter;

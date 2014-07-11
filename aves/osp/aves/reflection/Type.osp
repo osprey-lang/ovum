@@ -1,38 +1,245 @@
 namespace aves.reflection;
 
-public class Type
+public class Type is Member
 {
 	__init_type("aves_reflection_Type_init");
 
 	private new();
 
-	public get name
+	private get handle						__extern("aves_reflection_Type_get_handle");
+
+	override get kind = MemberKind.type;
+
+	override get accessLevel
 	{
-		var fullName = this.fullName;
-
-		var i = fullName.length - 1;
-		while i >= 0 and fullName[i] != '.':
-			i -= 1;
-
-		if i == -1:
-			return fullName;
-		return fullName.substr(i + 1);
+		if isPrivate:
+			return AccessLevel.isPrivate;
+		return AccessLevel.isPublic;
 	}
 
-	public get fullName						__extern("aves_reflection_Type_get_fullName");
+	private get _name						__extern("aves_reflection_Type_get_f_name");
+	private set _name						__extern("aves_reflection_Type_set_f_name");
 
+	override get name
+	{
+		// Possible race condition: 'name' could be read by multiple thread
+		// before _name has been initialized. However, fullName is immutable,
+		// so the code below will only ever produce the same string value.
+		// Worst case, we allocate an extra string or two, but the type name
+		// is almost certainly a tiny string anyway.
+		if _name is null:
+			_name = helpers.getLastComponent(fullName);
+		return _name;
+	}
+
+	override get fullName					__extern("aves_reflection_Type_get_fullName");
+
+	override get declaringType = null;
+
+	override get declaringModule
+	{
+		// Not implemented just yet
+		throw new NotSupportedError();
+	}
+
+	/// Summary: Gets the base type of this type, or null if it has none.
+	/// Returns: This type’s base type as a {Type}, or null if it has none.
 	public get baseType						__extern("aves_reflection_Type_get_baseType");
 
+	/// Summary: Gets a value that indicates whether the type is public.
+	/// Returns: True if the type is public; otherwise, false.
+	public get isPublic = not isPrivate;
+
+	/// Summary: Gets a value that indicates whether the type is private
+	///          (that is, internal to the module).
+	/// Returns: True if the type is private; otherwise, false.
+	public get isPrivate					__extern("aves_reflection_Type_get_isPrivate");
+
+	/// Summary: Gets a value that indicates whether the type is abstract.
+	/// Returns: True if the type is abstract; otherwise, false.
+	public get isAbstract					__extern("aves_reflection_Type_get_isAbstract");
+
+	/// Summary: Gets a value that indicates whether the type is inheritable.
+	/// Returns: True if the type is inheritable; otherwise, false.
+	public get isInheritable				__extern("aves_reflection_Type_get_isInheritable");
+
+	/// Summary: Gets a value that indicates whether the type is static.
+	/// Returns: True if the type is static; otherwise, false.
+	/// Remarks: It is not possible to create instances of a static type.
+	///          They act only as containers for static methods, static fields,
+	///          static properties and constants. Static types differ from
+	///          namespaces in their support for properties and fields, as
+	///          well as being able to declare private members.
+	public get isStatic                     __extern("aves_reflection_Type_get_isStatic");
+
+	/// Summary: Gets a value that indicates whether the type is primitive.
+	/// Returns: True if the type is primitive; otherwise, false.
+	public get isPrimitive					__extern("aves_reflection_Type_get_isPrimitive");
+
+	/// Summary: Determines whether instances of the type support iteration.
+	///          Such instances represent collections and can be used with
+	///          `for-in` statements as well as with in expressions like
+	///          `x.iter`.
+	/// Returns: True if instances of the type support iteration; otherwise,
+	///          false.
+	/// Remarks: A type supports iteration if it declares or inherits a public
+	///          method with the name “`.iter`”, which contains an overload that
+	///          takes zero arguments.
+	///
+	///          Additionally, to be used in `for-in` statements and `x.iter`
+	///          expressions, that method must return an instance of {Iterator}.
+	///          This property cannot verify that the method returns such an
+	///          object. The property only checks for the presence of a method
+	///          matching the above description.
+	public get canIterate					__extern("aves_reflection_Type_get_canIterate");
+
+	/// Summary: Creates an instance of the type, by invoking the public instance
+	///          constructor that matches the specified argument list.
+	/// Param arguments:
+	///          A List of arguments to pass to the constructor. If this argument
+	///          is null, it is treated as an empty List.
+	/// Returns: The newly constructed instance.
+	/// Throws TypeError:
+	///          {arguments} is not null and is not a {List}.
+	/// Throws NoOverloadError:
+	///          The instance constructor contains no overload that accepts the
+	///          specified arguments.
+	/// Throws InvalidStateError:
+	///          The type is static, abstract or primitive, or has no public
+	///          instance constructor.
+	public createInstance(arguments)
+	{
+		return createInstance(arguments, false);
+	}
+	/// Summary: Creates an instance of the type, by invoking the instance constructor
+	///          that matches the specified argument list.
+	/// Param arguments:
+	///          A List of arguments to pass to the constructor. If this argument
+	///          is null, it is treated as an empty List.
+	/// Param nonPublic:
+	///          True to allow the method to call private and protected instance
+	///          constructors. If false, only public constructors will be called.
+	/// Returns: The newly constructed instance.
+	/// Throws TypeError:
+	///          {arguments} is not null and is not a {List}.
+	/// Throws NoOverloadError:
+	///          The instance constructor contains no overload that accepts the
+	///          specified arguments.
+	/// Throws InvalidStateError:
+	///          The type is static, abstract or primitive, or {nonPublic} is false and
+	///          the type has no public instance constructor.
+	public createInstance(arguments, nonPublic)
+	{
+		if isStatic or isAbstract or isPrimitive:
+			throw new InvalidStateError("Cannot create an instance of a static, abstract or primitive type.");
+		if arguments is not null and arguments is not List:
+			throw new TypeError("arguments must be an aves.List or null.");
+
+		return createInstanceInternal(arguments, bool(nonPublic));
+	}
+
+	private createInstanceInternal(arguments, nonPublic)	__extern("aves_reflection_Type_createInstance");
+
+	/// Summary: Determines whether this type equals or inherits from another
+	///          type.
+	/// Param type: The {Type} instance to test against.
+	/// Returns: True if this type is the same as {type} or inherits from it;
+	///          otherwise, false.
+	/// Remarks: `typeof(x).inheritsFrom(typeof(T))`, where `T` is a type name,
+	///          is functionally equivalent to `x is T`. Prefer using the `is`
+	///          operator whenever possible.
 	public inheritsFrom(type)
 	{
 		if type is not Type:
-			throw new TypeError("type must be an instance of aves.Type.");
+			throw new TypeError("type must be an instance of aves.reflection.Type.");
 		return inheritsFromInternal(type);
 	}
 	private inheritsFromInternal(type)		__extern("aves_reflection_Type_inheritsFromInternal");
+
+	public getField(name)
+	{
+		return getField(string(name), defaultSearchFlags);
+	}
+	public getField(name, flags)			__extern("aves_reflection_Type_getField");
+
+	public getFields()
+	{
+		return getFields(defaultSearchFlags);
+	}
+	public getFields(flags)					__extern("aves_reflection_Type_getFields", locals=1);
+
+	public getMethod(name)
+	{
+		return getMethod(name, defaultSearchFlags);
+	}
+	public getMethod(name, flags)			__extern("aves_reflection_Type_getMethod");
+
+	public getMethods()
+	{
+		return getMethods(defaultSearchFlags);
+	}
+	public getMethods(flags)				__extern("aves_reflection_Type_getMethods", locals=1);
+
+	public getProperty(name)
+	{
+		return getProperty(name, defaultSearchFlags);
+	}
+	public getProperty(name, flags)			__extern("aves_reflection_Type_getProperty");
+
+	public getProperties()
+	{
+		return getProperties(defaultSearchFlags);
+	}
+	public getProperties(flags)				__extern("aves_reflection_Type_getProperties", locals=1);
+
+	public getMember(name)
+	{
+		return getMember(name, defaultSearchFlags);
+	}
+	public getMember(name, flags)			__extern("aves_reflection_Type_getMember");
+
+	public getMembers()
+	{
+		return getMembers(defaultSearchFlags);
+	}
+	public getMembers(flags)				__extern("aves_reflection_Type_getMembers", locals=1);
 
 	override toString()
 	{
 		return "<Type {0}>".format([fullName]);
 	}
+
+	operator ==(a, b)
+	{
+		return b is Type and a.handle == b.handle;
+	}
+
+	private const defaultSearchFlags =
+		MemberSearchFlags.isPublic |
+		MemberSearchFlags.isStatic |
+		MemberSearchFlags.isInstance;
+}
+
+public enum set MemberSearchFlags
+{
+	// These values must be synchronised with aves_type.h
+	none = 0,
+
+	/// Summary: Includes public members in the search.
+	isPublic     = 0x01,
+	/// Summary: Includes non-public members in the search.
+	///          This means protected and private members.
+	isNonPublic  = 0x02,
+	/// Summary: Includes instance members in the search.
+	isInstance   = 0x04,
+	/// Summary: Includes static members in the search.
+	isStatic     = 0x08,
+	/// Summary: Excludes inherited members from the search. Only members
+	///          declared in the type are considered.
+	declaredOnly = 0x10,
+
+	/// Summary: Combines the flags {isPublic}, {isNonPublic}, {isInstance}
+	///          and {isStatic}, thus specifying all members. This value can
+	///          be combined with the flag {declaredOnly}.
+	all = isPublic | isNonPublic | isInstance | isStatic,
 }

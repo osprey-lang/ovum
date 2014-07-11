@@ -135,6 +135,24 @@
     <ClInclude Include="windows\windows.h">
       <Filter>Header Files\Windows</Filter>
     </ClInclude>
+    <ClInclude Include="aves_nativehandle.h">
+      <Filter>Header Files\aves\reflection</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_field.h">
+      <Filter>Header Files\aves\reflection</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_overload.h">
+      <Filter>Header Files\aves\reflection</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_methodbase.h">
+      <Filter>Header Files\aves\reflection</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_property.h">
+      <Filter>Header Files\aves\reflection</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_module.h">
+      <Filter>Header Files\aves\reflection</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="aves.cpp">
@@ -232,6 +250,24 @@
     </ClCompile>
     <ClCompile Include="windows\windows.cpp">
       <Filter>Source Files\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="nativehandle.cpp">
+      <Filter>Source Files\aves\reflection</Filter>
+    </ClCompile>
+    <ClCompile Include="field.cpp">
+      <Filter>Source Files\aves\reflection</Filter>
+    </ClCompile>
+    <ClCompile Include="overload.cpp">
+      <Filter>Source Files\aves\reflection</Filter>
+    </ClCompile>
+    <ClCompile Include="methodbase.cpp">
+      <Filter>Source Files\aves\reflection</Filter>
+    </ClCompile>
+    <ClCompile Include="property.cpp">
+      <Filter>Source Files\aves\reflection</Filter>
+    </ClCompile>
+    <ClCompile Include="module.cpp">
+      <Filter>Source Files\aves\reflection</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

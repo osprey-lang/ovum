@@ -4,6 +4,7 @@
 #define VM__TYPE_INTERNAL_H
 
 #include "ov_vm.internal.h"
+#include "sync.internal.h"
 #include <cassert>
 
 enum class MemberFlags : uint32_t
@@ -23,6 +24,9 @@ enum class MemberFlags : uint32_t
 	PROTECTED = 0x0020,
 	// The member is private.
 	PRIVATE   = 0x0040,
+
+	// The member is a constructor.
+	CTOR      = 0x0100,
 
 	// The member is an instance member.
 	INSTANCE  = 0x0400,
@@ -231,7 +235,7 @@ public:
 
 	inline const bool Accepts(uint16_t argc) const
 	{
-		if ((flags & MethodFlags::VARIADIC) != MethodFlags::NONE)
+		if (IsVariadic())
 			return argc >= paramCount - 1;
 		else
 			return argc >= paramCount - optionalParamCount &&
@@ -247,6 +251,11 @@ public:
 	inline unsigned int GetEffectiveParamCount() const
 	{
 		return paramCount + InstanceOffset();
+	}
+
+	inline bool IsVariadic() const
+	{
+		return (flags & MethodFlags::VARIADIC) != MethodFlags::NONE;
 	}
 
 	inline bool IsInstanceMethod() const
@@ -411,6 +420,8 @@ public:
 	// then the type does not implement that operator.
 	MethodOverload *operators[OPERATOR_COUNT];
 
+	CriticalSection staticCtorLock;
+
 	int GetTypeToken(Thread *const thread, Value *result);
 
 	inline bool IsPrimitive() const
@@ -421,9 +432,18 @@ public:
 	{
 		return (flags & TypeFlags::HAS_FINALIZER) == TypeFlags::HAS_FINALIZER;
 	}
+	inline bool HasStaticCtorRun() const
+	{
+		return (flags & TypeFlags::STATIC_CTOR_RUN) == TypeFlags::STATIC_CTOR_RUN;
+	}
+	inline bool IsStaticCtorRunning() const
+	{
+		return (flags & TypeFlags::STATIC_CTOR_RUNNING) == TypeFlags::STATIC_CTOR_RUNNING;
+	}
 
 	void InitOperators();
 	bool InitStaticFields(Thread *const thread);
+	int RunStaticCtor(Thread *const thread);
 
 	void AddNativeField(size_t offset, NativeFieldType fieldType);
 

@@ -1,0 +1,205 @@
+namespace aves.reflection;
+
+// This class contains the base implementation of aves.reflection.Method and
+// aves.reflection.Constructor. Internally, they're both represented by a
+// MethodHandle, but externally they do behave slightly differently. MethodBase
+// abstracts away all the commonalities.
+//
+// Note that aves.reflection.Method is also used for global functions, which
+// are also MethodHandles internally.
+
+/// Summary: Contains the base implementation of all method members.
+///
+///          A method member represents a group of {Overload}s with the same name.
+///          To obtain information about a specific overload within the method, call
+///          {getOverload}. Alternatively, you can get a list of all overloads in
+///          the method from {getOverloads}.
+public abstract class MethodBase is Member
+{
+	__init_type("aves_reflection_MethodBase_init");
+
+	protected new(handle)				__extern("aves_reflection_MethodBase_new");
+
+	// Don't override Member.kind; implementations of MethodBase should provide it.
+
+	override get accessLevel			__extern("aves_reflection_MethodBase_get_accessLevel");
+
+	private get handle					__extern("aves_reflection_MethodBase_get_handle");
+
+	// For global functions, gets the full name; for class methods, the last component.
+	// This is basically whatever Ovum's Member_GetName returns for the MethodHandle.
+	private get internalName			__extern("aves_reflection_MethodBase_get_internalName");
+
+	// cachedName contains either name (if isGlobal) or fullName (if not)
+	private get cachedName				__extern("aves_reflection_MethodBase_get_cachedName");
+	private set cachedName				__extern("aves_reflection_MethodBase_set_cachedName");
+
+	override get name
+	{
+		if isGlobal
+		{
+			if cachedName is null:
+				cachedName = helpers.getLastComponent(internalName);
+			return cachedName;
+		}
+		return internalName;
+	}
+
+	override get fullName
+	{
+		if not isGlobal
+		{
+			if cachedName is null:
+				cachedName = declaringType.fullName :: "." :: internalName;
+			return cachedName;
+		}
+		return internalName;
+	}
+
+	override get declaringType			__extern("aves_reflection_MethodBase_get_declaringType");
+
+	override get declaringModule		//__extern("aves_reflection_MethodBase_get_declaringModule");
+	{
+		// Not implemented just yet
+		throw new NotSupportedError();
+	}
+
+	/// Summary: Gets a value that indicates whether the method is public.
+	/// Returns: True if the method is public; otherwise, false.
+	public get isPublic = accessLevel == AccessLevel.isPublic;
+
+	/// Summary: Gets a value that indicates whether the method is protected.
+	/// Returns: True if the method is protected; otherwise, false.
+	public get isProtected = accessLevel == AccessLevel.isProtected;
+
+	/// Summary: Gets a value that indicates whether the method is private.
+	/// Returns: True if the method is private; otherwise, false.
+	public get isPrivate = accessLevel == AccessLevel.isPrivate;
+
+	/// Summary: Gets a value that indicates whether the method is a global function.
+	/// Returns: True if the method is global; otherwise, false.
+	public get isGlobal					__extern("aves_reflection_MethodBase_get_isGlobal");
+
+	/// Summary: Gets a value that indicates whether the method is static.
+	/// Returns: True if the method is static; otherwise, false.
+	public get isStatic					__extern("aves_reflection_MethodBase_get_isStatic");
+
+	/// Summary: Gets a value that indicates whether the method is a constructor.
+	/// Returns: True if the method is a constructor; otherwise, false.
+	public get isConstructor			__extern("aves_reflection_MethodBase_get_isConstructor");
+
+	/// Summary: Gets a value that indicates whether the method has the `impl` flag.
+	///          A method with this flag is typically an internal implementation detail,
+	///          such as property accessor or an operator method.
+	/// Returns: True if the method has the `impl` flag; otherwise, false.
+	public get isImpl					__extern("aves_reflection_MethodBase_get_isImpl");
+
+	/// Summary: Gets the total number of overloads the method has.
+	/// Returns: The total number of overloads in the method, as an Int.
+	public get overloadCount			__extern("aves_reflection_MethodBase_get_overloadCount");
+
+	private getOverloadHandle(index)	__extern("aves_reflection_MethodBase_getOverloadHandle");
+
+	/// Summary: Gets the overload at the specified index.
+	/// Param index: The index of the overload to get. (Int, UInt or Real)
+	/// Returns: An {Overload} object for the overload at the specified index.
+	/// Throws ArgumentRangeError:
+	///          {index} is less than zero, or is greater than or equal to {overloadCount}.
+	public getOverload(index)
+	{
+		if index < 0 or index >= overloadCount:
+			throw new ArgumentRangeError("index");
+
+		return new Overload(getOverloadHandle(index), this, index);
+	}
+
+	/// Summary: Gets a list of all the overloads in the method.
+	/// Returns: A List of {Overload} objects for each overload in the method.
+	public getOverloads()
+	{
+		var output = new List(overloadCount);
+		for i in [0 to overloadCount - 1]:
+			output.add(new Overload(getOverloadHandle(i), this, i));
+
+		return output;
+	}
+
+	/// Summary: Invokes the method on the specified instance and with the specified
+	///          arguments. The instance must be of the method’s declaring type or of
+	///          a type derived from it.
+	/// Param instance:
+	///          The instance on which the method is invoked. If the method is static
+	///          or is a global function, this value is ignored.
+	/// Param arguments:
+	///          A List of arguments to pass to the method. If this value is null, it
+	///          is treated as an empty list.
+	/// Returns: The return value of the invocation.
+	/// Throws ArgumentNullError:
+	///          The method is an instance method and {instance} is null.
+	/// Throws TypeError:
+	///          {instance} is not of the method’s declaring type or of a type derived
+	///          from it.
+	///
+	///          {arguments} is not null and is not a List.
+	/// Throws NoOverloadError:
+	///          The method contains no overload that accepts the specified arguments.
+	public overridable invoke(instance, arguments)
+	{
+		if not isStatic
+		{
+			if instance is null:
+				throw new ArgumentNullError("instance");
+			if not typeof(instance).inheritsFrom(declaringType):
+				throw new TypeError();
+		}
+		if arguments is not null and arguments is not List:
+			throw new TypeError("arguments must be an aves.List.");
+		return invokeInternal(instance, arguments);
+	}
+	private invokeInternal(inst, args)		__extern("aves_reflection_MethodBase_invoke");
+
+	abstract override toString();
+
+	operator ==(a, b)
+	{
+		return b is MethodBase and a.handle == b.handle;
+	}
+}
+
+// Note: Method and Constructor do not require __init_type, as they do not
+// declare any fields of their own; they only use things in MethodBase.
+
+public class Method is MethodBase
+{
+	public new(handle)
+	{
+		new base(handle);
+	}
+
+	override get kind = MemberKind.method;
+
+	/// Summary: If this method overloads or overrides an inherited method,
+	///          this property gets a reference to that method. Otherwise,
+	///          returns null.
+	public get baseMethod					__extern("aves_reflection_Method_get_baseMethod");
+
+	override toString()
+	{
+		return "<Method {0}>".format([fullName]);
+	}
+}
+
+public class Constructor is MethodBase
+{
+	public new(handle)
+	{
+		new base(handle);
+	}
+
+	override get kind = MemberKind.constructor;
+
+	override toString()
+	{
+		return "<Constructor of {0}>".format([declaringType.fullName]);
+	}
+}

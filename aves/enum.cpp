@@ -17,12 +17,15 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Enum_toString)
 	while (iter.MoveNext())
 	{
 		FieldHandle field = Member_ToField(iter.Current());
-		Value value;
-		if (field && Field_GetStaticValue(field, &value) &&
-			value.type == thisType && value.integer == THISV.integer)
+		if (field)
 		{
-			VM_PushString(thread, Member_GetName((MemberHandle)field));
-			RETURN_SUCCESS;
+			Value value;
+			CHECKED(VM_LoadStaticField(thread, field, &value));
+			if (value.type == thisType && value.integer == THISV.integer)
+			{
+				VM_PushString(thread, Member_GetName((MemberHandle)field));
+				RETURN_SUCCESS;
+			}
 		}
 	}
 
@@ -82,33 +85,36 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_EnumSet_toString)
 	while (iter.MoveNext())
 	{
 		FieldHandle field = Member_ToField(iter.Current());
-		Value value;
-		if (field && Field_GetStaticValue(field, &value) &&
-			value.type == thisType)
+		if (field)
 		{
-			// If the value matches THISV.integer entirely, we always
-			// prefer the name of that field.
-			if (THISV.integer == value.integer)
+			Value value;
+			CHECKED(VM_LoadStaticField(thread, field, &value));
+			if (value.type == thisType)
 			{
-				// Don't append the string to the buffer; we don't want
-				// to allocate a whole new string for it upon returning.
-				VM_PushString(thread, Member_GetName((MemberHandle)field));
-				RETURN_SUCCESS; // Done!
-			}
-			// Let's see if the value matches any of the remaining flags,
-			// and no other
-			else if ((remainingFlags & value.integer) != 0 &&
-				(~remainingFlags & value.integer) == 0)
-			{
-				// value.integer covers some or all of the remaining flags,
-				// so let's append the name of that field!
-				if (buf.GetLength() > 0)
-					CHECKED_MEM(buf.Append(3, " | "));
-				CHECKED_MEM(buf.Append(Member_GetName((MemberHandle)field)));
-				remainingFlags &= ~(remainingFlags & value.integer);
+				// If the value matches THISV.integer entirely, we always
+				// prefer the name of that field.
+				if (THISV.integer == value.integer)
+				{
+					// Don't append the string to the buffer; we don't want
+					// to allocate a whole new string for it upon returning.
+					VM_PushString(thread, Member_GetName((MemberHandle)field));
+					RETURN_SUCCESS; // Done!
+				}
+				// Let's see if the value matches any of the remaining flags,
+				// and no other
+				else if ((remainingFlags & value.integer) != 0 &&
+					(~remainingFlags & value.integer) == 0)
+				{
+					// value.integer covers some or all of the remaining flags,
+					// so let's append the name of that field!
+					if (buf.GetLength() > 0)
+						CHECKED_MEM(buf.Append(3, " | "));
+					CHECKED_MEM(buf.Append(Member_GetName((MemberHandle)field)));
+					remainingFlags &= ~(remainingFlags & value.integer);
 
-				if (remainingFlags == 0)
-					break; // Done!
+					if (remainingFlags == 0)
+						break; // Done!
+				}
 			}
 		}
 	}

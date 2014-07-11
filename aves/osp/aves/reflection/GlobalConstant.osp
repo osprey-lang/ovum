@@ -1,0 +1,70 @@
+namespace aves.reflection;
+
+public class GlobalConstant is Member
+{
+	// This constructor is private so that only the native code
+	// of Module can construct a GlobalConstant.
+
+	private new(module, isInternal, fullName, value)
+	{
+		if module is not Module or fullName is not String:
+			throw new TypeError();
+
+		_module     = module;
+		_isInternal = bool(isInternal);
+		_fullName   = fullName;
+		_value      = value;
+	}
+
+	private _module;
+	private _isInternal;
+	private _fullName;
+	private _name;
+	private _value;
+
+	override get kind = MemberKind.globalConstant;
+
+	override get accessLevel
+	{
+		if isPrivate:
+			return AccessLevel.isPrivate;
+		return AccessLevel.isPublic;
+	}
+
+	override get name
+	{
+		if _name is null:
+			_name = helpers.getLastComponent(fullName);
+		return _name;
+	}
+
+	override get fullName = _fullName;
+
+	override get declaringType = null;
+
+	override get declaringModule = _module;
+
+	/// Summary: Gets a value that indicates whether the constant is public.
+	/// Returns: True if the constant is public; otherwise, false.
+	public get isPublic = not _isInternal;
+
+	/// Summary: Gets a value that indicates whether the constant is private
+	///          (that is, internal to the module).
+	/// Returns: True if the constant is private; otherwise, false.
+	public get isPrivate = _isInternal;
+
+	/// Summary: Gets the value associated of the constant.
+	/// Returns: The value of the constant.
+	public get value = _value;
+
+	override toString()
+	{
+		return "<GlobalConstant {0}>".format([fullName]);
+	}
+
+	operator ==(a, b)
+	{
+		return b is GlobalConstant and
+			a._module == b._module and a._fullName == b._fullName;
+	}
+}

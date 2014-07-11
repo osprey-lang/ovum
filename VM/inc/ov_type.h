@@ -33,6 +33,7 @@ enum class MemberAccess
 OVUM_API MemberKind Member_GetKind(MemberHandle member);
 OVUM_API MemberAccess Member_GetAccessLevel(MemberHandle member);
 OVUM_API TypeHandle Member_GetDeclType(MemberHandle member);
+OVUM_API ModuleHandle Member_GetDeclModule(MemberHandle member);
 
 OVUM_API bool Member_IsStatic(MemberHandle member);
 OVUM_API bool Member_IsImpl(MemberHandle member);
@@ -41,6 +42,18 @@ OVUM_API bool Member_IsAccessible(MemberHandle member, TypeHandle instType, Type
 OVUM_API MethodHandle Member_ToMethod(MemberHandle member);
 OVUM_API FieldHandle Member_ToField(MemberHandle member);
 OVUM_API PropertyHandle Member_ToProperty(MemberHandle member);
+
+
+OVUM_API bool Method_IsConstructor(MethodHandle method);
+OVUM_API int32_t Method_GetOverloadCount(MethodHandle method);
+OVUM_API OverloadHandle Method_GetOverload(MethodHandle method, int32_t index);
+OVUM_API int32_t Method_GetOverloads(MethodHandle method, int32_t destSize, OverloadHandle *dest);
+OVUM_API MethodHandle Method_GetBaseMethod(MethodHandle method);
+
+// Determines whether any overload in the method accepts the given number of arguments.
+// For instance methods, this does NOT include the instance.
+OVUM_API bool Method_Accepts(MethodHandle method, int argc);
+OVUM_API OverloadHandle Method_FindOverload(MethodHandle method, int argc);
 
 
 enum class MethodFlags : int32_t
@@ -75,20 +88,13 @@ enum class MethodFlags : int32_t
 };
 ENUM_OPS(MethodFlags, int32_t);
 
-OVUM_API int32_t Method_GetOverloadCount(MethodHandle method);
-OVUM_API int32_t Method_GetOverloads(MethodHandle method, int32_t destSize, OverloadHandle *dest);
-OVUM_API MethodFlags Method_GetFlags(MethodHandle method, int overloadIndex);
-OVUM_API MethodHandle Method_GetBaseMethod(MethodHandle method);
-
-// Determines whether any overload in the method accepts the given number of arguments.
-// For instance methods, this does NOT include the instance.
-OVUM_API bool Method_Accepts(MethodHandle method, int argc);
-OVUM_API OverloadHandle Method_FindOverload(MethodHandle method, int argc);
-
+OVUM_API MethodFlags Overload_GetFlags(OverloadHandle overload);
 
 typedef struct ParamInfo_S
 {
 	String *name;
+	bool isOptional;
+	bool isVariadic;
 	bool isByRef;
 } ParamInfo;
 
@@ -96,7 +102,19 @@ typedef struct ParamInfo_S
 // The count does not include the 'this' parameter if the overload
 // is in an instance method.
 OVUM_API int32_t Overload_GetParamCount(OverloadHandle overload);
-// Gets metadata about the parameters in the specified overload.
+// Gets metadata about a specific parameter in the specified overload.
+//
+// Returns true if there is a parameter at the specified index; otherwise, false.
+//
+// Parameters:
+//   overload:
+//     The method overload to get parameter info from.
+//   index:
+//     The index of the parameter to get metadata for.
+//   dest:
+//     The destination buffer.
+OVUM_API bool Overload_GetParameter(OverloadHandle overload, int32_t index, ParamInfo *dest);
+// Gets metadata about all the parameters in the specified overload.
 //
 // Returns the number of ParamInfo items that were written into 'dest'.
 //
@@ -107,14 +125,12 @@ OVUM_API int32_t Overload_GetParamCount(OverloadHandle overload);
 //     The size of the destination buffer, in number of ParamInfo items.
 //   dest:
 //     The destination buffer.
-OVUM_API int32_t Overload_GetParamInfo(OverloadHandle overload, int32_t destSize, ParamInfo *dest);
+OVUM_API int32_t Overload_GetAllParameters(OverloadHandle overload, int32_t destSize, ParamInfo *dest);
 // Gets a handle to an overload's containing method.
 OVUM_API MethodHandle Overload_GetMethod(OverloadHandle overload);
 
 
 OVUM_API uint32_t Field_GetOffset(FieldHandle field);
-OVUM_API bool Field_GetStaticValue(FieldHandle field, Value *result);
-OVUM_API bool Field_SetStaticValue(FieldHandle field, Value value);
 
 
 OVUM_API MethodHandle Property_GetGetter(PropertyHandle prop);
@@ -167,6 +183,7 @@ inline unsigned int Arity(Operator op)
 //         OPS_INITED
 //         INITED
 //         STATIC_CTOR_RUN
+//         STATIC_CTOR_RUNNING
 //         HAS_FINALIZER
 enum class TypeFlags : uint32_t
 {
@@ -191,15 +208,18 @@ enum class TypeFlags : uint32_t
 	// The type does not use a standard Value array for its fields.
 	// This is used only by the GC during collection.
 	CUSTOMPTR       = 0x0020,
+
 	// Internal use only. If set, the type's operators have been initialized.
-	OPS_INITED      = 0x0040,
+	OPS_INITED          = 0x0040,
 	// Internal use only. If set, the type has been initialised.
-	INITED          = 0x0080,
+	INITED              = 0x0080,
 	// Internal use only. If set, the static constructor for the type has been run.
-	STATIC_CTOR_RUN = 0x0100,
+	STATIC_CTOR_RUN     = 0x0100,
+	// Internal use only. If set, the static constructor is currently running.
+	STATIC_CTOR_RUNNING = 0x0200,
 	// Internal use only. If set, the type or any of its base types has a finalizer,
 	// which must be run before the value is collected.
-	HAS_FINALIZER   = 0x0200,
+	HAS_FINALIZER       = 0x0400,
 };
 ENUM_OPS(TypeFlags, uint32_t);
 

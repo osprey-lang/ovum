@@ -1,0 +1,22 @@
+namespace aves.reflection;
+
+// These values must be synchronsied with the MemberAccess enum in Ovum.
+
+/// Summary: Specifies the access level of a member.
+public enum AccessLevel
+{
+	/// Summary: Specifies an invalid access level.
+	invalid = -1,
+
+	/// Summary: The member is public.
+	isPublic = 0,
+
+	/// Summary: The member is protected.
+	/// Remarks: This value is not valid on global members.
+	isProtected = 1,
+
+	/// Summary: The member is private.
+	/// Remarks: On global members, this value indicates that the member
+	///          is internal to the module.
+	isPrivate = 2,
+}

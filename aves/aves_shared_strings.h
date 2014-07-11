@@ -35,7 +35,16 @@ namespace strings
 	extern String *access;
 	extern String *share;
 	extern String *origin;
+	extern String *handle;
+	extern String *flags;
+	extern String *overload;
+	extern String *major;
+	extern String *minor;
+	extern String *build;
+	extern String *revision;
 	extern String *_call; // .call
+	extern String *_iter; // .iter
+	extern String *_new;  // .new
 	
 	extern String *newline;
 }
