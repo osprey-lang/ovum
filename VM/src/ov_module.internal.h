@@ -14,6 +14,7 @@ class ModuleMember
 {
 public:
 	ModuleMemberFlags flags;
+	String *name;
 	union
 	{
 		Type   *type;
@@ -22,16 +23,19 @@ public:
 	};
 
 	inline ModuleMember() :
-		flags(ModuleMemberFlags::NONE)
+		flags(ModuleMemberFlags::NONE), name(nullptr)
 	{ }
 	inline ModuleMember(Type *type, bool isInternal) :
-		type(type), flags(ModuleMemberFlags::TYPE | (isInternal ? ModuleMemberFlags::INTERNAL : ModuleMemberFlags::PUBLIC))
+		type(type), name(type->fullName),
+		flags(ModuleMemberFlags::TYPE | (isInternal ? ModuleMemberFlags::INTERNAL : ModuleMemberFlags::PUBLIC))
 	{ }
 	inline ModuleMember(Method *function, bool isInternal) :
-		function(function), flags(ModuleMemberFlags::FUNCTION | (isInternal ? ModuleMemberFlags::INTERNAL : ModuleMemberFlags::PUBLIC))
+		function(function), name(function->name),
+		flags(ModuleMemberFlags::FUNCTION | (isInternal ? ModuleMemberFlags::INTERNAL : ModuleMemberFlags::PUBLIC))
 	{ }
-	inline ModuleMember(Value value, bool isInternal) :
-		constant(value), flags(ModuleMemberFlags::CONSTANT | (isInternal ? ModuleMemberFlags::INTERNAL : ModuleMemberFlags::PUBLIC))
+	inline ModuleMember(String *name, Value value, bool isInternal) :
+		constant(value), name(name),
+		flags(ModuleMemberFlags::CONSTANT | (isInternal ? ModuleMemberFlags::INTERNAL : ModuleMemberFlags::PUBLIC))
 	{ }
 };
 
@@ -271,6 +275,18 @@ private:
 	MemberTable<Field *> fieldRefs;    // Field references
 	MemberTable<Method*> methodRefs;   // Class method references
 
+public:
+	inline int32_t GetMemberCount() const
+	{
+		return members.GetCount();
+	}
+
+	inline bool GetMemberByIndex(int32_t index, ModuleMember &result) const
+	{
+		return members.GetByIndex(index, result);
+	}
+
+private:
 	void LoadNativeLibrary(String *nativeFileName, const PathName &path);
 	void *FindNativeEntryPoint(const char *name) const;
 	void FreeNativeLibrary();
@@ -278,7 +294,6 @@ private:
 	static Pool *loadedModules;
 	static const char *const NativeModuleIniterName;
 
-private:
 	static bool FileExists(const PathName &path);
 
 	static void VerifyMagicNumber(ModuleReader &reader);

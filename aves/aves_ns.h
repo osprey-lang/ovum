@@ -28,6 +28,21 @@ public:
 	static TypeHandle ConsoleColor;
 	static TypeHandle ConsoleKey;
 	static TypeHandle ConsoleKeyCode;
+	static TypeHandle Version;
+
+	static struct Reflection
+	{
+		TypeHandle AccessLevel;
+		TypeHandle Field;
+		TypeHandle Method;
+		TypeHandle Property;
+		TypeHandle Constructor;
+		TypeHandle Overload;
+		TypeHandle GlobalConstant;
+		TypeHandle NativeHandle;
+		TypeHandle MemberSearchFlags;
+		TypeHandle Module;
+	} reflection;
 
 	static TypeHandle IOError;
 	static TypeHandle FileNotFoundError;

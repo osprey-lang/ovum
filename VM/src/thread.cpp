@@ -1,4 +1,5 @@
 #include "ov_vm.internal.h"
+#include "ov_stringbuffer.internal.h"
 #include "ov_debug_symbols.internal.h"
 #if OVUM_TARGET == OVUM_UNIX
 #include <time.h>
@@ -871,21 +872,76 @@ int Thread::LoadMemberRefLL(Value *inst, String *member)
 	RETURN_SUCCESS;
 }
 
-void Thread::LoadStaticField(Field *field, Value *result)
+int Thread::LoadField(Field *field, Value *result)
 {
+	Value *inst = currentFrame->evalStack + currentFrame->stackCount - 1;
+
+	int r;
 	if (result)
-		field->staticValue->Read(result);
+	{
+		r = field->ReadField(this, inst, result);
+		currentFrame->stackCount--;
+	}
 	else
 	{
-		Value value = field->staticValue->Read();
-		currentFrame->Push(&value);
+		Value value;
+		r = field->ReadField(this, inst, &value);
+		*inst = value;
 	}
+	return r;
 }
 
-void Thread::StoreStaticField(Field *field)
+int Thread::StoreField(Field *field)
 {
-	field->staticValue->Write(currentFrame->Pop());
+	Value *args = currentFrame->evalStack + currentFrame->stackCount - 2;
+
+	int r = field->WriteField(this, args);
+	if (r == OVUM_SUCCESS)
+		currentFrame->stackCount -= 2;
+	return r;
 }
+
+int Thread::LoadStaticField(Field *field, Value *result)
+{
+	// Note: test against field->staticValue rather than
+	// field->declType->HasStaticCtorRun(), because the
+	// field may be a constant field and those don't trigger
+	// the static constructor.
+	if (!field->staticValue)
+	{
+		int r = field->declType->RunStaticCtor(this);
+		if (r != OVUM_SUCCESS) return r; // Something went wrong!
+	}
+	if (result)
+	{
+		field->staticValue->Read(result);
+		currentFrame->stackCount--;
+	}
+	else
+	{
+		Value value;
+		field->staticValue->Read(&value);
+		currentFrame->Push(&value);
+	}
+	RETURN_SUCCESS;
+}
+
+int Thread::StoreStaticField(Field *field)
+{
+	// Note: test against field->staticValue rather than
+	// field->declType->HasStaticCtorRun(), because the
+	// field may be a constant field and those don't trigger
+	// the static constructor.
+	if (!field->staticValue)
+	{
+		int r = field->declType->RunStaticCtor(this);
+		if (r != OVUM_SUCCESS) return r; // Something went wrong!
+	}
+	field->staticValue->Write(currentFrame->Pop());
+	currentFrame->stackCount--;
+	RETURN_SUCCESS;
+}
+
 
 int Thread::ToString(String **result)
 {
@@ -1439,6 +1495,24 @@ OVUM_API int VM_StoreMember(ThreadHandle thread, String *member)
 	return thread->StoreMember(member);
 }
 
+OVUM_API int VM_LoadField(ThreadHandle thread, FieldHandle field, Value *result)
+{
+	return thread->LoadField(field, result);
+}
+OVUM_API int VM_StoreField(ThreadHandle thread, FieldHandle field)
+{
+	return thread->StoreField(field);
+}
+
+OVUM_API int VM_LoadStaticField(ThreadHandle thread, FieldHandle field, Value *result)
+{
+	return thread->LoadStaticField(field, result);
+}
+OVUM_API int VM_StoreStaticField(ThreadHandle thread, FieldHandle field)
+{
+	return thread->StoreStaticField(field);
+}
+
 OVUM_API int VM_LoadIndexer(ThreadHandle thread, uint32_t argCount, Value *result)
 {
 	return thread->LoadIndexer(argCount, result);
@@ -1446,15 +1520,6 @@ OVUM_API int VM_LoadIndexer(ThreadHandle thread, uint32_t argCount, Value *resul
 OVUM_API int VM_StoreIndexer(ThreadHandle thread, uint32_t argCount)
 {
 	return thread->StoreIndexer(argCount);
-}
-
-OVUM_API void VM_LoadStaticField(ThreadHandle thread, FieldHandle field, Value *result)
-{
-	thread->LoadStaticField(field, result);
-}
-OVUM_API void VM_StoreStaticField(ThreadHandle thread, FieldHandle field)
-{
-	thread->StoreStaticField(field);
 }
 
 OVUM_API int VM_ToString(ThreadHandle thread, String **result)
@@ -1529,7 +1594,7 @@ OVUM_API int VM_GetStackDepth(ThreadHandle thread)
 {
 	int depth = 0;
 
-	StackFrame *frame = thread->currentFrame;
+	const StackFrame *frame = thread->GetCurrentFrame();
 	while (frame && frame->method)
 	{
 		depth++;
@@ -1541,6 +1606,111 @@ OVUM_API int VM_GetStackDepth(ThreadHandle thread)
 
 OVUM_API OverloadHandle VM_GetCurrentOverload(ThreadHandle thread)
 {
-	StackFrame *frame = thread->currentFrame;
+	const StackFrame *frame = thread->GetCurrentFrame();
 	return frame ? frame->method : nullptr;
+}
+
+const StackFrame *VM_FindStackFrame(ThreadHandle thread, int stackFrame)
+{
+	if (stackFrame >= 0)
+	{
+		const StackFrame *frame = thread->GetCurrentFrame();
+		while (frame && frame->method)
+		{
+			if (stackFrame-- == 0)
+				return frame;
+			frame = frame->prevFrame;
+		}
+	}
+	return nullptr;
+}
+
+OVUM_API int VM_GetEvalStackHeight(ThreadHandle thread, int stackFrame, const Value **slots)
+{
+	const StackFrame *frame = VM_FindStackFrame(thread, stackFrame);
+	if (frame)
+	{
+		if (slots)
+			*slots = frame->evalStack;
+		return (int)frame->stackCount;
+	}
+	return -1;
+}
+OVUM_API int VM_GetLocalCount(ThreadHandle thread, int stackFrame, const Value **slots)
+{
+	const StackFrame *frame = VM_FindStackFrame(thread, stackFrame);
+	if (frame)
+	{
+		if (slots)
+			*slots = frame->Locals();
+		return (int)frame->method->locals;
+	}
+	return -1;
+}
+OVUM_API int VM_GetMethodArgCount(ThreadHandle thread, int stackFrame, const Value **slots)
+{
+	const StackFrame *frame = VM_FindStackFrame(thread, stackFrame);
+	if (frame)
+	{
+		int argCount = (int)frame->method->GetEffectiveParamCount();
+		if (slots)
+			*slots = reinterpret_cast<const Value*>(frame) - argCount;
+		return argCount;
+	}
+	return -1;
+}
+OVUM_API OverloadHandle VM_GetExecutingOverload(ThreadHandle thread, int stackFrame)
+{
+	const StackFrame *frame = VM_FindStackFrame(thread, stackFrame);
+	if (frame)
+		return frame->method;
+	return nullptr;
+}
+OVUM_API const void *VM_GetInstructionPointer(ThreadHandle thread, int stackFrame)
+{
+	if (stackFrame >= 0)
+	{
+		const StackFrame *frame = thread->GetCurrentFrame();
+		if (frame)
+		{
+			const void *ip = thread->GetInstructionPointer();
+			while (frame && frame->method)
+			{
+				if (stackFrame-- == 0)
+					return ip;
+				ip = frame->prevInstr;
+				frame = frame->prevFrame;
+			}
+		}
+	}
+	return nullptr;
+}
+OVUM_API bool VM_GetStackFrameInfo(ThreadHandle thread, int stackFrame, StackFrameInfo *dest)
+{
+	if (stackFrame >= 0)
+	{
+	const StackFrame *frame = thread->GetCurrentFrame();
+		if (frame)
+		{
+			const void *ip = thread->GetInstructionPointer();
+			while (frame && frame->method)
+			{
+				if (stackFrame-- == 0)
+				{
+					dest->stackHeight = frame->stackCount;
+					dest->stackPointer = frame->evalStack;
+					dest->localCount = frame->method->locals;
+					dest->localPointer = frame->Locals();
+					dest->argumentCount = frame->method->GetEffectiveParamCount();
+					dest->argumentPointer = reinterpret_cast<const Value*>(frame) - dest->argumentCount;
+					dest->overload = frame->method;
+					dest->ip = ip;
+					return true;
+				}
+				ip = frame->prevInstr;
+				frame = frame->prevFrame;
+			}
+		}
+	}
+	return false;
 }

@@ -115,13 +115,30 @@ OVUM_API int VM_Compare(ThreadHandle thread, int64_t *result);
 //   result:
 //     The result of loading the member. If null, this value is pushed onto the stack.
 OVUM_API int VM_LoadMember(ThreadHandle thread, String *member, Value *result);
-// Stores a member from the top of the stack to the second stack value.
+// Stores the top of the stack into a member of the second stack value.
 //   thread:
 //     The thread on which to load the member. If the member is a property with a setter,
 //     then this is the thread on which the setter is executed.
 //   member:
 //     The name of the member to store.
 OVUM_API int VM_StoreMember(ThreadHandle thread, String *member);
+
+// Loads an instance field from the top value on the stack. Note that the instance is always popped.
+//   thread:
+//     The thread on which to load the member. If the member is a property with a getter,
+//     then this is the thread on which the getter is executed.
+//   field:
+//     The instance field to load.
+//   result:
+//     Receives the value of the field. If null, this value is pushed onto the stack.
+OVUM_API int VM_LoadField(ThreadHandle thread, FieldHandle field, Value *result);
+// Stores the top of the stack into a field of the second stack value.
+//   thread:
+//     The thread on which to load the member. If the member is a property with a setter,
+//     then this is the thread on which the setter is executed.
+//   field:
+//     The instance field to store.
+OVUM_API int VM_StoreField(ThreadHandle thread, FieldHandle field);
 
 // Loads the indexer from the top value on the stack.
 //   thread:
@@ -148,7 +165,7 @@ OVUM_API int VM_StoreIndexer(ThreadHandle thread, uint32_t argCount);
 // Note: If the type that the field belongs to has not had its static constructor run,
 // this method will cause the static constructor to be run, except when called from
 // within the static constructor.
-OVUM_API void VM_LoadStaticField(ThreadHandle thread, FieldHandle field, Value *result);
+OVUM_API int VM_LoadStaticField(ThreadHandle thread, FieldHandle field, Value *result);
 // Stores the top value on the stack into the specified static field.
 //   thread:
 //     The thread on which to perform the store.
@@ -157,7 +174,7 @@ OVUM_API void VM_LoadStaticField(ThreadHandle thread, FieldHandle field, Value *
 // Note: If the type that the field belongs to has not had its static constructor run,
 // this method will cause the static constructor to be run, except when called from
 // within the static constructor.
-OVUM_API void VM_StoreStaticField(ThreadHandle thread, FieldHandle field);
+OVUM_API int VM_StoreStaticField(ThreadHandle thread, FieldHandle field);
 
 // Stringifies the top value on the stack, by calling .toString on it. Additionally,
 // this method makes sure that the return value is indeed a string, and throws a TypeError
@@ -219,5 +236,81 @@ OVUM_API int VM_GetStackDepth(ThreadHandle thread);
 
 // Gets a handle to the currently executing method overload.
 OVUM_API OverloadHandle VM_GetCurrentOverload(ThreadHandle thread);
+
+// In the functions below, stack frames are numbered such that the frame on top
+// of the call stack is number 0, the previous frame is 1, and so on.
+//
+// These functions are provided for debugger support, and should be used cautiously.
+
+// Gets the height of the evaluation stack of the specified stack frame, and
+// optionally retrieves a pointer to the first value on the stack.
+//
+// If 'slots' is not null, it receives a pointer to the bottom of the evaluation
+// stack in the specified stack frame. Do not attempt to modify the evaluation
+// stack contents, as doing so will almost certainly corrupt the VM state. Also,
+// do not read beyond the beginning or end of the evaluation stack; you may hit
+// garbage, and may corrupt the VM.
+//
+// If stackFrame refers to an invalid stack frame, returns -1.
+OVUM_API int VM_GetEvalStackHeight(ThreadHandle thread, int stackFrame, const Value **slots);
+
+// Gets the number of locals in the specified stack frame, and optionally retrieves
+// a pointer to the first local variable.
+//
+// If 'slots' is not null, it receives a pointer to the first local variable in
+// the specified stack frame. Do not attempt to modify the local variable contents,
+// as doing so will almost certainly corrupt the VM state. Also, do not read beyond
+// the beginning or end of the local variable list; you may hit garbage, and may
+// corrupt the VM.
+//
+// If stackFrame refers to an invalid stack frame, returns -1.
+OVUM_API int VM_GetLocalCount(ThreadHandle thread, int stackFrame, const Value **slots);
+
+// Gets the number of method arguments in the specified stack frame, and optionally
+// retrieves a pointer to the first argument.
+//
+// If 'slots' is not null, it receives a pointer to the first method argument in
+// the specified stack frame. Do not attempt to modify the method argument contents,
+// as doing so will almost certainly corrupt the VM state. Also, do not read beyond
+// the beginning or end of the method argument list; you may hit garbage, and may
+// corrupt the VM.
+//
+// If stackFrame refers to an invalid stack frame, returns -1.
+OVUM_API int VM_GetMethodArgCount(ThreadHandle thread, int stackFrame, const Value **slots);
+
+// Gets a handle to the method overload executing in the specified stack frame.
+//
+// If stackFrame refers to an invalid stack frame, returns null.
+OVUM_API OverloadHandle VM_GetExecutingOverload(ThreadHandle thread, int stackFrame);
+
+// Gets the instruction pointer of the specified stack frame.
+// Warning: for native methods, the instruction pointer is not useful.
+// It may or may not point at the entry point of the method; this is not
+// a guarantee.
+//
+// If stackFrame refers to an invalid stack frame, returns null.
+OVUM_API const void *VM_GetInstructionPointer(ThreadHandle thread, int stackFrame);
+
+typedef struct StackFrameInfo_S
+{
+	int stackHeight;
+	const Value *stackPointer;
+
+	int localCount;
+	const Value *localPointer;
+
+	int argumentCount;
+	const Value *argumentPointer;
+
+	OverloadHandle overload;
+	const void *ip;
+} StackFrameInfo;
+
+// Gets information about the specified stack frame. Please read the documentation on
+// VM_GetEvalStackHeight, VM_GetLocalCount, VM_GetMethodArgCount and VM_GetInstructionPointer
+// to understand the various caveats of accessing this information.
+//
+// If stackFrame refers to an invalid stack frame, returns false.
+OVUM_API bool VM_GetStackFrameInfo(ThreadHandle thread, int stackFrame, StackFrameInfo *dest);
 
 #endif // VM__THREAD_H

@@ -36,7 +36,16 @@ namespace strings
 	LitString<6> _access   = { 6, 0, SFS, 'a','c','c','e','s','s',0 };
 	LitString<5> _share    = { 5, 0, SFS, 's','h','a','r','e',0 };
 	LitString<6> _origin   = { 6, 0, SFS, 'o','r','i','g','i','n',0 };
+	LitString<6> _handle   = { 6, 0, SFS, 'h','a','n','d','l','e',0 };
+	LitString<5> _flags    = { 5, 0, SFS, 'f','l','a','g','s',0 };
+	LitString<8> _overload = { 8, 0, SFS, 'o','v','e','r','l','o','a','d',0 };
+	LitString<5> _major    = { 5, 0, SFS, 'm','a','j','o','r',0 };
+	LitString<5> _minor    = { 5, 0, SFS, 'm','i','n','o','r',0 };
+	LitString<5> _build    = { 5, 0, SFS, 'b','u','i','l','d',0 };
+	LitString<8> _revision = { 8, 0, SFS, 'r','e','v','i','s','i','o','n',0 };
 	LitString<5> __call    = { 5, 0, SFS, '.','c','a','l','l',0 };
+	LitString<5> __iter    = { 5, 0, SFS, '.','i','t','e','r',0 };
+	LitString<4> __new     = { 4, 0, SFS, '.','n','e','w',0 };
 
 	String *str      = _S(_str);
 	String *i        = _S(_i);
@@ -61,7 +70,16 @@ namespace strings
 	String *access   = _S(_access);
 	String *share    = _S(_share);
 	String *origin   = _S(_origin);
+	String *handle   = _S(_handle);
+	String *flags    = _S(_flags);
+	String *overload = _S(_overload);
+	String *major    = _S(_major);
+	String *minor    = _S(_minor);
+	String *build    = _S(_build);
+	String *revision = _S(_revision);
 	String *_call    = _S(__call);
+	String *_iter    = _S(__iter);
+	String *_new     = _S(__new);
 
 #if OVUM_TARGET == OVUM_WINDOWS
 	LitString<2> _newline = { 2, 0, SFS, '\r','\n',0 };

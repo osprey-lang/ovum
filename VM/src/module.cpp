@@ -799,7 +799,7 @@ void Module::ReadConstantDefs(ModuleReader &reader, Module *module, int32_t head
 		else
 			constant.integer = value;
 
-		module->members.Add(name, ModuleMember(constant, (flags & CONST_PRIVATE) == CONST_PRIVATE));
+		module->members.Add(name, ModuleMember(name, constant, (flags & CONST_PRIVATE) == CONST_PRIVATE));
 	}
 
 	CHECKPOS_AFTER(ConstantDef);
@@ -1188,7 +1188,10 @@ Method *Module::ReadSingleMethod(ModuleReader &reader, Module *module)
 		// Flags
 		ov->flags = (MethodFlags)0;
 		if (methodFlags & FM_CTOR)
+		{
 			ov->flags |= MethodFlags::CTOR;
+			method->flags |= MemberFlags::CTOR;
+		}
 		if (methodFlags & FM_INSTANCE)
 			ov->flags |= MethodFlags::INSTANCE;
 		if (flags & OV_VAREND)
@@ -1425,7 +1428,36 @@ OVUM_API bool Module_GetGlobalMember(ModuleHandle module, String *name, bool inc
 	if (module->FindMember(name, includeInternal, member))
 	{
 		result->flags = member.flags;
-		result->name = name;
+		result->name = member.name;
+		switch (member.flags & ModuleMemberFlags::KIND)
+		{
+		case ModuleMemberFlags::TYPE:
+			result->type = member.type;
+			break;
+		case ModuleMemberFlags::FUNCTION:
+			result->function = member.function;
+			break;
+		case ModuleMemberFlags::CONSTANT:
+			result->constant = member.constant;
+			break;
+		}
+		return true;
+	}
+	return false;
+}
+
+OVUM_API int32_t Module_GetGlobalMemberCount(ModuleHandle module)
+{
+	return module->GetMemberCount();
+}
+
+OVUM_API bool Module_GetGlobalMemberByIndex(ModuleHandle module, int32_t index, GlobalMember *result)
+{
+	ModuleMember member;
+	if (module->GetMemberByIndex(index, member))
+	{
+		result->flags = member.flags;
+		result->name = member.name;
 		switch (member.flags & ModuleMemberFlags::KIND)
 		{
 		case ModuleMemberFlags::TYPE:

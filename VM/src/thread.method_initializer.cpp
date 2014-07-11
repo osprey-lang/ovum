@@ -204,7 +204,7 @@ namespace instr
 
 	void MethodBuilder::AddTypeToInitialize(Type *type)
 	{
-		if ((type->flags & TypeFlags::STATIC_CTOR_RUN) != TypeFlags::NONE)
+		if (type->HasStaticCtorRun())
 			return;
 
 		for (type_iter i = typesToInitialize.begin(); i < typesToInitialize.end(); i++)
@@ -932,27 +932,9 @@ int Thread::CallStaticConstructors(instr::MethodBuilder &builder)
 		Type *type = builder.GetType(i);
 		// The static constructor may have been triggered by a previous type initialization,
 		// so we must test the flag again
-		if ((type->flags & TypeFlags::STATIC_CTOR_RUN) == TypeFlags::NONE)
-		{
-			type->flags |= TypeFlags::STATIC_CTOR_RUN; // prevent infinite recursion
-			if (!type->InitStaticFields(this)) // Get some storage locations for the static fields
-				return ThrowMemoryError();
-			Member *member = type->GetMember(static_strings::_init);
-			if (member)
-			{
-				// If there is a member '.init', it must be a method!
-				assert((member->flags & MemberFlags::METHOD) == MemberFlags::METHOD);
-
-				MethodOverload *mo = ((Method*)member)->ResolveOverload(0);
-				if (!mo) return ThrowNoOverloadError(0);
-
-				Value ignore;
-				int r = InvokeMethodOverload(mo, 0,
-					currentFrame->evalStack + currentFrame->stackCount,
-					&ignore);
-				if (r != OVUM_SUCCESS) return r;
-			}
-		}
+		int r = type->RunStaticCtor(this);
+		if (r != OVUM_SUCCESS)
+			return r;
 	}
 	RETURN_SUCCESS;
 }
@@ -1375,14 +1357,14 @@ void Thread::InitializeInstructions(instr::MethodBuilder &builder, MethodOverloa
 			{
 				Field *field = FieldFromToken(method, U32_ARG(ip), false);
 				ip += sizeof(uint32_t);
-				instr = new LoadField(field);
+				instr = new instr::LoadField(field);
 			}
 			break;
 		case OPC_STFLD: // u4:fld
 			{
 				Field *field = FieldFromToken(method, U32_ARG(ip), false);
 				ip += sizeof(uint32_t);
-				instr = new StoreField(field);
+				instr = new instr::StoreField(field);
 			}
 			break;
 		case OPC_LDSFLD: // u4:fld

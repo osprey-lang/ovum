@@ -1,0 +1,15 @@
+namespace aves.reflection;
+
+private class NativeHandle __primitive
+{
+	private new();
+
+	override getHashCode()
+	{
+		return +this;
+	}
+
+	operator ==(a, b)		__extern("aves_reflection_NativeHandle_opEquals");
+
+	operator +(a)			__extern("aves_reflection_NativeHandle_opPlus");
+}

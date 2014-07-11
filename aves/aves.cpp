@@ -3,8 +3,9 @@
 #include "aves.h"
 #include "ov_string.h"
 
-#define SFS  ::StringFlags::STATIC
-#define AVES 'a','v','e','s','.'
+#define SFS        ::StringFlags::STATIC
+#define AVES       'a','v','e','s','.'
+#define REFLECTION AVES,'r','e','f','l','e','c','t','i','o','n','.'
 
 namespace type_names
 {
@@ -26,9 +27,21 @@ namespace type_names
 	LitString<17> ConsoleColor       = { 17, 0, SFS, AVES,'C','o','n','s','o','l','e','C','o','l','o','r',0 };
 	LitString<15> ConsoleKey         = { 15, 0, SFS, AVES,'C','o','n','s','o','l','e','K','e','y',0 };
 	LitString<19> ConsoleKeyCode     = { 19, 0, SFS, AVES,'C','o','n','s','o','l','e','K','e','y','C','o','d','e',0 };
+	LitString<12> Version            = { 12, 0, SFS, AVES,'V','e','r','s','i','o','n',0 };
 
-	LitString<10> IOError           = { 10, 0, SFS, 'i','o','.','I','O','E','r','r','o','r',0 };
-	LitString<20> FileNotFoundError = { 20, 0, SFS, 'i','o','.','F','i','l','e','N','o','t','F','o','u','n','d','E','r','r','o','r',0 };
+	LitString<10> IOError            = { 10, 0, SFS, 'i','o','.','I','O','E','r','r','o','r',0 };
+	LitString<20> FileNotFoundError  = { 20, 0, SFS, 'i','o','.','F','i','l','e','N','o','t','F','o','u','n','d','E','r','r','o','r',0 };
+
+	LitString<27> AccessLevel        = { 29, 0, SFS, REFLECTION,'A','c','c','e','s','s','L','e','v','e','l',0 };
+	LitString<21> Field              = { 21, 0, SFS, REFLECTION,'F','i','e','l','d',0 };
+	LitString<22> ReflMethod         = { 22, 0, SFS, REFLECTION,'M','e','t','h','o','d',0 };
+	LitString<24> Property           = { 24, 0, SFS, REFLECTION,'P','r','o','p','e','r','t','y',0 };
+	LitString<27> Constructor        = { 27, 0, SFS, REFLECTION,'C','o','n','s','t','r','u','c','t','o','r',0 };
+	LitString<24> Overload           = { 24, 0, SFS, REFLECTION,'O','v','e','r','l','o','a','d',0 };
+	LitString<30> GlobalConstant     = { 30, 0, SFS, REFLECTION,'G','l','o','b','a','l','C','o','n','s','t','a','n','t',0 };
+	LitString<28> NativeHandle       = { 28, 0, SFS, REFLECTION,'N','a','t','i','v','e','H','a','n','d','l','e',0 };
+	LitString<33> MemberSearchFlags  = { 33, 0, SFS, REFLECTION,'M','e','m','b','e','r','S','e','a','r','c','h','F','l','a','g','s',0 };
+	LitString<22> Module             = { 22, 0, SFS, REFLECTION,'M','o','d','u','l','e',0 };
 }
 
 TypeHandle Types::Int;
@@ -48,6 +61,8 @@ TypeHandle Types::HashEntry;
 TypeHandle Types::ConsoleColor;
 TypeHandle Types::ConsoleKey;
 TypeHandle Types::ConsoleKeyCode;
+TypeHandle Types::Version;
+Types::Reflection Types::reflection;
 
 TypeHandle Types::IOError;
 TypeHandle Types::FileNotFoundError;
@@ -73,8 +88,21 @@ AVES_API void CDECL OvumModuleMain(ModuleHandle module)
 	Types::ConsoleColor       = Module_FindType(module, _S(type_names::ConsoleColor),       true);
 	Types::ConsoleKey         = Module_FindType(module, _S(type_names::ConsoleKey),         true);
 	Types::ConsoleKeyCode     = Module_FindType(module, _S(type_names::ConsoleKeyCode),     true);
+	Types::Version            = Module_FindType(module, _S(type_names::Version),            true);
+
 	Types::IOError            = Module_FindType(module, _S(type_names::IOError),            true);
 	Types::FileNotFoundError  = Module_FindType(module, _S(type_names::FileNotFoundError),  true);
+
+	Types::reflection.AccessLevel       = Module_FindType(module, _S(type_names::AccessLevel),       true);
+	Types::reflection.Field             = Module_FindType(module, _S(type_names::Field),             true);
+	Types::reflection.Method            = Module_FindType(module, _S(type_names::ReflMethod),        true);
+	Types::reflection.Property          = Module_FindType(module, _S(type_names::Property),          true);
+	Types::reflection.Constructor       = Module_FindType(module, _S(type_names::Constructor),       true);
+	Types::reflection.Overload          = Module_FindType(module, _S(type_names::Overload),          true);
+	Types::reflection.GlobalConstant    = Module_FindType(module, _S(type_names::GlobalConstant),    true);
+	Types::reflection.NativeHandle      = Module_FindType(module, _S(type_names::NativeHandle),      true);
+	Types::reflection.MemberSearchFlags = Module_FindType(module, _S(type_names::MemberSearchFlags), true);
+	Types::reflection.Module            = Module_FindType(module, _S(type_names::Module),            true);
 }
 
 

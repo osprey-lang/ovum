@@ -17,6 +17,10 @@ public static class Console
 			throwFormatTypeError();
 		write(format.format(values));
 	}
+	public static writeLine()
+	{
+		write(Env.newline);
+	}
 	public static writeLine(format, values)
 	{
 		if format is not String:
@@ -28,6 +32,10 @@ public static class Console
 		if format is not String:
 			throwFormatTypeError();
 		writeErr(format.format(values));
+	}
+	public static writeLineErr()
+	{
+		writeErr(Env.newline);
 	}
 	public static writeLineErr(format, values)
 	{

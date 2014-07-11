@@ -1,0 +1,20 @@
+namespace aves.reflection;
+
+public enum MemberKind
+{
+	invalid = 0,
+	/// Summary: The member is a type, an instance of {Type}.
+	type = 1,
+	/// Summary: The member is a global constant, an instance of {GlobalConstant}.
+	globalConstant = 2,
+	/// Summary: The member is a method, an instance of {Method}.
+	method = 3,
+	/// Summary: The member is a field, an instance of {Field}.
+	field = 4,
+	/// Summary: The member is a property, an instance of {Property}.
+	property = 5,
+	/// Summary: The member is a constructor, an instance of {Constructor}.
+	constructor = 6,
+	/// Summary: The member is a method or constructor overload, an instance of {Overload}.
+	overload = 7,
+}

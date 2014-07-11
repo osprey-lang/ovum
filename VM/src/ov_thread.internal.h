@@ -6,7 +6,6 @@
 #include <cassert>
 #include <exception>
 #include "ov_vm.internal.h"
-#include "ov_stringbuffer.internal.h"
 #include "sync.internal.h"
 
 #if OVUM_TARGET == OVUM_UNIX
@@ -328,13 +327,16 @@ public:
 	int LoadMember(String *member, Value *result);
 	int StoreMember(String *member);
 
+	int LoadField(Field *field, Value *result);
+	int StoreField(Field *field);
+
 	// Note: argCount does NOT include the instance.
 	int LoadIndexer(uint32_t argCount, Value *result);
 	// Note: argCount does NOT include the instance or the value that's being stored.
 	int StoreIndexer(uint32_t argCount);
 
-	void LoadStaticField(Field *field, Value *result);
-	void StoreStaticField(Field *field);
+	int LoadStaticField(Field *field, Value *result);
+	int StoreStaticField(Field *field);
 
 	int ToString(String **result);
 
@@ -358,6 +360,15 @@ public:
 	inline bool IsInUnmanagedRegion() const
 	{
 		return (flags & ThreadFlags::IN_UNMANAGED_REGION) == ThreadFlags::IN_UNMANAGED_REGION;
+	}
+
+	inline const void *GetInstructionPointer() const
+	{
+		return ip;
+	}
+	inline const StackFrame *GetCurrentFrame() const
+	{
+		return currentFrame;
 	}
 
 private:
@@ -449,9 +460,8 @@ private:
 
 	friend class GC;
 	friend class VM;
+	friend class Type;
 	friend String *VM_GetStackTrace(ThreadHandle);
-	friend int VM_GetStackDepth(ThreadHandle);
-	friend OverloadHandle VM_GetCurrentOverload(ThreadHandle);
 };
 
 #endif // VM__THREAD_INTERNAL_H

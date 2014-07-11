@@ -79,6 +79,16 @@ OVUM_API String *Module_GetFileName(ThreadHandle thread, ModuleHandle module);
 // member and the method returns true.
 OVUM_API bool Module_GetGlobalMember(ModuleHandle module, String *name, bool includeInternal, GlobalMember *result);
 
+// Gets the total number of members in the module.
+OVUM_API int32_t Module_GetGlobalMemberCount(ModuleHandle module);
+
+// Gets the global member at the specified index. The index must be between zero (inclusive)
+// and the global member count (exclusive). Module_GetGlobalMemberCount returns the latter.
+//
+// If the index is valid, 'result' is updated with the result, and the function returns true.
+// Otherwise, the function returns false and 'result' is not written to.
+OVUM_API bool Module_GetGlobalMemberByIndex(ModuleHandle module, int32_t index, GlobalMember *result);
+
 // Searches a module for a type with the specified name.
 // If the type could not be found, or if the type is private and includeInternal is false,
 // this method returns null.
@@ -99,6 +109,44 @@ OVUM_API bool Module_FindConstant(ModuleHandle module, String *name, bool includ
 // of the given module. If the module has no native library or the entry
 // point doesn't exist, this method returns null.
 OVUM_API void *Module_FindNativeFunction(ModuleHandle module, const char *name);
+
+class ModuleMemberIterator
+{
+private:
+	ModuleHandle module;
+	int32_t index;
+	bool updateCurrent;
+	GlobalMember current;
+
+public:
+	inline ModuleMemberIterator(ModuleHandle module)
+		: module(module), index(-1), updateCurrent(false)
+	{
+		current.flags = ModuleMemberFlags::NONE;
+	}
+
+	inline bool MoveNext()
+	{
+		if (index < Module_GetGlobalMemberCount(module) - 1)
+		{
+			index++;
+			updateCurrent = true;
+			return true;
+		}
+
+		return false;
+	}
+
+	inline GlobalMember &Current()
+	{
+		if (updateCurrent)
+		{
+			updateCurrent = false;
+			Module_GetGlobalMemberByIndex(module, index, &current);
+		}
+		return current;
+	}
+};
 
 
 #endif // VM__MODULE_H

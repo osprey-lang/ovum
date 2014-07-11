@@ -90,6 +90,7 @@
     <ClInclude Include="aves_enum.h" />
     <ClInclude Include="aves_env.h" />
     <ClInclude Include="aves_error.h" />
+    <ClInclude Include="aves_field.h" />
     <ClInclude Include="aves_gc.h" />
     <ClInclude Include="aves_hash.h" />
     <ClInclude Include="aves_helpers.h" />
@@ -97,10 +98,15 @@
     <ClInclude Include="aves_list.h" />
     <ClInclude Include="aves_math.h" />
     <ClInclude Include="aves_method.h" />
+    <ClInclude Include="aves_methodbase.h" />
+    <ClInclude Include="aves_module.h" />
+    <ClInclude Include="aves_nativehandle.h" />
     <ClInclude Include="aves_ns.h" />
     <ClInclude Include="aves_boolean.h" />
     <ClInclude Include="aves_int.h" />
     <ClInclude Include="aves_object.h" />
+    <ClInclude Include="aves_overload.h" />
+    <ClInclude Include="aves_property.h" />
     <ClInclude Include="aves_real.h" />
     <ClInclude Include="aves_set.h" />
     <ClInclude Include="aves_shared_strings.h" />
@@ -123,6 +129,12 @@
     <ClCompile Include="char.cpp" />
     <ClCompile Include="console.cpp" />
     <ClCompile Include="directory.cpp" />
+    <ClCompile Include="field.cpp" />
+    <ClCompile Include="methodbase.cpp" />
+    <ClCompile Include="module.cpp" />
+    <ClCompile Include="nativehandle.cpp" />
+    <ClCompile Include="overload.cpp" />
+    <ClCompile Include="property.cpp" />
     <ClCompile Include="windows\dllmain.cpp">
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</CompileAsManaged>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
