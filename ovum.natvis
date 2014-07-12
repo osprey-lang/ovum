@@ -259,9 +259,35 @@
 			<Synthetic Name="[values]">
 				<DisplayString>Expand to view list values</DisplayString>
 				<Expand>
+					<ArrayItems Condition="length &gt; 0">
+						<Size>length</Size>
+						<ValuePointer>values</ValuePointer>
+					</ArrayItems>
+				</Expand>
+			</Synthetic>
+		</Expand>
+	</Type>
+
+	<Type Name="HashInst_S">
+		<DisplayString>{{Hash length={count - freeCount}, capacity={capacity}}}</DisplayString>
+		<Expand>
+			<Item Name="[length]">count - freeCount</Item>
+			<Item Name="[capacity]">capacity</Item>
+			<Synthetic Name="[buckets]">
+				<DisplayString>Expand to view hash buckets</DisplayString>
+				<Expand>
 					<ArrayItems Condition="capacity &gt; 0">
 						<Size>capacity</Size>
-						<ValuePointer>values</ValuePointer>
+						<ValuePointer>buckets</ValuePointer>
+					</ArrayItems>
+				</Expand>
+			</Synthetic>
+			<Synthetic Name="[entries]">
+				<DisplayString>Expand to view hash entries</DisplayString>
+				<Expand>
+					<ArrayItems Condition="count &gt; 0">
+						<Size>count</Size>
+						<ValuePointer>entries</ValuePointer>
 					</ArrayItems>
 				</Expand>
 			</Synthetic>

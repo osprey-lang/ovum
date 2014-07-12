@@ -125,13 +125,13 @@ struct Value_S
 #define IS_REFERENCE(value) (((uintptr_t)(value).type & 1) == 1)
 
 
-typedef struct ListInst_S
+struct ListInst_S
 {
 	int32_t capacity; // the length of 'values'
 	int32_t length;   // the actual number of items contained in the list
 	int32_t version;  // the "version" of the list, which is incremented each time the list changes
 	Value *values;    // the values contained in the list
-} ListInst;
+};
 
 
 typedef struct HashEntry_S
@@ -141,7 +141,7 @@ typedef struct HashEntry_S
 	Value key;
 	Value value;
 } HashEntry;
-typedef struct HashInst_S
+struct HashInst_S
 {
 	int32_t capacity;   // the number of "slots" in buckets and entries
 	int32_t count;      // the number of entries (not buckets) that have been used
@@ -151,25 +151,25 @@ typedef struct HashInst_S
 
 	int32_t *buckets;
 	HashEntry *entries;
-} HashInst;
+};
 
-typedef struct ErrorInst_S
+struct ErrorInst_S
 {
 	String *message;
 	String *stackTrace;
 	Value innerError;
 	Value data;
-} ErrorInst;
+};
 
 
 #include "ov_type.h"
 
 
-typedef struct MethodInst_S
+struct MethodInst_S
 {
 	Value instance;
 	MethodHandle method;
-} MethodInst;
+};
 
 
 #define NULL_CONSTANT  { nullptr, 0 }
@@ -250,21 +250,20 @@ OVUM_API bool IsType(Value *value, TypeHandle type);
 
 OVUM_API bool IsSameReference(Value *a, Value *b);
 
-
 OVUM_API bool IsBoolean(Value *value);
-inline bool IsBoolean(Value value) { return IsBoolean(&value); }
+inline bool IsBoolean(Value &value) { return IsBoolean(&value); }
 
 OVUM_API bool IsInt(Value *value);
-inline bool IsInt(Value value)    { return IsInt(&value); }
+inline bool IsInt(Value &value)    { return IsInt(&value); }
 
 OVUM_API bool IsUInt(Value *value);
-inline bool IsUInt(Value value)   { return IsUInt(&value); }
+inline bool IsUInt(Value &value)   { return IsUInt(&value); }
 
 OVUM_API bool IsReal(Value *value);
-inline bool IsReal(Value value)   { return IsReal(&value); }
+inline bool IsReal(Value &value)   { return IsReal(&value); }
 
 OVUM_API bool IsString(Value *value);
-inline bool IsString(Value value) { return IsString(&value); }
+inline bool IsString(Value &value) { return IsString(&value); }
 
 OVUM_API void ReadReference(Value *ref, Value *target);
 
