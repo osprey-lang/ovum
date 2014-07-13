@@ -110,7 +110,7 @@ public inheritable TextReader
 	/// Summary: Reads a single character (UTF-16 code unit) from the stream.
 	/// Returns: The next character read, as a Char, or null if the end of
 	///          the stream was reached.
-	public read()
+	public overridable read()
 	{
 		if _stream is null:
 			errorHelpers.readerClosed();
@@ -136,7 +136,7 @@ public inheritable TextReader
 	///          {count} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {count} is less than zero.
-	public read(count)
+	public overridable read(count)
 	{
 		if _stream is null:
 			errorHelpers.readerClosed();
@@ -169,7 +169,7 @@ public inheritable TextReader
 	///          the stream.
 	/// Returns: A String containing the remainder of the characters in the
 	///          stream.
-	public readToEnd()
+	public overridable readToEnd()
 	{
 		if _stream is null:
 			errorHelpers.readerClosed();
@@ -194,7 +194,7 @@ public inheritable TextReader
 	///          U+000A) or `'\r'` (Carriage Return, U+000D) character, or the
 	///          sequence `"\r\n"`. The returned string does not contain the
 	///          line separator.
-	public readLine()
+	public overridable readLine()
 	{
 		if _stream is null:
 			errorHelpers.readerClosed();
