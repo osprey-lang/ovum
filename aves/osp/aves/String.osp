@@ -53,10 +53,10 @@ public class String
 	/// Summary: Gets the length of the string, in number of UTF-16 code units, as an Int.
 	public get length						__extern("aves_String_get_length");
 
-	/// Summary: Gets a Boolean indicating whether the string is empty (its length is 0).
+	/// Summary: Gets a value indicating whether the string is empty (its length is 0).
 	public get isEmpty = length == 0;
 
-	/// Summary: Gets a Boolean indicating whether the string instance is
+	/// Summary: Gets a value indicating whether the string instance is
 	//           in the intern table.
 	public get isInterned					__extern("aves_String_get_isInterned");
 
@@ -532,7 +532,6 @@ private class StringIterator is Iterator
 			i += cur.length;
 			return true;
 		}
-		else
-			return false;
+		return false;
 	}
 }

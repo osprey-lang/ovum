@@ -8,5 +8,7 @@ use "fileenums.osp";
 use "FileNotFoundError.osp";
 use "FileStream.osp";
 use "IOError.osp";
-use "Stream.osp";
 use "Path.osp";
+use "Stream.osp";
+use "TextReader.osp";
+use "TextWriter.osp";

@@ -1,31 +1,128 @@
 namespace aves;
 
+/// Summary: A string buffer is a mutable sequence of UTF-16 code units,
+///          which can be used to build string values. They typically have
+///          better performance than repeatedly concatenating strings.
+/// Remarks: Most manipulation methods return the string buffer, to make it
+///          easier to chain calls. For example, instead of
+///
+///          `var sb = new StringBuffer();` \
+///          `sb.append(one);` \
+///          `sb.append(two);` \
+///          `sb.append(three);`
+///
+///          you can do this:
+///
+///          `var sb = new StringBuffer();` \
+///          `sb.append(one).append(two).append(three);`
+///
+///          which may be preferable under some circumstances.
 public class StringBuffer
 {
 	__init_type("aves_StringBuffer_init");
 
+	/// Summary: Creates a new {StringBuffer} with the default capacity.
 	public new()										__extern("aves_StringBuffer_new");
+	/// Summary: Creates a new {StringBuffer} with the specified initial capacity.
+	/// Param capacity: The initial capacity of the string buffer.
+	///                 (Int, UInt or Real)
+	/// Throws TypeError:
+	///          {capacity} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {capacity} is less than zero.
 	public new(capacity)								__extern("aves_StringBuffer_newCap");
 
+	/// Summary: Gets the UTF-16 code unit at the specified index.
+	/// Param index: The index of the UTF-16 code unit to get. (Int, UInt or Real)
+	/// Throws TypeError:
+	///          {index} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {index} is less than zero, or greater than or equal to {length}.
+	public get this[index]								__extern("aves_StringBuffer_get_item");
+	/// Summary: Sets the UTF-16 code unit at the specified index.
+	/// Param index: The index of the UTF-16 code unit to set. (Int, UInt or Real)
+	/// Throws TypeError:
+	///          {index} could not be converted to an Int.
+	///
+	///          The value is not a {Char}.
+	/// Throws ArgumentRangeError:
+	///          {index} is less than zero, or greater than or equal to {length}.
+	///
+	///          The value is a character above U+FFFF. String buffers are
+	///          sequences of UTF-16 code units, which cannot on their own
+	///          represent Unicode characters above U+FFFF.
+	public set this[index]								__extern("aves_StringBuffer_set_item");
+
+	/// Summary: Gets the total number of characters that have been written
+	///          to the string buffer.
 	public get length									__extern("aves_StringBuffer_get_length");
+	/// Summary: Gets the maximum number of characters the string buffer can
+	///          contain before it needs to be resized.
 	public get capacity									__extern("aves_StringBuffer_get_capacity");
 
+	/// Summary: Gets a value indicating whether the string buffer is empty (its length is 0).
+	public get isEmpty = length == 0;
+
+	/// Summary: Appends the specified value to the end of the string buffer.
+	/// Param value: The value to append.
+	/// Returns: The string buffer.
+	/// Throws TypeError:
+	///          {value} could not be converted to a String.
 	public append(value)
 	{
-		return appendInternal(string(value), 1);
+		if value is StringBuffer:
+			return appendSubstrFromBuffer(value, 0, value.length);
+
+		value = string(value);
+		return appendInternal(value, 1);
 	}
+	/// Summary: Appends the specified value to the end of the string buffer,
+	///          repeating it the specified number of times.
+	/// Param value: The value to append.
+	/// Param times: The number of times to repeat the value. (Int, UInt or Real)
+	/// Returns: The string buffer.
+	/// Throws TypeError:
+	///          {value} could not be converted to a String.
+	///
+	///          {times} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {times} is less than zero.
 	public append(value, times)
 	{
-		return appendInternal(string(value), int(times));
+		value = string(value);
+		times = int(times);
+		if times < 0:
+			throw new ArgumentRangeError("times");
+		return appendInternal(value, times);
 	}
+	private appendInternal(value, times)				__extern("aves_StringBuffer_append");
 
+	/// Summary: Appends a line separator to the end of the string buffer.
+	/// Returns: The string buffer.
 	public appendLine()									__extern("aves_StringBuffer_appendLine");
+	/// Summary: Appends the specified value to the end of the string buffer,
+	///          followed by a line separator.
+	/// Param value: The value to append.
+	/// Returns: The string buffer.
+	/// Throws TypeError:
+	///          {value} could not be converted to a String.
 	public appendLine(value)
 	{
-		appendInternal(string(value), 1);
+		value = string(value);
+		appendInternal(value, 1);
 		return appendLine();
 	}
 
+	/// Summary: Appends the Unicode character represented by the specified
+	///          codepoint to the end of the string buffer.
+	/// Param codepoint: The codepoint of the character to append. This value
+	///          must be between 0 and 1,114,111 (0x10FFFF), inclusive.
+	///          (Int, UInt or Real)
+	/// Returns: The string buffer.
+	/// Throws TypeError:
+	///          {codepoint} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {codepoint} is less than zero or greater than 1,114,111 (0x10FFFF).
 	public appendCodepoint(codepoint)
 	{
 		codepoint = int(codepoint);
@@ -33,30 +130,120 @@ public class StringBuffer
 			throw new ArgumentRangeError("codepoint");
 		return appendCodepointInternal(codepoint);
 	}
+	private appendCodepointInternal(cp)					__extern("aves_StringBuffer_appendCodepoint");
 
+	/// Summary: Appends part of a string or string buffer to the end of this
+	///          string buffer.
+	/// Param str: The string or string buffer to extract characters from.
+	/// Param index: The index in {str} at which to start reading characters.
+	///              (Int, UInt or Real)
+	/// Param count: The number of characters to copy from {str}. (Int, UInt or Real)
+	/// Returns: The string buffer.
+	/// Throws TypeError:
+	///          {str} is not a {StringBuffer} and could not be converted to
+	///          a String.
+	///
+	///          {index} or {count} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {index} or {count} is less than zero.
+	/// Throws ArgumentError:
+	///          {index} + {count} is greater than the length of {str}.
 	public appendSubstr(str, index, count)
 	{
-		str = string(str);
+		var isStringBuf = str is StringBuffer;
+		if not isStringBuf:
+			str = string(str);
+
 		index = int(index);
 		count = int(count);
-		if index < 0:
-			throw new ArgumentRangeError("index");
+		if index < 0 or count < 0:
+			throw new ArgumentRangeError(index < 0 ? "index" : "count");
 		if index + count > str.length:
 			throw new ArgumentError("The end of the range is outside of the string.");
-		return appendSubstrInternal(str, index, count);
-	}
 
+		if isStringBuf:
+			return appendSubstrFromBuffer(str, index, count);
+		else:
+			return appendSubstrFromString(str, index, count);
+	}
+	private appendSubstrFromString(str, index, count)	__extern("aves_StringBuffer_appendSubstrFromString");
+	private appendSubstrFromBuffer(sb, index, count)	__extern("aves_StringBuffer_appendSubstrFromBuffer");
+
+	/// Summary: Inserts the specified value into the string buffer at the
+	///          specified index.
+	/// Param index: The index at which to insert the value. (Int, UInt or Real)
+	/// Param value: The value to insert.
+	/// Returns: The string buffer.
+	/// Throws TypeError:
+	///          {index} could not be converted to an Int.
+	///
+	///          {value} could not be converted to a String.
+	/// Throws ArgumentRangeError:
+	///          {index} is less than zero, or greater than {length}.
 	public insert(index, value)
 	{
-		return insertInternal(int(index), string(value));
+		index = int(index);
+		if index < 0 or index > length:
+			throw new ArgumentRangeError("index");
+		value = string(value);
+		return insertInternal(index, value);
 	}
+	private insertInternal(index, value)				__extern("aves_StringBuffer_insert");
 
+	/// Summary: Removes all characters from the string buffer without altering
+	///          its capacity.
+	/// Returns: The string buffer.
 	public clear()										__extern("aves_StringBuffer_clear");
 
-	override toString()									__extern("aves_StringBuffer_toString");
+	/// Summary: Creates a new string buffer with characters from this buffer,
+	///          starting at the specified index.
+	/// Param start: The index at which to start extracting characters. (Int, UInt or Real)
+	/// Returns: A new {StringBuffer} with characters from this buffer, from
+	///          index {start} to the end of the string.
+	/// Throws TypeError:
+	///          {start} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {start} is less than zero or greater than {length}.
+	public substr(start)
+	{
+		start = int(start);
+		if start < 0 or start > length:
+			throw new ArgumentRangeError("start");
 
-	private appendInternal(value, times)				__extern("aves_StringBuffer_appendInternal");
-	private appendCodepointInternal(cp)					__extern("aves_StringBuffer_appendCodepointInternal");
-	private appendSubstrInternal(str, index, count)		__extern("aves_StringBuffer_appendSubstrInternal");
-	private insertInternal(index, value)				__extern("aves_StringBuffer_insertInternal");
+		var sb = new StringBuffer(length - start);
+		if start < length:
+			sb.appendSubstrFromBuffer(this, start, length - start);
+		return sb;
+	}
+	/// Summary: Creates a new string buffer with the specified number of characters
+	///          from this buffer, starting at the specified index.
+	/// Param start: The index at which to start extracting characters (Int, UInt or Real)
+	/// Param count: The number of characters to extract. (Int, UInt or Real)
+	/// Returns: A new {StringBuffer} with {count} characters from this buffer,
+	///          starting at index {start}.
+	/// Throws TypeError:
+	///          {start} or {count} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {start} is less than zero or greater than {length}.
+	///
+	///          {count} is less than zero.
+	/// Throws ArgumentError:
+	///          {start} + {count} is greater than {length}.
+	public substr(start, count)
+	{
+		start = int(start);
+		count = int(count);
+		if start < 0 or count < 0:
+			throw new ArgumentRangeError(start < 0 ? "start" : "count");
+		if start + count > length:
+			throw new ArgumentError("The end of the range is outside of the string buffer.");
+
+		var sb = new StringBuffer(count);
+		sb.appendSubstrFromBuffer(this, start, count);
+		return sb;
+	}
+
+	/// Summary: Returns the string value contained within the buffer.
+	/// Returns: A String composed of the characters in the buffer.
+	override toString()									__extern("aves_StringBuffer_toString");
 }

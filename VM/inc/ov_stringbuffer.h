@@ -6,7 +6,6 @@
 #include <memory>
 
 #include "ov_vm.h"
-#include "ov_unicode.h"
 
 // This is basically the same as ov_stringbuffer.internal.h, except rewritten slightly to be
 //   1. Fully inlined;
@@ -35,14 +34,14 @@ public:
 		}
 	}
 
-	inline bool Init(const int32_t capacity = DefaultCapacity)
+	inline bool Init(int32_t capacity = DefaultCapacity)
 	{
 		return SetCapacity(capacity);
 	}
 
-	inline int32_t GetLength()   { return this->length; }
-	inline int32_t GetCapacity() { return this->capacity; }
-	inline bool SetCapacity(const int32_t newCapacity)
+	inline int32_t GetLength() const   { return this->length; }
+	inline int32_t GetCapacity() const { return this->capacity; }
+	inline bool SetCapacity(int32_t newCapacity)
 	{
 		int32_t newCap = newCapacity;
 		if (newCap < this->length)
@@ -59,6 +58,8 @@ public:
 		this->capacity = newCap;
 		return true;
 	}
+
+	inline uchar *GetDataPointer() const { return this->data; }
 
 	inline bool Append(const uchar ch)
 	{
@@ -136,16 +137,16 @@ public:
 		this->length = 0;
 	}
 
-	inline bool StartsWith(const uchar ch)
+	inline bool StartsWith(const uchar ch) const
 	{
 		return this->length > 0 && this->data[0] == ch;
 	}
-	inline bool EndsWith(const uchar ch)
+	inline bool EndsWith(const uchar ch) const
 	{
 		return this->length > 0 && this->data[this->length - 1] == ch;
 	}
 
-	inline String *ToString(ThreadHandle thread)
+	inline String *ToString(ThreadHandle thread) const
 	{
 		return GC_ConstructString(thread, this->length, this->data);
 	}
