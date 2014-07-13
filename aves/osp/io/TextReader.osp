@@ -1,0 +1,267 @@
+use namespace aves;
+
+namespace io;
+
+public inheritable TextReader
+{
+	/// Summary: Creates a new {TextReader} from the specified stream.
+	///          The encoding is set to UTF-8, and {keepOpen} is set
+	///          to false.
+	/// Param stream: The stream to read from.
+	/// Throws ArgumentNullError:
+	///          {stream} is null.
+	/// Throws TypeError:
+	///          {stream} is not an {io.Stream}.
+	/// Throws ArgumentError:
+	///          {stream} is not readable.
+	public new(stream)
+	{
+		new this(stream, Encoding.utf8, false);
+	}
+	/// Summary: Creates a new {TextReader} from the specified stream and
+	///          with the specified encoding. {keepOpen} is set to false.
+	/// Param stream:   The stream to read from.
+	/// Param encoding: The character encoding of the data in the stream.
+	/// Throws ArgumentNullError:
+	///          {stream} or {encoding} is null.
+	/// Throws TypeError:
+	///          {stream} is not an {io.Stream}.
+	///
+	///          {encoding} is not an {aves.Encoding}.
+	/// Throws ArgumentError:
+	///          {stream} is not readable.
+	public new(stream, encoding)
+	{
+		new this(stream, encoding, false);
+	}
+	/// Summary: Creates a new {TextReader} from the specified stream and
+	///          with the specified encoding. The stream is optionally closed
+	///          when the reader is closed.
+	/// Param stream:    The stream to read from.
+	/// Param encoding:  The character encoding of the data in the stream.
+	/// Param keepOpen:  True to leave {stream} open when {close} is called
+	///                  on the text reader; false to close it.
+	/// Throws ArgumentNullError:
+	///          {stream} or {encoding} is null.
+	/// Throws TypeError:
+	///          {stream} is not an {io.Stream}.
+	///
+	///          {encoding} is not an {aves.Encoding}.
+	/// Throws ArgumentError:
+	///          {stream} is not readable.
+	public new(stream, encoding, keepOpen)
+	{
+		if stream is null:
+			throw new ArgumentNullError("stream");
+		if stream is not Stream:
+			throw new TypeError("stream must be an io.Stream instance.");
+		if not stream.canRead:
+			throw new ArgumentError("The stream must be readable.", "stream");
+		if encoding is null:
+			throw new ArgumentNullError("encoding");
+		if encoding is not Encoding:
+			throw new TypeError("encoding must be an aves.Encoding instance.");
+
+		_stream = stream;
+		_encoding = encoding;
+		_keepOpen = bool(keepOpen);
+		decoder = encoding.getDecoder();
+	}
+
+	private _stream;
+	/// Summary: Gets a reference to the stream that is being read from.
+	public get stream = _stream;
+
+	private _encoding;
+	/// Summary: Gets the character encoding that the text reader uses.
+	public get encoding = _encoding;
+
+	private _keepOpen;
+	/// Summary: Determines whether the text reader closes the stream
+	///          when the {close} method is called. If true, the stream
+	///          will be kept open.
+	public get keepOpen = _keepOpen;
+	/// Summary: Sets a value that determines whether the text reader
+	///          closes the stream when the {close} method is called. If
+	///          true, the stream will be kept open.
+	public set keepOpen { _keepOpen = bool(value); }
+
+	private const defaultBufferSize = 1k;
+
+	private decoder;
+	private byteBuffer = new Buffer(defaultBufferSize);
+	private charBuffer = new StringBuffer(defaultBufferSize);
+	private charOffset = 0;
+	private eof = false;
+
+	public overridable close()
+	{
+		try
+		{
+			if not keepOpen:
+				_stream.close();
+		}
+		finally
+		{
+			_stream = null;
+		}
+	}
+
+	/// Summary: Reads a single character (UTF-16 code unit) from the stream.
+	/// Returns: The next character read, as a Char, or null if the end of
+	///          the stream was reached.
+	public read()
+	{
+		if _stream is null:
+			errorHelpers.readerClosed();
+
+		if charOffset == charBuffer.length
+		{
+			if fillBuffer() == 0: return null;
+		}
+
+		var ch = charBuffer[charOffset];
+		charOffset += 1;
+		return ch;
+	}
+
+	/// Summary: Reads a string of the specified maximum length from the stream.
+	/// Param count: The number of characters to read from the stream.
+	///              (Int, UInt or Real)
+	/// Returns: A String value containing at most {count} characters from the
+	///          stream. If the end of the stream is encountered before {count}
+	///          characters could be read, the returned string will be shorter
+	///          than requested.
+	/// Throws TypeError:
+	///          {count} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {count} is less than zero.
+	public read(count)
+	{
+		if _stream is null:
+			errorHelpers.readerClosed();
+
+		count = int(count);
+		if count < 0:
+			throw new ArgumentRangeError("count");
+		if count == 0:
+			return "";
+
+		var sb = new StringBuffer(count);
+
+		while count > 0
+		{
+			if charOffset == charBuffer.length
+			{
+				if fillBuffer() == 0: break;
+			}
+
+			var n = math.min(count, charBuffer.length - charOffset);
+			sb.appendSubstr(charBuffer, charOffset, n);
+			charOffset += n;
+			count -= n;
+		}
+
+		return sb.toString();
+	}
+
+	/// Summary: Reads a string containing the remainder of the characters in
+	///          the stream.
+	/// Returns: A String containing the remainder of the characters in the
+	///          stream.
+	public readToEnd()
+	{
+		if _stream is null:
+			errorHelpers.readerClosed();
+
+		var sb = new StringBuffer(charBuffer.length - charOffset);
+
+		do
+		{
+			sb.appendSubstr(charBuffer, charOffset, charBuffer.length - charOffset);
+			charOffset = charBuffer.length;
+			fillBuffer();
+		} while not charBuffer.isEmpty;
+
+		return sb.toString();
+	}
+
+	/// Summary: Reads the next line from the stream. The resulting string does
+	///          not contain the line separator.
+	/// Returns: The next line from the stream, as a String, or null if the end
+	///          stream is at the end.
+	/// Remarks: A line is considered to end at the first `'\n'` (Line Feed,
+	///          U+000A) or `'\r'` (Carriage Return, U+000D) character, or the
+	///          sequence `"\r\n"`. The returned string does not contain the
+	///          line separator.
+	public readLine()
+	{
+		if _stream is null:
+			errorHelpers.readerClosed();
+
+		if charOffset == charBuffer.length
+		{
+			if fillBuffer() == 0: return null;
+		}
+
+		var sb; // initialize on demand only
+		outer: do
+		{
+			var i = charOffset;
+			do
+			{
+				var ch = charBuffer[i];
+				if ch == '\n' or ch == '\r'
+				{
+					if sb is not null:
+						sb.appendSubstr(charBuffer, charOffset, i - charOffset);
+					else:
+						sb = charBuffer.substr(charOffset, i - charOffset);
+
+					charOffset = i + 1;
+					// See if we have \r\n, and if so, skip the \n as well
+					if ch == '\r' and (charOffset < charBuffer.length or fillBuffer() > 0)
+					{
+						if charBuffer[charOffset] == '\n':
+							charOffset += 1;
+					}
+					break outer;
+				}
+				i += 1;
+			} while i < charBuffer.length;
+			
+			// length of current data
+			i = charBuffer.length - charOffset;
+			if sb is null:
+				sb = new StringBuffer(i + 128);
+			sb.appendSubstr(charBuffer, charOffset, i);
+		} while fillBuffer() > 0;
+
+		return sb.toString();
+	}
+
+	private fillBuffer()
+	{
+		if eof: return 0;
+
+		charOffset = 0;
+		charBuffer.clear();
+
+		do
+		{
+			var byteCount = _stream.readMax(byteBuffer, 0, byteBuffer.size);
+			if byteCount == 0
+			{
+				// EOF! Try to append any dangling characters that
+				// may be left in the decoder.
+				decoder.getChars(byteBuffer, 0, byteCount, charBuffer, true);
+				eof = true;
+				return charBuffer.length;
+			}
+
+			decoder.getChars(byteBuffer, 0, byteCount, charBuffer, false);
+		} while charBuffer.isEmpty;
+
+		return charBuffer.length;
+	}
+}
