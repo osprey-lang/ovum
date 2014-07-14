@@ -296,11 +296,28 @@ int32_t Utf8Decoder::GetCharCount(ThreadHandle thread, Buffer *buf, int32_t offs
 	BytesLeft left(this->bytesLeftAll);
 
 	int32_t charCount = 0;
-
 	uint8_t *bp = buf->bytes + offset;
-	for (int32_t i = 0; i < count; i++)
+
+	int32_t i = 0;
+	if (state == 0)
 	{
-		// Cast up to uint32 for speed.
+		while (i < count)
+		{
+			// Cast up to uint32 for speed.
+			uint32_t b = bp[i];
+			if (b > 0x7F)
+				// If we find a non-ASCII character, exit here and enter the slow path.
+				break;
+
+			charCount++;
+			// Don't increment i until here: if we enter the slow path,
+			// i remain on the non-ASCII character.
+			i++;
+		}
+	}
+
+	while (i < count)
+	{
 		uint32_t b = bp[i];
 
 		switch (state)
@@ -410,56 +427,40 @@ int32_t Utf8Decoder::GetCharCount(ThreadHandle thread, Buffer *buf, int32_t offs
 
 		default: // 0
 		defaultCase:
-			// Switch on the high nibble of the byte
-			switch (b >> 4)
+			if (b > 0x7F)
 			{
-			case 0xC:
-			case 0xD:
-				// 2-byte sequence
-				left.bytes[0] = (uint8_t)b;
-				state = 1;
-				break;
-			case 0xE:
-				// 3-byte sequence
-				left.bytes[0] = (uint8_t)b;
-				state = 2;
-				break;
-			case 0xF:
-				// 4-, 5-, or 6-byte sequence
-				// FE and FF are never valid in UTF-8, so they
-				// get turned into U+FFFD.
-
-				switch (b & 0x0f)
+				if (b >= 0xC0)
 				{
-				case 0x8: case 0x9: case 0xA: case 0xB:
-				case 0xC: case 0xD:
-					// 8-B = 111110xx: 5-byte sequence
-					// C-D = 1111110x: 6-byte sequence
-					// In both cases, the sequence is either overlong or
-					// represents something larger than U+10FFFF, so we
-					// spit out U+FFFD.
-					state = 7; // >5-byte sequence
-					left.all = b > 0xFB ? 5 : 4; // number of cont. bytes to skip
-					break;
-				case 0xE:
-				case 0xF:
-					charCount++; // U+FFFD
-					break;
-				default: // 0-7
-					// 11110xxx: 4-byte sequence
-					state = 4;
+					// Beginning of multi-byte sequence
 					left.bytes[0] = (uint8_t)b;
+					if (b <= 0xDF)
+						// 2-byte sequence
+						state = 1;
+					else if (b <= 0xEF)
+						// 3-byte sequence
+						state = 2;
+					else if (b <= 0xF7)
+						// 4-byte sequence
+						state = 4;
+					else if (b <= 0xFD)
+					{
+						// 5- or 6-byte sequence
+						state = 7;
+						left.all = b > 0xFB ? 5 : 4;
+					}
+					else
+						// FF or FE: always invalid
+						goto singleReplacement;
 					break;
 				}
-				break;
-			default:
-				// Single-byte sequence
-				// This may be a continuation byte outside of
-				// a multibyte sequence. These are turned into
-				// U+FFFD, which is one character.
-				charCount++;
-				break;
+				// Else: continuation byte outside multi-byte sequence
+
+				singleReplacement:
+				// Fall through to count replacement char
+				b = (uint32_t)ReplacementChar;
 			}
+			// Single byte or replacement char
+			charCount++;
 			break;
 		}
 	}
@@ -480,11 +481,31 @@ int32_t Utf8Decoder::GetChars(ThreadHandle thread, Buffer *buf, int32_t offset, 
 	BytesLeft left(this->bytesLeftAll);
 
 	int32_t charCount = 0;
-
 	uint8_t *bp = buf->bytes + offset;
-	for (int32_t i = 0; i < count; i++)
+
+	int32_t i = 0;
+	if (state == 0)
 	{
-		uint32_t b = bp[i];
+		while (i < count)
+		{
+			uint32_t b = bp[i];
+			if (b > 0x7F)
+				// If we find a non-ASCII character, exit here and enter the slow path.
+				break;
+
+			if (!sb->Append((uchar)b))
+				return ~OVUM_ERROR_NO_MEMORY;
+
+			charCount++;
+			// Don't increment i until here: if we enter the slow path,
+			// i remain on the non-ASCII character.
+			i++;
+		}
+	}
+
+	while (i < count)
+	{
+		uint32_t b = bp[i++];
 		uchar ch;
 
 		switch (state)
@@ -615,51 +636,42 @@ int32_t Utf8Decoder::GetChars(ThreadHandle thread, Buffer *buf, int32_t offset, 
 
 		default: // 0
 		defaultCase:
-			switch (b >> 4)
+			if (b > 0x7F)
 			{
-			case 0xC:
-			case 0xD:
-				// 2-byte sequence
-				left.bytes[0] = (uint8_t)b;
-				state = 1;
-				break;
-			case 0xE:
-				// 3-byte sequence
-				left.bytes[0] = (uint8_t)b;
-				state = 2;
-				break;
-			case 0xF:
-				// 4-, 5-, or 6-byte sequence
-				switch (b & 0x0f)
+				if (b >= 0xC0)
 				{
-				case 0x8: case 0x9: case 0xA: case 0xB:
-				case 0xC: case 0xD:
-					state = 7;
-					left.all = b > 0xFB ? 5 : 4;
-					break;
-				case 0xE:
-				case 0xF:
-					if (!sb->Append(ReplacementChar))
-						return ~OVUM_ERROR_NO_MEMORY;
-					charCount++;
-					break;
-				default: // 0-7
-					state = 4;
+					// Beginning of multi-byte sequence
 					left.bytes[0] = (uint8_t)b;
+					if (b <= 0xDF)
+						// 2-byte sequence
+						state = 1;
+					else if (b <= 0xEF)
+						// 3-byte sequence
+						state = 2;
+					else if (b <= 0xF7)
+						// 4-byte sequence
+						state = 4;
+					else if (b <= 0xFD)
+					{
+						// 5- or 6-byte sequence
+						state = 7;
+						left.all = b > 0xFB ? 5 : 4;
+					}
+					else
+						// FF or FE: always invalid
+						goto singleReplacement;
 					break;
 				}
-				break;
-			default:
-				// Single-byte sequence
-				if (b > 0x7F)
-					// b must be a continuation character outside
-					// a multibyte sequence, which is not okay.
-					b = ReplacementChar;
-				if (!sb->Append((uchar)b))
-					return ~OVUM_ERROR_NO_MEMORY;
-				charCount++;
-				break;
+				// Else: continuation byte outside multi-byte sequence
+
+				singleReplacement:
+				// Fall through to append replacement char
+				b = (uint32_t)ReplacementChar;
 			}
+			// Single byte or replacement char
+			if (!sb->Append((uchar)b))
+				return ~OVUM_ERROR_NO_MEMORY;
+			charCount++;
 			break;
 		}
 	}

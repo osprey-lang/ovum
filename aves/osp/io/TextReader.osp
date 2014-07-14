@@ -113,6 +113,7 @@ public inheritable TextReader
 	private decoder;
 	private byteBuffer = new Buffer(defaultBufferSize);
 	private charBuffer = new StringBuffer(defaultBufferSize);
+	private charCount = 0;
 	private charOffset = 0;
 	private eof = false;
 
@@ -137,7 +138,7 @@ public inheritable TextReader
 		if _stream is null:
 			errorHelpers.readerClosed();
 
-		if charOffset == charBuffer.length
+		if charOffset == charCount
 		{
 			if fillBuffer() == 0: return null;
 		}
@@ -173,12 +174,12 @@ public inheritable TextReader
 
 		while count > 0
 		{
-			if charOffset == charBuffer.length
+			if charOffset == charCount
 			{
 				if fillBuffer() == 0: break;
 			}
 
-			var n = math.min(count, charBuffer.length - charOffset);
+			var n = math.min(count, charCount - charOffset);
 			sb.appendSubstr(charBuffer, charOffset, n);
 			charOffset += n;
 			count -= n;
@@ -196,14 +197,14 @@ public inheritable TextReader
 		if _stream is null:
 			errorHelpers.readerClosed();
 
-		var sb = new StringBuffer(charBuffer.length - charOffset);
+		var sb = new StringBuffer(charCount - charOffset);
 
 		do
 		{
-			sb.appendSubstr(charBuffer, charOffset, charBuffer.length - charOffset);
-			charOffset = charBuffer.length;
+			sb.appendSubstr(charBuffer, charOffset, charCount - charOffset);
+			charOffset = charCount;
 			fillBuffer();
-		} while not charBuffer.isEmpty;
+		} while charCount > 0;
 
 		return sb.toString();
 	}
@@ -221,7 +222,7 @@ public inheritable TextReader
 		if _stream is null:
 			errorHelpers.readerClosed();
 
-		if charOffset == charBuffer.length
+		if charOffset == charCount
 		{
 			if fillBuffer() == 0: return null;
 		}
@@ -243,7 +244,7 @@ public inheritable TextReader
 
 					charOffset = i + 1;
 					// See if we have \r\n, and if so, skip the \n as well
-					if ch == '\r' and (charOffset < charBuffer.length or fillBuffer() > 0)
+					if ch == '\r' and (charOffset < charCount or fillBuffer() > 0)
 					{
 						if charBuffer[charOffset] == '\n':
 							charOffset += 1;
@@ -252,10 +253,10 @@ public inheritable TextReader
 					return sb;
 				}
 				i += 1;
-			} while i < charBuffer.length;
+			} while i < charCount;
 			
 			// length of current data
-			i = charBuffer.length - charOffset;
+			i = charCount - charOffset;
 			if sb is null:
 				sb = new StringBuffer(i + 128);
 			sb.appendSubstr(charBuffer, charOffset, i);
@@ -269,6 +270,7 @@ public inheritable TextReader
 		if eof: return 0;
 
 		charOffset = 0;
+		charCount = 0;
 		charBuffer.clear();
 
 		do
@@ -279,14 +281,15 @@ public inheritable TextReader
 				// EOF! Try to append any dangling characters that
 				// may be left in the decoder.
 				decoder.getChars(byteBuffer, 0, byteCount, charBuffer, true);
+				charCount = charBuffer.length;
 				eof = true;
-				return charBuffer.length;
+				return charCount;
 			}
 
-			decoder.getChars(byteBuffer, 0, byteCount, charBuffer, false);
-		} while charBuffer.isEmpty;
+			charCount = decoder.getChars(byteBuffer, 0, byteCount, charBuffer, false);
+		} while charCount > 0;
 
-		return charBuffer.length;
+		return charCount;
 	}
 
 	/// Summary: Creates a new {TextReader} from the specified file name and the
