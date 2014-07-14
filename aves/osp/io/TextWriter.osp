@@ -251,4 +251,46 @@ public inheritable TextWriter
 		write(string(format).format(values));
 		write(newline);
 	}
+
+	/// Summary: Creates a new {TextWriter} from the specified file name and the
+	///          UTF-8 encoding. If the file does not exist, it will be created;
+	///          if it already exists, it will be overwritten.
+	/// Param fileName: The name of the file to write to.
+	/// Returns: A new {TextWriter} that writes to the specified file.
+	/// Throws ArgumentNullError:
+	///          {fileName} is null.
+	/// Throws TypeError:
+	///          {fileName} could not be converted to a String.
+	public static open(fileName)
+	{
+		if fileName is null:
+			throw new ArgumentNullError("fileName");
+
+		return new TextWriter(File.create(fileName));
+	}
+
+	/// Summary: Creates a new {TextWriter} from the specified file name and
+	///          encoding. If the file does not exist, it will be created;
+	///          if it already exists, it will be overwritten.
+	/// Param fileName: The name of the file to write to.
+	/// Param encoding: The character encoding of the file.
+	/// Returns: A new {TextWriter} that writes to the specified file with the
+	///          specified encoding.
+	/// Throws ArgumentNullError:
+	///          {fileName} or {encoding} is null.
+	/// Throws TypeError:
+	///          {fileName} could not be converted to a String.
+	///
+	///          {encoding} is not an {Encoding}.
+	public static open(fileName, encoding)
+	{
+		if fileName is null:
+			throw new ArgumentNullError("fileName");
+		if encoding is null:
+			throw new ArgumentNullError("encoding");
+		if encoding is not Encoding:
+			throw new TypeError("encoding must be an aves.Encoding.");
+
+		return new TextWriter(File.create(fileName), encoding);
+	}
 }

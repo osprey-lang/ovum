@@ -915,7 +915,6 @@ int Thread::LoadStaticField(Field *field, Value *result)
 	if (result)
 	{
 		field->staticValue->Read(result);
-		currentFrame->stackCount--;
 	}
 	else
 	{
