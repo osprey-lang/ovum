@@ -287,7 +287,7 @@ public inheritable TextReader
 			}
 
 			charCount = decoder.getChars(byteBuffer, 0, byteCount, charBuffer, false);
-		} while charCount > 0;
+		} while charCount == 0;
 
 		return charCount;
 	}

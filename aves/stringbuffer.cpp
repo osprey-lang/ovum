@@ -235,5 +235,6 @@ void aves_StringBuffer_finalize(void *basePtr)
 {
 	// NOTE: Do not delete the memory! Just call the destructor.
 	// The GC allocated things, so we let it clean things up.
-	((StringBuffer*)basePtr)->~StringBuffer();
+	StringBuffer *buf = (StringBuffer*)basePtr;
+	buf->~StringBuffer();
 }
