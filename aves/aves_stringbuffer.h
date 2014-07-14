@@ -23,6 +23,7 @@ AVES_API NATIVE_FUNCTION(aves_StringBuffer_appendSubstrFromBuffer);
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_insert);
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_clear);
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_toString);
+AVES_API NATIVE_FUNCTION(aves_StringBuffer_toStringSubstr);
 
 void aves_StringBuffer_finalize(void *basePtr);
 

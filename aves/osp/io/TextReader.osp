@@ -227,7 +227,7 @@ public inheritable TextReader
 		}
 
 		var sb; // initialize on demand only
-		outer: do
+		do
 		{
 			var i = charOffset;
 			do
@@ -235,10 +235,11 @@ public inheritable TextReader
 				var ch = charBuffer[i];
 				if ch == '\n' or ch == '\r'
 				{
+					// Make sure a string is stored in sb
 					if sb is not null:
-						sb.appendSubstr(charBuffer, charOffset, i - charOffset);
+						sb = sb.appendSubstr(charBuffer, charOffset, i - charOffset).toString();
 					else:
-						sb = charBuffer.substr(charOffset, i - charOffset);
+						sb = charBuffer.toString(charOffset, i - charOffset);
 
 					charOffset = i + 1;
 					// See if we have \r\n, and if so, skip the \n as well
@@ -247,7 +248,8 @@ public inheritable TextReader
 						if charBuffer[charOffset] == '\n':
 							charOffset += 1;
 					}
-					break outer;
+
+					return sb;
 				}
 				i += 1;
 			} while i < charBuffer.length;
