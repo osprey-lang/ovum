@@ -115,7 +115,6 @@ public inheritable TextReader
 	private charBuffer = new StringBuffer(defaultBufferSize);
 	private charCount = 0;
 	private charOffset = 0;
-	private eof = false;
 
 	public overridable close()
 	{
@@ -267,8 +266,6 @@ public inheritable TextReader
 
 	private fillBuffer()
 	{
-		if eof: return 0;
-
 		charOffset = 0;
 		charCount = 0;
 		charBuffer.clear();
@@ -282,7 +279,6 @@ public inheritable TextReader
 				// may be left in the decoder.
 				decoder.getChars(byteBuffer, 0, byteCount, charBuffer, true);
 				charCount = charBuffer.length;
-				eof = true;
 				return charCount;
 			}
 
