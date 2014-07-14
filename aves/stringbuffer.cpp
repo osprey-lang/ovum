@@ -215,6 +215,22 @@ AVES_API NATIVE_FUNCTION(aves_StringBuffer_toString)
 	RETURN_SUCCESS;
 }
 
+AVES_API NATIVE_FUNCTION(aves_StringBuffer_toStringSubstr)
+{
+	// toStringSubstr(start is Int, count is Int)
+	// The public-facing method range-checks the values.
+
+	StringBuffer *buf = _SB(THISV);
+	int32_t start = (int32_t)args[1].integer;
+	int32_t count = (int32_t)args[2].integer;
+
+	String *result = GC_ConstructString(thread, count, buf->GetDataPointer() + start);
+	if (!result)
+		return VM_ThrowMemoryError(thread);
+	VM_PushString(thread, result);
+	RETURN_SUCCESS;
+}
+
 void aves_StringBuffer_finalize(void *basePtr)
 {
 	// NOTE: Do not delete the memory! Just call the destructor.

@@ -236,7 +236,7 @@ public class StringBuffer
 		if start < 0 or count < 0:
 			throw new ArgumentRangeError(start < 0 ? "start" : "count");
 		if start + count > length:
-			throw new ArgumentError("The end of the range is outside of the string buffer.");
+			throw new ArgumentError(endIsOutsideBuffer);
 
 		var sb = new StringBuffer(count);
 		sb.appendSubstrFromBuffer(this, start, count);
@@ -246,4 +246,33 @@ public class StringBuffer
 	/// Summary: Returns the string value contained within the buffer.
 	/// Returns: A String composed of the characters in the buffer.
 	override toString()									__extern("aves_StringBuffer_toString");
+
+	/// Summary: Creates a string based on the specified subrange of
+	///          characters in the string buffer.
+	/// Param start: The index at which to start extracting characters. (Int, UInt or Real)
+	/// Param count: The number of characters to extract.
+	/// Returns: A new String with {count} characters from this buffer,
+	///          starting at index {start}.
+	/// Throws TypeError:
+	///          {start} or {count} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {start} is less than zero or greater than {length}.
+	///
+	///          {count} is less than zero.
+	/// Throws ArgumentError:
+	///          {start} + {count} is greater than {length}.
+	public toString(start, count)
+	{
+		start = int(start);
+		count = int(count);
+		if start < 0 or count < 0:
+			throw new ArgumentRangeError(start < 0 ? "start" : "count");
+		if start + count > length:
+			throw new ArgumentError(endIsOutsideBuffer);
+
+		return toStringSubstr(start, count);
+	}
+	private toStringSubstr(start, count)				__extern("aves_StringBuffer_toStringSubstr");
+
+	private const endIsOutsideBuffer = "The end of the range is outside of the string buffer.";
 }
