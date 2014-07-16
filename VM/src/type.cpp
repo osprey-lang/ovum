@@ -240,6 +240,7 @@ void Type::AddNativeField(size_t offset, NativeFieldType fieldType)
 	{
 		uint32_t newCap = nativeFieldCapacity ? 2 * nativeFieldCapacity : 4;
 		nativeFields = reinterpret_cast<NativeField*>(realloc(nativeFields, sizeof(NativeField) * newCap));
+		nativeFieldCapacity = newCap;
 	}
 
 	NativeField *field = nativeFields + fieldCount++;
