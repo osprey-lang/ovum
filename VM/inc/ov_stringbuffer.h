@@ -27,11 +27,8 @@ public:
 	inline ~StringBuffer()
 	{
 		// Note: don't use delete; data was allocated with realloc, not new
-		if (data)
-		{
-			free(data);
-			data = nullptr;
-		}
+		free(data);
+		data = nullptr;
 	}
 
 	inline bool Init(int32_t capacity = DefaultCapacity)

@@ -119,6 +119,7 @@
     <ClInclude Include="io_directory.h" />
     <ClInclude Include="io_file.h" />
     <ClInclude Include="io_path.h" />
+    <ClInclude Include="io_textreader.h" />
     <ClInclude Include="windows\windows.h" />
     <ClInclude Include="aves_utf8encoding.h" />
   </ItemGroup>
@@ -135,6 +136,7 @@
     <ClCompile Include="nativehandle.cpp" />
     <ClCompile Include="overload.cpp" />
     <ClCompile Include="property.cpp" />
+    <ClCompile Include="textreader.cpp" />
     <ClCompile Include="windows\dllmain.cpp">
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</CompileAsManaged>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">

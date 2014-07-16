@@ -153,6 +153,9 @@
     <ClInclude Include="aves_module.h">
       <Filter>Header Files\aves\reflection</Filter>
     </ClInclude>
+    <ClInclude Include="io_textreader.h">
+      <Filter>Header Files\io</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="aves.cpp">
@@ -268,6 +271,9 @@
     </ClCompile>
     <ClCompile Include="module.cpp">
       <Filter>Source Files\aves\reflection</Filter>
+    </ClCompile>
+    <ClCompile Include="textreader.cpp">
+      <Filter>Source Files\io</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
