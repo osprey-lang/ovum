@@ -30,11 +30,29 @@ public inheritable Iterable
 
 	private collection;
 
+	/// Summary: Determines whether all items in the sequence match
+	///          the given predicate.
+	/// Param predicate: An invokable value that takes one argument
+	///          (the current element) and returns a truthy value if
+	///          the element matches the predicate, or a falsy value
+	///          otherwise.
+	/// Returns: True if all items in the sequence match the predicate;
+	///          otherwise, false.
+	/// Throws ArgumentNullError: {predicate} is null.
 	public any(predicate)
 	{
 		return this.iter.any(predicate);
 	}
 
+	/// Summary: Determines whether any item in the sequence matches
+	///          the given predicate.
+	/// Param predicate: An invokable value that takes one argument
+	///          (the current element) and returns a truthy value if
+	///          the element matches the predicate, or a falsy value
+	///          otherwise.
+	/// Returns: True if any item in the sequence matches the predicate;
+	///          otherwise, false.
+	/// Throws ArgumentNullError: {predicate} is null.
 	public all(predicate)
 	{
 		return this.iter.all(predicate);
@@ -202,6 +220,23 @@ public inheritable Iterable
 		return new SkipIterable(this, count);
 	}
 
+	public zip(other)
+	{
+		if other is null:
+			throw new ArgumentNullError("other");
+
+		return new ZipIterable(this, other, null);
+	}
+	public zip(other, func)
+	{
+		if other is null:
+			throw new ArgumentNullError("other");
+		if func is null:
+			throw new ArgumentNullError("func");
+
+		return new ZipIterable(this, other, func);
+	}
+
 	iter
 	{
 		if collection is null:
@@ -309,6 +344,20 @@ private class SkipIterable is Iterable
 	iter
 	{
 		return inner.iter.skip(skipCount);
+	}
+}
+
+private class ZipIterable is Iterable
+{
+	public new(this.one, this.two, this.func);
+
+	private one, two, func;
+
+	iter
+	{
+		if one is null:
+			return one.iter.zip(two.iter);
+		return one.iter.zip(two.iter, func);
 	}
 }
 

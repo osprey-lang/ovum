@@ -72,6 +72,10 @@ public abstract class Iterator
 		return false;
 	}
 
+	/// Summary: Calls a function once with each item in the sequence.
+	/// Param func: An invokable value that takes one argument (the
+	///           current element). The return value is discarded.
+	/// Throws ArgumentNullError: {func} is null.
 	public each(func)
 	{
 		if func is null:
@@ -410,6 +414,32 @@ public abstract class Iterator
 		return new SkipIterator(this, count);
 	}
 
+	public zip(other)
+	{
+		if other is null:
+			throw new ArgumentNullError("other");
+		if other is not Iterator:
+			other = other.iter;
+
+		return zipIter(other, defaultZipFunc);
+	}
+	public zip(other, func)
+	{
+		if other is null:
+			throw new ArgumentNullError("other");
+		if other is not Iterator:
+			other = other.iter;
+		if func is null:
+			throw new ArgumentNullError("func");
+
+		return zipIter(other, func);
+	}
+	private zipIter(other, func)
+	{
+		while this.moveNext() and other.moveNext():
+			yield func(this.current, other.current);
+	}
+
 	public toList()
 	{
 		var output = [];
@@ -424,6 +454,8 @@ public abstract class Iterator
 
 	private const emptySequence = "The sequence is empty.";
 	private const noMatchFound = "No matching item found.";
+
+	private static defaultZipFunc = @(a, b) = [a, b];
 
 	iter { return this; }
 }
