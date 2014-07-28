@@ -4,7 +4,7 @@
 
 Ovum is the virtual machine that runs programs written in [Osprey][osp]. For the time being, this is _not_ a pure C++ implementation, and will not compile outside Windows; there are several calls to various Windows API functions. If you want to try compiling this project outside of Visual Studio 2012, good luck to you!
 
-The Ovum solution consists of three projects: Ovum, VM and aves.
+The Ovum solution consists of four projects: Ovum, VM, aves and aves.tests.
 
 ## The Ovum project
 
@@ -33,6 +33,26 @@ where `DLLDIR` is the directory containing `aves.dll`, and `OUTDIR` is the outpu
 ### Why “aves”?
 
 [Because birds](http://en.wikipedia.org/wiki/Aves).
+
+## The aves.tests project
+
+This pure-Osprey project contains unit tests for the public API of aves. It depends on the [`testing.unit`](http://bitbucket.org/Heurlinius/testing.unit) module. This project is a work in progress; the vast majority of aves is *not* tested by it. However, it will be gradually expanded to cover as much as possible.
+
+The aves.tests project should be compiled with the following options:
+
+	/libpath LIBPATH /main aves.tests.main /r *.osp
+
+where `LIBPATH` is the module library path. Note the use of `/r *.osp` to include all `.osp` files: unlike the aves project, this project does not contain a list of `use` directives that name all test files. This may be changed in the future.
+
+When running the tests, the module can be invoked with any number of command-line arguments. If invoked with none, it will simply run all the tests in the module. Otherwise, each argument is treated as the name of a test class, without the `aves.tests.` prefix. For example,
+
+	Run all tests:
+	> ovum aves.tests.ovm
+
+	Test only Buffer and BufferView:
+	> ovum aves.tests.ovm BufferTests BufferViewTests
+
+Usually, all tests should be run.
 
 
   [osp]: http://bitbucket.org/Heurlinius/osprey

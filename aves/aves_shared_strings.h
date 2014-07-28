@@ -42,6 +42,8 @@ namespace strings
 	extern String *minor;
 	extern String *build;
 	extern String *revision;
+	extern String *minLength;
+	extern String *side;
 	extern String *_call; // .call
 	extern String *_iter; // .iter
 	extern String *_new;  // .new

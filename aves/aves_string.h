@@ -26,6 +26,8 @@ AVES_API NATIVE_FUNCTION(aves_String_format);
 AVES_API NATIVE_FUNCTION(aves_String_replaceInner);
 AVES_API NATIVE_FUNCTION(aves_String_split);
 
+AVES_API NATIVE_FUNCTION(aves_String_padInner);
+
 AVES_API NATIVE_FUNCTION(aves_String_toUpper);
 AVES_API NATIVE_FUNCTION(aves_String_toLower);
 
@@ -45,6 +47,14 @@ AVES_API NATIVE_FUNCTION(aves_String_fromCodepoint);
 AVES_API NATIVE_FUNCTION(aves_String_opEquals);
 AVES_API NATIVE_FUNCTION(aves_String_opCompare);
 AVES_API NATIVE_FUNCTION(aves_String_opMultiply);
+
+// Note: These values must be synchronised with aves.StringPad (in String.osp)
+enum StringPad
+{
+	PAD_START = 1,
+	PAD_END = 2,
+	PAD_BOTH = 3,
+};
 
 // Internal methods
 

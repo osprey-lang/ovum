@@ -202,33 +202,43 @@ public class String
 	/// Throws TypeError:
 	///          {oldValue} is null.
 	///
-	///          {oldValue} could not be converted to a string.
-	///
-	///          {newValue} could not be converted to a string.
-	/// Throws ArgumentError: {oldValue} is of length 0.
+	///          {oldValue} or {newValue} could not be converted to a string.
+	/// Throws ArgumentError:
+	///          {oldValue} is of length 0.
 	/// Remarks: If {oldValue} or {newValue} is not a String, the corresponding value
 	///          will be converted to one.
 	public replace(oldValue, newValue)
 	{
 		if oldValue is null:
 			throw new ArgumentNullError("oldValue");
-		return replaceInner(string(oldValue), string(newValue), -1);
+		oldValue = string(oldValue);
+		newValue = string(newValue);
+		return replaceInner(oldValue, newValue, -1);
 	}
 	/// Summary: Returns a new string with occurrences of {oldValue} replaced
 	///          with {newValue} a maximum of {maxTimes} times.
 	/// Param oldValue: The string to be replaced.
 	/// Param newValue: The string to replace {oldValue}.
-	/// Param maxTimes: The maximum number of substitutions to make. (Int)
-	///          If negative, all occurrences of {oldValue} are replaced. If
-	///          zero, the string is unaltered.
+	/// Param maxTimes: The maximum number of substitutions to make. If less
+	///          than zero, all occurrences of {oldValue} are replaced. If
+	///          zero, the string is unaltered. (Int, UInt or Real)
 	/// Returns: A new String instance with occurrences of {oldValue} replaced
 	///          with {newValue}, a maxiumim of {maxTimes} times, or with all
 	///          occurrences replaced if {maxTimes} is negative.
+	/// Throws TypeError:
+	///          {oldValue} is null.
+	///
+	///          {oldValue} or {newValue} could not be converted to a string.
+	/// Throws ArgumentError:
+	///          {oldValue} is of length 0.
 	public replace(oldValue, newValue, maxTimes)
 	{
 		if oldValue is null:
 			throw new ArgumentNullError("oldValue");
-		return replaceInner(string(oldValue), string(newValue), int(maxTimes));
+		oldValue = string(oldValue);
+		newValue = string(newValue);
+		maxTimes = int(maxTimes);
+		return replaceInner(oldValue, newValue, maxTimes);
 	}
 	private replaceInner(oldValue, newValue, maxTimes)	__extern("aves_String_replaceInner");
 
@@ -417,6 +427,175 @@ public class String
 		return end;
 	}
 
+	/// Summary: Pads the string with spaces up to a specified minimum length.
+	/// Param minLength: The minimum length to pad the string to. (Int, UInt or Real)
+	/// Param side: The “side” of the string that is padded ({StringPad.start},
+	///             {StringPad.end} or {StringPad.both}). (StringPad)
+	/// Returns: A padded version of this string, no shorter than {minLength} characters.
+	///          If {minLength} is less than or equal to the string’s {length}, the same
+	///          instance is returned.
+	/// Throws TypeError:
+	///          {minLength} could not be converted to an Int.
+	///
+	///          {side} is not a {StringPad} value.
+	/// Throws ArgumentRangeError:
+	///          {minLength} is less than zero.
+	/// Remarks: Note: This method returns a new String value. It does not modify the
+	///          original string.
+	public pad(minLength, side)
+	{
+		minLength = int(minLength);
+		if minLength < 0:
+			throw new ArgumentRangeError("minLength");
+		if side is not StringPad:
+			throw new TypeError("side must be a StringPad value.");
+
+		return padInner(minLength, ' ', side);
+	}
+	/// Summary: Pads the string with the specified character up to a specified minimum
+	///          length.
+	/// Param minLength: The minimum length to pad the string to. (Int, UInt or Real)
+	/// Param char: The character to pad with. This must be a Char or String of length 1.
+	///             (Char or String)
+	/// Param side: The “side” of the string that is padded ({StringPad.start},
+	///             {StringPad.end} or {StringPad.both}). (StringPad)
+	/// Returns: A padded version of this string, no shorter than {minLength} characters.
+	///          If {minLength} is less than or equal to the string’s {length}, the same
+	///          instance is returned.
+	/// Throws TypeError:
+	///          {minLength} could not be converted to an Int.
+	///
+	///          {char} is not a Char or String.
+	///
+	///          {side} is not a {StringPad} value.
+	/// Throws ArgumentRangeError:
+	///          {minLength} is less than zero.
+	/// Throws ArgumentError:
+	///          {char} is a Char or String whose `length` is not 1.
+	/// Remarks: Note: This method returns a new String value. It does not modify the
+	///          original string.
+	public pad(minLength, char, side)
+	{
+		minLength = int(minLength);
+		if minLength < 0:
+			throw new ArgumentRangeError("minLength");
+		char = getPaddingChar(char);
+		if side is not StringPad:
+			throw new TypeError("side must be a StringPad value.");
+
+		return padInner(minLength, char, side);
+	}
+
+	/// Summary: Pads the start of the string with spaces up to a specified minimum length.
+	/// Param minLength: The minimum length to pad the string to. (Int, UInt or Real)
+	/// Returns: A padded version of this string, no shorter than {minLength} characters.
+	///          If {minLength} is less than or equal to the string’s {length}, the same
+	///          instance is returned.
+	/// Throws TypeError:
+	///          {minLength} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {minLength} is less than zero.
+	/// Remarks: Note: This method returns a new String value. It does not modify the
+	///          original string.
+	public padStart(minLength)
+	{
+		minLength = int(minLength);
+		if minLength < 0:
+			throw new ArgumentRangeError("minLength");
+
+		return padInner(minLength, ' ', StringPad.start);
+	}
+	/// Summary: Pads the start of the string with the specified character up to a specified
+	///          minimum length.
+	/// Param minLength: The minimum length to pad the string to. (Int, UInt or Real)
+	/// Param char: The character to pad with. This must be a Char or String of length 1.
+	///             (Char or String)
+	/// Returns: A padded version of this string, no shorter than {minLength} characters.
+	///          If {minLength} is less than or equal to the string’s {length}, the same
+	///          instance is returned.
+	/// Throws TypeError:
+	///          {minLength} could not be converted to an Int.
+	///
+	///          {char} is not a Char or String.
+	/// Throws ArgumentRangeError:
+	///          {minLength} is less than zero.
+	/// Throws ArgumentError:
+	///          {char} is a Char or String whose `length` is not 1.
+	/// Remarks: Note: This method returns a new String value. It does not modify the
+	///          original string.
+	public padStart(minLength, char)
+	{
+		minLength = int(minLength);
+		if minLength < 0:
+			throw new ArgumentRangeError("minLength");
+		char = getPaddingChar(char);
+
+		return padInner(minLength, char, StringPad.start);
+	}
+
+	/// Summary: Pads the end of the string with spaces up to a specified minimum length.
+	/// Param minLength: The minimum length to pad the string to. (Int, UInt or Real)
+	/// Returns: A padded version of this string, no shorter than {minLength} characters.
+	///          If {minLength} is less than or equal to the string’s {length}, the same
+	///          instance is returned.
+	/// Throws TypeError:
+	///          {minLength} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {minLength} is less than zero.
+	/// Remarks: Note: This method returns a new String value. It does not modify the
+	///          original string.
+	public padEnd(minLength)
+	{
+		minLength = int(minLength);
+		if minLength < 0:
+			throw new ArgumentRangeError("minLength");
+
+		return padInner(minLength, ' ', StringPad.end);
+	}
+	/// Summary: Pads the end of the string with the specified character up to a specified
+	///          minimum length.
+	/// Param minLength: The minimum length to pad the string to. (Int, UInt or Real)
+	/// Param char: The character to pad with. This must be a Char or String of length 1.
+	///             (Char or String)
+	/// Returns: A padded version of this string, no shorter than {minLength} characters.
+	///          If {minLength} is less than or equal to the string’s {length}, the same
+	///          instance is returned.
+	/// Throws TypeError:
+	///          {minLength} could not be converted to an Int.
+	///
+	///          {char} is not a Char or String.
+	/// Throws ArgumentRangeError:
+	///          {minLength} is less than zero.
+	/// Throws ArgumentError:
+	///          {char} is a Char or String whose `length` is not 1.
+	/// Remarks: Note: This method returns a new String value. It does not modify the
+	///          original string.
+	public padEnd(minLength, char)
+	{
+		minLength = int(minLength);
+		if minLength < 0:
+			throw new ArgumentRangeError("minLength");
+		char = getPaddingChar(char);
+
+		return padInner(minLength, char, StringPad.end);
+	}
+
+	private padInner(minLength, char, side)				__extern("aves_String_padInner");
+
+	private static getPaddingChar(char)
+	{
+		if char is not String and char is not Char:
+			throw new TypeError("The padding character must be an aves.Char or an aves.String.");
+
+		if char.length != 1:
+			throw new ArgumentError("The padding character must be of length 1.");
+		if char is String:
+			// Get the first character
+			char = char[0];
+
+		return char;
+	}
+
 	public toUpper()						__extern("aves_String_toUpper");
 	public toLower()						__extern("aves_String_toLower");
 
@@ -534,4 +713,18 @@ private class StringIterator is Iterator
 		}
 		return false;
 	}
+}
+
+/// Summary: Specifies which part of a string is padded (start, end, or both).
+public enum StringPad
+{
+	// Note: These values must be synchronised with those in aves_string.h!
+
+	/// Summary: The start of the string is padded.
+	start = 1,
+	/// Summary: The end of the string is padded.
+	end = 2,
+	/// Summary: Both the start and the end are padded, effectively centering
+	///          the string within the padding.
+	both = 3,
 }

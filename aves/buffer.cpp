@@ -213,7 +213,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_writeUInt16)
 	CHECKED(GetBufferIndex(thread, buf, args[1], 2, index));
 
 	if (args[2].type != Types::Int && args[2].type != Types::UInt)
-		VM_ThrowTypeError(thread);
+		return VM_ThrowTypeError(thread);
 
 	buf->uint16s[index] = (uint16_t)args[2].uinteger;
 }
@@ -225,7 +225,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_writeUInt32)
 	CHECKED(GetBufferIndex(thread, buf, args[1], 4, index));
 
 	if (args[2].type != Types::Int && args[2].type != Types::UInt)
-		VM_ThrowTypeError(thread);
+		return VM_ThrowTypeError(thread);
 
 	buf->uint32s[index] = (uint32_t)args[2].uinteger;
 }
@@ -237,7 +237,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_writeUInt64)
 	CHECKED(GetBufferIndex(thread, buf, args[1], 8, index));
 
 	if (args[2].type != Types::Int && args[2].type != Types::UInt)
-		VM_ThrowTypeError(thread);
+		return VM_ThrowTypeError(thread);
 
 	buf->uint64s[index] = args[2].uinteger;
 }
@@ -249,7 +249,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_writeFloat32)
 	CHECKED(GetBufferIndex(thread, buf, args[1], 4, index));
 
 	if (args[2].type != Types::Real)
-		VM_ThrowTypeError(thread);
+		return VM_ThrowTypeError(thread);
 
 	buf->floats[index] = (float)args[2].real;
 }
@@ -261,7 +261,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_writeFloat64)
 	CHECKED(GetBufferIndex(thread, buf, args[1], 8, index));
 
 	if (args[2].type != Types::Real)
-		VM_ThrowTypeError(thread);
+		return VM_ThrowTypeError(thread);
 
 	buf->doubles[index] = args[2].real;
 }
@@ -317,6 +317,11 @@ AVES_API void aves_BufferView_init(TypeHandle type)
 
 AVES_API BEGIN_NATIVE_FUNCTION(aves_BufferView_new)
 {
+	if (IS_NULL(args[1]))
+	{
+		CHECKED(GC_Construct(thread, Types::ArgumentNullError, 0, nullptr));
+		return VM_Throw(thread);
+	}
 	if (!IsType(args + 1, BufferType))
 		return VM_ThrowTypeError(thread);
 	if (!IsType(args + 2, Types::BufferViewKind))
@@ -438,7 +443,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_BufferView_set_item)
 	}
 
 	unsigned int index;
-	CHECKED(GetBufferIndex(thread, buf, args[1], 1, index));
+	CHECKED(GetBufferIndex(thread, buf, args[1], valueSize, index));
 
 	switch (view->kind)
 	{
