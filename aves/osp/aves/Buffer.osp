@@ -1,36 +1,307 @@
 namespace aves;
 
+/// Summary: A buffer is a fixed-size sequence of bytes. Buffers are typically used to
+///          represent raw byte data of some kind, such as the contents of a file or
+///          encoded string data.
+///
+///          The Buffer class supports reading and writing of integral and floating-point
+///          values of various sizes. If you need a fixed-size array of integral values,
+///          a buffer (perhaps wrapped in a {BufferView}) will usually be more memory-efficient
+///          than a List of Ints or similar. For example, the {math.Random} class contains
+///          a buffer for its internal state, which it reads 32-bit values from.
+///
+///          If values of the same type frequently or exclusively need to be read from
+///          the same buffer, consider using a {BufferView}.
 public class Buffer
 {
 	__init_type("aves_Buffer_init");
 
+	/// Summary: Creates a new Buffer with the specified byte size.
+	/// Param size: The size, in bytes, of the new buffer. (Int, UInt or Real)
+	/// Throws TypeError:
+	///          {size} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {size} is less than zero.
 	public new(size)						__extern("aves_Buffer_new");
 
+	/// Summary: Reads an unsigned byte from the buffer at the specified offset.
+	/// Param index: The byte offset from which to read an unsigned byte.
+	///              (Int, UInt or Real)
+	/// Returns: A UInt containing the byte value at the specified offset.
+	/// Throws TypeError:
+	///          {index} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {index} is less than zero or greater than or equal to {size}.
+	/// Remarks: This indexer getter does the same thing as {readByte}.
 	public get this[index] = readByte(index);
+	/// Summary: Writes an unsigned byte to the buffer at the specified offset.
+	/// Param index: The byte offset at which to write the unsigned byte.
+	///              (Int, UInt or Real)
+	/// Throws TypeError:
+	///          {index} could not be converted to an Int.
+	///
+	///          The value is not an Int or UInt.
+	/// Throws ArgumentRangeError:
+	///          {index} is less than zero or greater than or equal to {size}.
+	/// Remarks: This indexer setter does the same thing as {writeByte}.
+	///
+	///          If the value is outside the range of an unsigned byte, the least
+	///          significant byte is used exactly as given. For example, the
+	///          value 0xFFFF (65535) will be clipped to 0xFF (255).
 	public set this[index] { writeByte(index, value); }
 
+	/// Summary: Gets the size of the buffer, in bytes.
+	/// Returns: The byte size of the buffer, as an Int.
 	public get size							__extern("aves_Buffer_get_size");
 
+	/// Summary: Reads an unsigned byte from the buffer at the specified offset.
+	/// Param index: The byte offset from which to read an unsigned byte.
+	///              (Int, UInt or Real)
+	/// Returns: A UInt containing the byte value at the specified offset.
+	/// Throws TypeError:
+	///          {index} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {index} is less than zero or greater than or equal to {size}.
 	public readByte(index)					__extern("aves_Buffer_readByte");
+	/// Summary: Reads a signed byte from the buffer at the specified offset.
+	/// Param index: The byte offset from which to read a signed byte.
+	///              (Int, UInt or Real)
+	/// Returns: A UInt containing the byte value at the specified offset.
+	/// Throws TypeError:
+	///          {index} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {index} is less than zero or greater than or equal to {size}.
 	public readSByte(index)					__extern("aves_Buffer_readSByte");
+	/// Summary: Reads a 16-bit signed integer from the buffer at the specified index.
+	///          The value is read from the byte offset 2 × {index}.
+	/// Param index: The index from which to read a 16-bit signed integer. This index
+	///              is multiplied by 2 to get the byte offset. (Int, UInt or Real)
+	/// Returns: An Int containing the 16-bit signed integer value at the specified index.
+	/// Throws TypeError:
+	///          {index} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {index} is less than zero or greater than or equal to {size} / 2.
 	public readInt16(index)					__extern("aves_Buffer_readInt16");
+	/// Summary: Reads a 32-bit signed integer from the buffer at the specified index.
+	///          The value is read from the byte offset 4 × {index}.
+	/// Param index: The index from which to read a 16-bit signed integer. This index
+	///              is multiplied by 4 to get the byte offset. (Int, UInt or Real)
+	/// Returns: An Int containing the 32-bit signed integer value at the specified index.
+	/// Throws TypeError:
+	///          {index} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {index} is less than zero or greater than or equal to {size} / 4.
 	public readInt32(index)					__extern("aves_Buffer_readInt32");
+	/// Summary: Reads a 64-bit signed integer from the buffer at the specified index.
+	///          The value is read from the byte offset 8 × {index}.
+	/// Param index: The index from which to read a 64-bit signed integer. This index
+	///              is multiplied by 8 to get the byte offset. (Int, UInt or Real)
+	/// Returns: An Int containing the 64-bit signed integer value at the specified index.
+	/// Throws TypeError:
+	///          {index} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {index} is less than zero or greater than or equal to {size} / 8.
 	public readInt64(index)					__extern("aves_Buffer_readInt64");
+	/// Summary: Reads a 16-bit unsigned integer from the buffer at the specified index.
+	///          The value is read from the byte offset 2 × {index}.
+	/// Param index: The index from which to read a 16-bit unsigned integer. This index
+	///              is multiplied by 2 to get the byte offset. (Int, UInt or Real)
+	/// Returns: A UInt containing the 16-bit unsigned integer value at the specified index.
+	/// Throws TypeError:
+	///          {index} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {index} is less than zero or greater than or equal to {size} / 2.
 	public readUInt16(index)				__extern("aves_Buffer_readUInt16");
+	/// Summary: Reads a 32-bit unsigned integer from the buffer at the specified index.
+	///          The value is read from the byte offset 4 × {index}.
+	/// Param index: The index from which to read a 32-bit unsigned integer. This index
+	///              is multiplied by 4 to get the byte offset. (Int, UInt or Real)
+	/// Returns: A UInt containing the 32-bit unsigned integer value at the specified index.
+	/// Throws TypeError:
+	///          {index} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {index} is less than zero or greater than or equal to {size} / 4.
 	public readUInt32(index)				__extern("aves_Buffer_readUInt32");
+	/// Summary: Reads a 64-bit unsigned integer from the buffer at the specified index.
+	///          The value is read from the byte offset 8 × {index}.
+	/// Param index: The index from which to read a 64-bit unsigned integer. This index
+	///              is multiplied by 4 to get the byte offset. (Int, UInt or Real)
+	/// Returns: A UInt containing the 32-bit unsigned integer value at the specified index.
+	/// Throws TypeError:
+	///          {index} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {index} is less than zero or greater than or equal to {size} / 8.
 	public readUInt64(index)				__extern("aves_Buffer_readUInt64");
+	/// Summary: Reads a 32-bit floating-point value from the buffer at the specified index.
+	///          The value is read from the byte offset 4 × {index}.
+	/// Param index: The index from which to read a 32-bit floating-point value. This index
+	///              is multiplied by 4 to get the byte offset. (Int, UInt or Real)
+	/// Returns: A Real containing the 32-bit floating-point value at the specified index.
+	/// Throws TypeError:
+	///          {index} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {index} is less than zero or greater than or equal to {size} / 4.
+	/// Remarks: Because of the way floating-point numbers are represented, a loss of precision
+	///          will occur when converting the 32-bit floating-point number to a Real, which
+	///          is 64 bits in size. Rounding errors could accumulate if the same number is
+	///          repeatedly read from and written to the buffer.
+	///
+	///          Unless a 32-bit floating-point number is required, it is recommended to use
+	///          {readFloat64} and {writeFloat64} instead.
+	///
+	///          Special values such as infinity and NaN are always preserved correctly.
 	public readFloat32(index)				__extern("aves_Buffer_readFloat32");
+	/// Summary: Reads a 64-bit floating-point value from the buffer at the specified index.
+	///          The value is read from the byte offset 8 × {index}.
+	/// Param index: The index from which to read a 64-bit floating-point value. This index
+	///              is multiplied by 8 to get the byte offset. (Int, UInt or Real)
+	/// Returns: A Real containing the 64-bit floating-point value at the specified index.
+	/// Throws TypeError:
+	///          {index} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {index} is less than zero or greater than or equal to {size} / 8.
 	public readFloat64(index)				__extern("aves_Buffer_readFloat64");
 
+	/// Summary: Writes an unsigned byte to the buffer at the specified offset.
+	/// Param index: The byte offset at which to write the unsigned byte.
+	///              (Int, UInt or Real)
+	/// Throws TypeError:
+	///          {index} could not be converted to an Int.
+	///
+	///          {value} is not an Int or UInt.
+	/// Throws ArgumentRangeError:
+	///          {index} is less than zero or greater than or equal to {size}.
+	/// Remarks: If the value is outside the range of an unsigned byte, the least
+	///          significant byte is used exactly as given. For example, the value
+	///          0xFFFF (65535) will be clipped to 0xFF (255).
 	public writeByte(index, value)			__extern("aves_Buffer_writeByte");
+	/// Summary: Writes a signed byte to the buffer at the specified offset.
+	/// Param index: The byte offset at which to write the signed byte.
+	///              (Int, UInt or Real)
+	/// Param value: The value to write to the buffer. (Int or UInt)
+	/// Throws TypeError:
+	///          {index} could not be converted to an Int.
+	///
+	///          {value} is not an Int or UInt.
+	/// Throws ArgumentRangeError:
+	///          {index} is less than zero or greater than or equal to {size}.
+	/// Remarks: If the value is outside the range of a signed byte, the least
+	///          significant byte is used exactly as given. For example, the value
+	///          0xFFFF (65535) will be clipped to 0xFF, which becomes -1 when
+	///          encoded as a signed byte.
 	public writeSByte(index, value)			__extern("aves_Buffer_writeSByte");
+	/// Summary: Writes a signed 16-bit integer value to the buffer at the specified
+	///          index. The value is written to the byte offset 2 × {index}.
+	/// Param index: The index at which to write the value. This index is multiplied
+	///              by 2 to get the byte offset. (Int, UInt or Real)
+	/// Param value: The value to write to the buffer. (Int or UInt)
+	/// Throws TypeError:
+	///          {index} could not be converted to an Int.
+	///
+	///          {value} is not an Int or UInt.
+	/// Throws ArgumentRangeError:
+	///          {index} is less than zero or greater than or equal to {size} / 2.
+	/// Remarks: If the value is outside the range of a signed 16-bit integer, only
+	///          the two least significant bytes will be used.
 	public writeInt16(index, value)			__extern("aves_Buffer_writeInt16");
+	/// Summary: Writes a signed 32-bit integer value to the buffer at the specified
+	///          index. The value is written to the byte offset 4 × {index}.
+	/// Param index: The index at which to write the value. This index is multiplied
+	///              by 4 to get the byte offset. (Int, UInt or Real)
+	/// Param value: The value to write to the buffer. (Int or UInt)
+	/// Throws TypeError:
+	///          {index} could not be converted to an Int.
+	///
+	///          {value} is not an Int or UInt.
+	/// Throws ArgumentRangeError:
+	///          {index} is less than zero or greater than or equal to {size} / 4.
+	/// Remarks: If the value is outside the range of a signed 32-bit integer, only
+	///          the four least significant bytes will be used.
 	public writeInt32(index, value)			__extern("aves_Buffer_writeInt32");
+	/// Summary: Writes a signed 64-bit integer value to the buffer at the specified
+	///          index. The value is written to the byte offset 8 × {index}.
+	/// Param index: The index at which to write the value. This index is multiplied
+	///              by 8 to get the byte offset. (Int, UInt or Real)
+	/// Param value: The value to write to the buffer. (Int or UInt)
+	/// Throws TypeError:
+	///          {index} could not be converted to an Int.
+	///
+	///          {value} is not an Int or UInt.
+	/// Throws ArgumentRangeError:
+	///          {index} is less than zero or greater than or equal to {size} / 8.
 	public writeInt64(index, value)			__extern("aves_Buffer_writeInt64");
+	/// Summary: Writes an unsigned 16-bit integer value to the buffer at the specified
+	///          index. The value is written to the byte offset 2 × {index}.
+	/// Param index: The index at which to write the value. This index is multiplied
+	///              by 2 to get the byte offset. (Int, UInt or Real)
+	/// Param value: The value to write to the buffer. (Int or UInt)
+	/// Throws TypeError:
+	///          {index} could not be converted to an Int.
+	///
+	///          {value} is not an Int or UInt.
+	/// Throws ArgumentRangeError:
+	///          {index} is less than zero or greater than or equal to {size} / 2.
+	/// Remarks: If the value is outside the range of an unsigned 16-bit integer, only
+	///          the two least significant bytes will be used.
 	public writeUInt16(index, value)		__extern("aves_Buffer_writeUInt16");
+	/// Summary: Writes an unsigned 32-bit integer value to the buffer at the specified
+	///          index. The value is written to the byte offset 4 × {index}.
+	/// Param index: The index at which to write the value. This index is multiplied
+	///              by 4 to get the byte offset. (Int, UInt or Real)
+	/// Param value: The value to write to the buffer. (Int or UInt)
+	/// Throws TypeError:
+	///          {index} could not be converted to an Int.
+	///
+	///          {value} is not an Int or UInt.
+	/// Throws ArgumentRangeError:
+	///          {index} is less than zero or greater than or equal to {size} / 4.
+	/// Remarks: If the value is outside the range of an unsigned 32-bit integer, only
+	///          the two least significant bytes will be used.
 	public writeUInt32(index, value)		__extern("aves_Buffer_writeUInt32");
+	/// Summary: Writes an unsigned 64-bit integer value to the buffer at the specified
+	///          index. The value is written to the byte offset 8 × {index}.
+	/// Param index: The index at which to write the value. This index is multiplied
+	///              by 8 to get the byte offset. (Int, UInt or Real)
+	/// Param value: The value to write to the buffer. (Int or UInt)
+	/// Throws TypeError:
+	///          {index} could not be converted to an Int.
+	///
+	///          {value} is not an Int or UInt.
+	/// Throws ArgumentRangeError:
+	///          {index} is less than zero or greater than or equal to {size} / 8.
 	public writeUInt64(index, value)		__extern("aves_Buffer_writeUInt64");
+	/// Summary: Writes a 32-bit floating-point value to the buffer at the specified
+	///          index. The value is written to the byte offset 4 × {index}.
+	/// Param index: The index at which to write the value. This index is multiplied
+	///              by 4 to get the byte offset. (Int, UInt or Real)
+	/// Param value: The value to write to the buffer. (Real)
+	/// Throws TypeError:
+	///          {index} could not be converted to an Int.
+	///
+	///          {value} is not a Real.
+	/// Throws ArgumentRangeError:
+	///          {index} is less than zero or greater than or equal to {size} / 4.
+	/// Remarks: Because of the way floating-point numbers are represented, a loss of precision
+	///          will occur when converting the value, which is 64 bits in size, to a 32-bit
+	///          floating-point number is 64 bits in size. Rounding errors could accumulate if
+	///          the same number is repeatedly read from and written to the buffer.
+	///
+	///          Unless a 32-bit floating-point number is required, it is recommended to use
+	///          {writeFloat64} and {readFloat64} instead.
+	///
+	///          Special values such as infinity and NaN are always preserved correctly.
 	public writeFloat32(index, value)		__extern("aves_Buffer_writeFloat32");
+	/// Summary: Writes a 64-bit floating-point value to the buffer at the specified
+	///          index. The value is written to the byte offset 8 × {index}.
+	/// Param index: The index at which to write the value. This index is multiplied
+	///              by 8 to get the byte offset. (Int, UInt or Real)
+	/// Param value: The value to write to the buffer. (Real)
+	/// Throws TypeError:
+	///          {index} could not be converted to an Int.
+	///
+	///          {value} is not a Real.
+	/// Throws ArgumentRangeError:
+	///          {index} is less than zero or greater than or equal to {size} / 8.
 	public writeFloat64(index, value)		__extern("aves_Buffer_writeFloat64");
 
 	/// Summary: Verifies that the specified range is inside the buffer.
@@ -45,7 +316,7 @@ public class Buffer
 	/// Throws ArgumentError:
 	///          {offset} + {count} is greater than the size of the buffer.
 	/// Remarks: {offset} and {count} are not type-checked. It is assumed
-	///          that the caller will convert both to ints.
+	///          that the caller have ensured they are both ints.
 	public verifyRange(offset, count)
 	{
 		if offset < 0:
@@ -80,6 +351,26 @@ public class Buffer
 		return buf;
 	}
 
+	/// Summary: Resizes the specified buffer to a new size. The old contents are
+	///          preserved, and will be clipped if the new size is smaller than
+	///          the old size.
+	/// Param buf: A {Buffer} that is updated with to a buffer of the new size.
+	/// Param newSize: The new size of {buf}. (Int, UInt or Real)
+	/// Throws TypeError:
+	///          {buf} is not null and is not an instance of {Buffer}.
+	///
+	///          {newSize} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {newSize} is less than zero.
+	/// Remarks: The {buf} argument is allowed to be null, which means the method
+	///          effectively allows you to initialize as well as resize a buffer.
+	///          The {buf} argument is passed by reference, and will be overwritten
+	///          by a new {Buffer} instance. The bytes from the old buffer are copied
+	///          to the new buffer. However, if the new size is smaller than the old
+	///          buffer, the data will be cut off.
+	///
+	///          Unlike many other methods that work with buffers, this method does
+	///          not accept a {BufferView} for the {buf} argument.
 	public static resize(ref buf, newSize)
 	{
 		if buf is not null and buf is not Buffer:
@@ -97,6 +388,17 @@ public class Buffer
 		}
 	}
 
+	/// Summary: Copies the contents of one buffer to another. The destination
+	///          buffer can be larger than the source buffer; in that case, only
+	///          `source.size` bytes are copied.
+	/// Param source:      The source buffer. (Buffer or BufferView)
+	/// Param destination: The destination buffer. (Buffer or BufferView)
+	/// Throws TypeError:
+	///          {source} is not a {Buffer} or {BufferView}.
+	///
+	///          {destination} is not a {Buffer} or {BufferView}.
+	/// Throws ArgumentError:
+	///          {source} is larger than {destination}.
 	public static copy(source, destination)
 	{
 		source = fromValue(source);
@@ -106,16 +408,51 @@ public class Buffer
 
 		copyInternal(source, 0, destination, 0, source.size);
 	}
+	/// Summary: Copies {count} bytes from one buffer to another.
+	/// Param source:      The source buffer. (Buffer or BufferView)
+	/// Param destination: The destination buffer. (Buffer or BufferView)
+	/// Param count:       The number of bytes to copy. (Int, UInt or Real)
+	/// Throws TypeError:
+	///          {source} is not a {Buffer} or {BufferView}.
+	///
+	///          {destination} is not a {Buffer} or {BufferView}.
+	///
+	///          {count} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {count} is less than zero, or {count} is larger than the size
+	///          of either the destination or the source buffer.
 	public static copy(source, destination, count)
 	{
 		source = fromValue(source);
 		destination = fromValue(destination);
 		count = int(count);
-		if count < 0 or count > destination.size:
+		if count < 0 or count > destination.size or count > source.size:
 			throw new ArgumentRangeError("count");
 
 		copyInternal(source, 0, destination, 0, count);
 	}
+	/// Summary: Copies {count} bytes from one buffer to another, starting at
+	///          the specified offsets within each buffer.
+	/// Param source:      The source buffer. (Buffer or BufferView)
+	/// Param sourceIndex: The byte offset at which to start reading bytes
+	///                    from {source}. (Int, UInt or Real)
+	/// Param dest:        The destination buffer. (Buffer or BufferView)
+	/// Param destIndex:   The byte offset at which to start writing bytes
+	///                    into {dest}. (Int, UInt or Real)
+	/// Param count:       The number of bytes to copy. (Int, UInt or Real)
+	/// Throws TypeError:
+	///          {source} is not a {Buffer} or {BufferView}.
+	///
+	///          {destination} is not a {Buffer} or {BufferView}.
+	///
+	///          {sourceIndex}, {destIndex} or {count} could not be converted
+	///          to an Int.
+	/// Throws ArgumentRangeError:
+	///          {count} is less than zero.
+	/// Throws ArgumentError:
+	///          {sourceIndex} + {count} is greater than the size of {source}.
+	///
+	///          {destIndex} + {count} is greater than the size of {dest}.
 	public static copy(source, sourceIndex, dest, destIndex, count)
 	{
 		source = fromValue(source);
@@ -146,18 +483,59 @@ public class Buffer
 	}
 }
 
+/// Summary: A BufferView effectively allows a {Buffer} to be treated as a collection of
+///          numeric values of the same size. Each buffer view has an associated {BufferViewKind},
+///          which specifies how the view interprets the data in the buffer.
 public class BufferView
 {
 	__init_type("aves_BufferView_init");
 
+	/// Summary: Creates a new BufferView from the specified buffer, with the specified kind.
+	/// Param buf:  The buffer to create a view of. (Buffer)
+	/// Param kind: A {BufferViewKind} which specifies how to read data in the buffer.
+	/// Throws TypeError:
+	///          {buf} is not a {Buffer}.
+	///
+	///          {kind} is not a {BufferViewKind}.
+	/// Throws ArgumentNullError:
+	///          {buf} is null.
+	/// Throws ArgumentRangeError:
+	///          {kind} is not a valid {BufferViewKind} value.
 	public new(buf, kind)					__extern("aves_BufferView_new");
 
+	/// Summary: Reads a value from the underlying buffer at the specified index.
+	/// Param index: The index from which to read data. This is multiplied by the size of the
+	///              data to obtain a byte offset. (Int, UInt or Real)
+	/// Returns: The data at the specified index in the buffer, according to the buffer view’s
+	///          {kind}.
+	/// Throws TypeError:
+	///          {index} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {index} is less than zero, or the calculated byte offset is outside of the
+	///          underlying buffer.
 	public get this[index]					__extern("aves_BufferView_get_item");
+	/// Summary: Writes a value to the underlying buffer at the specified index.
+	/// Param index: The index from which to read data. This is multiplied by the size of the
+	///              data to obtain a byte offset. (Int, UInt or Real)
+	/// Throws TypeError:
+	///          {index} could not be converted to an Int.
+	///
+	///          The value was of the wrong type. For {BufferViewKind.float32} and {BufferViewKind.float64},
+	///          the value must be a Real. Otherwise, it must be an Int or UInt.
+	/// Throws ArgumentRangeError:
+	///          {index} is less than zero, or the calculated byte offset is outside of the
+	///          underlying buffer.
 	public set this[index]					__extern("aves_BufferView_set_item");
 
+	/// Summary: Gets the length of the buffer view, in number of items of the type specified
+	///          by the {BufferViewKind}. This is equal to the underlying buffer’s size
+	///          divided by the size of the view data.
 	public get length						__extern("aves_BufferView_get_length");
 
+	/// Summary: Gets the underlying {Buffer} that the view reads from and writes to.
 	public get buffer						__extern("aves_BufferView_get_buffer");
+	/// Summary: Gets the {BufferViewKind} associated with the view, which specifies how it
+	///          reads from and writes to the buffer.
 	public get kind							__extern("aves_BufferView_get_kind");
 
 	override toString()
@@ -176,16 +554,27 @@ public class BufferView
 	}
 }
 
+/// Summary: Specifies how the contents of a buffer should be interpreted by a {BufferView}.
 public enum BufferViewKind
 {
+	/// Summary: The view reads and writes unsigned bytes.
 	byte = 1,
+	/// Summary: The view reads and writes signed bytes.
 	sbyte = 2,
+	/// Summary: The view reads and writes signed 16-bit integers.
 	int16 = 3,
+	/// Summary: The view reads and writes signed 32-bit integers.
 	int32 = 4,
+	/// Summary: The view reads and writes signed 64-bit integers.
 	int64 = 5,
+	/// Summary: The view reads and writes unsigned 16-bit integers.
 	uint16 = 6,
+	/// Summary: The view reads and writes unsigned 32-bit integers.
 	uint32 = 7,
+	/// Summary: The view reads and writes unsigned 64-bit integers.
 	uint64 = 8,
+	/// Summary: The view reads and writes 32-bit floating-point numbers.
 	float32 = 9,
+	/// Summary: The view reads and writes 64-bit floating-point numbers.
 	float64 = 10,
 }

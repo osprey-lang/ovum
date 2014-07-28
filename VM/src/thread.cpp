@@ -629,8 +629,9 @@ void Thread::GetHashIndexerSetter(MethodOverload **target)
 		return ThrowTypeError(thread_errors::NotComparable); \
 	\
 	int r = InvokeMethodOverload(method, 2, args, (pResult)); \
-	if (r == OVUM_SUCCESS && (pResult)->type != VM::vm->types.Int) \
-		r = ThrowTypeError(thread_errors::CompareType)
+	if (r != OVUM_SUCCESS) return r; \
+	if ((pResult)->type != VM::vm->types.Int) \
+		return ThrowTypeError(thread_errors::CompareType)
 
 int Thread::CompareLL(Value *args, Value *result)
 {

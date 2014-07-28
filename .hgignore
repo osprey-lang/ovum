@@ -9,5 +9,7 @@ ipch
 *.suo
 *.opensdf
 aves.bat
+aves.tests.bat
 
 *.ovm
+*.ovm.dbg

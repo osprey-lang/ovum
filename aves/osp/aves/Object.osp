@@ -15,7 +15,7 @@ public inheritable Object
 		return func -> [this] :: args;
 	}
 
-	/// Summary: Returns a hash code for the current instance.
+	/// Summary: Returns a hash code for the current instance, as an Int.
 	public overridable getHashCode()	__extern("aves_Object_getHashCode");
 
 	/// Summary: Returns a string representation of the value.

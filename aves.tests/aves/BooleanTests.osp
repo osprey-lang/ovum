@@ -1,0 +1,137 @@
+use namespace aves;
+use namespace testing.unit;
+
+namespace aves.tests;
+
+// Tests for the class aves.Boolean
+
+public class BooleanTests is TestFixture
+{
+	public new() { new base("aves.Boolean tests"); }
+
+	var trueValue = true;
+	var falseValue = false;
+
+	public test_Truth()
+	{
+		Assert.isTrue(trueValue);
+		Assert.isTrue(not falseValue);
+	}
+
+	public test_Falsehood()
+	{
+		Assert.isFalse(falseValue);
+		Assert.isFalse(not trueValue);
+	}
+
+	public test_EqualityWithBoolean()
+	{
+		Assert.areEqual(trueValue, true);
+		Assert.areEqual(not false, trueValue);
+		Assert.areEqual(falseValue, false);
+		Assert.areEqual(not true, falseValue);
+	}
+
+	public test_InequalityWithBoolean()
+	{
+		Assert.areNotEqual(trueValue, falseValue);
+		Assert.areNotEqual(falseValue, trueValue);
+	}
+
+	public test_InequalityWithNonBoolean()
+	{
+		// Using the == operator, Boolean values do not compare equal
+		// to anything other than Boolean values.
+		Assert.areNotEqual(trueValue, 1);
+		Assert.areNotEqual(trueValue, "true");
+		Assert.areNotEqual(falseValue, 0);
+		Assert.areNotEqual(falseValue, "");
+		Assert.areNotEqual(falseValue, "false");
+	}
+
+	public test_ReferenceEqualityWithBoolean()
+	{
+		Assert.areSameRef(trueValue, trueValue);
+		Assert.areSameRef(falseValue, falseValue);
+	}
+
+	public test_ReferenceInequalityWithBoolean()
+	{
+		Assert.areNotSameRef(trueValue, falseValue);
+		Assert.areNotSameRef(falseValue, trueValue);
+	}
+
+	public test_ReferenceInequalityWithNonBoolean()
+	{
+		Assert.areNotSameRef(trueValue, 1);
+		Assert.areNotSameRef(falseValue, 0);
+	}
+
+	public test_CompareWithBoolean()
+	{
+		// false is ordered before true
+		Assert.isLess(falseValue, trueValue);
+		Assert.isGreater(trueValue, falseValue);
+	}
+
+	public test_CompareWithNonBoolean()
+	{
+		// Operator <=> can only be applied to (Boolean, Boolean),
+		// and no other combination of types.
+		Assert.throws(typeof(TypeError), @= trueValue <=> 1);
+		Assert.throws(typeof(TypeError), @= falseValue <=> 0);
+	}
+
+	public test_UnaryPlusOperator()
+	{
+		// +true refeq 1, and +false refeq 0
+		// Note that we must use reference equality because the boolean unary +
+		// operator is NOT allowed to return values of any type other than Int.
+		Assert.areSameRef(+trueValue, 1);
+		Assert.areSameRef(+falseValue, 0);
+	}
+
+	public test_GetHashCode()
+	{
+		// Boolean.getHashCode() should return the same value as unary +.
+		Assert.areSameRef(trueValue.getHashCode(), 1);
+		Assert.areSameRef(falseValue.getHashCode(), 0);
+	}
+
+	public test_ToString()
+	{
+		// true always stringifies as "true".
+		Assert.areEqual(trueValue.toString(), "true");
+		// And false always stringifies as "false".
+		Assert.areEqual(falseValue.toString(), "false");
+	}
+
+	public test_ParseValid()
+	{
+		// Boolean.parse ignores case; hence true, True, tRue,
+		// trUE, and so on are all allowed. Same with false.
+		Assert.areEqual(Boolean.parse("true"), true);
+		Assert.areEqual(Boolean.parse("TRUE"), true);
+		Assert.areEqual(Boolean.parse("false"), false);
+		Assert.areEqual(Boolean.parse("FaLSe"), false);
+		// Leading and trailing white space is allowed
+		// U+2028 = Line Separator
+		Assert.areEqual(Boolean.parse("\t true "), true);
+		Assert.areEqual(Boolean.parse(" \u2028    false  "), false);
+	}
+
+	public test_ParseInvalid()
+	{
+		// Boolean.parse returns null when the input is invalid.
+		Assert.isNull(Boolean.parse("false=~"));
+		Assert.isNull(Boolean.parse("not true"));
+		Assert.isNull(Boolean.parse("hello"));
+		Assert.isNull(Boolean.parse(123));
+	}
+
+	public test_BoolFunction()
+	{
+		Assert.isTrue(bool(trueValue));
+		Assert.isFalse(bool(falseValue));
+	}
+}

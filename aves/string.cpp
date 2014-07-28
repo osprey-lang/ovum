@@ -394,6 +394,78 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_split)
 }
 END_NATIVE_FUNCTION
 
+AVES_API BEGIN_NATIVE_FUNCTION(aves_String_padInner)
+{
+	// padInner(minLength is Int, char is Char, side is StringPad)
+	// The public-facing methods make sure char is of length 1, so
+	// we can safely cast it to uchar here.
+
+	int64_t minLength64 = args[1].integer;
+	if (minLength64 < 0 || minLength64 > INT32_MAX)
+	{
+		VM_PushString(thread, strings::minLength); // paramName
+		CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr));
+		return VM_Throw(thread);
+	}
+
+	StringPad side = (StringPad)args[3].integer;
+	if (side < PAD_START || side > PAD_BOTH)
+	{
+		VM_PushString(thread, strings::side); // paramName
+		CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr));
+		return VM_Throw(thread);
+	}
+
+	String *str = THISV.common.string;
+	int32_t padLength = (int32_t)minLength64 - str->length;
+	if (padLength <= 0)
+	{
+		VM_PushString(thread, str);
+		RETURN_SUCCESS;
+	}
+
+	String *result;
+	{ Pinned s(THISP);
+		CHECKED_MEM(result = GC_ConstructString(thread, str->length + padLength, nullptr));
+		uchar *resultp = const_cast<uchar*>(&result->firstChar);
+
+		uchar ch = (uchar)args[2].integer;
+		switch (side)
+		{
+		case PAD_START:
+			while (padLength-- > 0)
+				*resultp++ = ch;
+
+			CopyMemoryT(resultp, &str->firstChar, str->length);
+			break;
+		case PAD_END:
+			CopyMemoryT(resultp, &str->firstChar, str->length);
+			resultp += str->length;
+
+			while (padLength-- > 0)
+				*resultp++ = ch;
+			break;
+		case PAD_BOTH:
+			{
+				int32_t padBefore = padLength / 2;
+				padLength -= padBefore;
+				while (padBefore-- > 0)
+					*resultp++ = ch;
+
+				CopyMemoryT(resultp, &str->firstChar, str->length);
+				resultp += str->length;
+
+				while (padLength-- > 0)
+					*resultp++ = ch;
+			}
+			break;
+		}
+	}
+
+	VM_PushString(thread, result);
+}
+END_NATIVE_FUNCTION
+
 AVES_API NATIVE_FUNCTION(aves_String_toUpper)
 {
 	String *result = String_ToUpper(thread, THISV.common.string);
