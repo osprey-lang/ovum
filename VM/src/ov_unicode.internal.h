@@ -28,8 +28,8 @@ extern const uint16_t IndexMap1[];
 extern const uint8_t IndexMap2[];
 extern const uint8_t PrimaryMap[];
 
-const UnicodeCategory UC_GetCategoryInternal(const int32_t codepoint);
-const CaseMap UC_GetCaseMapInternal(const int32_t codepoint);
+UnicodeCategory UC_GetCategoryInternal(const int32_t codepoint);
+CaseMap UC_GetCaseMapInternal(const int32_t codepoint);
 
 extern const int32_t CaseMaps[];
 extern const uint8_t CaseIndexMap[];

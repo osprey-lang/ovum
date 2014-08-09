@@ -14,6 +14,9 @@
 #error You're not supposed to include this file from outside the VM project!
 #endif
 
+namespace ovum
+{
+
 class Thread;
 class Type;
 class Module;
@@ -34,14 +37,16 @@ namespace debug
 	class ModuleDebugData;
 }
 
-typedef Thread *const ThreadHandle;
-typedef Type           *TypeHandle;
-typedef Module         *ModuleHandle;
-typedef Member         *MemberHandle;
-typedef Method         *MethodHandle;
-typedef MethodOverload *OverloadHandle;
-typedef Field          *FieldHandle;
-typedef Property       *PropertyHandle;
+}
+
+typedef ovum::Thread *const ThreadHandle;
+typedef ovum::Type           *TypeHandle;
+typedef ovum::Module         *ModuleHandle;
+typedef ovum::Member         *MemberHandle;
+typedef ovum::Method         *MethodHandle;
+typedef ovum::MethodOverload *OverloadHandle;
+typedef ovum::Field          *FieldHandle;
+typedef ovum::Property       *PropertyHandle;
 
 #define OVUM_HANDLES_DEFINED
 
@@ -55,6 +60,9 @@ typedef Property       *PropertyHandle;
 #endif
 
 #include <cstdio>
+
+namespace ovum
+{
 
 typedef uint32_t TokenId;
 
@@ -129,8 +137,10 @@ public:
 	friend class GC;
 	friend class Module;
 
-	friend int VM_Start(VMStartParams *params);
+	friend int ::VM_Start(VMStartParams *params);
 };
+
+} // namespace ovum
 
 #include "string_hash.internal.h"
 #include "ov_static_strings.internal.h"

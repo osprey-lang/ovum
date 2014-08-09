@@ -5,6 +5,9 @@
 #include <time.h>
 #endif
 
+namespace ovum
+{
+
 namespace thread_errors
 {
 	namespace
@@ -1408,6 +1411,7 @@ void Thread::AppendSourceLocation(StringBuffer &buf, MethodOverload *method, uin
 	}
 }
 
+} // namespace ovum
 
 // API functions, which are really just wrappers for the fun stuff.
 
@@ -1594,7 +1598,7 @@ OVUM_API int VM_GetStackDepth(ThreadHandle thread)
 {
 	int depth = 0;
 
-	const StackFrame *frame = thread->GetCurrentFrame();
+	const ovum::StackFrame *frame = thread->GetCurrentFrame();
 	while (frame && frame->method)
 	{
 		depth++;
@@ -1606,15 +1610,15 @@ OVUM_API int VM_GetStackDepth(ThreadHandle thread)
 
 OVUM_API OverloadHandle VM_GetCurrentOverload(ThreadHandle thread)
 {
-	const StackFrame *frame = thread->GetCurrentFrame();
+	const ovum::StackFrame *frame = thread->GetCurrentFrame();
 	return frame ? frame->method : nullptr;
 }
 
-const StackFrame *VM_FindStackFrame(ThreadHandle thread, int stackFrame)
+const ovum::StackFrame *VM_FindStackFrame(ThreadHandle thread, int stackFrame)
 {
 	if (stackFrame >= 0)
 	{
-		const StackFrame *frame = thread->GetCurrentFrame();
+		const ovum::StackFrame *frame = thread->GetCurrentFrame();
 		while (frame && frame->method)
 		{
 			if (stackFrame-- == 0)
@@ -1627,7 +1631,7 @@ const StackFrame *VM_FindStackFrame(ThreadHandle thread, int stackFrame)
 
 OVUM_API int VM_GetEvalStackHeight(ThreadHandle thread, int stackFrame, const Value **slots)
 {
-	const StackFrame *frame = VM_FindStackFrame(thread, stackFrame);
+	const ovum::StackFrame *frame = VM_FindStackFrame(thread, stackFrame);
 	if (frame)
 	{
 		if (slots)
@@ -1638,7 +1642,7 @@ OVUM_API int VM_GetEvalStackHeight(ThreadHandle thread, int stackFrame, const Va
 }
 OVUM_API int VM_GetLocalCount(ThreadHandle thread, int stackFrame, const Value **slots)
 {
-	const StackFrame *frame = VM_FindStackFrame(thread, stackFrame);
+	const ovum::StackFrame *frame = VM_FindStackFrame(thread, stackFrame);
 	if (frame)
 	{
 		if (slots)
@@ -1649,7 +1653,7 @@ OVUM_API int VM_GetLocalCount(ThreadHandle thread, int stackFrame, const Value *
 }
 OVUM_API int VM_GetMethodArgCount(ThreadHandle thread, int stackFrame, const Value **slots)
 {
-	const StackFrame *frame = VM_FindStackFrame(thread, stackFrame);
+	const ovum::StackFrame *frame = VM_FindStackFrame(thread, stackFrame);
 	if (frame)
 	{
 		int argCount = (int)frame->method->GetEffectiveParamCount();
@@ -1661,7 +1665,7 @@ OVUM_API int VM_GetMethodArgCount(ThreadHandle thread, int stackFrame, const Val
 }
 OVUM_API OverloadHandle VM_GetExecutingOverload(ThreadHandle thread, int stackFrame)
 {
-	const StackFrame *frame = VM_FindStackFrame(thread, stackFrame);
+	const ovum::StackFrame *frame = VM_FindStackFrame(thread, stackFrame);
 	if (frame)
 		return frame->method;
 	return nullptr;
@@ -1670,7 +1674,7 @@ OVUM_API const void *VM_GetInstructionPointer(ThreadHandle thread, int stackFram
 {
 	if (stackFrame >= 0)
 	{
-		const StackFrame *frame = thread->GetCurrentFrame();
+		const ovum::StackFrame *frame = thread->GetCurrentFrame();
 		if (frame)
 		{
 			const void *ip = thread->GetInstructionPointer();
@@ -1689,7 +1693,7 @@ OVUM_API bool VM_GetStackFrameInfo(ThreadHandle thread, int stackFrame, StackFra
 {
 	if (stackFrame >= 0)
 	{
-	const StackFrame *frame = thread->GetCurrentFrame();
+		const ovum::StackFrame *frame = thread->GetCurrentFrame();
 		if (frame)
 		{
 			const void *ip = thread->GetInstructionPointer();

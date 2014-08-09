@@ -7,9 +7,6 @@
  * This file contains various compatibility and utility macros and methods.
  */
 
-#include <cfloat>
-#include <cmath>
-
 #define ENUM_OPS(TEnum,TInt) \
 	inline TEnum operator&(const TEnum a, const TEnum b) { return static_cast<TEnum>((TInt)a & (TInt)b); } \
 	inline TEnum operator|(const TEnum a, const TEnum b) { return static_cast<TEnum>((TInt)a | (TInt)b); } \
@@ -36,6 +33,7 @@ inline T Clamp(const T value, const T max, const T min)
 		value > max ? max :
 		value;
 }
+
 template<int min, int max>
 inline int Clamp(const int value)
 {
@@ -43,6 +41,7 @@ inline int Clamp(const int value)
 		value > max ? max :
 		value;
 }
+
 template<long min, long max>
 inline long Clamp(const long value)
 {
@@ -50,6 +49,7 @@ inline long Clamp(const long value)
 		value > max ? max :
 		value;
 }
+
 template<long long min, long long max>
 inline long long Clamp(const long long value)
 {
@@ -103,19 +103,8 @@ inline void CopyMemoryT(T *destination, const T *source, const size_t size)
 }
 
 // Finds the smallest power of two that is greater than or equal to the given number.
-inline uint32_t NextPowerOfTwo(uint32_t n)
-{
-	n--; // When n == 0, this overflows on purpose
-	n |= n >> 1;
-	n |= n >> 2;
-	n |= n >> 4;
-	n |= n >> 8;
-	n |= n >> 16;
-	return n + 1;
-}
-
-// Finds the smallest power of two that is greater than or equal to the given number.
-inline int32_t NextPowerOfTwo(int32_t n)
+template<class T>
+inline T NextPowerOfTwo(T n)
 {
 	n--; // When n == 0, this overflows on purpose
 	n |= n >> 1;
@@ -131,20 +120,43 @@ inline int32_t NextPowerOfTwo(int32_t n)
 // can be fully evaluated at compile-time.
 #define ALIGN_TO(size,alignment)  ((size + (alignment) - 1) / (alignment) * (alignment))
 
-#if defined(_MSC_VER)
-# define NOINLINE __declspec(noinline)
-// Note: the Windows headers define a CDECL macro,
-// so we must define it conditionally here.
-# ifndef CDECL
-#  define CDECL    __cdecl
+// Marks a function member as having been deleted, if the compiler supports it.
+// TODO: Conditional definition based on compiler capabilities.
+#define OVUM_DELETE =delete
+
+// When put in the 'private' section of a type definition, disables copying and
+// assignment, by declaring operator= and the T(const T&) constructor as private
+// members. This should be used on any type that must not be copied by value.
+#define DISABLE_COPY_AND_ASSIGN(TypeName)  \
+	TypeName(const TypeName&) OVUM_DELETE; \
+	void operator=(const TypeName&)
+
+// Disallows parameterless construction, in addition to disabling the copy constructor
+// and operator=. This must be put in the 'private' section of a type definition.
+#define DISABLE_IMPLICIT_CONSTRUCTION(TypeName) \
+	TypeName() OVUM_DELETE;                     \
+	DISABLE_COPY_AND_ASSIGN(TypeName)
+
+#ifndef CDECL
+# if defined(_MSC_VER)
+#  define CDECL __cdecl
+# elif defined(__GNUC__)
+#  define CDECL __attribute__((cdecl))
+# else
+// Disable the feature
+#  define CDECL
 # endif
-#elif defined(__GNUC__)
-# define NOINLINE __attribute__((noinline))
-# define CDECL    __attribute__((cdecl))
-#else
-// Disable the features
-# define NOINLINE
-# define CDECL
+#endif
+
+#ifndef NOINLINE
+# if defined(_MSC_VER)
+#  define NOINLINE __declspec(noinline)
+# elif defined(__GNUC__)
+#  define NOINLINE __attribute__((noinline))
+# else
+// Disable the feature
+#  define NOINLINE
+# endif
 #endif
 
 #endif // VM__COMPAT_H

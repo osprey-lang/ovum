@@ -357,7 +357,7 @@ OVUM_API bool String_Contains(const String *str, const String *value)
 
 OVUM_API String *String_ToUpper(ThreadHandle thread, String *str)
 {
-	String *newStr = GC::gc->ConstructString(thread, str->length, nullptr);
+	String *newStr = ovum::GC::gc->ConstructString(thread, str->length, nullptr);
 	if (!newStr) return nullptr;
 
 	const uchar *a = &str->firstChar;
@@ -387,7 +387,7 @@ OVUM_API String *String_ToUpper(ThreadHandle thread, String *str)
 
 OVUM_API String *String_ToLower(ThreadHandle thread, String *str)
 {
-	String *newStr = GC::gc->ConstructString(thread, str->length, nullptr);
+	String *newStr = ovum::GC::gc->ConstructString(thread, str->length, nullptr);
 	if (!newStr) return nullptr;
 
 	const uchar *a = &str->firstChar;
@@ -423,7 +423,7 @@ OVUM_API String *String_Concat(ThreadHandle thread, const String *a, const Strin
 
 	int32_t outLength = a->length + b->length;
 
-	String *output = GC::gc->ConstructString(thread, outLength, nullptr);
+	String *output = ovum::GC::gc->ConstructString(thread, outLength, nullptr);
 	if (output)
 	{
 		uchar *outputChar = const_cast<uchar*>(&output->firstChar);
@@ -447,7 +447,7 @@ OVUM_API String *String_Concat3(ThreadHandle thread, const String *a, const Stri
 
 	outLength += c->length;
 
-	String *output = GC::gc->ConstructString(thread, outLength, nullptr);
+	String *output = ovum::GC::gc->ConstructString(thread, outLength, nullptr);
 	if (output)
 	{
 		uchar *outputChar = const_cast<uchar*>(&output->firstChar);
@@ -464,7 +464,7 @@ OVUM_API String *String_Concat3(ThreadHandle thread, const String *a, const Stri
 OVUM_API String *String_ConcatRange(ThreadHandle thread, const unsigned int count, String *values[])
 {
 	if (count == 0)
-		return static_strings::empty;
+		return ovum::static_strings::empty;
 	if (count == 1)
 		return values[0];
 
@@ -478,7 +478,7 @@ OVUM_API String *String_ConcatRange(ThreadHandle thread, const unsigned int coun
 		outLength += strlen;
 	}
 
-	String *output = GC::gc->ConstructString(thread, outLength, nullptr);
+	String *output = ovum::GC::gc->ConstructString(thread, outLength, nullptr);
 	if (output)
 	{
 		uchar *outputChar = const_cast<uchar*>(&output->firstChar);
@@ -554,7 +554,7 @@ OVUM_API int32_t String_ToWString(wchar_t *dest, const String *source)
 
 OVUM_API String *String_FromCString(ThreadHandle thread, const char *source)
 {
-	return GC::gc->ConvertString(thread, source);
+	return ovum::GC::gc->ConvertString(thread, source);
 }
 
 OVUM_API String *String_FromWString(ThreadHandle thread, const wchar_t *source)
@@ -564,7 +564,7 @@ OVUM_API String *String_FromWString(ThreadHandle thread, const wchar_t *source)
 
 	size_t length = wcslen(source);
 
-	String *output = GC::gc->ConstructString(thread, length, (const uchar*)source);
+	String *output = ovum::GC::gc->ConstructString(thread, length, (const uchar*)source);
 
 	return output;
 #elif OVUM_WCHAR_SIZE == 4
@@ -602,7 +602,7 @@ OVUM_API String *String_FromWString(ThreadHandle thread, const wchar_t *source)
 		outp++;
 	}
 
-	String *output = GC::gc->ConstructString(thread, outLength, buffer.get());
+	String *output = ovum::GC::gc->ConstructString(thread, outLength, buffer.get());
 
 	return output;
 #else
@@ -612,10 +612,10 @@ OVUM_API String *String_FromWString(ThreadHandle thread, const wchar_t *source)
 
 OVUM_API String *String_GetInterned(ThreadHandle thread, String *str)
 {
-	return GC::gc->GetInternedString(thread, str);
+	return ovum::GC::gc->GetInternedString(thread, str);
 }
 
 OVUM_API String *String_Intern(ThreadHandle thread, String *str)
 {
-	return GC::gc->InternString(thread, str);
+	return ovum::GC::gc->InternString(thread, str);
 }

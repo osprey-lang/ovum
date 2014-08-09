@@ -9,6 +9,9 @@
 // These are all initialised (in static_strings.cpp) from LitString<>s, and
 // as such have the STR_STATIC flag set.
 
+namespace ovum
+{
+
 namespace static_strings
 {
 	extern String *empty;   // ""
@@ -27,5 +30,7 @@ namespace static_strings
 		extern String *ToStringWrongType;
 	}
 }
+
+} // namespace ovum
 
 #endif // VM__STATIC_STRINGS_INTERNAL_H

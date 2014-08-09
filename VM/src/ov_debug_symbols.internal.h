@@ -5,6 +5,9 @@
 
 #include "ov_vm.internal.h"
 
+namespace ovum
+{
+
 class ModuleReader;
 
 namespace debug
@@ -67,6 +70,8 @@ namespace debug
 
 		friend class GC;
 	};
-}
+} // namespace debug
+
+} // namespace ovum
 
 #endif // VM__DEBUG_SYMBOLS_INTERNAL_H

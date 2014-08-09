@@ -3,9 +3,11 @@
 #ifndef VM__MODULEREADER_INTERNAL_H
 #define VM__MODULEREADER_INTERNAL_H
 
-#include <string>
 #include "ov_vm.internal.h"
 #include "pathname.internal.h"
+
+namespace ovum
+{
 
 enum class SeekOrigin
 {
@@ -31,6 +33,8 @@ private:
 	// Note: do not make this a fixed array. We don't want to
 	// fill up the call stack too much.
 	uint8_t *buffer;
+	// The file name from which the ModuleReader was created.
+	PathName fileName;
 
 	// Gets the real position of the file pointer
 	unsigned long GetFilePosition();
@@ -38,13 +42,16 @@ private:
 	uint32_t ReadRaw(void *dest, uint32_t count);
 
 public:
-	PathName fileName;
-
 	ModuleReader();
 	~ModuleReader();
 
-	void Open(const wchar_t *fileName);
+	void Open(const pathchar_t *fileName);
 	void Open(const PathName &fileName);
+
+	inline const PathName &GetFileName() const
+	{
+		return fileName;
+	}
 
 	void Read(void *dest, uint32_t count);
 
@@ -123,5 +130,7 @@ private:
 
 	static const int MaxShortStringLength = 128;
 };
+
+} // namespace ovum
 
 #endif // VM__MODULEREADER_INTERNAL_H

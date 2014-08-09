@@ -9,6 +9,9 @@
 #include <pthread.h>
 #endif
 
+namespace ovum
+{
+
 // CriticalSection works like a recursive mutex: it can be entered
 // by one thread at a time, but that thread can enter the critical
 // section any number of times. When the owning thread has called
@@ -134,5 +137,7 @@ public:
 		flag.clear(std::memory_order_release);
 	}
 };
+
+} // namespace ovum
 
 #endif // VM__CRITICAL_SECTION_H

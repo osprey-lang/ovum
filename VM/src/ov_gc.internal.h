@@ -8,6 +8,9 @@
 #include "string_table.internal.h"
 #include "sync.internal.h"
 
+namespace ovum
+{
+
 enum class GCOFlags : uint32_t
 {
 	NONE          = 0x0000,
@@ -595,5 +598,7 @@ public:
 
 	friend class VM;
 };
+
+} // namespace ovum
 
 #endif // VM__GC_INTERNAL_H

@@ -1,5 +1,8 @@
 #include "ov_vm.internal.h"
 
+namespace ovum
+{
+
 namespace static_strings
 {
 	namespace
@@ -37,3 +40,5 @@ namespace static_strings
 		String *ToStringWrongType = _S(_ToStringWrongType);
 	}
 }
+
+} // namespace ovum

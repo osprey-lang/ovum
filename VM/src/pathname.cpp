@@ -1,6 +1,9 @@
 #include "pathname.internal.h"
 #include <memory>
 
+namespace ovum
+{
+
 const PathName::noinit_t PathName::noinit = { };
 
 PathName::PathName(noinit_t)
@@ -186,3 +189,5 @@ uint32_t PathName::StringLength(const pathchar_t *const str)
 	return (uint32_t)strlen(str);
 #endif
 }
+
+} // namespace ovum

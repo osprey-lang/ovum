@@ -2,6 +2,9 @@
 #include "../inc/ov_string.h"
 #include "refsignature.internal.h"
 
+namespace ovum
+{
+
 namespace std_type_names
 {
 	// Fully qualified names of core types. If you change the fully
@@ -486,32 +489,34 @@ int MethodOverload::VerifyRefSignature(uint32_t signature, uint16_t argCount) co
 	return -1;
 }
 
+} // namespace ovum
+
 OVUM_API void GetStandardTypes(StandardTypes *target, size_t targetSize)
 {
 	// Never copy more than sizeof(StandardTypes) bytes,
 	// but potentially copy less.
 	targetSize = min(targetSize, sizeof(StandardTypes));
-	memcpy(target, &VM::vm->types, targetSize);
+	memcpy(target, &ovum::VM::vm->types, targetSize);
 }
-OVUM_API TypeHandle GetType_Object()              { return VM::vm->types.Object; }
-OVUM_API TypeHandle GetType_Boolean()             { return VM::vm->types.Boolean; }
-OVUM_API TypeHandle GetType_Int()                 { return VM::vm->types.Int; }
-OVUM_API TypeHandle GetType_UInt()                { return VM::vm->types.UInt; }
-OVUM_API TypeHandle GetType_Real()                { return VM::vm->types.Real; }
-OVUM_API TypeHandle GetType_String()              { return VM::vm->types.String; }
-OVUM_API TypeHandle GetType_List()                { return VM::vm->types.List; }
-OVUM_API TypeHandle GetType_Hash()                { return VM::vm->types.Hash; }
-OVUM_API TypeHandle GetType_Method()              { return VM::vm->types.Method; }
-OVUM_API TypeHandle GetType_Iterator()            { return VM::vm->types.Iterator; }
-OVUM_API TypeHandle GetType_Type()                { return VM::vm->types.Type; }
-OVUM_API TypeHandle GetType_Error()               { return VM::vm->types.Error; }
-OVUM_API TypeHandle GetType_TypeError()           { return VM::vm->types.TypeError; }
-OVUM_API TypeHandle GetType_MemoryError()         { return VM::vm->types.MemoryError; }
-OVUM_API TypeHandle GetType_OverflowError()       { return VM::vm->types.OverflowError; }
-OVUM_API TypeHandle GetType_NoOverloadError()     { return VM::vm->types.NoOverloadError; }
-OVUM_API TypeHandle GetType_DivideByZeroError()   { return VM::vm->types.DivideByZeroError; }
-OVUM_API TypeHandle GetType_NullReferenceError()  { return VM::vm->types.NullReferenceError; }
-OVUM_API TypeHandle GetType_MemberNotFoundError() { return VM::vm->types.MemberNotFoundError; }
+OVUM_API TypeHandle GetType_Object()              { return ovum::VM::vm->types.Object; }
+OVUM_API TypeHandle GetType_Boolean()             { return ovum::VM::vm->types.Boolean; }
+OVUM_API TypeHandle GetType_Int()                 { return ovum::VM::vm->types.Int; }
+OVUM_API TypeHandle GetType_UInt()                { return ovum::VM::vm->types.UInt; }
+OVUM_API TypeHandle GetType_Real()                { return ovum::VM::vm->types.Real; }
+OVUM_API TypeHandle GetType_String()              { return ovum::VM::vm->types.String; }
+OVUM_API TypeHandle GetType_List()                { return ovum::VM::vm->types.List; }
+OVUM_API TypeHandle GetType_Hash()                { return ovum::VM::vm->types.Hash; }
+OVUM_API TypeHandle GetType_Method()              { return ovum::VM::vm->types.Method; }
+OVUM_API TypeHandle GetType_Iterator()            { return ovum::VM::vm->types.Iterator; }
+OVUM_API TypeHandle GetType_Type()                { return ovum::VM::vm->types.Type; }
+OVUM_API TypeHandle GetType_Error()               { return ovum::VM::vm->types.Error; }
+OVUM_API TypeHandle GetType_TypeError()           { return ovum::VM::vm->types.TypeError; }
+OVUM_API TypeHandle GetType_MemoryError()         { return ovum::VM::vm->types.MemoryError; }
+OVUM_API TypeHandle GetType_OverflowError()       { return ovum::VM::vm->types.OverflowError; }
+OVUM_API TypeHandle GetType_NoOverloadError()     { return ovum::VM::vm->types.NoOverloadError; }
+OVUM_API TypeHandle GetType_DivideByZeroError()   { return ovum::VM::vm->types.DivideByZeroError; }
+OVUM_API TypeHandle GetType_NullReferenceError()  { return ovum::VM::vm->types.NullReferenceError; }
+OVUM_API TypeHandle GetType_MemberNotFoundError() { return ovum::VM::vm->types.MemberNotFoundError; }
 
 OVUM_API String *Member_GetName(MemberHandle member)
 {
@@ -520,6 +525,7 @@ OVUM_API String *Member_GetName(MemberHandle member)
 
 OVUM_API MemberKind Member_GetKind(MemberHandle member)
 {
+	using namespace ovum;
 	switch (member->flags & MemberFlags::KIND)
 	{
 		case MemberFlags::METHOD:   return MemberKind::METHOD;
@@ -530,6 +536,7 @@ OVUM_API MemberKind Member_GetKind(MemberHandle member)
 }
 OVUM_API MemberAccess Member_GetAccessLevel(MemberHandle member)
 {
+	using namespace ovum;
 	switch (member->flags & MemberFlags::ACCESS_LEVEL)
 	{
 	case MemberFlags::PUBLIC:
@@ -557,7 +564,7 @@ OVUM_API bool Member_IsStatic(MemberHandle member)
 }
 OVUM_API bool Member_IsImpl(MemberHandle member)
 {
-	return (member->flags & MemberFlags::IMPL) == MemberFlags::IMPL;
+	return (member->flags & ovum::MemberFlags::IMPL) == ovum::MemberFlags::IMPL;
 }
 OVUM_API bool Member_IsAccessible(MemberHandle member, TypeHandle instType, TypeHandle fromType)
 {
@@ -566,19 +573,19 @@ OVUM_API bool Member_IsAccessible(MemberHandle member, TypeHandle instType, Type
 
 OVUM_API MethodHandle Member_ToMethod(MemberHandle member)
 {
-	if ((member->flags & MemberFlags::METHOD) == MemberFlags::METHOD)
+	if ((member->flags & ovum::MemberFlags::METHOD) == ovum::MemberFlags::METHOD)
 		return (MethodHandle)member;
 	return nullptr;
 }
 OVUM_API FieldHandle Member_ToField(MemberHandle member)
 {
-	if ((member->flags & MemberFlags::FIELD) == MemberFlags::FIELD)
+	if ((member->flags & ovum::MemberFlags::FIELD) == ovum::MemberFlags::FIELD)
 		return (FieldHandle)member;
 	return nullptr;
 }
 OVUM_API PropertyHandle Member_ToProperty(MemberHandle member)
 {
-	if ((member->flags & MemberFlags::PROPERTY) == MemberFlags::PROPERTY)
+	if ((member->flags & ovum::MemberFlags::PROPERTY) == ovum::MemberFlags::PROPERTY)
 		return (PropertyHandle)member;
 	return nullptr;
 }
@@ -586,7 +593,7 @@ OVUM_API PropertyHandle Member_ToProperty(MemberHandle member)
 
 OVUM_API bool Method_IsConstructor(MethodHandle method)
 {
-	return (method->flags & MemberFlags::CTOR) == MemberFlags::CTOR;
+	return (method->flags & ovum::MemberFlags::CTOR) == ovum::MemberFlags::CTOR;
 }
 OVUM_API int32_t Method_GetOverloadCount(MethodHandle method)
 {
@@ -649,7 +656,7 @@ OVUM_API bool Overload_GetParameter(OverloadHandle overload, int32_t index, Para
 			index == overload->paramCount - 1;
 	else
 		dest->isVariadic = false;
-	RefSignature refs(overload->refSignature);
+	ovum::RefSignature refs(overload->refSignature);
 	// +1 because the reference signature always reserves the first
 	// slot for the instance, even if the method is static.
 	dest->isByRef = refs.IsParamRef(index + 1);
@@ -664,7 +671,7 @@ OVUM_API int32_t Overload_GetAllParameters(OverloadHandle overload, int32_t dest
 
 	bool isVariadic = overload->IsVariadic();
 
-	RefSignature refs(overload->refSignature);
+	ovum::RefSignature refs(overload->refSignature);
 	for (int32_t i = 0; i < count; i++)
 	{
 		ParamInfo *pi = dest + i;
@@ -738,7 +745,7 @@ OVUM_API int32_t Type_GetMemberCount(TypeHandle type)
 }
 OVUM_API MemberHandle Type_GetMemberByIndex(TypeHandle type, const int32_t index)
 {
-	Member *result;
+	ovum::Member *result;
 	if (type->members.GetByIndex(index, result))
 		return result;
 	return nullptr;

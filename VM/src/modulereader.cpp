@@ -2,6 +2,9 @@
 #include "modulereader.internal.h"
 #include "ov_module.internal.h"
 
+namespace ovum
+{
+
 ModuleReader::ModuleReader()
 	: fileName(256), stream(nullptr),
 	buffer(nullptr), bufferPosition(0),
@@ -182,14 +185,12 @@ String *ModuleReader::ReadStringOrNull()
 
 char *ModuleReader::ReadCString()
 {
-	using namespace std;
-
 	const int32_t length = ReadInt32();
 
 	if (length == 0)
 		return nullptr;
 
-	unique_ptr<char[]> output(new char[length]);
+	std::unique_ptr<char[]> output(new char[length]);
 	Read(output.get(), length);
 
 	return output.release();
@@ -213,9 +214,7 @@ String *ModuleReader::ReadShortString(const int32_t length)
 }
 String *ModuleReader::ReadLongString(const int32_t length)
 {
-	using namespace std;
-
-	unique_ptr<uchar[]> data(new uchar[length + 1]);
+	std::unique_ptr<uchar[]> data(new uchar[length + 1]);
 
 	// Note: the module file does NOT include a terminating \0!
 	Read(data.get(), sizeof(uchar) * length);
@@ -241,3 +240,5 @@ void ModuleReader::HandleError(DWORD error)
 	}
 	throw ModuleIOException(message);
 }
+
+} // namespace ovum

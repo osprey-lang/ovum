@@ -14,44 +14,12 @@
 #define CSTR  L"%s"
 #endif
 
+namespace ovum
+{
+
 VM *VM::vm = nullptr;
 FILE *VM::stdOut = nullptr;
 FILE *VM::stdErr = nullptr;
-
-OVUM_API int VM_Start(VMStartParams *params)
-{
-	int r;
-	// VM::Init depends on both GC::Init and Module::Init,
-	// so call those first.
-	if ((r = GC::Init()) == OVUM_SUCCESS &&
-		(r = Module::Init()) == OVUM_SUCCESS &&
-		// VM::Init also takes care of loading modules
-		(r = VM::Init(*params)) == OVUM_SUCCESS)
-		r = VM::vm->Run();
-
-	// done!
-	// We have to unload the GC first, because the GC relies on data in
-	// modules to perform cleanup, such as examining managed types and
-	// calling finalizers in native types. If we clean up modules first,
-	// then the GC will be very unhappy.
-	//
-	// Note that the Unload methods are safe to call even if the Init
-	// method hasn't been called, e.g. if a previous Init call failed.
-	GC::Unload();
-	Module::Unload();
-	VM::Unload();
-
-#if EXIT_SUCCESS == 0
-	// OVUM_SUCCESS == EXIT_SUCCESS, which also means
-	// the system error codes are != OVUM_SUCCESS, so
-	// let's just pass result on to the system.
-	return r;
-#else
-	// Unlikely case - let's fall back to standard C
-	// exit codes.
-	return r == OVUM_SUCCESS ? EXIT_SUCCESS : EXIT_FAILURE;
-#endif
-}
 
 VM::VM(VMStartParams &params, int &status) :
 	verbose(params.verbose),
@@ -423,36 +391,74 @@ int VM::GetArgValues(int destLength, Value dest[])
 	return maxIndex;
 }
 
+} // namespace ovum
+
+OVUM_API int VM_Start(VMStartParams *params)
+{
+	using namespace ovum;
+
+	int r;
+	// VM::Init depends on both GC::Init and Module::Init,
+	// so call those first.
+	if ((r = GC::Init()) == OVUM_SUCCESS &&
+		(r = Module::Init()) == OVUM_SUCCESS &&
+		// VM::Init also takes care of loading modules
+		(r = VM::Init(*params)) == OVUM_SUCCESS)
+		r = VM::vm->Run();
+
+	// done!
+	// We have to unload the GC first, because the GC relies on data in
+	// modules to perform cleanup, such as examining managed types and
+	// calling finalizers in native types. If we clean up modules first,
+	// then the GC will be very unhappy.
+	//
+	// Note that the Unload methods are safe to call even if the Init
+	// method hasn't been called, e.g. if a previous Init call failed.
+	GC::Unload();
+	Module::Unload();
+	VM::Unload();
+
+#if EXIT_SUCCESS == 0
+	// OVUM_SUCCESS == EXIT_SUCCESS, which also means
+	// the system error codes are != OVUM_SUCCESS, so
+	// let's just pass result on to the system.
+	return r;
+#else
+	// Unlikely case - let's fall back to standard C
+	// exit codes.
+	return r == OVUM_SUCCESS ? EXIT_SUCCESS : EXIT_FAILURE;
+#endif
+}
 
 OVUM_API void VM_Print(String *str)
 {
-	VM::Print(str);
+	ovum::VM::Print(str);
 }
 OVUM_API void VM_PrintLn(String *str)
 {
-	VM::PrintLn(str);
+	ovum::VM::PrintLn(str);
 }
 
 OVUM_API void VM_PrintErr(String *str)
 {
-	VM::PrintErr(str);
+	ovum::VM::PrintErr(str);
 }
 OVUM_API void VM_PrintErrLn(String *str)
 {
-	VM::PrintErrLn(str);
+	ovum::VM::PrintErrLn(str);
 }
 
 OVUM_API int VM_GetArgCount()
 {
-	return VM::vm->GetArgCount();
+	return ovum::VM::vm->GetArgCount();
 }
 OVUM_API int VM_GetArgs(const int destLength, String *dest[])
 {
-	return VM::vm->GetArgs(destLength, dest);
+	return ovum::VM::vm->GetArgs(destLength, dest);
 }
 OVUM_API int VM_GetArgValues(const int destLength, Value dest[])
 {
-	if (VM::vm == nullptr)
+	if (ovum::VM::vm == nullptr)
 		return -1;
-	return VM::vm->GetArgValues(destLength, dest);
+	return ovum::VM::vm->GetArgValues(destLength, dest);
 }

@@ -8,6 +8,9 @@
 #include <memory>
 #include <string>
 
+namespace ovum
+{
+
 RefSignature::Pool *RefSignature::pool = nullptr;
 
 #define I16_ARG(ip)  *reinterpret_cast<int16_t *>(ip)
@@ -1705,3 +1708,5 @@ int instr::StaticCall::SetReferenceSignature(const StackManager &stack)
 		return method->VerifyRefSignature(this->refSignature, argCount);
 	return -1;
 }
+
+} // namespace ovum
