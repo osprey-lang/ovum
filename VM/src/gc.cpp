@@ -5,6 +5,9 @@
 #include <cstring>
 #include <vector>
 
+namespace ovum
+{
+
 namespace gc_strings
 {
 	LitString<47> _ObjectTooBig  = LitString<47>::FromCString("The size of the requested object was too large.");
@@ -1033,40 +1036,41 @@ int GC::UpdateFieldsCallback(void *state, unsigned int count, Value *values)
 	RETURN_SUCCESS;
 }
 
+} // namespace ovum
 
 OVUM_API int GC_Construct(ThreadHandle thread, TypeHandle type, const uint16_t argc, Value *output)
 {
-	return GC::gc->Construct(thread, type, argc, output);
+	return ovum::GC::gc->Construct(thread, type, argc, output);
 }
 
 OVUM_API String *GC_ConstructString(ThreadHandle thread, const int32_t length, const uchar *values)
 {
-	return GC::gc->ConstructString(thread, length, values);
+	return ovum::GC::gc->ConstructString(thread, length, values);
 }
 
 OVUM_API int GC_AllocArray(ThreadHandle thread, uint32_t length, size_t itemSize, void **output)
 {
-	return GC::gc->AllocArray(thread, length, itemSize, output);
+	return ovum::GC::gc->AllocArray(thread, length, itemSize, output);
 }
 
 OVUM_API int GC_AllocValueArray(ThreadHandle thread, uint32_t length, Value **output)
 {
-	return GC::gc->AllocValueArray(thread, length, output);
+	return ovum::GC::gc->AllocValueArray(thread, length, output);
 }
 
 OVUM_API void GC_AddMemoryPressure(ThreadHandle thread, const size_t size)
 {
-	GC::gc->AddMemoryPressure(thread, size);
+	ovum::GC::gc->AddMemoryPressure(thread, size);
 }
 
 OVUM_API void GC_RemoveMemoryPressure(ThreadHandle thread, const size_t size)
 {
-	GC::gc->RemoveMemoryPressure(thread, size);
+	ovum::GC::gc->RemoveMemoryPressure(thread, size);
 }
 
 OVUM_API Value *GC_AddStaticReference(ThreadHandle thread, Value initialValue)
 {
-	StaticRef *ref = GC::gc->AddStaticReference(thread, initialValue);
+	ovum::StaticRef *ref = ovum::GC::gc->AddStaticReference(thread, initialValue);
 	if (ref == nullptr)
 		return nullptr;
 	return ref->GetValuePointer();
@@ -1074,16 +1078,18 @@ OVUM_API Value *GC_AddStaticReference(ThreadHandle thread, Value initialValue)
 
 OVUM_API void GC_Collect(ThreadHandle thread)
 {
-	GC::gc->Collect(thread, false);
+	ovum::GC::gc->Collect(thread, false);
 }
 
 OVUM_API uint32_t GC_GetCollectCount()
 {
-	return GC::gc->GetCollectCount();
+	return ovum::GC::gc->GetCollectCount();
 }
 
 OVUM_API int GC_GetGeneration(Value *value)
 {
+	using namespace ovum;
+
 	if (value->type->IsPrimitive())
 		return -1;
 
@@ -1105,7 +1111,7 @@ OVUM_API uint32_t GC_GetObjectHashCode(Value *value)
 	if (value->type == nullptr || value->type->IsPrimitive())
 		return 0; // Nope!
 
-	GCObject *gco = GCObject::FromValue(value);
+	ovum::GCObject *gco = ovum::GCObject::FromValue(value);
 	if (gco->hashCode == 0)
 	{
 		// Shift down by 3 because addresses are (generally) aligned on the 8-byte boundary
@@ -1125,12 +1131,12 @@ OVUM_API void GC_Pin(Value *value)
 	using namespace std;
 	if (value->type != nullptr && !value->type->IsPrimitive())
 	{
-		GCObject *gco = GCObject::FromValue(value);
+		ovum::GCObject *gco = ovum::GCObject::FromValue(value);
 		// We must synchronise access to these two fields.
 		// Let's just reuse the field access lock.
 		gco->fieldAccessLock.Enter();
 		gco->pinCount++;
-		gco->flags |= GCOFlags::PINNED;
+		gco->flags |= ovum::GCOFlags::PINNED;
 		gco->fieldAccessLock.Leave();
 	}
 }
@@ -1140,12 +1146,12 @@ OVUM_API void GC_PinInst(void *value)
 	using namespace std;
 	if (value)
 	{
-		GCObject *gco = GCObject::FromInst(value);
+		ovum::GCObject *gco = ovum::GCObject::FromInst(value);
 		// We must synchronise access to these two fields.
 		// Let's just reuse the field access lock.
 		gco->fieldAccessLock.Enter();
 		gco->pinCount++;
-		gco->flags |= GCOFlags::PINNED;
+		gco->flags |= ovum::GCOFlags::PINNED;
 		gco->fieldAccessLock.Leave();
 	}
 }
@@ -1155,13 +1161,13 @@ OVUM_API void GC_Unpin(Value *value)
 	using namespace std;
 	if (value->type != nullptr && !value->type->IsPrimitive())
 	{
-		GCObject *gco = GCObject::FromValue(value);
+		ovum::GCObject *gco = ovum::GCObject::FromValue(value);
 		// We must synchronise access to these two fields.
 		// Let's just reuse the field access lock.
 		gco->fieldAccessLock.Enter();
 		gco->pinCount--;
 		if (gco->pinCount == 0)
-			gco->flags &= ~GCOFlags::PINNED;
+			gco->flags &= ~ovum::GCOFlags::PINNED;
 		gco->fieldAccessLock.Leave();
 	}
 }
@@ -1171,13 +1177,13 @@ OVUM_API void GC_UnpinInst(void *value)
 	using namespace std;
 	if (value)
 	{
-		GCObject *gco = GCObject::FromInst(value);
+		ovum::GCObject *gco = ovum::GCObject::FromInst(value);
 		// We must synchronise access to these two fields.
 		// Let's just reuse the field access lock.
 		gco->fieldAccessLock.Enter();
 		gco->pinCount--;
 		if (gco->pinCount == 0)
-			gco->flags &= ~GCOFlags::PINNED;
+			gco->flags &= ~ovum::GCOFlags::PINNED;
 		gco->fieldAccessLock.Leave();
 	}
 }

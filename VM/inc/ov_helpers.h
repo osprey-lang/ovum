@@ -21,10 +21,10 @@ OVUM_API int StringFromValue(ThreadHandle thread, Value *v);
 // Acknowledgement: The checked multiplication is basically lifted directly
 // from SafeInt, albeit with slightly different variable names.
 
-// UINT
 #define RETURN_OVERFLOW  return OVUM_ERROR_OVERFLOW
 #define RETURN_DIV_ZERO  return OVUM_ERROR_DIVIDE_BY_ZERO
 
+// UINT
 inline int UInt_AddChecked(const uint64_t left, const uint64_t right, uint64_t &result)
 {
 	if (UINT64_MAX - left < right)

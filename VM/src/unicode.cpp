@@ -1,6 +1,6 @@
 #include "ov_unicode.internal.h"
 
-const UnicodeCategory UC_GetCategoryInternal(const int32_t codepoint)
+UnicodeCategory UC_GetCategoryInternal(const int32_t codepoint)
 {
 	int32_t index = PrimaryMap[codepoint >> 11];
 	index = IndexMap2[(index << 4) + ((codepoint >> 7) & 15)];
@@ -8,7 +8,7 @@ const UnicodeCategory UC_GetCategoryInternal(const int32_t codepoint)
 	return CategoryChunks[(index << 3) + (codepoint & 7)];
 }
 
-const CaseMap UC_GetCaseMapInternal(const int32_t codepoint)
+CaseMap UC_GetCaseMapInternal(const int32_t codepoint)
 {
 	const CaseOffsets *cases = reinterpret_cast<const CaseOffsets*>(CaseMaps);
 	int32_t index = PrimaryCaseMap[codepoint >> 13];

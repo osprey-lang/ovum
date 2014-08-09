@@ -10,6 +10,9 @@
 #include "membertable.internal.h"
 #include "pathname.internal.h"
 
+namespace ovum
+{
+
 class ModuleMember
 {
 public:
@@ -41,19 +44,19 @@ public:
 
 enum ModuleMemberId : uint32_t
 {
-	IDMASK_MEMBERKIND   = 0xff000000u,
-	IDMASK_MEMBERINDEX  = 0x00ffffffu,
-	IDMASK_CONSTANTDEF  = 0x02000000u,
-	IDMASK_FUNCTIONDEF  = 0x04000000u,
-	IDMASK_TYPEDEF      = 0x10000000u,
-	IDMASK_FIELDDEF     = 0x12000000u,
-	IDMASK_METHODDEF    = 0x14000000u,
-	IDMASK_STRING       = 0x20000000u,
-	IDMASK_MODULEREF    = 0x40000000u,
-	IDMASK_FUNCTIONREF  = 0x44000000u,
-	IDMASK_TYPEREF      = 0x50000000u,
-	IDMASK_FIELDREF     = 0x52000000u,
-	IDMASK_METHODREF    = 0x54000000u,
+	IDMASK_MEMBERKIND  = 0xff000000u,
+	IDMASK_MEMBERINDEX = 0x00ffffffu,
+	IDMASK_CONSTANTDEF = 0x02000000u,
+	IDMASK_FUNCTIONDEF = 0x04000000u,
+	IDMASK_TYPEDEF     = 0x10000000u,
+	IDMASK_FIELDDEF    = 0x12000000u,
+	IDMASK_METHODDEF   = 0x14000000u,
+	IDMASK_STRING      = 0x20000000u,
+	IDMASK_MODULEREF   = 0x40000000u,
+	IDMASK_FUNCTIONREF = 0x44000000u,
+	IDMASK_TYPEREF     = 0x50000000u,
+	IDMASK_FIELDREF    = 0x52000000u,
+	IDMASK_METHODREF   = 0x54000000u,
 };
 
 class ModuleReader; // Defined in modulereader.internal.h
@@ -420,5 +423,7 @@ public:
 		exception(what)
 	{ }
 };
+
+} // namespace ovum
 
 #endif // VM__MODULE_INTERNAL_H

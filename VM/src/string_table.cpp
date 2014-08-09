@@ -1,6 +1,9 @@
 #include "ov_vm.internal.h"
 #include "string_table.internal.h"
 
+namespace ovum
+{
+
 StringTable::StringTable(const int capacity) :
 	count(0), freeCount(0), freeList(-1)
 {
@@ -187,3 +190,5 @@ void StringTable::DebugBuckets()
 	wprintf(L"Used %d out of %d buckets\n", bucketsUsed, capacity);
 	wprintf(L"Most collided bucket: %d (%d)\n", mostCollidedBucket, maxCollisionCount);
 }
+
+} // namespace ovum

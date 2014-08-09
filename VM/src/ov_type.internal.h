@@ -7,6 +7,9 @@
 #include "sync.internal.h"
 #include <cassert>
 
+namespace ovum
+{
+
 enum class MemberFlags : uint32_t
 {
 	NONE      = 0x0000,
@@ -481,5 +484,7 @@ namespace std_type_names
 	extern const unsigned int StandardTypeCount;
 	extern const StdType Types[];
 }
+
+} // namespace ovum
 
 #endif

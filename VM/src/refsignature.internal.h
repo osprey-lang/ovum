@@ -6,6 +6,10 @@
 #include <cstdint>
 #include <vector>
 
+namespace ovum
+{
+
+class RefSignature;
 class LongRefSignature;
 class RefSignatureBuilder;
 
@@ -239,5 +243,7 @@ public:
 			return shortMask;
 	}
 };
+
+} // namespace ovum
 
 #endif // VM__REFSIGNATURE_INTERNAL_H

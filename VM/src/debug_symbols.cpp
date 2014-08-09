@@ -5,6 +5,9 @@
 #include <memory>
 #include <stdio.h>
 
+namespace ovum
+{
+
 namespace debug_file
 {
 	const char magicNumber[] = { 'O', 'V', 'D', 'S' };
@@ -198,4 +201,6 @@ namespace debug
 		location->sourceStartIndex = reader.ReadInt32();
 		location->sourceEndIndex   = reader.ReadInt32();
 	}
-}
+} // namespace debug
+
+} // namespace ovum

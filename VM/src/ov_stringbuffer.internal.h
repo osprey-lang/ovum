@@ -5,6 +5,9 @@
 
 #include "ov_vm.internal.h"
 
+namespace ovum
+{
+
 class StringBuffer
 {
 private:
@@ -53,5 +56,7 @@ private:
 
 	static const size_t DefaultCapacity = 128;
 };
+
+} // namespace ovum
 
 #endif // VM__STRINGBUFFER_INTERNAL_H

@@ -7,6 +7,9 @@
 #include <vector>
 #include <cassert>
 
+namespace ovum
+{
+
 enum Opcode : uint8_t
 {
 	OPC_NOP       = 0x00,
@@ -2043,6 +2046,8 @@ namespace instr
 			*(Field**)buffer = field;
 		}
 	};
-}
+} // namespace instr
+
+} // namespace ovum
 
 #endif // VM__VM_OPCODES_H

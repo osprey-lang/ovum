@@ -268,7 +268,7 @@ typedef int (CDECL *ReferenceVisitor)(void *cbState, unsigned int count, Value *
 // If your type has both Value fields and non-Value fields, consider making
 // the Values adjacent in memory. That way, you can just give 'callback' the
 // address of the first Value and pass an appropriate length into 'count',
-// thus  removing the need for repeatedly calling the callback.
+// thus removing the need for repeatedly calling the callback.
 //
 // Also, whenever possible, use native fields (see Type_AddNativeField) and
 // GC-allocated arrays (GC_AllocArray, GC_AllocValueArray).
@@ -320,10 +320,10 @@ typedef int (CDECL *ListInitializer)(ThreadHandle thread, ListInst *list, int32_
 // When called, 'hash' is guaranteed to refer to a valid HashInst*.
 typedef int (CDECL *HashInitializer)(ThreadHandle thread, HashInst *hash, int32_t capacity);
 
-// Initializes a value of the aves.Type class for a specific underlying
-// TypeHandle. The standard module must expose a method with the name
-// "InitTypeToken", with this signature, so that the VM can create type
-// tokens when they are requested.
+// Initializes a value of the aves.reflection.Type class for a specific
+// underlying TypeHandle. The standard module must expose a method with
+// the name "InitTypeToken", with this signature, so that the VM can create
+// type tokens when they are requested.
 typedef int (CDECL *TypeTokenInitializer)(ThreadHandle thread, void *basePtr, TypeHandle type);
 
 OVUM_API TypeFlags Type_GetFlags(TypeHandle type);

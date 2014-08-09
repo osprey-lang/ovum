@@ -2,6 +2,9 @@
 #include "ov_thread.opcodes.h"
 #include <memory>
 
+namespace ovum
+{
+
 #define T_ARG(ip, T)   (*reinterpret_cast<T*>(ip))
 #define VAL_ARG(ip)    T_ARG(ip, Value*)
 #define I16_ARG(ip)    T_ARG(ip, int16_t)
@@ -1491,3 +1494,5 @@ int Thread::EvaluateLeave(register StackFrame *frame, int32_t target)
 
 	RETURN_SUCCESS;
 }
+
+} // namespace ovum

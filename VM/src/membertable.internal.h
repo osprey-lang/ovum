@@ -5,6 +5,9 @@
 
 #include "ov_vm.internal.h"
 
+namespace ovum
+{
+
 template<class T>
 class MemberTable
 {
@@ -82,5 +85,7 @@ public:
 
 	friend class Module;
 };
+
+} // namespace ovum
 
 #endif // VM__MEMBERTABLE_INTERNAL_H

@@ -6,6 +6,10 @@
 #include <cstdint>
 
 typedef struct String_S String;
+
+namespace ovum
+{
+
 class GC;
 
 // The StringTable class contains the implementation of the string
@@ -55,5 +59,7 @@ public:
 
 	friend class GC;
 };
+
+} // namespace ovum
 
 #endif // VM__STRING_TABLE_INTERNAL_H

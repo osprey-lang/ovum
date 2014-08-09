@@ -6,6 +6,9 @@
 #include "ov_vm.internal.h"
 #include <new>
 
+namespace ovum
+{
+
 // This header file exports a class PathName, which
 // is a mutable sequence of pathchar_t. It supports
 // various path name manipulation methods.
@@ -242,5 +245,7 @@ private:
 
 	static uint32_t StringLength(const pathchar_t *const str);
 };
+
+} // namespace ovum
 
 #endif // VM__PATHNAME_INTERNAL_H

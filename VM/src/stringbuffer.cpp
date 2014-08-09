@@ -1,6 +1,9 @@
 #include "ov_stringbuffer.internal.h"
 #include "ov_unicode.internal.h"
 
+namespace ovum
+{
+
 namespace buffer_errors
 {
 	LitString<70> _MemoryError = LitString<70>::FromCString("There was not enough memory to increase the size of the string buffer.");
@@ -201,3 +204,5 @@ int StringBuffer::ToWString(wchar_t *buf)
 #error Not supported
 #endif
 }
+
+} // namespace ovum

@@ -6,6 +6,9 @@
 #include "ov_vm.internal.h"
 #include "ov_type.internal.h"
 
+namespace ovum
+{
+
 static const uintptr_t LOCAL_REFERENCE = (uintptr_t)-1;
 static const uintptr_t STATIC_REFERENCE = (uintptr_t)-3;
 
@@ -125,6 +128,8 @@ inline bool IsSameReference_(Value *a, Value *b)
 	if (a->type->IsPrimitive())
 		return a->integer == b->integer;
 	return a->instance == b->instance;
+}
+
 }
 
 #endif // VM__VALUE_INTERNAL_H

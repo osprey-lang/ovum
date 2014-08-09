@@ -18,12 +18,14 @@
 #endif
 #endif
 
+namespace ovum
+{
+
 class StringBuffer;
 namespace instr
 {
 	class MethodBuilder;
 }
-
 
 class StackFrame
 {
@@ -120,7 +122,7 @@ public:
 	Value *Locals() const;
 };
 
-static const size_t STACK_FRAME_SIZE = ALIGN_TO(sizeof(::StackFrame), 8);
+static const size_t STACK_FRAME_SIZE = ALIGN_TO(sizeof(::ovum::StackFrame), 8);
 
 inline Value *StackFrame::Locals() const
 {
@@ -461,7 +463,9 @@ private:
 	friend class GC;
 	friend class VM;
 	friend class Type;
-	friend String *VM_GetStackTrace(ThreadHandle);
+	friend String *::VM_GetStackTrace(ThreadHandle);
 };
+
+} // namespace ovum
 
 #endif // VM__THREAD_INTERNAL_H

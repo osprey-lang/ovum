@@ -6,6 +6,9 @@
 #include "ov_vm.internal.h"
 #include "../inc/ov_string.h"
 
+namespace ovum
+{
+
 // This file contains a StringHash template class, because these are commonly needed in the VM.
 // A StringHash maps a String* to any type, using a relatively naïve implementation.
 // This class is intended for collections that do not need to be resized, because this class
@@ -200,6 +203,8 @@ void StringHash<T>::DeleteArrayValues()
 		delete[] entries[i].value;
 		entries[i].value = nullptr;
 	}
+}
+
 }
 
 #endif // VM__STRING_HASH_INTERNAL_H
