@@ -35,6 +35,8 @@ private:
 	uint8_t *buffer;
 	// The file name from which the ModuleReader was created.
 	PathName fileName;
+	// The VM instance that the reader reads module data for.
+	VM *vm;
 
 	// Gets the real position of the file pointer
 	unsigned long GetFilePosition();
@@ -42,7 +44,7 @@ private:
 	uint32_t ReadRaw(void *dest, uint32_t count);
 
 public:
-	ModuleReader();
+	ModuleReader(VM *owner);
 	~ModuleReader();
 
 	void Open(const pathchar_t *fileName);
@@ -121,6 +123,16 @@ public:
 	String *ReadString();
 	String *ReadStringOrNull();
 	char *ReadCString();
+
+	inline VM *GetVM() const
+	{
+		return vm;
+	}
+
+	inline GC *GetGC() const
+	{
+		return vm->GetGC();
+	}
 
 private:
 	String *ReadShortString(const int32_t length);

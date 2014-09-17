@@ -121,15 +121,19 @@ inline T NextPowerOfTwo(T n)
 #define ALIGN_TO(size,alignment)  ((size + (alignment) - 1) / (alignment) * (alignment))
 
 // Marks a function member as having been deleted, if the compiler supports it.
-// TODO: Conditional definition based on compiler capabilities.
+// TODO: Better conditional definition based on compiler capabilities.
+#if defined(_MSC_VER) && _MSC_VER > 1800
 #define OVUM_DELETE =delete
+#else
+#define OVUM_DELETE
+#endif
 
 // When put in the 'private' section of a type definition, disables copying and
 // assignment, by declaring operator= and the T(const T&) constructor as private
 // members. This should be used on any type that must not be copied by value.
 #define DISABLE_COPY_AND_ASSIGN(TypeName)  \
 	TypeName(const TypeName&) OVUM_DELETE; \
-	void operator=(const TypeName&)
+	void operator=(const TypeName&) OVUM_DELETE
 
 // Disallows parameterless construction, in addition to disabling the copy constructor
 // and operator=. This must be put in the 'private' section of a type definition.

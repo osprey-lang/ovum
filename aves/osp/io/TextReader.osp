@@ -239,6 +239,9 @@ public inheritable TextReader
 
 		return readLineInternal();
 
+		// This method used to be implemented in Osprey, which turned out to be too slow.
+		// The original implementation is below, for later restoration when Ovum is better
+		// at executing Osprey programs with good performance.
 		/*if charOffset == charCount
 		{
 			if fillBuffer() == 0: return null;

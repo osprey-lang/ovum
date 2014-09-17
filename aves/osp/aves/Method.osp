@@ -6,22 +6,103 @@ public class Method
 
 	private new(value)			__extern("aves_Method_new");
 
+	/// Summary: Gets a value that indicates whether the method is
+	///          bound to an instance.
 	public get hasInstance		__extern("aves_Method_get_hasInstance");
 
 	public this(args...)
 	{
+		// The VM is supposed to forward calls to the underlying method directly.
 		throw new Error("aves.Method's invocator is not supposed to be called directly.");
 	}
 
+	/// Summary: Determines whether the method accepts the specified number
+	///          of arguments.
+	/// Param argCount: The number of arguments to test against. (Int, UInt or Real)
+	/// Returns: True if the method accepts the specified number of arguments;
+	///          otherwise, false.
+	/// Throws TypeError:
+	///          {argCount} could not be converted to an Int.
 	public accepts(argCount)	__extern("aves_Method_accepts");
 
+	/// Summary: Extracts a method from the specified value. If the value is already
+	///          a {Method} instance, it is returned as is. Otherwise, a new {Method}
+	///          instance is created that calls the value’s invocator.
+	/// Param value: The value to get a method out of.
+	/// Returns: A {Method} instance.
+	/// Throws ArgumentNullError:
+	///          {value} is null.
+	/// Throws TypeError:
+	///          {value} is not invokable.
 	public static fromValue(value)
 	{
+		if value is null:
+			throw new ArgumentNullError("value");
 		if value is not Method:
 			value = new Method(value);
 
 		return value;
 	}
 
+	/// Summary: Determines whether two values refer to the same method
+	///          bound to the same instance.
+	/// Param a: The first value to compare.
+	/// Param b: The second value to compare.
+	/// Returns: True if {a} and {b} refer to the same method bound to the
+	///          same instance.
+	/// Remarks: Instance equality is determined using the `refeq` operator.
+	///          This means that two {Method}s may compare equal if they
+	///          were loaded from two different primitive values with the
+	///          same contents. For example:
+	///
+	///          `1.toString == 1.toString // true` \
+	///          `new T().toString == new T().toString // false` \
+	///          `"x".toString == "x".toString // true, because of interning`
 	operator ==(a, b)			__extern("aves_Method_opEquals");
+
+	/// Summary: Returns a new {Method} which, when invoked with one argument,
+	///          calls {right} with that value, then calls {left} with the return
+	///          value of the call to {right}.
+	/// Param left:  The {Method} to invoke with the return value of {right}.
+	/// Param right: The {Method} to invoke with the argument passed to the return
+	///              value of this method.
+	/// Returns: A new {Method} that can be called with one argument.
+	/// Remarks: The expression `left << right` is effectively equivalent to
+	///          `@arg = left(right(arg))`, as well as `right >> left`.
+	///
+	///          Authors are strongly discouraged from mixing `<<` and `>>` in
+	///          the same expression. It is likely to lead to confusion.
+	operator <<(left, right)
+	{
+		return new MethodChain(right, left).call;
+	}
+
+	/// Summary: Returns a new {Method} which, when invoked with one argument,
+	///          calls {left} with that value, then calls {right} with the return
+	///          value of the call to {left}.
+	/// Param left:  The {Method} to invoke with the argument passed to the return
+	///              value of this method.
+	/// Param right: The {Method} to invoke with the return value of {left}.
+	/// Returns: A new {Method} that can be called with one argument.
+	/// Remarks: The expression `left >> right` is effectively equivalent to
+	///          `@arg = right(left(arg))`, as well as `right << left`.
+	///
+	///          Authors are strongly discouraged from mixing `<<` and `>>` in
+	///          the same expression. It is likely to lead to confusion.
+	operator >>(left, right)
+	{
+		return new MethodChain(left, right).call;
+	}
+}
+
+private class MethodChain
+{
+	public new(this.first, this.second);
+
+	private first, second;
+
+	public call(arg)
+	{
+		return second(first(arg));
+	}
 }

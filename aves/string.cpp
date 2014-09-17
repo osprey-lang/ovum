@@ -181,7 +181,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_reverse)
 	CHECKED_MEM(outputString = GC_ConstructString(thread, THISV.common.string->length, nullptr));
 
 	Value *output = VM_Local(thread, 0);
-	SetString(output, outputString);
+	SetString(thread, output, outputString);
 
 	const uchar *srcp = &THISV.common.string->firstChar;
 	uchar *dstp = const_cast<uchar*>(&outputString->firstChar + outputString->length - 1);
@@ -267,9 +267,9 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_format)
 
 	String *result = nullptr;
 	{ Pinned str(THISP);
-		if (IsType(values, GetType_List()))
+		if (IsType(values, GetType_List(thread)))
 			CHECKED(string::Format(thread, str->common.string, values->common.list, result));
-		else if (IsType(values, GetType_Hash()))
+		else if (IsType(values, GetType_Hash(thread)))
 			CHECKED(string::Format(thread, str->common.string, values, result));
 		else
 			return VM_ThrowTypeError(thread, error_strings::FormatValueType);
@@ -326,7 +326,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_split)
 	{
 		// Construct the output list
 		VM_PushInt(thread, str->length);
-		CHECKED(GC_Construct(thread, GetType_List(), 1, output));
+		CHECKED(GC_Construct(thread, GetType_List(thread), 1, output));
 
 		// And then copy each individual character to the output
 		const uchar *chp = &str->firstChar;
@@ -342,7 +342,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_split)
 	{
 		// Construct the output list
 		VM_PushInt(thread, str->length / 2);
-		CHECKED(GC_Construct(thread, GetType_List(), 1, output));
+		CHECKED(GC_Construct(thread, GetType_List(thread), 1, output));
 
 		const uchar *chp = &str->firstChar;
 		const uchar *chStart = chp;
@@ -913,14 +913,14 @@ int ScanFormatIdentifier(ThreadHandle thread, LitString<BufLen> &buffer,
 	{
 		buffer.chars[length] = 0; // trailing 0, always!
 		*const_cast<int32_t*>(&buffer.length) = length;
-		SetString(result, _S(buffer));
+		SetString(thread, result, _S(buffer));
 	}
 	else
 	{
 		String *outputString = GC_ConstructString(thread, length, chStart);
 		if (outputString == nullptr)
 			return OVUM_ERROR_NO_MEMORY;
-		SetString(result, outputString);
+		SetString(thread, result, outputString);
 	}
 	RETURN_SUCCESS;
 

@@ -2,7 +2,7 @@
 
 AVES_API NATIVE_FUNCTION(aves_GC_get_collectCount)
 {
-	VM_PushInt(thread, GC_GetCollectCount());
+	VM_PushInt(thread, GC_GetCollectCount(thread));
 	RETURN_SUCCESS;
 }
 

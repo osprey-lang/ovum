@@ -136,7 +136,7 @@ void StringBuffer::Clear()
 
 String *StringBuffer::ToString(Thread *const thread)
 {
-	return GC::gc->ConstructString(thread, this->length, this->data);
+	return thread->GetGC()->ConstructString(thread, this->length, this->data);
 }
 
 int StringBuffer::ToWString(wchar_t *buf)

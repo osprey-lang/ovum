@@ -17,6 +17,8 @@
 namespace ovum
 {
 
+class VM;
+class GC;
 class Thread;
 class Type;
 class Module;
@@ -26,6 +28,9 @@ class MethodOverload;
 class Field;
 class Property;
 class StaticRef;
+
+class ModulePool;
+class RefSignaturePool;
 
 class MethodInitException;
 
@@ -37,7 +42,7 @@ namespace debug
 	class ModuleDebugData;
 }
 
-}
+} // namespace ovum
 
 typedef ovum::Thread *const ThreadHandle;
 typedef ovum::Type           *TypeHandle;
@@ -60,6 +65,7 @@ typedef ovum::Property       *PropertyHandle;
 #endif
 
 #include <cstdio>
+#include "tls.internal.h"
 
 namespace ovum
 {
@@ -96,12 +102,13 @@ private:
 
 	Module *startupModule;
 
+	GC *gc;
+	ModulePool *modules;
+	RefSignaturePool *refSignatures;
+
 	int LoadModules(VMStartParams &params);
 	int InitArgs(int argCount, const wchar_t *args[]);
 	int GetMainMethodOverload(Method *method, unsigned int &argc, MethodOverload *&overload);
-
-	static FILE *stdOut;
-	static FILE *stdErr;
 
 	static void PrintInternal(FILE *file, const wchar_t *format, String *str);
 
@@ -109,13 +116,25 @@ public:
 	StandardTypes types;
 	IniterFunctions functions;
 
-	VM(VMStartParams &params, int &status);
+	VM(VMStartParams &params);
 	~VM();
 
 	int Run();
 
-	NOINLINE static int Init(VMStartParams &params);
-	NOINLINE static void Unload();
+	NOINLINE static int Create(VMStartParams &params, VM *&result);
+
+	inline GC *GetGC() const
+	{
+		return gc;
+	}
+	inline ModulePool *GetModulePool() const
+	{
+		return modules;
+	}
+	inline RefSignaturePool *GetRefSignaturePool() const
+	{
+		return refSignatures;
+	}
 
 	static void Print(String *str);
 	static void Printf(const wchar_t *format, String *str);
@@ -129,10 +148,11 @@ public:
 	int GetArgs(int destLength, String *dest[]);
 	int GetArgValues(int destLength, Value dest[]);
 
-	static void PrintUnhandledError(Thread *const thread);
-	static void PrintMethodInitException(MethodInitException &e);
+	void PrintUnhandledError(Thread *const thread);
+	void PrintMethodInitException(MethodInitException &e);
 
-	static VM *vm;
+	// Contains the VM running on the current thread.
+	static TlsEntry<VM> vmKey;
 
 	friend class GC;
 	friend class Module;

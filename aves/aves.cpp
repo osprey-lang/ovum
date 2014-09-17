@@ -108,9 +108,9 @@ AVES_API void CDECL OvumModuleMain(ModuleHandle module)
 
 AVES_API BEGIN_NATIVE_FUNCTION(aves_print)
 {
-	if (IS_NULL(*args))
-		SetString(args, strings::Empty); // null prints like empty string
-	else if (!IsString(*args))
+	if (IS_NULL(args[0]))
+		SetString(thread, args, strings::Empty); // null prints like empty string
+	else if (!IsString(thread, args))
 		CHECKED(StringFromValue(thread, args));
 
 	VM_PrintLn(args->common.string);

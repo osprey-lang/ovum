@@ -79,7 +79,7 @@ OVUM_API Value *GC_AddStaticReference(ThreadHandle thread, Value initialValue);
 OVUM_API void GC_Collect(ThreadHandle thread);
 
 // Gets the number of times garbage collection has occurred.
-OVUM_API uint32_t GC_GetCollectCount();
+OVUM_API uint32_t GC_GetCollectCount(ThreadHandle thread);
 
 OVUM_API int GC_GetGeneration(Value *value);
 

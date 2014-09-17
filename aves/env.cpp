@@ -10,13 +10,13 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Env_get_args)
 {
 	if (EnvArgsField == nullptr)
 	{
-		const int argCount = VM_GetArgCount();
+		const int argCount = VM_GetArgCount(thread);
 
 		CHECKED_MEM(EnvArgsField = GC_AddStaticReference(thread, NULL_VALUE));
 		VM_PushInt(thread, argCount); // list capacity
-		CHECKED(GC_Construct(thread, GetType_List(), 1, EnvArgsField));
+		CHECKED(GC_Construct(thread, GetType_List(thread), 1, EnvArgsField));
 
-		VM_GetArgValues(argCount, EnvArgsField->common.list->values);
+		VM_GetArgValues(thread, argCount, EnvArgsField->common.list->values);
 		EnvArgsField->common.list->length = argCount;
 	}
 

@@ -12,7 +12,7 @@ namespace ovum
 static const uintptr_t LOCAL_REFERENCE = (uintptr_t)-1;
 static const uintptr_t STATIC_REFERENCE = (uintptr_t)-3;
 
-// These access VM::vm->types directly, instead of calling the various GetType_* methods.
+// These access VM::types directly, instead of calling the various GetType_* methods.
 
 inline void SetNull_(Value &target)
 {
@@ -23,58 +23,58 @@ inline void SetNull_(Value *target)
 	target->type = nullptr;
 }
 
-inline void SetBool_(Value &target, const bool value)
+inline void SetBool_(VM *vm, Value &target, const bool value)
 {
-	target.type = VM::vm->types.Boolean;
+	target.type = vm->types.Boolean;
 	target.integer = value;
 }
-inline void SetBool_(Value *target, const bool value)
+inline void SetBool_(VM *vm, Value *target, const bool value)
 {
-	target->type = VM::vm->types.Boolean;
+	target->type = vm->types.Boolean;
 	target->integer = value;
 }
 
-inline void SetInt_(Value &target, const int64_t value)
+inline void SetInt_(VM *vm, Value &target, const int64_t value)
 {
-	target.type = VM::vm->types.Int;
+	target.type = vm->types.Int;
 	target.integer = value;
 }
-inline void SetInt_(Value *target, const int64_t value)
+inline void SetInt_(VM *vm, Value *target, const int64_t value)
 {
-	target->type = VM::vm->types.Int;
+	target->type = vm->types.Int;
 	target->integer = value;
 }
 
-inline void SetUInt_(Value &target, const uint64_t value)
+inline void SetUInt_(VM *vm, Value &target, const uint64_t value)
 {
-	target.type = VM::vm->types.UInt;
+	target.type = vm->types.UInt;
 	target.uinteger = value;
 }
-inline void SetUInt_(Value *target, const uint64_t value)
+inline void SetUInt_(VM *vm, Value *target, const uint64_t value)
 {
-	target->type = VM::vm->types.UInt;
+	target->type = vm->types.UInt;
 	target->uinteger = value;
 }
 
-inline void SetReal_(Value &target, const double value)
+inline void SetReal_(VM *vm, Value &target, const double value)
 {
-	target.type = VM::vm->types.Real;
+	target.type = vm->types.Real;
 	target.real = value;
 }
-inline void SetReal_(Value *target, const double value)
+inline void SetReal_(VM *vm, Value *target, const double value)
 {
-	target->type = VM::vm->types.Real;
+	target->type = vm->types.Real;
 	target->real = value;
 }
 
-inline void SetString_(Value &target, String *value)
+inline void SetString_(VM *vm, Value &target, String *value)
 {
-	target.type = VM::vm->types.String;
+	target.type = vm->types.String;
 	target.common.string = value;
 }
-inline void SetString_(Value *target, String *value)
+inline void SetString_(VM *vm, Value *target, String *value)
 {
-	target->type = VM::vm->types.String;
+	target->type = vm->types.String;
 	target->common.string = value;
 }
 

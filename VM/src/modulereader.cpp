@@ -5,10 +5,11 @@
 namespace ovum
 {
 
-ModuleReader::ModuleReader()
+ModuleReader::ModuleReader(VM *owner)
 	: fileName(256), stream(nullptr),
 	buffer(nullptr), bufferPosition(0),
-	bufferIndex(0), bufferDataSize(0)
+	bufferIndex(0), bufferDataSize(0),
+	vm(owner)
 { }
 ModuleReader::~ModuleReader()
 {
@@ -202,12 +203,12 @@ String *ModuleReader::ReadShortString(const int32_t length)
 	// Fill the buffer with contents from the file
 	Read(const_cast<uchar*>(buf.chars), sizeof(uchar) * length);
 
-	String *intern = GC::gc->GetInternedString(nullptr, _S(buf));
+	String *intern = GetGC()->GetInternedString(nullptr, _S(buf));
 	if (intern == nullptr)
 	{
 		// Not interned, have to allocate!
-		intern = GC::gc->ConstructModuleString(nullptr, length, buf.chars);
-		GC::gc->InternString(nullptr, intern);
+		intern = GetGC()->ConstructModuleString(nullptr, length, buf.chars);
+		GetGC()->InternString(nullptr, intern);
 	}
 
 	return intern;
@@ -222,8 +223,8 @@ String *ModuleReader::ReadLongString(const int32_t length)
 	// If a string with this value is already interned, we get that string instead.
 	// If we have that string, GC::InternString does nothing; if we don't, we have
 	// a brand new string and interning it actually interns it.
-	String *string = GC::gc->ConstructModuleString(nullptr, length, data.get());
-	string = GC::gc->InternString(nullptr, string);
+	String *string = GetGC()->ConstructModuleString(nullptr, length, data.get());
+	string = GetGC()->InternString(nullptr, string);
 
 	return string;
 }

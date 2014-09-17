@@ -108,16 +108,16 @@ public class String
 	///          substring within the current string.
 	/// Param value: The substring to search for.
 	/// Returns: The index of the first occurrence of the given substring within
-	///          this string, as an Int, or null if this string doesn&rsquo;t
-	///          contain the substring.
+	///          this string, as an Int, or null if this string doesn’t contain
+	///          the substring.
 	/// Throws TypeError: {value} is not a String or Char.
 	public indexOf(value)					__extern("aves_String_indexOf");
 	/// Summary: Returns the index of the last occurrence of the specified
 	///          substring within the current string.
 	/// Param value: The substring to search for.
 	/// Returns: The index of the last occurrence of the given substring within
-	///          this string, as an Int, or null if this string doesn&rsquo;t
-	///          contain the substring.
+	///          this string, as an Int, or null if this string doesn’t contain
+	///          the substring.
 	/// Throws TypeError: {value} is not a String or Char.
 	public lastIndexOf(value)				__extern("aves_String_lastIndexOf");
 

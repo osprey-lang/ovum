@@ -420,26 +420,26 @@ typedef struct StandardTypes_S
 	TypeHandle MemberNotFoundError;
 } StandardTypes;
 
-OVUM_API void GetStandardTypes(StandardTypes *target, size_t targetSize);
-OVUM_API TypeHandle GetType_Object();
-OVUM_API TypeHandle GetType_Boolean();
-OVUM_API TypeHandle GetType_Int();
-OVUM_API TypeHandle GetType_UInt();
-OVUM_API TypeHandle GetType_Real();
-OVUM_API TypeHandle GetType_String();
-OVUM_API TypeHandle GetType_List();
-OVUM_API TypeHandle GetType_Hash();
-OVUM_API TypeHandle GetType_Method();
-OVUM_API TypeHandle GetType_Iterator();
-OVUM_API TypeHandle GetType_Type();
-OVUM_API TypeHandle GetType_Error();
-OVUM_API TypeHandle GetType_TypeError();
-OVUM_API TypeHandle GetType_MemoryError();
-OVUM_API TypeHandle GetType_OverflowError();
-OVUM_API TypeHandle GetType_NoOverloadError();
-OVUM_API TypeHandle GetType_DivideByZeroError();
-OVUM_API TypeHandle GetType_NullReferenceError();
-OVUM_API TypeHandle GetType_MemberNotFoundError();
+OVUM_API void GetStandardTypes(ThreadHandle thread, StandardTypes *target, size_t targetSize);
+OVUM_API TypeHandle GetType_Object(ThreadHandle thread);
+OVUM_API TypeHandle GetType_Boolean(ThreadHandle thread);
+OVUM_API TypeHandle GetType_Int(ThreadHandle thread);
+OVUM_API TypeHandle GetType_UInt(ThreadHandle thread);
+OVUM_API TypeHandle GetType_Real(ThreadHandle thread);
+OVUM_API TypeHandle GetType_String(ThreadHandle thread);
+OVUM_API TypeHandle GetType_List(ThreadHandle thread);
+OVUM_API TypeHandle GetType_Hash(ThreadHandle thread);
+OVUM_API TypeHandle GetType_Method(ThreadHandle thread);
+OVUM_API TypeHandle GetType_Iterator(ThreadHandle thread);
+OVUM_API TypeHandle GetType_Type(ThreadHandle thread);
+OVUM_API TypeHandle GetType_Error(ThreadHandle thread);
+OVUM_API TypeHandle GetType_TypeError(ThreadHandle thread);
+OVUM_API TypeHandle GetType_MemoryError(ThreadHandle thread);
+OVUM_API TypeHandle GetType_OverflowError(ThreadHandle thread);
+OVUM_API TypeHandle GetType_NoOverloadError(ThreadHandle thread);
+OVUM_API TypeHandle GetType_DivideByZeroError(ThreadHandle thread);
+OVUM_API TypeHandle GetType_NullReferenceError(ThreadHandle thread);
+OVUM_API TypeHandle GetType_MemberNotFoundError(ThreadHandle thread);
 
 class TypeMemberIterator
 {

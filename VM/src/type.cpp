@@ -1,4 +1,5 @@
 #include "ov_vm.internal.h"
+#include "ov_module.internal.h"
 #include "../inc/ov_string.h"
 #include "refsignature.internal.h"
 
@@ -60,20 +61,12 @@ namespace std_type_names
 	};
 }
 
-int32_t MethodOverload::GetLocalOffset(uint16_t local) const
-{
-	return (int32_t)(STACK_FRAME_SIZE + local * sizeof(Value));
-}
-int32_t MethodOverload::GetStackOffset(uint16_t stackSlot) const
-{
-	return (int32_t)(STACK_FRAME_SIZE + (locals + stackSlot) * sizeof(Value));
-}
-
-Type::Type(int32_t memberCount) :
+Type::Type(Module *module, int32_t memberCount) :
 	members(memberCount), typeToken(nullptr),
 	size(0), fieldCount(0),
 	getReferences(nullptr), finalizer(nullptr),
 	nativeFieldCapacity(0), nativeFields(nullptr),
+	module(module), vm(module->GetVM()),
 	staticCtorLock(8000)
 {
 	memset(operators, 0, sizeof(MethodOverload*) * OPERATOR_COUNT);
@@ -85,8 +78,8 @@ Type::~Type()
 	for (unsigned int i = 0; i < std_type_names::StandardTypeCount; i++)
 	{
 		std_type_names::StdType type = std_type_names::Types[i];
-		if (VM::vm->types.*(type.member) == this)
-			VM::vm->types.*(type.member) = nullptr;
+		if (vm->types.*(type.member) == this)
+			vm->types.*(type.member) = nullptr;
 	}
 
 	// If there are any native fields, destroy them
@@ -143,18 +136,18 @@ int Type::LoadTypeToken(Thread *const thread)
 {
 	// Type tokens can never be destroyed, so let's create a static
 	// reference to it.
-	StaticRef *typeTkn = GC::gc->AddStaticReference(thread, NULL_VALUE);
+	StaticRef *typeTkn = GetGC()->AddStaticReference(thread, NULL_VALUE);
 	if (typeTkn == nullptr)
 		return thread->ThrowMemoryError();
 
 	// Note: use GC::Alloc because the aves.Type type may not have
 	// a public constructor. GC::Construct would fail if it didn't.
-	int r = GC::gc->Alloc(thread, VM::vm->types.Type, VM::vm->types.Type->size, typeTkn->GetValuePointer());
+	int r = GetGC()->Alloc(thread, vm->types.Type, vm->types.Type->size, typeTkn->GetValuePointer());
 	if (r != OVUM_SUCCESS) return r;
 
 	// Call the type token initializer with this type and the brand
 	// new allocated instance data thing. Hurrah.
-	r = VM::vm->functions.initTypeToken(thread, typeTkn->GetValuePointer()->instance, this);
+	r = vm->functions.initTypeToken(thread, typeTkn->GetValuePointer()->instance, this);
 	if (r == OVUM_SUCCESS)
 		typeToken = typeTkn;
 
@@ -171,7 +164,7 @@ bool Type::InitStaticFields(Thread *const thread)
 			static_cast<Field*>(m)->staticValue == nullptr)
 		{
 			Field *f = static_cast<Field*>(m);
-			f->staticValue = GC::gc->AddStaticReference(thread, NULL_VALUE);
+			f->staticValue = GetGC()->AddStaticReference(thread, NULL_VALUE);
 			if (f->staticValue == nullptr)
 				return false;
 		}
@@ -419,10 +412,26 @@ void Field::WriteFieldUnchecked(Value *instanceAndValue) const
 	gco->fieldAccessLock.Leave();
 }
 
+int32_t MethodOverload::GetLocalOffset(uint16_t local) const
+{
+	return (int32_t)(STACK_FRAME_SIZE + local * sizeof(Value));
+}
+
+int32_t MethodOverload::GetStackOffset(uint16_t stackSlot) const
+{
+	return (int32_t)(STACK_FRAME_SIZE + (locals + stackSlot) * sizeof(Value));
+}
+
+RefSignaturePool *MethodOverload::GetRefSignaturePool() const
+{
+	return group->declModule->GetVM()->GetRefSignaturePool();
+}
+
 int MethodOverload::VerifyRefSignature(uint32_t signature, uint16_t argCount) const
 {
-	RefSignature methodSignature(refSignature);
-	RefSignature argSignature(signature);
+	RefSignaturePool *refSigPool = GetRefSignaturePool();
+	RefSignature methodSignature(refSignature, refSigPool);
+	RefSignature argSignature(signature, refSigPool);
 
 	// Signatures always include extra space for the instance, even if the method
 	// is static. Argument 0 should never be by ref.
@@ -491,32 +500,32 @@ int MethodOverload::VerifyRefSignature(uint32_t signature, uint16_t argCount) co
 
 } // namespace ovum
 
-OVUM_API void GetStandardTypes(StandardTypes *target, size_t targetSize)
+OVUM_API void GetStandardTypes(ThreadHandle thread, StandardTypes *target, size_t targetSize)
 {
 	// Never copy more than sizeof(StandardTypes) bytes,
 	// but potentially copy less.
 	targetSize = min(targetSize, sizeof(StandardTypes));
-	memcpy(target, &ovum::VM::vm->types, targetSize);
+	memcpy(target, &thread->GetVM()->types, targetSize);
 }
-OVUM_API TypeHandle GetType_Object()              { return ovum::VM::vm->types.Object; }
-OVUM_API TypeHandle GetType_Boolean()             { return ovum::VM::vm->types.Boolean; }
-OVUM_API TypeHandle GetType_Int()                 { return ovum::VM::vm->types.Int; }
-OVUM_API TypeHandle GetType_UInt()                { return ovum::VM::vm->types.UInt; }
-OVUM_API TypeHandle GetType_Real()                { return ovum::VM::vm->types.Real; }
-OVUM_API TypeHandle GetType_String()              { return ovum::VM::vm->types.String; }
-OVUM_API TypeHandle GetType_List()                { return ovum::VM::vm->types.List; }
-OVUM_API TypeHandle GetType_Hash()                { return ovum::VM::vm->types.Hash; }
-OVUM_API TypeHandle GetType_Method()              { return ovum::VM::vm->types.Method; }
-OVUM_API TypeHandle GetType_Iterator()            { return ovum::VM::vm->types.Iterator; }
-OVUM_API TypeHandle GetType_Type()                { return ovum::VM::vm->types.Type; }
-OVUM_API TypeHandle GetType_Error()               { return ovum::VM::vm->types.Error; }
-OVUM_API TypeHandle GetType_TypeError()           { return ovum::VM::vm->types.TypeError; }
-OVUM_API TypeHandle GetType_MemoryError()         { return ovum::VM::vm->types.MemoryError; }
-OVUM_API TypeHandle GetType_OverflowError()       { return ovum::VM::vm->types.OverflowError; }
-OVUM_API TypeHandle GetType_NoOverloadError()     { return ovum::VM::vm->types.NoOverloadError; }
-OVUM_API TypeHandle GetType_DivideByZeroError()   { return ovum::VM::vm->types.DivideByZeroError; }
-OVUM_API TypeHandle GetType_NullReferenceError()  { return ovum::VM::vm->types.NullReferenceError; }
-OVUM_API TypeHandle GetType_MemberNotFoundError() { return ovum::VM::vm->types.MemberNotFoundError; }
+OVUM_API TypeHandle GetType_Object(ThreadHandle thread)              { return thread->GetVM()->types.Object; }
+OVUM_API TypeHandle GetType_Boolean(ThreadHandle thread)             { return thread->GetVM()->types.Boolean; }
+OVUM_API TypeHandle GetType_Int(ThreadHandle thread)                 { return thread->GetVM()->types.Int; }
+OVUM_API TypeHandle GetType_UInt(ThreadHandle thread)                { return thread->GetVM()->types.UInt; }
+OVUM_API TypeHandle GetType_Real(ThreadHandle thread)                { return thread->GetVM()->types.Real; }
+OVUM_API TypeHandle GetType_String(ThreadHandle thread)              { return thread->GetVM()->types.String; }
+OVUM_API TypeHandle GetType_List(ThreadHandle thread)                { return thread->GetVM()->types.List; }
+OVUM_API TypeHandle GetType_Hash(ThreadHandle thread)                { return thread->GetVM()->types.Hash; }
+OVUM_API TypeHandle GetType_Method(ThreadHandle thread)              { return thread->GetVM()->types.Method; }
+OVUM_API TypeHandle GetType_Iterator(ThreadHandle thread)            { return thread->GetVM()->types.Iterator; }
+OVUM_API TypeHandle GetType_Type(ThreadHandle thread)                { return thread->GetVM()->types.Type; }
+OVUM_API TypeHandle GetType_Error(ThreadHandle thread)               { return thread->GetVM()->types.Error; }
+OVUM_API TypeHandle GetType_TypeError(ThreadHandle thread)           { return thread->GetVM()->types.TypeError; }
+OVUM_API TypeHandle GetType_MemoryError(ThreadHandle thread)         { return thread->GetVM()->types.MemoryError; }
+OVUM_API TypeHandle GetType_OverflowError(ThreadHandle thread)       { return thread->GetVM()->types.OverflowError; }
+OVUM_API TypeHandle GetType_NoOverloadError(ThreadHandle thread)     { return thread->GetVM()->types.NoOverloadError; }
+OVUM_API TypeHandle GetType_DivideByZeroError(ThreadHandle thread)   { return thread->GetVM()->types.DivideByZeroError; }
+OVUM_API TypeHandle GetType_NullReferenceError(ThreadHandle thread)  { return thread->GetVM()->types.NullReferenceError; }
+OVUM_API TypeHandle GetType_MemberNotFoundError(ThreadHandle thread) { return thread->GetVM()->types.MemberNotFoundError; }
 
 OVUM_API String *Member_GetName(MemberHandle member)
 {
@@ -656,7 +665,7 @@ OVUM_API bool Overload_GetParameter(OverloadHandle overload, int32_t index, Para
 			index == overload->paramCount - 1;
 	else
 		dest->isVariadic = false;
-	ovum::RefSignature refs(overload->refSignature);
+	ovum::RefSignature refs(overload->refSignature, overload->GetRefSignaturePool());
 	// +1 because the reference signature always reserves the first
 	// slot for the instance, even if the method is static.
 	dest->isByRef = refs.IsParamRef(index + 1);
@@ -671,7 +680,7 @@ OVUM_API int32_t Overload_GetAllParameters(OverloadHandle overload, int32_t dest
 
 	bool isVariadic = overload->IsVariadic();
 
-	ovum::RefSignature refs(overload->refSignature);
+	ovum::RefSignature refs(overload->refSignature, overload->GetRefSignaturePool());
 	for (int32_t i = 0; i < count; i++)
 	{
 		ParamInfo *pi = dest + i;

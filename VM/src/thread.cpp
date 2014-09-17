@@ -1,6 +1,7 @@
 #include "ov_vm.internal.h"
 #include "ov_stringbuffer.internal.h"
 #include "ov_debug_symbols.internal.h"
+#include <memory>
 #if OVUM_TARGET == OVUM_UNIX
 #include <time.h>
 #endif
@@ -44,13 +45,33 @@ namespace thread_errors
 	String *MemberIsNotAField           = _S(_MemberIsNotAField);
 }
 
+TlsEntry<Thread> Thread::threadKey;
 
-Thread::Thread(int &status) :
-	currentFrame(nullptr), state(ThreadState::CREATED),
-	currentError(NULL_VALUE), ip(nullptr),
+int Thread::Create(VM *owner, Thread *&result)
+{
+	// Try to allocate the TLS key first
+	if (!threadKey.IsValid() && !threadKey.Alloc())
+		return OVUM_ERROR_NO_MEMORY;
+
+	// And now make the thread!
+	int status;
+	result = new(std::nothrow) Thread(owner, status);
+	if (!result)
+		status = OVUM_ERROR_NO_MEMORY;
+	return status;
+}
+
+Thread::Thread(VM *owner, int &status) :
+	ip(nullptr),
+	currentFrame(nullptr),
 	pendingRequest(ThreadRequest::NONE),
+	state(ThreadState::CREATED),
 	flags(ThreadFlags::NONE),
-	gcCycleSection(4000)
+	callStack(nullptr),
+	vm(owner),
+	currentError(NULL_VALUE),
+	gcCycleSection(4000),
+	hashSetItem(nullptr)
 {
 	status = InitCallStack();
 	if (status == OVUM_SUCCESS)
@@ -60,6 +81,10 @@ Thread::Thread(int &status) :
 #else
 		nativeId = pthread_self();
 #endif
+		// Associate the VM with the native thread
+		VM::vmKey.Set(owner);
+		// And this managed thread, too
+		threadKey.Set(this);
 	}
 }
 
@@ -165,7 +190,7 @@ int Thread::InvokeLL(unsigned int argCount, Value *value, Value *result, uint32_
 	// If the value is a Method instance, we use that instance's details.
 	// Otherwise, we load the default invocator from the value.
 
-	if (value->type == VM::vm->types.Method)
+	if (value->type == vm->types.Method)
 	{
 		MethodInst *methodInst = value->common.method;
 		if (mo = methodInst->method->ResolveOverload(argCount))
@@ -260,7 +285,7 @@ int Thread::InvokeMemberLL(String *name, uint32_t argCount, Value *value, Value 
 				// Call the property getter!
 				// We do need to copy the instance, because the property getter
 				// would otherwise overwrite the arguments already on the stack.
-				currentFrame->Push(value);
+				Push(value);
 				int r = InvokeMethodOverload(mo, 0,
 					currentFrame->evalStack + currentFrame->stackCount - 1,
 					value);
@@ -415,7 +440,7 @@ int Thread::InvokeApply(Value *result)
 int Thread::InvokeApplyLL(Value *args, Value *result)
 {
 	// First, ensure that args[1] is a List.
-	if (!Type::ValueIsType(args + 1, VM::vm->types.List))
+	if (!Type::ValueIsType(args + 1, vm->types.List))
 		return ThrowTypeError(thread_errors::WrongApplyArgsType);
 	// Second, ensure that args[0] is not null.
 	if (IS_NULL(args[0]))
@@ -448,7 +473,7 @@ int Thread::InvokeApplyMethod(Method *method, Value *result)
 int Thread::InvokeApplyMethodLL(Method *method, Value *args, Value *result)
 {
 	// First, ensure that args[0] is a List
-	if (!Type::ValueIsType(args, VM::vm->types.List))
+	if (!Type::ValueIsType(args, vm->types.List))
 		return ThrowTypeError(thread_errors::WrongApplyArgsType);
 
 	assert((method->flags & MemberFlags::INSTANCE) == MemberFlags::NONE);
@@ -534,17 +559,17 @@ int Thread::ConcatLL(Value *args, Value *result)
 	int __status;
 	register Value *a = args;
 	register Value *b = args + 1;
-	if (a->type == VM::vm->types.List || b->type == VM::vm->types.List)
+	if (a->type == vm->types.List || b->type == vm->types.List)
 	{
 		// list concatenation
 		if (a->type != b->type)
 			return ThrowTypeError(thread_errors::ConcatTypes);
 
 		Value output;
-		CHECKED(GC::gc->Alloc(this, VM::vm->types.List, sizeof(ListInst), &output));
+		CHECKED(GetGC()->Alloc(this, vm->types.List, sizeof(ListInst), &output));
 
 		int32_t length = a->common.list->length + b->common.list->length;
-		CHECKED(VM::vm->functions.initListInstance(this,
+		CHECKED(vm->functions.initListInstance(this,
 			output.common.list, length));
 
 		if (length > 0)
@@ -556,25 +581,23 @@ int Thread::ConcatLL(Value *args, Value *result)
 
 		*result = output;
 	}
-	else if (a->type == VM::vm->types.Hash || b->type == VM::vm->types.Hash)
+	else if (a->type == vm->types.Hash || b->type == vm->types.Hash)
 	{
 		// hash concatenation
 		if (a->type != b->type)
 			return ThrowTypeError(thread_errors::ConcatTypes);
 
-		static MethodOverload *hashSetItem = nullptr;
-		if (!hashSetItem) GetHashIndexerSetter(&hashSetItem);
-		assert(hashSetItem != nullptr);
-
 		register StackFrame *f = currentFrame;
-		register Value *hash = args + 2; // Put the hash on the stack for extra GC reachability!
+		// Put the hash on the stack for extra GC reachability!
+		register Value *hash = args + 2;
 		f->stackCount++;
 
-		CHECKED(GC::gc->Alloc(this, VM::vm->types.Hash, sizeof(HashInst), hash));
-		CHECKED(VM::vm->functions.initHashInstance(this,
+		CHECKED(GetGC()->Alloc(this, vm->types.Hash, sizeof(HashInst), hash));
+		CHECKED(vm->functions.initHashInstance(this,
 			hash->common.hash,
 			max(a->common.hash->count, b->common.hash->count)));
 
+		MethodOverload *hashSetItem = GetHashIndexerSetter();
 		do
 		{
 			for (int32_t i = 0; i < a->common.hash->count; i++)
@@ -601,7 +624,7 @@ int Thread::ConcatLL(Value *args, Value *result)
 
 		String *str;
 		CHECKED_MEM(str = String_Concat(this, a->common.string, b->common.string));
-		SetString_(result, str);
+		SetString_(vm, result, str);
 	}
 	currentFrame->stackCount -= 2;
 	RETURN_SUCCESS;
@@ -609,14 +632,20 @@ int Thread::ConcatLL(Value *args, Value *result)
 	__retStatus: return __status;
 }
 
-void Thread::GetHashIndexerSetter(MethodOverload **target)
+MethodOverload *Thread::GetHashIndexerSetter()
 {
-	Member *m = VM::vm->types.Hash->GetMember(static_strings::_item);
+	if (!hashSetItem)
+	{
+		Member *m = vm->types.Hash->GetMember(static_strings::_item);
 
-	assert((m->flags & MemberFlags::KIND) == MemberFlags::PROPERTY);
-	assert(((Property*)m)->setter != nullptr);
+		assert((m->flags & MemberFlags::KIND) == MemberFlags::PROPERTY);
+		assert(((Property*)m)->setter != nullptr);
 
-	*target = ((Property*)m)->setter->ResolveOverload(2);
+		MethodOverload *result = ((Property*)m)->setter->ResolveOverload(2);
+		assert(result != nullptr);
+		hashSetItem = result;
+	}
+	return hashSetItem;
 }
 
 
@@ -633,7 +662,7 @@ void Thread::GetHashIndexerSetter(MethodOverload **target)
 	\
 	int r = InvokeMethodOverload(method, 2, args, (pResult)); \
 	if (r != OVUM_SUCCESS) return r; \
-	if ((pResult)->type != VM::vm->types.Int) \
+	if ((pResult)->type != vm->types.Int) \
 		return ThrowTypeError(thread_errors::CompareType)
 
 int Thread::CompareLL(Value *args, Value *result)
@@ -707,7 +736,7 @@ int Thread::LoadMemberLL(Value *instance, String *member, Value *result)
 	else if ((m->flags & MemberFlags::METHOD) != MemberFlags::NONE)
 	{
 		Value output;
-		int r = GC::gc->Alloc(this, VM::vm->types.Method, sizeof(MethodInst), &output);
+		int r = GetGC()->Alloc(this, vm->types.Method, sizeof(MethodInst), &output);
 		if (r != OVUM_SUCCESS) return r;
 
 		output.common.method->instance = *instance;
@@ -849,7 +878,7 @@ int Thread::LoadFieldRefLL(Value *inst, Field *field)
 	Value fieldRef;
 	fieldRef.type = (Type*)~(field->offset + GCO_SIZE);
 	fieldRef.reference = inst->instance + field->offset;
-	currentFrame->Push(&fieldRef);
+	Push(&fieldRef);
 
 	RETURN_SUCCESS;
 }
@@ -871,7 +900,7 @@ int Thread::LoadMemberRefLL(Value *inst, String *member)
 	Value fieldRef;
 	fieldRef.type = (Type*)~(field->offset + GCO_SIZE);
 	fieldRef.reference = inst->instance + field->offset;
-	currentFrame->Push(&fieldRef);
+	Push(&fieldRef);
 
 	RETURN_SUCCESS;
 }
@@ -924,7 +953,7 @@ int Thread::LoadStaticField(Field *field, Value *result)
 	{
 		Value value;
 		field->staticValue->Read(&value);
-		currentFrame->Push(&value);
+		Push(&value);
 	}
 	RETURN_SUCCESS;
 }
@@ -952,7 +981,7 @@ int Thread::ToString(String **result)
 	if (r != OVUM_SUCCESS)
 		return r;
 
-	if (currentFrame->PeekType(0) != VM::vm->types.String)
+	if (currentFrame->PeekType(0) != vm->types.String)
 		return ThrowTypeError(static_strings::errors::ToStringWrongType);
 
 	if (result != nullptr)
@@ -981,10 +1010,10 @@ int Thread::Throw(bool rethrow)
 int Thread::ThrowError(String *message)
 {
 	if (message == nullptr)
-		currentFrame->PushNull();
+		PushNull();
 	else
-		currentFrame->PushString(message);
-	int r = GC::gc->Construct(this, VM::vm->types.Error, 1, nullptr);
+		PushString(message);
+	int r = GetGC()->Construct(this, vm->types.Error, 1, nullptr);
 	if (r == OVUM_SUCCESS)
 		r = Throw();
 	return r;
@@ -993,10 +1022,10 @@ int Thread::ThrowError(String *message)
 int Thread::ThrowTypeError(String *message)
 {
 	if (message == nullptr)
-		currentFrame->PushNull();
+		PushNull();
 	else
-		currentFrame->PushString(message);
-	int r = GC::gc->Construct(this, VM::vm->types.TypeError, 1, nullptr);
+		PushString(message);
+	int r = GetGC()->Construct(this, vm->types.TypeError, 1, nullptr);
 	if (r == OVUM_SUCCESS)
 		r = Throw();
 	return r;
@@ -1005,10 +1034,10 @@ int Thread::ThrowTypeError(String *message)
 int Thread::ThrowMemoryError(String *message)
 {
 	if (message == nullptr)
-		currentFrame->PushNull();
+		PushNull();
 	else
-		currentFrame->PushString(message);
-	int r = GC::gc->Construct(this, VM::vm->types.MemoryError, 1, nullptr);
+		PushString(message);
+	int r = GetGC()->Construct(this, vm->types.MemoryError, 1, nullptr);
 	if (r == OVUM_SUCCESS)
 		r = Throw();
 	return r;
@@ -1017,10 +1046,10 @@ int Thread::ThrowMemoryError(String *message)
 int Thread::ThrowOverflowError(String *message)
 {
 	if (message == nullptr)
-		currentFrame->PushNull();
+		PushNull();
 	else
-		currentFrame->PushString(message);
-	int r = GC::gc->Construct(this, VM::vm->types.OverflowError, 1, nullptr);
+		PushString(message);
+	int r = GetGC()->Construct(this, vm->types.OverflowError, 1, nullptr);
 	if (r == OVUM_SUCCESS)
 		r = Throw();
 	return r;
@@ -1029,10 +1058,10 @@ int Thread::ThrowOverflowError(String *message)
 int Thread::ThrowDivideByZeroError(String *message)
 {
 	if (message == nullptr)
-		currentFrame->PushNull();
+		PushNull();
 	else
-		currentFrame->PushString(message);
-	int r = GC::gc->Construct(this, VM::vm->types.DivideByZeroError, 1, nullptr);
+		PushString(message);
+	int r = GetGC()->Construct(this, vm->types.DivideByZeroError, 1, nullptr);
 	if (r == OVUM_SUCCESS)
 		r = Throw();
 	return r;
@@ -1041,10 +1070,10 @@ int Thread::ThrowDivideByZeroError(String *message)
 int Thread::ThrowNullReferenceError(String *message)
 {
 	if (message == nullptr)
-		currentFrame->PushNull();
+		PushNull();
 	else
-		currentFrame->PushString(message);
-	int r = GC::gc->Construct(this, VM::vm->types.NullReferenceError, 1, nullptr);
+		PushString(message);
+	int r = GetGC()->Construct(this, vm->types.NullReferenceError, 1, nullptr);
 	if (r == OVUM_SUCCESS)
 		r = Throw();
 	return r;
@@ -1052,12 +1081,12 @@ int Thread::ThrowNullReferenceError(String *message)
 
 int Thread::ThrowNoOverloadError(uint32_t argCount, String *message)
 {
-	currentFrame->PushInt(argCount);
+	PushInt(argCount);
 	if (message == nullptr)
-		currentFrame->PushNull();
+		PushNull();
 	else
-		currentFrame->PushString(message);
-	int r = GC::gc->Construct(this, VM::vm->types.NoOverloadError, 2, nullptr);
+		PushString(message);
+	int r = GetGC()->Construct(this, vm->types.NoOverloadError, 2, nullptr);
 	if (r == OVUM_SUCCESS)
 		r = Throw();
 	return r;
@@ -1065,8 +1094,8 @@ int Thread::ThrowNoOverloadError(uint32_t argCount, String *message)
 
 int Thread::ThrowMemberNotFoundError(String *member)
 {
-	currentFrame->PushString(member);
-	int r = GC::gc->Construct(this, VM::vm->types.MemberNotFoundError, 1, nullptr);
+	PushString(member);
+	int r = GetGC()->Construct(this, vm->types.MemberNotFoundError, 1, nullptr);
 	if (r == OVUM_SUCCESS)
 		r = Throw();
 	return r;
@@ -1112,7 +1141,7 @@ int Thread::ThrowMissingOperatorError(Operator op)
 		return OVUM_ERROR_NO_MEMORY;
 	}
 
-	int r = GC::gc->Construct(this, VM::vm->types.TypeError, 1, nullptr);
+	int r = GetGC()->Construct(this, vm->types.TypeError, 1, nullptr);
 	if (r == OVUM_SUCCESS)
 		r = Throw();
 
@@ -1209,11 +1238,11 @@ int Thread::PrepareVariadicArgs(MethodFlags flags, uint32_t argCount, uint32_t p
 	// We cannot really make any assumptions about the List constructor,
 	// so we can't call it here. Instead, we "manually" allocate a ListInst,
 	// set its type to List, and initialize its fields.
-	int r = GC::gc->Alloc(this, VM::vm->types.List, sizeof(ListInst), &listValue);
+	int r = GetGC()->Alloc(this, vm->types.List, sizeof(ListInst), &listValue);
 	if (r != OVUM_SUCCESS) return r;
 
 	ListInst *list = listValue.common.list;
-	r = VM::vm->functions.initListInstance(this, list, count);
+	r = vm->functions.initListInstance(this, list, count);
 	if (r != OVUM_SUCCESS) return r;
 	list->length = count;
 
@@ -1345,22 +1374,21 @@ String *Thread::GetStackTrace()
 void Thread::AppendArgumentType(StringBuffer &buf, Value *arg)
 {
 	Type *type = arg->type;
+	if ((uintptr_t)type & 1)
+	{
+		buf.Append(4, "ref ");
+		Value refValue;
+		ReadReference(arg, &refValue);
+		type = refValue.type;
+	}
+
 	if (type == nullptr)
 		buf.Append(4, "null");
 	else
 	{
-		if ((uintptr_t)type & 1)
-		{
-			buf.Append(4, "ref ");
-			if ((uintptr_t)type == STATIC_REFERENCE)
-				type = reinterpret_cast<StaticRef*>(arg->reference)->GetValuePointer()->type;
-			else
-				type = reinterpret_cast<Value*>(arg->reference)->type;
-		}
-
 		buf.Append(type->fullName);
 
-		if (type == VM::vm->types.Method)
+		if (type == vm->types.Method)
 		{
 			// Append some information about the instance and method group, too.
 			MethodInst *method = arg->common.method;

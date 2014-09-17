@@ -209,7 +209,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(io_Path_join)
 		String *path = args[i].common.string;
 		CHECKED(Path::ValidatePath(thread, path, false));
 		if (i == 0 || Path::IsAbsolute(path))
-			SetString(output, path);
+			SetString(thread, output, path);
 		else
 		{
 			String *outputStr;
@@ -223,7 +223,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(io_Path_join)
 			else
 				outputStr = String_Concat3(thread, output->common.string, _S(Path::DirSeparatorString), path);
 			CHECKED_MEM(outputStr);
-			SetString(output, outputStr);
+			SetString(thread, output, outputStr);
 		}
 	}
 
@@ -327,12 +327,12 @@ AVES_API BEGIN_NATIVE_FUNCTION(io_Path_changeExtension)
 	Value *retval = VM_Local(thread, 0);
 
 	if (extIdx == -1)
-		SetString(retval, path);
+		SetString(thread, retval, path);
 	else
 	{
 		String *str;
 		CHECKED_MEM(str = GC_ConstructString(thread, extIdx, &path->firstChar));
-		SetString(retval, str);
+		SetString(thread, retval, str);
 	}
 
 	if (!IS_NULL(args[1]))
@@ -343,7 +343,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(io_Path_changeExtension)
 		else
 			retString = String_Concat3(thread, retval->common.string, _S(dot), args[1].common.string);
 		CHECKED_MEM(retString);
-		SetString(retval, retString);
+		SetString(thread, retval, retString);
 	}
 
 	VM_Push(thread, retval);

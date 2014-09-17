@@ -4,9 +4,11 @@
 #define VM__CRITICAL_SECTION_H
 
 #include "ov_vm.internal.h"
+
 #include <atomic>
 #if OVUM_TARGET == OVUM_UNIX
 #include <pthread.h>
+#include <semaphore.h>
 #endif
 
 namespace ovum
@@ -29,6 +31,8 @@ private:
 #else
 	pthread_mutex_t mutex;
 #endif
+
+	DISABLE_COPY_AND_ASSIGN(CriticalSection);
 
 public:
 	inline CriticalSection(uint32_t spinCount)
@@ -92,6 +96,71 @@ public:
 	}
 };
 
+class Semaphore
+{
+private:
+#if OVUM_TARGET == OVUM_WINDOWS
+	HANDLE semaphore;
+#else
+	sem_t semaphore;
+#endif
+
+	DISABLE_COPY_AND_ASSIGN(Semaphore);
+
+public:
+	inline Semaphore(int value)
+	{
+#if OVUM_TARGET == OVUM_WINDOWS
+		semaphore = CreateSemaphoreW(nullptr,
+			value,
+			INT_MAX,
+			nullptr);
+#else
+		sem_init(&semaphore, 0, value);
+#endif
+	}
+
+	inline ~Semaphore()
+	{
+#if OVUM_TARGET == OVUM_WINDOWS
+		CloseHandle(semaphore);
+#else
+		sem_destroy(&semaphore);
+#endif
+	}
+
+	// Decrements the semaphore value by one. If the value is
+	// currently zero, the calling thread will block until another
+	// thread increments the semaphore count.
+	inline void Enter()
+	{
+#if OVUM_TARGET == OVUM_WINDOWS
+		WaitForSingleObject(semaphore, INFINITE);
+#else
+		// TODO: Handle signal interrupts
+		sem_wait(&semaphore);
+#endif
+	}
+
+	inline bool TryEnter()
+	{
+#if OVUM_TARGET == OVUM_WINDOWS
+		return WaitForSingleObject(semaphore, 0) != ERROR_TIMEOUT;
+#else
+		return sem_trywait(&semaphore) != EAGAIN;
+#endif
+	}
+
+	inline void Leave()
+	{
+#if OVUM_TARGET == OVUM_WINDOWS
+		ReleaseSemaphore(semaphore, 1, nullptr);
+#else
+		sem_post(&semaphore);
+#endif
+	}
+};
+
 // SpinLock is a simple, non-recursive lock. Attempting to enter
 // the lock when it is taken by another thread will cause the lock
 // to spin, that is, repeatedly try to acquire the lock in a loop.
@@ -109,6 +178,8 @@ class SpinLock
 {
 private:
 	std::atomic_flag flag;
+
+	DISABLE_COPY_AND_ASSIGN(SpinLock);
 
 public:
 	inline SpinLock() : flag() { }

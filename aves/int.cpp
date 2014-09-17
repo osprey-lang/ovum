@@ -44,7 +44,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Int_toStringf)
 
 		str = integer::ToString(thread, THISV.integer, (int)format->integer, 0, false);
 	}
-	else if (IsString(format))
+	else if (IsString(thread, format))
 	{
 		int radix, minWidth;
 		bool upper;
@@ -491,7 +491,7 @@ int integer::ParseFormatString(ThreadHandle thread, String *str, int *radix, int
 
 	case 'D': // 'd'[width]
 	case 'd': // 'D'[width]
-		i++; // eat the D
+		i++; // take the D
 		ch++;
 		if (str->length > 1)
 			goto parseMinWidth;

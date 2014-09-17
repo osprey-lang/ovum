@@ -45,7 +45,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_UInt_toStringf)
 
 		str = uinteger::ToString(thread, THISV.uinteger, (int)format->integer, 0, false);
 	}
-	else if (IsString(format))
+	else if (IsString(thread, format))
 	{
 		int radix, minWidth;
 		bool upper;

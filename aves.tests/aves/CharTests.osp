@@ -1,0 +1,29 @@
+use namespace aves;
+use namespace testing.unit;
+
+namespace aves.tests;
+
+// Tests for the class aves.Char
+
+public class CharTests is TestFixture
+{
+	public new() { new base("aves.Char tests"); }
+
+	// TODO: Figure out a good way of testing Unicode character categories.
+
+	public test_Length()
+	{
+		var char1 = 'x';
+		var char2 = '\U0001D11E'; // Musical Symbol G Clef
+
+		Assert.areEqual(char1.length, 1);
+		Assert.areEqual(char2.length, 2);
+	}
+
+	public test_Codepoint()
+	{
+		var char = '\u014A';
+
+		Assert.areEqual(char.codepoint, 0x014A);
+	}
+}

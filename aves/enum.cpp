@@ -123,7 +123,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_EnumSet_toString)
 	{
 		String *remainingString;
 		CHECKED_MEM(remainingString = integer::ToString(thread, remainingFlags, 10, 0, false));
-		SetString(VM_Local(thread, 0), remainingString);
+		SetString(thread, VM_Local(thread, 0), remainingString);
 		if (buf.GetLength() > 0)
 		{
 			CHECKED_MEM(buf.Append(3, " | "));
