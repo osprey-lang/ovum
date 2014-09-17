@@ -1,6 +1,7 @@
 ﻿#include "ov_vm.internal.h"
 #include "ov_module.internal.h"
 #include "pathname.internal.h"
+#include "refsignature.internal.h"
 #include <fcntl.h>
 #include <io.h>
 #include <cstdio>
@@ -17,27 +18,37 @@
 namespace ovum
 {
 
-VM *VM::vm = nullptr;
-FILE *VM::stdOut = nullptr;
-FILE *VM::stdErr = nullptr;
+TlsEntry<VM> VM::vmKey;
 
-VM::VM(VMStartParams &params, int &status) :
+VM::VM(VMStartParams &params) :
 	verbose(params.verbose),
 	argCount(params.argc), argValues(nullptr),
-	types(), functions(), mainThread(nullptr),
-	startupPath(nullptr), startupPathLib(nullptr), modulePath(nullptr)
-{
-	mainThread = new(std::nothrow) Thread(status);
-	if (mainThread == nullptr)
-		status = OVUM_ERROR_NO_MEMORY;
-}
+	types(), functions(),
+	startupPath(),
+	startupPathLib(),
+	modulePath(),
+	mainThread(nullptr),
+	gc(nullptr),
+	modules(nullptr),
+	refSignatures(nullptr)
+{ }
 
 VM::~VM()
 {
+	// We have to unload the GC first, because the GC relies on data in
+	// modules to perform cleanup, such as examining managed types and
+	// calling finalizers in native types. If we clean up modules first,
+	// then the GC will be very unhappy.
+	delete gc;
+	delete modules;
+	delete refSignatures;
+
 	delete mainThread;
+
 	delete startupPath;
 	delete startupPathLib;
 	delete modulePath;
+
 	delete[] argValues;
 }
 
@@ -48,7 +59,7 @@ int VM::Run()
 	Method *main = startupModule->GetMainMethod();
 	if (main == nullptr)
 	{
-		fwprintf(stdErr, L"Startup error: Startup module does not define a main method.\n");
+		fwprintf(stderr, L"Startup error: Startup module does not define a main method.\n");
 		r = OVUM_ERROR_NO_MAIN_METHOD;
 	}
 	else
@@ -82,33 +93,30 @@ int VM::Run()
 	return r;
 }
 
-int VM::Init(VMStartParams &params)
+int VM::Create(VMStartParams &params, VM *&result)
 {
-	VM::stdOut = stdout;
-	VM::stdErr = stderr;
-
-	_setmode(_fileno(stdOut), _O_U8TEXT);
-	_setmode(_fileno(stdErr), _O_U8TEXT);
-	_setmode(_fileno(stdin),  _O_U8TEXT);
-
-	if (params.verbose)
+	int __status;
 	{
-		wprintf(L"Module path:    %ls\n", params.modulePath);
-		wprintf(L"Startup file:   %ls\n", params.startupFile);
-		wprintf(L"Argument count: %d\n",  params.argc);
+		if (!vmKey.IsValid())
+			CHECKED_MEM(vmKey.Alloc());
+
+		std::unique_ptr<VM> vm(new(std::nothrow) VM(params));
+		CHECKED_MEM(vm.get());
+
+		CHECKED(Thread::Create(vm.get(), vm->mainThread));
+		CHECKED(GC::Create(vm.get(), vm->gc));
+		CHECKED_MEM(vm->modules = new(std::nothrow) ModulePool(10));
+		CHECKED_MEM(vm->refSignatures = new(std::nothrow) RefSignaturePool());
+		
+		CHECKED(vm->LoadModules(params));
+		CHECKED(vm->InitArgs(params.argc, params.argv));
+
+		result = vm.release();
 	}
 
-	int r;
-	vm = new(std::nothrow) VM(params, r);
-	if (!vm)
-		r = OVUM_ERROR_NO_MEMORY;
-	else if (r == OVUM_SUCCESS)
-	{
-		r = vm->LoadModules(params);
-		if (r == OVUM_SUCCESS)
-			r = vm->InitArgs(params.argc, params.argv);
-	}
-	return r;
+	__status = OVUM_SUCCESS;
+__retStatus:
+	return __status;
 }
 
 int VM::LoadModules(VMStartParams &params)
@@ -129,7 +137,7 @@ int VM::LoadModules(VMStartParams &params)
 		PathName startupFile(params.startupFile, std::nothrow);
 		if (!startupFile.IsValid())
 			return OVUM_ERROR_NO_MEMORY;
-		this->startupModule = Module::Open(startupFile, nullptr);
+		this->startupModule = Module::Open(this, startupFile, nullptr);
 	}
 	catch (ModuleLoadException &e)
 	{
@@ -166,14 +174,14 @@ int VM::InitArgs(int argCount, const wchar_t *args[])
 
 	for (int i = 0; i < argCount; i++)
 	{
-		String *argString = String_FromWString(nullptr, args[i]);
+		String *argString = String_FromWString(mainThread, args[i]);
 		if (!argString) return OVUM_ERROR_NO_MEMORY;
 
 		Value argValue;
 		argValue.type = types.String;
 		argValue.common.string = argString;
 
-		StaticRef *ref = GC::gc->AddStaticReference(nullptr, argValue);
+		StaticRef *ref = gc->AddStaticReference(nullptr, argValue);
 		if (!ref) return OVUM_ERROR_NO_MEMORY;
 
 		argValues[i] = ref->GetValuePointer();
@@ -197,7 +205,7 @@ int VM::GetMainMethodOverload(Method *method, unsigned int &argc, MethodOverload
 		// If there is a one-argument overload, try to create an aves.List
 		// and put the argument values in it.
 		GCObject *listGco;
-		int r = GC::gc->Alloc(mainThread, types.List, types.List->size, &listGco);
+		int r = gc->Alloc(mainThread, types.List, types.List->size, &listGco);
 		if (r != OVUM_SUCCESS) return r;
 
 		ListInst *argsList = reinterpret_cast<ListInst*>(listGco->InstanceBase());
@@ -210,7 +218,7 @@ int VM::GetMainMethodOverload(Method *method, unsigned int &argc, MethodOverload
 		argsList->length = this->argCount;
 
 		Value argsValue;
-		argsValue.type = vm->types.List;
+		argsValue.type = types.List;
 		argsValue.instance = reinterpret_cast<uint8_t*>(argsList);
 		mainThread->Push(&argsValue);
 	}
@@ -221,18 +229,11 @@ int VM::GetMainMethodOverload(Method *method, unsigned int &argc, MethodOverload
 
 	if (overload == nullptr || overload->IsInstanceMethod())
 	{
-		fwprintf(stdErr, L"Startup error: Main method must take 1 or 0 arguments, and cannot be an instance method.\n");
+		fwprintf(stderr, L"Startup error: Main method must take 1 or 0 arguments, and cannot be an instance method.\n");
 		return OVUM_ERROR_NO_MAIN_METHOD;
 	}
 
 	RETURN_SUCCESS;
-}
-
-void VM::Unload()
-{
-	VM::stdOut = nullptr;
-	VM::stdErr = nullptr;
-	delete VM::vm;
 }
 
 void VM::PrintInternal(FILE *f, const wchar_t *format, String *str)
@@ -263,34 +264,34 @@ void VM::PrintInternal(FILE *f, const wchar_t *format, String *str)
 
 void VM::Print(String *str)
 {
-	PrintInternal(stdOut, L"%ls", str);
+	PrintInternal(stdout, L"%ls", str);
 }
 void VM::Printf(const wchar_t *format, String *str)
 {
-	PrintInternal(stdOut, format, str);
+	PrintInternal(stdout, format, str);
 }
 void VM::PrintLn(String *str)
 {
-	PrintInternal(stdOut, L"%ls\n", str);
+	PrintInternal(stdout, L"%ls\n", str);
 }
 
 void VM::PrintErr(String *str)
 {
-	PrintInternal(stdErr, L"%ls", str);
+	PrintInternal(stderr, L"%ls", str);
 }
 void VM::PrintfErr(const wchar_t *format, String *str)
 {
-	PrintInternal(stdErr, format, str);
+	PrintInternal(stderr, format, str);
 }
 void VM::PrintErrLn(String *str)
 {
-	PrintInternal(stdErr, L"%ls\n", str);
+	PrintInternal(stderr, L"%ls\n", str);
 }
 
 void VM::PrintUnhandledError(Thread *const thread)
 {
 	Value &error = thread->currentError;
-	PrintInternal(stdErr, L"Unhandled error: %ls: ", error.type->fullName);
+	PrintInternal(stderr, L"Unhandled error: %ls: ", error.type->fullName);
 
 	String *message = nullptr;
 	// If the member exists and is a readable instance property,
@@ -306,7 +307,7 @@ void VM::PrintUnhandledError(Thread *const thread)
 
 			Value result;
 			int r = thread->InvokeMethod(msgProp->getter, 0, &result);
-			if (r == OVUM_SUCCESS && result.type == vm->types.String)
+			if (r == OVUM_SUCCESS && result.type == types.String)
 				message = result.common.string;
 		}
 	}
@@ -320,7 +321,7 @@ void VM::PrintUnhandledError(Thread *const thread)
 }
 void VM::PrintMethodInitException(MethodInitException &e)
 {
-	FILE *err = stdErr;
+	FILE *err = stderr;
 
 	fwprintf(err, L"An error occurred while initializing the method '");
 
@@ -329,7 +330,7 @@ void VM::PrintMethodInitException(MethodInitException &e)
 		PrintInternal(err, L"%ls.", method->declType->fullName);
 	PrintErr(method->group->name);
 
-	PrintInternal(err, L"' from module %ls: ", method->group->declModule->name);
+	PrintInternal(err, L"' from module %ls: ", method->group->declModule->GetName());
 	fwprintf(err, CSTR L"\n", e.what());
 
 	switch (e.GetFailureKind())
@@ -360,14 +361,14 @@ void VM::PrintMethodInitException(MethodInitException &e)
 			if (method->declType)
 				PrintInternal(err, L"%ls.", method->declType->fullName);
 			PrintErr(method->name);
-			PrintInternal(err, L"' from module %ls\n", method->declModule->name);
+			PrintInternal(err, L"' from module %ls\n", method->declModule->GetName());
 		}
 		fwprintf(err, L"Argument count: %u\n", e.GetArgumentCount());
 		break;
 	case MethodInitException::INACCESSIBLE_TYPE:
 	case MethodInitException::TYPE_NOT_CONSTRUCTIBLE:
 		PrintInternal(err, L"Type: '%ls' ", e.GetType()->fullName);
-		PrintInternal(err, L"from module %ls\n", e.GetType()->module->name);
+		PrintInternal(err, L"from module %ls\n", e.GetType()->module->GetName());
 		break;
 	}
 }
@@ -397,31 +398,29 @@ OVUM_API int VM_Start(VMStartParams *params)
 {
 	using namespace ovum;
 
-	int r;
-	// VM::Init depends on both GC::Init and Module::Init,
-	// so call those first.
-	if ((r = GC::Init()) == OVUM_SUCCESS &&
-		(r = Module::Init()) == OVUM_SUCCESS &&
-		// VM::Init also takes care of loading modules
-		(r = VM::Init(*params)) == OVUM_SUCCESS)
-		r = VM::vm->Run();
+	_setmode(_fileno(stdout), _O_U8TEXT);
+	_setmode(_fileno(stderr), _O_U8TEXT);
+	_setmode(_fileno(stdin),  _O_U8TEXT);
 
-	// done!
-	// We have to unload the GC first, because the GC relies on data in
-	// modules to perform cleanup, such as examining managed types and
-	// calling finalizers in native types. If we clean up modules first,
-	// then the GC will be very unhappy.
-	//
-	// Note that the Unload methods are safe to call even if the Init
-	// method hasn't been called, e.g. if a previous Init call failed.
-	GC::Unload();
-	Module::Unload();
-	VM::Unload();
+	if (params->verbose)
+	{
+		wprintf(L"Module path:    %ls\n", params->modulePath);
+		wprintf(L"Startup file:   %ls\n", params->startupFile);
+		wprintf(L"Argument count: %d\n",  params->argc);
+	}
+
+	VM *vm;
+	int r = VM::Create(*params, vm);
+	if (r == OVUM_SUCCESS)
+	{
+		r = vm->Run();
+		delete vm;
+	}
 
 #if EXIT_SUCCESS == 0
 	// OVUM_SUCCESS == EXIT_SUCCESS, which also means
-	// the system error codes are != OVUM_SUCCESS, so
-	// let's just pass result on to the system.
+	// Ovum's error codes are != EXIT_SUCCESS, so let's
+	// just pass the result on to the system.
 	return r;
 #else
 	// Unlikely case - let's fall back to standard C
@@ -448,17 +447,15 @@ OVUM_API void VM_PrintErrLn(String *str)
 	ovum::VM::PrintErrLn(str);
 }
 
-OVUM_API int VM_GetArgCount()
+OVUM_API int VM_GetArgCount(ThreadHandle thread)
 {
-	return ovum::VM::vm->GetArgCount();
+	return thread->GetVM()->GetArgCount();
 }
-OVUM_API int VM_GetArgs(const int destLength, String *dest[])
+OVUM_API int VM_GetArgs(ThreadHandle thread, const int destLength, String *dest[])
 {
-	return ovum::VM::vm->GetArgs(destLength, dest);
+	return thread->GetVM()->GetArgs(destLength, dest);
 }
-OVUM_API int VM_GetArgValues(const int destLength, Value dest[])
+OVUM_API int VM_GetArgValues(ThreadHandle thread, const int destLength, Value dest[])
 {
-	if (ovum::VM::vm == nullptr)
-		return -1;
-	return ovum::VM::vm->GetArgValues(destLength, dest);
+	return thread->GetVM()->GetArgValues(destLength, dest);
 }

@@ -266,7 +266,7 @@ int SliceList(ThreadHandle thread, ListInst *list, int32_t startIndex, int32_t e
 
 	// Create the output list
 	VM_PushInt(thread, sliceLength); // capacity
-	CHECKED(GC_Construct(thread, GetType_List(), 1, output));
+	CHECKED(GC_Construct(thread, GetType_List(thread), 1, output));
 
 	if (sliceLength > 0)
 	{

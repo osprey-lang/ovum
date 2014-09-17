@@ -222,7 +222,7 @@ public:
 	// This should only be called ONCE per static reference.
 	inline void Init(Value value)
 	{
-		accessLock = SpinLock();
+		accessLock.SpinLock::SpinLock();
 		this->value = value;
 	}
 
@@ -346,6 +346,9 @@ private:
 	// Alloc or AddStaticReference.
 	CriticalSection allocSection;
 
+	// The VM instance that owns the GC.
+	VM *vm;
+
 	GCObject *AllocRaw(size_t size);
 	GCObject *AllocRawGen1(size_t size);
 	void ReleaseRaw(GCObject *gco);
@@ -369,12 +372,10 @@ private:
 	void EndAlloc();
 
 public:
-	// Initializes the garbage collector.
-	NOINLINE static int Init();
-	// Unloads the garbage collector.
-	NOINLINE static void Unload();
+	// Creates a garbage collector instance.
+	NOINLINE static int Create(VM *owner, GC *&gc);
 
-	GC();
+	GC(VM *owner);
 	~GC();
 
 	inline uint32_t GetCollectCount() const
@@ -435,6 +436,11 @@ public:
 
 	void Collect(Thread *const thread, bool collectGen1);
 
+	inline VM *GetVM() const
+	{
+		return vm;
+	}
+
 private:
 	void RunCycle(Thread *const thread, bool collectGen1);
 	void BeginCycle(Thread *const thread);
@@ -465,7 +471,7 @@ private:
 		if (val->type == nullptr || val->type->IsPrimitive())
 			return false;
 
-		if (val->type == VM::vm->types.String &&
+		if (val->type == vm->types.String &&
 			(val->common.string->flags & StringFlags::STATIC) == StringFlags::STATIC)
 			return false;
 
@@ -537,22 +543,22 @@ private:
 
 	void UpdateGen0References();
 	void UpdateRootSet();
-	static void UpdateObjectFields(GCObject *gco);
-	static void UpdateCustomFields(Type *type, void *instBase);
+	void UpdateObjectFields(GCObject *gco);
+	void UpdateCustomFields(Type *type, void *instBase);
 	static int UpdateFieldsCallback(void *state, unsigned int count, Value *values);
 
-	static inline bool ShouldUpdateRef(Value *val)
+	inline bool ShouldUpdateRef(Value *val)
 	{
 		if (val->type == nullptr || val->type->IsPrimitive())
 			return false;
 
-		if (val->type == VM::vm->types.String &&
+		if (val->type == vm->types.String &&
 			(val->common.string->flags & StringFlags::STATIC) == StringFlags::STATIC)
 			return false;
 
 		return GCObject::FromValue(val)->IsMoved();
 	}
-	static inline void TryUpdateRef(Value *value)
+	inline void TryUpdateRef(Value *value)
 	{
 		if (ShouldUpdateRef(value))
 			value->instance = GCObject::FromValue(value)->newAddress->InstanceBase();
@@ -566,12 +572,12 @@ private:
 				*str = (String*)gco->newAddress->InstanceBase();
 		}
 	}
-	static inline void UpdateFields(unsigned int fieldCount, Value fields[])
+	inline void UpdateFields(unsigned int fieldCount, Value fields[])
 	{
 		for (unsigned int i = 0; i < fieldCount; i++)
 			TryUpdateRef(fields + i);
 	}
-	static inline void UpdateLocals(unsigned int count, Value values[])
+	inline void UpdateLocals(unsigned int count, Value values[])
 	{
 		for (unsigned int i = 0; i < count; i++)
 		{
@@ -592,9 +598,6 @@ private:
 				TryUpdateRef(v);
 		}
 	}
-
-public:
-	static GC *gc;
 
 	friend class VM;
 };

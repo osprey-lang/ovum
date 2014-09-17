@@ -37,27 +37,27 @@ namespace ovum
 
 #define SET_BOOL(ptarg, bvalue) \
 	{ \
-		(ptarg)->type = VM::vm->types.Boolean; \
+		(ptarg)->type = vm->types.Boolean; \
 		(ptarg)->integer = bvalue; \
 	}
 #define SET_INT(ptarg, ivalue) \
 	{ \
-		(ptarg)->type = VM::vm->types.Int; \
+		(ptarg)->type = vm->types.Int; \
 		(ptarg)->integer = ivalue; \
 	}
 #define SET_UINT(ptarg, uvalue) \
 	{ \
-		(ptarg)->type = VM::vm->types.UInt; \
+		(ptarg)->type = vm->types.UInt; \
 		(ptarg)->uinteger = uvalue; \
 	}
 #define SET_REAL(ptarg, rvalue) \
 	{ \
-		(ptarg)->type = VM::vm->types.Real; \
+		(ptarg)->type = vm->types.Real; \
 		(ptarg)->real = rvalue; \
 	}
 #define SET_STRING(ptarg, svalue) \
 	{ \
-		(ptarg)->type = VM::vm->types.String; \
+		(ptarg)->type = vm->types.String; \
 		(ptarg)->common.string = svalue; \
 	}
 
@@ -289,7 +289,7 @@ int Thread::Evaluate()
 				register Type *const type = T_ARG(ip, Type*);
 				ip += sizeof(Type*);
 
-				CHK(GC::gc->ConstructLL(this, type, U16_ARG(ip), args, dest));
+				CHK(GetGC()->ConstructLL(this, type, U16_ARG(ip), args, dest));
 
 				// ConstructLL pops the arguments
 				ip += sizeof(uint16_t);
@@ -304,7 +304,7 @@ int Thread::Evaluate()
 				register Type *const type = T_ARG(ip, Type*);
 				ip += sizeof(Type*);
 
-				CHK(GC::gc->ConstructLL(this, type, U16_ARG(ip), args, dest));
+				CHK(GetGC()->ConstructLL(this, type, U16_ARG(ip), args, dest));
 
 				ip += sizeof(uint16_t);
 				// ConstructLL pops the arguments
@@ -316,8 +316,8 @@ int Thread::Evaluate()
 		TARGET(OPI_LIST_L)
 			{
 				Value result;
-				CHK(GC::gc->Alloc(this, VM::vm->types.List, sizeof(ListInst), &result));
-				CHK(VM::vm->functions.initListInstance(this, result.common.list, I32_ARG(ip + LOSZ)));
+				CHK(GetGC()->Alloc(this, vm->types.List, sizeof(ListInst), &result));
+				CHK(vm->functions.initListInstance(this, result.common.list, I32_ARG(ip + LOSZ)));
 
 				*OFF_ARG(ip, f) = result;
 				ip += LOSZ + sizeof(int32_t);
@@ -326,8 +326,8 @@ int Thread::Evaluate()
 		TARGET(OPI_LIST_S)
 			{
 				Value result; // Can't put it in dest until it's fully initialized
-				GC::gc->Alloc(this, VM::vm->types.List, sizeof(ListInst), &result);
-				VM::vm->functions.initListInstance(this, result.common.list, I32_ARG(ip + LOSZ));
+				CHK(GetGC()->Alloc(this, vm->types.List, sizeof(ListInst), &result));
+				CHK(vm->functions.initListInstance(this, result.common.list, I32_ARG(ip + LOSZ)));
 
 				*OFF_ARG(ip, f) = result;
 				ip += LOSZ + sizeof(int32_t);
@@ -340,8 +340,8 @@ int Thread::Evaluate()
 		TARGET(OPI_HASH_L)
 			{
 				Value result; // Can't put it in dest until it's fully initialized
-				CHK(GC::gc->Alloc(this, VM::vm->types.Hash, sizeof(HashInst), &result));
-				CHK(VM::vm->functions.initHashInstance(this, result.common.hash, I32_ARG(ip + LOSZ)));
+				CHK(GetGC()->Alloc(this, vm->types.Hash, sizeof(HashInst), &result));
+				CHK(vm->functions.initHashInstance(this, result.common.hash, I32_ARG(ip + LOSZ)));
 
 				*OFF_ARG(ip, f) = result;
 
@@ -351,8 +351,8 @@ int Thread::Evaluate()
 		TARGET(OPI_HASH_S)
 			{
 				Value result; // Can't put it in dest until it's fully initialized
-				CHK(GC::gc->Alloc(this, VM::vm->types.Hash, sizeof(HashInst), &result));
-				CHK(VM::vm->functions.initHashInstance(this, result.common.hash, I32_ARG(ip + LOSZ)));
+				CHK(GetGC()->Alloc(this, vm->types.Hash, sizeof(HashInst), &result));
+				CHK(vm->functions.initHashInstance(this, result.common.hash, I32_ARG(ip + LOSZ)));
 
 				*OFF_ARG(ip, f) = result;
 
@@ -504,7 +504,7 @@ int Thread::Evaluate()
 		TARGET(OPI_LDSFN_L)
 			{
 				register Value *const dest = OFF_ARG(ip, f);
-				CHK(GC::gc->Alloc(this, VM::vm->types.Method, sizeof(MethodInst), dest));
+				CHK(GetGC()->Alloc(this, vm->types.Method, sizeof(MethodInst), dest));
 				ip += LOSZ;
 
 				dest->common.method->method = T_ARG(ip, Method*);
@@ -514,7 +514,7 @@ int Thread::Evaluate()
 		TARGET(OPI_LDSFN_S)
 			{
 				register Value *const dest = OFF_ARG(ip, f);
-				CHK(GC::gc->Alloc(this, VM::vm->types.Method, sizeof(MethodInst), dest));
+				CHK(GetGC()->Alloc(this, vm->types.Method, sizeof(MethodInst), dest));
 				ip += LOSZ;
 
 				dest->common.method->method = T_ARG(ip, Method*);
@@ -741,7 +741,7 @@ int Thread::Evaluate()
 		TARGET(OPI_SWITCH_L)
 			{
 				register Value *const value = OFF_ARG(ip, f);
-				if (value->type != VM::vm->types.Int)
+				if (value->type != vm->types.Int)
 					return ThrowTypeError();
 
 				register int32_t count = U16_ARG(ip + LOSZ);
@@ -756,7 +756,7 @@ int Thread::Evaluate()
 		TARGET(OPI_SWITCH_S)
 			{
 				register Value *const value = OFF_ARG(ip, f);
-				if (value->type != VM::vm->types.Int)
+				if (value->type != vm->types.Int)
 					return ThrowTypeError();
 
 				register int32_t count = U16_ARG(ip + LOSZ);
@@ -831,7 +831,7 @@ int Thread::Evaluate()
 			{
 				bool eq;
 				CHK(EqualsLL(OFF_ARG(ip, f), eq));
-				SetBool_(OFF_ARG(ip + LOSZ, f), eq);
+				SetBool_(vm, OFF_ARG(ip + LOSZ, f), eq);
 				ip += 2*LOSZ;
 				// EqualsLL pops arguments off the stack
 			}
@@ -840,7 +840,7 @@ int Thread::Evaluate()
 			{
 				bool eq;
 				CHK(EqualsLL(OFF_ARG(ip, f), eq));
-				SetBool_(OFF_ARG(ip + LOSZ, f), eq);
+				SetBool_(vm, OFF_ARG(ip + LOSZ, f), eq);
 				ip += 2*LOSZ;
 				// EqualsLL pops arguments off the stack
 				f->stackCount++;
@@ -869,7 +869,7 @@ int Thread::Evaluate()
 			{
 				bool result;
 				CHK(CompareLessThanLL(OFF_ARG(ip, f), result));
-				SetBool_(OFF_ARG(ip + LOSZ, f), result);
+				SetBool_(vm, OFF_ARG(ip + LOSZ, f), result);
 				ip += 2*LOSZ;
 				// CompareLL pops arguments off the stack
 			}
@@ -878,7 +878,7 @@ int Thread::Evaluate()
 			{
 				bool result;
 				CHK(CompareLessThanLL(OFF_ARG(ip, f), result));
-				SetBool_(OFF_ARG(ip + LOSZ, f), result);
+				SetBool_(vm, OFF_ARG(ip + LOSZ, f), result);
 				ip += 2*LOSZ;
 				// CompareLL pops arguments off the stack
 				f->stackCount++;
@@ -890,7 +890,7 @@ int Thread::Evaluate()
 			{
 				bool result;
 				CHK(CompareGreaterThanLL(OFF_ARG(ip, f), result));
-				SetBool_(OFF_ARG(ip + LOSZ, f), result);
+				SetBool_(vm, OFF_ARG(ip + LOSZ, f), result);
 				ip += 2*LOSZ;
 				// CompareLL pops arguments off the stack
 			}
@@ -899,7 +899,7 @@ int Thread::Evaluate()
 			{
 				bool result;
 				CHK(CompareGreaterThanLL(OFF_ARG(ip, f), result));
-				SetBool_(OFF_ARG(ip + LOSZ, f), result);
+				SetBool_(vm, OFF_ARG(ip + LOSZ, f), result);
 				ip += 2*LOSZ;
 				// CompareLL pops arguments off the stack
 				f->stackCount++;
@@ -911,7 +911,7 @@ int Thread::Evaluate()
 			{
 				bool result;
 				CHK(CompareLessEqualsLL(OFF_ARG(ip, f), result));
-				SetBool_(OFF_ARG(ip + LOSZ, f), result);
+				SetBool_(vm, OFF_ARG(ip + LOSZ, f), result);
 				ip += 2*LOSZ;
 				// CompareLL pops arguments off the stack
 			}
@@ -920,7 +920,7 @@ int Thread::Evaluate()
 			{
 				bool result;
 				CHK(CompareLessEqualsLL(OFF_ARG(ip, f), result));
-				SetBool_(OFF_ARG(ip + LOSZ, f), result);
+				SetBool_(vm, OFF_ARG(ip + LOSZ, f), result);
 				ip += 2*LOSZ;
 				// CompareLL pops arguments off the stack
 				f->stackCount++;
@@ -932,7 +932,7 @@ int Thread::Evaluate()
 			{
 				bool result;
 				CHK(CompareGreaterEqualsLL(OFF_ARG(ip, f), result));
-				SetBool_(OFF_ARG(ip + LOSZ, f), result);
+				SetBool_(vm, OFF_ARG(ip + LOSZ, f), result);
 				ip += 2*LOSZ;
 				// CompareLL pops arguments off the stack
 			}
@@ -941,7 +941,7 @@ int Thread::Evaluate()
 			{
 				bool result;
 				CHK(CompareGreaterEqualsLL(OFF_ARG(ip, f), result));
-				SetBool_(OFF_ARG(ip + LOSZ, f), result);
+				SetBool_(vm, OFF_ARG(ip + LOSZ, f), result);
 				ip += 2*LOSZ;
 				// CompareLL pops arguments off the stack
 				f->stackCount++;

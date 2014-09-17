@@ -17,25 +17,19 @@ namespace gc_strings
 	String *CStringTooBig = _S(_CStringTooBig);
 }
 
-GC *GC::gc = nullptr;
-
-int GC::Init()
+int GC::Create(VM *owner, GC *&result)
 {
-	GC::gc = new(std::nothrow) GC();
-	if (!GC::gc)
+	GC *gc = new(std::nothrow) GC(owner);
+	if (!gc)
 		return OVUM_ERROR_NO_MEMORY;
-	if (!GC::gc->InitializeHeaps())
+	if (!gc->InitializeHeaps())
 		return OVUM_ERROR_NO_MEMORY;
+
+	result = gc;
 	RETURN_SUCCESS;
 }
 
-void GC::Unload()
-{
-	// This field may be null, but delete can handle that just fine.
-	delete GC::gc;
-}
-
-GC::GC() :
+GC::GC(VM *owner) :
 	collectList(nullptr), pinnedList(nullptr),
 	currentCollectMark((GCOFlags)1),
 	currentKeepMark((GCOFlags)3),
@@ -44,7 +38,8 @@ GC::GC() :
 	mainHeap(nullptr), largeObjectHeap(nullptr),
 	gen0Base(nullptr), gen0Current(nullptr), gen0End(nullptr),
 	gcoLists(nullptr),
-	allocSection(5000)
+	allocSection(5000),
+	vm(owner)
 { }
 
 GC::~GC()
@@ -286,7 +281,7 @@ void GC::EndAlloc()
 
 int GC::Construct(Thread *const thread, Type *type, const uint16_t argc, Value *output)
 {
-	if (type == VM::vm->types.String ||
+	if (type == vm->types.String ||
 		type->IsPrimitive() ||
 		(type->flags & TypeFlags::ABSTRACT) == TypeFlags::ABSTRACT)
 		return thread->ThrowTypeError();
@@ -341,7 +336,7 @@ String *GC::ConstructString(Thread *const thread, const int32_t length, const uc
 	GCObject *gco;
 	// Note: sizeof(String) includes firstChar, but we need an extra character
 	// for the terminating \0 anyway. So this is fine.
-	int r = Alloc(thread, VM::vm->types.String, sizeof(String) + length*sizeof(uchar), &gco);
+	int r = Alloc(thread, vm->types.String, sizeof(String) + length*sizeof(uchar), &gco);
 	if (r != OVUM_SUCCESS) return nullptr;
 
 	MutableString *str = reinterpret_cast<MutableString*>(gco->InstanceBase());
@@ -391,7 +386,7 @@ String *GC::ConstructModuleString(Thread *const thread, const int32_t length, co
 	// Pin the strings so that they will never move, even if we later update
 	// the GC to compact gen1
 	gco->size = size;
-	gco->type = VM::vm->types.String;
+	gco->type = vm->types.String;
 	gco->flags |= currentCollectMark | GCOFlags::PINNED;
 	if (gco->type == nullptr)
 		gco->flags |= GCOFlags::EARLY_STRING;
@@ -409,7 +404,7 @@ void GC::Release(GCObject *gco)
 {
 	assert((gco->flags & GCOFlags::MARK) == currentCollectMark);
 
-	if (gco->IsEarlyString() || gco->type == VM::vm->types.String)	
+	if (gco->IsEarlyString() || gco->type == vm->types.String)	
 	{
 		String *str = reinterpret_cast<String*>(gco->InstanceBase());
 		if ((str->flags & StringFlags::INTERN) != StringFlags::NONE)
@@ -610,7 +605,7 @@ void GC::EndCycle(Thread *const thread)
 
 void GC::MarkRootSet()
 {
-	Thread *const mainThread = VM::vm->mainThread;
+	Thread *const mainThread = vm->mainThread;
 
 	bool hasGen0Refs;
 	// Mark stack frames first.
@@ -638,13 +633,14 @@ void GC::MarkRootSet()
 
 	// Examine module strings! We don't want to collect these, even
 	// if there is nothing referencing them anywhere else.
-	for (int i = 0; i < Module::loadedModules->GetLength(); i++)
+	ModulePool *loadedModules = vm->GetModulePool();
+	for (int i = 0; i < loadedModules->GetLength(); i++)
 	{
 #ifndef NDEBUG
 		hasGen0Refs = false;
 #endif
 
-		Module *m = Module::loadedModules->Get(i);
+		Module *m = loadedModules->Get(i);
 		TryMarkStringForProcessing(m->name, &hasGen0Refs);
 
 		for (int32_t s = 0; s < m->strings.GetLength(); s++)
@@ -835,7 +831,7 @@ void GC::MoveGen0Survivors()
 			obj->flags |= GCOFlags::MOVED;
 			obj->newAddress = newAddress;
 
-			if (newAddress->type == VM::vm->types.String ||
+			if (newAddress->type == vm->types.String ||
 				(newAddress->flags & GCOFlags::EARLY_STRING) == GCOFlags::EARLY_STRING)
 			{
 				String *str = reinterpret_cast<String*>(newAddress->InstanceBase());
@@ -936,7 +932,7 @@ void GC::UpdateGen0References()
 
 void GC::UpdateRootSet()
 {
-	Thread *const mainThread = VM::vm->mainThread;
+	Thread *const mainThread = vm->mainThread;
 
 	// Update stack frames first
 	StackFrame *frame = mainThread->currentFrame;
@@ -1027,12 +1023,12 @@ void GC::UpdateCustomFields(Type *type, void *instBase)
 	// If the type has no reference getter, assume it has no managed references
 	if (type->getReferences)
 		type->getReferences((char*)instBase + type->fieldsOffset,
-			UpdateFieldsCallback, nullptr);
+			UpdateFieldsCallback, this);
 }
 
 int GC::UpdateFieldsCallback(void *state, unsigned int count, Value *values)
 {
-	UpdateFields(count, values);
+	reinterpret_cast<GC*>(state)->UpdateFields(count, values);
 	RETURN_SUCCESS;
 }
 
@@ -1040,37 +1036,37 @@ int GC::UpdateFieldsCallback(void *state, unsigned int count, Value *values)
 
 OVUM_API int GC_Construct(ThreadHandle thread, TypeHandle type, const uint16_t argc, Value *output)
 {
-	return ovum::GC::gc->Construct(thread, type, argc, output);
+	return thread->GetGC()->Construct(thread, type, argc, output);
 }
 
 OVUM_API String *GC_ConstructString(ThreadHandle thread, const int32_t length, const uchar *values)
 {
-	return ovum::GC::gc->ConstructString(thread, length, values);
+	return thread->GetGC()->ConstructString(thread, length, values);
 }
 
 OVUM_API int GC_AllocArray(ThreadHandle thread, uint32_t length, size_t itemSize, void **output)
 {
-	return ovum::GC::gc->AllocArray(thread, length, itemSize, output);
+	return thread->GetGC()->AllocArray(thread, length, itemSize, output);
 }
 
 OVUM_API int GC_AllocValueArray(ThreadHandle thread, uint32_t length, Value **output)
 {
-	return ovum::GC::gc->AllocValueArray(thread, length, output);
+	return thread->GetGC()->AllocValueArray(thread, length, output);
 }
 
 OVUM_API void GC_AddMemoryPressure(ThreadHandle thread, const size_t size)
 {
-	ovum::GC::gc->AddMemoryPressure(thread, size);
+	thread->GetGC()->AddMemoryPressure(thread, size);
 }
 
 OVUM_API void GC_RemoveMemoryPressure(ThreadHandle thread, const size_t size)
 {
-	ovum::GC::gc->RemoveMemoryPressure(thread, size);
+	thread->GetGC()->RemoveMemoryPressure(thread, size);
 }
 
 OVUM_API Value *GC_AddStaticReference(ThreadHandle thread, Value initialValue)
 {
-	ovum::StaticRef *ref = ovum::GC::gc->AddStaticReference(thread, initialValue);
+	ovum::StaticRef *ref = thread->GetGC()->AddStaticReference(thread, initialValue);
 	if (ref == nullptr)
 		return nullptr;
 	return ref->GetValuePointer();
@@ -1078,12 +1074,12 @@ OVUM_API Value *GC_AddStaticReference(ThreadHandle thread, Value initialValue)
 
 OVUM_API void GC_Collect(ThreadHandle thread)
 {
-	ovum::GC::gc->Collect(thread, false);
+	thread->GetGC()->Collect(thread, false);
 }
 
-OVUM_API uint32_t GC_GetCollectCount()
+OVUM_API uint32_t GC_GetCollectCount(ThreadHandle thread)
 {
-	return ovum::GC::gc->GetCollectCount();
+	return thread->GetGC()->GetCollectCount();
 }
 
 OVUM_API int GC_GetGeneration(Value *value)

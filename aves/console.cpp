@@ -71,7 +71,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_write)
 {
 	if (IS_NULL(*args))
 		RETURN_SUCCESS;
-	if (!IsString(*args))
+	if (!IsString(thread, args))
 		CHECKED(StringFromValue(thread, args));
 
 	VM_Print(args->common.string);
@@ -81,7 +81,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_writeErr)
 {
 	if (IS_NULL(*args))
 		RETURN_SUCCESS;
-	if (!IsString(*args))
+	if (!IsString(thread, args))
 		CHECKED(StringFromValue(thread, args));
 
 	VM_PrintErr(args->common.string);
@@ -90,8 +90,8 @@ END_NATIVE_FUNCTION
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_writeLineErr)
 {
 	if (IS_NULL(*args))
-		SetString(args, strings::Empty); // null prints like empty string
-	else if (!IsString(*args))
+		SetString(thread, args, strings::Empty); // null prints like empty string
+	else if (!IsString(thread, args))
 		CHECKED(StringFromValue(thread, args));
 
 	VM_PrintErrLn(args->common.string);

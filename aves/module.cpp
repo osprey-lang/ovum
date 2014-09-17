@@ -111,7 +111,7 @@ int GetAllMembers(ThreadHandle thread, ModuleHandle module, Value *moduleValue,
 	{
 		Value *list = VM_Local(thread, 0);
 		VM_PushInt(thread, 5);
-		CHECKED(GC_Construct(thread, GetType_List(), 1, list));
+		CHECKED(GC_Construct(thread, GetType_List(thread), 1, list));
 
 		// Make sure the list is always on the stack
 		VM_Push(thread, list);
@@ -367,7 +367,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Module_find)
 	PinnedAlias<String> name(args + 0);
 	ModuleHandle result;
 	if (IS_NULL(args[1]))
-		result = FindModule(*name, nullptr);
+		result = FindModule(thread, *name, nullptr);
 	else
 	{
 		ModuleVersion version;
@@ -389,7 +389,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Module_find)
 		CHECKED(VM_LoadMember(thread, strings::revision, &field));
 		version.revision = (int32_t)field.integer;
 
-		result = FindModule(*name, &version);
+		result = FindModule(thread, *name, &version);
 	}
 
 	if (result)

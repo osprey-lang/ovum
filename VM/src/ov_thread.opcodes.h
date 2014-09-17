@@ -580,19 +580,22 @@ namespace instr
 
 		virtual StackChange GetStackChange() const = 0;
 
-		inline bool HasInput() const           { return (flags & InstrFlags::HAS_INPUT)      == InstrFlags::HAS_INPUT; }
-		inline bool HasOutput() const          { return (flags & InstrFlags::HAS_OUTPUT)     == InstrFlags::HAS_OUTPUT; }
-		inline bool IsBranch() const           { return (flags & InstrFlags::BRANCH)         == InstrFlags::BRANCH; }
-		inline bool IsSwitch() const           { return (flags & InstrFlags::SWITCH)         == InstrFlags::SWITCH; }
-		inline bool IsLoadLocal() const        { return (flags & InstrFlags::LOAD_LOCAL)     == InstrFlags::LOAD_LOCAL; }
-		inline bool IsStoreLocal() const       { return (flags & InstrFlags::STORE_LOCAL)    == InstrFlags::STORE_LOCAL; }
-		inline bool IsDup() const              { return (flags & InstrFlags::DUP)            == InstrFlags::DUP; }
-		inline bool HasBranches() const        { return (flags & InstrFlags::HAS_BRANCHES)   == InstrFlags::HAS_BRANCHES; }
-		inline bool RequiresStackInput() const { return (flags & InstrFlags::INPUT_ON_STACK) == InstrFlags::INPUT_ON_STACK; }
-		inline bool AcceptsRefs() const        { return (flags & InstrFlags::ACCEPTS_REFS)   == InstrFlags::ACCEPTS_REFS; }
-		inline bool PushesRef() const          { return (flags & InstrFlags::PUSHES_REF)     == InstrFlags::PUSHES_REF; }
+		inline bool HasInput()           const { return HasFlag(InstrFlags::HAS_INPUT);      }
+		inline bool HasOutput()          const { return HasFlag(InstrFlags::HAS_OUTPUT);     }
+		inline bool IsBranch()           const { return HasFlag(InstrFlags::BRANCH);         }
+		inline bool IsSwitch()           const { return HasFlag(InstrFlags::SWITCH);         }
+		inline bool IsLoadLocal()        const { return HasFlag(InstrFlags::LOAD_LOCAL);     }
+		inline bool IsStoreLocal()       const { return HasFlag(InstrFlags::STORE_LOCAL);    }
+		inline bool IsDup()              const { return HasFlag(InstrFlags::DUP);            }
+		inline bool HasBranches()        const { return HasFlag(InstrFlags::HAS_BRANCHES);   }
+		inline bool RequiresStackInput() const { return HasFlag(InstrFlags::INPUT_ON_STACK); }
+		inline bool AcceptsRefs()        const { return HasFlag(InstrFlags::ACCEPTS_REFS);   }
+		inline bool PushesRef()          const { return HasFlag(InstrFlags::PUSHES_REF);     }
 
-		inline void AddBranch() { flags = flags | InstrFlags::HAS_BRANCHES; }
+		inline void AddBranch()
+		{
+			flags = flags | InstrFlags::HAS_BRANCHES;
+		}
 
 		inline virtual void UpdateInput(const LocalOffset offset, bool isOnStack) { }
 		inline virtual void UpdateOutput(const LocalOffset offset, bool isOnStack) { }
@@ -600,14 +603,19 @@ namespace instr
 		inline virtual uint32_t GetReferenceSignature() const { return 0; }
 		inline virtual int SetReferenceSignature(const StackManager &stack) { return -1; }
 
-	protected:
-		inline virtual void WriteArguments(char *buffer, MethodBuilder &builder) const { }
-
-	public:
 		inline void WriteBytes(char *buffer, MethodBuilder &builder) const
 		{
 			*buffer = opcode;
 			WriteArguments(buffer + 1, builder);
+		}
+
+	protected:
+		inline virtual void WriteArguments(char *buffer, MethodBuilder &builder) const { }
+
+	private:
+		inline bool HasFlag(InstrFlags flag) const
+		{
+			return (flags & flag) == flag;
 		}
 	};
 

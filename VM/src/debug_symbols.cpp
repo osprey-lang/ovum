@@ -71,7 +71,7 @@ namespace debug
 
 		try
 		{
-			ModuleReader reader;
+			ModuleReader reader(module->GetVM());
 			PathName fileName(moduleFile);
 			fileName.Append(_Path(".dbg"));
 			reader.Open(fileName);

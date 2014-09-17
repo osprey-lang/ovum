@@ -133,7 +133,7 @@ int GetAllMembers(ThreadHandle thread, TypeHandle type,
 	{
 		Value *list = VM_Local(thread, 0);
 		VM_PushInt(thread, 5);
-		CHECKED(GC_Construct(thread, GetType_List(), 1, list));
+		CHECKED(GC_Construct(thread, GetType_List(thread), 1, list));
 
 		// Make sure the list is always on the stack.
 		VM_Push(thread, list);
@@ -165,7 +165,7 @@ AVES_API NATIVE_FUNCTION(aves_reflection_Type_get_handle)
 	TypeInst *inst = _T(THISV);
 
 	Value handle;
-	handle.type = GetType_Type();
+	handle.type = GetType_Type(thread);
 	handle.instance = (uint8_t*)inst->type;
 	VM_Push(thread, &handle);
 

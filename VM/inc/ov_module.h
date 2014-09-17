@@ -57,12 +57,14 @@ typedef struct GlobalMember_S
 // Obtains a handle to the module with the specified name and version.
 //
 // Parameters:
+//   thread:
+//     The current thread.
 //   name:
 //     The name of the module to find.
 //   version:
 //     The desired version of the module. If null, this function will
 //     return the first encountered module with the given name.
-OVUM_API ModuleHandle FindModule(String *name, ModuleVersion *version);
+OVUM_API ModuleHandle FindModule(ThreadHandle thread, String *name, ModuleVersion *version);
 
 // Gets the name of the specified module.
 OVUM_API String *Module_GetName(ModuleHandle module);
@@ -109,6 +111,18 @@ OVUM_API bool Module_FindConstant(ModuleHandle module, String *name, bool includ
 // of the given module. If the module has no native library or the entry
 // point doesn't exist, this method returns null.
 OVUM_API void *Module_FindNativeFunction(ModuleHandle module, const char *name);
+
+// Searches the specified module's imported modules (that is, other modules that
+// the specified module depends on) for a module with the specified name.
+//
+// If the module does not import a module by the specified name, null is returned.
+//
+// Parameters:
+//   module:
+//     The module whose imported modules is to be searched.
+//   name:
+//     The name of the module to find.
+OVUM_API ModuleHandle Module_FindDependency(ModuleHandle module, String *name);
 
 class ModuleMemberIterator
 {

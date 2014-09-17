@@ -23,29 +23,29 @@ OVUM_API bool IsSameReference(Value *a, Value *b)
 }
 
 
-OVUM_API bool IsBoolean(Value *value)
+OVUM_API bool IsBoolean(ThreadHandle thread, Value *value)
 {
-	return value->type == ovum::VM::vm->types.Boolean;
+	return value->type == thread->GetVM()->types.Boolean;
 }
 
-OVUM_API bool IsInt(Value *value)
+OVUM_API bool IsInt(ThreadHandle thread, Value *value)
 {
-	return value->type == ovum::VM::vm->types.Int;
+	return value->type == thread->GetVM()->types.Int;
 }
 
-OVUM_API bool IsUInt(Value *value)
+OVUM_API bool IsUInt(ThreadHandle thread, Value *value)
 {
-	return value->type == ovum::VM::vm->types.UInt;
+	return value->type == thread->GetVM()->types.UInt;
 }
 
-OVUM_API bool IsReal(Value *value)
+OVUM_API bool IsReal(ThreadHandle thread, Value *value)
 {
-	return value->type == ovum::VM::vm->types.Real;
+	return value->type == thread->GetVM()->types.Real;
 }
 
-OVUM_API bool IsString(Value *value)
+OVUM_API bool IsString(ThreadHandle thread, Value *value)
 {
-	return value->type == ovum::VM::vm->types.String;
+	return value->type == thread->GetVM()->types.String;
 }
 
 OVUM_API void ReadReference(Value *ref, Value *target)

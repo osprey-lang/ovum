@@ -184,58 +184,58 @@ inline void SetNull(Value *target)
 	target->type = nullptr;
 }
 
-inline void SetBool(Value &target, const bool value)
+inline void SetBool(ThreadHandle thread, Value &target, bool value)
 {
-	target.type = GetType_Boolean();
+	target.type = GetType_Boolean(thread);
 	target.integer = value;
 }
-inline void SetBool(Value *target, const bool value)
+inline void SetBool(ThreadHandle thread, Value *target, bool value)
 {
-	target->type = GetType_Boolean();
+	target->type = GetType_Boolean(thread);
 	target->integer = value;
 }
 
-inline void SetInt(Value &target, const int64_t value)
+inline void SetInt(ThreadHandle thread, Value &target, int64_t value)
 {
-	target.type = GetType_Int();
+	target.type = GetType_Int(thread);
 	target.integer = value;
 }
-inline void SetInt(Value *target, const int64_t value)
+inline void SetInt(ThreadHandle thread, Value *target, int64_t value)
 {
-	target->type = GetType_Int();
+	target->type = GetType_Int(thread);
 	target->integer = value;
 }
 
-inline void SetUInt(Value &target, const uint64_t value)
+inline void SetUInt(ThreadHandle thread, Value &target, uint64_t value)
 {
-	target.type = GetType_UInt();
+	target.type = GetType_UInt(thread);
 	target.uinteger = value;
 }
-inline void SetUInt(Value *target, const uint64_t value)
+inline void SetUInt(ThreadHandle thread, Value *target, uint64_t value)
 {
-	target->type = GetType_UInt();
+	target->type = GetType_UInt(thread);
 	target->uinteger = value;
 }
 
-inline void SetReal(Value &target, const double value)
+inline void SetReal(ThreadHandle thread, Value &target, double value)
 {
-	target.type = GetType_Real();
+	target.type = GetType_Real(thread);
 	target.real = value;
 }
-inline void SetReal(Value *target, const double value)
+inline void SetReal(ThreadHandle thread, Value *target, double value)
 {
-	target->type = GetType_Real();
+	target->type = GetType_Real(thread);
 	target->real = value;
 }
 
-inline void SetString(Value &target, String *value)
+inline void SetString(ThreadHandle thread, Value &target, String *value)
 {
-	target.type = GetType_String();
+	target.type = GetType_String(thread);
 	target.common.string = value;
 }
-inline void SetString(Value *target, String *value)
+inline void SetString(ThreadHandle thread, Value *target, String *value)
 {
-	target->type = GetType_String();
+	target->type = GetType_String(thread);
 	target->common.string = value;
 }
 
@@ -250,20 +250,15 @@ OVUM_API bool IsType(Value *value, TypeHandle type);
 
 OVUM_API bool IsSameReference(Value *a, Value *b);
 
-OVUM_API bool IsBoolean(Value *value);
-inline bool IsBoolean(Value &value) { return IsBoolean(&value); }
+OVUM_API bool IsBoolean(ThreadHandle thread, Value *value);
 
-OVUM_API bool IsInt(Value *value);
-inline bool IsInt(Value &value)    { return IsInt(&value); }
+OVUM_API bool IsInt(ThreadHandle thread, Value *value);
 
-OVUM_API bool IsUInt(Value *value);
-inline bool IsUInt(Value &value)   { return IsUInt(&value); }
+OVUM_API bool IsUInt(ThreadHandle thread, Value *value);
 
-OVUM_API bool IsReal(Value *value);
-inline bool IsReal(Value &value)   { return IsReal(&value); }
+OVUM_API bool IsReal(ThreadHandle thread, Value *value);
 
-OVUM_API bool IsString(Value *value);
-inline bool IsString(Value &value) { return IsString(&value); }
+OVUM_API bool IsString(ThreadHandle thread, Value *value);
 
 OVUM_API void ReadReference(Value *ref, Value *target);
 

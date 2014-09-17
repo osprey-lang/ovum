@@ -278,6 +278,8 @@ public:
 	int32_t GetLocalOffset(uint16_t local) const;
 	int32_t GetStackOffset(uint16_t stackSlot) const;
 
+	RefSignaturePool *GetRefSignaturePool() const;
+
 	// argCount does NOT include the instance.
 	int VerifyRefSignature(uint32_t signature, uint16_t argCount) const;
 };
@@ -362,7 +364,7 @@ public:
 		NativeFieldType type;
 	} NativeField;
 
-	Type(int32_t memberCount);
+	Type(Module *module, int32_t memberCount);
 	~Type();
 
 	Member *GetMember(String *name) const;
@@ -391,6 +393,8 @@ public:
 	Type *sharedType;
 	// The module that declares the type.
 	Module *module;
+	// The VM instance that the type belongs to.
+	VM *vm;
 
 	// The fully qualified name of the type, e.g. "aves.Object".
 	String *fullName;
@@ -426,6 +430,16 @@ public:
 	CriticalSection staticCtorLock;
 
 	int GetTypeToken(Thread *const thread, Value *result);
+
+	inline VM *GetVM() const
+	{
+		return vm;
+	}
+
+	inline GC *GetGC() const
+	{
+		return vm->GetGC();
+	}
 
 	inline bool IsPrimitive() const
 	{

@@ -7,6 +7,7 @@
 #include <exception>
 #include "ov_vm.internal.h"
 #include "sync.internal.h"
+#include "tls.internal.h"
 
 #if OVUM_TARGET == OVUM_UNIX
 #include <pthread.h>
@@ -51,33 +52,9 @@ public:
 	// to obtain the name of the method.
 	MethodOverload *method;
 
-	inline void Push      (Value *value)
+	inline Value *NextStackSlot()
 	{
-		evalStack[stackCount++] = *value;
-	}
-	inline void PushBool  (bool value)
-	{
-		SetBool_(evalStack + stackCount++, value);
-	}
-	inline void PushInt   (int64_t value)
-	{
-		SetInt_(evalStack + stackCount++, value);
-	}
-	inline void PushUInt  (uint64_t value)
-	{
-		SetUInt_(evalStack + stackCount++, value);
-	}
-	inline void PushReal  (double value)
-	{
-		SetReal_(evalStack + stackCount++, value);
-	}
-	inline void PushString(String *value)
-	{
-		SetString_(evalStack + stackCount++, value);
-	}
-	inline void PushNull  ()
-	{
-		SetNull_(evalStack + stackCount++);
+		return evalStack + stackCount++;
 	}
 
 	inline Value Pop()
@@ -236,17 +213,21 @@ public:
 
 class Thread
 {
-private:
-	// The size of the managed call stack
-	static const size_t CALL_STACK_SIZE = 1024 * 1024;
-
 public:
-	Thread(int &status);
+	NOINLINE static int Create(VM *owner, Thread *&result);
+
+	Thread(VM *owner, int &status);
 	~Thread();
 
 	int Start(unsigned int argCount, MethodOverload *mo, Value &result);
 
 private:
+	// The size of the managed call stack
+	static const size_t CALL_STACK_SIZE = 1024 * 1024;
+
+	// The currently executing managed thread.
+	static TlsEntry<Thread> threadKey;
+
 	// The current instruction pointer. This should always be the first field in the class.
 	uint8_t *ip;
 
@@ -279,6 +260,9 @@ private:
 	// as unsigned char allows us to add and subtract from the address of this field.
 	unsigned char *callStack;
 
+	// The VM instance that owns this thread.
+	VM *vm;
+
 	// The current error.
 	// If successfully caught, this is set to NULL_VALUE *after* the catch clause
 	// has been exited. We need to do this after because the catch clause may be
@@ -292,22 +276,57 @@ private:
 	// the cycle.
 	CriticalSection gcCycleSection;
 
+	// The one-argument indexer setter for aves.Hash, used by ConcatLL.
+	// Starts out null; is initialized on demand. Access through GetHashIndexerSetter().
+	MethodOverload *hashSetItem;
+
 public:
-	inline void Push      (Value   *value) { currentFrame->Push(value);       }
-	inline void PushBool  (bool     value) { currentFrame->PushBool(value);   }
-	inline void PushInt   (int64_t  value) { currentFrame->PushInt(value);    }
-	inline void PushUInt  (uint64_t value) { currentFrame->PushUInt(value);   }
-	inline void PushReal  (double   value) { currentFrame->PushReal(value);   }
-	inline void PushString(String  *value) { currentFrame->PushString(value); }
-	inline void PushNull  ()               { currentFrame->PushNull();        }
+	inline void Push(Value *value)
+	{
+		*currentFrame->NextStackSlot() = *value;
+	}
+	inline void PushBool(bool value)
+	{
+		Value *top = currentFrame->NextStackSlot();
+		top->type = vm->types.Boolean;
+		top->integer = value;
+	}
+	inline void PushInt(int64_t value)
+	{
+		Value *top = currentFrame->NextStackSlot();
+		top->type = vm->types.Int;
+		top->integer = value;
+	}
+	inline void PushUInt(uint64_t value)
+	{
+		Value *top = currentFrame->NextStackSlot();
+		top->type = vm->types.UInt;
+		top->uinteger = value;
+	}
+	inline void PushReal(double value)
+	{
+		Value *top = currentFrame->NextStackSlot();
+		top->type = vm->types.Real;
+		top->real = value;
+	}
+	inline void PushString(String *value)
+	{
+		Value *top = currentFrame->NextStackSlot();
+		top->type = vm->types.String;
+		top->common.string = value;
+	}
+	inline void PushNull()
+	{
+		currentFrame->NextStackSlot()->type = nullptr;
+	}
 
 	inline Value Pop() { return currentFrame->Pop(); }
 	inline void Pop(unsigned int n) { currentFrame->Pop(n); }
 
 	inline void Dup()
 	{
-		Value *ptr = currentFrame->evalStack + currentFrame->stackCount++;
-		*(ptr + 1) = *ptr;
+		Value *top = currentFrame->evalStack + currentFrame->stackCount++;
+		*(top + 1) = *top;
 	}
 
 	inline Value *Local(unsigned int n) { return currentFrame->Locals() + n; }
@@ -371,6 +390,15 @@ public:
 	inline const StackFrame *GetCurrentFrame() const
 	{
 		return currentFrame;
+	}
+
+	inline VM *GetVM() const
+	{
+		return vm;
+	}
+	inline GC *GetGC() const
+	{
+		return vm->GetGC();
 	}
 
 private:
@@ -444,7 +472,7 @@ private:
 	int ThrowMissingOperatorError(Operator op);
 
 	int InitializeMethod(MethodOverload *method);
-	static void InitializeInstructions(instr::MethodBuilder &builder, MethodOverload *method);
+	void InitializeInstructions(instr::MethodBuilder &builder, MethodOverload *method);
 	static void InitializeBranchOffsets(instr::MethodBuilder &builder, MethodOverload *method);
 	static void CalculateStackHeights(instr::MethodBuilder &builder, MethodOverload *method, StackManager &stack);
 	static void WriteInitializedBody(instr::MethodBuilder &builder, MethodOverload *method);
@@ -458,7 +486,7 @@ private:
 	static Field *FieldFromToken(MethodOverload *fromMethod, uint32_t token, bool shouldBeStatic);
 	static void EnsureConstructible(Type *type, uint32_t argCount, MethodOverload *fromMethod);
 
-	static void GetHashIndexerSetter(MethodOverload **target);
+	MethodOverload *GetHashIndexerSetter();
 
 	friend class GC;
 	friend class VM;

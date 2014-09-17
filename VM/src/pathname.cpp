@@ -94,7 +94,7 @@ PathName::~PathName()
 String *PathName::ToManagedString(ThreadHandle thread) const
 {
 #if OVUM_TARGET == OVUM_WINDOWS
-	return GC::gc->ConstructString(thread, length, reinterpret_cast<const uchar*>(data));
+	return thread->GetGC()->ConstructString(thread, length, reinterpret_cast<const uchar*>(data));
 #else
 #error Not implemented
 #endif

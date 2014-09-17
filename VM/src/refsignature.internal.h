@@ -12,6 +12,7 @@ namespace ovum
 class RefSignature;
 class LongRefSignature;
 class RefSignatureBuilder;
+class RefSignaturePool;
 
 class RefSignature
 {
@@ -24,7 +25,7 @@ private:
 	};
 
 public:
-	RefSignature(uint32_t mask);
+	RefSignature(uint32_t mask, RefSignaturePool *pool);
 
 	inline bool IsParamRef(unsigned int index) const
 	{
@@ -46,21 +47,6 @@ public:
 	static const uint32_t SignatureDataMask = 0x7fffffffu;
 
 private:
-	class Pool
-	{
-	private:
-		std::vector<LongRefSignature*> signatures;
-
-	public:
-		inline Pool() { } // Do nothing; initialize signatures to empty vector
-		~Pool();
-
-		const LongRefSignature *Get(uint32_t index) const;
-		uint32_t Add(LongRefSignature *signature, bool &isNew);
-	};
-
-	static Pool *pool; // Defined in thread.method_initializer.cpp
-
 	friend class RefSignatureBuilder;
 };
 
@@ -132,54 +118,18 @@ public:
 	}
 };
 
-inline RefSignature::RefSignature(uint32_t mask)
+class RefSignaturePool
 {
-	if (mask & SignatureKindMask)
-	{
-		const LongRefSignature *signature = pool->Get(mask & SignatureDataMask);
-		paramCount = signature->paramCount;
-		longMask = signature->maskValues;
-	}
-	else
-	{
-		paramCount = 31;
-		shortMask = mask & SignatureDataMask;
-	}
-}
+private:
+	std::vector<LongRefSignature*> signatures;
 
-inline RefSignature::Pool::~Pool()
-{
-	typedef std::vector<LongRefSignature*>::iterator ref_iter;
+public:
+	inline RefSignaturePool() { } // Do nothing; initialize signatures to empty vector
+	~RefSignaturePool();
 
-	for (ref_iter i = signatures.begin(); i != signatures.end(); ++i)
-	{
-		LongRefSignature *signature = *i;
-		delete signature;
-	}
-}
-
-inline const LongRefSignature *RefSignature::Pool::Get(uint32_t index) const
-{
-	return signatures[index];
-}
-
-inline uint32_t RefSignature::Pool::Add(LongRefSignature *signature, bool &isNew)
-{
-	uint32_t i = 0;
-	while (i < (uint32_t)signatures.size())
-	{
-		LongRefSignature *item = signatures[i];
-		if (item->Equals(*signature))
-		{
-			isNew = false;
-			return i | RefSignature::SignatureKindMask;
-		}
-		i++;
-	}
-	signatures.push_back(signature);
-	isNew = true;
-	return i | RefSignature::SignatureKindMask;
-}
+	const LongRefSignature *Get(uint32_t index) const;
+	uint32_t Add(LongRefSignature *signature, bool &isNew);
+};
 
 class RefSignatureBuilder
 {
@@ -228,21 +178,68 @@ public:
 			shortMask = (isRef ? shortMask | (1 << index) : shortMask & ~(1 << index));
 	}
 
-	inline uint32_t Commit()
+	inline uint32_t Commit(RefSignaturePool *pool)
 	{
 		if (isLong)
 		{
 			if (!longSignature->HasRefs())
 				return 0;
 
-			if (RefSignature::pool == nullptr)
-				RefSignature::pool = new RefSignature::Pool();
-			return RefSignature::pool->Add(longSignature, isCommitted);
+			return pool->Add(longSignature, isCommitted);
 		}
 		else
 			return shortMask;
 	}
 };
+
+inline RefSignature::RefSignature(uint32_t mask, RefSignaturePool *pool)
+{
+	if (mask & SignatureKindMask)
+	{
+		const LongRefSignature *signature = pool->Get(mask & SignatureDataMask);
+		paramCount = signature->paramCount;
+		longMask = signature->maskValues;
+	}
+	else
+	{
+		paramCount = 31;
+		shortMask = mask & SignatureDataMask;
+	}
+}
+
+inline RefSignaturePool::~RefSignaturePool()
+{
+	typedef std::vector<LongRefSignature*>::iterator ref_iter;
+
+	for (ref_iter i = signatures.begin(); i != signatures.end(); ++i)
+	{
+		LongRefSignature *signature = *i;
+		delete signature;
+	}
+}
+
+inline const LongRefSignature *RefSignaturePool::Get(uint32_t index) const
+{
+	return signatures[index];
+}
+
+inline uint32_t RefSignaturePool::Add(LongRefSignature *signature, bool &isNew)
+{
+	uint32_t i = 0;
+	while (i < (uint32_t)signatures.size())
+	{
+		LongRefSignature *item = signatures[i];
+		if (item->Equals(*signature))
+		{
+			isNew = false;
+			return i | RefSignature::SignatureKindMask;
+		}
+		i++;
+	}
+	signatures.push_back(signature);
+	isNew = true;
+	return i | RefSignature::SignatureKindMask;
+}
 
 } // namespace ovum
 

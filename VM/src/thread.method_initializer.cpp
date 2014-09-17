@@ -11,8 +11,6 @@
 namespace ovum
 {
 
-RefSignature::Pool *RefSignature::pool = nullptr;
-
 #define I16_ARG(ip)  *reinterpret_cast<int16_t *>(ip)
 #define I32_ARG(ip)  *reinterpret_cast<int32_t *>(ip)
 #define I64_ARG(ip)  *reinterpret_cast<int64_t *>(ip)
@@ -231,6 +229,10 @@ public:
 		} flags;
 	} StackEntry;
 
+	inline StackManager(RefSignaturePool *refSignatures)
+		: refSignatures(refSignatures)
+	{ }
+
 	inline virtual ~StackManager() { }
 
 	virtual uint32_t GetStackHeight() const = 0;
@@ -253,6 +255,14 @@ public:
 	virtual bool IsRef(uint32_t stackSlot) const = 0;
 
 	virtual uint32_t GetRefSignature(uint32_t argCount) const = 0;
+
+	inline RefSignaturePool *GetRefSignaturePool() const
+	{
+		return refSignatures;
+	}
+
+protected:
+	RefSignaturePool *refSignatures;
 };
 
 class SmallStackManager : public StackManager
@@ -271,7 +281,8 @@ private:
 	std::queue<Branch> branches;
 
 public:
-	inline SmallStackManager()
+	inline SmallStackManager(RefSignaturePool *refSignatures)
+		: StackManager(refSignatures)
 	{
 		// Push a fake branch onto the queue, so that the first call to DequeueBranch
 		// will actually move to the first "real" branch.
@@ -360,7 +371,7 @@ public:
 			if (cur.stack[origin + i].flags & StackEntry::IS_REF)
 				refBuilder.SetParam(i, true);
 
-		return refBuilder.Commit();
+		return refBuilder.Commit(refSignatures);
 	}
 };
 
@@ -420,8 +431,8 @@ private:
 	std::queue<Branch> branches;
 
 public:
-	LargeStackManager(uint32_t maxStack) :
-		maxStack(maxStack)
+	LargeStackManager(uint32_t maxStack, RefSignaturePool *refSignatures)
+		: StackManager(refSignatures), maxStack(maxStack)
 	{
 		branches.push(Branch());
 	}
@@ -434,6 +445,7 @@ public:
 	virtual void EnqueueBranch(int32_t firstInstr)
 	{
 		Branch br(branches.front()); // Use the copy constructor! :D
+		br.firstInstr = firstInstr;
 		branches.push(br);
 	}
 	virtual void EnqueueBranch(uint32_t stackHeight, int32_t firstInstr)
@@ -501,7 +513,7 @@ public:
 			if (cur.stack[origin + i].flags & StackEntry::IS_REF)
 				refBuilder.SetParam(i, true);
 
-		return refBuilder.Commit();
+		return refBuilder.Commit(refSignatures);
 	}
 };
 
@@ -528,12 +540,12 @@ int Thread::InitializeMethod(MethodOverload *method)
 		// some LocalOffsets from stack offsets to locals.
 		if (method->maxStack <= SmallStackManager::MaxStack)
 		{
-			SmallStackManager stack;
+			SmallStackManager stack(vm->GetRefSignaturePool());
 			CalculateStackHeights(builder, method, stack);
 		}
 		else
 		{
-			LargeStackManager stack(method->maxStack);
+			LargeStackManager stack(method->maxStack, vm->GetRefSignaturePool());
 			CalculateStackHeights(builder, method, stack);
 		}
 
@@ -541,7 +553,7 @@ int Thread::InitializeMethod(MethodOverload *method)
 	}
 	catch (MethodInitException &e)
 	{
-		VM::PrintMethodInitException(e);
+		vm->PrintMethodInitException(e);
 		abort();
 	}
 
@@ -946,7 +958,7 @@ void Thread::InitializeInstructions(instr::MethodBuilder &builder, MethodOverloa
 {
 	using namespace instr;
 
-	RefSignature refs(method->refSignature);
+	RefSignature refs(method->refSignature, vm->GetRefSignaturePool());
 	// An offset that is added to param/arg indexes when calling refs.IsParamRef.
 	// The ref signature always reserves space for the instance at the very beginning,
 	// so for static methods, we have to skip it.
@@ -1650,63 +1662,66 @@ void Thread::EnsureConstructible(Type *type, uint32_t argCount, MethodOverload *
 			fromMethod, type->instanceCtor, argCount, MethodInitException::NO_MATCHING_OVERLOAD);
 }
 
-int instr::NewObject::SetReferenceSignature(const StackManager &stack)
+namespace instr
 {
-	// We have to treat the stack as if it contained an invisible extra
-	// item before the first argument. That's where the instance will
-	// go when the constructor is invoked.
-	RefSignatureBuilder refBuilder(argCount + 1);
-
-	for (int i = 1; i <= argCount; i++)
-		if (stack.IsRef(argCount - i))
-			refBuilder.SetParam(i, true);
-
-	refSignature = refBuilder.Commit();
-
-	MethodOverload *ctor = type->instanceCtor->ResolveOverload(argCount);
-	if (this->refSignature != ctor->refSignature)
-		// VerifyRefSignature does NOT include the instance in the argCount
-		return ctor->VerifyRefSignature(this->refSignature, argCount);
-	return -1;
-}
-
-int instr::Call::SetReferenceSignature(const StackManager &stack)
-{
-	refSignature = stack.GetRefSignature(argCount + 1);
-	if (refSignature)
-		opcode = (IntermediateOpcode)(OPI_CALLR_L | opcode & 1);
-	return -1;
-}
-
-int instr::CallMember::SetReferenceSignature(const StackManager &stack)
-{
-	refSignature = stack.GetRefSignature(argCount + 1);
-	if (refSignature)
-		opcode = (IntermediateOpcode)(OPI_CALLMEMR_L | opcode & 1);
-	return -1;
-}
-
-int instr::StaticCall::SetReferenceSignature(const StackManager &stack)
-{
-	if (method->group->IsStatic())
+	int NewObject::SetReferenceSignature(const StackManager &stack)
 	{
+		// We have to treat the stack as if it contained an invisible extra
+		// item before the first argument. That's where the instance will
+		// go when the constructor is invoked.
 		RefSignatureBuilder refBuilder(argCount + 1);
 
 		for (int i = 1; i <= argCount; i++)
 			if (stack.IsRef(argCount - i))
 				refBuilder.SetParam(i, true);
 
-		refSignature = refBuilder.Commit();
+		refSignature = refBuilder.Commit(stack.GetRefSignaturePool());
+
+		MethodOverload *ctor = type->instanceCtor->ResolveOverload(argCount);
+		if (this->refSignature != ctor->refSignature)
+			// VerifyRefSignature does NOT include the instance in the argCount
+			return ctor->VerifyRefSignature(this->refSignature, argCount);
+		return -1;
 	}
-	else
+	
+	int Call::SetReferenceSignature(const StackManager &stack)
 	{
 		refSignature = stack.GetRefSignature(argCount + 1);
+		if (refSignature)
+			opcode = (IntermediateOpcode)(OPI_CALLR_L | opcode & 1);
+		return -1;
 	}
+	
+	int CallMember::SetReferenceSignature(const StackManager &stack)
+	{
+		refSignature = stack.GetRefSignature(argCount + 1);
+		if (refSignature)
+			opcode = (IntermediateOpcode)(OPI_CALLMEMR_L | opcode & 1);
+		return -1;
+	}
+	
+	int StaticCall::SetReferenceSignature(const StackManager &stack)
+	{
+		if (method->group->IsStatic())
+		{
+			RefSignatureBuilder refBuilder(argCount + 1);
 
-	if (this->refSignature != method->refSignature)
-		// VerifyRefSignature does NOT include the instance in the argCount
-		return method->VerifyRefSignature(this->refSignature, argCount);
-	return -1;
+			for (int i = 1; i <= argCount; i++)
+				if (stack.IsRef(argCount - i))
+					refBuilder.SetParam(i, true);
+
+			refSignature = refBuilder.Commit(stack.GetRefSignaturePool());
+		}
+		else
+		{
+			refSignature = stack.GetRefSignature(argCount + 1);
+		}
+
+		if (this->refSignature != method->refSignature)
+			// VerifyRefSignature does NOT include the instance in the argCount
+			return method->VerifyRefSignature(this->refSignature, argCount);
+		return -1;
+	}
 }
 
 } // namespace ovum

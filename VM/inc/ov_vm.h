@@ -107,8 +107,8 @@ OVUM_API void VM_PrintLn(String *str);
 OVUM_API void VM_PrintErr(String *str);
 OVUM_API void VM_PrintErrLn(String *str);
 
-OVUM_API int VM_GetArgCount();
-OVUM_API int VM_GetArgs(const int destLength, String *dest[]);
-OVUM_API int VM_GetArgValues(const int destLength, Value dest[]);
+OVUM_API int VM_GetArgCount(ThreadHandle thread);
+OVUM_API int VM_GetArgs(ThreadHandle thread, const int destLength, String *dest[]);
+OVUM_API int VM_GetArgValues(ThreadHandle thread, const int destLength, Value dest[]);
 
 #endif // VM__VM_H

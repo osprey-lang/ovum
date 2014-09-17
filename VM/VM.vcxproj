@@ -86,6 +86,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="inc\ov_pathchar.h" />
+    <ClInclude Include="src\tls.internal.h" />
     <ClInclude Include="src\sync.internal.h" />
     <ClInclude Include="src\membertable.internal.h" />
     <ClInclude Include="src\modulereader.internal.h" />
@@ -121,6 +122,7 @@
   <ItemGroup>
     <ClCompile Include="src\debug_symbols.cpp" />
     <ClCompile Include="src\pathname.cpp" />
+    <ClCompile Include="src\tls.cpp" />
     <ClCompile Include="windows\dllmain.cpp">
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</CompileAsManaged>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">

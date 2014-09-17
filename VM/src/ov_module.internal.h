@@ -81,9 +81,10 @@ typedef struct ModuleMeta_S
 class Module
 {
 public:
-	Module(uint32_t fileFormatVersion, ModuleMeta &meta, const PathName &fileName);
+	Module(uint32_t fileFormatVersion, ModuleMeta &meta, const PathName &fileName, VM *vm);
 	~Module();
 
+	Module *FindModuleRef(String *name) const;
 	bool    FindMember(String *name, bool includeInternal, ModuleMember &result) const;
 	Type   *FindType(String *name, bool includeInternal) const;
 	Method *FindGlobalFunction(String *name, bool includeInternal) const;
@@ -99,8 +100,6 @@ public:
 
 	void   *FindNativeFunction(const char *name);
 
-	static Module *Find(String *name);
-	static Module *Find(String *name, ModuleVersion *version);
 	/* Module name resolution for a module named $name is performed by
 	 * looking for the following files, in the order written:
 	 *    $startupPath/lib/$name-$version/$name.ovm
@@ -127,112 +126,10 @@ public:
 	 * 2011 can do about 40,000 calls a second (with a different file name each
 	 * time, to counteract caching).
 	 */
-	static Module *OpenByName(String *name, ModuleVersion *requiredVersion);
-	static Module *Open(const PathName &fileName, ModuleVersion *requiredVersion);
-
-	NOINLINE static int Init();
-	NOINLINE static void Unload();
+	static Module *OpenByName(VM *vm, String *name, ModuleVersion *requiredVersion);
+	static Module *Open(VM *vm, const PathName &fileName, ModuleVersion *requiredVersion);
 
 private:
-	class Pool
-	{
-	private:
-		int capacity;
-		int length;
-		Module **data;
-
-		void Init(int capacity)
-		{
-			capacity = max(capacity, 4);
-
-			data = new Module*[capacity];
-			memset(data, 0, sizeof(Module*) * capacity);
-
-			this->capacity = capacity;
-		}
-
-		void Resize()
-		{
-			int newCap = capacity * 2;
-
-			Module **newData = new Module*[newCap];
-			CopyMemoryT(newData, this->data, capacity);
-
-			capacity = newCap;
-			delete[] this->data;
-			this->data = newData;
-		}
-
-	public:
-		inline Pool() : capacity(0), length(0), data(nullptr)
-		{
-			Init(0);
-		}
-		inline Pool(int capacity) : capacity(0), length(0), data(nullptr)
-		{
-			Init(capacity);
-		}
-		inline ~Pool()
-		{
-			for (int i = 0; i < length; i++)
-				delete data[i];
-			delete[] data;
-		}
-
-		inline int GetLength() const { return length; }
-
-		inline Module *Get(int index) const
-		{
-			return data[index];
-		}
-		inline Module *Get(String *name) const
-		{
-			for (int i = 0; i < length; i++)
-				if (String_Equals(data[i]->name, name))
-					return data[i];
-			return nullptr;
-		}
-		inline Module *Get(String *name, ModuleVersion *version) const
-		{
-			for (int i = 0; i < length; i++)
-			{
-				Module *module = data[i];
-				if (String_Equals(module->name, name) && module->version == *version)
-					return module;
-			}
-			return nullptr;
-		}
-
-		inline void Set(int index, Module *value)
-		{
-			data[index] = value;
-		}
-
-		inline int Add(Module *value)
-		{
-			if (length == capacity)
-				Resize();
-			int index = length++;
-			data[index] = value;
-			return index;
-		}
-
-		inline bool Remove(Module *value)
-		{
-			bool found = false;
-			for (int i = 0; i < length; i++)
-			{
-				if (found)
-					data[i - 1] = data[i];
-				else
-					found = data[i] == value;
-			}
-			if (found)
-				length--;
-			return found;
-		}
-	};
-
 	class FieldConstData
 	{
 	public:
@@ -245,12 +142,10 @@ private:
 		{ }
 	};
 
-public:
 	String *name;
 	ModuleVersion version;
 	const PathName fileName;
 
-private:
 	bool fullyOpened; // Set to true when the module file has been fully loaded
 	                  // If a module depends on another module with this set to false,
 	                  // then there's a circular dependency issue.
@@ -264,6 +159,9 @@ private:
 	HMODULE nativeLib; // Handle to native library (null if not loaded)
 
 	debug::ModuleDebugData *debugData;
+
+	VM *vm; // The VM instance that the module belongs to
+	ModulePool *pool; // The module pool that the module belongs to
 
 	MemberTable<Type  *> types;     // Types defined in the module
 	MemberTable<Method*> functions; // Global functions defined in the module
@@ -279,6 +177,21 @@ private:
 	MemberTable<Method*> methodRefs;   // Class method references
 
 public:
+	inline String *GetName() const
+	{
+		return name;
+	}
+
+	inline const ModuleVersion &GetVersion() const
+	{
+		return version;
+	}
+
+	inline const PathName &GetFileName() const
+	{
+		return fileName;
+	}
+
 	inline int32_t GetMemberCount() const
 	{
 		return members.GetCount();
@@ -289,12 +202,21 @@ public:
 		return members.GetByIndex(index, result);
 	}
 
+	inline VM *GetVM() const
+	{
+		return vm;
+	}
+
+	inline GC *GetGC() const
+	{
+		return vm->GetGC();
+	}
+
 private:
 	void LoadNativeLibrary(String *nativeFileName, const PathName &path);
 	void *FindNativeEntryPoint(const char *name) const;
 	void FreeNativeLibrary();
 
-	static Pool *loadedModules;
 	static const char *const NativeModuleIniterName;
 
 	static bool FileExists(const PathName &path);
@@ -305,32 +227,32 @@ private:
 
 	static void ReadVersion(ModuleReader &reader, ModuleVersion &target);
 
-	static void ReadStringTable(ModuleReader &reader, Module *module);
+	void ReadStringTable(ModuleReader &reader);
 
 	// Reads the module reference table and opens all dependent modules.
 	// Also initializes the moduleRefs table (and moduleRefCount).
-	static void ReadModuleRefs(ModuleReader &reader, Module *module);
-	static void ReadTypeRefs(ModuleReader &reader, Module *module);
-	static void ReadFunctionRefs(ModuleReader &reader, Module *module);
-	static void ReadFieldRefs(ModuleReader &reader, Module *module);
-	static void ReadMethodRefs(ModuleReader &reader, Module *module);
+	void ReadModuleRefs(ModuleReader &reader);
+	void ReadTypeRefs(ModuleReader &reader);
+	void ReadFunctionRefs(ModuleReader &reader);
+	void ReadFieldRefs(ModuleReader &reader);
+	void ReadMethodRefs(ModuleReader &reader);
 
-	static void ReadTypeDefs(ModuleReader &reader, Module *module);
-	static void ReadFunctionDefs(ModuleReader &reader, Module *module);
-	static void ReadConstantDefs(ModuleReader &reader, Module *module, int32_t headerConstantCount);
+	void ReadTypeDefs(ModuleReader &reader);
+	void ReadFunctionDefs(ModuleReader &reader);
+	void ReadConstantDefs(ModuleReader &reader, int32_t headerConstantCount);
 
-	static Type *ReadSingleType(ModuleReader &reader, Module *module, const TokenId typeId, std::vector<FieldConstData> &unresolvedConstants);
-	static void ReadFields(ModuleReader &reader, Module *targetModule, Type *targetType, std::vector<FieldConstData> &unresolvedConstants);
-	static void ReadMethods(ModuleReader &reader, Module *targetModule, Type *targetType);
-	static void ReadProperties(ModuleReader &reader, Module *targetModule, Type *targetType);
-	static void ReadOperators(ModuleReader &reader, Module *targetModule, Type *targetType);
+	Type *ReadSingleType(ModuleReader &reader, const TokenId typeId, std::vector<FieldConstData> &unresolvedConstants);
+	void ReadFields(ModuleReader &reader, Type *targetType, std::vector<FieldConstData> &unresolvedConstants);
+	void ReadMethods(ModuleReader &reader, Type *targetType);
+	void ReadProperties(ModuleReader &reader, Type *targetType);
+	void ReadOperators(ModuleReader &reader, Type *targetType);
 
-	static void SetConstantFieldValue(ModuleReader &reader, Module *module, Field *field, Type *constantType, const int64_t value);
+	void SetConstantFieldValue(ModuleReader &reader, Field *field, Type *constantType, const int64_t value);
 
-	static Method *ReadSingleMethod(ModuleReader &reader, Module *module);
-	static MethodOverload::TryBlock *ReadTryBlocks(ModuleReader &reader, Module *targetModule, int32_t &tryCount);
+	Method *ReadSingleMethod(ModuleReader &reader);
+	MethodOverload::TryBlock *ReadTryBlocks(ModuleReader &reader, int32_t &tryCount);
 
-	static void TryRegisterStandardType(Type *type, Module *fromModule, ModuleReader &reader);
+	void TryRegisterStandardType(Type *type, ModuleReader &reader);
 
 	static inline int CompareVersion(const ModuleVersion &a, const ModuleVersion &b)
 	{
@@ -388,9 +310,109 @@ private:
 		CONST_PRIVATE = 0x02,
 	};
 
+	friend class ModulePool;
 	friend class ModuleReader;
 	friend class GC;
 	friend class debug::ModuleDebugData;
+};
+
+class ModulePool
+{
+private:
+	int capacity;
+	int length;
+	Module **data;
+
+	inline void Init(int capacity)
+	{
+		capacity = max(capacity, 4);
+
+		data = new Module*[capacity];
+		memset(data, 0, sizeof(Module*) * capacity);
+
+		this->capacity = capacity;
+	}
+
+	inline void Resize()
+	{
+		int newCap = capacity * 2;
+
+		Module **newData = new Module*[newCap];
+		CopyMemoryT(newData, this->data, capacity);
+
+		capacity = newCap;
+		delete[] this->data;
+		this->data = newData;
+	}
+
+public:
+	inline ModulePool() : capacity(0), length(0), data(nullptr)
+	{
+		Init(0);
+	}
+	inline ModulePool(int capacity) : capacity(0), length(0), data(nullptr)
+	{
+		Init(capacity);
+	}
+	inline ~ModulePool()
+	{
+		for (int i = 0; i < length; i++)
+			delete data[i];
+		delete[] data;
+	}
+
+	inline int GetLength() const { return length; }
+
+	inline Module *Get(int index) const
+	{
+		return data[index];
+	}
+	inline Module *Get(String *name) const
+	{
+		for (int i = 0; i < length; i++)
+			if (String_Equals(data[i]->name, name))
+				return data[i];
+		return nullptr;
+	}
+	inline Module *Get(String *name, ModuleVersion *version) const
+	{
+		for (int i = 0; i < length; i++)
+		{
+			Module *module = data[i];
+			if (String_Equals(module->name, name) && module->version == *version)
+				return module;
+		}
+		return nullptr;
+	}
+
+	inline void Set(int index, Module *value)
+	{
+		data[index] = value;
+	}
+
+	inline int Add(Module *value)
+	{
+		if (length == capacity)
+			Resize();
+		int index = length++;
+		data[index] = value;
+		return index;
+	}
+
+	inline bool Remove(Module *value)
+	{
+		bool found = false;
+		for (int i = 0; i < length; i++)
+		{
+			if (found)
+				data[i - 1] = data[i];
+			else
+				found = data[i] == value;
+		}
+		if (found)
+			length--;
+		return found;
+	}
 };
 
 class ModuleLoadException : public std::exception
