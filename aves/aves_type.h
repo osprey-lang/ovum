@@ -36,6 +36,8 @@ AVES_API NATIVE_FUNCTION(aves_reflection_Type_createInstance);
 
 AVES_API NATIVE_FUNCTION(aves_reflection_Type_inheritsFromInternal);
 
+AVES_API NATIVE_FUNCTION(aves_reflection_Type_isInstance);
+
 AVES_API NATIVE_FUNCTION(aves_reflection_Type_getField);
 AVES_API NATIVE_FUNCTION(aves_reflection_Type_getFields);
 

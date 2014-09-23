@@ -318,6 +318,27 @@ AVES_API NATIVE_FUNCTION(aves_reflection_Type_inheritsFromInternal)
 	RETURN_SUCCESS;
 }
 
+AVES_API NATIVE_FUNCTION(aves_reflection_Type_isInstance)
+{
+	// isInstance(value)
+	TypeHandle thisType  = _T(THISV)->type;
+	TypeHandle valueType = args[1].type;
+
+	bool isType = false;
+	while (valueType != nullptr)
+	{
+		if (valueType == thisType)
+		{
+			isType = true;
+			break;
+		}
+		valueType = Type_GetBaseType(valueType);
+	}
+
+	VM_PushBool(thread, isType);
+	RETURN_SUCCESS;
+}
+
 AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Type_getField)
 {
 	// getField(name, flags)
