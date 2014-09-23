@@ -11,7 +11,7 @@ public inheritable Iterable
 	/// Summary: Creates a new Iterable representing an empty collection.
 	public new()
 	{
-		collection = null;
+		_collection = null;
 	}
 	/// Summary: Creates a new Iterable for the specified collection.
 	/// Param collection: The collection to create an iterable wrapper for.
@@ -25,10 +25,12 @@ public inheritable Iterable
 		if collection is Iterator:
 			throw new ArgumentError("The collection cannot be of a type derived from Iterator.", "collection");
 
-		this.collection = collection;
+		this._collection = collection;
 	}
 
-	private collection;
+	private _collection;
+	/// Summary: Gets a reference to the collection wrapped by the iterable.
+	protected get collection = _collection;
 
 	/// Summary: Determines whether all items in the sequence match
 	///          the given predicate.
@@ -239,9 +241,9 @@ public inheritable Iterable
 
 	iter
 	{
-		if collection is null:
+		if _collection is null:
 			return Iterator.empty;
-		return collection.iter;
+		return _collection.iter;
 	}
 
 	public static range(start, count)

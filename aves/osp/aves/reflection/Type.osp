@@ -137,7 +137,6 @@ public class Type is Member
 
 		return createInstanceInternal(arguments, bool(nonPublic));
 	}
-
 	private createInstanceInternal(arguments, nonPublic)	__extern("aves_reflection_Type_createInstance");
 
 	/// Summary: Determines whether this type equals or inherits from another
@@ -155,6 +154,16 @@ public class Type is Member
 		return inheritsFromInternal(type);
 	}
 	private inheritsFromInternal(type)		__extern("aves_reflection_Type_inheritsFromInternal");
+
+	/// Summary: Determines whether the specified value is an instance
+	///          of the current type.
+	/// Param value: The value to test.
+	/// Returns: True if {value} is an instance of the current type;
+	///          otherwise, false.
+	/// Remarks: `typeof(T).isInstance(x)`, where `T` is a type name,
+	///          is precisely equivalent to `x is T`. Prefer using the
+	///          `is` operator whenever possible.
+	public isInstance(value)				__extern("aves_reflection_Type_isInstance");
 
 	public getField(name)
 	{
