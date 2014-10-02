@@ -165,7 +165,7 @@ AVES_API NATIVE_FUNCTION(aves_reflection_Type_get_handle)
 	TypeInst *inst = _T(THISV);
 
 	Value handle;
-	handle.type = GetType_Type(thread);
+	handle.type = Types::reflection.NativeHandle;
 	handle.instance = (uint8_t*)inst->type;
 	VM_Push(thread, &handle);
 

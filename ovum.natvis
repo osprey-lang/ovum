@@ -70,7 +70,7 @@
 		<StringView>&amp;firstChar,su</StringView>
 	</Type>
 
-	<Type Name="StringTable">
+	<Type Name="ovum::StringTable">
 		<DisplayString>{{size={count - freeCount}}}</DisplayString>
 		<Expand>
 			<Item Name="[size]">count - freeCount</Item>
@@ -82,11 +82,11 @@
 		</Expand>
 	</Type>
 
-	<Type Name="StringTable::Entry">
+	<Type Name="ovum::StringTable::Entry">
 		<DisplayString>{{{value}}}</DisplayString>
 	</Type>
 
-	<Type Name="StringHash&lt;*&gt;">
+	<Type Name="ovum::StringHash&lt;*&gt;">
 		<DisplayString>{{size={count}, type={"$T1",s8b}}}</DisplayString>
 		<Expand>
 			<Item Name="[size]">count</Item>
@@ -112,7 +112,7 @@
 		</Expand>
 	</Type>
 
-	<Type Name="StringHashEntry&lt;*&gt;">
+	<Type Name="ovum::StringHashEntry&lt;*&gt;">
 		<DisplayString>[{&amp;key->firstChar,su} : {value}]</DisplayString>
 		<Expand>
 			<Item Name="[key]">key</Item>
@@ -120,24 +120,24 @@
 		</Expand>
 	</Type>
 
-	<Type Name="Member">
-		<DisplayString Condition="(flags &amp; MemberFlags::KIND) == MemberFlags::METHOD">[Method: {&amp;name->firstChar,sub}]</DisplayString>
-		<DisplayString Condition="(flags &amp; MemberFlags::KIND) == MemberFlags::FIELD">[Field: {&amp;name->firstChar,sub}]</DisplayString>
-		<DisplayString Condition="(flags &amp; MemberFlags::KIND) == MemberFlags::PROPERTY">[Property: {&amp;name->firstChar,sub}]</DisplayString>
+	<Type Name="ovum::Member">
+		<DisplayString Condition="(flags &amp; ovum::MemberFlags::KIND) == ovum::MemberFlags::METHOD">[Method: {&amp;name->firstChar,sub}]</DisplayString>
+		<DisplayString Condition="(flags &amp; ovum::MemberFlags::KIND) == ovum::MemberFlags::FIELD">[Field: {&amp;name->firstChar,sub}]</DisplayString>
+		<DisplayString Condition="(flags &amp; ovum::MemberFlags::KIND) == ovum::MemberFlags::PROPERTY">[Property: {&amp;name->firstChar,sub}]</DisplayString>
 		<DisplayString>[???: {&amp;name->firstChar,sub}]</DisplayString>
 		<Expand>
-			<ExpandedItem Condition="(flags &amp; MemberFlags::KIND) == MemberFlags::METHOD">(Method*)this</ExpandedItem>
-			<ExpandedItem Condition="(flags &amp; MemberFlags::KIND) == MemberFlags::FIELD">(Field*)this</ExpandedItem>
-			<ExpandedItem Condition="(flags &amp; MemberFlags::KIND) == MemberFlags::PROPERTY">(Property*)this</ExpandedItem>
+			<ExpandedItem Condition="(flags &amp; ovum::MemberFlags::KIND) == ovum::MemberFlags::METHOD">(Method*)this</ExpandedItem>
+			<ExpandedItem Condition="(flags &amp; ovum::MemberFlags::KIND) == ovum::MemberFlags::FIELD">(Field*)this</ExpandedItem>
+			<ExpandedItem Condition="(flags &amp; ovum::MemberFlags::KIND) == ovum::MemberFlags::PROPERTY">(Property*)this</ExpandedItem>
 		</Expand>
 	</Type>
 
-	<Type Name="Type">
+	<Type Name="ovum::Type">
 		<DisplayString Condition="baseType == 0">{{name={&amp;fullName->firstChar,sub} members={members.count} module={module}}}</DisplayString>
 		<DisplayString>{{name={&amp;fullName->firstChar,sub} baseType={&amp;baseType->fullName->firstChar,sub} members={members.count} module={module}}}</DisplayString>
 	</Type>
 
-	<Type Name="Module">
+	<Type Name="ovum::Module">
 		<DisplayString>[{&amp;name->firstChar,sub}, {version.major}.{version.minor}.{version.build}.{version.revision}]</DisplayString>
 	</Type>
 
@@ -145,19 +145,19 @@
 		<DisplayString>[{major}.{minor}.{build}.{revision}]</DisplayString>
 	</Type>
 
-	<Type Name="ModuleMember">
-		<DisplayString Condition="(flags &amp; ModuleMemberFlags::KIND) == ModuleMemberFlags::TYPE">[Type: {&amp;type->fullName->firstChar,sub}]</DisplayString>
-		<DisplayString Condition="(flags &amp; ModuleMemberFlags::KIND) == ModuleMemberFlags::FUNCTION">[Function: {&amp;function->name->firstChar,sub}]</DisplayString>
-		<DisplayString Condition="(flags &amp; ModuleMemberFlags::KIND) == ModuleMemberFlags::CONSTANT">[Constant: {constant}]</DisplayString>
+	<Type Name="ovum::ModuleMember">
+		<DisplayString Condition="(flags &amp; ovum::ModuleMemberFlags::KIND) == ovum::ModuleMemberFlags::TYPE">[Type: {&amp;type->fullName->firstChar,sub}]</DisplayString>
+		<DisplayString Condition="(flags &amp; ovum::ModuleMemberFlags::KIND) == ovum::ModuleMemberFlags::FUNCTION">[Function: {&amp;function->name->firstChar,sub}]</DisplayString>
+		<DisplayString Condition="(flags &amp; ovum::ModuleMemberFlags::KIND) == ovum::ModuleMemberFlags::CONSTANT">[Constant: {constant}]</DisplayString>
 		<DisplayString>[???]</DisplayString>
 		<Expand>
-			<ExpandedItem Condition="(flags &amp; ModuleMemberFlags::KIND) == ModuleMemberFlags::TYPE">type</ExpandedItem>
-			<ExpandedItem Condition="(flags &amp; ModuleMemberFlags::KIND) == ModuleMemberFlags::FUNCTION">function</ExpandedItem>
-			<ExpandedItem Condition="(flags &amp; ModuleMemberFlags::KIND) == ModuleMemberFlags::CONSTANT">constant</ExpandedItem>
+			<ExpandedItem Condition="(flags &amp; ovum::ModuleMemberFlags::KIND) == ovum::ModuleMemberFlags::TYPE">type</ExpandedItem>
+			<ExpandedItem Condition="(flags &amp; ovum::ModuleMemberFlags::KIND) == ovum::ModuleMemberFlags::FUNCTION">function</ExpandedItem>
+			<ExpandedItem Condition="(flags &amp; ovum::ModuleMemberFlags::KIND) == ovum::ModuleMemberFlags::CONSTANT">constant</ExpandedItem>
 		</Expand>
 	</Type>
 
-	<Type Name="MemberTable&lt;*&gt;">
+	<Type Name="ovum::MemberTable&lt;*&gt;">
 		<DisplayString>{{size={length} type={"$T1",s8b}}}</DisplayString>
 		<Expand>
 			<Item Name="[size]">length</Item>
@@ -169,7 +169,7 @@
 		</Expand>
 	</Type>
 
-	<Type Name="StackFrame">
+	<Type Name="ovum::StackFrame">
 		<DisplayString>{{stackCount={stackCount} argc={argc} method={method}}}</DisplayString>
 		<Expand>
 			<Synthetic Name="[eval stack]" Condition="stackCount == 0">
@@ -218,7 +218,7 @@
 		</Expand>
 	</Type>
 
-	<Type Name="GCObject">
+	<Type Name="ovum::GCObject">
 		<DisplayString>{{size={size} mark={(int)(flags &amp; GCOFlags::MARK)} type={&amp;type->fullName->firstChar,sub}}}</DisplayString>
 		<Expand>
 			<Item Name="[size]">size</Item>
@@ -239,13 +239,13 @@
 		</Expand>
 	</Type>
 
-	<Type Name="instr::Instruction">
-		<DisplayString Condition="(flags &amp; instr::InstrFlags::BRANCH) != instr::InstrFlags::NONE">{{{opcode}, target={((Branch*)this)->target}}}</DisplayString>
-		<DisplayString Condition="(flags &amp; (instr::InstrFlags::LOAD_LOCAL | instr::InstrFlags::STORE_LOCAL)) != instr::InstrFlags::NONE">{{{opcode}, source={((MoveLocal*)this)-&gt;source}, target={((MoveLocal*)this)-&gt;target}}}</DisplayString>
+	<Type Name="ovum::instr::Instruction">
+		<DisplayString Condition="(flags &amp; ovum::instr::InstrFlags::BRANCH) != ovum::instr::InstrFlags::NONE">{{{opcode}, target={((Branch*)this)->target}}}</DisplayString>
+		<DisplayString Condition="(flags &amp; (ovum::instr::InstrFlags::LOAD_LOCAL | ovum::instr::InstrFlags::STORE_LOCAL)) != ovum::instr::InstrFlags::NONE">{{{opcode}, source={((ovum::instr::MoveLocal*)this)-&gt;source}, target={((ovum::instr::MoveLocal*)this)-&gt;target}}}</DisplayString>
 		<DisplayString>{{{opcode}}}</DisplayString>
 	</Type>
 
-	<Type Name="instr::MethodBuilder::InstrDesc">
+	<Type Name="ovum::instr::MethodBuilder::InstrDesc">
 		<DisplayString Condition="removed">{{instr={instr}, removed}}</DisplayString>
 		<DisplayString Condition="stackHeight == -1">{{instr={instr}, unvisited}}</DisplayString>
 		<DisplayString>{{instr={instr}, stackHeight={stackHeight}}}</DisplayString>
