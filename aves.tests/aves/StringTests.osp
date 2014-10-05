@@ -9,6 +9,19 @@ public class StringTests is TestFixture
 {
 	public new() { new base("aves.String tests"); }
 
+	// Booleanness tests
+
+	public test_Truth()
+	{
+		// All string values are true, even the empty string.
+		Assert.isTrue("");
+		Assert.isTrue(" ");
+		Assert.isTrue("false");
+		Assert.isTrue("plumage");
+	}
+
+	// End booleanness tests
+
 	// Padding tests
 
 	// Pad start tests
@@ -86,7 +99,7 @@ public class StringTests is TestFixture
 		Assert.throws(typeof(ArgumentRangeError), @= str.pad(minLength, char, StringPad.start));
 	}
 
-	public test_PadStartWithOverlongChar()
+	public test_PadStartWithOverlongPaddingChar()
 	{
 		var str = "aaa";
 		var minLength = 6;
@@ -96,7 +109,7 @@ public class StringTests is TestFixture
 		Assert.throws(typeof(ArgumentError), @= str.pad(minLength, char, StringPad.start));
 	}
 
-	public test_PadStartWithOverlongString()
+	public test_PadStartWithOverlongPaddingString()
 	{
 		var str = "aaa";
 		var minLength = 6;
@@ -163,7 +176,7 @@ public class StringTests is TestFixture
 		Assert.areEqual(padded2.length, minLength);
 	}
 
-	public test_PadEndWithInvalidChar()
+	public test_PadEndWithInvalidPaddingChar()
 	{
 		var str = "aaa";
 		var minLength = 6;
@@ -183,7 +196,7 @@ public class StringTests is TestFixture
 		Assert.throws(typeof(ArgumentRangeError), @= str.pad(minLength, char, StringPad.end));
 	}
 
-	public test_PadEndWithOverlongChar()
+	public test_PadEndWithOverlongPaddingChar()
 	{
 		var str = "aaa";
 		var minLength = 6;
@@ -193,7 +206,7 @@ public class StringTests is TestFixture
 		Assert.throws(typeof(ArgumentError), @= str.pad(minLength, char, StringPad.end));
 	}
 
-	public test_PadEndWithOverlongString()
+	public test_PadEndWithOverlongPaddingString()
 	{
 		var str = "aaa";
 		var minLength = 6;
@@ -256,7 +269,7 @@ public class StringTests is TestFixture
 		Assert.areEqual(padded.length, minLength);
 	}
 
-	public test_PadBothWithInvalidChar()
+	public test_PadBothWithInvalidPaddingChar()
 	{
 		var str = "aaa";
 		var minLength = 6;
@@ -274,7 +287,7 @@ public class StringTests is TestFixture
 		Assert.throws(typeof(ArgumentRangeError), @= str.pad(minLength, char, StringPad.both));
 	}
 
-	public test_PadBothWithOverlongChar()
+	public test_PadBothWithOverlongPaddingChar()
 	{
 		var str = "aaa";
 		var minLength = 6;
@@ -283,7 +296,7 @@ public class StringTests is TestFixture
 		Assert.throws(typeof(ArgumentError), @= str.pad(minLength, char, StringPad.both));
 	}
 
-	public test_PadBothWithOverlongString()
+	public test_PadBothWithOverlongPaddingString()
 	{
 		var str = "aaa";
 		var minLength = 6;
