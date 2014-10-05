@@ -9,8 +9,9 @@ public class BooleanTests is TestFixture
 {
 	public new() { new base("aves.Boolean tests"); }
 
-	var trueValue = true;
-	var falseValue = false;
+	// Don't turn into consts - we don't want constant folding to occur
+	private trueValue = true;
+	private falseValue = false;
 
 	public test_Truth()
 	{
@@ -27,24 +28,28 @@ public class BooleanTests is TestFixture
 	public test_EqualityWithBoolean()
 	{
 		Assert.areEqual(trueValue, true);
-		Assert.areEqual(not false, trueValue);
 		Assert.areEqual(falseValue, false);
-		Assert.areEqual(not true, falseValue);
 	}
 
-	public test_InequalityWithBoolean()
+	public test_TrueInequalityWithBoolean()
 	{
 		Assert.areNotEqual(trueValue, falseValue);
 		Assert.areNotEqual(falseValue, trueValue);
 	}
 
-	public test_InequalityWithNonBoolean()
+	public test_TrueInequalityWithNonBoolean()
 	{
 		// Using the == operator, Boolean values do not compare equal
 		// to anything other than Boolean values.
+		Assert.areNotEqual(trueValue, 0);
 		Assert.areNotEqual(trueValue, 1);
 		Assert.areNotEqual(trueValue, "true");
+	}
+
+	public test_FalseInequalityWithNonBoolean()
+	{
 		Assert.areNotEqual(falseValue, 0);
+		Assert.areNotEqual(falseValue, 1);
 		Assert.areNotEqual(falseValue, "");
 		Assert.areNotEqual(falseValue, "false");
 	}
@@ -72,6 +77,8 @@ public class BooleanTests is TestFixture
 		// false is ordered before true
 		Assert.isLess(falseValue, trueValue);
 		Assert.isGreater(trueValue, falseValue);
+		Assert.areEqual(falseValue <=> falseValue, 0);
+		Assert.areEqual(trueValue <=> trueValue, 0);
 	}
 
 	public test_CompareWithNonBoolean()
@@ -98,25 +105,35 @@ public class BooleanTests is TestFixture
 		Assert.areSameRef(falseValue.getHashCode(), 0);
 	}
 
-	public test_ToString()
+	public test_TrueToString()
 	{
 		// true always stringifies as "true".
 		Assert.areEqual(trueValue.toString(), "true");
+	}
+
+	public test_FalseToString()
+	{
 		// And false always stringifies as "false".
 		Assert.areEqual(falseValue.toString(), "false");
 	}
 
-	public test_ParseValid()
+	public test_ParseValidTrue()
 	{
 		// Boolean.parse ignores case; hence true, True, tRue,
 		// trUE, and so on are all allowed. Same with false.
 		Assert.areEqual(Boolean.parse("true"), true);
 		Assert.areEqual(Boolean.parse("TRUE"), true);
-		Assert.areEqual(Boolean.parse("false"), false);
-		Assert.areEqual(Boolean.parse("FaLSe"), false);
+		Assert.areEqual(Boolean.parse("tRuE"), true);
 		// Leading and trailing white space is allowed
-		// U+2028 = Line Separator
 		Assert.areEqual(Boolean.parse("\t true "), true);
+	}
+
+	public test_ParseValidFalse()
+	{
+		Assert.areEqual(Boolean.parse("false"), false);
+		Assert.areEqual(Boolean.parse("FALSE"), false);
+		Assert.areEqual(Boolean.parse("FaLSe"), false);
+		// U+2028 = Line Separator
 		Assert.areEqual(Boolean.parse(" \u2028    false  "), false);
 	}
 
