@@ -829,7 +829,7 @@ Type *Module::ReadSingleType(ModuleReader &reader, const TokenId typeId,
 	type->flags        = flags;
 	type->baseType     = baseType;
 	type->sharedType   = sharedType;
-	type->fieldsOffset = baseType ? baseType->fieldsOffset + baseType->size : 0;
+	type->fieldsOffset = baseType ? baseType->GetTotalSize() : 0;
 	type->fullName     = name;
 
 	ReadFields(reader, type.get(), unresolvedConstants);
@@ -916,7 +916,7 @@ void Module::ReadFields(ModuleReader &reader, Type *type,
 
 		if (!field->IsStatic())
 		{
-			field->offset = type->fieldsOffset + type->size;
+			field->offset = type->GetTotalSize();
 			type->fieldCount++;
 			type->size += sizeof(Value);
 		}
