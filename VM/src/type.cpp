@@ -142,7 +142,9 @@ int Type::LoadTypeToken(Thread *const thread)
 
 	// Note: use GC::Alloc because the aves.Type type may not have
 	// a public constructor. GC::Construct would fail if it didn't.
-	int r = GetGC()->Alloc(thread, vm->types.Type, vm->types.Type->size, typeTkn->GetValuePointer());
+	int r = GetGC()->Alloc(thread, vm->types.Type,
+		vm->types.Type->GetTotalSize(),
+		typeTkn->GetValuePointer());
 	if (r != OVUM_SUCCESS) return r;
 
 	// Call the type token initializer with this type and the brand
@@ -773,9 +775,13 @@ OVUM_API uint32_t Type_GetFieldOffset(TypeHandle type)
 {
 	return type->fieldsOffset;
 }
-OVUM_API uint32_t Type_GetInstanceSize(TypeHandle type)
+OVUM_API size_t Type_GetInstanceSize(TypeHandle type)
 {
 	return type->size;
+}
+OVUM_API size_t Type_GetTotalSize(TypeHandle type)
+{
+	return type->GetTotalSize();
 }
 
 OVUM_API void Type_SetFinalizer(TypeHandle type, Finalizer finalizer)
@@ -791,7 +797,7 @@ OVUM_API void Type_SetFinalizer(TypeHandle type, Finalizer finalizer)
 			type->flags &= ~TypeFlags::HAS_FINALIZER;
 	}
 }
-OVUM_API void Type_SetInstanceSize(TypeHandle type, uint32_t size)
+OVUM_API void Type_SetInstanceSize(TypeHandle type, size_t size)
 {
 	if ((type->flags & TypeFlags::INITED) == TypeFlags::NONE)
 	{

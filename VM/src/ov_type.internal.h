@@ -375,8 +375,9 @@ public:
 
 	// The offset (in bytes) of the first field in instances of this type.
 	uint32_t fieldsOffset;
-	// The total size (in bytes) of instances of this type.
-	// Note: this is 0 for Object, and String is variable-size.
+	// The total size (in bytes) of instances of this type, not including
+	// the size consumed by the base type.
+	// Note: this is 0 for Object and String, the latter of which is variable-size.
 	size_t size;
 	// The total number of instance fields in the type. If the flag CUSTOMPTR
 	// is set, this contains the number of native fields; otherwise, this is
@@ -428,6 +429,13 @@ public:
 	MethodOverload *operators[OPERATOR_COUNT];
 
 	CriticalSection staticCtorLock;
+
+	// Gets the total number of bytes required to construct an instance
+	// of this type. This includes the size of the base type.
+	inline size_t GetTotalSize() const
+	{
+		return fieldsOffset + size;
+	}
 
 	int GetTypeToken(Thread *const thread, Value *result);
 

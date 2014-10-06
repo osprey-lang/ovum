@@ -341,9 +341,10 @@ OVUM_API MethodHandle Type_GetOperator(TypeHandle type, Operator op);
 OVUM_API int Type_GetTypeToken(ThreadHandle thread, TypeHandle type, Value *result);
 
 OVUM_API uint32_t Type_GetFieldOffset(TypeHandle type);
-OVUM_API uint32_t Type_GetInstanceSize(TypeHandle type);
+OVUM_API size_t Type_GetInstanceSize(TypeHandle type);
+OVUM_API size_t Type_GetTotalSize(TypeHandle type);
 OVUM_API void Type_SetFinalizer(TypeHandle type, Finalizer finalizer);
-OVUM_API void Type_SetInstanceSize(TypeHandle type, uint32_t size);
+OVUM_API void Type_SetInstanceSize(TypeHandle type, size_t size);
 OVUM_API void Type_SetReferenceGetter(TypeHandle type, ReferenceGetter getter);
 
 enum class NativeFieldType : int

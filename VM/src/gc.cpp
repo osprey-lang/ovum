@@ -303,7 +303,7 @@ int GC::Construct(Thread *const thread, Type *type, const uint16_t argc, Value *
 int GC::ConstructLL(Thread *const thread, Type *type, const uint16_t argc, Value *args, Value *output)
 {
 	GCObject *gco;
-	int r = Alloc(thread, type, type->fieldsOffset + type->size, &gco);
+	int r = Alloc(thread, type, type->GetTotalSize(), &gco);
 	if (r != OVUM_SUCCESS) return r;
 
 	Value *framePointer = args + argc;
@@ -681,7 +681,7 @@ void GC::MarkForProcessing(GCObject *gco)
 		gco->IsArray() ? gco->type == nullptr || gco->type == (Type*)GC_VALUE_ARRAY :
 		gco->type != nullptr);
 	bool couldHaveFields = gco->type != nullptr &&
-		(gco->type == (Type*)GC_VALUE_ARRAY || gco->type->size > 0);
+		(gco->type == (Type*)GC_VALUE_ARRAY || gco->type->GetTotalSize() > 0);
 
 	if (couldHaveFields)
 	{
