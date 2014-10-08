@@ -1,11 +1,28 @@
 namespace aves;
 
+/// Summary: Implements a collection that stores its values in last-in, first-out
+///          (LIFO) order. The items of a stack cannot be indexed into; only the
+///          value currently on top of the stack can be seen, either by peeking at
+///          it (returning it without removing it), or by popping it off (removing
+///          it, then returning it).
+///
+///          The items of a stack are iterated from top to bottom.
 public inheritable Stack
 {
+	/// Summary: Creates a new, empty {Stack} with the default capacity.
 	public new();
+	/// Summary: Creates a new, empty {Stack} with the specified initial capacity.
+	/// Param capacity: The capacity of the new stack. (Int, UInt or Real)
+	/// Throws TypeError:
+	///          {capacity} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {capacity} is less than zero.
 	public new(capacity)
 	{
 		capacity = int(capacity);
+		if capacity < 0:
+			throw new ArgumentRangeError("capacity");
+
 		if capacity > 0:
 			list = new List(capacity);
 	}
@@ -13,9 +30,32 @@ public inheritable Stack
 	private version = 0;
 	private list = null; // Not initialized until it is needed
 
+	/// Summary: Gets the total number of items on the stack.
+	/// Returns: The length of the stack, as an Int.
 	public get length = list is null ? 0 : list.length;
+
+	/// Summary: Gets the capacity of the stack; that is, the number of items it
+	///          can contain without resizing its internal container.
+	public get capacity = list is null ? 0 : list.capacity;
+
+	/// Summary: Sets the capacity of the stack; that is, the number of items it
+	///          can contain without resizing its internal container.
+	/// Throws TypeError: The value could not be converted to an Int.
+	/// Throws ArgumentRangeError: The value is less than {length}.
+	public set capacity
+	{
+		if list is null:
+			list = new List(value);
+		else:
+			list.capacity = value;
+	}
+
+	/// Summary: Gets a value that indicates whether the stack is empty.
+	/// Returns: True if the stack is empty; otherwise, false.
 	public get isEmpty = list is null or list.isEmpty;
 
+	/// Summary: Pushes a value onto the top of the stack.
+	/// Param value: The value to push onto the stack.
 	public push(value)
 	{
 		if list is null:
@@ -25,6 +65,8 @@ public inheritable Stack
 		version += 1;
 	}
 
+	/// Summary: Removes the top value from the stack, and returns it.
+	/// Returns: The value that was removed from the top of the stack.
 	public pop()
 	{
 		if list is null or list.isEmpty:
@@ -36,11 +78,20 @@ public inheritable Stack
 		return value;
 	}
 
+	/// Summary: Returns the top value on the stack without removing it.
+	/// Returns: The current top value on the stack.
 	public peek()
 	{
 		if list is null or list.isEmpty:
 			throw new InvalidStateError(emptyStack);
 		return list[-1];
+	}
+
+	/// Summary: Removes all the values from the stack without changing
+	///          its internal capacity.
+	public clear()
+	{
+		list?.clear();
 	}
 
 	override toString()
