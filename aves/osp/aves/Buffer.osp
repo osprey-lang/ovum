@@ -399,6 +399,12 @@ public class Buffer
 	///          {destination} is not a {Buffer} or {BufferView}.
 	/// Throws ArgumentError:
 	///          {source} is larger than {destination}.
+	/// Remarks: It is safe to copy part of one buffer to another part of the same
+	///          buffer, even if the source and destination regions overlap. The
+	///          data is copied as if an intermediate buffer had been used. However,
+	///          since this method copies the entire buffer contents, if {source}
+	///          and {destination} refer to the same buffer, the result is a possibly
+	///          expensive way of doing nothing.
 	public static copy(source, destination)
 	{
 		source = fromValue(source);
@@ -421,6 +427,9 @@ public class Buffer
 	/// Throws ArgumentRangeError:
 	///          {count} is less than zero, or {count} is larger than the size
 	///          of either the destination or the source buffer.
+	/// Remarks: It is safe to copy part of one buffer to another part of the same
+	///          buffer, even if the source and destination regions overlap. The
+	///          data is copied as if an intermediate buffer had been used.
 	public static copy(source, destination, count)
 	{
 		source = fromValue(source);
@@ -453,6 +462,9 @@ public class Buffer
 	///          {sourceIndex} + {count} is greater than the size of {source}.
 	///
 	///          {destIndex} + {count} is greater than the size of {dest}.
+	/// Remarks: It is safe to copy part of one buffer to another part of the same
+	///          buffer, even if the source and destination regions overlap. The
+	///          data is copied as if an intermediate buffer had been used.
 	public static copy(source, sourceIndex, dest, destIndex, count)
 	{
 		source = fromValue(source);

@@ -281,8 +281,9 @@ AVES_API NATIVE_FUNCTION(aves_Buffer_copyInternal)
 	// Copying the data could take a while if there's a lot to copy,
 	// so let's enter an unmanaged region during the copying, so we
 	// don't block the GC if it decides to run.
+	// Note: use memmove to make it safe for src and dest to overlap.
 	VM_EnterUnmanagedRegion(thread);
-	memcpy(dest->bytes + destIndex, src->bytes + srcIndex, count);
+	memmove(dest->bytes + destIndex, src->bytes + srcIndex, count);
 	VM_LeaveUnmanagedRegion(thread);
 
 	RETURN_SUCCESS;
