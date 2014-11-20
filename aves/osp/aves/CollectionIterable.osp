@@ -1,0 +1,40 @@
+namespace aves;
+
+/// Summary: Exposes a read-only {Iterable} that lets you iterate over
+///          a single collection object.
+/// Remarks: Unlike {Iterator} objects, {Iterable} can be iterated over
+///          any number of times. Because {Iterator} instances can only
+///          be iterated over once, you cannot pass an {Iterator} an
+///          instance into the {CollectionIterable} constructor.
+public inheritable CollectionIterable is Iterable
+{
+	/// Summary: Creates a new {CollectionIterable} representing an empty collection.
+	public new()
+	{
+		_collection = null;
+	}
+	/// Summary: Creates a new {CollectionIterable} for the specified collection.
+	/// Param collection: The collection to create an iterable wrapper for.
+	/// Throws ArgumentNullError:
+	///          {collection} is null.
+	/// Throws ArgumentError:
+	///          {collection} is of a type derived from {Iterator}.
+	public new(collection)
+	{
+		if collection is null:
+			throw new ArgumentNullError("collection");
+		if collection is Iterator:
+			throw new ArgumentError("The collection cannot be of a type derived from Iterator.", "collection");
+
+		this._collection = collection;
+	}
+
+	private _collection;
+	/// Summary: Gets a reference to the collection wrapped by the iterable.
+	protected get collection = _collection;
+
+	iter
+	{
+		return _collection.iter;
+	}
+}

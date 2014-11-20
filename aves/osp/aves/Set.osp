@@ -1,6 +1,6 @@
 namespace aves;
 
-public inheritable Set
+public inheritable Set is Iterable
 {
 	__init_type("aves_Set_init");
 

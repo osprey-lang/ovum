@@ -1,36 +1,16 @@
 namespace aves;
 
 /// Summary: Exposes a read-only interface that can be used to iterate
-///          over a specific object.
-/// Remarks: Unlike {Iterator} objects, {Iterable} can be iterated
-///          over any number of times. Because {Iterator} instances
-///          can only be iterated over once, you cannot pass such
-///          an instance into the {Iterable} constructor.
-public inheritable Iterable
+///          over a collection any number of times. Often, an {Iterable}
+///          represents a collection, but it may also be a lazy-evaluated
+///          sequence, or any other kind of iterable object.
+///
+///          This class is abstract. Classes that inherit from this must
+///          provide an iterator.
+public abstract class Iterable
 {
-	/// Summary: Creates a new Iterable representing an empty collection.
-	public new()
-	{
-		_collection = null;
-	}
-	/// Summary: Creates a new Iterable for the specified collection.
-	/// Param collection: The collection to create an iterable wrapper for.
-	///          If this value is null, it is treated like an empty collection.
-	/// Throws ArgumentNullError: {collection} is null.
-	/// Throws ArgumentError: {collection} is of a type derived from {Iterator}.
-	public new(collection)
-	{
-		if collection is null:
-			throw new ArgumentNullError("collection");
-		if collection is Iterator:
-			throw new ArgumentError("The collection cannot be of a type derived from Iterator.", "collection");
-
-		this._collection = collection;
-	}
-
-	private _collection;
-	/// Summary: Gets a reference to the collection wrapped by the iterable.
-	protected get collection = _collection;
+	/// Summary: Creates a new Iterable.
+	public new();
 
 	/// Summary: Determines whether all items in the sequence match
 	///          the given predicate.
@@ -41,7 +21,7 @@ public inheritable Iterable
 	/// Returns: True if all items in the sequence match the predicate;
 	///          otherwise, false.
 	/// Throws ArgumentNullError: {predicate} is null.
-	public any(predicate)
+	public overridable any(predicate)
 	{
 		return this.iter.any(predicate);
 	}
@@ -55,14 +35,14 @@ public inheritable Iterable
 	/// Returns: True if any item in the sequence matches the predicate;
 	///          otherwise, false.
 	/// Throws ArgumentNullError: {predicate} is null.
-	public all(predicate)
+	public overridable all(predicate)
 	{
 		return this.iter.all(predicate);
 	}
 
 	/// Summary: Counts the items in the collection.
 	/// Returns: The number of items in the collection, as an Int.
-	public count()
+	public overridable count()
 	{
 		var length = 0;
 		var iterator = this.iter;
@@ -78,7 +58,7 @@ public inheritable Iterable
 	///          otherwise.
 	/// Returns: The number of items that match {predicate}, as an Int.
 	/// Throws ArgumentNullError: {predicate} is null.
-	public count(predicate)
+	public overridable count(predicate)
 	{
 		if predicate is null:
 			throw new ArgumentNullError("predicate");
@@ -91,7 +71,7 @@ public inheritable Iterable
 		return length;
 	}
 
-	public each(func)
+	public overridable each(func)
 	{
 		if func is null:
 			throw new ArgumentNullError("func");
@@ -99,7 +79,7 @@ public inheritable Iterable
         this.iter.each(func);
 	}
 
-	public filter(predicate)
+	public overridable filter(predicate)
 	{
 		if predicate is null:
 			throw new ArgumentNullError("predicate");
@@ -107,46 +87,46 @@ public inheritable Iterable
 		return new FilterIterable(this, predicate);
 	}
 
-	public first()
+	public overridable first()
 	{
 		return this.iter.first();
 	}
-	public first(predicate)
+	public overridable first(predicate)
 	{
 		return this.iter.first(predicate);
 	}
 
-	public firstOrNull()
+	public overridable firstOrNull()
 	{
 		return this.iter.firstOrNull();
 	}
-	public firstOrNull(predicate)
+	public overridable firstOrNull(predicate)
 	{
 		return this.iter.firstOrNull(predicate);
 	}
 
-	public fold(func)
+	public overridable fold(func)
 	{
 		return this.iter.fold(func);
 	}
-	public fold(init, func)
+	public overridable fold(init, func)
 	{
 		return this.iter.fold(init, func);
 	}
 
-	public join(sep)
+	public overridable join(sep)
 	{
 		return this.iter.join(sep);
 	}
 
-	public group(func)
+	public overridable group(func)
 	{
 		if func is null:
 			throw new ArgumentNullError("func");
 
 		return new GroupIterable(this, func);
 	}
-	public group(keyFunc, valueFunc)
+	public overridable group(keyFunc, valueFunc)
 	{
 		if keyFunc is null:
 			throw new ArgumentNullError("keyFunc");
@@ -156,7 +136,7 @@ public inheritable Iterable
 		return new GroupIterable(this, keyFunc, valueFunc);
 	}
 
-	public groupEvery(frequency)
+	public overridable groupEvery(frequency)
 	{
 		frequency = int(frequency);
 		if frequency < 0:
@@ -165,11 +145,11 @@ public inheritable Iterable
 		return new GroupEveryIterable(this, frequency);
 	}
 
-	public intersperse(value)
+	public overridable intersperse(value)
 	{
 		return new IntersperseIterable(this, value);
 	}
-	public intersperse(value, frequency)
+	public overridable intersperse(value, frequency)
 	{
 		frequency = int(frequency);
 		if frequency <= 0:
@@ -178,25 +158,25 @@ public inheritable Iterable
 		return new IntersperseIterable(this, value, frequency);
 	}
 
-	public last()
+	public overridable last()
 	{
 		return this.iter.last();
 	}
-	public last(predicate)
+	public overridable last(predicate)
 	{
 		return this.iter.last(predicate);
 	}
 
-	public lastOrNull()
+	public overridable lastOrNull()
 	{
 		return this.iter.lastOrNull();
 	}
-	public lastOrNull(predicate)
+	public overridable lastOrNull(predicate)
 	{
 		return this.iter.lastOrNull(predicate);
 	}
 
-	public map(func)
+	public overridable map(func)
 	{
 		if func is null:
 			throw new ArgumentNullError("func");
@@ -204,7 +184,7 @@ public inheritable Iterable
 		return new MapIterable(this, func);
 	}
 
-	public take(count)
+	public overridable take(count)
 	{
 		count = int(count);
 		if count < 0:
@@ -213,7 +193,7 @@ public inheritable Iterable
 		return new TakeIterable(this, count);
 	}
 
-	public skip(count)
+	public overridable skip(count)
 	{
 		count = int(count);
 		if count < 0:
@@ -222,14 +202,14 @@ public inheritable Iterable
 		return new SkipIterable(this, count);
 	}
 
-	public zip(other)
+	public overridable zip(other)
 	{
 		if other is null:
 			throw new ArgumentNullError("other");
 
 		return new ZipIterable(this, other, null);
 	}
-	public zip(other, func)
+	public overridable zip(other, func)
 	{
 		if other is null:
 			throw new ArgumentNullError("other");
@@ -241,10 +221,10 @@ public inheritable Iterable
 
 	iter
 	{
-		if _collection is null:
-			return Iterator.empty;
-		return _collection.iter;
+		throw new InvalidStateError("Iterable does not provide an iterator.");
 	}
+
+	public static get empty = new CollectionIterable();
 
 	public static range(start, count)
 	{

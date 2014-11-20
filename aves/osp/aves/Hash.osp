@@ -322,6 +322,13 @@ public inheritable Hash
 		return output;
 	}
 
+	/// Summary: Gets a read-only {Iterable} that encapsulates the hash table.
+	public toIterable()
+	{
+		// TODO: Create a dedicated HashIterable, with specialised code
+		return new CollectionIterable(this);
+	}
+
 	private static getHash(key)
 	{
 		if key is null:
@@ -333,6 +340,16 @@ public inheritable Hash
 			throw new TypeError("The return value of getHashCode() must be of type Int or UInt.");
 
 		return h;
+	}
+
+	overridable override getHashCode()
+	{
+		return base.getHashCode();
+	}
+
+	overridable override toString()
+	{
+		return "Hash[length = {0}]".format([length]);
 	}
 
 	/// Summary: Constructs a new hash table by extracting the values of the specified
@@ -371,15 +388,6 @@ public inheritable Hash
 		}
 
 		return output;
-	}
-
-	overridable override getHashCode()
-	{
-		return base.getHashCode();
-	}
-	overridable override toString()
-	{
-		return "Hash[length = {0}]".format([length]);
 	}
 
 	iter
