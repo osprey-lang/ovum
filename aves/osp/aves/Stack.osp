@@ -7,7 +7,7 @@ namespace aves;
 ///          it, then returning it).
 ///
 ///          The items of a stack are iterated from top to bottom.
-public inheritable Stack
+public inheritable Stack is Iterable
 {
 	/// Summary: Creates a new, empty {Stack} with the default capacity.
 	public new();

@@ -58,8 +58,6 @@ public inheritable List
 	/// Returns: True if the list has no items in it; otherwise, false.
 	public get isEmpty = length == 0;
 
-	private static defaultComparer = @<=>;
-
 	// General list manipulation
 	/// Summary: Adds an item to the end of the list.
 	/// Param item: The item to add.
@@ -527,6 +525,7 @@ public inheritable List
 
 		return init;
 	}
+
 	private foldrInternal(init, func, startIndex)
 	{
 		var startVersion = version;
@@ -542,12 +541,20 @@ public inheritable List
 		return init;
 	}
 
+	/// Summary: Gets a read-only {Iterable} that encapsulates the list.
+	public toIterable()
+	{
+		// TODO: Create a dedicated ListIterable, with specialised code
+		return new CollectionIterable(this);
+	}
+
 	protected const listHasChanged = "The list has changed since the iteration started.";
 
 	overridable override getHashCode()
 	{
 		return base.getHashCode();
 	}
+
 	overridable override toString()
 	{
 		return "List[length = {0}]".format([length]);
@@ -557,6 +564,8 @@ public inheritable List
 	{
 		return new ListIterator(this);
 	}
+
+	private static defaultComparer = @<=>;
 }
 
 private class ListIterator is Iterator

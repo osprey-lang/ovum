@@ -1,6 +1,6 @@
 namespace aves;
 
-public inheritable Queue
+public inheritable Queue is Iterable
 {
 	public new();
 	public new(capacity)
