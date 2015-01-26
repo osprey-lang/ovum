@@ -126,6 +126,12 @@
     <ClInclude Include="src\tls.internal.h">
       <Filter>Header Files\Internal</Filter>
     </ClInclude>
+    <ClInclude Include="src\methodbuilder.internal.h">
+      <Filter>Header Files\Internal</Filter>
+    </ClInclude>
+    <ClInclude Include="src\instructions.internal.h">
+      <Filter>Header Files\Internal</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\module.cpp">
@@ -186,6 +192,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\tls.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\methodbuilder.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\instructions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
