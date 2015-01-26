@@ -125,6 +125,12 @@ public:
 		uint32_t catchEnd;
 	} CatchBlock;
 
+	typedef struct
+	{
+		uint32_t finallyStart;
+		uint32_t finallyEnd;
+	} FinallyBlock;
+
 	class TryBlock
 	{
 	public:
@@ -146,11 +152,7 @@ public:
 				int32_t count;
 				CatchBlock *blocks;
 			} catches;
-			struct
-			{
-				uint32_t finallyStart;
-				uint32_t finallyEnd;
-			} finallyBlock;
+			FinallyBlock finallyBlock;
 		};
 
 		inline TryBlock()

@@ -25,7 +25,9 @@ namespace ovum
 class StringBuffer;
 namespace instr
 {
+	class Instruction;
 	class MethodBuilder;
+	class MethodBuffer;
 }
 
 class StackFrame
