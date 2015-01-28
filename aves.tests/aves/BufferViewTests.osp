@@ -461,10 +461,7 @@ public class BufferViewTests is TestFixture
 	{
 		var kind = BufferViewKind.uint64;
 		var view;
-		Assert.doesNotThrow(@{
-			view =
-				new BufferView(buffer, kind);
-		});
+		Assert.doesNotThrow(@{ view = new BufferView(buffer, kind); });
 		Assert.areEqual(view.kind, kind);
 		Assert.areSameRef(view.buffer, buffer);
 		Assert.areEqual(view.length, buffer.size / 8);
