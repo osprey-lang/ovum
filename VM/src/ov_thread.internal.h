@@ -3,20 +3,13 @@
 #ifndef VM__THREAD_INTERNAL_H
 #define VM__THREAD_INTERNAL_H
 
-#include <cassert>
-#include <exception>
 #include "ov_vm.internal.h"
 #include "sync.internal.h"
 #include "tls.internal.h"
+#include <cassert>
 
 #if OVUM_TARGET == OVUM_UNIX
 #include <pthread.h>
-#endif
-
-#ifdef THREADED_EVALUATION
-#ifndef __GNUC__
-#error You must compile with gcc for threaded evaluation
-#endif
 #endif
 
 namespace ovum

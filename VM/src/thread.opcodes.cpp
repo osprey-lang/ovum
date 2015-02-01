@@ -19,21 +19,8 @@ namespace ovum
 // Used in Thread::Evaluate. Semicolon intentionally missing.
 #define CHK(expr) do { if ((retCode = (expr)) != OVUM_SUCCESS) goto exitMethod; } while (0)
 
-#ifdef THREADED_EVALUATION
-
-#define TARGET(opc)	case opc: TARGET_##opc:
-#define NEXT_INSTR() \
-	{ \
-		this->ip = ip; \
-		goto *opcodeTargets[*ip++]; \
-	}
-
-#else // THREADED_EVALUATION
-
 #define TARGET(opc) case opc:
 #define NEXT_INSTR() break
-
-#endif // THREADED_EVALUATION
 
 #define SET_BOOL(ptarg, bvalue) \
 	{ \
@@ -63,12 +50,6 @@ namespace ovum
 
 int Thread::Evaluate()
 {
-#ifdef THREADED_EVALUATION
-	static void *opcodeTargets[256] = {
-#	include "thread.opcode_targets.h"
-	};
-#endif
-
 	if (pendingRequest != ThreadRequest::NONE)
 		HandleRequest();
 

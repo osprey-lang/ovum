@@ -121,7 +121,6 @@
     <ClInclude Include="src\ov_value.internal.h" />
     <ClInclude Include="inc\ov_vm.h" />
     <ClInclude Include="src\ov_vm.internal.h" />
-    <ClInclude Include="src\thread.opcode_targets.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\debug_symbols.cpp" />
