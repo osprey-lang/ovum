@@ -1,5 +1,6 @@
 #include "ov_stringbuffer.internal.h"
 #include "ov_unicode.internal.h"
+#include <exception>
 
 namespace ovum
 {
