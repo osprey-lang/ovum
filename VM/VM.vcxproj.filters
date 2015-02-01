@@ -132,6 +132,12 @@
     <ClInclude Include="src\instructions.internal.h">
       <Filter>Header Files\Internal</Filter>
     </ClInclude>
+    <ClInclude Include="src\methodinitializer.internal.h">
+      <Filter>Header Files\Internal</Filter>
+    </ClInclude>
+    <ClInclude Include="src\methodinitexception.internal.h">
+      <Filter>Header Files\Internal</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\module.cpp">
@@ -198,6 +204,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\instructions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\methodinitializer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

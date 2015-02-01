@@ -23,12 +23,6 @@ namespace ovum
 {
 
 class StringBuffer;
-namespace instr
-{
-	class Instruction;
-	class MethodBuilder;
-	class MethodBuffer;
-}
 
 class StackFrame
 {
@@ -136,82 +130,6 @@ enum class ThreadFlags : int
 	IN_UNMANAGED_REGION = 0x01,
 };
 ENUM_OPS(ThreadFlags, int);
-
-class StackManager; // used by the method initializer
-
-class MethodInitException : public std::exception
-{
-public:
-	enum FailureKind
-	{
-		GENERAL = 0, // no extra information
-		INCONSISTENT_STACK,
-		INVALID_BRANCH_OFFSET,
-		INSUFFICIENT_STACK_HEIGHT,
-		STACK_HAS_REFS,
-		INACCESSIBLE_MEMBER,
-		FIELD_STATIC_MISMATCH,
-		UNRESOLVED_TOKEN_ID,
-		NO_MATCHING_OVERLOAD,
-		INACCESSIBLE_TYPE,
-		TYPE_NOT_CONSTRUCTIBLE,
-	};
-
-private:
-	FailureKind kind;
-	MethodOverload *method;
-
-	union {
-		int32_t instrIndex;
-		Member *member;
-		Type *type;
-		uint32_t tokenId;
-		struct {
-			Method *methodGroup;
-			uint32_t argCount;
-		} noOverload;
-	};
-
-public:
-	inline MethodInitException(const char *const message, MethodOverload *method) :
-		exception(message), method(method), kind(GENERAL)
-	{ }
-
-	inline MethodInitException(const char *const message, MethodOverload *method, int32_t instrIndex, FailureKind kind) :
-		exception(message), method(method), kind(kind), instrIndex(instrIndex)
-	{ }
-
-	inline MethodInitException(const char *const message, MethodOverload *method, Member *member, FailureKind kind) :
-		exception(message), method(method), kind(kind), member(member)
-	{ }
-
-	inline MethodInitException(const char *const message, MethodOverload *method, Type *type, FailureKind kind) :
-		exception(message), method(method), kind(kind), type(type)
-	{ }
-
-	inline MethodInitException(const char *const message, MethodOverload *method, uint32_t tokenId, FailureKind kind) :
-		exception(message), method(method), kind(kind), tokenId(tokenId)
-	{ }
-
-	inline MethodInitException(const char *const message, MethodOverload *method,
-		Method *methodGroup, uint32_t argCount, FailureKind kind) :
-		exception(message), method(method), kind(kind)
-	{
-		noOverload.methodGroup = methodGroup;
-		noOverload.argCount = argCount;
-	}
-
-	inline FailureKind GetFailureKind() const { return kind; }
-
-	inline MethodOverload *GetMethod() const { return method; }
-
-	inline int32_t GetInstructionIndex() const { return instrIndex; }
-	inline Member *GetMember() const { return member; }
-	inline Type *GetType() const { return type; }
-	inline uint32_t GetTokenId() const { return tokenId; }
-	inline Method *GetMethodGroup() const { return noOverload.methodGroup; }
-	inline uint32_t GetArgumentCount() const { return noOverload.argCount; }
-};
 
 class Thread
 {
@@ -474,25 +392,14 @@ private:
 	int ThrowMissingOperatorError(Operator op);
 
 	int InitializeMethod(MethodOverload *method);
-	void InitializeInstructions(instr::MethodBuilder &builder, MethodOverload *method);
-	static void InitializeBranchOffsets(instr::MethodBuilder &builder, MethodOverload *method);
-	static void CalculateStackHeights(instr::MethodBuilder &builder, MethodOverload *method, StackManager &stack);
-	static void WriteInitializedBody(instr::MethodBuilder &builder, MethodOverload *method);
 	int CallStaticConstructors(instr::MethodBuilder &builder);
-
-	// These are used by the initializer
-	static Type *TypeFromToken(MethodOverload *fromMethod, uint32_t token);
-	static String *StringFromToken(MethodOverload *fromMethod, uint32_t token);
-	static Method *MethodFromToken(MethodOverload *fromMethod, uint32_t token);
-	static MethodOverload *MethodOverloadFromToken(MethodOverload *fromMethod, uint32_t token, uint32_t argCount);
-	static Field *FieldFromToken(MethodOverload *fromMethod, uint32_t token, bool shouldBeStatic);
-	static void EnsureConstructible(Type *type, uint32_t argCount, MethodOverload *fromMethod);
 
 	MethodOverload *GetHashIndexerSetter();
 
 	friend class GC;
 	friend class VM;
 	friend class Type;
+	friend class MethodInitializer;
 	friend String *::VM_GetStackTrace(ThreadHandle);
 };
 

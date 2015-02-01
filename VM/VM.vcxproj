@@ -88,6 +88,8 @@
     <ClInclude Include="inc\ov_pathchar.h" />
     <ClInclude Include="src\instructions.internal.h" />
     <ClInclude Include="src\methodbuilder.internal.h" />
+    <ClInclude Include="src\methodinitexception.internal.h" />
+    <ClInclude Include="src\methodinitializer.internal.h" />
     <ClInclude Include="src\tls.internal.h" />
     <ClInclude Include="src\sync.internal.h" />
     <ClInclude Include="src\membertable.internal.h" />
@@ -125,6 +127,7 @@
     <ClCompile Include="src\debug_symbols.cpp" />
     <ClCompile Include="src\instructions.cpp" />
     <ClCompile Include="src\methodbuilder.cpp" />
+    <ClCompile Include="src\methodinitializer.cpp" />
     <ClCompile Include="src\pathname.cpp" />
     <ClCompile Include="src\tls.cpp" />
     <ClCompile Include="windows\dllmain.cpp">

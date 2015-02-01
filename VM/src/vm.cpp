@@ -2,6 +2,7 @@
 #include "ov_module.internal.h"
 #include "pathname.internal.h"
 #include "refsignature.internal.h"
+#include "methodinitexception.internal.h"
 #include <fcntl.h>
 #include <io.h>
 #include <cstdio>
