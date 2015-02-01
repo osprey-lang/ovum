@@ -1,5 +1,7 @@
 #include "instructions.internal.h"
 #include "methodbuilder.internal.h"
+#include "methodinitializer.internal.h"
+#include "refsignature.internal.h"
 
 namespace ovum
 {
@@ -7,6 +9,65 @@ namespace ovum
 namespace instr
 {
 	const StackChange StackChange::empty = StackChange(0, 0);
+
+	int NewObject::SetReferenceSignature(const StackManager &stack)
+	{
+		// We have to treat the stack as if it contained an invisible extra
+		// item before the first argument. That's where the instance will
+		// go when the constructor is invoked.
+		RefSignatureBuilder refBuilder(argCount + 1);
+
+		for (int i = 1; i <= argCount; i++)
+			if (stack.IsRef(argCount - i))
+				refBuilder.SetParam(i, true);
+
+		refSignature = refBuilder.Commit(stack.GetRefSignaturePool());
+
+		MethodOverload *ctor = type->instanceCtor->ResolveOverload(argCount);
+		if (this->refSignature != ctor->refSignature)
+			// VerifyRefSignature does NOT include the instance in the argCount
+			return ctor->VerifyRefSignature(this->refSignature, argCount);
+		return -1;
+	}
+	
+	int Call::SetReferenceSignature(const StackManager &stack)
+	{
+		refSignature = stack.GetRefSignature(argCount + 1);
+		if (refSignature)
+			opcode = (IntermediateOpcode)(OPI_CALLR_L | opcode & 1);
+		return -1;
+	}
+	
+	int CallMember::SetReferenceSignature(const StackManager &stack)
+	{
+		refSignature = stack.GetRefSignature(argCount + 1);
+		if (refSignature)
+			opcode = (IntermediateOpcode)(OPI_CALLMEMR_L | opcode & 1);
+		return -1;
+	}
+	
+	int StaticCall::SetReferenceSignature(const StackManager &stack)
+	{
+		if (method->group->IsStatic())
+		{
+			RefSignatureBuilder refBuilder(argCount + 1);
+
+			for (int i = 1; i <= argCount; i++)
+				if (stack.IsRef(argCount - i))
+					refBuilder.SetParam(i, true);
+
+			refSignature = refBuilder.Commit(stack.GetRefSignaturePool());
+		}
+		else
+		{
+			refSignature = stack.GetRefSignature(argCount + 1);
+		}
+
+		if (this->refSignature != method->refSignature)
+			// VerifyRefSignature does NOT include the instance in the argCount
+			return method->VerifyRefSignature(this->refSignature, argCount);
+		return -1;
+	}
 
 	void Instruction::WriteBytes(MethodBuffer &buffer, MethodBuilder &builder) const
 	{

@@ -33,8 +33,17 @@ class ModulePool;
 class RefSignaturePool;
 
 class MethodInitException;
+class MethodInitializer;
+class StackManager;
 
 class PathName;
+
+namespace instr
+{
+	class Instruction;
+	class MethodBuilder;
+	class MethodBuffer;
+}
 
 namespace debug
 {
