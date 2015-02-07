@@ -668,6 +668,9 @@ void MethodInitializer::WriteInitializedBody(instr::MethodBuilder &builder)
 	{
 		Instruction *instr = builder[i];
 		instr->WriteBytes(mbuffer, builder);
+
+		// The buffer should be properly aligned after each instruction
+		assert((mbuffer.GetCurrent() - mbuffer.GetBuffer()) % oa::ALIGNMENT == 0);
 	}
 
 	delete[] method->entry;
