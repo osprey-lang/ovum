@@ -8,6 +8,11 @@ namespace ovum
 
 namespace instr
 {
+	namespace oa = ovum::opcode_args;
+
+#define ONE_LOCAL(local) oa::OneLocal args = { (local) }
+#define TWO_LOCALS(source, dest) oa::TwoLocals args = { (source), (dest) }
+
 	const StackChange StackChange::empty = StackChange(0, 0);
 
 	int NewObject::SetReferenceSignature(const StackManager &stack)
@@ -71,270 +76,290 @@ namespace instr
 
 	void Instruction::WriteBytes(MethodBuffer &buffer, MethodBuilder &builder) const
 	{
-		buffer.Write(opcode);
+		buffer.Write(opcode, oa::ALIGNMENT);
 		WriteArguments(buffer, builder);
 	}
 
 	void MoveLocal::WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const
 	{
-		buffer.Write(source);
-		buffer.Write(target);
+		TWO_LOCALS(source, target);
+		buffer.Write(args, oa::TWO_LOCALS_SIZE);
 	}
 
 	void DupInstr::WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const
 	{
-		buffer.Write(source);
-		buffer.Write(target);
+		TWO_LOCALS(source, target);
+		buffer.Write(args, oa::TWO_LOCALS_SIZE);
+	}
+
+	void LoadValue::WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const
+	{
+		ONE_LOCAL(target);
+		buffer.Write(args, oa::ONE_LOCAL_SIZE);
 	}
 
 	void LoadInt::WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const
 	{
-		WriteTarget(buffer);
-		buffer.Write(value);
+		oa::LocalAndValue<int64_t> args = { target, value };
+		buffer.Write(args, oa::LOCAL_AND_VALUE<int64_t>::SIZE);
 	}
 
 	void LoadUInt::WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const
 	{
-		WriteTarget(buffer);
-		buffer.Write(value);
+		oa::LocalAndValue<uint64_t> args = { target, value };
+		buffer.Write(args, oa::LOCAL_AND_VALUE<uint64_t>::SIZE);
 	}
 
 	void LoadReal::WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const
 	{
-		WriteTarget(buffer);
-		buffer.Write(value);
+		oa::LocalAndValue<double> args = { target, value };
+		buffer.Write(args, oa::LOCAL_AND_VALUE<double>::SIZE);
 	}
 
 	void LoadString::WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const
 	{
-		WriteTarget(buffer);
-		buffer.Write(value);
+		oa::LocalAndValue<String*> args = { target, value };
+		buffer.Write(args, oa::LOCAL_AND_VALUE<String*>::SIZE);
 	}
 
 	void LoadEnumValue::WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const
 	{
-		WriteTarget(buffer);
-		buffer.Write(type);
-		buffer.Write(value);
+		oa::LoadEnum args = { target, type, value };
+		buffer.Write(args, oa::LOAD_ENUM_SIZE);
 	}
 
 	void NewObject::WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const
 	{
-		buffer.Write(args);
-		buffer.Write(target);
-		buffer.Write(type);
-		buffer.Write(argCount);
+		oa::NewObject args = { this->args, target, argCount, type };
+		buffer.Write(args, oa::NEW_OBJECT_SIZE);
 	}
 
 	void CreateList::WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const
 	{
-		WriteTarget(buffer);
-		buffer.Write(capacity);
+		oa::LocalAndValue<int32_t> args = { target, capacity };
+		buffer.Write(args, oa::LOCAL_AND_VALUE<int32_t>::SIZE);
 	}
 
 	void CreateHash::WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const
 	{
-		WriteTarget(buffer);
-		buffer.Write(capacity);
+		oa::LocalAndValue<int32_t> args = { target, capacity };
+		buffer.Write(args, oa::LOCAL_AND_VALUE<int32_t>::SIZE);
 	}
 
 	void LoadStaticFunction::WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const
 	{
-		WriteTarget(buffer);
-		buffer.Write(method);
+		oa::LocalAndValue<Method*> args = { target, method };
+		buffer.Write(args, oa::LOCAL_AND_VALUE<Method*>::SIZE);
 	}
 
 	void LoadTypeToken::WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const
 	{
-		WriteTarget(buffer);
-		buffer.Write(type);
+		oa::LocalAndValue<Type*> args = { target, type };
+		buffer.Write(args, oa::LOCAL_AND_VALUE<Type*>::SIZE);
 	}
 
 	void LoadMember::WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const
 	{
-		buffer.Write(instance);
-		buffer.Write(output);
-		buffer.Write(member);
+		oa::TwoLocalsAndValue<String*> args = { instance, output, member };
+		buffer.Write(args, oa::TWO_LOCALS_AND_VALUE<String*>::SIZE);
 	}
 
 	void StoreMember::WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const
 	{
-		buffer.Write(args);
-		buffer.Write(member);
+		oa::LocalAndValue<String*> args = { this->args, member };
+		buffer.Write(args, oa::LOCAL_AND_VALUE<String*>::SIZE);
 	}
 
 	void LoadField::WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const
 	{
-		buffer.Write(instance);
-		buffer.Write(output);
-		buffer.Write(field);
+		oa::TwoLocalsAndValue<Field*> args = { instance, output, field };
+		buffer.Write(args, oa::TWO_LOCALS_AND_VALUE<Field*>::SIZE);
 	}
 
 	void StoreField::WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const
 	{
-		buffer.Write(args);
-		buffer.Write(field);
+		oa::LocalAndValue<Field*> args = { this->args, field };
+		buffer.Write(args, oa::LOCAL_AND_VALUE<Field*>::SIZE);
 	}
 
 	void LoadStaticField::WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const
 	{
-		WriteTarget(buffer);
-		buffer.Write(field);
+		oa::LocalAndValue<Field*> args = { target, field };
+		buffer.Write(args, oa::LOCAL_AND_VALUE<Field*>::SIZE);
 	}
 
 	void StoreStaticField::WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const
 	{
-		buffer.Write(value);
-		buffer.Write(field);
+		oa::LocalAndValue<Field*> args = { value, field };
+		buffer.Write(args, oa::LOCAL_AND_VALUE<Field*>::SIZE);
 	}
 
 	void LoadIterator::WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const
 	{
-		buffer.Write(value);
-		buffer.Write(output);
+		TWO_LOCALS(value, output);
+		buffer.Write(args, oa::TWO_LOCALS_SIZE);
 	}
 
 	void LoadType::WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const
 	{
-		buffer.Write(source);
-		buffer.Write(target);
+		TWO_LOCALS(source, target);
+		buffer.Write(args, oa::TWO_LOCALS_SIZE);
 	}
 
 	void LoadIndexer::WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const
 	{
-		buffer.Write(args);
-		buffer.Write(output);
-		buffer.Write(argCount);
+		oa::TwoLocalsAndValue<uint32_t> args = { this->args, output, argCount };
+		buffer.Write(args, oa::TWO_LOCALS_AND_VALUE<uint32_t>::SIZE);
 	}
 
 	void StoreIndexer::WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const
 	{
-		buffer.Write(args);
-		buffer.Write(argCount);
+		oa::LocalAndValue<uint32_t> args = { this->args, argCount };
+		buffer.Write(args, oa::LOCAL_AND_VALUE<uint32_t>::SIZE);
 	}
 
 	void Call::WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const
 	{
 		// The final instruction DOES include the value to be invoked
-		buffer.Write(args);
-		buffer.Write(output);
-		buffer.Write(argCount);
 		if (refSignature)
 		{
-			buffer.Write(refSignature);
+			oa::CallRef args = { this->args, output, argCount, refSignature };
+			buffer.Write(args, oa::CALL_REF_SIZE);
+		}
+		else
+		{
+			oa::Call args = { this->args, output, argCount };
+			buffer.Write(args, oa::CALL_SIZE);
 		}
 	}
 
 	void CallMember::WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const
 	{
-		buffer.Write(args);
-		buffer.Write(output);
-		buffer.Write(member);
-		buffer.Write(argCount);
 		if (refSignature)
 		{
-			buffer.Write(refSignature);
+			oa::CallMemberRef args = {
+				this->args,
+				output,
+				argCount,
+				refSignature,
+				member,
+			};
+			buffer.Write(args, oa::CALL_MEMBER_REF_SIZE);
+		}
+		else
+		{
+			oa::CallMember args = { this->args, output, argCount, member };
+			buffer.Write(args, oa::CALL_MEMBER_SIZE);
 		}
 	}
 
 	void StaticCall::WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const
 	{
 		// The scall instruction does NOT include the instance in its argCount.
-		buffer.Write(args);
-		buffer.Write(output);
-		buffer.Write(argCount);
-		buffer.Write(method);
+		oa::StaticCall args = { this->args, output, argCount, method };
+		buffer.Write(args, oa::STATIC_CALL_SIZE);
 	}
 
 	void Apply::WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const
 	{
-		buffer.Write(args);
-		buffer.Write(output);
+		TWO_LOCALS(this->args, output);
+		buffer.Write(args, oa::TWO_LOCALS_SIZE);
 	}
 
 	void StaticApply::WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const
 	{
-		buffer.Write(args);
-		buffer.Write(output);
-		buffer.Write(method);
+		oa::TwoLocalsAndValue<Method*> args = { this->args, output, method };
+		buffer.Write(args, oa::TWO_LOCALS_AND_VALUE<Method*>::SIZE);
 	}
 
 	void Branch::WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const
 	{
-		buffer.Write(builder.GetNewOffset(target, this));
+		oa::Branch args = { builder.GetNewOffset(target, this) };
+		buffer.Write(args, oa::BRANCH_SIZE);
 	}
 
 	void ConditionalBranch::WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const
 	{
-		buffer.Write(value);
-		buffer.Write(builder.GetNewOffset(target, this));
+		oa::ConditionalBranch args = { value, builder.GetNewOffset(target, this) };
+		buffer.Write(args, oa::CONDITIONAL_BRANCH_SIZE);
 	}
 
 	void BranchIfType::WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const
 	{
-		buffer.Write(value);
-		buffer.Write(type);
-		buffer.Write(builder.GetNewOffset(target, this));
+		oa::BranchIfType args = { value, builder.GetNewOffset(target, this), type };
+		buffer.Write(args, oa::BRANCH_IF_TYPE_SIZE);
 	}
 
 	void Switch::WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const
 	{
-		buffer.Write(value);
-		buffer.Write(targetCount);
+		oa::Switch args = { value, targetCount, 0 };
+		// Write the whole oa::Switch, but only increment it up to the first target
+		buffer.Write(args, sizeof(oa::Switch) - sizeof(int32_t));
 
+		// The buffer pointer should now be properly aligned for the first target,
+		// so let's just write them all out, shall we?
 		for (uint16_t i = 0; i < targetCount; i++)
 		{
-			buffer.Write(builder.GetNewOffset(targets[i], this));
+			buffer.Write(builder.GetNewOffset(targets[i], this), sizeof(int32_t));
 		}
+
+		// Make sure the buffer is properly aligned afterwards as well
+		buffer.AlignTo(oa::ALIGNMENT);
 	}
 
 	void BranchIfReference::WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const
 	{
-		buffer.Write(args);
-		buffer.Write(builder.GetNewOffset(target, this));
+		oa::ConditionalBranch args = { this->args, builder.GetNewOffset(target, this) };
+		buffer.Write(args, oa::CONDITIONAL_BRANCH_SIZE);
 	}
 
 	void BranchComparison::WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const
 	{
-		buffer.Write(args);
-		buffer.Write(builder.GetNewOffset(target, this));
+		oa::ConditionalBranch args = { this->args, builder.GetNewOffset(target, this) };
+		buffer.Write(args, oa::CONDITIONAL_BRANCH_SIZE);
 	}
 
 	void ExecOperator::WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const
 	{
-		buffer.Write(args);
-		buffer.Write(output);
-
-		// The op is negative (or 0xff, rather) when the operator
-		// is one of: <  <=  >  >=  ::
-		// (Because there are specialised opcodes for those)
-		// Similarly, there are specialised opcodes for == and <=>
+		// When op is negative (or 0xff, rather), it means the operator has
+		// a special opcode. This applies to: <  <=  >  >=  ::
+		// The operators == and <=> also have their own opcodes.
 		if ((uint8_t)op != 0xff && op != Operator::EQ && op != Operator::CMP)
 		{
-			buffer.Write(op);
+			// Gotta output the operator if it doesn't have its own opcode.
+			oa::TwoLocalsAndValue<Operator> args = { this->args, output, op };
+			buffer.Write(args, oa::TWO_LOCALS_AND_VALUE<Operator>::SIZE);
+		}
+		else
+		{
+			// Just the two local offsets are fine.
+			TWO_LOCALS(this->args, output);
+			buffer.Write(args, oa::TWO_LOCALS_SIZE);
 		}
 	}
 
 	void LoadLocalRef::WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const
 	{
-		buffer.Write(local);
+		ONE_LOCAL(local);
+		buffer.Write(args, oa::ONE_LOCAL_SIZE);
 	}
 
 	void LoadMemberRef::WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const
 	{
-		buffer.Write(instance);
-		buffer.Write(member);
+		oa::LocalAndValue<String*> args = { instance, member };
+		buffer.Write(args, oa::LOCAL_AND_VALUE<String*>::SIZE);
 	}
 
 	void LoadFieldRef::WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const
 	{
-		buffer.Write(instance);
-		buffer.Write(field);
+		oa::LocalAndValue<Field*> args = { instance, field };
+		buffer.Write(args, oa::LOCAL_AND_VALUE<Field*>::SIZE);
 	}
 
 	void LoadStaticFieldRef::WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const
 	{
-		buffer.Write(field);
+		oa::SingleValue<Field*> args = { field };
+		buffer.Write(args, oa::SINGLE_VALUE<Field*>::SIZE);
 	}
 } // namespace instr
 

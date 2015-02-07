@@ -5,16 +5,7 @@
 namespace ovum
 {
 
-#define T_ARG(ip, T)   (*reinterpret_cast<T*>(ip))
-#define VAL_ARG(ip)    T_ARG(ip, Value*)
-#define I16_ARG(ip)    T_ARG(ip, int16_t)
-#define I32_ARG(ip)    T_ARG(ip, int32_t)
-#define I64_ARG(ip)    T_ARG(ip, int64_t)
-#define U16_ARG(ip)    T_ARG(ip, uint16_t)
-#define U32_ARG(ip)    T_ARG(ip, uint32_t)
-#define U64_ARG(ip)    T_ARG(ip, uint64_t)
-#define OFF_ARG(ip,f)  (T_ARG(ip, LocalOffset) + (f))
-#define LOSZ           sizeof(LocalOffset) // For convenience, since it's used a LOT below
+#define OPC_ARGS(T) register const T *const args = reinterpret_cast<const T*>(ip)
 
 // Used in Thread::Evaluate. Semicolon intentionally missing.
 #define CHK(expr) do { if ((retCode = (expr)) != OVUM_SUCCESS) goto exitMethod; } while (0)
@@ -23,33 +14,35 @@ namespace ovum
 #define NEXT_INSTR() break
 
 #define SET_BOOL(ptarg, bvalue) \
-	{ \
-		(ptarg)->type = vm->types.Boolean; \
-		(ptarg)->integer = bvalue; \
+	{                                       \
+		(ptarg)->type = vm->types.Boolean;  \
+		(ptarg)->integer = bvalue;          \
 	}
 #define SET_INT(ptarg, ivalue) \
-	{ \
-		(ptarg)->type = vm->types.Int; \
-		(ptarg)->integer = ivalue; \
+	{                                       \
+		(ptarg)->type = vm->types.Int;      \
+		(ptarg)->integer = ivalue;          \
 	}
 #define SET_UINT(ptarg, uvalue) \
-	{ \
-		(ptarg)->type = vm->types.UInt; \
-		(ptarg)->uinteger = uvalue; \
+	{                                       \
+		(ptarg)->type = vm->types.UInt;     \
+		(ptarg)->uinteger = uvalue;         \
 	}
 #define SET_REAL(ptarg, rvalue) \
-	{ \
-		(ptarg)->type = vm->types.Real; \
-		(ptarg)->real = rvalue; \
+	{                                       \
+		(ptarg)->type = vm->types.Real;     \
+		(ptarg)->real = rvalue;             \
 	}
 #define SET_STRING(ptarg, svalue) \
-	{ \
-		(ptarg)->type = vm->types.String; \
-		(ptarg)->common.string = svalue; \
+	{                                       \
+		(ptarg)->type = vm->types.String;   \
+		(ptarg)->common.string = svalue;    \
 	}
 
 int Thread::Evaluate()
 {
+	namespace oa = ovum::opcode_args; // For convenience
+
 	if (pendingRequest != ThreadRequest::NONE)
 		HandleRequest();
 
@@ -62,7 +55,9 @@ int Thread::Evaluate()
 	while (true)
 	{
 		this->ip = ip;
-		switch (*ip++) // always skip opcode
+		// Always skip the opcode
+		ip += ALIGN_TO(sizeof(IntermediateOpcode), oa::ALIGNMENT);
+		switch (*this->ip)
 		{
 		TARGET(OPI_NOP) NEXT_INSTR(); // Really, do nothing!
 
@@ -91,42 +86,48 @@ int Thread::Evaluate()
 		// mvloc: LocalOffset source, LocalOffset destination
 		TARGET(OPI_MVLOC_LL) // local to local
 			{
-				*OFF_ARG(ip + LOSZ, f) = *OFF_ARG(ip, f);
-				ip += 2*LOSZ;
+				OPC_ARGS(oa::TwoLocals);
+				*args->Dest(f) = *args->Source(f);
+				ip += oa::TWO_LOCALS_SIZE;
 			}
 			NEXT_INSTR();
 		TARGET(OPI_MVLOC_SL) // stack to local
 			{
-				*OFF_ARG(ip + LOSZ, f) = *OFF_ARG(ip, f);
-				ip += 2*LOSZ;
+				OPC_ARGS(oa::TwoLocals);
+				*args->Dest(f) = *args->Source(f);
+				ip += oa::TWO_LOCALS_SIZE;
 				f->stackCount--;
 			}
 			NEXT_INSTR();
 		TARGET(OPI_MVLOC_LS) // local to stack
 			{
-				*OFF_ARG(ip + LOSZ, f) = *OFF_ARG(ip, f);
-				ip += 2*LOSZ;
+				OPC_ARGS(oa::TwoLocals);
+				*args->Dest(f) = *args->Source(f);
+				ip += oa::TWO_LOCALS_SIZE;
 				f->stackCount++;
 			}
 			NEXT_INSTR();
 		TARGET(OPI_MVLOC_SS) // stack to stack (shouldn't really be used!)
 			{
-				*OFF_ARG(ip + LOSZ, f) = *OFF_ARG(ip, f);
-				ip += 2*LOSZ;
+				OPC_ARGS(oa::TwoLocals);
+				*args->Dest(f) = *args->Source(f);
+				ip += oa::TWO_LOCALS_SIZE;
 			}
 			NEXT_INSTR();
 
 		// ldnull: LocalOffset dest
 		TARGET(OPI_LDNULL_L)
 			{
-				OFF_ARG(ip, f)->type = nullptr;
-				ip += LOSZ;
+				OPC_ARGS(oa::OneLocal);
+				args->Local(f)->type = nullptr;
+				ip += oa::ONE_LOCAL_SIZE;
 			}
 			NEXT_INSTR();
 		TARGET(OPI_LDNULL_S)
 			{
-				OFF_ARG(ip, f)->type = nullptr;
-				ip += LOSZ;
+				OPC_ARGS(oa::OneLocal);
+				args->Local(f)->type = nullptr;
+				ip += oa::ONE_LOCAL_SIZE;
 				f->stackCount++;
 			}
 			NEXT_INSTR();
@@ -134,14 +135,16 @@ int Thread::Evaluate()
 		// ldfalse: LocalOffset dest
 		TARGET(OPI_LDFALSE_L)
 			{
-				SET_BOOL(OFF_ARG(ip, f), false);
-				ip += LOSZ;
+				OPC_ARGS(oa::OneLocal);
+				SET_BOOL(args->Local(f), false);
+				ip += oa::ONE_LOCAL_SIZE;
 			}
 			NEXT_INSTR();
 		TARGET(OPI_LDFALSE_S)
 			{
-				SET_BOOL(OFF_ARG(ip, f), false);
-				ip += LOSZ;
+				OPC_ARGS(oa::OneLocal);
+				SET_BOOL(args->Local(f), false);
+				ip += oa::ONE_LOCAL_SIZE;
 				f->stackCount++;
 			}
 			NEXT_INSTR();
@@ -149,14 +152,16 @@ int Thread::Evaluate()
 		// ldtrue: LocalOffset dest
 		TARGET(OPI_LDTRUE_L)
 			{
-				SET_BOOL(OFF_ARG(ip, f), true);
-				ip += LOSZ;
+				OPC_ARGS(oa::OneLocal);
+				SET_BOOL(args->Local(f), true);
+				ip += oa::ONE_LOCAL_SIZE;
 			}
 			NEXT_INSTR();
 		TARGET(OPI_LDTRUE_S)
 			{
-				SET_BOOL(OFF_ARG(ip, f), true);
-				ip += LOSZ;
+				OPC_ARGS(oa::OneLocal);
+				SET_BOOL(args->Local(f), true);
+				ip += oa::ONE_LOCAL_SIZE;
 				f->stackCount++;
 			}
 			NEXT_INSTR();
@@ -164,14 +169,16 @@ int Thread::Evaluate()
 		// ldc.i: LocalOffset dest, int64_t value
 		TARGET(OPI_LDC_I_L)
 			{
-				SET_INT(OFF_ARG(ip, f), I64_ARG(ip + LOSZ));
-				ip += LOSZ + sizeof(int64_t);
+				OPC_ARGS(oa::LocalAndValue<int64_t>);
+				SET_INT(args->Local(f), args->value);
+				ip += oa::LOCAL_AND_VALUE<int64_t>::SIZE;
 			}
 			NEXT_INSTR();
 		TARGET(OPI_LDC_I_S)
 			{
-				SET_INT(OFF_ARG(ip, f), I64_ARG(ip + LOSZ));
-				ip += LOSZ + sizeof(int64_t);
+				OPC_ARGS(oa::LocalAndValue<int64_t>);
+				SET_INT(args->Local(f), args->value);
+				ip += oa::LOCAL_AND_VALUE<int64_t>::SIZE;
 				f->stackCount++;
 			}
 			NEXT_INSTR();
@@ -179,14 +186,16 @@ int Thread::Evaluate()
 		// ldc.u: LocalOffset dest, uint64_t value
 		TARGET(OPI_LDC_U_L)
 			{
-				SET_UINT(OFF_ARG(ip, f), U64_ARG(ip + LOSZ));
-				ip += LOSZ + sizeof(uint64_t);
+				OPC_ARGS(oa::LocalAndValue<uint64_t>);
+				SET_UINT(args->Local(f), args->value);
+				ip += oa::LOCAL_AND_VALUE<uint64_t>::SIZE;
 			}
 			NEXT_INSTR();
 		TARGET(OPI_LDC_U_S)
 			{
-				SET_UINT(OFF_ARG(ip, f), U64_ARG(ip + LOSZ));
-				ip += LOSZ + sizeof(uint64_t);
+				OPC_ARGS(oa::LocalAndValue<uint64_t>);
+				SET_UINT(args->Local(f), args->value);
+				ip += oa::LOCAL_AND_VALUE<uint64_t>::SIZE;
 				f->stackCount++;
 			}
 			NEXT_INSTR();
@@ -194,14 +203,16 @@ int Thread::Evaluate()
 		// ldc.r: LocalOffset dest, double value
 		TARGET(OPI_LDC_R_L)
 			{
-				SET_REAL(OFF_ARG(ip, f), T_ARG(ip + LOSZ, double));
-				ip += LOSZ + sizeof(double);
+				OPC_ARGS(oa::LocalAndValue<double>);
+				SET_REAL(args->Local(f), args->value);
+				ip += oa::LOCAL_AND_VALUE<double>::SIZE;
 			}
 			NEXT_INSTR();
 		TARGET(OPI_LDC_R_S)
 			{
-				SET_REAL(OFF_ARG(ip, f), T_ARG(ip + LOSZ, double));
-				ip += LOSZ + sizeof(int64_t);
+				OPC_ARGS(oa::LocalAndValue<double>);
+				SET_REAL(args->Local(f), args->value);
+				ip += oa::LOCAL_AND_VALUE<double>::SIZE;
 				f->stackCount++;
 			}
 			NEXT_INSTR();
@@ -209,14 +220,16 @@ int Thread::Evaluate()
 		// ldstr: LocalOffset dest, String *value
 		TARGET(OPI_LDSTR_L)
 			{
-				SET_STRING(OFF_ARG(ip, f), T_ARG(ip + LOSZ, String*));
-				ip += LOSZ + sizeof(String*);
+				OPC_ARGS(oa::LocalAndValue<String*>);
+				SET_STRING(args->Local(f), args->value);
+				ip += oa::LOCAL_AND_VALUE<String*>::SIZE;
 			}
 			NEXT_INSTR();
 		TARGET(OPI_LDSTR_S)
 			{
-				SET_STRING(OFF_ARG(ip, f), T_ARG(ip + LOSZ, String*));
-				ip += LOSZ + sizeof(String*);
+				OPC_ARGS(oa::LocalAndValue<String*>);
+				SET_STRING(args->Local(f), args->value);
+				ip += oa::LOCAL_AND_VALUE<String*>::SIZE;
 				f->stackCount++;
 			}
 			NEXT_INSTR();
@@ -224,14 +237,16 @@ int Thread::Evaluate()
 		// ldargc: LocalOffset dest
 		TARGET(OPI_LDARGC_L)
 			{
-				SET_INT(OFF_ARG(ip, f), f->argc);
-				ip += LOSZ;
+				OPC_ARGS(oa::OneLocal);
+				SET_INT(args->Local(f), f->argc);
+				ip += oa::ONE_LOCAL_SIZE;
 			}
 			NEXT_INSTR();
 		TARGET(OPI_LDARGC_S)
 			{
-				SET_INT(OFF_ARG(ip, f), f->argc);
-				ip += LOSZ;
+				OPC_ARGS(oa::OneLocal);
+				SET_INT(args->Local(f), f->argc);
+				ip += oa::ONE_LOCAL_SIZE;
 				f->stackCount++;
 			}
 			NEXT_INSTR();
@@ -239,55 +254,38 @@ int Thread::Evaluate()
 		// ldenum: LocalOffset dest, Type *type, int64_t value
 		TARGET(OPI_LDENUM_L)
 			{
-				register Value *const dest = OFF_ARG(ip, f);
-				ip += LOSZ;
-
-				dest->type = T_ARG(ip, Type*);
-				dest->integer = I64_ARG(ip + sizeof(Type*));
-				ip += sizeof(Type*) + sizeof(int64_t);
+				OPC_ARGS(oa::LoadEnum);
+				register Value *const dest = args->Dest(f);
+				dest->type = args->type;
+				dest->integer = args->value;
+				ip += oa::LOAD_ENUM_SIZE;
 			}
 			NEXT_INSTR();
 		TARGET(OPI_LDENUM_S)
 			{
-				register Value *const dest = OFF_ARG(ip, f);
-				ip += LOSZ;
-
-				dest->type = T_ARG(ip, Type*);
-				dest->integer = I64_ARG(ip + sizeof(Type*));
-				ip += sizeof(Type*) + sizeof(int64_t);
-
+				OPC_ARGS(oa::LoadEnum);
+				register Value *const dest = args->Dest(f);
+				dest->type = args->type;
+				dest->integer = args->value;
+				ip += oa::LOAD_ENUM_SIZE;
 				f->stackCount++;
 			}
 			NEXT_INSTR();
 
-		// newobj: LocalOffset args, LocalOffset dest, Type *type, uint16_t argc
+		// newobj: LocalOffset args, LocalOffset dest, uint32_t argc, Type *type
 		TARGET(OPI_NEWOBJ_L)
 			{
-				register Value *const args = OFF_ARG(ip, f);
-				register Value *const dest = OFF_ARG(ip + LOSZ, f);
-				ip += 2*LOSZ;
-
-				register Type *const type = T_ARG(ip, Type*);
-				ip += sizeof(Type*);
-
-				CHK(GetGC()->ConstructLL(this, type, U16_ARG(ip), args, dest));
-
+				OPC_ARGS(oa::NewObject);
+				CHK(GetGC()->ConstructLL(this, args->type, args->argc, args->Args(f), args->Dest(f)));
+				ip += oa::NEW_OBJECT_SIZE;
 				// ConstructLL pops the arguments
-				ip += sizeof(uint16_t);
 			}
 			NEXT_INSTR();
 		TARGET(OPI_NEWOBJ_S)
 			{
-				register Value *const args = OFF_ARG(ip, f);
-				register Value *const dest = OFF_ARG(ip + LOSZ, f);
-				ip += 2*LOSZ;
-
-				register Type *const type = T_ARG(ip, Type*);
-				ip += sizeof(Type*);
-
-				CHK(GetGC()->ConstructLL(this, type, U16_ARG(ip), args, dest));
-
-				ip += sizeof(uint16_t);
+				OPC_ARGS(oa::NewObject);
+				CHK(GetGC()->ConstructLL(this, args->type, args->argc, args->Args(f), args->Dest(f)));
+				ip += oa::NEW_OBJECT_SIZE;
 				// ConstructLL pops the arguments
 				f->stackCount++;
 			}
@@ -296,23 +294,24 @@ int Thread::Evaluate()
 		// list: LocalOffset dest, int32_t capacity
 		TARGET(OPI_LIST_L)
 			{
-				Value result;
+				OPC_ARGS(oa::LocalAndValue<int32_t>);
+				Value result; // Can't put it in dest until it's fully initialized
 				CHK(GetGC()->Alloc(this, vm->types.List, sizeof(ListInst), &result));
-				CHK(vm->functions.initListInstance(this, result.common.list, I32_ARG(ip + LOSZ)));
+				CHK(vm->functions.initListInstance(this, result.common.list, args->value));
+				*args->Local(f) = result;
 
-				*OFF_ARG(ip, f) = result;
-				ip += LOSZ + sizeof(int32_t);
+				ip += oa::LOCAL_AND_VALUE<int32_t>::SIZE;
 			}
 			NEXT_INSTR();
 		TARGET(OPI_LIST_S)
 			{
+				OPC_ARGS(oa::LocalAndValue<int32_t>);
 				Value result; // Can't put it in dest until it's fully initialized
 				CHK(GetGC()->Alloc(this, vm->types.List, sizeof(ListInst), &result));
-				CHK(vm->functions.initListInstance(this, result.common.list, I32_ARG(ip + LOSZ)));
+				CHK(vm->functions.initListInstance(this, result.common.list, args->value));
+				*args->Local(f) = result;
 
-				*OFF_ARG(ip, f) = result;
-				ip += LOSZ + sizeof(int32_t);
-
+				ip += oa::LOCAL_AND_VALUE<int32_t>::SIZE;
 				f->stackCount++;
 			}
 			NEXT_INSTR();
@@ -320,24 +319,24 @@ int Thread::Evaluate()
 		// hash: LocalOffset dest, int32_t capacity
 		TARGET(OPI_HASH_L)
 			{
+				OPC_ARGS(oa::LocalAndValue<int32_t>);
 				Value result; // Can't put it in dest until it's fully initialized
 				CHK(GetGC()->Alloc(this, vm->types.Hash, sizeof(HashInst), &result));
-				CHK(vm->functions.initHashInstance(this, result.common.hash, I32_ARG(ip + LOSZ)));
+				CHK(vm->functions.initHashInstance(this, result.common.hash, args->value));
+				*args->Local(f) = result;
 
-				*OFF_ARG(ip, f) = result;
-
-				ip += LOSZ + sizeof(int32_t);
+				ip += oa::LOCAL_AND_VALUE<int32_t>::SIZE;
 			}
 			NEXT_INSTR();
 		TARGET(OPI_HASH_S)
 			{
+				OPC_ARGS(oa::LocalAndValue<int32_t>);
 				Value result; // Can't put it in dest until it's fully initialized
 				CHK(GetGC()->Alloc(this, vm->types.Hash, sizeof(HashInst), &result));
-				CHK(vm->functions.initHashInstance(this, result.common.hash, I32_ARG(ip + LOSZ)));
+				CHK(vm->functions.initHashInstance(this, result.common.hash, args->value));
+				*args->Local(f) = result;
 
-				*OFF_ARG(ip, f) = result;
-
-				ip += LOSZ + sizeof(int32_t);
+				ip += oa::LOCAL_AND_VALUE<int32_t>::SIZE;
 				f->stackCount++;
 			}
 			NEXT_INSTR();
@@ -345,37 +344,37 @@ int Thread::Evaluate()
 		// ldfld: LocalOffset instance, LocalOffset dest, Field *field
 		TARGET(OPI_LDFLD_L)
 			{
-				register Value *const inst = OFF_ARG(ip, f);
-				register Value *const dest = OFF_ARG(ip + LOSZ, f);
-				ip += 2*LOSZ;
-
-				CHK(T_ARG(ip, Field*)->ReadField(this, inst, dest));
-				ip += sizeof(Field*);
+				OPC_ARGS(oa::TwoLocalsAndValue<Field*>);
+				CHK(args->value->ReadField(this, args->Source(f), args->Dest(f)));
+				ip += oa::TWO_LOCALS_AND_VALUE<Field*>::SIZE;
+				// The instance is read from the stack, and the field
+				// value is put in a local. One item removed.
 				f->stackCount--;
 			}
 			NEXT_INSTR();
 		TARGET(OPI_LDFLD_S)
 			{
-				register Value *const inst = OFF_ARG(ip, f);
-				register Value *const dest = OFF_ARG(ip + LOSZ, f);
-				ip += 2*LOSZ;
-											
-				CHK(T_ARG(ip, Field*)->ReadField(this, inst, dest));
-				ip += sizeof(Field*);
+				OPC_ARGS(oa::TwoLocalsAndValue<Field*>);
+				CHK(args->value->ReadField(this, args->Source(f), args->Dest(f)));
+				ip += oa::TWO_LOCALS_AND_VALUE<Field*>::SIZE;
+				// The instance is read from the stack, and the field
+				// value is pushed right back onto it. No change.
 			}
 			NEXT_INSTR();
 
 		// ldsfld: LocalOffset dest, Field *field
 		TARGET(OPI_LDSFLD_L)
 			{
-				T_ARG(ip + LOSZ, Field*)->staticValue->Read(OFF_ARG(ip, f));
-				ip += LOSZ + sizeof(Field*);
+				OPC_ARGS(oa::LocalAndValue<Field*>);
+				args->value->staticValue->Read(args->Local(f));
+				ip += oa::LOCAL_AND_VALUE<Field*>::SIZE;
 			}
 			NEXT_INSTR();
 		TARGET(OPI_LDSFLD_S)
 			{
-				T_ARG(ip + LOSZ, Field*)->staticValue->Read(OFF_ARG(ip, f));
-				ip += LOSZ + sizeof(Field*);
+				OPC_ARGS(oa::LocalAndValue<Field*>);
+				args->value->staticValue->Read(args->Local(f));
+				ip += oa::LOCAL_AND_VALUE<Field*>::SIZE;
 				f->stackCount++;
 			}
 			NEXT_INSTR();
@@ -383,19 +382,17 @@ int Thread::Evaluate()
 		// ldmem: LocalOffset instance, LocalOffset dest, String *name
 		TARGET(OPI_LDMEM_L)
 			{
-				CHK(LoadMemberLL(OFF_ARG(ip, f), // inst
-					T_ARG(ip + 2*LOSZ, String*), // name
-					OFF_ARG(ip + LOSZ, f))); // dest
-				ip += 2*LOSZ + sizeof(String*);
+				OPC_ARGS(oa::TwoLocalsAndValue<String*>);
+				CHK(LoadMemberLL(args->Source(f), args->value, args->Dest(f)));
+				ip += oa::TWO_LOCALS_AND_VALUE<String*>::SIZE;
 				// LoadMemberLL pops the instance
 			}
 			NEXT_INSTR();
 		TARGET(OPI_LDMEM_S)
 			{
-				CHK(LoadMemberLL(OFF_ARG(ip, f), // inst
-					T_ARG(ip + 2*LOSZ, String*), // name
-					OFF_ARG(ip + LOSZ, f))); // dest
-				ip += 2*LOSZ + sizeof(String*);
+				OPC_ARGS(oa::TwoLocalsAndValue<String*>);
+				CHK(LoadMemberLL(args->Source(f), args->value, args->Dest(f)));
+				ip += oa::TWO_LOCALS_AND_VALUE<String*>::SIZE;
 				// LoadMemberLL pops the instance
 				f->stackCount++;
 			}
@@ -404,22 +401,18 @@ int Thread::Evaluate()
 		// lditer: LocalOffset instance, LocalOffest dest
 		TARGET(OPI_LDITER_L)
 			{
-				CHK(InvokeMemberLL(static_strings::_iter, 0,
-					OFF_ARG(ip, f), // value
-					OFF_ARG(ip + LOSZ, f), // result
-					0));
+				OPC_ARGS(oa::TwoLocals);
+				CHK(InvokeMemberLL(static_strings::_iter, 0, args->Source(f), args->Dest(f), 0));
 				// InvokeMemberLL pops the instance and all 0 of the arguments
-				ip += 2*LOSZ;
+				ip += oa::TWO_LOCALS_SIZE;
 			}
 			NEXT_INSTR();
 		TARGET(OPI_LDITER_S)
 			{
-				CHK(InvokeMemberLL(static_strings::_iter, 0,
-					OFF_ARG(ip, f), // value
-					OFF_ARG(ip + LOSZ, f), // result
-					0));
+				OPC_ARGS(oa::TwoLocals);
+				CHK(InvokeMemberLL(static_strings::_iter, 0, args->Source(f), args->Dest(f), 0));
 				// InvokeMemberLL pops the instance and all 0 of the arguments
-				ip += 2*LOSZ;
+				ip += oa::TWO_LOCALS_SIZE;
 				f->stackCount++;
 			}
 			NEXT_INSTR();
@@ -427,56 +420,52 @@ int Thread::Evaluate()
 		// ldtype: LocalOffset instance, LocalOffset dest
 		TARGET(OPI_LDTYPE_L)
 			{
-				register Value *const inst = OFF_ARG(ip, f);
-				register Value *const dest = OFF_ARG(ip + LOSZ, f);
+				OPC_ARGS(oa::TwoLocals);
+				register Value *const inst = args->Source(f);
 
 				if (inst->type)
-					CHK(inst->type->GetTypeToken(this, dest));
+					CHK(inst->type->GetTypeToken(this, args->Dest(f)));
 				else
-					dest->type = nullptr;
+					args->Dest(f)->type = nullptr;
 
-				ip += 2*LOSZ;
+				ip += oa::TWO_LOCALS_SIZE;
 				f->stackCount--;
 			}
 			NEXT_INSTR();
 		TARGET(OPI_LDTYPE_S)
 			{
-				register Value *const inst = OFF_ARG(ip, f);
-				register Value *const dest = OFF_ARG(ip + LOSZ, f);
+				OPC_ARGS(oa::TwoLocals);
+				register Value *const inst = args->Source(f);
 
 				if (inst->type)
-					CHK(inst->type->GetTypeToken(this, dest));
+					CHK(inst->type->GetTypeToken(this, args->Dest(f)));
 				else
-					dest->type = nullptr;
+					args->Dest(f)->type = nullptr;
 
-				ip += 2*LOSZ;
+				ip += oa::TWO_LOCALS_SIZE;
 			}
 			NEXT_INSTR();
 
-		// ldidx: LocalOffset args, LocalOffset dest, uint16_t argc
+		// ldidx: LocalOffset args, LocalOffset dest, uint32_t argc
 		// Note: argc does not include the instance
 		TARGET(OPI_LDIDX_L)
 			{
-				register Value *const args = OFF_ARG(ip, f);
-				register Value *const dest = OFF_ARG(ip + LOSZ, f);
-				ip += 2*LOSZ;
+				OPC_ARGS(oa::TwoLocalsAndValue<uint32_t>);
 
-				CHK(LoadIndexerLL(U16_ARG(ip), args, dest));
+				CHK(LoadIndexerLL(args->value, args->Source(f), args->Dest(f)));
 
 				// LoadIndexerLL decrements the stack height by the argument count + instance
-				ip += sizeof(uint16_t);
+				ip += oa::TWO_LOCALS_AND_VALUE<uint32_t>::SIZE;
 			}
 			NEXT_INSTR();
 		TARGET(OPI_LDIDX_S)
 			{
-				register Value *const args = OFF_ARG(ip, f);
-				register Value *const dest = OFF_ARG(ip + LOSZ, f);
-				ip += 2*LOSZ;
+				OPC_ARGS(oa::TwoLocalsAndValue<uint32_t>);
 
-				CHK(LoadIndexerLL(U16_ARG(ip), args, dest));
+				CHK(LoadIndexerLL(args->value, args->Source(f), args->Dest(f)));
 
 				// LoadIndexerLL decrements the stack height by the argument count + instance
-				ip += sizeof(uint16_t);
+				ip += oa::TWO_LOCALS_AND_VALUE<uint32_t>::SIZE;
 				f->stackCount++;
 			}
 			NEXT_INSTR();
@@ -484,23 +473,22 @@ int Thread::Evaluate()
 		// ldsfn: LocalOffset dest, Method *method
 		TARGET(OPI_LDSFN_L)
 			{
-				register Value *const dest = OFF_ARG(ip, f);
+				OPC_ARGS(oa::LocalAndValue<Method*>);
+				register Value *const dest = args->Local(f);
 				CHK(GetGC()->Alloc(this, vm->types.Method, sizeof(MethodInst), dest));
-				ip += LOSZ;
+				dest->common.method->method = args->value;
 
-				dest->common.method->method = T_ARG(ip, Method*);
-				ip += sizeof(Method*);
+				ip += oa::LOCAL_AND_VALUE<Method*>::SIZE;
 			}
 			NEXT_INSTR();
 		TARGET(OPI_LDSFN_S)
 			{
-				register Value *const dest = OFF_ARG(ip, f);
+				OPC_ARGS(oa::LocalAndValue<Method*>);
+				register Value *const dest = args->Local(f);
 				CHK(GetGC()->Alloc(this, vm->types.Method, sizeof(MethodInst), dest));
-				ip += LOSZ;
+				dest->common.method->method = args->value;
 
-				dest->common.method->method = T_ARG(ip, Method*);
-				ip += sizeof(Method*);
-
+				ip += oa::LOCAL_AND_VALUE<Method*>::SIZE;
 				f->stackCount++;
 			}
 			NEXT_INSTR();
@@ -508,108 +496,90 @@ int Thread::Evaluate()
 		// ldtypetkn: LocalOffset dest, Type *type
 		TARGET(OPI_LDTYPETKN_L)
 			{
-				CHK(T_ARG(ip + LOSZ, Type*)->GetTypeToken(this, OFF_ARG(ip, f)));
-				ip += LOSZ + sizeof(Type*);
+				OPC_ARGS(oa::LocalAndValue<Type*>);
+				CHK(args->value->GetTypeToken(this, args->Local(f)));
+				ip += oa::LOCAL_AND_VALUE<Type*>::SIZE;
 			}
 			NEXT_INSTR();
 		TARGET(OPI_LDTYPETKN_S)
 			{
-				CHK(T_ARG(ip + LOSZ, Type*)->GetTypeToken(this, OFF_ARG(ip, f)));
-				ip += LOSZ + sizeof(Type*);
+				OPC_ARGS(oa::LocalAndValue<Type*>);
+				CHK(args->value->GetTypeToken(this, args->Local(f)));
+				ip += oa::LOCAL_AND_VALUE<Type*>::SIZE;
 				f->stackCount++;
 			}
 			NEXT_INSTR();
 
-		// call: LocalOffset args, LocalOffset output, uint16_t argc
+		// call: LocalOffset args, LocalOffset dest, uint32_t argc
 		TARGET(OPI_CALL_L)
 			{
-				register Value *const args   = OFF_ARG(ip, f);
-				register Value *const output = OFF_ARG(ip + LOSZ, f);
-				ip += 2*LOSZ;
-
-				CHK(InvokeLL(U16_ARG(ip), args, output, 0));
-
-				ip += sizeof(uint16_t);
+				OPC_ARGS(oa::Call);
+				CHK(InvokeLL(args->argc, args->Args(f), args->Dest(f), 0));
+				ip += oa::CALL_SIZE;
 				// InvokeLL pops the arguments
 			}
 			NEXT_INSTR();
 		TARGET(OPI_CALL_S)
 			{
-				register Value *const args   = OFF_ARG(ip, f);
-				register Value *const output = OFF_ARG(ip + LOSZ, f);
-				ip += 2*LOSZ;
-
-				CHK(InvokeLL(U16_ARG(ip), args, output, 0));
-
-				ip += sizeof(uint16_t);
+				OPC_ARGS(oa::Call);
+				CHK(InvokeLL(args->argc, args->Args(f), args->Dest(f), 0));
+				ip += oa::CALL_SIZE;
 				// InvokeLL pops the arguments
 				f->stackCount++;
 			}
 			NEXT_INSTR();
 
-		// scall: LocalOffset args, LocalOffset output, uint16_t argc, MethodOverload *method
+		// scall: LocalOffset args, LocalOffset dest, uint32_t argc, MethodOverload *method
 		TARGET(OPI_SCALL_L)
 			{
-				register Value *const args   = OFF_ARG(ip, f);
-				register Value *const output = OFF_ARG(ip + LOSZ, f);
-				ip += 2*LOSZ;
-				
-				CHK(InvokeMethodOverload(T_ARG(ip + sizeof(uint16_t), MethodOverload*),
-					U16_ARG(ip), args, output));
-
-				ip += sizeof(uint16_t) + sizeof(MethodOverload*);
+				OPC_ARGS(oa::StaticCall);
+				CHK(InvokeMethodOverload(args->method, args->argc, args->Args(f), args->Dest(f)));
+				ip += oa::STATIC_CALL_SIZE;
 			}
 			NEXT_INSTR();
 		TARGET(OPI_SCALL_S)
 			{
-				register Value *const args   = OFF_ARG(ip, f);
-				register Value *const output = OFF_ARG(ip + LOSZ, f);
-				ip += 2*LOSZ;
-				
-				CHK(InvokeMethodOverload(T_ARG(ip + sizeof(uint16_t), MethodOverload*),
-					U16_ARG(ip), args, output));
-
-				ip += sizeof(uint16_t) + sizeof(MethodOverload*);
+				OPC_ARGS(oa::StaticCall);
+				CHK(InvokeMethodOverload(args->method, args->argc, args->Args(f), args->Dest(f)));
+				ip += oa::STATIC_CALL_SIZE;
 				f->stackCount++;
 			}
 			NEXT_INSTR();
 
-		// apply: LocalOffset args, LocalOffset output
+		// apply: LocalOffset args, LocalOffset dest
 		TARGET(OPI_APPLY_L)
 			{
-				CHK(InvokeApplyLL(OFF_ARG(ip, f), // args
-					OFF_ARG(ip + LOSZ, f))); // output
-
-				ip += 2*LOSZ;
+				OPC_ARGS(oa::TwoLocals);
+				CHK(InvokeApplyLL(args->Source(f), args->Dest(f)));
+				ip += oa::TWO_LOCALS_SIZE;
+				// InvokeApplyLL pops the arguments
 			}
 			NEXT_INSTR();
 		TARGET(OPI_APPLY_S)
 			{
-				CHK(InvokeApplyLL(OFF_ARG(ip, f), // args
-					OFF_ARG(ip + LOSZ, f))); // output
-
-				ip += 2*LOSZ;
+				OPC_ARGS(oa::TwoLocals);
+				CHK(InvokeApplyLL(args->Source(f), args->Dest(f)));
+				ip += oa::TWO_LOCALS_SIZE;
+				// InvokeApplyLL pops the arguments
 				f->stackCount++;
 			}
 			NEXT_INSTR();
 
-		// sapply: LocalOffset args, LocalOffset output, Method *method
+		// sapply: LocalOffset args, LocalOffset dest, Method *method
 		TARGET(OPI_SAPPLY_L)
 			{
-				CHK(InvokeApplyMethodLL(T_ARG(ip + 2*LOSZ, Method*),
-					OFF_ARG(ip, f), // args
-					OFF_ARG(ip + LOSZ, f))); // output
-
-				ip += 2*LOSZ + sizeof(Method*);
+				OPC_ARGS(oa::TwoLocalsAndValue<Method*>);
+				CHK(InvokeApplyMethodLL(args->value, args->Source(f), args->Dest(f)));
+				ip += oa::TWO_LOCALS_AND_VALUE<Method*>::SIZE;
+				// InvokeApplyMethodLL pops the arguments
 			}
 			NEXT_INSTR();
 		TARGET(OPI_SAPPLY_S)
 			{
-				CHK(InvokeApplyMethodLL(T_ARG(ip + 2*LOSZ, Method*),
-					OFF_ARG(ip, f), // args
-					OFF_ARG(ip + LOSZ, f))); // output
-
-				ip += 2*LOSZ + sizeof(Method*);
+				OPC_ARGS(oa::TwoLocalsAndValue<Method*>);
+				CHK(InvokeApplyMethodLL(args->value, args->Source(f), args->Dest(f)));
+				ip += oa::TWO_LOCALS_AND_VALUE<Method*>::SIZE;
+				// InvokeApplyMethodLL pops the arguments
 				f->stackCount++;
 			}
 			NEXT_INSTR();
@@ -617,33 +587,37 @@ int Thread::Evaluate()
 		// br: int32_t offset
 		TARGET(OPI_BR)
 			{
-				ip += I32_ARG(ip);
-				ip += sizeof(int32_t);
+				OPC_ARGS(oa::Branch);
+				ip += args->offset;
+				ip += oa::BRANCH_SIZE;
 			}
 			NEXT_INSTR();
 
 		// leave: int32_t offset
 		TARGET(OPI_LEAVE)
 			{
-				register const int32_t offset = I32_ARG(ip);
-				CHK(EvaluateLeave(f, offset));
-				ip += sizeof(int32_t) + offset;
+				OPC_ARGS(oa::Branch);
+				CHK(EvaluateLeave(f, args->offset));
+				ip += args->offset;
+				ip += oa::BRANCH_SIZE;
 			}
 			NEXT_INSTR();
 
 		// brnull: LocalOffset value, int32_t offset
 		TARGET(OPI_BRNULL_L)
 			{
-				if (OFF_ARG(ip, f)->type == nullptr)
-					ip += I32_ARG(ip + LOSZ);
-				ip += LOSZ + sizeof(int32_t);
+				OPC_ARGS(oa::ConditionalBranch);
+				if (args->Value(f)->type == nullptr)
+					ip += args->offset;
+				ip += oa::CONDITIONAL_BRANCH_SIZE;
 			}
 			NEXT_INSTR();
 		TARGET(OPI_BRNULL_S)
 			{
-				if (OFF_ARG(ip, f)->type == nullptr)
-					ip += I32_ARG(ip + LOSZ);
-				ip += LOSZ + sizeof(int32_t);
+				OPC_ARGS(oa::ConditionalBranch);
+				if (args->Value(f)->type == nullptr)
+					ip += args->offset;
+				ip += oa::CONDITIONAL_BRANCH_SIZE;
 				f->stackCount--;
 			}
 			NEXT_INSTR();
@@ -651,16 +625,18 @@ int Thread::Evaluate()
 		// brinst: LocalOffset value, int32_t offset
 		TARGET(OPI_BRINST_L)
 			{
-				if (OFF_ARG(ip, f)->type != nullptr)
-					ip += I32_ARG(ip + LOSZ);
-				ip += LOSZ + sizeof(int32_t);
+				OPC_ARGS(oa::ConditionalBranch);
+				if (args->Value(f)->type != nullptr)
+					ip += args->offset;
+				ip += oa::CONDITIONAL_BRANCH_SIZE;
 			}
 			NEXT_INSTR();
 		TARGET(OPI_BRINST_S)
 			{
-				if (OFF_ARG(ip, f)->type != nullptr)
-					ip += I32_ARG(ip + LOSZ);
-				ip += LOSZ + sizeof(int32_t);
+				OPC_ARGS(oa::ConditionalBranch);
+				if (args->Value(f)->type != nullptr)
+					ip += args->offset;
+				ip += oa::CONDITIONAL_BRANCH_SIZE;
 				f->stackCount--;
 			}
 			NEXT_INSTR();
@@ -668,16 +644,18 @@ int Thread::Evaluate()
 		// brfalse: LocalOffset value, int32_t offset
 		TARGET(OPI_BRFALSE_L)
 			{
-				if (IsFalse_(OFF_ARG(ip, f)))
-					ip += I32_ARG(ip + LOSZ);
-				ip += LOSZ + sizeof(int32_t);
+				OPC_ARGS(oa::ConditionalBranch);
+				if (IsFalse_(args->Value(f)))
+					ip += args->offset;
+				ip += oa::CONDITIONAL_BRANCH_SIZE;
 			}
 			NEXT_INSTR();
 		TARGET(OPI_BRFALSE_S)
 			{
-				if (IsFalse_(OFF_ARG(ip, f)))
-					ip += I32_ARG(ip + LOSZ);
-				ip += LOSZ + sizeof(int32_t);
+				OPC_ARGS(oa::ConditionalBranch);
+				if (IsFalse_(args->Value(f)))
+					ip += args->offset;
+				ip += oa::CONDITIONAL_BRANCH_SIZE;
 				f->stackCount--;
 			}
 			NEXT_INSTR();
@@ -685,69 +663,65 @@ int Thread::Evaluate()
 		// brtrue: LocalOffset value, int32_t offset
 		TARGET(OPI_BRTRUE_L)
 			{
-				if (IsTrue_(OFF_ARG(ip, f)))
-					ip += I32_ARG(ip + LOSZ);
-				ip += LOSZ + sizeof(int32_t);
+				OPC_ARGS(oa::ConditionalBranch);
+				if (IsTrue_(args->Value(f)))
+					ip += args->offset;
+				ip += oa::CONDITIONAL_BRANCH_SIZE;
 			}
 			NEXT_INSTR();
 		TARGET(OPI_BRTRUE_S)
 			{
-				if (IsTrue_(OFF_ARG(ip, f)))
-					ip += I32_ARG(ip + LOSZ);
-				ip += LOSZ + sizeof(int32_t);
+				OPC_ARGS(oa::ConditionalBranch);
+				if (IsTrue_(args->Value(f)))
+					ip += args->offset;
+				ip += oa::CONDITIONAL_BRANCH_SIZE;
 				f->stackCount--;
 			}
 			NEXT_INSTR();
 
-		// brtype: LocalOffset value, Type *type, int32_t offset
+		// brtype: LocalOffset value, int32_t offset, Type *type
 		TARGET(OPI_BRTYPE_L)
 			{
-				if (Type::ValueIsType(OFF_ARG(ip, f), T_ARG(ip + LOSZ, Type*)))
-					ip += I32_ARG(ip + LOSZ + sizeof(Type*));
-
-				ip += LOSZ + sizeof(Type*) + sizeof(int32_t);
+				OPC_ARGS(oa::BranchIfType);
+				if (Type::ValueIsType(args->Value(f), args->type))
+					ip += args->offset;
+				ip += oa::BRANCH_IF_TYPE_SIZE;
 			}
 			NEXT_INSTR();
 		TARGET(OPI_BRTYPE_S)
 			{
-				if (Type::ValueIsType(OFF_ARG(ip, f), T_ARG(ip + LOSZ, Type*)))
-					ip += I32_ARG(ip + LOSZ + sizeof(Type*));
-
-				ip += LOSZ + sizeof(Type*) + sizeof(int32_t);
-				f->stackCount--;
+				OPC_ARGS(oa::BranchIfType);
+				if (Type::ValueIsType(args->Value(f), args->type))
+					ip += args->offset;
+				ip += oa::BRANCH_IF_TYPE_SIZE;
 			}
 			NEXT_INSTR();
 
 		// switch: LocalOffset value, uint16_t count, int32_t offsets[count]
 		TARGET(OPI_SWITCH_L)
 			{
-				register Value *const value = OFF_ARG(ip, f);
+				OPC_ARGS(oa::Switch);
+				register Value *const value = args->Value(f);
 				if (value->type != vm->types.Int)
 					return ThrowTypeError();
 
-				register int32_t count = U16_ARG(ip + LOSZ);
-				ip += LOSZ + sizeof(uint16_t);
+				if (value->integer >= 0 && value->integer < args->count)
+					ip += (&args->firstOffset)[(int32_t)value->integer];
 
-				if (value->integer >= 0 && value->integer < count)
-					ip += *(reinterpret_cast<int32_t*>(ip) + (int32_t)value->integer);
-
-				ip += count * sizeof(int32_t);
+				ip += oa::SWITCH_SIZE(args->count);
 			}
 			NEXT_INSTR();
 		TARGET(OPI_SWITCH_S)
 			{
-				register Value *const value = OFF_ARG(ip, f);
+				OPC_ARGS(oa::Switch);
+				register Value *const value = args->Value(f);
 				if (value->type != vm->types.Int)
 					return ThrowTypeError();
 
-				register int32_t count = U16_ARG(ip + LOSZ);
-				ip += LOSZ + sizeof(uint16_t);
+				if (value->integer >= 0 && value->integer < args->count)
+					ip += (&args->firstOffset)[(int32_t)value->integer];
 
-				if (value->integer >= 0 && value->integer < count)
-					ip += *(reinterpret_cast<int32_t*>(ip) + (int32_t)value->integer);
-
-				ip += count * sizeof(int32_t);
-
+				ip += oa::SWITCH_SIZE(args->count);
 				f->stackCount--;
 			}
 			NEXT_INSTR();
@@ -755,13 +729,13 @@ int Thread::Evaluate()
 		// brref: LocalOffset (a, b), int32_t offset
 		TARGET(OPI_BRREF)
 			{
-				register Value *const args = OFF_ARG(ip, f);
-				ip += LOSZ;
+				OPC_ARGS(oa::ConditionalBranch);
+				register Value *const ops = args->Value(f);
 
-				if (IsSameReference_(args + 0, args + 1))
-					ip += I32_ARG(ip);
-				ip += sizeof(int32_t);
+				if (IsSameReference_(ops + 0, ops + 1))
+					ip += args->offset;
 
+				ip += oa::CONDITIONAL_BRANCH_SIZE;
 				f->stackCount -= 2;
 			}
 			NEXT_INSTR();
@@ -769,13 +743,13 @@ int Thread::Evaluate()
 		// brnref: LocalOffset (a, b), int32_t offset
 		TARGET(OPI_BRNREF)
 			{
-				register Value *const args = OFF_ARG(ip, f);
-				ip += LOSZ;
+				OPC_ARGS(oa::ConditionalBranch);
+				register Value *const ops = args->Value(f);
 
-				if (!IsSameReference_(args + 0, args + 1))
-					ip += I32_ARG(ip);
-				ip += sizeof(int32_t);
+				if (IsSameReference_(ops + 0, ops + 1))
+					ip += args->offset;
 
+				ip += oa::CONDITIONAL_BRANCH_SIZE;
 				f->stackCount -= 2;
 			}
 			NEXT_INSTR();
@@ -783,25 +757,17 @@ int Thread::Evaluate()
 		// operator: LocalOffset args, LocalOffset dest, Operator op
 		TARGET(OPI_OPERATOR_L)
 			{
-				register Value *const args = OFF_ARG(ip, f);
-				register Value *const dest = OFF_ARG(ip + LOSZ, f);
-				ip += 2*LOSZ;
-
-				CHK(InvokeOperatorLL(args, T_ARG(ip, Operator), dest));
-				ip += sizeof(Operator);
-
+				OPC_ARGS(oa::TwoLocalsAndValue<Operator>);
+				CHK(InvokeOperatorLL(args->Source(f), args->value, args->Dest(f)));
+				ip += oa::TWO_LOCALS_AND_VALUE<Operator>::SIZE;
 				// InvokeOperatorLL pops arguments off the stack
 			}
 			NEXT_INSTR();
 		TARGET(OPI_OPERATOR_S)
 			{
-				register Value *const args = OFF_ARG(ip, f);
-				register Value *const dest = OFF_ARG(ip + LOSZ, f);
-				ip += 2*LOSZ;
-
-				CHK(InvokeOperatorLL(args, T_ARG(ip, Operator), dest));
-				ip += sizeof(Operator);
-
+				OPC_ARGS(oa::TwoLocalsAndValue<Operator>);
+				CHK(InvokeOperatorLL(args->Source(f), args->value, args->Dest(f)));
+				ip += oa::TWO_LOCALS_AND_VALUE<Operator>::SIZE;
 				// InvokeOperatorLL pops arguments off the stack
 				f->stackCount++;
 			}
@@ -810,19 +776,21 @@ int Thread::Evaluate()
 		// eq: LocalOffset args, LocalOffset dest
 		TARGET(OPI_EQ_L)
 			{
+				OPC_ARGS(oa::TwoLocals);
 				bool eq;
-				CHK(EqualsLL(OFF_ARG(ip, f), eq));
-				SetBool_(vm, OFF_ARG(ip + LOSZ, f), eq);
-				ip += 2*LOSZ;
+				CHK(EqualsLL(args->Source(f), eq));
+				SetBool_(vm, args->Dest(f), eq);
+				ip += oa::TWO_LOCALS_SIZE;
 				// EqualsLL pops arguments off the stack
 			}
 			NEXT_INSTR();
 		TARGET(OPI_EQ_S)
 			{
+				OPC_ARGS(oa::TwoLocals);
 				bool eq;
-				CHK(EqualsLL(OFF_ARG(ip, f), eq));
-				SetBool_(vm, OFF_ARG(ip + LOSZ, f), eq);
-				ip += 2*LOSZ;
+				CHK(EqualsLL(args->Source(f), eq));
+				SetBool_(vm, args->Dest(f), eq);
+				ip += oa::TWO_LOCALS_SIZE;
 				// EqualsLL pops arguments off the stack
 				f->stackCount++;
 			}
@@ -831,15 +799,17 @@ int Thread::Evaluate()
 		// cmp: LocalOffset args, LocalOffset dest
 		TARGET(OPI_CMP_L)
 			{
-				CHK(CompareLL(OFF_ARG(ip, f), OFF_ARG(ip + LOSZ, f)));
-				ip += 2*LOSZ;
+				OPC_ARGS(oa::TwoLocals);
+				CHK(CompareLL(args->Source(f), args->Dest(f)));
+				ip += oa::TWO_LOCALS_SIZE;
 				// CompareLL pops arguments off the stack
 			}
 			NEXT_INSTR();
 		TARGET(OPI_CMP_S)
 			{
-				CHK(CompareLL(OFF_ARG(ip, f), OFF_ARG(ip + LOSZ, f)));
-				ip += 2*LOSZ;
+				OPC_ARGS(oa::TwoLocals);
+				CHK(CompareLL(args->Source(f), args->Dest(f)));
+				ip += oa::TWO_LOCALS_SIZE;
 				// CompareLL pops arguments off the stack
 				f->stackCount++;
 			}
@@ -848,19 +818,21 @@ int Thread::Evaluate()
 		// lt: LocalOffset args, LocalOffset dest
 		TARGET(OPI_LT_L)
 			{
+				OPC_ARGS(oa::TwoLocals);
 				bool result;
-				CHK(CompareLessThanLL(OFF_ARG(ip, f), result));
-				SetBool_(vm, OFF_ARG(ip + LOSZ, f), result);
-				ip += 2*LOSZ;
+				CHK(CompareLessThanLL(args->Source(f), result));
+				SetBool_(vm, args->Dest(f), result);
+				ip += oa::TWO_LOCALS_SIZE;
 				// CompareLL pops arguments off the stack
 			}
 			NEXT_INSTR();
 		TARGET(OPI_LT_S)
 			{
+				OPC_ARGS(oa::TwoLocals);
 				bool result;
-				CHK(CompareLessThanLL(OFF_ARG(ip, f), result));
-				SetBool_(vm, OFF_ARG(ip + LOSZ, f), result);
-				ip += 2*LOSZ;
+				CHK(CompareLessThanLL(args->Source(f), result));
+				SetBool_(vm, args->Dest(f), result);
+				ip += oa::TWO_LOCALS_SIZE;
 				// CompareLL pops arguments off the stack
 				f->stackCount++;
 			}
@@ -869,19 +841,21 @@ int Thread::Evaluate()
 		// gt: LocalOffset args, LocalOffset dest
 		TARGET(OPI_GT_L)
 			{
+				OPC_ARGS(oa::TwoLocals);
 				bool result;
-				CHK(CompareGreaterThanLL(OFF_ARG(ip, f), result));
-				SetBool_(vm, OFF_ARG(ip + LOSZ, f), result);
-				ip += 2*LOSZ;
+				CHK(CompareGreaterThanLL(args->Source(f), result));
+				SetBool_(vm, args->Dest(f), result);
+				ip += oa::TWO_LOCALS_SIZE;
 				// CompareLL pops arguments off the stack
 			}
 			NEXT_INSTR();
 		TARGET(OPI_GT_S)
 			{
+				OPC_ARGS(oa::TwoLocals);
 				bool result;
-				CHK(CompareGreaterThanLL(OFF_ARG(ip, f), result));
-				SetBool_(vm, OFF_ARG(ip + LOSZ, f), result);
-				ip += 2*LOSZ;
+				CHK(CompareGreaterThanLL(args->Source(f), result));
+				SetBool_(vm, args->Dest(f), result);
+				ip += oa::TWO_LOCALS_SIZE;
 				// CompareLL pops arguments off the stack
 				f->stackCount++;
 			}
@@ -890,19 +864,21 @@ int Thread::Evaluate()
 		// lte: LocalOffset args, LocalOffset dest
 		TARGET(OPI_LTE_L)
 			{
+				OPC_ARGS(oa::TwoLocals);
 				bool result;
-				CHK(CompareLessEqualsLL(OFF_ARG(ip, f), result));
-				SetBool_(vm, OFF_ARG(ip + LOSZ, f), result);
-				ip += 2*LOSZ;
+				CHK(CompareLessEqualsLL(args->Source(f), result));
+				SetBool_(vm, args->Dest(f), result);
+				ip += oa::TWO_LOCALS_SIZE;
 				// CompareLL pops arguments off the stack
 			}
 			NEXT_INSTR();
 		TARGET(OPI_LTE_S)
 			{
+				OPC_ARGS(oa::TwoLocals);
 				bool result;
-				CHK(CompareLessEqualsLL(OFF_ARG(ip, f), result));
-				SetBool_(vm, OFF_ARG(ip + LOSZ, f), result);
-				ip += 2*LOSZ;
+				CHK(CompareLessEqualsLL(args->Source(f), result));
+				SetBool_(vm, args->Dest(f), result);
+				ip += oa::TWO_LOCALS_SIZE;
 				// CompareLL pops arguments off the stack
 				f->stackCount++;
 			}
@@ -911,19 +887,21 @@ int Thread::Evaluate()
 		// gte: LocalOffset args, LocalOffset dest
 		TARGET(OPI_GTE_L)
 			{
+				OPC_ARGS(oa::TwoLocals);
 				bool result;
-				CHK(CompareGreaterEqualsLL(OFF_ARG(ip, f), result));
-				SetBool_(vm, OFF_ARG(ip + LOSZ, f), result);
-				ip += 2*LOSZ;
+				CHK(CompareGreaterEqualsLL(args->Source(f), result));
+				SetBool_(vm, args->Dest(f), result);
+				ip += oa::TWO_LOCALS_SIZE;
 				// CompareLL pops arguments off the stack
 			}
 			NEXT_INSTR();
 		TARGET(OPI_GTE_S)
 			{
+				OPC_ARGS(oa::TwoLocals);
 				bool result;
-				CHK(CompareGreaterEqualsLL(OFF_ARG(ip, f), result));
-				SetBool_(vm, OFF_ARG(ip + LOSZ, f), result);
-				ip += 2*LOSZ;
+				CHK(CompareGreaterEqualsLL(args->Source(f), result));
+				SetBool_(vm, args->Dest(f), result);
+				ip += oa::TWO_LOCALS_SIZE;
 				// CompareLL pops arguments off the stack
 				f->stackCount++;
 			}
@@ -932,41 +910,35 @@ int Thread::Evaluate()
 		// concat: LocalOffset args, LocalOffset dest
 		TARGET(OPI_CONCAT_L)
 			{
-				CHK(ConcatLL(OFF_ARG(ip, f), OFF_ARG(ip + LOSZ, f)));
-				ip += 2*LOSZ;
+				OPC_ARGS(oa::TwoLocals);
+				CHK(ConcatLL(args->Source(f), args->Dest(f)));
+				ip += oa::TWO_LOCALS_SIZE;
 				// ConcatLL pops arguments off stack
 			}
 			NEXT_INSTR();
 		TARGET(OPI_CONCAT_S)
 			{
-				CHK(ConcatLL(OFF_ARG(ip, f), OFF_ARG(ip + LOSZ, f)));
-				ip += 2*LOSZ;
+				OPC_ARGS(oa::TwoLocals);
+				CHK(ConcatLL(args->Source(f), args->Dest(f)));
+				ip += oa::TWO_LOCALS_SIZE;
 				// ConcatLL pops arguments off stack
 				f->stackCount++;
 			}
 			NEXT_INSTR();
 
-		// callmem: LocalOffset args, LocalOffset dest, String *member, uint16_t argCount
+		// callmem: LocalOffset args, LocalOffset dest, uint32_t argc, String *member
 		TARGET(OPI_CALLMEM_L)
 			{
-				register Value *const args = OFF_ARG(ip, f);
-				register Value *const dest = OFF_ARG(ip + LOSZ, f);
-				ip += 2*LOSZ;
-
-				CHK(InvokeMemberLL(T_ARG(ip, String*), U16_ARG(ip + sizeof(String*)), args, dest, 0));
-
-				ip += sizeof(String*) + sizeof(uint16_t);
+				OPC_ARGS(oa::CallMember);
+				CHK(InvokeMemberLL(args->member, args->argc, args->Args(f), args->Dest(f), 0));
+				ip += oa::CALL_MEMBER_SIZE;
 			}
 			NEXT_INSTR();
 		TARGET(OPI_CALLMEM_S)
 			{
-				register Value *const args = OFF_ARG(ip, f);
-				register Value *const dest = OFF_ARG(ip + LOSZ, f);
-				ip += 2*LOSZ;
-
-				CHK(InvokeMemberLL(T_ARG(ip, String*), U16_ARG(ip + sizeof(String*)), args, dest, 0));
-
-				ip += sizeof(String*) + sizeof(uint16_t);
+				OPC_ARGS(oa::CallMember);
+				CHK(InvokeMemberLL(args->member, args->argc, args->Args(f), args->Dest(f), 0));
+				ip += oa::CALL_MEMBER_SIZE;
 				f->stackCount++;
 			}
 			NEXT_INSTR();
@@ -974,14 +946,16 @@ int Thread::Evaluate()
 		// stsfld: LocalOffset value, Field *field
 		TARGET(OPI_STSFLD_L)
 			{
-				T_ARG(ip + LOSZ, Field*)->staticValue->Write(OFF_ARG(ip, f));
-				ip += LOSZ + sizeof(Field*);
+				OPC_ARGS(oa::LocalAndValue<Field*>);
+				args->value->staticValue->Write(args->Local(f));
+				ip += oa::LOCAL_AND_VALUE<Field*>::SIZE;
 			}
 			NEXT_INSTR();
 		TARGET(OPI_STSFLD_S)
 			{
-				T_ARG(ip + LOSZ, Field*)->staticValue->Write(OFF_ARG(ip, f));
-				ip += LOSZ + sizeof(Field*);
+				OPC_ARGS(oa::LocalAndValue<Field*>);
+				args->value->staticValue->Write(args->Local(f));
+				ip += oa::LOCAL_AND_VALUE<Field*>::SIZE;
 				f->stackCount--;
 			}
 			NEXT_INSTR();
@@ -989,10 +963,9 @@ int Thread::Evaluate()
 		// stfld: LocalOffset (instance, value), Field *field
 		TARGET(OPI_STFLD)
 			{
-				register Value *const values = OFF_ARG(ip, f);
-				CHK(T_ARG(ip + LOSZ, Field*)->WriteField(this, values));
-
-				ip += LOSZ + sizeof(Field*);
+				OPC_ARGS(oa::LocalAndValue<Field*>);
+				CHK(args->value->WriteField(this, args->Local(f)));
+				ip += oa::LOCAL_AND_VALUE<Field*>::SIZE;
 				f->stackCount -= 2;
 			}
 			NEXT_INSTR();
@@ -1000,24 +973,23 @@ int Thread::Evaluate()
 		// stmem: LocalOffset (instance, value), String *name
 		TARGET(OPI_STMEM)
 			{
+				OPC_ARGS(oa::LocalAndValue<String*>);
 				// StoreMemberLL performs a null check
-				CHK(StoreMemberLL(OFF_ARG(ip, f), T_ARG(ip + LOSZ, String*)));
-
+				CHK(StoreMemberLL(args->Local(f), args->value));
 				// It also pops the things off the stack
-				ip += LOSZ + sizeof(String*);
+				ip += oa::LOCAL_AND_VALUE<String*>::SIZE;
 			}
 			NEXT_INSTR();
 
-		// stidx: LocalOffset args, uint16_t argCount
+		// stidx: LocalOffset args, uint32_t argc
 		// Note: argCount does not include the instance, or the value being assigned
 		TARGET(OPI_STIDX)
 			{
+				OPC_ARGS(oa::LocalAndValue<uint32_t>);
 				// StoreIndexerLL performs a null check
-				CHK(StoreIndexerLL(U16_ARG(ip + LOSZ), // argCount
-					OFF_ARG(ip, f))); // args
-
+				CHK(StoreIndexerLL(args->value, args->Local(f)));
 				// It also pops things off the stack
-				ip += LOSZ + sizeof(uint16_t);
+				ip += oa::LOCAL_AND_VALUE<uint32_t>::SIZE;
 			}
 			NEXT_INSTR();
 
@@ -1044,23 +1016,17 @@ int Thread::Evaluate()
 		// This is identical to ldfld except that it does not perform a type check.
 		TARGET(OPI_LDFLDFAST_L)
 			{
-				register Value *const inst = OFF_ARG(ip, f);
-				register Value *const dest = OFF_ARG(ip + LOSZ, f);
-				ip += 2*LOSZ;
-				
-				CHK(T_ARG(ip, Field*)->ReadFieldFast(this, inst, dest));
-				ip += sizeof(Field*);
+				OPC_ARGS(oa::TwoLocalsAndValue<Field*>);
+				CHK(args->value->ReadFieldFast(this, args->Source(f), args->Dest(f)));
+				ip += oa::TWO_LOCALS_AND_VALUE<Field*>::SIZE;
 				f->stackCount--;
 			}
 			NEXT_INSTR();
 		TARGET(OPI_LDFLDFAST_S)
 			{
-				register Value *const inst = OFF_ARG(ip, f);
-				register Value *const dest = OFF_ARG(ip + LOSZ, f);
-				ip += 2*LOSZ;
-											
-				CHK(T_ARG(ip, Field*)->ReadFieldFast(this, inst, dest));
-				ip += sizeof(Field*);
+				OPC_ARGS(oa::TwoLocalsAndValue<Field*>);
+				CHK(args->value->ReadFieldFast(this, args->Source(f), args->Dest(f)));
+				ip += oa::TWO_LOCALS_AND_VALUE<Field*>::SIZE;
 			}
 			NEXT_INSTR();
 
@@ -1068,10 +1034,9 @@ int Thread::Evaluate()
 		// This is identical to stfld except that it does not perform a type check.
 		TARGET(OPI_STFLDFAST)
 			{
-				register Value *const values = OFF_ARG(ip, f);
-				CHK(T_ARG(ip + LOSZ, Field*)->WriteFieldFast(this, values));
-
-				ip += LOSZ + sizeof(Field*);
+				OPC_ARGS(oa::LocalAndValue<Field*>);
+				CHK(args->value->WriteFieldFast(this, args->Local(f)));
+				ip += oa::LOCAL_AND_VALUE<Field*>::SIZE;
 				f->stackCount -= 2;
 			}
 			NEXT_INSTR();
@@ -1079,266 +1044,253 @@ int Thread::Evaluate()
 		// breq: LocalOffset args, int32_t offset
 		TARGET(OPI_BREQ)
 			{
+				OPC_ARGS(oa::ConditionalBranch);
 				bool eq;
-				CHK(EqualsLL(OFF_ARG(ip, f), eq));
+				CHK(EqualsLL(args->Value(f), eq));
 				if (eq)
-					ip += I32_ARG(ip + LOSZ);
-				ip += LOSZ + sizeof(int32_t);
+					ip += args->offset;
+				ip += oa::CONDITIONAL_BRANCH_SIZE;
 			}
 			NEXT_INSTR();
 
 		// brneq: LocalOffset args, int32_t offset
 		TARGET(OPI_BRNEQ)
 			{
+				OPC_ARGS(oa::ConditionalBranch);
 				bool eq;
-				CHK(EqualsLL(OFF_ARG(ip, f), eq));
+				CHK(EqualsLL(args->Value(f), eq));
 				if (!eq)
-					ip += I32_ARG(ip + LOSZ);
-				ip += LOSZ + sizeof(int32_t);
+					ip += args->offset;
+				ip += oa::CONDITIONAL_BRANCH_SIZE;
 			}
 			NEXT_INSTR();
 
 		// brlt: LocalOffset args, int32_t offset
 		TARGET(OPI_BRLT)
 			{
+				OPC_ARGS(oa::ConditionalBranch);
 				bool result;
-				CHK(CompareLessThanLL(OFF_ARG(ip, f), result));
+				CHK(CompareLessThanLL(args->Value(f), result));
 				if (result)
-					ip += I32_ARG(ip + LOSZ);
-				ip += LOSZ + sizeof(int32_t);
+					ip += args->offset;
+				ip += oa::CONDITIONAL_BRANCH_SIZE;
 			}
 			NEXT_INSTR();
 
 		// brgt: LocalOffset args, int32_t offset
 		TARGET(OPI_BRGT)
 			{
+				OPC_ARGS(oa::ConditionalBranch);
 				bool result;
-				CHK(CompareGreaterThanLL(OFF_ARG(ip, f), result));
+				CHK(CompareGreaterThanLL(args->Value(f), result));
 				if (result)
-					ip += I32_ARG(ip + LOSZ);
-				ip += LOSZ + sizeof(int32_t);
+					ip += args->offset;
+				ip += oa::CONDITIONAL_BRANCH_SIZE;
 			}
 			NEXT_INSTR();
 
 		// brlte: LocalOffset args, int32_t offset
 		TARGET(OPI_BRLTE)
 			{
+				OPC_ARGS(oa::ConditionalBranch);
 				bool result;
-				CHK(CompareLessEqualsLL(OFF_ARG(ip, f), result));
+				CHK(CompareLessEqualsLL(args->Value(f), result));
 				if (result)
-					ip += I32_ARG(ip + LOSZ);
-				ip += LOSZ + sizeof(int32_t);
+					ip += args->offset;
+				ip += oa::CONDITIONAL_BRANCH_SIZE;
 			}
 			NEXT_INSTR();
 
 		// brgte: LocalOffset args, int32_t offset
 		TARGET(OPI_BRGTE)
 			{
+				OPC_ARGS(oa::ConditionalBranch);
 				bool result;
-				CHK(CompareGreaterEqualsLL(OFF_ARG(ip, f), result));
+				CHK(CompareGreaterEqualsLL(args->Value(f), result));
 				if (result)
-					ip += I32_ARG(ip + LOSZ);
-				ip += LOSZ + sizeof(int32_t);
+					ip += args->offset;
+				ip += oa::CONDITIONAL_BRANCH_SIZE;
 			}
 			NEXT_INSTR();
 
 		// ldlocref: LocalOffset local
 		TARGET(OPI_LDLOCREF)
 			{
-				register Value *const local = OFF_ARG(ip, f);
+				OPC_ARGS(oa::OneLocal);
 				register Value *const dest = f->evalStack + f->stackCount++;
-				ip += LOSZ;
 				dest->type = (Type*)LOCAL_REFERENCE;
-				dest->reference = local;
+				dest->reference = args->Local(f);
+				ip += oa::ONE_LOCAL_SIZE;
 			}
 			NEXT_INSTR();
 
 		// ldmemref: LocalOffset inst, String *member
 		TARGET(OPI_LDMEMREF_L) // Instance in local
 			{
-				register Value *const inst = OFF_ARG(ip, f);
-				register String *const member = T_ARG(ip + LOSZ, String*);
-				CHK(LoadMemberRefLL(inst, member));
-				ip += LOSZ + sizeof(String*);
+				OPC_ARGS(oa::LocalAndValue<String*>);
+				CHK(LoadMemberRefLL(args->Local(f), args->value));
+				ip += oa::LOCAL_AND_VALUE<String*>::SIZE;
 			}
 			NEXT_INSTR();
 		TARGET(OPI_LDMEMREF_S) // Instance on stack
 			{
-				register Value *const inst = OFF_ARG(ip, f);
-				register String *const member = T_ARG(ip + LOSZ, String*);
+				OPC_ARGS(oa::LocalAndValue<String*>);
 				f->stackCount--;
-				CHK(LoadMemberRefLL(inst, member));
-				ip += LOSZ + sizeof(String*);
+				CHK(LoadMemberRefLL(args->Local(f), args->value));
+				ip += oa::LOCAL_AND_VALUE<String*>::SIZE;
 			}
 			NEXT_INSTR();
 
 		// ldfldref: LocalOffset inst, Field *field
 		TARGET(OPI_LDFLDREF_L) // Instance in local
 			{
-				register Value *const inst = OFF_ARG(ip, f);
-				register Field *const field = T_ARG(ip + LOSZ, Field*);
-				CHK(LoadFieldRefLL(inst, field));
-				ip += LOSZ + sizeof(Field*);
+				OPC_ARGS(oa::LocalAndValue<Field*>);
+				CHK(LoadFieldRefLL(args->Local(f), args->value));
+				ip += oa::LOCAL_AND_VALUE<Field*>::SIZE;
 			}
 			NEXT_INSTR();
 		TARGET(OPI_LDFLDREF_S) // Instance on stack
 			{
-				register Value *const inst = OFF_ARG(ip, f);
-				register Field *const field = T_ARG(ip + LOSZ, Field*);
+				OPC_ARGS(oa::LocalAndValue<Field*>);
 				f->stackCount--;
-				CHK(LoadFieldRefLL(inst, field));
-				ip += LOSZ + sizeof(Field*);
+				CHK(LoadFieldRefLL(args->Local(f), args->value));
+				ip += oa::LOCAL_AND_VALUE<Field*>::SIZE;
 			}
 			NEXT_INSTR();
 
 		// ldsfldref: Field *field
 		TARGET(OPI_LDSFLDREF)
 			{
-				register Field *const field = T_ARG(ip, Field*);
-				ip += sizeof(Field*);
-
+				OPC_ARGS(oa::SingleValue<Field*>);
 				register Value *const dest = f->evalStack + f->stackCount++;
 				dest->type = (Type*)STATIC_REFERENCE;
-				dest->reference = field->staticValue;
+				dest->reference = args->value->staticValue;
+				ip += oa::SINGLE_VALUE<Field*>::SIZE;
 			}
 			NEXT_INSTR();
 
 		// mvloc_rr: LocalOffset source, LocalOffset dest
+		// Note: these are all subtly different in implementation. Do not attempt to abstract
+		// them into a single macro without making note of the differences.
 		TARGET(OPI_MVLOC_RL) // Reference -> local
 			{
-				register Value *const source = OFF_ARG(ip, f);
-				register Value *const dest = OFF_ARG(ip + LOSZ, f);
-				ip += 2 * LOSZ;
+				OPC_ARGS(oa::TwoLocals);
+				register Value *const source = args->Source(f);
 
 				if ((uintptr_t)source->type == LOCAL_REFERENCE)
-					*dest = *reinterpret_cast<Value*>(source->reference);
+					*args->Dest(f) = *reinterpret_cast<Value*>(source->reference);
 				else if ((uintptr_t)source->type == STATIC_REFERENCE)
-					reinterpret_cast<StaticRef*>(source->reference)->Read(dest);
+					reinterpret_cast<StaticRef*>(source->reference)->Read(args->Dest(f));
 				else
 				{
 					uintptr_t offset = ~(uintptr_t)source->type;
 					GCObject *gco = reinterpret_cast<GCObject*>((char*)source->reference - offset);
 					gco->fieldAccessLock.Enter();
-					*dest = *reinterpret_cast<Value*>(source->reference);
+					*args->Dest(f) = *reinterpret_cast<Value*>(source->reference);
 					gco->fieldAccessLock.Leave();
 				}
+
+				ip += oa::TWO_LOCALS_SIZE;
 			}
 			NEXT_INSTR();
 		TARGET(OPI_MVLOC_RS) // Reference -> stack
 			{
-				register Value *const source = OFF_ARG(ip, f);
-				register Value *const dest = OFF_ARG(ip + LOSZ, f);
-				ip += 2 * LOSZ;
+				OPC_ARGS(oa::TwoLocals);
+				register Value *const source = args->Source(f);
 
 				if ((uintptr_t)source->type == LOCAL_REFERENCE)
-					*dest = *reinterpret_cast<Value*>(source->reference);
+					*args->Dest(f) = *reinterpret_cast<Value*>(source->reference);
 				else if ((uintptr_t)source->type == STATIC_REFERENCE)
-					reinterpret_cast<StaticRef*>(source->reference)->Read(dest);
+					reinterpret_cast<StaticRef*>(source->reference)->Read(args->Dest(f));
 				else
 				{
 					uintptr_t offset = ~(uintptr_t)source->type;
 					GCObject *gco = reinterpret_cast<GCObject*>((char*)source->reference - offset);
 					gco->fieldAccessLock.Enter();
-					*dest = *reinterpret_cast<Value*>(source->reference);
+					*args->Dest(f) = *reinterpret_cast<Value*>(source->reference);
 					gco->fieldAccessLock.Leave();
 				}
+
+				ip += oa::TWO_LOCALS_SIZE;
 				f->stackCount++;
 			}
 			NEXT_INSTR();
 		TARGET(OPI_MVLOC_LR) // Local -> reference
 			{
-				register Value *const source = OFF_ARG(ip, f);
-				register Value *const dest = OFF_ARG(ip + LOSZ, f);
-				ip += 2 * LOSZ;
+				OPC_ARGS(oa::TwoLocals);
+				register Value *const dest = args->Dest(f);
 
 				if ((uintptr_t)dest->type == LOCAL_REFERENCE)
-					*reinterpret_cast<Value*>(dest->reference) = *source;
+					*reinterpret_cast<Value*>(dest->reference) = *args->Source(f);
 				else if ((uintptr_t)dest->type == STATIC_REFERENCE)
-					reinterpret_cast<StaticRef*>(dest->reference)->Write(source);
+					reinterpret_cast<StaticRef*>(dest->reference)->Write(args->Source(f));
 				else
 				{
 					uint32_t offset = ~(uint32_t)dest->type;
 					GCObject *gco = reinterpret_cast<GCObject*>(dest->instance - offset);
 					gco->fieldAccessLock.Enter();
-					*reinterpret_cast<Value*>(dest->instance) = *source;
+					*reinterpret_cast<Value*>(dest->instance) = *args->Source(f);
 					gco->fieldAccessLock.Leave();
 				}
+
+				ip += oa::TWO_LOCALS_SIZE;
 			}
 			NEXT_INSTR();
 		TARGET(OPI_MVLOC_SR) // Stack -> reference
 			{
-				register Value *const source = OFF_ARG(ip, f);
-				register Value *const dest = OFF_ARG(ip + LOSZ, f);
-				ip += 2 * LOSZ;
+				OPC_ARGS(oa::TwoLocals);
+				register Value *const dest = args->Dest(f);
 
 				if ((uintptr_t)dest->type == LOCAL_REFERENCE)
-					*reinterpret_cast<Value*>(dest->reference) = *source;
+					*reinterpret_cast<Value*>(dest->reference) = *args->Source(f);
 				else if ((uintptr_t)dest->type == STATIC_REFERENCE)
-					reinterpret_cast<StaticRef*>(dest->reference)->Write(source);
+					reinterpret_cast<StaticRef*>(dest->reference)->Write(args->Source(f));
 				else
 				{
 					uintptr_t offset = ~(uintptr_t)dest->type;
 					GCObject *gco = reinterpret_cast<GCObject*>((char*)dest->reference - offset);
 					gco->fieldAccessLock.Enter();
-					*reinterpret_cast<Value*>(dest->reference) = *source;
+					*reinterpret_cast<Value*>(dest->reference) = *args->Source(f);
 					gco->fieldAccessLock.Leave();
 				}
+
+				ip += oa::TWO_LOCALS_SIZE;
 				f->stackCount--;
 			}
 			NEXT_INSTR();
 
-		// callr: LocalOffset args, LocalOffset output, uint16_t argc, uint32_t refSignature
+		// callr: LocalOffset args, LocalOffset output, uint32_t argc, uint32_t refSignature
 		TARGET(OPI_CALLR_L)
 			{
-				register Value *const args   = OFF_ARG(ip, f);
-				register Value *const output = OFF_ARG(ip + LOSZ, f);
-				ip += 2*LOSZ;
-
-				CHK(InvokeLL(U16_ARG(ip), args, output, U32_ARG(ip + sizeof(uint16_t))));
-
-				ip += sizeof(uint16_t) + sizeof(uint32_t);
+				OPC_ARGS(oa::CallRef);
+				CHK(InvokeLL(args->argc, args->Args(f), args->Dest(f), args->refSignature));
+				ip += oa::CALL_REF_SIZE;
 				// InvokeLL pops the arguments
 			}
 			NEXT_INSTR();
 		TARGET(OPI_CALLR_S)
 			{
-				register Value *const args   = OFF_ARG(ip, f);
-				register Value *const output = OFF_ARG(ip + LOSZ, f);
-				ip += 2*LOSZ;
-
-				CHK(InvokeLL(U16_ARG(ip), args, output, U32_ARG(ip + sizeof(uint16_t))));
-
-				ip += sizeof(uint16_t) + sizeof(uint32_t);
+				OPC_ARGS(oa::CallRef);
+				CHK(InvokeLL(args->argc, args->Args(f), args->Dest(f), args->refSignature));
+				ip += oa::CALL_REF_SIZE;
 				// InvokeLL pops the arguments
 				f->stackCount++;
 			}
 			NEXT_INSTR();
 
-		// callmemr: LocalOffset args, LocalOffset dest, String *member, uint16_t argCount, uint32_t refSignature
+		// callmemr: LocalOffset args, LocalOffset dest, uint32_t argc, uint32_t refSignature, String *member
 		TARGET(OPI_CALLMEMR_L)
 			{
-				register Value *const args = OFF_ARG(ip, f);
-				register Value *const dest = OFF_ARG(ip + LOSZ, f);
-				ip += 2*LOSZ;
-
-				String *name = T_ARG(ip, String*);
-				ip += sizeof(String*);
-				CHK(InvokeMemberLL(name, U16_ARG(ip), args, dest, U32_ARG(ip + sizeof(uint16_t))));
-
-				ip += sizeof(uint16_t) + sizeof(uint32_t);
+				OPC_ARGS(oa::CallMemberRef);
+				CHK(InvokeMemberLL(args->member, args->argc, args->Args(f), args->Dest(f), args->refSignature));
+				ip += oa::CALL_MEMBER_REF_SIZE;
 			}
 			NEXT_INSTR();
 		TARGET(OPI_CALLMEMR_S)
 			{
-				register Value *const args = OFF_ARG(ip, f);
-				register Value *const dest = OFF_ARG(ip + LOSZ, f);
-				ip += 2*LOSZ;
-
-				String *name = T_ARG(ip, String*);
-				ip += sizeof(String*);
-				CHK(InvokeMemberLL(name, U16_ARG(ip), args, dest, U32_ARG(ip + sizeof(uint16_t))));
-
-				ip += sizeof(uint16_t) + sizeof(uint32_t);
+				OPC_ARGS(oa::CallMemberRef);
+				CHK(InvokeMemberLL(args->member, args->argc, args->Args(f), args->Dest(f), args->refSignature));
+				ip += oa::CALL_MEMBER_REF_SIZE;
 				f->stackCount++;
 			}
 			NEXT_INSTR();

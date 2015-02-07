@@ -151,12 +151,19 @@ namespace instr
 		}
 
 		// Writes a value of the specified type at the current buffer offset,
-		// and increments the buffer offset by the size of the data.
+		// and increments the buffer offset by the specified amount.
 		template<class T>
-		inline void Write(T value)
+		inline void Write(T value, size_t size)
 		{
 			*reinterpret_cast<T*>(current) = value;
-			current += sizeof(T);
+			current += size;
+		}
+
+		inline void AlignTo(size_t alignment)
+		{
+			uintptr_t offset = (uintptr_t)current % (uintptr_t)alignment;
+			if (offset != 0)
+				current += alignment - offset;
 		}
 	};
 } // namespace instr

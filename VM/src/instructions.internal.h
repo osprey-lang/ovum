@@ -11,6 +11,8 @@ namespace ovum
 
 namespace instr
 {
+	namespace oa = ovum::opcode_args;
+
 	enum class InstrFlags : uint32_t
 	{
 		NONE           = 0x0000,
@@ -70,7 +72,10 @@ namespace instr
 		{ }
 		inline virtual ~Instruction() { }
 
-		inline unsigned int GetSize() const { return sizeof(IntermediateOpcode) + GetArgsSize(); }
+		inline unsigned int GetSize() const
+		{
+			return ALIGN_TO(sizeof(IntermediateOpcode), oa::ALIGNMENT) + GetArgsSize();
+		}
 
 		inline virtual unsigned int GetArgsSize() const { return 0; }
 
@@ -153,7 +158,7 @@ namespace instr
 
 		inline virtual unsigned int GetArgsSize() const
 		{
-			return 2 * sizeof(LocalOffset);
+			return oa::TWO_LOCALS_SIZE;
 		}
 
 		inline virtual StackChange GetStackChange() const
@@ -247,7 +252,7 @@ namespace instr
 
 		inline virtual unsigned int GetArgsSize() const
 		{
-			return 2 * sizeof(LocalOffset);
+			return oa::TWO_LOCALS_SIZE;
 		}
 
 		inline virtual StackChange GetStackChange() const
@@ -284,7 +289,6 @@ namespace instr
 	// In all the load instructions that follow, the lowest bit is set
 	// to indicate that the target is on the stack.
 
-	template<int ValueSize>
 	class LoadValue : public Instruction
 	{
 	public:
@@ -295,7 +299,7 @@ namespace instr
 
 		inline virtual unsigned int GetArgsSize() const
 		{
-			return sizeof(LocalOffset) + ValueSize;
+			return oa::ONE_LOCAL_SIZE;
 		}
 
 		inline virtual StackChange GetStackChange() const { return StackChange(0, opcode & 1); }
@@ -307,24 +311,16 @@ namespace instr
 		}
 
 	protected:
-		inline void WriteTarget(MethodBuffer &buffer) const
-		{
-			buffer.Write(target);
-		}
-
-		inline virtual void WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const
-		{
-			WriteTarget(buffer);
-		}
+		virtual void WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const;
 	};
 
-	class LoadNull : public LoadValue<0>
+	class LoadNull : public LoadValue
 	{
 	public:
 		inline LoadNull() : LoadValue(OPI_LDNULL_S) { }
 	};
 
-	class LoadBoolean : public LoadValue<0>
+	class LoadBoolean : public LoadValue
 	{
 	public:
 		bool value;
@@ -335,7 +331,7 @@ namespace instr
 		{ }
 	};
 
-	class LoadInt : public LoadValue<sizeof(int64_t)>
+	class LoadInt : public LoadValue
 	{
 	public:
 		int64_t value;
@@ -345,11 +341,16 @@ namespace instr
 			value(value)
 		{ }
 
+		inline virtual unsigned int GetArgsSize() const
+		{
+			return oa::LOCAL_AND_VALUE<int64_t>::SIZE;
+		}
+
 	protected:
 		virtual void WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const;
 	};
 
-	class LoadUInt : public LoadValue<sizeof(uint64_t)>
+	class LoadUInt : public LoadValue
 	{
 	public:
 		uint64_t value;
@@ -359,11 +360,16 @@ namespace instr
 			value(value)
 		{ }
 
+		inline virtual unsigned int GetArgsSize() const
+		{
+			return oa::LOCAL_AND_VALUE<uint64_t>::SIZE;
+		}
+
 	protected:
 		virtual void WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const;
 	};
 
-	class LoadReal : public LoadValue<sizeof(double)>
+	class LoadReal : public LoadValue
 	{
 	public:
 		double value;
@@ -373,13 +379,18 @@ namespace instr
 			value(value)
 		{ }
 
+		inline virtual unsigned int GetArgsSize() const
+		{
+			return oa::LOCAL_AND_VALUE<double>::SIZE;
+		}
+
 	protected:
 		virtual void WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const;
 	};
 
 	// Note: Windows headers define a LoadString macro
 	#undef LoadString
-	class LoadString : public LoadValue<sizeof(String*)>
+	class LoadString : public LoadValue
 	{
 	public:
 		String *value;
@@ -389,17 +400,22 @@ namespace instr
 			value(value)
 		{ }
 
+		inline virtual unsigned int GetArgsSize() const
+		{
+			return oa::LOCAL_AND_VALUE<String*>::SIZE;
+		}
+
 	protected:
 		virtual void WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const;
 	};
 
-	class LoadArgCount : public LoadValue<0>
+	class LoadArgCount : public LoadValue
 	{
 	public:
 		inline LoadArgCount() : LoadValue(OPI_LDARGC_S) { }
 	};
 
-	class LoadEnumValue : public LoadValue<sizeof(Type*) + sizeof(int64_t)>
+	class LoadEnumValue : public LoadValue
 	{
 	public:
 		Type *type;
@@ -409,6 +425,11 @@ namespace instr
 			LoadValue(OPI_LDENUM_S),
 			type(type), value(value)
 		{ }
+
+		inline virtual unsigned int GetArgsSize() const
+		{
+			return oa::LOAD_ENUM_SIZE;
+		}
 
 	protected:
 		virtual void WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const;
@@ -430,7 +451,7 @@ namespace instr
 
 		inline virtual unsigned int GetArgsSize() const
 		{
-			return 2 * sizeof(LocalOffset) + sizeof(Type*) + sizeof(uint16_t);
+			return oa::NEW_OBJECT_SIZE;
 		}
 
 		inline virtual StackChange GetStackChange() const { return StackChange(argCount, opcode & 1); }
@@ -453,7 +474,7 @@ namespace instr
 		virtual void WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const;
 	};
 
-	class CreateList : public LoadValue<sizeof(int32_t)>
+	class CreateList : public LoadValue
 	{
 	public:
 		int32_t capacity;
@@ -463,11 +484,16 @@ namespace instr
 			capacity(capacity)
 		{ }
 
+		inline virtual unsigned int GetArgsSize() const
+		{
+			return oa::LOCAL_AND_VALUE<int32_t>::SIZE;
+		}
+
 	protected:
 		virtual void WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const;
 	};
 
-	class CreateHash : public LoadValue<sizeof(int32_t)>
+	class CreateHash : public LoadValue
 	{
 	public:
 		int32_t capacity;
@@ -477,11 +503,16 @@ namespace instr
 			capacity(capacity)
 		{ }
 
+		inline virtual unsigned int GetArgsSize() const
+		{
+			return oa::LOCAL_AND_VALUE<int32_t>::SIZE;
+		}
+
 	protected:
 		virtual void WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const;
 	};
 
-	class LoadStaticFunction : public LoadValue<sizeof(Method*)>
+	class LoadStaticFunction : public LoadValue
 	{
 	public:
 		Method *method;
@@ -491,11 +522,16 @@ namespace instr
 			method(method)
 		{ }
 
+		inline virtual unsigned int GetArgsSize() const
+		{
+			return oa::LOCAL_AND_VALUE<Method*>::SIZE;
+		}
+
 	protected:
 		virtual void WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const;
 	};
 
-	class LoadTypeToken : public LoadValue<sizeof(const Type*)>
+	class LoadTypeToken : public LoadValue
 	{
 	public:
 		Type *type;
@@ -504,6 +540,11 @@ namespace instr
 			LoadValue(OPI_LDTYPETKN_S),
 			type(type)
 		{ }
+
+		inline virtual unsigned int GetArgsSize() const
+		{
+			return oa::LOCAL_AND_VALUE<Type*>::SIZE;
+		}
 
 	protected:
 		virtual void WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const;
@@ -523,7 +564,7 @@ namespace instr
 
 		inline virtual unsigned int GetArgsSize() const
 		{
-			return 2 * sizeof(LocalOffset) + sizeof(String*);
+			return oa::TWO_LOCALS_AND_VALUE<String*>::SIZE;
 		}
 
 		inline virtual StackChange GetStackChange() const { return StackChange(1, opcode & 1); }
@@ -556,7 +597,7 @@ namespace instr
 
 		inline virtual unsigned int GetArgsSize() const
 		{
-			return sizeof(LocalOffset) + sizeof(String*);
+			return oa::LOCAL_AND_VALUE<String*>::SIZE;
 		}
 
 		inline virtual StackChange GetStackChange() const { return StackChange(2, 0); }
@@ -585,7 +626,7 @@ namespace instr
 
 		inline virtual unsigned int GetArgsSize() const
 		{
-			return 2 * sizeof(LocalOffset) + sizeof(Field*);
+			return oa::TWO_LOCALS_AND_VALUE<Field*>::SIZE;
 		}
 
 		inline virtual StackChange GetStackChange() const { return StackChange(1, opcode & 1); }
@@ -618,7 +659,7 @@ namespace instr
 
 		inline virtual unsigned int GetArgsSize() const
 		{
-			return sizeof(LocalOffset) + sizeof(Field*);
+			return oa::LOCAL_AND_VALUE<Field*>::SIZE;
 		}
 
 		inline virtual StackChange GetStackChange() const { return StackChange(2, 0); }
@@ -633,7 +674,7 @@ namespace instr
 		virtual void WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const;
 	};
 
-	class LoadStaticField : public LoadValue<sizeof(Field*)>
+	class LoadStaticField : public LoadValue
 	{
 	public:
 		Field *field;
@@ -642,6 +683,11 @@ namespace instr
 			LoadValue(OPI_LDSFLD_S),
 			field(field)
 		{ }
+
+		inline virtual unsigned int GetArgsSize() const
+		{
+			return oa::LOCAL_AND_VALUE<Field*>::SIZE;
+		}
 
 	protected:
 		virtual void WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const;
@@ -660,7 +706,7 @@ namespace instr
 
 		inline virtual unsigned int GetArgsSize() const
 		{
-			return sizeof(LocalOffset) + sizeof(Field*);
+			return oa::LOCAL_AND_VALUE<Field*>::SIZE;
 		}
 
 		inline virtual StackChange GetStackChange() const { return StackChange(opcode & 1, 0); }
@@ -688,7 +734,7 @@ namespace instr
 
 		inline virtual unsigned int GetArgsSize() const
 		{
-			return 2 * sizeof(LocalOffset);
+			return oa::TWO_LOCALS_SIZE;
 		}
 
 		inline virtual StackChange GetStackChange() const { return StackChange(1, opcode & 1); }
@@ -721,7 +767,7 @@ namespace instr
 
 		inline virtual unsigned int GetArgsSize() const
 		{
-			return 2 * sizeof(LocalOffset);
+			return oa::TWO_LOCALS_SIZE;
 		}
 
 		inline virtual StackChange GetStackChange() const { return StackChange(1, opcode & 1); }
@@ -755,7 +801,7 @@ namespace instr
 
 		inline virtual unsigned int GetArgsSize() const
 		{
-			return 2 * sizeof(LocalOffset) + sizeof(uint16_t);
+			return oa::TWO_LOCALS_AND_VALUE<uint32_t>::SIZE;
 		}
 
 		inline virtual StackChange GetStackChange() const { return StackChange(argCount + 1, opcode & 1); }
@@ -788,7 +834,7 @@ namespace instr
 
 		inline virtual unsigned int GetArgsSize() const
 		{
-			return sizeof(LocalOffset) + sizeof(uint16_t);
+			return oa::LOCAL_AND_VALUE<uint32_t>::SIZE;
 		}
 
 		inline virtual StackChange GetStackChange() const { return StackChange(argCount + 2, 0); }
@@ -818,8 +864,7 @@ namespace instr
 
 		inline virtual unsigned int GetArgsSize() const
 		{
-			return 2 * sizeof(LocalOffset) + sizeof(uint16_t) +
-				(refSignature ? sizeof(uint32_t) : 0);
+			return refSignature ? oa::CALL_REF_SIZE : oa::CALL_SIZE;
 		}
 
 		inline virtual StackChange GetStackChange() const { return StackChange(argCount + 1, opcode & 1); }
@@ -858,8 +903,7 @@ namespace instr
 
 		inline virtual unsigned int GetArgsSize() const
 		{
-			return 2 * sizeof(LocalOffset) + sizeof(String*) + sizeof(uint16_t) +
-				(refSignature ? sizeof(uint32_t) : 0);
+			return refSignature ? oa::CALL_MEMBER_REF_SIZE : oa::CALL_MEMBER_SIZE;
 		}
 
 		inline virtual StackChange GetStackChange() const { return StackChange(argCount + 1, opcode & 1); }
@@ -898,7 +942,7 @@ namespace instr
 
 		inline virtual unsigned int GetArgsSize() const
 		{
-			return 2 * sizeof(LocalOffset) + sizeof(uint16_t) + sizeof(Method*);
+			return oa::STATIC_CALL_SIZE;
 		}
 
 		inline virtual StackChange GetStackChange() const { return StackChange(argCount + method->InstanceOffset(), opcode & 1); }
@@ -934,7 +978,7 @@ namespace instr
 
 		inline virtual unsigned int GetArgsSize() const
 		{
-			return 2 * sizeof(LocalOffset);
+			return oa::TWO_LOCALS_SIZE;
 		}
 
 		inline virtual StackChange GetStackChange() const { return StackChange(2, opcode & 1); }
@@ -968,7 +1012,7 @@ namespace instr
 
 		inline virtual unsigned int GetArgsSize() const
 		{
-			return 2 * sizeof(LocalOffset) + sizeof(Method*);
+			return oa::TWO_LOCALS_AND_VALUE<Method*>::SIZE;
 		}
 
 		inline virtual StackChange GetStackChange() const { return StackChange(1, opcode & 1); }
@@ -1000,7 +1044,7 @@ namespace instr
 
 		inline virtual unsigned int GetArgsSize() const
 		{
-			return sizeof(int32_t);
+			return oa::BRANCH_SIZE;
 		}
 
 		inline virtual StackChange GetStackChange() const { return StackChange::empty; }
@@ -1034,7 +1078,7 @@ namespace instr
 
 		inline virtual unsigned int GetArgsSize() const
 		{
-			return sizeof(LocalOffset) + sizeof(int32_t);
+			return oa::CONDITIONAL_BRANCH_SIZE;
 		}
 
 		inline virtual StackChange GetStackChange() const { return StackChange(opcode & 1, 0); }
@@ -1063,7 +1107,7 @@ namespace instr
 
 		inline virtual unsigned int GetArgsSize() const
 		{
-			return ConditionalBranch::GetArgsSize() + sizeof(Type*);
+			return oa::BRANCH_IF_TYPE_SIZE;
 		}
 
 		inline virtual bool IsConditional() const { return true; }
@@ -1091,7 +1135,7 @@ namespace instr
 
 		inline virtual unsigned int GetArgsSize() const
 		{
-			return sizeof(LocalOffset) + sizeof(uint16_t) + targetCount * sizeof(int32_t);
+			return oa::SWITCH_SIZE(targetCount);
 		}
 
 		inline virtual StackChange GetStackChange() const { return StackChange(opcode & 1, 0); }
@@ -1118,7 +1162,7 @@ namespace instr
 
 		inline virtual unsigned int GetArgsSize() const
 		{
-			return sizeof(LocalOffset) + sizeof(int32_t);
+			return oa::CONDITIONAL_BRANCH_SIZE;
 		}
 
 		inline virtual StackChange GetStackChange() const { return StackChange(2, 0); }
@@ -1147,7 +1191,7 @@ namespace instr
 
 		inline virtual unsigned int GetArgsSize() const
 		{
-			return sizeof(LocalOffset) + sizeof(int32_t);
+			return oa::CONDITIONAL_BRANCH_SIZE;
 		}
 
 		inline virtual StackChange GetStackChange() const { return StackChange(2, 0); }
@@ -1198,8 +1242,9 @@ namespace instr
 		inline virtual unsigned int GetArgsSize() const
 		{
 			if ((uint8_t)op == 0xff || op == Operator::EQ || op == Operator::CMP)
-				return 2 * sizeof(LocalOffset);
-			return 2 * sizeof(LocalOffset) + sizeof(Operator);
+				return oa::TWO_LOCALS_SIZE;
+			else
+				return oa::TWO_LOCALS_AND_VALUE<Operator>::SIZE;
 		}
 
 		inline virtual StackChange GetStackChange() const { return StackChange(IsUnary() ? 1 : 2, opcode & 1); }
@@ -1231,7 +1276,7 @@ namespace instr
 
 		inline virtual unsigned int GetArgsSize() const
 		{
-			return sizeof(LocalOffset);
+			return oa::ONE_LOCAL_SIZE;
 		}
 
 		inline virtual StackChange GetStackChange() const { return StackChange(0, 1); }
@@ -1253,7 +1298,7 @@ namespace instr
 
 		inline virtual unsigned int GetArgsSize() const
 		{
-			return sizeof(LocalOffset) + sizeof(String*);
+			return oa::LOCAL_AND_VALUE<String*>::SIZE;
 		}
 
 		inline virtual StackChange GetStackChange() const { return StackChange(1, 1); }
@@ -1281,7 +1326,7 @@ namespace instr
 
 		inline virtual unsigned int GetArgsSize() const
 		{
-			return sizeof(LocalOffset) + sizeof(Field*);
+			return oa::LOCAL_AND_VALUE<Field*>::SIZE;
 		}
 
 		inline virtual StackChange GetStackChange() const { return StackChange(1, 1); }
@@ -1308,7 +1353,7 @@ namespace instr
 
 		inline virtual unsigned int GetArgsSize() const
 		{
-			return sizeof(Field*);
+			return oa::SINGLE_VALUE<Field*>::SIZE;
 		}
 
 		inline virtual StackChange GetStackChange() const { return StackChange(0, 1); }

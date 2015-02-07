@@ -385,6 +385,8 @@ private:
 	int32_t offset;
 
 public:
+	// There is a variety of code that depends on this NOT being an explicit constructor.
+	// Don't mark it explicit unless you also change those bits of code.
 	inline LocalOffset(const int32_t offset) : offset(offset) { }
 
 	inline int32_t GetOffset() const { return offset; }
@@ -397,6 +399,264 @@ public:
 		return (Value*)((char*)frame + offset);
 	}
 };
+
+namespace opcode_args
+{
+	static const size_t ALIGNMENT = 8;
+
+	struct OneLocal
+	{
+		LocalOffset local;
+
+		inline Value *const Local(const StackFrame *const frame) const
+		{
+			return local + frame;
+		}
+	};
+	static const size_t ONE_LOCAL_SIZE = ALIGN_TO(sizeof(OneLocal), ALIGNMENT);
+
+	struct TwoLocals
+	{
+		// Every single instruction that takes only two locals has
+		// a source (or args or similar) followed by a dest.
+		LocalOffset source;
+		LocalOffset dest;
+
+		inline Value *const Source(const StackFrame *const frame) const
+		{
+			return source + frame;
+		}
+		inline Value *const Dest(const StackFrame *const frame) const
+		{
+			return dest + frame;
+		}
+	};
+	static const size_t TWO_LOCALS_SIZE = ALIGN_TO(sizeof(TwoLocals), ALIGNMENT);
+
+	template<typename T>
+	struct LocalAndValue
+	{
+		LocalOffset local;
+		T value;
+
+		inline Value *const Local(const StackFrame *const frame) const
+		{
+			return local + frame;
+		}
+	};
+	template<typename T>
+	struct LOCAL_AND_VALUE
+	{
+		static const size_t SIZE = ALIGN_TO(sizeof(LocalAndValue<T>), ALIGNMENT);
+	};
+
+	template<typename T>
+	struct TwoLocalsAndValue
+	{
+		// Every instruction that makes use of this struct has
+		// a source (or instance or args) followed by a dest.
+		LocalOffset source;
+		LocalOffset dest;
+		T value;
+		
+		inline Value *const Source(const StackFrame *const frame) const
+		{
+			return source + frame;
+		}
+		inline Value *const Dest(const StackFrame *const frame) const
+		{
+			return dest + frame;
+		}
+	};
+	template<typename T>
+	struct TWO_LOCALS_AND_VALUE
+	{
+		static const size_t SIZE = ALIGN_TO(sizeof(TwoLocalsAndValue<T>), ALIGNMENT);
+	};
+
+	struct LoadEnum
+	{
+		LocalOffset dest;
+		Type *type;
+		int64_t value;
+
+		inline Value *const Dest(const StackFrame *const frame) const
+		{
+			return dest + frame;
+		}
+	};
+	static const size_t LOAD_ENUM_SIZE = ALIGN_TO(sizeof(LoadEnum), ALIGNMENT);
+
+	struct NewObject
+	{
+		LocalOffset args;
+		LocalOffset dest;
+		uint32_t argc;
+		Type *type;
+		
+		inline Value *const Args(const StackFrame *const frame) const
+		{
+			return args + frame;
+		}
+		inline Value *const Dest(const StackFrame *const frame) const
+		{
+			return dest + frame;
+		}
+	};
+	static const size_t NEW_OBJECT_SIZE = ALIGN_TO(sizeof(NewObject), ALIGNMENT);
+
+	struct Call
+	{
+		LocalOffset args;
+		LocalOffset dest;
+		uint32_t argc;
+
+		inline Value *const Args(const StackFrame *const frame) const
+		{
+			return args + frame;
+		}
+		inline Value *const Dest(const StackFrame *const frame) const
+		{
+			return dest + frame;
+		}
+	};
+	static const size_t CALL_SIZE = ALIGN_TO(sizeof(Call), ALIGNMENT);
+
+	struct StaticCall
+	{
+		LocalOffset args;
+		LocalOffset dest;
+		uint32_t argc;
+		MethodOverload *method;
+		
+		inline Value *const Args(const StackFrame *const frame) const
+		{
+			return args + frame;
+		}
+		inline Value *const Dest(const StackFrame *const frame) const
+		{
+			return dest + frame;
+		}
+	};
+	static const size_t STATIC_CALL_SIZE = ALIGN_TO(sizeof(StaticCall), ALIGNMENT);
+
+	struct CallMember
+	{
+		LocalOffset args;
+		LocalOffset dest;
+		uint32_t argc;
+		String *member;
+
+		inline Value *const Args(const StackFrame *const frame) const
+		{
+			return args + frame;
+		}
+		inline Value *const Dest(const StackFrame *const frame) const
+		{
+			return dest + frame;
+		}
+	};
+	static const size_t CALL_MEMBER_SIZE = ALIGN_TO(sizeof(CallMember), ALIGNMENT);
+
+	struct CallRef
+	{
+		LocalOffset args;
+		LocalOffset dest;
+		uint32_t argc;
+		uint32_t refSignature;
+		
+		inline Value *const Args(const StackFrame *const frame) const
+		{
+			return args + frame;
+		}
+		inline Value *const Dest(const StackFrame *const frame) const
+		{
+			return dest + frame;
+		}
+	};
+	static const size_t CALL_REF_SIZE = ALIGN_TO(sizeof(CallRef), ALIGNMENT);
+
+	struct CallMemberRef
+	{
+		LocalOffset args;
+		LocalOffset dest;
+		uint32_t argc;
+		uint32_t refSignature;
+		String *member;
+		
+		inline Value *const Args(const StackFrame *const frame) const
+		{
+			return args + frame;
+		}
+		inline Value *const Dest(const StackFrame *const frame) const
+		{
+			return dest + frame;
+		}
+	};
+	static const size_t CALL_MEMBER_REF_SIZE = ALIGN_TO(sizeof(CallMemberRef), ALIGNMENT);
+
+	struct Branch
+	{
+		int32_t offset;
+	};
+	static const size_t BRANCH_SIZE = ALIGN_TO(sizeof(Branch), ALIGNMENT);
+
+	struct ConditionalBranch
+	{
+		LocalOffset value;
+		int32_t offset;
+
+		inline Value *const Value(const StackFrame *const frame) const
+		{
+			return value + frame;
+		}
+	};
+	static const size_t CONDITIONAL_BRANCH_SIZE = ALIGN_TO(sizeof(ConditionalBranch), ALIGNMENT);
+
+	struct BranchIfType
+	{
+		LocalOffset value;
+		int32_t offset;
+		Type *type;
+
+		inline Value *const Value(const StackFrame *const frame) const
+		{
+			return value + frame;
+		}
+	};
+	static const size_t BRANCH_IF_TYPE_SIZE = ALIGN_TO(sizeof(BranchIfType), ALIGNMENT);
+
+	struct Switch
+	{
+		LocalOffset value;
+		uint32_t count;
+		int32_t firstOffset;
+
+		inline Value *const Value(const StackFrame *const frame) const
+		{
+			return value + frame;
+		}
+	};
+	inline static const size_t SWITCH_SIZE(const uint32_t count)
+	{
+		// Don't be tempted to do this: sizeof(Switch) + (count - 1) * sizeof(int32_t)
+		// The expression sizeof(Switch) - sizeof(int32_t) can be calculated at compile time,
+		// so we can do without the subtraction.
+		size_t size = sizeof(Switch) - sizeof(int32_t) + count * sizeof(int32_t);
+		return ALIGN_TO(size, ALIGNMENT);
+	}
+
+	template<typename T>
+	struct SingleValue
+	{
+		T value;
+	};
+	template<typename T>
+	struct SINGLE_VALUE
+	{
+		static const size_t SIZE = ALIGN_TO(sizeof(SingleValue<T>), ALIGNMENT);
+	};
+} // namespace opcode_args
 
 } // namespace ovum
 
