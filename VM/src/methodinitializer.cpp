@@ -662,19 +662,18 @@ void MethodInitializer::WriteInitializedBody(instr::MethodBuilder &builder)
 	using namespace instr;
 
 	// Let's allocate a buffer for the output, yay!
-	std::unique_ptr<uint8_t[]> buffer(new uint8_t[builder.GetByteSize()]);
-	MethodBuffer mbuffer(buffer.get());
+	MethodBuffer buffer(builder.GetByteSize());
 	for (int32_t i = 0; i < builder.GetLength(); i++)
 	{
 		Instruction *instr = builder[i];
-		instr->WriteBytes(mbuffer, builder);
+		instr->WriteBytes(buffer, builder);
 
 		// The buffer should be properly aligned after each instruction
-		assert((mbuffer.GetCurrent() - mbuffer.GetBuffer()) % oa::ALIGNMENT == 0);
+		assert((buffer.GetCurrent() - buffer.GetBuffer()) % oa::ALIGNMENT == 0);
 	}
 
 	delete[] method->entry;
-	method->entry  = buffer.release();
+	method->entry  = buffer.Release();
 	method->length = builder.GetByteSize();
 	method->flags |= MethodFlags::INITED;
 }

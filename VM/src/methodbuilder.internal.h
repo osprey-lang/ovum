@@ -5,6 +5,7 @@
 
 #include "ov_vm.internal.h"
 #include <vector>
+#include <memory>
 
 namespace ovum
 {
@@ -130,13 +131,14 @@ namespace instr
 	{
 	private:
 		uint8_t *current;
-		uint8_t *buffer;
+		std::unique_ptr<uint8_t[]> buffer;
 
 		DISABLE_COPY_AND_ASSIGN(MethodBuffer);
 
 	public:
-		inline MethodBuffer(uint8_t *buffer) : current(buffer), buffer(buffer)
-		{ }
+		explicit MethodBuffer(int32_t size);
+
+		~MethodBuffer();
 
 		// Gets the current buffer pointer. Data is written at this offset.
 		inline uint8_t *GetCurrent() const
@@ -147,7 +149,14 @@ namespace instr
 		// Gets a pointer to the start of the buffer.
 		inline uint8_t *GetBuffer() const
 		{
-			return buffer;
+			return buffer.get();
+		}
+
+		// Claims the fully initialized buffer, which prevents the MethodBuffer
+		// from deallocating it in the destructor.
+		inline uint8_t *Release()
+		{
+			return buffer.release();
 		}
 
 		// Writes a value of the specified type at the current buffer offset,
