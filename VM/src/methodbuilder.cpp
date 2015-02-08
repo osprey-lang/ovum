@@ -19,7 +19,7 @@ namespace instr
 	{
 		instructions.push_back(InstrDesc(originalOffset, originalSize, instr));
 		instr->offset = lastOffset;
-		lastOffset += instr->GetSize();
+		lastOffset += (int32_t)instr->GetSize();
 		hasBranches = hasBranches || instr->IsBranch() || instr->IsSwitch();
 	}
 
@@ -99,7 +99,7 @@ namespace instr
 			else
 			{
 				i->instr->offset = lastOffset;
-				lastOffset += i->instr->GetSize();
+				lastOffset += (int32_t)i->instr->GetSize();
 				newIndices[oldIndex] = newIndex;
 				newIndex++;
 				i++;
@@ -180,7 +180,7 @@ namespace instr
 		}
 		else
 			offset = instructions[index].instr->offset;
-		return offset - relativeTo->offset - (int)relativeTo->GetSize();
+		return offset - relativeTo->offset - relativeTo->GetSize();
 	}
 
 	void MethodBuilder::SetInstruction(int32_t index, Instruction *newInstr, bool deletePrev)
@@ -201,6 +201,16 @@ namespace instr
 
 		typesToInitialize.push_back(type);
 	}
+
+	MethodBuffer::MethodBuffer(int32_t size) :
+		current(nullptr), buffer()
+	{
+		buffer.reset(new uint8_t[size]);
+		current = buffer.get();
+	}
+
+	MethodBuffer::~MethodBuffer()
+	{ }
 } // namespace instr
 
 } // namespace ovum

@@ -72,12 +72,12 @@ namespace instr
 		{ }
 		inline virtual ~Instruction() { }
 
-		inline unsigned int GetSize() const
+		inline uint32_t GetSize() const
 		{
 			return ALIGN_TO(sizeof(IntermediateOpcode), oa::ALIGNMENT) + GetArgsSize();
 		}
 
-		inline virtual unsigned int GetArgsSize() const { return 0; }
+		inline virtual uint32_t GetArgsSize() const { return 0; }
 
 		virtual StackChange GetStackChange() const = 0;
 
@@ -156,7 +156,7 @@ namespace instr
 			source(0), target(0)
 		{ }
 
-		inline virtual unsigned int GetArgsSize() const
+		inline virtual uint32_t GetArgsSize() const
 		{
 			return oa::TWO_LOCALS_SIZE;
 		}
@@ -250,7 +250,7 @@ namespace instr
 			source(0), target(0)
 		{ }
 
-		inline virtual unsigned int GetArgsSize() const
+		inline virtual uint32_t GetArgsSize() const
 		{
 			return oa::TWO_LOCALS_SIZE;
 		}
@@ -297,7 +297,7 @@ namespace instr
 		inline LoadValue(IntermediateOpcode opcode) :
 			Instruction(InstrFlags::HAS_OUTPUT, opcode), target(0) { }
 
-		inline virtual unsigned int GetArgsSize() const
+		inline virtual uint32_t GetArgsSize() const
 		{
 			return oa::ONE_LOCAL_SIZE;
 		}
@@ -341,7 +341,7 @@ namespace instr
 			value(value)
 		{ }
 
-		inline virtual unsigned int GetArgsSize() const
+		inline virtual uint32_t GetArgsSize() const
 		{
 			return oa::LOCAL_AND_VALUE<int64_t>::SIZE;
 		}
@@ -360,7 +360,7 @@ namespace instr
 			value(value)
 		{ }
 
-		inline virtual unsigned int GetArgsSize() const
+		inline virtual uint32_t GetArgsSize() const
 		{
 			return oa::LOCAL_AND_VALUE<uint64_t>::SIZE;
 		}
@@ -379,7 +379,7 @@ namespace instr
 			value(value)
 		{ }
 
-		inline virtual unsigned int GetArgsSize() const
+		inline virtual uint32_t GetArgsSize() const
 		{
 			return oa::LOCAL_AND_VALUE<double>::SIZE;
 		}
@@ -400,7 +400,7 @@ namespace instr
 			value(value)
 		{ }
 
-		inline virtual unsigned int GetArgsSize() const
+		inline virtual uint32_t GetArgsSize() const
 		{
 			return oa::LOCAL_AND_VALUE<String*>::SIZE;
 		}
@@ -426,7 +426,7 @@ namespace instr
 			type(type), value(value)
 		{ }
 
-		inline virtual unsigned int GetArgsSize() const
+		inline virtual uint32_t GetArgsSize() const
 		{
 			return oa::LOAD_ENUM_SIZE;
 		}
@@ -449,7 +449,7 @@ namespace instr
 			type(type), argCount(argCount), args(0), target(0), refSignature(0)
 		{ }
 
-		inline virtual unsigned int GetArgsSize() const
+		inline virtual uint32_t GetArgsSize() const
 		{
 			return oa::NEW_OBJECT_SIZE;
 		}
@@ -484,7 +484,7 @@ namespace instr
 			capacity(capacity)
 		{ }
 
-		inline virtual unsigned int GetArgsSize() const
+		inline virtual uint32_t GetArgsSize() const
 		{
 			return oa::LOCAL_AND_VALUE<int32_t>::SIZE;
 		}
@@ -503,7 +503,7 @@ namespace instr
 			capacity(capacity)
 		{ }
 
-		inline virtual unsigned int GetArgsSize() const
+		inline virtual uint32_t GetArgsSize() const
 		{
 			return oa::LOCAL_AND_VALUE<int32_t>::SIZE;
 		}
@@ -522,7 +522,7 @@ namespace instr
 			method(method)
 		{ }
 
-		inline virtual unsigned int GetArgsSize() const
+		inline virtual uint32_t GetArgsSize() const
 		{
 			return oa::LOCAL_AND_VALUE<Method*>::SIZE;
 		}
@@ -541,7 +541,7 @@ namespace instr
 			type(type)
 		{ }
 
-		inline virtual unsigned int GetArgsSize() const
+		inline virtual uint32_t GetArgsSize() const
 		{
 			return oa::LOCAL_AND_VALUE<Type*>::SIZE;
 		}
@@ -562,7 +562,7 @@ namespace instr
 			instance(0), output(0), member(member)
 		{ }
 
-		inline virtual unsigned int GetArgsSize() const
+		inline virtual uint32_t GetArgsSize() const
 		{
 			return oa::TWO_LOCALS_AND_VALUE<String*>::SIZE;
 		}
@@ -595,7 +595,7 @@ namespace instr
 			args(0), member(member)
 		{ }
 
-		inline virtual unsigned int GetArgsSize() const
+		inline virtual uint32_t GetArgsSize() const
 		{
 			return oa::LOCAL_AND_VALUE<String*>::SIZE;
 		}
@@ -624,7 +624,7 @@ namespace instr
 			instance(0), output(0), field(field)
 		{ }
 
-		inline virtual unsigned int GetArgsSize() const
+		inline virtual uint32_t GetArgsSize() const
 		{
 			return oa::TWO_LOCALS_AND_VALUE<Field*>::SIZE;
 		}
@@ -657,7 +657,7 @@ namespace instr
 			args(0), field(field)
 		{ }
 
-		inline virtual unsigned int GetArgsSize() const
+		inline virtual uint32_t GetArgsSize() const
 		{
 			return oa::LOCAL_AND_VALUE<Field*>::SIZE;
 		}
@@ -684,7 +684,7 @@ namespace instr
 			field(field)
 		{ }
 
-		inline virtual unsigned int GetArgsSize() const
+		inline virtual uint32_t GetArgsSize() const
 		{
 			return oa::LOCAL_AND_VALUE<Field*>::SIZE;
 		}
@@ -704,7 +704,7 @@ namespace instr
 			value(0), field(field)
 		{ }
 
-		inline virtual unsigned int GetArgsSize() const
+		inline virtual uint32_t GetArgsSize() const
 		{
 			return oa::LOCAL_AND_VALUE<Field*>::SIZE;
 		}
@@ -732,7 +732,7 @@ namespace instr
 			value(0), output(0)
 		{ }
 
-		inline virtual unsigned int GetArgsSize() const
+		inline virtual uint32_t GetArgsSize() const
 		{
 			return oa::TWO_LOCALS_SIZE;
 		}
@@ -765,7 +765,7 @@ namespace instr
 			source(0), target(0)
 		{ }
 
-		inline virtual unsigned int GetArgsSize() const
+		inline virtual uint32_t GetArgsSize() const
 		{
 			return oa::TWO_LOCALS_SIZE;
 		}
@@ -799,7 +799,7 @@ namespace instr
 			args(0), output(0), argCount(argCount)
 		{ }
 
-		inline virtual unsigned int GetArgsSize() const
+		inline virtual uint32_t GetArgsSize() const
 		{
 			return oa::TWO_LOCALS_AND_VALUE<uint32_t>::SIZE;
 		}
@@ -832,7 +832,7 @@ namespace instr
 			args(0), argCount(argCount)
 		{ }
 
-		inline virtual unsigned int GetArgsSize() const
+		inline virtual uint32_t GetArgsSize() const
 		{
 			return oa::LOCAL_AND_VALUE<uint32_t>::SIZE;
 		}
@@ -862,7 +862,7 @@ namespace instr
 			args(0), output(0), argCount(argCount), refSignature(0)
 		{ }
 
-		inline virtual unsigned int GetArgsSize() const
+		inline virtual uint32_t GetArgsSize() const
 		{
 			return refSignature ? oa::CALL_REF_SIZE : oa::CALL_SIZE;
 		}
@@ -901,7 +901,7 @@ namespace instr
 			args(0), output(0), member(member), argCount(argCount), refSignature(0)
 		{ }
 
-		inline virtual unsigned int GetArgsSize() const
+		inline virtual uint32_t GetArgsSize() const
 		{
 			return refSignature ? oa::CALL_MEMBER_REF_SIZE : oa::CALL_MEMBER_SIZE;
 		}
@@ -940,7 +940,7 @@ namespace instr
 			args(0), output(0), argCount(argCount), method(method), refSignature(0)
 		{ }
 
-		inline virtual unsigned int GetArgsSize() const
+		inline virtual uint32_t GetArgsSize() const
 		{
 			return oa::STATIC_CALL_SIZE;
 		}
@@ -976,7 +976,7 @@ namespace instr
 			args(0), output(0)
 		{ }
 
-		inline virtual unsigned int GetArgsSize() const
+		inline virtual uint32_t GetArgsSize() const
 		{
 			return oa::TWO_LOCALS_SIZE;
 		}
@@ -1010,7 +1010,7 @@ namespace instr
 			args(0), output(0), method(method)
 		{ }
 
-		inline virtual unsigned int GetArgsSize() const
+		inline virtual uint32_t GetArgsSize() const
 		{
 			return oa::TWO_LOCALS_AND_VALUE<Method*>::SIZE;
 		}
@@ -1042,7 +1042,7 @@ namespace instr
 			target(target)
 		{ }
 
-		inline virtual unsigned int GetArgsSize() const
+		inline virtual uint32_t GetArgsSize() const
 		{
 			return oa::BRANCH_SIZE;
 		}
@@ -1076,7 +1076,7 @@ namespace instr
 			value(0)
 		{ }
 
-		inline virtual unsigned int GetArgsSize() const
+		inline virtual uint32_t GetArgsSize() const
 		{
 			return oa::CONDITIONAL_BRANCH_SIZE;
 		}
@@ -1105,7 +1105,7 @@ namespace instr
 			type(type)
 		{ }
 
-		inline virtual unsigned int GetArgsSize() const
+		inline virtual uint32_t GetArgsSize() const
 		{
 			return oa::BRANCH_IF_TYPE_SIZE;
 		}
@@ -1133,7 +1133,7 @@ namespace instr
 			delete[] targets;
 		}
 
-		inline virtual unsigned int GetArgsSize() const
+		inline virtual uint32_t GetArgsSize() const
 		{
 			return oa::SWITCH_SIZE(targetCount);
 		}
@@ -1160,7 +1160,7 @@ namespace instr
 			args(0)
 		{ }
 
-		inline virtual unsigned int GetArgsSize() const
+		inline virtual uint32_t GetArgsSize() const
 		{
 			return oa::CONDITIONAL_BRANCH_SIZE;
 		}
@@ -1189,7 +1189,7 @@ namespace instr
 			args(args)
 		{ }
 
-		inline virtual unsigned int GetArgsSize() const
+		inline virtual uint32_t GetArgsSize() const
 		{
 			return oa::CONDITIONAL_BRANCH_SIZE;
 		}
@@ -1239,7 +1239,7 @@ namespace instr
 			return op == Operator::PLUS || op == Operator::NEG || op == Operator::NOT;
 		}
 
-		inline virtual unsigned int GetArgsSize() const
+		inline virtual uint32_t GetArgsSize() const
 		{
 			if ((uint8_t)op == 0xff || op == Operator::EQ || op == Operator::CMP)
 				return oa::TWO_LOCALS_SIZE;
@@ -1274,7 +1274,7 @@ namespace instr
 			local(local)
 		{ }
 
-		inline virtual unsigned int GetArgsSize() const
+		inline virtual uint32_t GetArgsSize() const
 		{
 			return oa::ONE_LOCAL_SIZE;
 		}
@@ -1296,7 +1296,7 @@ namespace instr
 			instance(0), member(member)
 		{ }
 
-		inline virtual unsigned int GetArgsSize() const
+		inline virtual uint32_t GetArgsSize() const
 		{
 			return oa::LOCAL_AND_VALUE<String*>::SIZE;
 		}
@@ -1324,7 +1324,7 @@ namespace instr
 			instance(0), field(field)
 		{ }
 
-		inline virtual unsigned int GetArgsSize() const
+		inline virtual uint32_t GetArgsSize() const
 		{
 			return oa::LOCAL_AND_VALUE<Field*>::SIZE;
 		}
@@ -1351,7 +1351,7 @@ namespace instr
 			field(field)
 		{ }
 
-		inline virtual unsigned int GetArgsSize() const
+		inline virtual uint32_t GetArgsSize() const
 		{
 			return oa::SINGLE_VALUE<Field*>::SIZE;
 		}
