@@ -113,11 +113,40 @@ namespace os
 		return attrs != INVALID_FILE_ATTRIBUTES && (attrs & FILE_ATTRIBUTE_DIRECTORY) != 0;
 	}
 
+	// Determines whether the specified file handle is (probably)
+	// valid; that is, refers to an open file. This accuracy of
+	// this check varies between implementations. It should only
+	// really be used to test whether a file handle variable has
+	// been initialized to something other than the default value.
+	//   file:
+	//     The file handle to test.
+	// Returns:
+	//   True if the file handle looks like it might be valid;
+	//   otherwise, false.
 	inline bool FileHandleIsValid(FileHandle *file)
 	{
 		return *file != nullptr && *file != INVALID_HANDLE_VALUE;
 	}
 
+	// Opens a file with the specified name, mode, read/write access
+	// and sharing mode.
+	//   fileName:
+	//     The name of the file to open.
+	//   mode:
+	//     Specifies how the file is opened. See FileMode's members
+	//     for a description of each mode.
+	//   access:
+	//     Specifies whether the file should be opened for reading,
+	//     writing, or both.
+	//   share:
+	//     Specifies whether other processes can open the file at
+	//     the same time, and if so, what they can do with it.
+	//   output:
+	//     Receives a handle to the newly opened file, if the function
+	//     call succeeds.
+	// Returns:
+	//   A status code which indicates whether an error occurred. If
+	//   the file was opened successfully, FILE_OK is returned.
 	inline FileStatus OpenFile(const pathchar_t *fileName, FileMode mode, FileAccess access, FileShare share, FileHandle *output)
 	{
 		HANDLE handle = CreateFileW(
@@ -135,6 +164,12 @@ namespace os
 		return FILE_OK;
 	}
 
+	// Closes a file handle previously opened with OpenFile.
+	//   file:
+	//     The file to close.
+	// Returns:
+	//   A status code which indicates whether an error occurred. If
+	//   the file was closed successfully, FILE_OK is returned.
 	inline FileStatus CloseFile(FileHandle *file)
 	{
 		BOOL r = ::CloseHandle(*file);
@@ -143,6 +178,26 @@ namespace os
 		return FILE_OK;
 	}
 
+	// Reads a number of bytes from the specified file.
+	//   file:
+	//     The file to read from.
+	//   count:
+	//     The maximum number of bytes to read. The function may read
+	//     fewer bytes, depending on the implementation. The bytesRead
+	//     parameter is used to find out how many bytes were actually
+	//     consumed.
+	//   buffer:
+	//     The buffer that receives bytes from the file. This buffer
+	//     MUST be large enough to contain at least count bytes.
+	//   bytesRead:
+	//     Receives the actual number of bytes that were read. If this
+	//     is set to 0, it means the end of the file was reached.
+	// Returns:
+	//   A status code which indicates whether an error occurred. If the
+	//   data was read successfully, FILE_OK is returned. This function
+	//   does not return FILE_EOF; that status code is reserved for future
+	//   and internal use. End-of-file is signalled by setting bytesRead
+	//   to 0.
 	inline FileStatus ReadFile(FileHandle *file, size_t count, void *buffer, size_t *bytesRead)
 	{
 		BOOL r;
@@ -162,6 +217,23 @@ namespace os
 		return FILE_OK;
 	}
 
+	// Writes a number of bytes to the specified file.
+	//   file:
+	//     The file to write to.
+	//   count:
+	//     The maximum number of bytes to write.
+	//   buffer:
+	//     The buffer whose bytes are written to the file. The contents
+	//     of this buffer must not be modified while the file is being
+	//     written, or undefined behaviour will occur.
+	//   bytesWritten:
+	//     Receives the number of bytes written. This should equal count
+	//     when writing to a regular file.
+	// Returns:
+	//   A status code which indicates whether an error occurred. If the
+	//   data was written successfully, FILE_OK is returned. This function
+	//   does not return FILE_EOF; that status code is reserved for future
+	//   and internal use. Moreover, the file expands as needed.
 	inline FileStatus WriteFile(FileHandle *file, size_t count, const void *buffer, size_t *bytesWritten)
 	{
 		BOOL r;
@@ -180,6 +252,23 @@ namespace os
 		return FILE_OK;
 	}
 
+	// Sets the current file cursor for the specified file.
+	//   file:
+	//     The file to seek within.
+	//   offset:
+	//     The number of bytes to move the file cursor. Positive values
+	//     seek toward the end of the file, negative values toward the
+	//     beginning.
+	//   origin:
+	//     Determines what "end" of the file the offset is relative to.
+	//     Note: when origin = FILE_SEEK_END, a positive offset will
+	//     still seek forwards in the file; that is, past the end.
+	//   newOffset:
+	//     Receives the new position of the file cursor, relative to the
+	//     beginning of the file.
+	// Returns:
+	//   A status code which indicates whether an error occurred. If the
+	//   file cursor was successfully changed, FILE_OK is returned.
 	inline FileStatus SeekFile(FileHandle *file, int64_t offset, SeekOrigin origin, int64_t *newOffset)
 	{
 		LARGE_INTEGER largeIntOffset;
