@@ -16,14 +16,23 @@
     <Filter Include="Header Files\Internal">
       <UniqueIdentifier>{881751af-5e7b-496f-8455-89f965ab3ee3}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Windows">
-      <UniqueIdentifier>{27816d3d-e0e9-4c1c-8128-ebb93b0400b5}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\Unicode">
       <UniqueIdentifier>{da4e806e-c0b1-477a-8bd7-cc807e860309}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Windows">
-      <UniqueIdentifier>{3e12c8b4-40d9-40ed-b034-36fd00fc4cfe}</UniqueIdentifier>
+    <Filter Include="Source Files\os">
+      <UniqueIdentifier>{035d6fea-734f-4a5e-9f07-810cbbc6e8fc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\os\windows">
+      <UniqueIdentifier>{fcec8b00-0df6-4e23-b52f-fb1af50015f3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\os">
+      <UniqueIdentifier>{9cc4e743-0f34-4be6-a4b4-2d8323d832db}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\os\windows">
+      <UniqueIdentifier>{5027c15d-862f-4fab-a421-9ac9f6e2f4a8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\os\_template">
+      <UniqueIdentifier>{9bda7611-4e5b-4b18-a015-95590361fe53}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -108,9 +117,6 @@
     <ClInclude Include="src\ov_gc.internal.h">
       <Filter>Header Files\Internal</Filter>
     </ClInclude>
-    <ClInclude Include="windows\windows.h">
-      <Filter>Header Files\Windows</Filter>
-    </ClInclude>
     <ClInclude Include="src\pathname.internal.h">
       <Filter>Header Files\Internal</Filter>
     </ClInclude>
@@ -134,6 +140,33 @@
     </ClInclude>
     <ClInclude Include="src\methodinitexception.internal.h">
       <Filter>Header Files\Internal</Filter>
+    </ClInclude>
+    <ClInclude Include="src\os\windows.h">
+      <Filter>Header Files\os</Filter>
+    </ClInclude>
+    <ClInclude Include="src\os\windows\def.h">
+      <Filter>Header Files\os\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="src\os\_template\def.h">
+      <Filter>Header Files\os\_template</Filter>
+    </ClInclude>
+    <ClInclude Include="src\os\_template\filesystem.h">
+      <Filter>Header Files\os\_template</Filter>
+    </ClInclude>
+    <ClInclude Include="src\os\_template\mem.h">
+      <Filter>Header Files\os\_template</Filter>
+    </ClInclude>
+    <ClInclude Include="src\os\windows\mem.h">
+      <Filter>Header Files\os\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="src\os\_template\threading.h">
+      <Filter>Header Files\os\_template</Filter>
+    </ClInclude>
+    <ClInclude Include="src\os\windows\threading.h">
+      <Filter>Header Files\os\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="src\os\windows\filesystem.h">
+      <Filter>Header Files\os\windows</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -188,13 +221,7 @@
     <ClCompile Include="src\vm.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="windows\dllmain.cpp">
-      <Filter>Source Files\Windows</Filter>
-    </ClCompile>
     <ClCompile Include="src\pathname.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\tls.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\methodbuilder.cpp">
@@ -205,6 +232,12 @@
     </ClCompile>
     <ClCompile Include="src\methodinitializer.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\os\windows\dllmain.cpp">
+      <Filter>Source Files\os\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="src\os\windows\filesystem.cpp">
+      <Filter>Source Files\os\windows</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

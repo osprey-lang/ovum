@@ -90,6 +90,22 @@
     <ClInclude Include="src\methodbuilder.internal.h" />
     <ClInclude Include="src\methodinitexception.internal.h" />
     <ClInclude Include="src\methodinitializer.internal.h" />
+    <ClInclude Include="src\os\windows\def.h" />
+    <ClInclude Include="src\os\windows\filesystem.h" />
+    <ClInclude Include="src\os\windows\mem.h" />
+    <ClInclude Include="src\os\windows\threading.h" />
+    <ClInclude Include="src\os\_template\def.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="src\os\_template\filesystem.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="src\os\_template\mem.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="src\os\_template\threading.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="src\tls.internal.h" />
     <ClInclude Include="src\sync.internal.h" />
     <ClInclude Include="src\membertable.internal.h" />
@@ -113,7 +129,7 @@
     <ClInclude Include="src\ov_type.internal.h" />
     <ClInclude Include="src\ov_thread.opcodes.h" />
     <ClInclude Include="src\string_hash.internal.h" />
-    <ClInclude Include="windows\windows.h" />
+    <ClInclude Include="src\os\windows.h" />
     <ClInclude Include="inc\ov_type.h" />
     <ClInclude Include="inc\ov_unicode.h" />
     <ClInclude Include="src\ov_unicode.internal.h" />
@@ -127,9 +143,9 @@
     <ClCompile Include="src\instructions.cpp" />
     <ClCompile Include="src\methodbuilder.cpp" />
     <ClCompile Include="src\methodinitializer.cpp" />
+    <ClCompile Include="src\os\windows\filesystem.cpp" />
     <ClCompile Include="src\pathname.cpp" />
-    <ClCompile Include="src\tls.cpp" />
-    <ClCompile Include="windows\dllmain.cpp">
+    <ClCompile Include="src\os\windows\dllmain.cpp">
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</CompileAsManaged>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
       </PrecompiledHeader>
