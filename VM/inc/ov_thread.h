@@ -5,16 +5,6 @@
 
 #include "ov_vm.h"
 
-#define OVUM_SUCCESS               0  /* EVERYTHING IS FINE. THERE IS NOTHING TO WORRY ABOUT. */
-#define OVUM_ERROR_THROWN          1  /* An error was thrown using the VM_Throw function or Osprey's 'throw' keyword. */
-#define OVUM_ERROR_UNSPECIFIED     2  /* An unspecified error occurred. */
-#define OVUM_ERROR_METHOD_INIT     3  /* A method could not be initialized (e.g. due to an invalid opcode). */
-#define OVUM_ERROR_NO_MEMORY       4  /* A memory allocation failed due to insufficient memory. */
-#define OVUM_ERROR_NO_MAIN_METHOD  5  /* The startup module has no main method, or the main method is invalid. */
-#define OVUM_ERROR_MODULE_LOAD     6  /* A module could not be loaded. */
-#define OVUM_ERROR_OVERFLOW        8  /* Arithmetic overflow. */
-#define OVUM_ERROR_DIVIDE_BY_ZERO  9  /* Integer division by zero. */
-
 // Returns a successful status code. Semicolon intentionally missing.
 #define RETURN_SUCCESS             return OVUM_SUCCESS
 #define BEGIN_NATIVE_FUNCTION(name) \

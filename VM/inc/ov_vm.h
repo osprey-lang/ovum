@@ -71,6 +71,22 @@ typedef void *PropertyHandle;
 #define OVUM_HANDLES_DEFINED
 #endif
 
+// Standard Ovum error codes.
+
+#define OVUM_SUCCESS                0  /* EVERYTHING IS FINE. THERE IS NOTHING TO WORRY ABOUT. */
+#define OVUM_ERROR_THROWN           1  /* An error was thrown using the VM_Throw function or Osprey's 'throw' keyword. */
+#define OVUM_ERROR_UNSPECIFIED      2  /* An unspecified error occurred. */
+#define OVUM_ERROR_METHOD_INIT      3  /* A method could not be initialized (e.g. due to an invalid opcode). */
+#define OVUM_ERROR_NO_MEMORY        4  /* A memory allocation failed due to insufficient memory. */
+#define OVUM_ERROR_NO_MAIN_METHOD   5  /* The startup module has no main method, or the main method is invalid. */
+#define OVUM_ERROR_MODULE_LOAD      6  /* A module could not be loaded. */
+#define OVUM_ERROR_OVERFLOW         8  /* Arithmetic overflow. */
+#define OVUM_ERROR_DIVIDE_BY_ZERO   9  /* Integer division by zero. */
+#define OVUM_ERROR_INTERRUPTED     10  /* The thread was interrupted while waiting for a blocking operation. */
+#define OVUM_ERROR_WRONG_THREAD    11  /* Attempting an operation on the wrong thread, such as leaving a mutex that the caller isn't in. */
+#define OVUM_ERROR_BUSY           (-1) /* A semaphore, mutex or similar value is entered by another thread. */
+
+
 // Some header files!
 #include "ov_value.h"
 #include "ov_thread.h"

@@ -219,8 +219,6 @@ private:
 
 	static const char *const NativeModuleIniterName;
 
-	static bool FileExists(const PathName &path);
-
 	static void VerifyMagicNumber(ModuleReader &reader);
 
 	static void ReadModuleMeta(ModuleReader &reader, ModuleMeta &target);

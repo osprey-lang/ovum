@@ -88,7 +88,7 @@ public:
 	}
 	inline uint32_t Append(String *path)
 	{
-#if OVUM_TARGET == OVUM_WINDOWS
+#if OVUM_WIDE_PATHCHAR
 		return AppendInner(path->length, reinterpret_cast<const pathchar_t*>(&path->firstChar));
 #else
 #error Not implemented
@@ -112,7 +112,7 @@ public:
 	}
 	inline uint32_t Join(String *path)
 	{
-#if OVUM_TARGET == OVUM_WINDOWS
+#if OVUM_WIDE_PATHCHAR
 		return JoinInner(path->length, reinterpret_cast<const pathchar_t*>(&path->firstChar));
 #else
 #error Not implemented
