@@ -154,7 +154,7 @@ namespace debug
 					||
 					(method = module->FindMethod(methodId)) == nullptr)
 				{
-					reader.Seek(overloadsSize, SeekOrigin::CURRENT);
+					reader.Seek(overloadsSize, os::FILE_SEEK_CURRENT);
 					continue;
 				}
 				if (overloadsSize == 0)
@@ -164,7 +164,7 @@ namespace debug
 				if (overloadsLength != method->overloadCount)
 				{
 					// -4 for the length
-					reader.Seek(overloadsSize - 4, SeekOrigin::CURRENT);
+					reader.Seek(overloadsSize - 4, os::FILE_SEEK_CURRENT);
 					continue;
 				}
 

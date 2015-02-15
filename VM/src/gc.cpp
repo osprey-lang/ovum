@@ -79,17 +79,15 @@ GC::~GC()
 bool GC::InitializeHeaps()
 {
 	// Create the mainHeap with enough initial memory for the gen0 chunk
-	mainHeap = HeapCreate(0, GEN0_SIZE, 0);
-	if (!mainHeap)
+	if (!os::HeapCreate(&mainHeap, GEN0_SIZE))
 		return false;
 
 	// The LOH has no initial size
-	largeObjectHeap = HeapCreate(0, 0, 0);
-	if (!largeObjectHeap)
+	if (!os::HeapCreate(&largeObjectHeap, 0))
 		return false;
 
 	// Allocate gen0
-	gen0Base = HeapAlloc(mainHeap, HEAP_GENERATE_EXCEPTIONS, GEN0_SIZE);
+	gen0Base = os::HeapAlloc(&mainHeap, GEN0_SIZE, false);
 	if (!gen0Base)
 		// This shouldn't happen since mainHeap is initialized with
 		// a size that should be enough for gen0, but let's check
@@ -104,9 +102,9 @@ bool GC::InitializeHeaps()
 void GC::DestroyHeaps()
 {
 	if (mainHeap)
-		HeapDestroy(mainHeap);
+		os::HeapDestroy(&mainHeap);
 	if (largeObjectHeap)
-		HeapDestroy(largeObjectHeap);
+		os::HeapDestroy(&largeObjectHeap);
 }
 
 
@@ -118,7 +116,7 @@ GCObject *GC::AllocRaw(size_t size)
 	GCObject *result;
 	if (size > LARGE_OBJECT_SIZE)
 	{
-		result = (GCObject*)HeapAlloc(largeObjectHeap, HEAP_ZERO_MEMORY, size);
+		result = (GCObject*)os::HeapAlloc(&largeObjectHeap, size, true);
 		if (result)
 			result->flags |= GCOFlags::LARGE_OBJECT;
 	}
@@ -163,8 +161,10 @@ GCObject *GC::AllocRaw(size_t size)
 		result = (GCObject*)gen0Current;
 		gen0Current += ALIGN_TO(size, 8);
 		if (gen0Current > gen0End)
+		{
 			// Not enough space in gen0. Return null, which forces a cycle.
 			result = nullptr;
+		}
 		else
 		{
 			// Always zero all the memory before returning
@@ -180,7 +180,7 @@ GCObject *GC::AllocRawGen1(size_t size)
 {
 	// Don't call with HEAP_ZERO_MEMORY. We'll be copying the old
 	// object into this address anyway, it'd be unnecessary work.
-	return (GCObject*)HeapAlloc(mainHeap, 0, size);
+	return (GCObject*)os::HeapAlloc(&mainHeap, size, false);
 }
 
 void GC::ReleaseRaw(GCObject *gco)
@@ -190,10 +190,10 @@ void GC::ReleaseRaw(GCObject *gco)
 	// Do nothing with gen0 objects
 	case GCOFlags::GEN_1:
 		gen1Size -= gco->size;
-		HeapFree(mainHeap, 0, gco);
+		os::HeapFree(&mainHeap, gco);
 		break;
 	case GCOFlags::LARGE_OBJECT:
-		HeapFree(largeObjectHeap, 0, gco);
+		os::HeapFree(&largeObjectHeap, gco);
 		break;
 	}
 }
@@ -266,7 +266,7 @@ int GC::AllocValueArray(Thread *const thread, uint32_t length, Value **output)
 
 void GC::BeginAlloc(Thread *const thread)
 {
-	if (!allocSection.TryEnter())
+	if (allocSection.TryEnter() != OVUM_SUCCESS)
 	{
 		thread->EnterUnmanagedRegion();
 		allocSection.Enter();

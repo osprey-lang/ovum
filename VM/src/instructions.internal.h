@@ -388,8 +388,6 @@ namespace instr
 		virtual void WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const;
 	};
 
-	// Note: Windows headers define a LoadString macro
-	#undef LoadString
 	class LoadString : public LoadValue
 	{
 	public:

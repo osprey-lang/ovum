@@ -239,7 +239,7 @@ Module *Module::Open(VM *vm, const PathName &fileName, ModuleVersion *requiredVe
 			fileFormatVersion > module_file::MaxFileFormatVersion)
 			throw ModuleLoadException(fileName, "Unsupported module file format version.");
 
-		reader.Seek(module_file::DataStart, SeekOrigin::BEGIN);
+		reader.Seek(module_file::DataStart, os::FILE_SEEK_START);
 
 		ModuleMeta meta;
 		ReadModuleMeta(reader, meta);
@@ -348,13 +348,13 @@ Module *Module::OpenByName(VM *vm, String *name, ModuleVersion *requiredVersion)
 			// path/$name-version/$name.ovm
 			moduleFileName.Join(name);
 			moduleFileName.Append(module_file::Extension);
-			if (found = FileExists(moduleFileName))
+			if (found = os::FileExists(moduleFileName.GetDataPointer()))
 				break;
 
 			// path/$name-$version.ovm
 			moduleFileName.ClipTo(0, versionedName);
 			moduleFileName.Append(module_file::Extension);
-			if (found = FileExists(moduleFileName))
+			if (found = os::FileExists(moduleFileName.GetDataPointer()))
 				break;
 		}
 
@@ -367,13 +367,13 @@ Module *Module::OpenByName(VM *vm, String *name, ModuleVersion *requiredVersion)
 		moduleFileName.ClipTo(0, simpleName);
 		moduleFileName.Join(name);
 		moduleFileName.Append(module_file::Extension);
-		if (found = FileExists(moduleFileName))
+		if (found = os::FileExists(moduleFileName.GetDataPointer()))
 			break;
 
 		// path/$name.ovm
 		moduleFileName.ClipTo(0, simpleName);
 		moduleFileName.Append(module_file::Extension);
-		if (found = FileExists(moduleFileName))
+		if (found = os::FileExists(moduleFileName.GetDataPointer()))
 			break;
 	}
 
@@ -428,16 +428,6 @@ void Module::FreeNativeLibrary()
 		FreeLibrary(this->nativeLib);
 		this->nativeLib = nullptr;
 	}
-}
-
-bool Module::FileExists(const PathName &path)
-{
-#if OVUM_TARGET == OVUM_WINDOWS
-	DWORD attrs = GetFileAttributesW(path.GetDataPointer());
-	return attrs != INVALID_FILE_ATTRIBUTES && (attrs & FILE_ATTRIBUTE_DIRECTORY) == 0;
-#else
-#error Not implemented
-#endif
 }
 
 void Module::VerifyMagicNumber(ModuleReader &reader)
@@ -1228,15 +1218,15 @@ Method *Module::ReadSingleMethod(ModuleReader &reader)
 				uint32_t offset = reader.ReadUInt32(); // The offset of the first instruction in the method, relative to the method block
 				uint32_t length = reader.ReadUInt32(); // The length of the body, in bytes
 
-				const long posCurrent = reader.GetPosition(); // Resumption point
+				const unsigned long posCurrent = reader.GetPosition(); // Resumption point
 
 				// Read the method body
-				reader.Seek(methodStart + offset, SeekOrigin::BEGIN);
+				reader.Seek(methodStart + offset, os::FILE_SEEK_START);
 				std::unique_ptr<uint8_t[]> body(new uint8_t[length]);
 				reader.Read(body.get(), length);
 
 				// Return to previous position
-				reader.Seek(posCurrent, SeekOrigin::BEGIN);
+				reader.Seek(posCurrent, os::FILE_SEEK_START);
 
 				ov->length = length;
 				ov->entry = body.release();
@@ -1355,9 +1345,9 @@ void Module::TryRegisterStandardType(Type *type, ModuleReader &reader)
 
 void Module::AppendVersionString(PathName &path, ModuleVersion &version)
 {
-	typedef int32_t (ModuleVersion::*ModuleField);
+	typedef int32_t (ModuleVersion::*VersionField);
 	static const int fieldCount = 4;
-	static ModuleField fields[] = {
+	static VersionField fields[] = {
 		&ModuleVersion::major,
 		&ModuleVersion::minor,
 		&ModuleVersion::build,

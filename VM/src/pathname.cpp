@@ -27,7 +27,7 @@ PathName::PathName(uint32_t capacity)
 PathName::PathName(String *path)
 	: data(nullptr), length(0), capacity(0)
 {
-#if OVUM_TARGET == OVUM_WINDOWS
+#if OVUM_WIDE_PATHCHAR
 	Init(path->length);
 	this->length = path->length;
 	CopyMemoryT(this->data, reinterpret_cast<const pathchar_t*>(&path->firstChar), path->length);
@@ -64,7 +64,7 @@ PathName::PathName(uint32_t capacity, std::nothrow_t)
 PathName::PathName(String *path, std::nothrow_t)
 	: data(nullptr), length(0), capacity(0)
 {
-#if OVUM_TARGET == OVUM_WINDOWS
+#if OVUM_WIDE_PATHCHAR
 	Init(path->length, std::nothrow);
 	if (IsValid())
 	{
@@ -93,7 +93,7 @@ PathName::~PathName()
 
 String *PathName::ToManagedString(ThreadHandle thread) const
 {
-#if OVUM_TARGET == OVUM_WINDOWS
+#if OVUM_WIDE_PATHCHAR
 	return thread->GetGC()->ConstructString(thread, length, reinterpret_cast<const uchar*>(data));
 #else
 #error Not implemented
@@ -183,7 +183,7 @@ uint32_t PathName::GetRootLength(uint32_t length, const pathchar_t *path)
 
 uint32_t PathName::StringLength(const pathchar_t *const str)
 {
-#if OVUM_TARGET == OVUM_WINDOWS
+#if OVUM_WIDE_PATHCHAR
 	return (uint32_t)wcslen(str);
 #else
 	return (uint32_t)strlen(str);

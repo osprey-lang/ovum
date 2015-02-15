@@ -6,78 +6,54 @@
 #ifndef VM__TLS_INTERNAL_H
 #define VM__TLS_INTERNAL_H
 
-#include "../inc/ov_vm.h"
-
-#if OVUM_TARGET == OVUM_WINDOWS
-#include "../windows/windows.h"
-
-typedef DWORD TlsKey;
-#else
-#error Not supported
-#endif
+#include "ov_vm.internal.h"
 
 namespace ovum
 {
-
-// Non-template implementation class for TlsEntry<T>.
-// This is required because:
-//   1. We want TlsEntry to be a template class (generally safer);
-//   2. Template classes must be defined inline;
-//   3. We need the implementation to be in a source file.
-// This class uses the same API as TlsEntry<T>, except that the
-// Get and Set methods operate on void*.
-// You should generally not use this class in your code.
-class _TlsEntry
-{
-private:
-	bool inited;
-	TlsKey key;
-
-	DISABLE_COPY_AND_ASSIGN(_TlsEntry);
-
-public:
-	_TlsEntry();
-
-	inline bool IsValid() const
-	{
-		return inited;
-	}
-	bool Alloc();
-	void Free();
-	void *const Get();
-	void Set(void *const value);
-};
-
+// Implements a thread-local storage entry. The thread-local storage slot
+// contains a pointer to T. The constructor for TlsEntry does not attempt
+// to allocate a TLS slot; that is done by the Alloc method.
 template<typename T>
 class TlsEntry
 {
 private:
-	_TlsEntry entry;
+	bool inited;
+	os::TlsKey key;
+
+	DISABLE_COPY_AND_ASSIGN(TlsEntry);
 
 public:
-	inline TlsEntry()
-		: entry()
+	inline TlsEntry() : inited(false)
 	{ }
 
 	// Determines whether the TLS key is valid, that is,
 	// whether it's been allocated for the calling process.
 	inline bool IsValid() const
 	{
-		return entry.IsValid();
+		return inited;
 	}
 
 	// Attempts to allocate storage for this TLS key. Returns
 	// true if successful; otherwise, false.
 	inline bool Alloc()
 	{
-		return entry.Alloc();
+		if (IsValid())
+			return true;
+
+		if (os::TlsAlloc(&key))
+		{
+			inited = true;
+			return true;
+		}
+		return false;
 	}
 
 	// Frees the storage for this TLS key. The value stored
 	// in the key is NOT destructed in any way.
 	inline void Free()
 	{
-		entry.Free();
+		if (IsValid())
+			os::TlsFree(&key);
 	}
 
 	// Gets the value stored in this TLS key on the currently
@@ -85,13 +61,16 @@ public:
 	// returns false), then null is always returned.
 	inline T *const Get()
 	{
-		return reinterpret_cast<T*>(entry.Get());
+		if (!IsValid())
+			return nullptr;
+		return reinterpret_cast<T*>(os::TlsGet(&key));
 	}
 
 	// Sets the value of this TLS key on the current thread.
 	inline void Set(T *const value)
 	{
-		entry.Set(value);
+		if (IsValid())
+			os::TlsSet(&key, value);
 	}
 };
 

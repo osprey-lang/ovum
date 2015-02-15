@@ -1150,20 +1150,20 @@ int Thread::ThrowMissingOperatorError(Operator op)
 
 int Thread::InitCallStack()
 {
-	callStack = (unsigned char*)VirtualAlloc(nullptr,
+	callStack = (unsigned char*)os::VirtualAlloc(
+		nullptr,
 		CALL_STACK_SIZE + 256,
-		MEM_RESERVE | MEM_COMMIT,
-		PAGE_READWRITE);
+		os::VPROT_READ_WRITE
+	);
 	if (callStack == nullptr)
 		return OVUM_ERROR_NO_MEMORY;
 
 	// Make sure the page following the call stack will cause an instant segfault,
 	// as a very dirty way of signalling a stack overflow.
-	DWORD ignore;
-	VirtualProtect(callStack + CALL_STACK_SIZE, 256, PAGE_NOACCESS, &ignore);
+	os::VirtualProtect(callStack + CALL_STACK_SIZE, 256, os::VPROT_NO_ACCESS);
 
 	// The call stack should never be swapped out.
-	VirtualLock(callStack, CALL_STACK_SIZE);
+	os::VirtualLock(callStack, CALL_STACK_SIZE);
 
 	// Push a "fake" stack frame onto the stack, so that we can
 	// push values onto the evaluation stack before invoking the
@@ -1176,7 +1176,7 @@ int Thread::InitCallStack()
 void Thread::DisposeCallStack()
 {
 	if (callStack)
-		VirtualFree(callStack, 0, MEM_RELEASE);
+		os::VirtualFree(callStack);
 }
 
 

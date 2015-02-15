@@ -323,8 +323,8 @@ private:
 	char *gen0Current;
 	void *gen0Base;
 	void *gen0End;
-	HANDLE mainHeap;
-	HANDLE largeObjectHeap;
+	os::HeapHandle mainHeap;
+	os::HeapHandle largeObjectHeap;
 	
 	GCObject *collectList;
 	GCObject *pinnedList;

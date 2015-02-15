@@ -9,19 +9,12 @@
 namespace ovum
 {
 
-enum class SeekOrigin
-{
-	BEGIN = 0,
-	CURRENT = 1,
-	END = 2,
-};
-
 class ModuleReader
 {
 private:
 	static const size_t BUFFER_SIZE = 65536;
 
-	HANDLE stream;
+	os::FileHandle stream;
 
 	// The file position of the first byte in the buffer
 	uint32_t bufferPosition;
@@ -67,7 +60,7 @@ public:
 
 	unsigned long GetPosition();
 
-	void Seek(long amount, SeekOrigin origin);
+	void Seek(long amount, os::SeekOrigin origin);
 
 	inline int8_t ReadInt8()
 	{
@@ -117,7 +110,7 @@ public:
 	{
 		using namespace std;
 		uint32_t size = ReadUInt32();
-		Seek(size, SeekOrigin::CURRENT);
+		Seek(size, os::FILE_SEEK_CURRENT);
 	}
 
 	String *ReadString();
@@ -138,7 +131,7 @@ private:
 	String *ReadShortString(const int32_t length);
 	String *ReadLongString(const int32_t length);
 
-	void HandleError(DWORD error);
+	void HandleError(os::FileStatus error);
 
 	static const int MaxShortStringLength = 128;
 };

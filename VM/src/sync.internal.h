@@ -6,10 +6,6 @@
 #include "ov_vm.internal.h"
 
 #include <atomic>
-#if OVUM_TARGET == OVUM_UNIX
-#include <pthread.h>
-#include <semaphore.h>
-#endif
 
 namespace ovum
 {
@@ -26,98 +22,64 @@ namespace ovum
 class CriticalSection
 {
 private:
-#if OVUM_TARGET == OVUM_WINDOWS
-	CRITICAL_SECTION section;
-#else
-	pthread_mutex_t mutex;
-#endif
+	os::CriticalSection cs;
 
 	DISABLE_COPY_AND_ASSIGN(CriticalSection);
 
 public:
-	inline CriticalSection(uint32_t spinCount)
+	inline CriticalSection(int spinCount)
 	{
-#if OVUM_TARGET == OVUM_WINDOWS
-		InitializeCriticalSectionEx(&section, spinCount,
-			CRITICAL_SECTION_NO_DEBUG_INFO);
-#else
-		pthread_mutexattr_t attr;
-		pthread_mutexattr_init(&attr);
-		pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
-		pthread_mutex_init(&mutex, &attr);
-		pthread_mutexattr_destroy(&attr);
-#endif
+		os::CriticalSectionInit(&cs, spinCount);
 	}
 
 	inline ~CriticalSection()
 	{
-#if OVUM_TARGET == OVUM_WINDOWS
-		DeleteCriticalSection(&section);
-#else
-		pthread_mutex_destroy(&mutex);
-#endif
+		os::CriticalSectionDestroy(&cs);
 	}
 
-	// Enters the critical section. If another thread has
-	// entered it already, the current thread blocks until
-	// the section becomes available.
-	inline void Enter()
+	// Enters a critical section. The calling thread will block until
+	// the critical section has been entered.
+	// Returns:
+	//   OVUM_SUCCESS if the critical section was successfully entered,
+	//   or an error code otherwise. This method will never return
+	//   OVUM_ERROR_BUSY.
+	inline int Enter()
 	{
-#if OVUM_TARGET == OVUM_WINDOWS
-		EnterCriticalSection(&section);
-#else
-		pthread_mutex_lock(&mutex);
-#endif
+		return os::CriticalSectionEnter(&cs);
 	}
 
-	// Tries to enter the critical section. This method
-	// always returns immediately.
-	// If this thread successfully entered the section,
-	// true is returned; otherwise, another thread has
-	// already entered the section, and false is returned.
-	inline bool TryEnter()
+	// Attempts to enter a critical section. This method always
+	// returns immediately.
+	// Returns:
+	//   If another thread is inside the critical section, the method
+	//   returns OVUM_ERROR_BUSY. If an error occurs, an error code is
+	//   returned. Otherwise, the method returns OVUM_SUCCESS.
+	inline int TryEnter()
 	{
-#if OVUM_TARGET == OVUM_WINDOWS
-		return TryEnterCriticalSection(&section) != 0;
-#else
-		return pthread_mutex_trylock(&mutex) == 0;
-#endif
+		return os::CriticalSectionTryEnter(&cs);
 	}
 
 	// Leaves the critical section. Other threads are now
 	// free to enter it.
-	inline void Leave()
+	// Returns:
+	//   If an error occurs, an error code. Otherwise, OVUM_SUCCESS.
+	inline int Leave()
 	{
-#if OVUM_TARGET == OVUM_WINDOWS
-		LeaveCriticalSection(&section);
-#else
-		pthread_mutex_unlock(&mutex);
-#endif
+		return os::CriticalSectionLeave(&cs);
 	}
 };
 
 class Semaphore
 {
 private:
-#if OVUM_TARGET == OVUM_WINDOWS
-	HANDLE semaphore;
-#else
-	sem_t semaphore;
-#endif
+	os::Semaphore semaphore;
 
 	DISABLE_COPY_AND_ASSIGN(Semaphore);
 
 public:
 	inline Semaphore(int value)
 	{
-#if OVUM_TARGET == OVUM_WINDOWS
-		semaphore = CreateSemaphoreW(nullptr,
-			value,
-			INT_MAX,
-			nullptr);
-#else
-		sem_init(&semaphore, 0, value);
-#endif
+		os::SemaphoreInit(&semaphore, value);
 	}
 
 	inline ~Semaphore()
@@ -129,35 +91,36 @@ public:
 #endif
 	}
 
-	// Decrements the semaphore value by one. If the value is
-	// currently zero, the calling thread will block until another
-	// thread increments the semaphore count.
-	inline void Enter()
+	// Decrements the semaphore value by one. If the value is currently
+	// zero, the calling thread will block until another thread increments
+	// the semaphore count.
+	// Returns:
+	//   OVUM_SUCCESS if the semaphore was successfully entered, or an
+	//   error code otherwise. This function will never return OVUM_ERROR_BUSY.
+	inline int Enter()
 	{
-#if OVUM_TARGET == OVUM_WINDOWS
-		WaitForSingleObject(semaphore, INFINITE);
-#else
-		// TODO: Handle signal interrupts
-		sem_wait(&semaphore);
-#endif
+		return os::SemaphoreEnter(&semaphore);
 	}
 
-	inline bool TryEnter()
+	// Attempts to decrement the semaphore value by one. If the value is
+	// currently zero, the function returns without affecting the semaphore.
+	// This function always returns immediately.
+	// Returns:
+	//   If the semaphore is was zero, the function returns OVUM_ERROR_BUSY.
+	//   If the semaphore was decremented, the return value is OVUM_SUCCESS.
+	//   Otherwise, an error code is returned.
+	inline int TryEnter()
 	{
-#if OVUM_TARGET == OVUM_WINDOWS
-		return WaitForSingleObject(semaphore, 0) != ERROR_TIMEOUT;
-#else
-		return sem_trywait(&semaphore) != EAGAIN;
-#endif
+		return os::SemaphoreTryEnter(&semaphore);
 	}
 
-	inline void Leave()
+	// Increments the semaphore by one.
+	// Returns:
+	//   If the semaphore was successfully incremented, the return value is
+	//   OVUM_SUCCESS. Otherwise, an error code is returned.
+	inline int Leave()
 	{
-#if OVUM_TARGET == OVUM_WINDOWS
-		ReleaseSemaphore(semaphore, 1, nullptr);
-#else
-		sem_post(&semaphore);
-#endif
+		return os::SemaphoreLeave(&semaphore);
 	}
 };
 
@@ -177,6 +140,9 @@ public:
 class SpinLock
 {
 private:
+	// The total number of times to spin before yielding
+	static const int MAX_COUNT_BEFORE_YIELDING = 100;
+
 	std::atomic_flag flag;
 
 	DISABLE_COPY_AND_ASSIGN(SpinLock);
@@ -188,8 +154,20 @@ public:
 	// the thread will spin until it becomes available.
 	inline void Enter()
 	{
-		while (flag.test_and_set(std::memory_order_acquire))
-			; // Spin!
+		int spinCountLeft = MAX_COUNT_BEFORE_YIELDING;
+		while (spinCountLeft != 0)
+		{
+			if (!flag.test_and_set(std::memory_order_acquire))
+				return;
+			spinCountLeft--;
+		}
+
+		while (true)
+		{
+			if (!flag.test_and_set(std::memory_order_acquire))
+				return;
+			os::Yield();
+		}
 	}
 
 	// Tries to enter the spinlock. This method returns

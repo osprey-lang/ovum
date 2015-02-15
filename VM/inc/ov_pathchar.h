@@ -27,6 +27,14 @@
 #include "ov_vm.h"
 
 #if OVUM_TARGET == OVUM_WINDOWS
+// pathchar_t is a wide character type.
+#define OVUM_WIDE_PATHCHAR 1
+#else
+// pathchar_t is the regular char type, encoded as UTF-8.
+#define OVUM_WIDE_PATHCHAR 0
+#endif
+
+#if OVUM_WIDE_PATHCHAR
 
 typedef wchar_t pathchar_t;
 

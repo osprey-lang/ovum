@@ -6,15 +6,15 @@ namespace ovum
 {
 
 ModuleReader::ModuleReader(VM *owner)
-	: fileName(256), stream(nullptr),
+	: fileName(256), stream(),
 	buffer(nullptr), bufferPosition(0),
 	bufferIndex(0), bufferDataSize(0),
 	vm(owner)
 { }
 ModuleReader::~ModuleReader()
 {
-	if (stream != nullptr && stream != INVALID_HANDLE_VALUE)
-		CloseHandle(stream);
+	if (os::FileHandleIsValid(&stream))
+		os::CloseFile(&stream);
 	free(buffer);
 }
 
@@ -28,10 +28,15 @@ void ModuleReader::Open(const pathchar_t *fileName)
 	}
 	this->fileName.Append(fileName);
 
-	stream = CreateFileW(fileName, GENERIC_READ, FILE_SHARE_READ,
-		nullptr, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, nullptr);
-	if (stream == INVALID_HANDLE_VALUE)
-		HandleError(GetLastError());
+	os::FileStatus r = os::OpenFile(
+		fileName,
+		os::FILE_OPEN,
+		os::FILE_ACCESS_READ,
+		os::FILE_SHARE_READ,
+		&stream
+	);
+	if (r != os::FILE_OK)
+		HandleError(r);
 }
 void ModuleReader::Open(const PathName &fileName)
 {
@@ -96,21 +101,22 @@ void ModuleReader::Read(void *dest, uint32_t count)
 
 uint32_t ModuleReader::ReadRaw(void *dest, uint32_t count)
 {
-	DWORD bytesRead;
-	BOOL result = ReadFile(stream, dest, count, &bytesRead, nullptr);
-	if (!result)
-		HandleError(GetLastError());
+	size_t bytesRead;
+	os::FileStatus r = os::ReadFile(&stream, (size_t)count, dest, &bytesRead);
+	if (r != os::FILE_OK)
+		HandleError(r);
 	if (bytesRead == 0)
-		HandleError(ERROR_HANDLE_EOF);
-	return bytesRead;
+		HandleError(os::FILE_EOF);
+	return (uint32_t)bytesRead;
 }
 
 unsigned long ModuleReader::GetFilePosition()
 {
-	unsigned long result = SetFilePointer(stream, 0, nullptr, FILE_CURRENT);
-	if (result == INVALID_SET_FILE_POINTER)
-		HandleError(GetLastError());
-	return result;
+	int64_t position;
+	os::FileStatus r = os::SeekFile(&stream, 0, os::FILE_SEEK_CURRENT, &position);
+	if (r != os::FILE_OK)
+		HandleError(r);
+	return (unsigned long)position;
 }
 
 void ModuleReader::FillBuffer()
@@ -128,9 +134,9 @@ unsigned long ModuleReader::GetPosition()
 	return bufferPosition + bufferIndex;
 }
 
-void ModuleReader::Seek(long amount, SeekOrigin origin)
+void ModuleReader::Seek(long amount, os::SeekOrigin origin)
 {
-	if (origin == SeekOrigin::CURRENT)
+	if (origin == os::FILE_SEEK_CURRENT)
 	{
 		bufferIndex += amount;
 		if (bufferIndex < bufferDataSize)
@@ -139,7 +145,7 @@ void ModuleReader::Seek(long amount, SeekOrigin origin)
 		// Otherwise, fall through to reset buffer and seek
 		// the file pointer.
 	}
-	else if (origin == SeekOrigin::BEGIN)
+	else if (origin == os::FILE_SEEK_START)
 	{
 		bufferIndex = amount - bufferPosition;
 		if (bufferIndex < bufferDataSize)
@@ -155,11 +161,9 @@ void ModuleReader::Seek(long amount, SeekOrigin origin)
 	bufferIndex = 0;
 	bufferDataSize = 0;
 
-	// The SeekOrigin values are the same as FILE_BEGIN, FILE_CURRENT and FILE_END,
-	// so we can just cast origin to DWORD.
-	unsigned long newPos = SetFilePointer(stream, amount, nullptr, (DWORD)origin);
-	if (newPos == INVALID_SET_FILE_POINTER)
-		HandleError(GetLastError());
+	os::FileStatus r = os::SeekFile(&stream, (int64_t)amount, origin, nullptr);
+	if (r != os::FILE_OK)
+		HandleError(r);
 }
 
 String *ModuleReader::ReadString()
@@ -229,15 +233,15 @@ String *ModuleReader::ReadLongString(const int32_t length)
 	return string;
 }
 
-void ModuleReader::HandleError(DWORD error)
+void ModuleReader::HandleError(os::FileStatus error)
 {
 	const char *message;
 	switch (error)
 	{
-	case ERROR_FILE_NOT_FOUND: message = "The file could not be found.";   break;
-	case ERROR_ACCESS_DENIED:  message = "Access to the file was denied."; break;
-	case ERROR_HANDLE_EOF:     message = "Unexpected end of file.";        break;
-	default:                   message = "Unspecified I/O error.";         break;
+	case os::FILE_NOT_FOUND:     message = "The file could not be found.";   break;
+	case os::FILE_ACCESS_DENIED: message = "Access to the file was denied."; break;
+	case os::FILE_EOF:           message = "Unexpected end of file.";        break;
+	default:                     message = "Unspecified I/O error.";         break;
 	}
 	throw ModuleIOException(message);
 }
