@@ -36,51 +36,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\modulereader.internal.h">
-      <Filter>Header Files\Internal</Filter>
-    </ClInclude>
-    <ClInclude Include="src\membertable.internal.h">
-      <Filter>Header Files\Internal</Filter>
-    </ClInclude>
-    <ClInclude Include="src\ov_debug_symbols.internal.h">
-      <Filter>Header Files\Internal</Filter>
-    </ClInclude>
-    <ClInclude Include="src\ov_module.internal.h">
-      <Filter>Header Files\Internal</Filter>
-    </ClInclude>
-    <ClInclude Include="src\ov_static_strings.internal.h">
-      <Filter>Header Files\Internal</Filter>
-    </ClInclude>
-    <ClInclude Include="src\ov_stringbuffer.internal.h">
-      <Filter>Header Files\Internal</Filter>
-    </ClInclude>
-    <ClInclude Include="src\ov_thread.internal.h">
-      <Filter>Header Files\Internal</Filter>
-    </ClInclude>
-    <ClInclude Include="src\ov_unicode.internal.h">
-      <Filter>Header Files\Unicode</Filter>
-    </ClInclude>
-    <ClInclude Include="src\ov_thread.opcodes.h">
-      <Filter>Header Files\Internal</Filter>
-    </ClInclude>
-    <ClInclude Include="src\ov_type.internal.h">
-      <Filter>Header Files\Internal</Filter>
-    </ClInclude>
-    <ClInclude Include="src\ov_value.internal.h">
-      <Filter>Header Files\Internal</Filter>
-    </ClInclude>
-    <ClInclude Include="src\ov_vm.internal.h">
-      <Filter>Header Files\Internal</Filter>
-    </ClInclude>
-    <ClInclude Include="src\refsignature.internal.h">
-      <Filter>Header Files\Internal</Filter>
-    </ClInclude>
-    <ClInclude Include="src\string_hash.internal.h">
-      <Filter>Header Files\Internal</Filter>
-    </ClInclude>
-    <ClInclude Include="src\string_table.internal.h">
-      <Filter>Header Files\Internal</Filter>
-    </ClInclude>
     <ClInclude Include="inc\ov_vm.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -114,32 +69,8 @@
     <ClInclude Include="inc\ov_value.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\ov_gc.internal.h">
-      <Filter>Header Files\Internal</Filter>
-    </ClInclude>
-    <ClInclude Include="src\pathname.internal.h">
-      <Filter>Header Files\Internal</Filter>
-    </ClInclude>
     <ClInclude Include="inc\ov_pathchar.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\sync.internal.h">
-      <Filter>Header Files\Internal</Filter>
-    </ClInclude>
-    <ClInclude Include="src\tls.internal.h">
-      <Filter>Header Files\Internal</Filter>
-    </ClInclude>
-    <ClInclude Include="src\methodbuilder.internal.h">
-      <Filter>Header Files\Internal</Filter>
-    </ClInclude>
-    <ClInclude Include="src\instructions.internal.h">
-      <Filter>Header Files\Internal</Filter>
-    </ClInclude>
-    <ClInclude Include="src\methodinitializer.internal.h">
-      <Filter>Header Files\Internal</Filter>
-    </ClInclude>
-    <ClInclude Include="src\methodinitexception.internal.h">
-      <Filter>Header Files\Internal</Filter>
     </ClInclude>
     <ClInclude Include="src\os\windows.h">
       <Filter>Header Files\os</Filter>
@@ -167,6 +98,75 @@
     </ClInclude>
     <ClInclude Include="src\os\windows\filesystem.h">
       <Filter>Header Files\os\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="src\debug_symbols.h">
+      <Filter>Header Files\Internal</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gc.h">
+      <Filter>Header Files\Internal</Filter>
+    </ClInclude>
+    <ClInclude Include="src\module.h">
+      <Filter>Header Files\Internal</Filter>
+    </ClInclude>
+    <ClInclude Include="src\static_strings.h">
+      <Filter>Header Files\Internal</Filter>
+    </ClInclude>
+    <ClInclude Include="src\stringbuffer.h">
+      <Filter>Header Files\Internal</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thread.h">
+      <Filter>Header Files\Internal</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thread.opcodes.h">
+      <Filter>Header Files\Internal</Filter>
+    </ClInclude>
+    <ClInclude Include="src\type.h">
+      <Filter>Header Files\Internal</Filter>
+    </ClInclude>
+    <ClInclude Include="src\value.h">
+      <Filter>Header Files\Internal</Filter>
+    </ClInclude>
+    <ClInclude Include="src\vm.h">
+      <Filter>Header Files\Internal</Filter>
+    </ClInclude>
+    <ClInclude Include="src\pathname.h">
+      <Filter>Header Files\Internal</Filter>
+    </ClInclude>
+    <ClInclude Include="src\refsignature.h">
+      <Filter>Header Files\Internal</Filter>
+    </ClInclude>
+    <ClInclude Include="src\string_hash.h">
+      <Filter>Header Files\Internal</Filter>
+    </ClInclude>
+    <ClInclude Include="src\string_table.h">
+      <Filter>Header Files\Internal</Filter>
+    </ClInclude>
+    <ClInclude Include="src\sync.h">
+      <Filter>Header Files\Internal</Filter>
+    </ClInclude>
+    <ClInclude Include="src\tls.h">
+      <Filter>Header Files\Internal</Filter>
+    </ClInclude>
+    <ClInclude Include="src\instructions.h">
+      <Filter>Header Files\Internal</Filter>
+    </ClInclude>
+    <ClInclude Include="src\membertable.h">
+      <Filter>Header Files\Internal</Filter>
+    </ClInclude>
+    <ClInclude Include="src\methodbuilder.h">
+      <Filter>Header Files\Internal</Filter>
+    </ClInclude>
+    <ClInclude Include="src\methodinitexception.h">
+      <Filter>Header Files\Internal</Filter>
+    </ClInclude>
+    <ClInclude Include="src\methodinitializer.h">
+      <Filter>Header Files\Internal</Filter>
+    </ClInclude>
+    <ClInclude Include="src\modulereader.h">
+      <Filter>Header Files\Internal</Filter>
+    </ClInclude>
+    <ClInclude Include="src\unicode.h">
+      <Filter>Header Files\Unicode</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

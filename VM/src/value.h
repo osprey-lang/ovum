@@ -3,8 +3,8 @@
 #ifndef VM__VALUE_INTERNAL_H
 #define VM__VALUE_INTERNAL_H
 
-#include "ov_vm.internal.h"
-#include "ov_type.internal.h"
+#include "vm.h"
+#include "type.h"
 
 namespace ovum
 {

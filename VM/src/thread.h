@@ -3,9 +3,9 @@
 #ifndef VM__THREAD_INTERNAL_H
 #define VM__THREAD_INTERNAL_H
 
-#include "ov_vm.internal.h"
-#include "sync.internal.h"
-#include "tls.internal.h"
+#include "vm.h"
+#include "sync.h"
+#include "tls.h"
 #include <cassert>
 
 #if OVUM_TARGET == OVUM_UNIX

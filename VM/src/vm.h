@@ -74,7 +74,7 @@ typedef ovum::Property       *PropertyHandle;
 #endif
 
 #include <cstdio>
-#include "tls.internal.h"
+#include "tls.h"
 
 namespace ovum
 {
@@ -171,11 +171,11 @@ public:
 
 } // namespace ovum
 
-#include "string_hash.internal.h"
-#include "ov_static_strings.internal.h"
-#include "ov_value.internal.h"
-#include "ov_type.internal.h"
-#include "ov_thread.internal.h"
-#include "ov_gc.internal.h"
+#include "string_hash.h"
+#include "static_strings.h"
+#include "value.h"
+#include "type.h"
+#include "thread.h"
+#include "gc.h"
 
 #endif // VM__VM_INTERNAL

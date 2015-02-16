@@ -1,6 +1,6 @@
-#include "ov_vm.internal.h"
-#include "methodinitializer.internal.h"
-#include "methodbuilder.internal.h"
+#include "vm.h"
+#include "methodinitializer.h"
+#include "methodbuilder.h"
 
 namespace ovum
 {

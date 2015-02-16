@@ -1,6 +1,6 @@
-#include "ov_vm.internal.h"
-#include "ov_stringbuffer.internal.h"
-#include "ov_debug_symbols.internal.h"
+#include "vm.h"
+#include "stringbuffer.h"
+#include "debug_symbols.h"
 #include <memory>
 #if OVUM_TARGET == OVUM_UNIX
 #include <time.h>

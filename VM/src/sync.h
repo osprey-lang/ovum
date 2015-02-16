@@ -3,7 +3,7 @@
 #ifndef VM__CRITICAL_SECTION_H
 #define VM__CRITICAL_SECTION_H
 
-#include "ov_vm.internal.h"
+#include "vm.h"
 
 #include <atomic>
 

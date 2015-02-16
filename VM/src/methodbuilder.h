@@ -3,7 +3,7 @@
 #ifndef VM__METHODBUILDER_INTERNAL_H
 #define VM__METHODBUILDER_INTERNAL_H
 
-#include "ov_vm.internal.h"
+#include "vm.h"
 #include <vector>
 #include <memory>
 

@@ -1,10 +1,10 @@
-#include "methodinitializer.internal.h"
-#include "ov_module.internal.h"
-#include "instructions.internal.h"
-#include "methodbuilder.internal.h"
-#include "methodinitexception.internal.h"
-#include "refsignature.internal.h"
-#include "ov_debug_symbols.internal.h"
+#include "methodinitializer.h"
+#include "module.h"
+#include "instructions.h"
+#include "methodbuilder.h"
+#include "methodinitexception.h"
+#include "refsignature.h"
+#include "debug_symbols.h"
 #include <queue>
 #include <memory>
 

@@ -3,8 +3,8 @@
 #ifndef VM__METHODINITIALIZER_INTERNAL_H
 #define VM__METHODINITIALIZER_INTERNAL_H
 
-#include "ov_vm.internal.h"
-#include "instructions.internal.h"
+#include "vm.h"
+#include "instructions.h"
 #include <vector>
 
 namespace ovum

@@ -1,7 +1,7 @@
-#include "methodbuilder.internal.h"
-#include "ov_thread.opcodes.h"
-#include "ov_debug_symbols.internal.h"
-#include "instructions.internal.h"
+#include "methodbuilder.h"
+#include "thread.opcodes.h"
+#include "debug_symbols.h"
+#include "instructions.h"
 #include <memory>
 
 namespace ovum

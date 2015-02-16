@@ -1,5 +1,5 @@
-#include "ov_vm.internal.h"
-#include "ov_thread.opcodes.h"
+#include "vm.h"
+#include "thread.opcodes.h"
 #include <memory>
 
 namespace ovum

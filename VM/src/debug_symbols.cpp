@@ -1,7 +1,7 @@
-#include "ov_debug_symbols.internal.h"
-#include "ov_module.internal.h"
-#include "modulereader.internal.h"
-#include "pathname.internal.h"
+#include "debug_symbols.h"
+#include "module.h"
+#include "modulereader.h"
+#include "pathname.h"
 #include <memory>
 #include <stdio.h>
 

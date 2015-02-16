@@ -1,4 +1,4 @@
-#include "ov_vm.internal.h"
+#include "vm.h"
 
 const Value NULL_VALUE = NULL_CONSTANT;
 

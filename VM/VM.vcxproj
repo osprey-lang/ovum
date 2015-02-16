@@ -86,10 +86,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="inc\ov_pathchar.h" />
-    <ClInclude Include="src\instructions.internal.h" />
-    <ClInclude Include="src\methodbuilder.internal.h" />
-    <ClInclude Include="src\methodinitexception.internal.h" />
-    <ClInclude Include="src\methodinitializer.internal.h" />
+    <ClInclude Include="src\instructions.h" />
+    <ClInclude Include="src\methodbuilder.h" />
+    <ClInclude Include="src\methodinitexception.h" />
+    <ClInclude Include="src\methodinitializer.h" />
     <ClInclude Include="src\os\windows\def.h" />
     <ClInclude Include="src\os\windows\filesystem.h" />
     <ClInclude Include="src\os\windows\mem.h" />
@@ -106,37 +106,37 @@
     <ClInclude Include="src\os\_template\threading.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="src\tls.internal.h" />
-    <ClInclude Include="src\sync.internal.h" />
-    <ClInclude Include="src\membertable.internal.h" />
-    <ClInclude Include="src\modulereader.internal.h" />
+    <ClInclude Include="src\tls.h" />
+    <ClInclude Include="src\sync.h" />
+    <ClInclude Include="src\membertable.h" />
+    <ClInclude Include="src\modulereader.h" />
     <ClInclude Include="inc\ov_compat.h" />
-    <ClInclude Include="src\ov_debug_symbols.internal.h" />
+    <ClInclude Include="src\debug_symbols.h" />
     <ClInclude Include="inc\ov_gc.h" />
-    <ClInclude Include="src\ov_gc.internal.h" />
+    <ClInclude Include="src\gc.h" />
     <ClInclude Include="inc\ov_helpers.h" />
     <ClInclude Include="inc\ov_module.h" />
-    <ClInclude Include="src\ov_module.internal.h" />
-    <ClInclude Include="src\ov_static_strings.internal.h" />
+    <ClInclude Include="src\module.h" />
+    <ClInclude Include="src\static_strings.h" />
     <ClInclude Include="inc\ov_string.h" />
     <ClInclude Include="inc\ov_stringbuffer.h" />
-    <ClInclude Include="src\ov_stringbuffer.internal.h" />
-    <ClInclude Include="src\pathname.internal.h" />
-    <ClInclude Include="src\refsignature.internal.h" />
-    <ClInclude Include="src\string_table.internal.h" />
+    <ClInclude Include="src\stringbuffer.h" />
+    <ClInclude Include="src\pathname.h" />
+    <ClInclude Include="src\refsignature.h" />
+    <ClInclude Include="src\string_table.h" />
     <ClInclude Include="inc\ov_thread.h" />
-    <ClInclude Include="src\ov_thread.internal.h" />
-    <ClInclude Include="src\ov_type.internal.h" />
-    <ClInclude Include="src\ov_thread.opcodes.h" />
-    <ClInclude Include="src\string_hash.internal.h" />
+    <ClInclude Include="src\thread.h" />
+    <ClInclude Include="src\type.h" />
+    <ClInclude Include="src\thread.opcodes.h" />
+    <ClInclude Include="src\string_hash.h" />
     <ClInclude Include="src\os\windows.h" />
     <ClInclude Include="inc\ov_type.h" />
     <ClInclude Include="inc\ov_unicode.h" />
-    <ClInclude Include="src\ov_unicode.internal.h" />
+    <ClInclude Include="src\unicode.h" />
     <ClInclude Include="inc\ov_value.h" />
-    <ClInclude Include="src\ov_value.internal.h" />
+    <ClInclude Include="src\value.h" />
     <ClInclude Include="inc\ov_vm.h" />
-    <ClInclude Include="src\ov_vm.internal.h" />
+    <ClInclude Include="src\vm.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\debug_symbols.cpp" />

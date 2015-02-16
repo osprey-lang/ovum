@@ -3,7 +3,7 @@
 #ifndef VM__VM_OPCODES_H
 #define VM__VM_OPCODES_H
 
-#include "ov_vm.internal.h"
+#include "vm.h"
 #include <vector>
 #include <cassert>
 

@@ -3,7 +3,7 @@
 #ifndef VM__STRING_HASH_INTERNAL_H
 #define VM__STRING_HASH_INTERNAL_H
 
-#include "ov_vm.internal.h"
+#include "vm.h"
 #include "../inc/ov_string.h"
 
 namespace ovum

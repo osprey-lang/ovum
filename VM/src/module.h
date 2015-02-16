@@ -6,9 +6,9 @@
 #include <cstdio>
 #include <vector>
 #include <exception>
-#include "ov_vm.internal.h"
-#include "membertable.internal.h"
-#include "pathname.internal.h"
+#include "vm.h"
+#include "membertable.h"
+#include "pathname.h"
 
 namespace ovum
 {

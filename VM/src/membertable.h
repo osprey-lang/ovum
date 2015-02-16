@@ -3,7 +3,7 @@
 #ifndef VM__MEMBERTABLE_INTERNAL_H
 #define VM__MEMBERTABLE_INTERNAL_H
 
-#include "ov_vm.internal.h"
+#include "vm.h"
 
 namespace ovum
 {
