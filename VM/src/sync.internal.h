@@ -148,7 +148,10 @@ private:
 	DISABLE_COPY_AND_ASSIGN(SpinLock);
 
 public:
-	inline SpinLock() : flag() { }
+	inline SpinLock()
+	{
+		flag.clear(std::memory_order_release);
+	}
 
 	// Enters the spinlock. If the lock is already held,
 	// the thread will spin until it becomes available.
