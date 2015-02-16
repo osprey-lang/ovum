@@ -3,8 +3,8 @@
 #ifndef VM__TYPE_INTERNAL_H
 #define VM__TYPE_INTERNAL_H
 
-#include "ov_vm.internal.h"
-#include "sync.internal.h"
+#include "vm.h"
+#include "sync.h"
 #include <cassert>
 
 namespace ovum

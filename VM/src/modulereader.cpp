@@ -1,6 +1,6 @@
 #include <memory>
-#include "modulereader.internal.h"
-#include "ov_module.internal.h"
+#include "modulereader.h"
+#include "module.h"
 
 namespace ovum
 {

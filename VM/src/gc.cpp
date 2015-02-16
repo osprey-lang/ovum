@@ -1,6 +1,6 @@
-#include "ov_vm.internal.h"
-#include "ov_module.internal.h"
-#include "ov_debug_symbols.internal.h"
+#include "vm.h"
+#include "module.h"
+#include "debug_symbols.h"
 #include <cstdlib>
 #include <cstring>
 #include <vector>

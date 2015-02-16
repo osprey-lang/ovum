@@ -1,7 +1,7 @@
-#include "instructions.internal.h"
-#include "methodbuilder.internal.h"
-#include "methodinitializer.internal.h"
-#include "refsignature.internal.h"
+#include "instructions.h"
+#include "methodbuilder.h"
+#include "methodinitializer.h"
+#include "refsignature.h"
 
 namespace ovum
 {

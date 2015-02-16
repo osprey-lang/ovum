@@ -1,8 +1,8 @@
-﻿#include "ov_vm.internal.h"
-#include "ov_module.internal.h"
-#include "pathname.internal.h"
-#include "refsignature.internal.h"
-#include "methodinitexception.internal.h"
+﻿#include "vm.h"
+#include "module.h"
+#include "pathname.h"
+#include "refsignature.h"
+#include "methodinitexception.h"
 #include <fcntl.h>
 #include <io.h>
 #include <cstdio>

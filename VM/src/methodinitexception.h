@@ -3,7 +3,7 @@
 #ifndef VM__METHODINITEXCEPTION_INTERNAL_H
 #define VM__METHODINITEXCEPTION_INTERNAL_H
 
-#include "ov_vm.internal.h"
+#include "vm.h"
 
 namespace ovum
 {

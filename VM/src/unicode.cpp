@@ -1,4 +1,4 @@
-#include "ov_unicode.internal.h"
+#include "unicode.h"
 
 UnicodeCategory UC_GetCategoryInternal(const int32_t codepoint)
 {

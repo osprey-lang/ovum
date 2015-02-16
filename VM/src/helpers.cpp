@@ -1,4 +1,4 @@
-#include "ov_vm.internal.h"
+#include "vm.h"
 #include "../inc/ov_helpers.h"
 #include <math.h>
 

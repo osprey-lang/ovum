@@ -1,8 +1,8 @@
-#include "ov_module.internal.h"
-#include "modulereader.internal.h"
-#include "ov_stringbuffer.internal.h"
-#include "ov_debug_symbols.internal.h"
-#include "refsignature.internal.h"
+#include "module.h"
+#include "modulereader.h"
+#include "stringbuffer.h"
+#include "debug_symbols.h"
+#include "refsignature.h"
 #include <memory>
 
 namespace ovum

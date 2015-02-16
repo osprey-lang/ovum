@@ -1,4 +1,4 @@
-#include "ov_vm.internal.h"
+#include "vm.h"
 #include "../inc/ov_unicode.h"
 #include "../inc/ov_string.h"
 #include <memory>

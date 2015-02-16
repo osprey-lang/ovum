@@ -3,8 +3,8 @@
 #ifndef VM__INSTRUCTIONS_INTERNAL_H
 #define VM__INSTRUCTIONS_INTERNAL_H
 
-#include "ov_vm.internal.h"
-#include "ov_thread.opcodes.h"
+#include "vm.h"
+#include "thread.opcodes.h"
 
 namespace ovum
 {

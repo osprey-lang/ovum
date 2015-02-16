@@ -1,4 +1,4 @@
-#include "pathname.internal.h"
+#include "pathname.h"
 #include <memory>
 
 namespace ovum

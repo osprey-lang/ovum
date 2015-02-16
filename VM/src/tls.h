@@ -6,7 +6,7 @@
 #ifndef VM__TLS_INTERNAL_H
 #define VM__TLS_INTERNAL_H
 
-#include "ov_vm.internal.h"
+#include "vm.h"
 
 namespace ovum
 {

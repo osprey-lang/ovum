@@ -3,8 +3,8 @@
 #ifndef VM__MODULEREADER_INTERNAL_H
 #define VM__MODULEREADER_INTERNAL_H
 
-#include "ov_vm.internal.h"
-#include "pathname.internal.h"
+#include "vm.h"
+#include "pathname.h"
 
 namespace ovum
 {
