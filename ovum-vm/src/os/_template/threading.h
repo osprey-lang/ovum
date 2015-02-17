@@ -12,6 +12,18 @@ namespace ovum
 namespace os
 {
 
+	// Thread identifier type. This must be a type that can be copied
+	// safely by value.
+	typedef ... ThreadId;
+	typedef ... CriticalSection;
+	typedef ... Semaphore;
+	typedef ... TlsKey;
+
+	static const ThreadId INVALID_THREAD_ID = ...;
+	
+	// Gets the ID of the current thread.
+	ThreadId GetCurrentThread();
+
 	// Causes the calling thread to yield execution to another thread
 	// that is ready to run. This may or may not actually cause another
 	// thread to run, depending entirely on the OS's thread scheduling.
@@ -19,9 +31,13 @@ namespace os
 	// asynchronous I/O, occasionally cause the process to deadlock.
 	void Yield();
 
-	typedef ... CriticalSection;
-	typedef ... Semaphore;
-	typedef ... TlsKey;
+	// Suspends the calling thread for a number of milliseconds. The
+	// thread does not wake up until the specified time has elapsed.
+	// Returns:
+	//   False if the sleep was interrupted (e.g. by a signal); true
+	//   if the thread slept peacefully. Depending on the OS, thread
+	//   sleep may or may not be interruptible.
+	bool Sleep(uint32_t milliseconds);
 
 	// Attempts to initialize a critical section. The spin count
 	// may be ignored on some platforms. Returns true if successful;
