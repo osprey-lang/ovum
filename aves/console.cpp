@@ -455,9 +455,7 @@ int AssertValidCoord(ThreadHandle thread, Value *v, String *paramName)
 		if (v->integer < 0 || v->integer > SHRT_MAX)
 		{
 			VM_PushString(thread, paramName);
-			r = GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr);
-			if (r == OVUM_SUCCESS)
-				r = VM_Throw(thread);
+			r = VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 1);
 		}
 	}
 	return r;
@@ -551,14 +549,12 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_setBufferSize)
 	if (width < csbi.srWindow.Right + 1 || width >= SHRT_MAX)
 	{
 		VM_PushString(thread, strings::width);
-		CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr));
-		return VM_Throw(thread);
+		return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 1);
 	}
 	if (height < csbi.srWindow.Bottom + 1 || height >= SHRT_MAX)
 	{
 		VM_PushString(thread, strings::height);
-		CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr));
-		return VM_Throw(thread);
+		return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 1);
 	}
 
 	COORD size = { (SHORT)width, (SHORT)height };
@@ -577,14 +573,12 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_setWindowSize)
 	if (width64 < 0 || width64 > INT32_MAX)
 	{
 		VM_PushString(thread, strings::width);
-		CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr));
-		return VM_Throw(thread);
+		return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 1);
 	}
 	if (height64 < 0 || height64 > INT32_MAX)
 	{
 		VM_PushString(thread, strings::height);
-		CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr));
-		return VM_Throw(thread);
+		return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 1);
 	}
 
 	int32_t width  = (int32_t)width64;
@@ -603,8 +597,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_setWindowSize)
 		if (csbi.srWindow.Left >= SHRT_MAX - width)
 		{
 			VM_PushString(thread, strings::width);
-			CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr));
-			return VM_Throw(thread);
+			return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 1);
 		}
 		newBufferSize.X = csbi.srWindow.Left + width;
 		resizeBuffer = true;
@@ -614,8 +607,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_setWindowSize)
 		if (csbi.srWindow.Top >= SHRT_MAX - height)
 		{
 			VM_PushString(thread, strings::height);
-			CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr));
-			return VM_Throw(thread);
+			return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 1);
 		}
 		newBufferSize.Y = csbi.srWindow.Top + height;
 		resizeBuffer = true;

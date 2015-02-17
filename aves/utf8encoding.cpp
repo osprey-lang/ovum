@@ -233,10 +233,7 @@ void Utf8Encoder::Reset()
 int Utf8Encoder::BufferOverrunError(ThreadHandle thread)
 {
 	VM_PushString(thread, error_strings::EncodingBufferOverrun);
-	int r = GC_Construct(thread, Types::ArgumentError, 1, nullptr);
-	if (r == OVUM_SUCCESS)
-		r = VM_Throw(thread);
-	return r;
+	return VM_ThrowErrorOfType(thread, Types::ArgumentError, 1);
 }
 
 AVES_API void aves_Utf8Encoder_init(TypeHandle type)

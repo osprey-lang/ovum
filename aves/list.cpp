@@ -22,10 +22,7 @@ int GetIndex(ThreadHandle thread, ListInst *list, Value indexValue, bool canEqua
 	if (index < 0 || (canEqualLength ? index > list->length : index >= list->length))
 	{
 		VM_PushString(thread, strings::index);
-		r = GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr);
-		if (r == OVUM_SUCCESS)
-			r = VM_Throw(thread);
-		return r;
+		return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 1);
 	}
 
 	result = (int32_t)index;
@@ -43,8 +40,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_List_newCap)
 	if (capacity < 0 || capacity > INT32_MAX)
 	{
 		VM_PushString(thread, strings::capacity);
-		CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr));
-		return VM_Throw(thread);
+		return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 1);
 	}
 
 	CHECKED(InitListInstance(thread, _L(THISV), (int32_t)capacity));
@@ -69,8 +65,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_List_set_capacity)
 	if (capacity < 0 || capacity > INT32_MAX)
 	{
 		VM_PushString(thread, strings::capacity);
-		CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr));
-		return VM_Throw(thread);
+		return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 1);
 	}
 
 	PinnedAlias<ListInst> list(THISP);
@@ -232,10 +227,7 @@ int SetListCapacity(ThreadHandle thread, ListInst *list, const int32_t capacity)
 	if (capacity < list->length)
 	{
 		VM_PushString(thread, strings::capacity);
-		int r = GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr);
-		if (r == OVUM_SUCCESS)
-			r = VM_Throw(thread);
-		return r;
+		return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 1);
 	}
 
 	Value *newValues;
@@ -258,8 +250,7 @@ int SliceList(ThreadHandle thread, ListInst *list, int32_t startIndex, int32_t e
 	{
 		VM_PushNull(thread); // paramName
 		VM_PushString(thread, error_strings::EndIndexLessThanStart); // message
-		CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 2, nullptr));
-		return VM_Throw(thread);
+		return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 2);
 	}
 
 	int32_t sliceLength = endIndex - startIndex;

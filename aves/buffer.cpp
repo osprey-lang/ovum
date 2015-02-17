@@ -17,8 +17,8 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_new)
 	int64_t size64 = args[1].integer;
 	if (size64 < 0 || size64 > UINT32_MAX)
 	{
-		CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 0, nullptr));
-		CHECKED(VM_Throw(thread));
+		VM_PushString(thread, strings::size);
+		return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 1);
 	}
 
 	Buffer *buf = (Buffer*)THISV.instance;
@@ -47,8 +47,7 @@ int GetBufferIndex(ThreadHandle thread, Buffer *buf, Value indexValue, int value
 	if (index64 < 0 || index64 >= buf->size / valueSize)
 	{
 		VM_PushString(thread, strings::index);
-		if ((r = GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr)) != OVUM_SUCCESS) return r;
-		return VM_Throw(thread);
+		return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 1);
 	}
 
 	index = (unsigned int)index64;
@@ -316,13 +315,10 @@ AVES_API void aves_BufferView_init(TypeHandle type)
 	Type_AddNativeField(type, offsetof(BufferView, buffer), NativeFieldType::VALUE);
 }
 
-AVES_API BEGIN_NATIVE_FUNCTION(aves_BufferView_new)
+AVES_API NATIVE_FUNCTION(aves_BufferView_new)
 {
 	if (IS_NULL(args[1]))
-	{
-		CHECKED(GC_Construct(thread, Types::ArgumentNullError, 0, nullptr));
-		return VM_Throw(thread);
-	}
+		return VM_ThrowErrorOfType(thread, Types::ArgumentNullError, 0);
 	if (!IsType(args + 1, BufferType))
 		return VM_ThrowTypeError(thread);
 	if (!IsType(args + 2, Types::BufferViewKind))
@@ -331,15 +327,14 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_BufferView_new)
 		args[2].integer > BufferView::FLOAT64)
 	{
 		VM_PushString(thread, strings::kind);
-		CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr));
-		return VM_Throw(thread);
+		return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 1);
 	}
 
 	BufferView *view = (BufferView*)THISV.instance;
 	view->buffer = args[1];
 	view->kind = (BufferView::BufferViewKind)args[2].integer;
+	RETURN_SUCCESS;
 }
-END_NATIVE_FUNCTION
 
 AVES_API BEGIN_NATIVE_FUNCTION(aves_BufferView_get_item)
 {

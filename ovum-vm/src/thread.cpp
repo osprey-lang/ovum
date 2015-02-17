@@ -1583,6 +1583,13 @@ OVUM_API int VM_ThrowNullReferenceError(ThreadHandle thread, String *message)
 {
 	return thread->ThrowNullReferenceError(message);
 }
+OVUM_API int VM_ThrowErrorOfType(ThreadHandle thread, TypeHandle type, int argc)
+{
+	int r = thread->GetGC()->Construct(thread, type, argc, nullptr);
+	if (r == OVUM_SUCCESS)
+		r = thread->Throw(false);
+	return r;
+}
 
 OVUM_API void VM_EnterUnmanagedRegion(ThreadHandle thread)
 {

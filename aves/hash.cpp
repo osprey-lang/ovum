@@ -146,11 +146,9 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Hash_getItemInternal)
 		}
 	}
 
-	// ArgumentError(message, paramName)
-	VM_PushString(thread, error_strings::HashKeyNotFound);
-	VM_PushString(thread, strings::key);
-	CHECKED(GC_Construct(thread, Types::ArgumentError, 2, nullptr));
-	return VM_Throw(thread);
+	VM_PushString(thread, error_strings::HashKeyNotFound); // message
+	VM_PushString(thread, strings::key); // paramName
+	return VM_ThrowErrorOfType(thread, Types::ArgumentError, 2);
 }
 END_NATIVE_FUNCTION
 AVES_API NATIVE_FUNCTION(aves_Hash_getEntry)
@@ -198,10 +196,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Hash_insert)
 			if (equals)
 			{
 				if (add)
-				{
-					CHECKED(GC_Construct(thread, Types::DuplicateKeyError, 0, nullptr));
-					return VM_Throw(thread);
-				}
+					return VM_ThrowErrorOfType(thread, Types::DuplicateKeyError, 0);
 
 				entry->value = args[3];
 				inst->version++;
