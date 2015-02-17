@@ -44,7 +44,7 @@
 #ifdef VM_EXPORTS
 # define _OVUM_API __declspec(dllexport)
 #else
-# pragma comment(lib, "VM.lib")
+# pragma comment(lib, "ovum-vm.lib")
 # define _OVUM_API __declspec(dllimport)
 #endif
 
