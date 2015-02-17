@@ -156,11 +156,7 @@ private:
 	// the GC, but that may change in the future.
 	volatile ThreadRequest pendingRequest;
 
-#if OVUM_TARGET == OVUM_WINDOWS
-	DWORD nativeId;
-#else
-	pthread_t nativeId;
-#endif
+	os::ThreadId nativeId;
 
 	// The current state of the thread. And what a state it's in. Tsk tsk tsk.
 	ThreadState state;

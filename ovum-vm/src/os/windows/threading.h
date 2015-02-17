@@ -13,6 +13,19 @@ namespace ovum
 namespace os
 {
 
+	typedef DWORD ThreadId;
+	typedef CRITICAL_SECTION CriticalSection;
+	typedef HANDLE Semaphore;
+	typedef DWORD TlsKey;
+
+	static const ThreadId INVALID_THREAD_ID = 0;
+
+	// Gets the ID of the current thread.
+	inline ThreadId GetCurrentThread()
+	{
+		return ::GetCurrentThreadId();
+	}
+
 	// Causes the calling thread to yield execution to another thread
 	// that is ready to run. This may or may not actually cause another
 	// thread to run, depending entirely on the OS's thread scheduling.
@@ -23,9 +36,17 @@ namespace os
 		::SwitchToThread();
 	}
 
-	typedef CRITICAL_SECTION CriticalSection;
-	typedef HANDLE Semaphore;
-	typedef DWORD TlsKey;
+	// Suspends the calling thread for a number of milliseconds. The
+	// thread does not wake up until the specified time has elapsed.
+	// Returns:
+	//   False if the sleep was interrupted (e.g. by a signal); true
+	//   if the thread slept peacefully. Depending on the OS, thread
+	//   sleep may or may not be interruptible.
+	inline bool Sleep(uint32_t milliseconds)
+	{
+		::Sleep((DWORD)milliseconds);
+		return true;
+	}
 
 	// Attempts to initialize a critical section. The spin count
 	// may be ignored on some platforms. Returns true if successful;

@@ -76,11 +76,7 @@ Thread::Thread(VM *owner, int &status) :
 	status = InitCallStack();
 	if (status == OVUM_SUCCESS)
 	{
-#if OVUM_TARGET == OVUM_WINDOWS
-		nativeId = GetCurrentThreadId();
-#else
-		nativeId = pthread_self();
-#endif
+		nativeId = os::GetCurrentThread();
 		// Associate the VM with the native thread
 		VM::vmKey.Set(owner);
 		// And this managed thread, too
@@ -1605,14 +1601,7 @@ OVUM_API void VM_Sleep(ThreadHandle thread, unsigned int milliseconds)
 {
 	thread->EnterUnmanagedRegion();
 
-#if OVUM_TARGET == OVUM_WINDOWS
-	Sleep(milliseconds);
-#else
-	timespec time;
-	time.tv_sec  = milliseconds / 1000;
-	time.tv_nsec = (milliseconds % 1000) * 1000000;
-	nanosleep(&time, nullptr);
-#endif
+	ovum::os::Sleep(milliseconds);
 
 	thread->LeaveUnmanagedRegion();
 }
