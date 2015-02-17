@@ -10,7 +10,7 @@ AVES_API void CDECL aves_reflection_Property_init(TypeHandle type)
 	Type_AddNativeField(type, offsetof(PropertyInst,fullName), NativeFieldType::STRING);
 }
 
-AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Property_new)
+AVES_API NATIVE_FUNCTION(aves_reflection_Property_new)
 {
 	// new(handle)
 
@@ -18,14 +18,13 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Property_new)
 	{
 		VM_PushNull(thread); // message
 		VM_PushString(thread, strings::handle); // paramName
-		CHECKED(GC_Construct(thread, Types::ArgumentError, 2, nullptr));
-		return VM_Throw(thread);
+		return VM_ThrowErrorOfType(thread, Types::ArgumentError, 2);
 	}
 
 	PropertyInst *inst = _P(THISV);
 	inst->property = (PropertyHandle)args[1].instance;
+	RETURN_SUCCESS;
 }
-END_NATIVE_FUNCTION
 
 AVES_API NATIVE_FUNCTION(aves_reflection_Property_get_accessLevel)
 {

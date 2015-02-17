@@ -146,10 +146,7 @@ int Path::ValidatePath(ThreadHandle thread, String *path, bool checkWildcards)
 	{
 		VM_PushNull(thread); // message, use default
 		VM_PushString(thread, strings::path); // paramName
-		int r = GC_Construct(thread, Types::ArgumentError, 2, nullptr);
-		if (r == OVUM_SUCCESS)
-			r = VM_Throw(thread);
-		return r;
+		return VM_ThrowErrorOfType(thread, Types::ArgumentError, 2);
 	}
 
 	RETURN_SUCCESS;

@@ -99,8 +99,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Char_fromCodepoint)
 	if (cp < 0 || cp > 0x10FFFF)
 	{
 		VM_PushString(thread, strings::cp);
-		CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr));
-		return VM_Throw(thread);
+		return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 1);
 	}
 
 	Value character;
@@ -161,8 +160,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Char_opMultiply)
 	if (length > INT32_MAX)
 	{
 		VM_PushString(thread, strings::times);
-		CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr));
-		return VM_Throw(thread);
+		return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 1);
 	}
 
 	StringBuffer buf;

@@ -24,10 +24,7 @@ int GetIndex(ThreadHandle thread, String *str, Value *arg, int32_t &result)
 	{
 		VM_PushString(thread, strings::index); // paramName
 		VM_PushString(thread, error_strings::IndexOutOfRange); // message
-		r = GC_Construct(thread, Types::ArgumentRangeError, 2, nullptr);
-		if (r == OVUM_SUCCESS)
-			r = VM_Throw(thread);
-		return r;
+		return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 2);
 	}
 
 	result = (int32_t)index;
@@ -239,10 +236,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_substr2)
 	CHECKED(IntFromValue(thread, args + 2));
 	int64_t count = args[2].integer;
 	if (start + count > str->length)
-	{
-		CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 0, nullptr));
-		return VM_Throw(thread);
-	}
+		return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 0);
 
 	if (start == 0 && count == str->length)
 	{
@@ -289,8 +283,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_replaceInner)
 	{
 		VM_PushString(thread, error_strings::ReplaceEmptyString);
 		VM_PushString(thread, strings::oldValue);
-		CHECKED(GC_Construct(thread, Types::ArgumentError, 2, nullptr));
-		return VM_Throw(thread);
+		return VM_ThrowErrorOfType(thread, Types::ArgumentError, 2);
 	}
 
 	if (args[3].integer == 0) // No replacements to perform! Return 'this'.
@@ -404,16 +397,14 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_padInner)
 	if (minLength64 < 0 || minLength64 > INT32_MAX)
 	{
 		VM_PushString(thread, strings::minLength); // paramName
-		CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr));
-		return VM_Throw(thread);
+		return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 1);
 	}
 
 	StringPad side = (StringPad)args[3].integer;
 	if (side < PAD_START || side > PAD_BOTH)
 	{
 		VM_PushString(thread, strings::side); // paramName
-		CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr));
-		return VM_Throw(thread);
+		return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 1);
 	}
 
 	String *str = THISV.common.string;
@@ -581,8 +572,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_fromCodepoint)
 	if (cp64 < 0 || cp64 > 0x10FFFF)
 	{
 		VM_PushString(thread, strings::cp); // paramName
-		CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr));
-		return VM_Throw(thread);
+		return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 1);
 	}
 
 	String *output;
@@ -653,8 +643,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_opMultiply)
 	if (length > INT32_MAX)
 	{
 		VM_PushString(thread, strings::times); // paramName
-		CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr));
-		return VM_Throw(thread);
+		return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 1);
 	}
 
 	StringBuffer buf;
@@ -709,7 +698,7 @@ enum class FormatAlignment
 };
 
 inline int AppendAlignedFormatString(StringBuffer &buf, String *value,
-                                     FormatAlignment alignment, uint32_t alignmentWidth)
+	FormatAlignment alignment, uint32_t alignmentWidth)
 {
 	uint32_t valueLength = (uint32_t)value->length;
 	switch (alignment)
@@ -863,12 +852,9 @@ int string::Format(ThreadHandle thread, const String *format, ListInst *list, St
 failure:
 	return r;
 formatError:
-	VM_PushNull(thread);                    // message
+	VM_PushNull(thread); // message
 	VM_PushString(thread, strings::format); // paramName
-	r = GC_Construct(thread, Types::ArgumentError, 2, nullptr);
-	if (r == OVUM_SUCCESS)
-		r = VM_Throw(thread);
-	return r;
+	return VM_ThrowErrorOfType(thread, Types::ArgumentError, 2);
 }
 
 template<int BufLen>
@@ -927,10 +913,7 @@ int ScanFormatIdentifier(ThreadHandle thread, LitString<BufLen> &buffer,
 formatError:
 	VM_PushNull(thread);
 	VM_PushString(thread, strings::format);
-	int r = GC_Construct(thread, Types::ArgumentError, 2, nullptr);
-	if (r == OVUM_SUCCESS)
-		VM_Throw(thread);
-	return r;
+	return VM_ThrowErrorOfType(thread, Types::ArgumentError, 2);
 }
 
 int string::Format(ThreadHandle thread, const String *format, Value *hash, String *&result)
@@ -1047,10 +1030,7 @@ failure:
 formatError:
 	VM_PushNull(thread);
 	VM_PushString(thread, strings::format);
-	r = GC_Construct(thread, Types::ArgumentError, 2, nullptr);
-	if (r == OVUM_SUCCESS)
-		r = VM_Throw(thread);
-	return r;
+	return VM_ThrowErrorOfType(thread, Types::ArgumentError, 2);
 }
 
 String *string::Replace(ThreadHandle thread, String *input, const uchar oldChar, const uchar newChar, const int64_t maxTimes)

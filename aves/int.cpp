@@ -38,8 +38,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Int_toStringf)
 		{
 			VM_PushString(thread, strings::format);
 			VM_PushString(thread, error_strings::RadixOutOfRange);
-			CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 2, nullptr));
-			return VM_Throw(thread);
+			return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 2);
 		}
 
 		str = integer::ToString(thread, THISV.integer, (int)format->integer, 0, false);
@@ -117,10 +116,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Int_opShiftLeft)
 	int64_t amount = RIGHT.integer;
 
 	if (amount < 0)
-	{
-		CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 0, nullptr));
-		return VM_Throw(thread);
-	}
+		return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 0);
 	if (amount > 64)
 	{
 		VM_PushInt(thread, 0);
@@ -137,10 +133,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Int_opShiftRight)
 	int64_t amount = RIGHT.integer;
 
 	if (amount < 0)
-	{
-		CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 0, nullptr));
-		return VM_Throw(thread);
-	}
+		return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 0);
 	if (amount > 64)
 	{
 		VM_PushInt(thread, LEFT.integer < 0 ? -1 : 0);
@@ -282,10 +275,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Int_opPower)
 	}
 
 	if (RIGHT.integer < 0)
-	{
-		CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 0, nullptr));
-		return VM_Throw(thread);
-	}
+		return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 0);
 
 	int64_t result;
 	if (integer::Power(LEFT.integer, RIGHT.integer, result))
@@ -481,12 +471,10 @@ int integer::ParseFormatString(ThreadHandle thread, String *str, int *radix, int
 	switch (*ch)
 	{
 	case '0': // '0'+ (specifies width of number)
+		do
 		{
-			do
-			{
-				(*minWidth)++;
-			} while (i++ < str->length && *++ch == '0');
-		}
+			(*minWidth)++;
+		} while (i++ < str->length && *++ch == '0');
 		break;
 
 	case 'D': // 'd'[width]
@@ -554,8 +542,5 @@ parseMinWidth:
 
 throwFormatError:
 	VM_PushString(thread, error_strings::InvalidIntegerFormat);
-	int r = GC_Construct(thread, Types::ArgumentError, 1, nullptr);
-	if (r == OVUM_SUCCESS)
-		r = VM_Throw(thread);
-	return r;
+	return VM_ThrowErrorOfType(thread, Types::ArgumentError, 1);
 }

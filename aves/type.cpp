@@ -16,10 +16,7 @@ int GetMemberSearchFlags(ThreadHandle thread, Value *arg, MemberSearchFlags *res
 	{
 		VM_PushNull(thread); // message
 		VM_PushString(thread, strings::flags); // paramName
-		int r = GC_Construct(thread, Types::ArgumentError, 2, nullptr);
-		if (r == OVUM_SUCCESS)
-			r = VM_Throw(thread);
-		return r;
+		return VM_ThrowErrorOfType(thread, Types::ArgumentError, 2);
 	}
 
 	*result = (MemberSearchFlags)arg->integer;
@@ -283,11 +280,8 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Type_createInstance)
 
 	MemberHandle ctor = Type_GetMember(inst->type, strings::_new);
 	if (args[2].integer == 0 && Member_GetAccessLevel(ctor) != MemberAccess::PUBLIC)
-	{
 		// No public constructor, and nonPublic is false
-		CHECKED(GC_Construct(thread, Types::InvalidStateError, 0, nullptr));
-		return VM_Throw(thread);
-	}
+		return VM_ThrowErrorOfType(thread, Types::InvalidStateError, 0);
 
 	// Push arguments
 	uint32_t argCount = 0;

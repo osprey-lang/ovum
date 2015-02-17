@@ -111,10 +111,7 @@ int FileStream::EnsureOpen(ThreadHandle thread)
 int FileStream::ErrorHandleClosed(ThreadHandle thread)
 {
 	VM_PushString(thread, error_strings::FileHandleClosed);
-	int r = GC_Construct(thread, Types::InvalidStateError, 1, nullptr);
-	if (r == OVUM_SUCCESS)
-		r = VM_Throw(thread);
-	return r;
+	return VM_ThrowErrorOfType(thread, Types::InvalidStateError, 1);
 }
 
 AVES_API void io_FileStream_initType(TypeHandle type)
@@ -147,8 +144,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(io_FileStream_init)
 	case FileMode::APPEND:         mode = OPEN_ALWAYS;       break;
 	default:
 		VM_PushString(thread, strings::mode);
-		CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr));
-		return VM_Throw(thread);
+		return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 1);
 	}
 
 	switch (args[3].integer) // access
@@ -160,8 +156,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(io_FileStream_init)
 		// io.FileAccess is an enum set, but only
 		// the three combinations above are valid.
 		VM_PushString(thread, strings::access);
-		CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr));
-		return VM_Throw(thread);
+		return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 1);
 	}
 	if ((FileMode)args[2].integer == FileMode::APPEND)
 	{
@@ -169,8 +164,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(io_FileStream_init)
 		{
 			VM_PushString(thread, error_strings::AppendMustBeWriteOnly); // message
 			VM_PushString(thread, strings::access); // paramName
-			CHECKED(GC_Construct(thread, Types::ArgumentError, 2, nullptr));
-			return VM_Throw(thread);
+			return VM_ThrowErrorOfType(thread, Types::ArgumentError, 2);
 		}
 		// access is now updated to FILE_APPEND_DATA; mode remains the same.
 		// It seems that no other access flags are needed for appending.
@@ -180,8 +174,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(io_FileStream_init)
 	if (args[4].uinteger > 7) // uinteger so that negative numbers are > 0
 	{
 		VM_PushString(thread, strings::share);
-		CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr));
-		return VM_Throw(thread);
+		return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 1);
 	}
 	// By a genuine coincidence, io.FileShare's values perfectly match those
 	// used by the Windows API, so we can just assign the value as-is.
@@ -206,8 +199,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(io_FileStream_init)
 	if (fileType != FILE_TYPE_DISK)
 	{
 		VM_PushString(thread, error_strings::FileStreamWithNonFile);
-		CHECKED(GC_Construct(thread, Types::NotSupportedError, 1, nullptr));
-		return VM_Throw(thread);
+		return VM_ThrowErrorOfType(thread, Types::NotSupportedError, 1);
 	}
 
 	FileStream *stream = _FS(THISV);
@@ -387,8 +379,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(io_FileStream_flush)
 	if ((stream->access & FileAccess::WRITE) != FileAccess::WRITE)
 	{
 		VM_PushString(thread, error_strings::CannotFlushReadOnlyStream);
-		CHECKED(GC_Construct(thread, Types::InvalidStateError, 1, nullptr));
-		return VM_Throw(thread);
+		return VM_ThrowErrorOfType(thread, Types::InvalidStateError, 1);
 	}
 
 	HANDLE handle = stream->handle;
@@ -418,8 +409,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(io_FileStream_seekInternal)
 	case SeekOrigin::END:     seekOrigin = FILE_END;     break;
 	default:
 		VM_PushString(thread, strings::origin);
-		CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr));
-		return VM_Throw(thread);
+		return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 1);
 	}
 
 	HANDLE handle = stream->handle;

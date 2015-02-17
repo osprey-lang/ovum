@@ -182,6 +182,24 @@ OVUM_API int VM_ThrowMemoryError(ThreadHandle thread, String *message = nullptr)
 OVUM_API int VM_ThrowOverflowError(ThreadHandle thread, String *message = nullptr);
 OVUM_API int VM_ThrowDivideByZeroError(ThreadHandle thread, String *message = nullptr);
 OVUM_API int VM_ThrowNullReferenceError(ThreadHandle thread, String *message = nullptr);
+// Constructs and throws an error of the specified type. The caller
+// pushes the constructor arguments onto the stack before calling
+// this function.
+//   thread:
+//     The thread on which to throw the error.
+//   type:
+//     The error type. An instance of this type will be constructed
+//     using arguments on the evaluation stack.
+//   argc:
+//     The total number of arguments that are to be passed to the
+//     error type's constructor.
+// Note that this function may not always return OVUM_ERROR_THROWN.
+// If the VM runs out of memory while constructing the error object,
+// OVUM_ERROR_NO_MEMORY is returned instead. Other error codes may
+// also be returned.
+// This function should be used by native code that need to throw
+// an error of a type not covered by the helper functions above.
+OVUM_API int VM_ThrowErrorOfType(ThreadHandle thread, TypeHandle type, int argc);
 
 // Informs the thread that it is entering a section of native code
 // which will not interact with the managed runtime in any way.

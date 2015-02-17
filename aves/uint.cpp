@@ -39,8 +39,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_UInt_toStringf)
 		{
 			VM_PushString(thread, strings::format); // paramName
 			VM_PushString(thread, error_strings::RadixOutOfRange); // message
-			CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 2, nullptr));
-			return VM_Throw(thread);
+			return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 2);
 		}
 
 		str = uinteger::ToString(thread, THISV.uinteger, (int)format->integer, 0, false);
@@ -117,10 +116,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_UInt_opShiftLeft)
 	int64_t amount = RIGHT.integer;
 
 	if (amount < 0)
-	{
-		CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 0, nullptr));
-		return VM_Throw(thread);
-	}
+		return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 0);
 	if (amount > 64)
 	{
 		VM_PushUInt(thread, 0);
@@ -136,10 +132,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_UInt_opShiftRight)
 	int64_t amount = RIGHT.integer;
 
 	if (amount < 0)
-	{
-		CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 0, nullptr));
-		return VM_Throw(thread);
-	}
+		return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 0);
 	if (amount > 64)
 	{
 		VM_PushUInt(thread, 0);

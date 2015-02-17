@@ -45,6 +45,7 @@ namespace strings
 	LitString<8> _revision  = { 8, 0, SFS, 'r','e','v','i','s','i','o','n',0 };
 	LitString<9> _minLength = { 9, 0, SFS, 'm','i','n','L','e','n','g','t','h',0 };
 	LitString<4> _side      = { 4, 0, SFS, 's','i','d','e',0 };
+	LitString<4> _size      = { 4, 0, SFS, 's','i','z','e',0 };
 	LitString<5> __call     = { 5, 0, SFS, '.','c','a','l','l',0 };
 	LitString<5> __iter     = { 5, 0, SFS, '.','i','t','e','r',0 };
 	LitString<4> __new      = { 4, 0, SFS, '.','n','e','w',0 };
@@ -81,6 +82,7 @@ namespace strings
 	String *revision  = _S(_revision);
 	String *minLength = _S(_minLength);
 	String *side      = _S(_side);
+	String *size      = _S(_size);
 	String *_call     = _S(__call);
 	String *_iter     = _S(__iter);
 	String *_new      = _S(__new);

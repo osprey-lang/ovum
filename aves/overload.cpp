@@ -19,8 +19,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Overload_new)
 	{
 		VM_PushNull(thread); // message
 		VM_PushString(thread, strings::handle); // paramName
-		CHECKED(GC_Construct(thread, Types::ArgumentError, 2, nullptr));
-		return VM_Throw(thread);
+		return VM_ThrowErrorOfType(thread, Types::ArgumentError, 2);
 	}
 
 	CHECKED(IntFromValue(thread, args + 3));
@@ -171,8 +170,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Parameter_new)
 	{
 		VM_PushNull(thread); // message
 		VM_PushString(thread, strings::overload); // paramName
-		CHECKED(GC_Construct(thread, Types::ArgumentError, 2, nullptr));
-		return VM_Throw(thread);
+		return VM_ThrowErrorOfType(thread, Types::ArgumentError, 2);
 	}
 	OverloadInst *ovl = _O(args[1]);
 
@@ -185,8 +183,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Parameter_new)
 	if (!found)
 	{
 		VM_PushString(thread, strings::index);
-		CHECKED(GC_Construct(thread, Types::ArgumentRangeError, 1, nullptr));
-		return VM_Throw(thread);
+		return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 1);
 	}
 
 	inst->index = (int32_t)args[2].integer;
