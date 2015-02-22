@@ -1383,7 +1383,11 @@ void Module::AppendVersionString(PathName &path, ModuleVersion &version)
 
 OVUM_API ModuleHandle FindModule(ThreadHandle thread, String *name, ModuleVersion *version)
 {
-	return thread->GetVM()->GetModulePool()->Get(name, version);
+	ovum::ModulePool *pool = thread->GetVM()->GetModulePool();
+	if (version == nullptr)
+		return pool->Get(name);
+	else
+		return pool->Get(name, version);
 }
 
 OVUM_API String *Module_GetName(ModuleHandle module)
