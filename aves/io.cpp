@@ -22,7 +22,7 @@ int io::ThrowIOError(ThreadHandle thread, ErrorCode code, String *pathName)
 	String *message = nullptr;
 
 	int r = OVUM_SUCCESS;
-#if OVUM_TARGET == OVUM_WINDOWS
+#if OVUM_WINDOWS
 	switch (code)
 	{
 	case ERROR_FILE_NOT_FOUND:

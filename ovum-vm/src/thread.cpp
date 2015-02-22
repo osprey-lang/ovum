@@ -2,9 +2,6 @@
 #include "stringbuffer.h"
 #include "debug_symbols.h"
 #include <memory>
-#if OVUM_TARGET == OVUM_UNIX
-#include <time.h>
-#endif
 
 namespace ovum
 {

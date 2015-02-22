@@ -3,31 +3,61 @@
 #ifndef VM__VM_H
 #define VM__VM_H
 
-#define OVUM_UNIX    0
-#define OVUM_WINDOWS 1
+// Define some macros for the target OS.
+// The following macros will be defined as 0 or 1 depending
+// on what the target OS is:
+//   OVUM_UNIX
+//   OVUM_WINDOWS
+//
+// In the future, this list will be expanded. More than one
+// macro at a time may be 1; when compiling against Debian,
+// say, the macros OVUM_DEBIAN, OVUM_LINUX and OVUM_UNIX might
+// all be true. That way, "#if OVUM_LINUX" will be usable as
+// a way of targetting all Linux distros, while "#if OVUM_DEBIAN"
+// would be used to narrow it down to Debian only.
+// That is why there is not just a single OVUM_TARGET macro
+// with a numeric value or somesuch.
 
-#ifndef OVUM_TARGET
+#ifndef OVUM_HAS_TARGET_OS
+
+// Let's try to figure out the OS.
+
 #ifdef _WIN32
-# define OVUM_TARGET OVUM_WINDOWS
+# define OVUM_WINDOWS 1
 #else
-# define OVUM_TARGET OVUM_UNIX
-# error Ovum does not support the target operating system.
+# error Ovum is not yet supported on the target operating system.
 #endif
+
+// Assign 0 to macros that haven't been defined yet.
+
+#ifndef OVUM_WINDOWS
+# define OVUM_WINDOWS 0
 #endif
+#ifndef OVUM_UNIX
+# define OVUM_UNIX 0
+#endif
+
+#define OVUM_HAS_TARGET_OS
+#endif // OVUM_HAS_TARGET_OS
+
+// Define an OVUM_WCHAR_SIZE macro for text functions
 
 #ifndef OVUM_WCHAR_SIZE
-// Define an OVUM_WCHAR_SIZE macro for text functions
-#if OVUM_TARGET == OVUM_WINDOWS
+
+#if OVUM_WINDOWS
 // wchar_t is UTF-16 on Windows
 # define OVUM_WCHAR_SIZE 2
+
 #elif defined(__SIZEOF_WCHAR_T__)
 # define OVUM_WCHAR_SIZE __SIZEOF_WCHAR_T__
+
 #elif defined(__WCHAR_MAX__)
 # if __WCHAR_MAX__ > 0xFFFF
 #  define OVUM_WCHAR_SIZE 4
 # else
 #  define OVUM_WCHAR_SIZE 2
 # endif
+
 #else
 # include <wchar.h>
 # ifndef WCHAR_MAX
@@ -39,7 +69,10 @@
 #  define OVUM_WCHAR_SIZE 2
 # endif
 #endif
-#endif
+
+#endif // OVUM_WCHAR_SIZE
+
+#ifndef OVUM_API
 
 #ifdef VM_EXPORTS
 # define _OVUM_API __declspec(dllexport)
@@ -48,7 +81,18 @@
 # define _OVUM_API __declspec(dllimport)
 #endif
 
-#define OVUM_API	extern "C" _OVUM_API
+#ifdef __cplusplus
+#define OVUM_API  extern "C" _OVUM_API
+#else
+#define OVUM_API  _OVUM_API
+#endif
+
+#endif // OVUM_API
+
+// Handle types. The OVUM_HANDLES_DEFINED macro lets these
+// types be defined as something else by whatever includes
+// this header file, usually for internal use. This should
+// be used with caution.
 
 #ifndef OVUM_HANDLES_DEFINED
 // Represents a handle to a specific thread.
@@ -69,7 +113,7 @@ typedef void *FieldHandle;
 typedef void *PropertyHandle;
 
 #define OVUM_HANDLES_DEFINED
-#endif
+#endif // OVUM_HANDLES_DEFINED
 
 // Standard Ovum error codes.
 
@@ -87,7 +131,8 @@ typedef void *PropertyHandle;
 #define OVUM_ERROR_BUSY           (-1) /* A semaphore, mutex or similar value is entered by another thread. */
 
 
-// Some header files!
+// Include some general useful API functions, as well as
+// the required ov_pathchar.h.
 #include "ov_value.h"
 #include "ov_thread.h"
 #include "ov_gc.h"
