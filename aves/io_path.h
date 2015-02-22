@@ -9,7 +9,7 @@ class Path
 {
 public:
 
-#if OVUM_TARGET == OVUM_WINDOWS
+#if OVUM_WINDOWS
 	static const uchar DirSeparator = '\\';
 	static const uchar AltDirSeparator = '/';
 	static const uchar VolumeSeparator = ':';

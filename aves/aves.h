@@ -15,7 +15,7 @@
 // Ovum
 #include "ov_vm.h"
 
-#if OVUM_TARGET == OVUM_WINDOWS
+#if OVUM_WINDOWS
 # include "windows/windows.h"
 #else
 # error aves does not support the target operating system

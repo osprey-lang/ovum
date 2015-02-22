@@ -151,7 +151,7 @@ public:
 	inline void ReplaceWith(String *path)
 	{
 		Clear();
-#if OVUM_TARGET == OVUM_WINDOWS
+#if OVUM_WIDE_PATHCHAR
 		ReplaceWith(path->length, reinterpret_cast<const pathchar_t*>(&path->firstChar));
 #else
 #error Not implemented

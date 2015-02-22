@@ -84,11 +84,7 @@ public:
 
 	inline ~Semaphore()
 	{
-#if OVUM_TARGET == OVUM_WINDOWS
-		CloseHandle(semaphore);
-#else
-		sem_destroy(&semaphore);
-#endif
+		os::SemaphoreDestroy(&semaphore);
 	}
 
 	// Decrements the semaphore value by one. If the value is currently

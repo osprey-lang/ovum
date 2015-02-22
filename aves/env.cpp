@@ -1,6 +1,6 @@
 #include "aves_env.h"
 #include <memory>
-#if OVUM_TARGET != OVUM_WINDOWS
+#if OVUM_UNIX
 #include <time.h>
 #endif
 
@@ -38,7 +38,7 @@ AVES_API NATIVE_FUNCTION(aves_Env_get_bigEndian)
 
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Env_get_currentDirectory)
 {
-#if OVUM_TARGET == OVUM_WINDOWS
+#if OVUM_WINDOWS
 	String *result = nullptr;
 	do
 	{
@@ -95,7 +95,7 @@ END_NATIVE_FUNCTION
 
 AVES_API NATIVE_FUNCTION(aves_Env_get_tickCount)
 {
-#if OVUM_TARGET == OVUM_WINDOWS
+#if OVUM_WINDOWS
 	VM_PushInt(thread, GetTickCount64());
 #else
 	timespec t;

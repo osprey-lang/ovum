@@ -8,10 +8,6 @@
 #include "tls.h"
 #include <cassert>
 
-#if OVUM_TARGET == OVUM_UNIX
-#include <pthread.h>
-#endif
-
 namespace ovum
 {
 

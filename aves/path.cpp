@@ -54,7 +54,7 @@ bool Path::IsAbsolute(String *path)
 	// If the path begins with a directory separator, or (on Windows) volume name + ':',
 	// the path is considered absolute.
 	if (length >= 1 && IsPathSep(chp[0])
-#if OVUM_TARGET == OVUM_WINDOWS
+#if OVUM_WINDOWS
 		|| length >= 2 && chp[1] == Path::VolumeSeparator
 #endif
 		)
@@ -100,11 +100,11 @@ int32_t Path::GetRootLength(String *path)
 	int32_t length = path->length;
 	const uchar *chp = &path->firstChar;
 
-#if OVUM_TARGET == OVUM_WINDOWS
 	if (length >= 1 && IsPathSep(chp[0]))
 	{
 		index = 1;
 	}
+#if OVUM_WINDOWS
 	else if (length >= 2 && chp[1] == ':')
 	{
 		// Volume label + ':'
@@ -112,9 +112,6 @@ int32_t Path::GetRootLength(String *path)
 		if (length >= 3 && IsPathSep(chp[2]))
 			index++;
 	}
-#else
-	if (length >= 1 && IsPathSep(chp[0]))
-		index = 1;
 #endif
 
 	return index;
@@ -212,7 +209,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(io_Path_join)
 			String *outputStr;
 			uchar lastChar = (&output->common.string->firstChar)[output->common.string->length - 1];
 			if (Path::IsPathSep(lastChar)
-#if OVUM_TARGET == OVUM_WINDOWS
+#if OVUM_WINDOWS
 				|| lastChar == Path::VolumeSeparator
 #endif
 				)

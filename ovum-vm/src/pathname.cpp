@@ -145,11 +145,11 @@ void PathName::ReplaceWith(uint32_t length, const pathchar_t *path)
 bool PathName::IsRooted(uint32_t length, const pathchar_t *path)
 {
 	// Starts with path separator, e.g. /hello/nope
-	if (length > 0 && IsPathSep(path[0]))
+	if (length >= 1 && IsPathSep(path[0]))
 		return true;
 
-#if OVUM_TARGET == OVUM_WINDOWS
-	// Windows only: volume label + colon, e.g. C:\One or C:Two
+#if OVUM_WINDOWS
+	// Windows only: volume label + ':', e.g. C:\One or C:Two
 	if (length >= 2 && path[1] == _Path(':'))
 		return true;
 #endif
@@ -161,21 +161,19 @@ uint32_t PathName::GetRootLength(uint32_t length, const pathchar_t *path)
 {
 	uint32_t index = 0;
 
-#if OVUM_TARGET == OVUM_WINDOWS
 	if (length >= 1 && IsPathSep(path[0]))
 	{
 		index = 1;
 	}
+#if OVUM_WINDOWS
+	// Windows only: volume label + ':'
 	else if (length >= 2 && path[1] == _Path(':'))
 	{
-		// Volume label + ':'
 		index = 2;
+		// + optional path separator
 		if (length >= 3 && IsPathSep(path[2]))
 			index++;
 	}
-#else
-	if (length > 0 && IsPathSep(path[0]))
-		index = 1;
 #endif
 
 	return index;

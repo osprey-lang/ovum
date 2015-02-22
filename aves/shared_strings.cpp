@@ -87,7 +87,7 @@ namespace strings
 	String *_iter     = _S(__iter);
 	String *_new      = _S(__new);
 
-#if OVUM_TARGET == OVUM_WINDOWS
+#if OVUM_WINDOWS
 	LitString<2> _newline = { 2, 0, SFS, '\r','\n',0 };
 #else
 	LitString<1> _newline = { 1, 0, SFS, '\n',0 };
