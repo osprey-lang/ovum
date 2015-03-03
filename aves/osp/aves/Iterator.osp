@@ -440,6 +440,12 @@ public abstract class Iterator
 			yield func(this.current, other.current);
 	}
 
+	/// Summary: Collects all the items in the iterator into a {List}.
+	/// Returns: A {List} containing all the items of the iterator.
+	/// Remarks: This method will attempt to enumerate the iterator all the
+	///          way to the end. If the iterator represents an infinite
+	///          sequence, the program will attempt to allocate a lot of
+	///          memory before throwing a {MemoryError}.
 	public toList()
 	{
 		var output = [];

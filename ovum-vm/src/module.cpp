@@ -1361,7 +1361,7 @@ void Module::AppendVersionString(PathName &path, ModuleVersion &version)
 
 		int32_t value = version.*(fields[f]);
 
-		// The max value of int32_t is 4,294,967,295, which is 10 characters.
+		// The max value of int32_t is 2,147,483,647, which is 10 characters.
 		static const int charCount = 15;
 		pathchar_t chars[charCount + 1];
 		pathchar_t *pch = chars + charCount;
