@@ -1,4 +1,4 @@
-#include "filesystem.h"
+#include "def.h"
 
 namespace ovum
 {
@@ -24,6 +24,40 @@ namespace os
 			return FILE_IO_ERROR;
 		}
 	}
+
+	FileStatus OpenMemoryMappedFile(const pathchar_t *name, FileMode mode, MmfAccess access, FileShare share, MemoryMappedFile *output)
+	{
+		// First, transform 'access' to an appropriate FileAccess value
+		FileAccess fileAccess;
+		switch (access)
+		{
+		case MMF_OPEN_READ:
+		case MMF_OPEN_READ_EXEC:
+			fileAccess = FILE_ACCESS_READ;
+			break;
+		case MMF_OPEN_WRITE:
+		case MMF_OPEN_WRITE_EXEC:
+		case MMF_OPEN_PRIVATE:
+		case MMF_OPEN_PRIVATE_EXEC:
+			fileAccess = FILE_ACCESS_READWRITE;
+			break;
+		}
+
+		FileHandle file;
+		FileStatus r = OpenFile(name, mode, fileAccess, share, &file);
+		if (r != FILE_OK)
+			return r; // Nope.
+
+		// Create the file mapping without a maximum size
+		HANDLE mapping = ::CreateFileMappingW(file, nullptr, (DWORD)access, 0, 0, nullptr);
+		if (mapping == nullptr)
+			return FILE_IO_ERROR; // Also nope.
+
+		output->file = file;
+		output->mapping = mapping;
+		return FILE_OK;
+	}
+
 
 } // namespace os
 

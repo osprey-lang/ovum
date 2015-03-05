@@ -12,4 +12,7 @@
 // (Multi)threading and related
 #include "threading.h"
 
+// Memory-mapped files (relies on types from filesystem.h)
+#include "mmf.h"
+
 #endif // VM__OS_DEF_H
