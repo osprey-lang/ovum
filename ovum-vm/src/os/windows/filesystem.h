@@ -47,6 +47,9 @@ namespace os
 		FILE_CREATE_NEW = CREATE_NEW,
 	};
 
+	// Specifies how a file may be accessed, once opened. These values
+	// can be combined as flags. FILE_ACCESS_READWRITE is a shorthand
+	// for FILE_ACCESS_READ | FILE_ACCESS_WRITE.
 	enum FileAccess
 	{
 		// The file is opened for reading.
@@ -57,6 +60,12 @@ namespace os
 		FILE_ACCESS_READWRITE = GENERIC_READ | GENERIC_WRITE,
 	};
 
+	// Specifies whether and how the file may be accessed by other
+	// processes once opened. These values can be combined as flags.
+	// FILE_SHARE_READWRITE is a shorthand for FILE_SHARE_READ | FILE_SHARE_WRITE.
+	// These flags may be advisory (not enforced on a system level)
+	// on some OSes. Also, the FILE_SHARE_DELETE flag may not be
+	// supported, or may not be distinct from FILE_SHARE_WRITE.
 	enum FileShare
 	{
 		// No one else can access the file until it is closed.

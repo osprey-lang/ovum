@@ -168,6 +168,12 @@
     <ClInclude Include="inc\ov_vm.h">
       <Filter>Header Files\inc</Filter>
     </ClInclude>
+    <ClInclude Include="src\os\_template\mmf.h">
+      <Filter>Header Files\src\os\_template</Filter>
+    </ClInclude>
+    <ClInclude Include="src\os\windows\mmf.h">
+      <Filter>Header Files\src\os\windows</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\module.cpp">
