@@ -746,7 +746,7 @@ int Thread::Evaluate()
 				OPC_ARGS(oa::ConditionalBranch);
 				register Value *const ops = args->Value(f);
 
-				if (IsSameReference_(ops + 0, ops + 1))
+				if (!IsSameReference_(ops + 0, ops + 1))
 					ip += args->offset;
 
 				ip += oa::CONDITIONAL_BRANCH_SIZE;
