@@ -1384,11 +1384,13 @@ int Thread::EvaluateLeave(register StackFrame *frame, int32_t target)
 	typedef MethodOverload::TryBlock::TryKind TryKind;
 
 	// Note: the IP currently points to the leave instruction.
-	// We must add sizeof(IntermediateOpcode) + sizeof(int32_t) to get
-	// the right ipOffset and tOffset.
+	// We must add the size of the instructions to get the right ipOffset and tOffset.
+	const size_t TOTAL_INSTR_SIZE = // including the opcode, not just its args
+		ALIGN_TO(sizeof(IntermediateOpcode), opcode_args::ALIGNMENT) +
+		opcode_args::BRANCH_SIZE;
 
 	MethodOverload *method = frame->method;
-	const uint32_t ipOffset = (uint32_t)(this->ip + sizeof(IntermediateOpcode) + sizeof(int32_t) - method->entry);
+	const uint32_t ipOffset = (uint32_t)(this->ip + TOTAL_INSTR_SIZE - method->entry);
 	const uint32_t tOffset  = ipOffset + target;
 	for (int32_t t = 0; t < method->tryBlockCount; t++)
 	{
