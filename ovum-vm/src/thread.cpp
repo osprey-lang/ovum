@@ -721,35 +721,48 @@ int Thread::LoadMemberLL(Value *instance, String *member, Value *result)
 	if ((m->flags & MemberFlags::INSTANCE) == MemberFlags::NONE)
 		return ThrowTypeError(thread_errors::StaticMemberThroughInstance);
 
-	if ((m->flags & MemberFlags::FIELD) != MemberFlags::NONE)
+	int r = OVUM_SUCCESS;
+	switch (m->flags & MemberFlags::KIND)
 	{
+	case MemberFlags::FIELD:
 		reinterpret_cast<const Field*>(m)->ReadFieldUnchecked(instance, result);
 		currentFrame->Pop(1); // Done with the instance!
-	}
-	else if ((m->flags & MemberFlags::METHOD) != MemberFlags::NONE)
-	{
-		Value output;
-		int r = GetGC()->Alloc(this, vm->types.Method, sizeof(MethodInst), &output);
-		if (r != OVUM_SUCCESS) return r;
+		break;
+	case MemberFlags::METHOD:
+		{
+			Value output;
+			r = GetGC()->Alloc(this, vm->types.Method, sizeof(MethodInst), &output);
+			if (r != OVUM_SUCCESS)
+				break;
 
-		output.common.method->instance = *instance;
-		output.common.method->method = (Method*)m;
-		*result = output;
-		currentFrame->Pop(1); // Done with the instance!
-	}
-	else // MemberFlags::PROPERTY
-	{
-		const Property *p = (Property*)m;
-		if (!p->getter)
-			return ThrowTypeError(thread_errors::GettingWriteonlyProperty);
+			output.common.method->instance = *instance;
+			output.common.method->method = (Method*)m;
+			*result = output;
+			currentFrame->Pop(1); // Done with the instance!
+		}
+		break;
+	case MemberFlags::PROPERTY:
+		{
+			const Property *p = (Property*)m;
+			if (!p->getter)
+			{
+				r = ThrowTypeError(thread_errors::GettingWriteonlyProperty);
+				break;
+			}
 
-		MethodOverload *mo = p->getter->ResolveOverload(0);
-		if (!mo) return ThrowNoOverloadError(0);
+			MethodOverload *mo = p->getter->ResolveOverload(0);
+			if (!mo)
+			{
+				r = ThrowNoOverloadError(0);
+				break;
+			}
 
-		// Remember: the instance is already on the stack!
-		return InvokeMethodOverload(mo, 0, instance, result);
+			// Remember: the instance is already on the stack!
+			r = InvokeMethodOverload(mo, 0, instance, result);
+		}
+		break;
 	}
-	RETURN_SUCCESS;
+	return r;
 }
 
 int Thread::StoreMember(String *member)
@@ -768,28 +781,40 @@ int Thread::StoreMemberLL(Value *instance, String *member)
 		return ThrowMemberNotFoundError(member);
 	if ((m->flags & MemberFlags::INSTANCE) == MemberFlags::NONE)
 		return ThrowTypeError(thread_errors::StaticMemberThroughInstance);
-	if ((m->flags & MemberFlags::METHOD) != MemberFlags::NONE)
-		return ThrowTypeError(thread_errors::AssigningToMethod);
 
-	if ((m->flags & MemberFlags::FIELD) != MemberFlags::NONE)
-		reinterpret_cast<Field*>(m)->WriteFieldUnchecked(instance);
-	else // MemberFlags::PROPERTY
+	int r = OVUM_SUCCESS;
+	switch (m->flags & MemberFlags::KIND)
 	{
-		Property *p = (Property*)m;
-		if (!p->setter)
-			return ThrowTypeError(thread_errors::SettingReadonlyProperty);
+	case MemberFlags::FIELD:
+		reinterpret_cast<Field*>(m)->WriteFieldUnchecked(instance);
+		currentFrame->Pop(2); // Done with the instance and the value!
+		break;
+	case MemberFlags::METHOD:
+		r = ThrowTypeError(thread_errors::AssigningToMethod);
+		break;
+	case MemberFlags::PROPERTY:
+		{
+			Property *p = (Property*)m;
+			if (!p->setter)
+			{
+				r = ThrowTypeError(thread_errors::SettingReadonlyProperty);
+				break;
+			}
 
-		MethodOverload *mo = p->setter->ResolveOverload(1);
-		if (!mo) return ThrowNoOverloadError(1);
+			MethodOverload *mo = p->setter->ResolveOverload(1);
+			if (!mo)
+			{
+				r = ThrowNoOverloadError(1);
+				break;
+			}
 
-		// Remember: the instance and value are already on the stack!
-		int r = InvokeMethodOverload(mo, 1, instance, instance);
-		if (r != OVUM_SUCCESS)
-			return r;
+			// Remember: the instance and value are already on the stack!
+			r = InvokeMethodOverload(mo, 1, instance, instance);
+		}
+		break;
 	}
 
-	currentFrame->Pop(2); // Done with the instance and the value!
-	RETURN_SUCCESS;
+	return r;
 }
 
 // Note: argCount does NOT include the instance.
@@ -970,12 +995,15 @@ int Thread::StoreStaticField(Field *field)
 
 int Thread::ToString(String **result)
 {
-	int r = InvokeMember(static_strings::toString, 0, nullptr);
-	if (r != OVUM_SUCCESS)
-		return r;
-
 	if (currentFrame->PeekType(0) != vm->types.String)
-		return ThrowTypeError(static_strings::errors::ToStringWrongType);
+	{
+		int r = InvokeMember(static_strings::toString, 0, nullptr);
+		if (r != OVUM_SUCCESS)
+			return r;
+
+		if (currentFrame->PeekType(0) != vm->types.String)
+			return ThrowTypeError(static_strings::errors::ToStringWrongType);
+	}
 
 	if (result != nullptr)
 	{
