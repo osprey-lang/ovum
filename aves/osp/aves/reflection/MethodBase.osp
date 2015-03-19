@@ -18,21 +18,27 @@ public abstract class MethodBase is Member
 {
 	__init_type("aves_reflection_MethodBase_init");
 
-	protected new(handle)				__extern("aves_reflection_MethodBase_new");
+	protected new(handle)
+		__extern("aves_reflection_MethodBase_new");
 
 	// Don't override Member.kind; implementations of MethodBase should provide it.
 
-	override get accessLevel			__extern("aves_reflection_MethodBase_get_accessLevel");
+	override get accessLevel
+		__extern("aves_reflection_MethodBase_get_accessLevel");
 
-	private get handle					__extern("aves_reflection_MethodBase_get_handle");
+	private get handle
+		__extern("aves_reflection_MethodBase_get_handle");
 
 	// For global functions, gets the full name; for class methods, the last component.
 	// This is basically whatever Ovum's Member_GetName returns for the MethodHandle.
-	private get internalName			__extern("aves_reflection_MethodBase_get_internalName");
+	private get internalName
+		__extern("aves_reflection_MethodBase_get_internalName");
 
 	// cachedName contains either name (if isGlobal) or fullName (if not)
-	private get cachedName				__extern("aves_reflection_MethodBase_get_cachedName");
-	private set cachedName				__extern("aves_reflection_MethodBase_set_cachedName");
+	private get cachedName
+		__extern("aves_reflection_MethodBase_get_cachedName");
+	private set cachedName
+		__extern("aves_reflection_MethodBase_set_cachedName");
 
 	override get name
 	{
@@ -56,7 +62,8 @@ public abstract class MethodBase is Member
 		return internalName;
 	}
 
-	override get declaringType			__extern("aves_reflection_MethodBase_get_declaringType");
+	override get declaringType
+		__extern("aves_reflection_MethodBase_get_declaringType");
 
 	override get declaringModule		//__extern("aves_reflection_MethodBase_get_declaringModule");
 	{
@@ -78,27 +85,33 @@ public abstract class MethodBase is Member
 
 	/// Summary: Gets a value that indicates whether the method is a global function.
 	/// Returns: True if the method is global; otherwise, false.
-	public get isGlobal					__extern("aves_reflection_MethodBase_get_isGlobal");
+	public get isGlobal
+		__extern("aves_reflection_MethodBase_get_isGlobal");
 
 	/// Summary: Gets a value that indicates whether the method is static.
 	/// Returns: True if the method is static; otherwise, false.
-	public get isStatic					__extern("aves_reflection_MethodBase_get_isStatic");
+	public get isStatic
+		__extern("aves_reflection_MethodBase_get_isStatic");
 
 	/// Summary: Gets a value that indicates whether the method is a constructor.
 	/// Returns: True if the method is a constructor; otherwise, false.
-	public get isConstructor			__extern("aves_reflection_MethodBase_get_isConstructor");
+	public get isConstructor
+		__extern("aves_reflection_MethodBase_get_isConstructor");
 
 	/// Summary: Gets a value that indicates whether the method has the `impl` flag.
 	///          A method with this flag is typically an internal implementation detail,
 	///          such as property accessor or an operator method.
 	/// Returns: True if the method has the `impl` flag; otherwise, false.
-	public get isImpl					__extern("aves_reflection_MethodBase_get_isImpl");
+	public get isImpl
+		__extern("aves_reflection_MethodBase_get_isImpl");
 
 	/// Summary: Gets the total number of overloads the method has.
 	/// Returns: The total number of overloads in the method, as an Int.
-	public get overloadCount			__extern("aves_reflection_MethodBase_get_overloadCount");
+	public get overloadCount
+		__extern("aves_reflection_MethodBase_get_overloadCount");
 
-	private getOverloadHandle(index)	__extern("aves_reflection_MethodBase_getOverloadHandle");
+	private getOverloadHandle(index)
+		__extern("aves_reflection_MethodBase_getOverloadHandle");
 
 	/// Summary: Gets the overload at the specified index.
 	/// Param index: The index of the overload to get. (Int, UInt or Real)
@@ -156,7 +169,8 @@ public abstract class MethodBase is Member
 			throw new TypeError("arguments must be an aves.List.");
 		return invokeInternal(instance, arguments);
 	}
-	private invokeInternal(inst, args)		__extern("aves_reflection_MethodBase_invoke");
+	private invokeInternal(inst, args)
+		__extern("aves_reflection_MethodBase_invoke");
 
 	abstract override toString();
 
@@ -181,7 +195,8 @@ public class Method is MethodBase
 	/// Summary: If this method overloads or overrides an inherited method,
 	///          this property gets a reference to that method. Otherwise,
 	///          returns null.
-	public get baseMethod					__extern("aves_reflection_Method_get_baseMethod");
+	public get baseMethod
+		__extern("aves_reflection_Method_get_baseMethod");
 
 	override toString()
 	{

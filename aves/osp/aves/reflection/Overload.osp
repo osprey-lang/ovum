@@ -4,7 +4,8 @@ public class Overload is Member
 {
 	__init_type("aves_reflection_Overload_init");
 
-	public new(handle, method, index)		__extern("aves_reflection_Overload_new");
+	public new(handle, method, index)
+		__extern("aves_reflection_Overload_new");
 
 	override get kind = MemberKind.overload;
 
@@ -18,13 +19,16 @@ public class Overload is Member
 
 	override get declaringModule = method.delaringModule;
 
-	private get handle						__extern("aves_reflection_Overload_get_handle");
+	private get handle
+		__extern("aves_reflection_Overload_get_handle");
 
 	/// Summary: Gets the method that the overload belongs to, as a {MethodBase}.
-	public get method						__extern("aves_reflection_Overload_get_method");
+	public get method
+		__extern("aves_reflection_Overload_get_method");
 
 	/// Summary: Gets the index of the overload within the {method}, as an Int.
-	public get index						__extern("aves_reflection_Overload_get_index");
+	public get index
+		__extern("aves_reflection_Overload_get_index");
 
 	/// Summary: Gets a value that indicates whether the overload belongs to a public method.
 	/// Returns: True if the overload belongs to a public method; otherwise, false.
@@ -48,7 +52,8 @@ public class Overload is Member
 
 	/// Summary: Gets a value that indicates whether the overload belongs to a constructor.
 	/// Returns: True if the overload belongs to a constructor; otherwise, false.
-	public get isConstructor				__extern("aves_reflection_Overload_get_isConstructor");
+	public get isConstructor
+		__extern("aves_reflection_Overload_get_isConstructor");
 
 	/// Summary: Gets a value that indicates whether the overload’s containing method has the
 	///          `impl` flag. A method with this flag is typically an internal implementation
@@ -58,23 +63,28 @@ public class Overload is Member
 
 	/// Summary: Gets a value that indicates whether the overload is overridable.
 	/// Returns: True if the overload is overridable; otherwise, false.
-	public get isOverridable				__extern("aves_reflection_Overload_get_isOverridable");
+	public get isOverridable
+		__extern("aves_reflection_Overload_get_isOverridable");
 
 	/// Summary: Gets a value that indicates whether the overload is abstract.
 	/// Returns: True if the overload is abstract; otherwise, false.
-	public get isAbstract					__extern("aves_reflection_Overload_get_isAbstract");
+	public get isAbstract
+		__extern("aves_reflection_Overload_get_isAbstract");
 
 	/// Summary: Gets a value that indicates whether the overload is variadic.
 	/// Returns: True if the overload is variadic; otherwise, false.
-	public get isVariadic					__extern("aves_reflection_Overload_get_isVariadic");
+	public get isVariadic
+		__extern("aves_reflection_Overload_get_isVariadic");
 
 	/// Summary: Gets a value that indicates whether the overload has a native-code implementation.
 	/// Returns: True if the overload has a native-code implementation; otherwise, false.
-	public get isNative						__extern("aves_reflection_Overload_get_isNative");
+	public get isNative
+		__extern("aves_reflection_Overload_get_isNative");
 
 	/// Summary: Gets the total number of parameters the overload has.
 	/// Returns: The number of parameters in the overload, as an Int.
-	public get paramCount					__extern("aves_reflection_Overload_get_paramCount");
+	public get paramCount
+		__extern("aves_reflection_Overload_get_paramCount");
 
 	/// Summary: Gets metadata for the parameter at the specified index.
 	/// Param index: The index of the parameter to get. (Int, UInt or Real)
@@ -111,7 +121,8 @@ public class Overload is Member
 	/// Summary: Gets an {Overload} object that represents the currently executing
 	///          method overload.
 	/// Returns: An {Overload} object for the current executing overload.
-	public static getCurrentOverload()		__extern("aves_reflection_Overload_getCurrentOverload", locals=1);
+	public static getCurrentOverload()
+		__extern("aves_reflection_Overload_getCurrentOverload", locals=1);
 
 	operator ==(a, b)
 	{

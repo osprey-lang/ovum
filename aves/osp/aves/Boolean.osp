@@ -53,13 +53,15 @@ public class Boolean __primitive
 	///          contains the value true.
 	public const max = true;
 
-	operator ==(a, b)		__extern("aves_Boolean_opEquals");
+	operator ==(a, b)
+		__extern("aves_Boolean_opEquals");
 	/// Summary: Compares two boolean values for ordering.
 	/// Param a: The first value to compare. (Boolean)
 	/// Param b: The second value to compare. (Boolean)
 	/// Returns: -1 if {a} is less than {b}; 1 if {a} is greater than {b}; and
 	///          0 otherwise. False is ordered before true.
-	operator <=>(a, b)		__extern("aves_Boolean_opCompare");
+	operator <=>(a, b)
+		__extern("aves_Boolean_opCompare");
 	/// Summary: Converts the boolean to a numeric value.
 	/// Param a: The value to convert.
 	/// Returns: 1 if {a} is true, or 0 otherwise.

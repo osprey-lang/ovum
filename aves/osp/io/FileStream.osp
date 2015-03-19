@@ -52,20 +52,27 @@ public class FileStream is Stream
 		init(string(fileName), mode, access, share);
 	}
 
-	override get canRead						__extern("io_FileStream_get_canRead");
-	override get canWrite						__extern("io_FileStream_get_canWrite");
-	override get canSeek						__extern("io_FileStream_get_canSeek");
+	override get canRead
+		__extern("io_FileStream_get_canRead");
+	override get canWrite
+		__extern("io_FileStream_get_canWrite");
+	override get canSeek
+		__extern("io_FileStream_get_canSeek");
 
-	override get length							__extern("io_FileStream_get_length");
+	override get length
+		__extern("io_FileStream_get_length");
 
 	override get position = seekInternal(0, SeekOrigin.current); // seekInternal always returns the new position in the stream
 	override set position { seekInternal(value, SeekOrigin.start); }
 
-	public get fileName							__extern("io_FileStream_get_fileName");
+	public get fileName
+		__extern("io_FileStream_get_fileName");
 
-	private init(fileName, mode, access, share)	__extern("io_FileStream_init");
+	private init(fileName, mode, access, share)
+		__extern("io_FileStream_init");
 
-	override readByte()							__extern("io_FileStream_readByte");
+	override readByte()
+		__extern("io_FileStream_readByte");
 	override readMax(buf, offset, count)
 	{
 		buf = Buffer.fromValue(buf);
@@ -76,9 +83,11 @@ public class FileStream is Stream
 
 		return readMaxInternal(buf, offset, count);
 	}
-	private readMaxInternal(buf, offset, count)	__extern("io_FileStream_readMaxInternal");
+	private readMaxInternal(buf, offset, count)
+		__extern("io_FileStream_readMaxInternal");
 
-	override writeByte(value)					__extern("io_FileStream_writeByte");
+	override writeByte(value)
+		__extern("io_FileStream_writeByte");
 	override write(buf, offset, count)
 	{
 		buf = Buffer.fromValue(buf);
@@ -89,9 +98,11 @@ public class FileStream is Stream
 
 		writeInternal(buf, offset, count);
 	}
-	private writeInternal(buf, offset, count)	__extern("io_FileStream_writeInternal");
+	private writeInternal(buf, offset, count)
+		__extern("io_FileStream_writeInternal");
 
-	override flush()							__extern("io_FileStream_flush");
+	override flush()
+		__extern("io_FileStream_flush");
 
 	override seek(offset, origin)
 	{
@@ -101,9 +112,11 @@ public class FileStream is Stream
 
 		return seekInternal(offset, origin);
 	}
-	private seekInternal(offset, origin)		__extern("io_FileStream_seekInternal");
+	private seekInternal(offset, origin)
+		__extern("io_FileStream_seekInternal");
 
-	override close()							__extern("io_FileStream_close");
+	override close()
+		__extern("io_FileStream_close");
 
 	private const invalidFileMode   = "mode must be an io.FileMode value.";
 	private const invalidFileAccess = "access must be an io.FileAccess value.";

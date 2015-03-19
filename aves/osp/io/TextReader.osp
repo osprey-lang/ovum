@@ -72,18 +72,24 @@ public inheritable TextReader
 		charBuffer = new StringBuffer(defaultBufferSize);
 	}
 
-	private get _stream					__extern("io_TextReader_get_stream");
-	private set _stream					__extern("io_TextReader_set_stream");
+	private get _stream
+		__extern("io_TextReader_get_stream");
+	private set _stream
+		__extern("io_TextReader_set_stream");
 	/// Summary: Gets a reference to the stream that is being read from.
 	public get stream = _stream;
 
-	private get _encoding				__extern("io_TextReader_get_encoding");
-	private set _encoding				__extern("io_TextReader_set_encoding");
+	private get _encoding
+		__extern("io_TextReader_get_encoding");
+	private set _encoding
+		__extern("io_TextReader_set_encoding");
 	/// Summary: Gets the character encoding that the text reader uses.
 	public get encoding = _encoding;
 
-	private get _keepOpen				__extern("io_TextReader_get_keepOpen");
-	private set _keepOpen				__extern("io_TextReader_set_keepOpen");
+	private get _keepOpen
+		__extern("io_TextReader_get_keepOpen");
+	private set _keepOpen
+		__extern("io_TextReader_set_keepOpen");
 	/// Summary: Determines whether the text reader closes the stream
 	///          when the {close} method is called. If true, the stream
 	///          will be kept open.
@@ -117,20 +123,30 @@ public inheritable TextReader
 
 	private const defaultBufferSize = 1k;
 
-	private get decoder					__extern("io_TextReader_get_decoder");
-	private set decoder					__extern("io_TextReader_set_decoder");
+	private get decoder
+		__extern("io_TextReader_get_decoder");
+	private set decoder
+		__extern("io_TextReader_set_decoder");
 
-	private get byteBuffer				__extern("io_TextReader_get_byteBuffer");
-	private set byteBuffer				__extern("io_TextReader_set_byteBuffer");
+	private get byteBuffer
+		__extern("io_TextReader_get_byteBuffer");
+	private set byteBuffer
+		__extern("io_TextReader_set_byteBuffer");
 
-	private get charBuffer				__extern("io_TextReader_get_charBuffer");
-	private set charBuffer				__extern("io_TextReader_set_charBuffer");
+	private get charBuffer
+		__extern("io_TextReader_get_charBuffer");
+	private set charBuffer
+		__extern("io_TextReader_set_charBuffer");
 
-	private get charCount				__extern("io_TextReader_get_charCount");
-	private set charCount				__extern("io_TextReader_set_charCount");
+	private get charCount
+		__extern("io_TextReader_get_charCount");
+	private set charCount
+		__extern("io_TextReader_set_charCount");
 
-	private get charOffset				__extern("io_TextReader_get_charOffset");
-	private set charOffset				__extern("io_TextReader_set_charOffset");
+	private get charOffset
+		__extern("io_TextReader_get_charOffset");
+	private set charOffset
+		__extern("io_TextReader_set_charOffset");
 
 	public overridable close()
 	{
@@ -284,7 +300,8 @@ public inheritable TextReader
 
 		return sb.toString();*/
 	}
-	private readLineInternal()			__extern("io_TextReader_readLine");
+	private readLineInternal()
+		__extern("io_TextReader_readLine");
 
 	private fillBuffer()
 	{

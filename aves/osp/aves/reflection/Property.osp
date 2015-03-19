@@ -4,18 +4,24 @@ public class Property is Member
 {
 	__init_type("aves_reflection_Property_init");
 
-	public new(handle)						__extern("aves_reflection_Property_new");
+	public new(handle)
+		__extern("aves_reflection_Property_new");
 
-	private get handle						__extern("aves_reflection_Property_get_handle");
+	private get handle
+		__extern("aves_reflection_Property_get_handle");
 
 	override get kind = MemberKind.property;
 
-	override get accessLevel				__extern("aves_reflection_Property_get_accessLevel");
+	override get accessLevel
+		__extern("aves_reflection_Property_get_accessLevel");
 
-	override get name						__extern("aves_reflection_Property_get_name");
+	override get name
+		__extern("aves_reflection_Property_get_name");
 
-	private get _fullName					__extern("aves_reflection_Property_get_f_fullName");
-	private set _fullName					__extern("aves_reflection_Property_set_f_fullName");
+	private get _fullName
+		__extern("aves_reflection_Property_get_f_fullName");
+	private set _fullName
+		__extern("aves_reflection_Property_set_f_fullName");
 
 	override get fullName
 	{
@@ -24,7 +30,8 @@ public class Property is Member
 		return _fullName;
 	}
 
-	override get declaringType				__extern("aves_reflection_Property_get_declaringType");
+	override get declaringType
+		__extern("aves_reflection_Property_get_declaringType");
 
 	override get declaringModule			//__extern("aves_reflection_Property_get_declaringModule");
 	{
@@ -46,23 +53,28 @@ public class Property is Member
 
 	/// Summary: Gets a value that indicates whether the property is static.
 	/// Returns: True if the property is static; otherwise, false.
-	public get isStatic						__extern("aves_reflection_Property_get_isStatic");
+	public get isStatic
+		__extern("aves_reflection_Property_get_isStatic");
 
 	/// Summary: Gets a value that indicates whether the property is readable.
 	/// Returns: True if the property is readable; otherwise, false.
-	public get canRead						__extern("aves_reflection_Property_get_canRead");
+	public get canRead
+		__extern("aves_reflection_Property_get_canRead");
 
 	/// Summary: Gets a value that indicates whether the property is writable.
 	/// Returns: True if the property is writable; otherwise, false.
-	public get canWrite						__extern("aves_reflection_Property_get_canWrite");
+	public get canWrite
+		__extern("aves_reflection_Property_get_canWrite");
 
 	/// Summary: Gets the {Method} that implements the property’s getter,
 	///          or null if the property is write-only.
-	public get getterMethod					__extern("aves_reflection_Property_get_getterMethod");
+	public get getterMethod
+		__extern("aves_reflection_Property_get_getterMethod");
 
 	/// Summary: Gets the {Method} that implements the property’s setter,
 	///          or null if the property is read-only.
-	public get setterMethod					__extern("aves_reflection_Property_get_setterMethod");
+	public get setterMethod
+		__extern("aves_reflection_Property_get_setterMethod");
 
 	override toString()
 	{

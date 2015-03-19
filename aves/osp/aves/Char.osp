@@ -9,10 +9,12 @@ public class Char __primitive
 	/// Returns: The number of code units required to encode this Unicode
 	///          character as UTF-16, as an Int.
 	/// Remarks: This property always returns 1 or 2.
-	public get length					__extern("aves_Char_get_length");
+	public get length
+		__extern("aves_Char_get_length");
 
 	/// Summary: Gets the Unicode category of this Unicode character.
-	public get category					__extern("aves_Char_get_category");
+	public get category
+		__extern("aves_Char_get_category");
 
 	/// Summary: Gets a value that indicates whether the Unicode character is
 	///          a surrogate character.
@@ -103,14 +105,18 @@ public class Char __primitive
 	/// Summary: Converts this character to uppercase.
 	/// Returns: A new Char that contains the value of this character
 	///          converted to uppercase.
-	public toUpper()					__extern("aves_Char_toUpper");
+	public toUpper()
+		__extern("aves_Char_toUpper");
 	/// Summary: Converts this character to lowercase.
 	/// Returns: A new Char that contains the value of this character
 	///          converted to lowercase.
-	public toLower()					__extern("aves_Char_toLower");
+	public toLower()
+		__extern("aves_Char_toLower");
 
-	override getHashCode()				__extern("aves_Char_getHashCode");
-	override toString()					__extern("aves_Char_toString");
+	override getHashCode()
+		__extern("aves_Char_getHashCode");
+	override toString()
+		__extern("aves_Char_toString");
 
 	/// Summary: Returns a new Char that represents the Unicode character
 	///          at the specified codepoint.
@@ -121,10 +127,15 @@ public class Char __primitive
 	///          {cp} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {cp} is less than zero or greater than 1,114,111 (0x10FFFF).
-	public static fromCodepoint(cp)		__extern("aves_Char_fromCodepoint");
+	public static fromCodepoint(cp)
+		__extern("aves_Char_fromCodepoint");
 
-	operator ==(a, b)					__extern("aves_Char_opEquals");
-	operator <=>(a, b)					__extern("aves_Char_opCompare");
-	operator *(ch, times)				__extern("aves_Char_opMultiply");
-	operator +(ch)						__extern("aves_Char_opPlus");
+	operator ==(a, b)
+		__extern("aves_Char_opEquals");
+	operator <=>(a, b)
+		__extern("aves_Char_opCompare");
+	operator *(ch, times)
+		__extern("aves_Char_opMultiply");
+	operator +(ch)
+		__extern("aves_Char_opPlus");
 }

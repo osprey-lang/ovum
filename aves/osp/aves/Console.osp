@@ -6,10 +6,14 @@ public static class Console
 
 	// Output
 
-	public static write(value)					__extern("aves_Console_write");
-	public static writeLine(value)				__extern("aves_print"); // An alias! How naughty. They do the same thing anyway.
-	public static writeErr(value)				__extern("aves_Console_writeErr");
-	public static writeLineErr(value)			__extern("aves_Console_writeLineErr");
+	public static write(value)
+		__extern("aves_Console_write");
+	public static writeLine(value)
+		__extern("aves_print"); // An alias! How naughty. They do the same thing anyway.
+	public static writeErr(value)
+		__extern("aves_Console_writeErr");
+	public static writeLineErr(value)
+		__extern("aves_Console_writeLineErr");
 
 	public static write(format, values)
 	{
@@ -44,58 +48,82 @@ public static class Console
 		writeLineErr(format.format(values));
 	}
 
-	public static clear()						__extern("aves_Console_clear");
+	public static clear()
+		__extern("aves_Console_clear");
 
 	// Input
 
-	public static readKey()						__extern("aves_Console_readKey");
-	public static readKey(hideChar)				__extern("aves_Console_readKey");
-	public static readChar()					__extern("aves_Console_readChar");
-	public static readLine()					__extern("aves_Console_readLine", locals=1);
+	public static readKey()
+		__extern("aves_Console_readKey");
+	public static readKey(hideChar)
+		__extern("aves_Console_readKey");
+	public static readChar()
+		__extern("aves_Console_readChar");
+	public static readLine()
+		__extern("aves_Console_readLine", locals=1);
 
 	// Color
 
-	public static get textColor					__extern("aves_Console_get_textColor");
-	public static set textColor					__extern("aves_Console_set_textColor");
+	public static get textColor
+		__extern("aves_Console_get_textColor");
+	public static set textColor
+		__extern("aves_Console_set_textColor");
 
-	public static get backColor					__extern("aves_Console_get_backColor");
-	public static set backColor					__extern("aves_Console_set_backColor");
+	public static get backColor
+		__extern("aves_Console_get_backColor");
+	public static set backColor
+		__extern("aves_Console_set_backColor");
 
-	public static setColors(text, background)	__extern("aves_Console_setColors");
-	public static resetColors()					__extern("aves_Console_resetColors");
+	public static setColors(text, background)
+		__extern("aves_Console_setColors");
+	public static resetColors()
+		__extern("aves_Console_resetColors");
 
 	// Cursor
 
-	public static get showCursor				__extern("aves_Console_get_showCursor");
-	public static set showCursor				__extern("aves_Console_set_showCursor");
+	public static get showCursor
+		__extern("aves_Console_get_showCursor");
+	public static set showCursor
+		__extern("aves_Console_set_showCursor");
 
-	public static get cursorX					__extern("aves_Console_get_cursorX");
-	public static set cursorX					__extern("aves_Console_set_cursorX");
+	public static get cursorX
+		__extern("aves_Console_get_cursorX");
+	public static set cursorX
+		__extern("aves_Console_set_cursorX");
 
-	public static get cursorY					__extern("aves_Console_get_cursorY");
-	public static set cursorY					__extern("aves_Console_set_cursorY");
+	public static get cursorY
+		__extern("aves_Console_get_cursorY");
+	public static set cursorY
+		__extern("aves_Console_set_cursorY");
 
-	public static setCursorPosition(x, y)		__extern("aves_Console_setCursorPosition");
+	public static setCursorPosition(x, y)
+		__extern("aves_Console_setCursorPosition");
 
 	// Buffer size
 
-	public static get bufferWidth				__extern("aves_Console_get_bufferWidth");
+	public static get bufferWidth
+		__extern("aves_Console_get_bufferWidth");
 	public static set bufferWidth { setBufferSize(value, bufferHeight); }
 
-	public static get bufferHeight				__extern("aves_Console_get_bufferHeight");
+	public static get bufferHeight
+		__extern("aves_Console_get_bufferHeight");
 	public static set bufferHeight { setBufferSize(bufferWidth, value); }
 
-	public static setBufferSize(width, height)	__extern("aves_Console_setBufferSize");
+	public static setBufferSize(width, height)
+		__extern("aves_Console_setBufferSize");
 
 	// Windows size & position
 
-	public static get windowWidth				__extern("aves_Console_get_windowWidth");
+	public static get windowWidth
+		__extern("aves_Console_get_windowWidth");
 	public static set windowWidth { setWindowSize(value, windowHeight); }
 
-	public static get windowHeight				__extern("aves_Console_get_windowHeight");
+	public static get windowHeight
+		__extern("aves_Console_get_windowHeight");
 	public static set windowHeight { setWindowSize(windowWidth, value); }
 
-	public static setWindowSize(width, height)	__extern("aves_Console_setWindowSize");
+	public static setWindowSize(width, height)
+		__extern("aves_Console_setWindowSize");
 
 	private static throwFormatTypeError()
 	{

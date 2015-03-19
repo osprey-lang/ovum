@@ -1,20 +1,28 @@
 namespace aves;
 
-public function real(value)							__extern("aves_real");
+public function real(value)
+	__extern("aves_real");
 
 public class Real __primitive
 {
 	private new();
 
-	public get isNaN								__extern("aves_Real_get_isNaN");
-	public get isInfinite							__extern("aves_Real_get_isInfinite");
+	public get isNaN
+		__extern("aves_Real_get_isNaN");
+	public get isInfinite
+		__extern("aves_Real_get_isInfinite");
 
-	public asInt()									__extern("aves_number_asInt");
-	public asUInt()									__extern("aves_number_asUInt");
-	public asReal()									__extern("aves_number_asReal");
+	public asInt()
+		__extern("aves_number_asInt");
+	public asUInt()
+		__extern("aves_number_asUInt");
+	public asReal()
+		__extern("aves_number_asReal");
 
-	override getHashCode()							__extern("aves_Real_getHashCode");
-	override toString()								__extern("aves_Real_toString");
+	override getHashCode()
+		__extern("aves_Real_getHashCode");
+	override toString()
+		__extern("aves_Real_toString");
 
 	public static parse(str)
 	{
@@ -51,7 +59,8 @@ public class Real __primitive
 
 		return null;
 	}
-	private static parseInternal(str, start, end)	__extern("aves_Real_parseInternal");
+	private static parseInternal(str, start, end)
+		__extern("aves_Real_parseInternal");
 
 	public const min     = __named_const(real: min);
 	public const max     = __named_const(real: max);
@@ -59,14 +68,14 @@ public class Real __primitive
 	public const NaN     = __named_const(real: NaN);
 	public const inf     = __named_const(real: inf);
 
-	operator ==(a, b)								__extern("aves_Real_opEquals");
-	operator <=>(a, b)								__extern("aves_Real_opCompare");
-	operator +(a, b)								__extern("aves_Real_opAdd");
-	operator -(a, b)								__extern("aves_Real_opSubtract");
-	operator *(a, b)								__extern("aves_Real_opMultiply");
-	operator /(a, b)								__extern("aves_Real_opDivide");
-	operator %(a, b)								__extern("aves_Real_opModulo");
-	operator **(a, b)								__extern("aves_Real_opPower");
-	operator +(a)									__extern("aves_Real_opPlus");
-	operator -(a)									__extern("aves_Real_opNegate");
+	operator ==(a, b)  __extern("aves_Real_opEquals");
+	operator <=>(a, b) __extern("aves_Real_opCompare");
+	operator +(a, b)   __extern("aves_Real_opAdd");
+	operator -(a, b)   __extern("aves_Real_opSubtract");
+	operator *(a, b)   __extern("aves_Real_opMultiply");
+	operator /(a, b)   __extern("aves_Real_opDivide");
+	operator %(a, b)   __extern("aves_Real_opModulo");
+	operator **(a, b)  __extern("aves_Real_opPower");
+	operator +(a)      __extern("aves_Real_opPlus");
+	operator -(a)      __extern("aves_Real_opNegate");
 }

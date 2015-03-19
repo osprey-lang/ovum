@@ -2,4 +2,5 @@ namespace aves.helpers;
 
 // Loads an arbitrary (public) member from the specified object.
 // 'member' must be a string.
-private function loadMember(object, member)		__extern("aves_helpers_loadMember");
+private function loadMember(object, member)
+	__extern("aves_helpers_loadMember");

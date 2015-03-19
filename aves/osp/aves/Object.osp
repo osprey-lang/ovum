@@ -4,7 +4,8 @@ namespace aves;
 public inheritable Object
 {
 	/// Summary: Constructs a new {aves.Object}.
-	public new()		__extern("aves_Object_new");
+	public new()
+		__extern("aves_Object_new");
 
 	/// Summary: Applies the function {func} to the current instance,
 	///          with an optional list of additional arguments.
@@ -16,10 +17,12 @@ public inheritable Object
 	}
 
 	/// Summary: Returns a hash code for the current instance, as an Int.
-	public overridable getHashCode()	__extern("aves_Object_getHashCode");
+	public overridable getHashCode()
+		__extern("aves_Object_getHashCode");
 
 	/// Summary: Returns a string representation of the value.
-	public overridable toString()		__extern("aves_Object_toString", locals=1);
+	public overridable toString()
+		__extern("aves_Object_toString", locals=1);
 
 	/// Summary: Compares two values for equality.
 	/// Param a: The first value to compare.
