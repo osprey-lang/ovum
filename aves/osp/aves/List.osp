@@ -11,13 +11,15 @@ public inheritable List
 	__init_type("aves_List_init");
 
 	/// Summary: Creates a new, empty list with the default capacity.
-	public new()								__extern("aves_List_new");
+	public new()
+		__extern("aves_List_new");
 	/// Summary: Creates a new, empty list with the specified capacity.
 	/// Param capacity: The capacity of the new list. (Int, UInt or Real)
 	/// Throws TypeError: {capacity} could not be converted to an Int.
 	/// Throws ArgumentRangeError: {capacity} is less than zero, or greater
 	///          than 2,147,483,647 (0x7fffffff).
-	public new(capacity)						__extern("aves_List_newCap");
+	public new(capacity)
+		__extern("aves_List_newCap");
 
 	/// Summary: Gets the item at the specified index.
 	/// Param index: The index of the item to set. If negative, the index is
@@ -27,7 +29,8 @@ public inheritable List
 	/// Throws TypeError: {index} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {index} is less than -{length}, or greater than or equal to {length}.
-	public get this[index]						__extern("aves_List_get_item");
+	public get this[index]
+		__extern("aves_List_get_item");
 	/// Summary: Sets the item at the specified index.
 	/// Param index: The index of the item to set. If negative, the index is
 	///              relative to the end of the list, e.g. -2 is the second to
@@ -35,24 +38,29 @@ public inheritable List
 	/// Throws TypeError: {index} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {index} is less than -{length}, or greater than or requal to {length}.
-	public set this[index]						__extern("aves_List_set_item");
+	public set this[index]
+		__extern("aves_List_set_item");
 
 	/// Summary: Gets the total number of items contained in the list.
 	/// Returns: The total number of items actually contained in the list,
 	///          as an Int.
-	public get length							__extern("aves_List_get_length");
+	public get length
+		__extern("aves_List_get_length");
 
 	/// Summary: Gets the capacity of the list; that is, the number of items
 	///          it can contain before needing to be resized.
 	/// Returns: The capacity of the list, as an Int.
-	public get capacity							__extern("aves_List_get_capacity");
+	public get capacity
+		__extern("aves_List_get_capacity");
 	/// Summary: Sets the capacity of the list; that is, the number of items
 	///          it can contain before needing to be resized.
 	/// Throws TypeError: The value could not be converted to an Int.
 	/// Throws ArgumentRangeError: The value is less than {length}.
-	public set capacity							__extern("aves_List_set_capacity");
+	public set capacity
+		__extern("aves_List_set_capacity");
 
-	private get version							__extern("aves_List_get_version");
+	private get version
+		__extern("aves_List_get_version");
 
 	/// Summary: Determines whether the list is empty.
 	/// Returns: True if the list has no items in it; otherwise, false.
@@ -62,7 +70,8 @@ public inheritable List
 	/// Summary: Adds an item to the end of the list.
 	/// Param item: The item to add.
 	/// Returns: The index at which the item was inserted.
-	public add(item)							__extern("aves_List_add");
+	public add(item)
+		__extern("aves_List_add");
 	/// Summary: Inserts an item at the specified index.
 	/// Param index: The index at which to insert the item. If negative,
 	///              the index is relative to the end of the list, e.g. -2
@@ -73,7 +82,8 @@ public inheritable List
 	///          {index} is less than -{length}, or greater than {length}.
 	/// Remarks: If {index} is equal to {length}, then the item is inserted
 	///          at the end of the list.
-	public insert(index, item)					__extern("aves_List_insert");
+	public insert(index, item)
+		__extern("aves_List_insert");
 	/// Summary: Determines whether the list contains the specified item.
 	/// Param item: The item to look for.
 	/// Returns: True if the item is in the list; otherwise, false.
@@ -132,9 +142,11 @@ public inheritable List
 	/// Throws TypeError: {index} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {index} is less than -{length}, or greater than or equal to {length}.
-	public removeAt(index)						__extern("aves_List_removeAt");
+	public removeAt(index)
+		__extern("aves_List_removeAt");
 	/// Summary: Removes all items from the list.
-	public clear()								__extern("aves_List_clear");
+	public clear()
+		__extern("aves_List_clear");
 	/// Summary: Copies items from this list into a new list, starting at the
 	///          specified index, up to the end of this list.
 	/// Param start: The index at which the slice starts (inclusive). If negative,
@@ -146,7 +158,8 @@ public inheritable List
 	/// Throws ArgumentRangeError:
 	///          {start} is less than -{length}, or greater than {length}.
 	/// Remarks: If {start} is equal to {length}, the returned list will be empty.
-	public slice(start)							__extern("aves_List_slice1", locals=1);
+	public slice(start)
+		__extern("aves_List_slice1", locals=1);
 	/// Summary: Copies items form this list into a new list, starting at the
 	///          specified start index, up to the specified exclusive end index.
 	/// Param start: The index at which the slice starts (inclusive). If negative,
@@ -175,7 +188,8 @@ public inheritable List
 	///
 	///          If {start} is equal to {length}, the returned list will be empty
 	///          (as long as {end} is also valid).
-	public slice(start, end)					__extern("aves_List_slice2", locals=1);
+	public slice(start, end)
+		__extern("aves_List_slice2", locals=1);
 	/// Summary: Joins the values of this list into a string, separated by the
 	///          specified separator.
 	/// Param sep: The separator to be put between items in the list.
@@ -205,7 +219,8 @@ public inheritable List
 	}
 	/// Summary: Reverses the order of the items in this list in-place.
 	/// Returns: The current list.
-	public reverse()							__extern("aves_List_reverse");
+	public reverse()
+		__extern("aves_List_reverse");
 
 	/// Summary: Sorts this list in-place using the default comparison
 	///          (the `<=>` operator).
@@ -600,5 +615,6 @@ private class ListIterator is Iterator
 	// Note: this binds to the same native method as List.version's getter.
 	// This works perfectly fine because this is a static method, so the first
 	// argument on the stack is a List.
-	private static getVersion(list)		__extern("aves_List_get_version");
+	private static getVersion(list)
+		__extern("aves_List_get_version");
 }

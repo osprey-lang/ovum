@@ -6,7 +6,8 @@ public class Type is Member
 
 	private new();
 
-	private get handle						__extern("aves_reflection_Type_get_handle");
+	private get handle
+		__extern("aves_reflection_Type_get_handle");
 
 	override get kind = MemberKind.type;
 
@@ -17,8 +18,10 @@ public class Type is Member
 		return AccessLevel.isPublic;
 	}
 
-	private get _name						__extern("aves_reflection_Type_get_f_name");
-	private set _name						__extern("aves_reflection_Type_set_f_name");
+	private get _name
+		__extern("aves_reflection_Type_get_f_name");
+	private set _name
+		__extern("aves_reflection_Type_set_f_name");
 
 	override get name
 	{
@@ -32,7 +35,8 @@ public class Type is Member
 		return _name;
 	}
 
-	override get fullName					__extern("aves_reflection_Type_get_fullName");
+	override get fullName
+		__extern("aves_reflection_Type_get_fullName");
 
 	override get declaringType = null;
 
@@ -44,7 +48,8 @@ public class Type is Member
 
 	/// Summary: Gets the base type of this type, or null if it has none.
 	/// Returns: This type’s base type as a {Type}, or null if it has none.
-	public get baseType						__extern("aves_reflection_Type_get_baseType");
+	public get baseType
+		__extern("aves_reflection_Type_get_baseType");
 
 	/// Summary: Gets a value that indicates whether the type is public.
 	/// Returns: True if the type is public; otherwise, false.
@@ -53,15 +58,18 @@ public class Type is Member
 	/// Summary: Gets a value that indicates whether the type is private
 	///          (that is, internal to the module).
 	/// Returns: True if the type is private; otherwise, false.
-	public get isPrivate					__extern("aves_reflection_Type_get_isPrivate");
+	public get isPrivate
+		__extern("aves_reflection_Type_get_isPrivate");
 
 	/// Summary: Gets a value that indicates whether the type is abstract.
 	/// Returns: True if the type is abstract; otherwise, false.
-	public get isAbstract					__extern("aves_reflection_Type_get_isAbstract");
+	public get isAbstract
+		__extern("aves_reflection_Type_get_isAbstract");
 
 	/// Summary: Gets a value that indicates whether the type is inheritable.
 	/// Returns: True if the type is inheritable; otherwise, false.
-	public get isInheritable				__extern("aves_reflection_Type_get_isInheritable");
+	public get isInheritable
+		__extern("aves_reflection_Type_get_isInheritable");
 
 	/// Summary: Gets a value that indicates whether the type is static.
 	/// Returns: True if the type is static; otherwise, false.
@@ -74,7 +82,8 @@ public class Type is Member
 
 	/// Summary: Gets a value that indicates whether the type is primitive.
 	/// Returns: True if the type is primitive; otherwise, false.
-	public get isPrimitive					__extern("aves_reflection_Type_get_isPrimitive");
+	public get isPrimitive
+		__extern("aves_reflection_Type_get_isPrimitive");
 
 	/// Summary: Determines whether instances of the type support iteration.
 	///          Such instances represent collections and can be used with
@@ -91,7 +100,8 @@ public class Type is Member
 	///          This property cannot verify that the method returns such an
 	///          object. The property only checks for the presence of a method
 	///          matching the above description.
-	public get canIterate					__extern("aves_reflection_Type_get_canIterate");
+	public get canIterate
+		__extern("aves_reflection_Type_get_canIterate");
 
 	/// Summary: Creates an instance of the type, by invoking the public instance
 	///          constructor that matches the specified argument list.
@@ -137,7 +147,8 @@ public class Type is Member
 
 		return createInstanceInternal(arguments, bool(nonPublic));
 	}
-	private createInstanceInternal(arguments, nonPublic)	__extern("aves_reflection_Type_createInstance");
+	private createInstanceInternal(arguments, nonPublic)
+		__extern("aves_reflection_Type_createInstance");
 
 	/// Summary: Determines whether this type equals or inherits from another
 	///          type.
@@ -153,7 +164,8 @@ public class Type is Member
 			throw new TypeError("type must be an instance of aves.reflection.Type.");
 		return inheritsFromInternal(type);
 	}
-	private inheritsFromInternal(type)		__extern("aves_reflection_Type_inheritsFromInternal");
+	private inheritsFromInternal(type)
+		__extern("aves_reflection_Type_inheritsFromInternal");
 
 	/// Summary: Determines whether the specified value is an instance
 	///          of the current type.
@@ -163,55 +175,64 @@ public class Type is Member
 	/// Remarks: `typeof(T).isInstance(x)`, where `T` is a type name,
 	///          is precisely equivalent to `x is T`. Prefer using the
 	///          `is` operator whenever possible.
-	public isInstance(value)				__extern("aves_reflection_Type_isInstance");
+	public isInstance(value)
+		__extern("aves_reflection_Type_isInstance");
 
 	public getField(name)
 	{
 		return getField(string(name), defaultSearchFlags);
 	}
-	public getField(name, flags)			__extern("aves_reflection_Type_getField");
+	public getField(name, flags)
+		__extern("aves_reflection_Type_getField");
 
 	public getFields()
 	{
 		return getFields(defaultSearchFlags);
 	}
-	public getFields(flags)					__extern("aves_reflection_Type_getFields", locals=1);
+	public getFields(flags)
+		__extern("aves_reflection_Type_getFields", locals=1);
 
 	public getMethod(name)
 	{
 		return getMethod(name, defaultSearchFlags);
 	}
-	public getMethod(name, flags)			__extern("aves_reflection_Type_getMethod");
+	public getMethod(name, flags)
+		__extern("aves_reflection_Type_getMethod");
 
 	public getMethods()
 	{
 		return getMethods(defaultSearchFlags);
 	}
-	public getMethods(flags)				__extern("aves_reflection_Type_getMethods", locals=1);
+	public getMethods(flags)
+		__extern("aves_reflection_Type_getMethods", locals=1);
 
 	public getProperty(name)
 	{
 		return getProperty(name, defaultSearchFlags);
 	}
-	public getProperty(name, flags)			__extern("aves_reflection_Type_getProperty");
+	public getProperty(name, flags)
+		__extern("aves_reflection_Type_getProperty");
 
 	public getProperties()
 	{
 		return getProperties(defaultSearchFlags);
 	}
-	public getProperties(flags)				__extern("aves_reflection_Type_getProperties", locals=1);
+	public getProperties(flags)
+		__extern("aves_reflection_Type_getProperties", locals=1);
 
 	public getMember(name)
 	{
 		return getMember(name, defaultSearchFlags);
 	}
-	public getMember(name, flags)			__extern("aves_reflection_Type_getMember");
+	public getMember(name, flags)
+		__extern("aves_reflection_Type_getMember");
 
 	public getMembers()
 	{
 		return getMembers(defaultSearchFlags);
 	}
-	public getMembers(flags)				__extern("aves_reflection_Type_getMembers", locals=1);
+	public getMembers(flags)
+		__extern("aves_reflection_Type_getMembers", locals=1);
 
 	override toString()
 	{

@@ -4,77 +4,91 @@ public class Module
 {
 	__init_type("aves_reflection_Module_init");
 
-	public new(handle)								__extern("aves_reflection_Module_new");
+	public new(handle)
+		__extern("aves_reflection_Module_new");
 
-	private get handle								__extern("aves_reflection_Module_get_handle");
+	private get handle
+		__extern("aves_reflection_Module_get_handle");
 
 	/// Summary: Gets the name of the module.
 	/// Returns: The name of the module, as a String.
-	public get name									__extern("aves_reflection_Module_get_name");
+	public get name
+		__extern("aves_reflection_Module_get_name");
 
 	/// Summary: Gets the version of the module.
 	/// Returns: The version of the module, as a {Version}.
-	public get version								__extern("aves_reflection_Module_get_version");
+	public get version
+		__extern("aves_reflection_Module_get_version");
 
 	/// Summary: Gets the full name and path of the file that the module
 	///          was loaded from.
 	/// Returns: The file name that the module was loaded from, as a String.
-	public get fileName								__extern("aves_reflection_Module_get_fileName");
+	public get fileName
+		__extern("aves_reflection_Module_get_fileName");
 
 	public getType(name)
 	{
 		return getType(string(name), defaultSearchFlags);
 	}
-	public getType(name, flags)						__extern("aves_reflection_Module_getType");
+	public getType(name, flags)
+		__extern("aves_reflection_Module_getType");
 
 	public getTypes()
 	{
 		return getTypes(defaultSearchFlags);
 	}
-	public getTypes(flags)							__extern("aves_reflection_Module_getTypes", locals=1);
+	public getTypes(flags)
+		__extern("aves_reflection_Module_getTypes", locals=1);
 
 	public getFunction(name)
 	{
 		return getFunction(string(name), defaultSearchFlags);
 	}
-	public getFunction(name, flags)					__extern("aves_reflection_Module_getFunction");
+	public getFunction(name, flags)
+		__extern("aves_reflection_Module_getFunction");
 
 	public getFunctions()
 	{
 		return getFunctions(defaultSearchFlags);
 	}
-	public getFunctions(flags)						__extern("aves_reflection_Module_getFunctions", locals=1);
+	public getFunctions(flags)
+		__extern("aves_reflection_Module_getFunctions", locals=1);
 
 	public getGlobalConstant(name)
 	{
 		return getGlobalConstant(string(name), defaultSearchFlags);
 	}
-	public getGlobalConstant(name, flags)			__extern("aves_reflection_Module_getGlobalConstant");
+	public getGlobalConstant(name, flags)
+		__extern("aves_reflection_Module_getGlobalConstant");
 
 	public getGlobalConstants()
 	{
 		return getGlobalConstants(defaultSearchFlags);
 	}
-	public getGlobalConstants(flags)				__extern("aves_reflection_Module_getGlobalConstants", locals=1);
+	public getGlobalConstants(flags)
+		__extern("aves_reflection_Module_getGlobalConstants", locals=1);
 
 	public getMember(name)
 	{
 		return getMember(string(name), defaultSearchFlags);
 	}
-	public getMember(name, flags)					__extern("aves_reflection_Module_getMember");
+	public getMember(name, flags)
+		__extern("aves_reflection_Module_getMember");
 
 	public getMembers()
 	{
 		return getMembers(defaultSearchFlags);
 	}
-	public getMembers(flags)						__extern("aves_reflection_Module_getMembers", locals=1);
+	public getMembers(flags)
+		__extern("aves_reflection_Module_getMembers", locals=1);
 
 	override toString()
 	{
 		return "<Module {0}, version={1}>".format([name, version]);
 	}
 
-	public static getCurrentModule()				__extern("aves_reflection_Module_getCurrentModule");
+	public static getCurrentModule()
+		__extern("aves_reflection_Module_getCurrentModule");
 
 	/// Summary: Finds a loaded module with the specified name.
 	/// Param name: The name of the module to find.
@@ -114,7 +128,8 @@ public class Module
 		return findInternal(name, version);
 	}
 		
-	private static findInternal(name, version)		__extern("aves_reflection_Module_find");
+	private static findInternal(name, version)
+		__extern("aves_reflection_Module_find");
 
 	operator ==(a, b)
 	{

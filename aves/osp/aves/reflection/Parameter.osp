@@ -5,24 +5,29 @@ public class Parameter
 {
 	__init_type("aves_reflection_Parameter_init");
 
-	public new(overload, index)			__extern("aves_reflection_Parameter_new");
+	public new(overload, index)
+		__extern("aves_reflection_Parameter_new");
 
 	/// Summary: Gets the overload that the parameter belongs to.
 	/// Returns: The {Overload} that the parameter belongs to.
-	public get overload					__extern("aves_reflection_Parameter_get_overload");
+	public get overload
+		__extern("aves_reflection_Parameter_get_overload");
 
 	/// Summary: Gets the index of this parameter within the parameter list.
 	///          The first parameter is at index 0.
 	/// Returns: The index of the parameter in the parameter list, as an Int.
-	public get index					__extern("aves_reflection_Parameter_get_index");
+	public get index
+		__extern("aves_reflection_Parameter_get_index");
 
 	/// Summary: Gets the name of the parameter.
 	/// Returns: The name of the parameter, as a String.
-	public get name						__extern("aves_reflection_Parameter_get_name");
+	public get name
+		__extern("aves_reflection_Parameter_get_name");
 
 	/// Summary: Gets a value that indicates whether the parameter is passed by reference.
 	/// Returns: True if the parameter is passed by reference; otherwise, false.
-	public get isByRef					__extern("aves_reflection_Parameter_get_isByRef");
+	public get isByRef
+		__extern("aves_reflection_Parameter_get_isByRef");
 
 	/// Summary: Gets a value that indicates whether the parameter is optional.
 	/// Returns: True if the parameter is optional; otherwise, false.
@@ -30,7 +35,8 @@ public class Parameter
 	///          that is specified in the parameter list, such as `xyz` in `a = xyz`, is
 	///          actually assigned in the method body. For this reason, there is no way
 	///          to get the default value specified in the parameter list.
-	public get isOptional			__extern("aves_reflection_Parameter_get_isOptional");
+	public get isOptional
+		__extern("aves_reflection_Parameter_get_isOptional");
 
 	/// Summary: Gets a value that indicates whether the parameter is variadic.
 	/// Returns: True if the parameter is variadic; otherwise, false.
@@ -42,7 +48,8 @@ public class Parameter
 	///
 	///          A variadic parameter can only ever be the first or the last parameter
 	///          in the parameter list. 
-	public get isVariadic			__extern("aves_reflection_Parameter_get_isVariadic");
+	public get isVariadic
+		__extern("aves_reflection_Parameter_get_isVariadic");
 
 	override toString()
 	{

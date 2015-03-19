@@ -48,17 +48,20 @@ public class String
 	/// Remarks: If the index refers to the first code unit of a surrogate pair, then the
 	///          resulting char will only contain that one code unit, not the surrogate pair.
 	///          Use {getCharacter} to obtain the value represented by the surrogate pair.
-	public get this[index]					__extern("aves_String_get_item");
+	public get this[index]
+		__extern("aves_String_get_item");
 
 	/// Summary: Gets the length of the string, in number of UTF-16 code units, as an Int.
-	public get length						__extern("aves_String_get_length");
+	public get length
+		__extern("aves_String_get_length");
 
 	/// Summary: Gets a value indicating whether the string is empty (its length is 0).
 	public get isEmpty = length == 0;
 
 	/// Summary: Gets a value indicating whether the string instance is
 	//           in the intern table.
-	public get isInterned					__extern("aves_String_get_isInterned");
+	public get isInterned
+		__extern("aves_String_get_isInterned");
 
 	/// Summary: Determines whether this string equals another value.
 	/// Param value: The value to compare against.
@@ -67,7 +70,8 @@ public class String
 	///          same sequence of characters as this string.
 	///
 	///          This comparison is case-sensitive.
-	public equals(value)					__extern("aves_String_opEquals");
+	public equals(value)
+		__extern("aves_String_opEquals");
 	/// Summary: Determines whether this string equals another value, by
 	///          performing a case-insensitive comparison.
 	/// Param value: The value to compare against.
@@ -84,26 +88,30 @@ public class String
 	///          This method does not normalize composite characters.
 	///          Hence, “a” followed by a combining acute accent (U+0301)
 	///          is equal to neither “á” (U+00E1) nor “Á” (U+00C1).
-	public equalsIgnoreCase(value)			__extern("aves_String_equalsIgnoreCase");
+	public equalsIgnoreCase(value)
+		__extern("aves_String_equalsIgnoreCase");
 	/// Summary: Determines whether the given string occurs as a substring
 	///          within this string. The comparison is case-sensitive.
 	/// Param value: The substring to look for in this string. (String, Char)
 	/// Returns: True if this string contains {value} as a substring; otherwise,
 	///          false.
 	/// Throws TypeError: {value} is not a String or Char.
-	public contains(value)					__extern("aves_String_contains");
+	public contains(value)
+		__extern("aves_String_contains");
 	/// Summary: Determines whether the current string starts with the specified
 	///          string. The comparison is case-sensitive.
 	/// Param value: The value to test against.
 	/// Returns: True if this string starts with {value}; otherwise, false.
 	/// Throws TypeError: {value} is not a String or Char.
-	public startsWith(value)				__extern("aves_String_startsWith");
+	public startsWith(value)
+		__extern("aves_String_startsWith");
 	/// Summary: Determines whether the current string ends with the specified
 	///          string. The comparison is case-sensitive.
 	/// Param value: The value to test against.
 	/// Returns: True if this string starts with {value}; otherwise, false.
 	/// Throws TypeError: {value} is not a String or Char.
-	public endsWith(value)					__extern("aves_String_endsWith");
+	public endsWith(value)
+		__extern("aves_String_endsWith");
 	/// Summary: Returns the index of the first occurrence of the specified
 	///          substring within the current string.
 	/// Param value: The substring to search for.
@@ -111,7 +119,8 @@ public class String
 	///          this string, as an Int, or null if this string doesn’t contain
 	///          the substring.
 	/// Throws TypeError: {value} is not a String or Char.
-	public indexOf(value)					__extern("aves_String_indexOf");
+	public indexOf(value)
+		__extern("aves_String_indexOf");
 	/// Summary: Returns the index of the last occurrence of the specified
 	///          substring within the current string.
 	/// Param value: The substring to search for.
@@ -119,13 +128,15 @@ public class String
 	///          this string, as an Int, or null if this string doesn’t contain
 	///          the substring.
 	/// Throws TypeError: {value} is not a String or Char.
-	public lastIndexOf(value)				__extern("aves_String_lastIndexOf");
+	public lastIndexOf(value)
+		__extern("aves_String_lastIndexOf");
 
 	/// Summary: Returns a new string containing the characters of this string
 	///          in reverse order.
 	/// Remarks: This method works with Unicode characters, not UTF-16 code
 	///          units. Surrogate pairs will be treated as a single unit.
-	public reverse()						__extern("aves_String_reverse", locals=1);
+	public reverse()
+		__extern("aves_String_reverse", locals=1);
 	/// Summary: Returns a substring of this string starting at the specified index.
 	/// Param start: The index at which to start extracting characters. (Int, UInt or Real)
 	/// Returns: A String containing characters from this string, from index
@@ -134,7 +145,8 @@ public class String
 	/// Throws ArgumentRangeError:
 	///          {start} is negative, or greater than or equal to the length of this string.
 	/// Remarks: This method will happily split surrogate pairs in half.
-	public substr(start)					__extern("aves_String_substr1", locals=1);
+	public substr(start)
+		__extern("aves_String_substr1", locals=1);
 	/// Summary: Returns a substring of of the specified length, starting at
 	///          the specified index in this string.
 	/// Param start: The index at which to start extracting characters. (Int, UInt or Real)
@@ -150,7 +162,8 @@ public class String
 	///
 	///     {start} + {count} is beyond the end of this string.
 	/// Remarks: This method will happily split surrogate pairs in half.
-	public substr(start, count)				__extern("aves_String_substr2", locals=1);
+	public substr(start, count)
+		__extern("aves_String_substr2", locals=1);
 	/// Summary: Formats this string using the specified values.
 	/// Param values: A List or Hash containing values to replace format placeholders with.
 	/// Returns: A new String with the format placeholders replaced by values from {values}.
@@ -192,7 +205,8 @@ public class String
 	///         `"x{0<5}z".format(["abc"]) // => "xabc  z"` \
 	///         `"[{0=6}]".format(["hi"])  // => "[  hi  ]"` \
 	///         `"Name: {name}, age: {age}".format({name: null, age: Real.NaN}) // => "Name: , age: NaN"`
-	public format(values)					__extern("aves_String_format", locals=1);
+	public format(values)
+		__extern("aves_String_format", locals=1);
 	/// Summary: Returns a new string with all occurrences of {oldValue} replaced
 	///          with {newValue}
 	/// Param oldValue: The string to be replaced.
@@ -240,7 +254,8 @@ public class String
 		maxTimes = int(maxTimes);
 		return replaceInner(oldValue, newValue, maxTimes);
 	}
-	private replaceInner(oldValue, newValue, maxTimes)	__extern("aves_String_replaceInner");
+	private replaceInner(oldValue, newValue, maxTimes)
+		__extern("aves_String_replaceInner");
 
 	/// Summary: Splits the string into a List of substrings on the given
 	///          separator.
@@ -260,7 +275,8 @@ public class String
 	///          continues immediately after the substring. To illustrate:
 	///
 	///              `"a;;;b;;;;c".split(";;") // => ["a", ";b", "", "c"]
-	public split(separator)								__extern("aves_String_split", locals=1);
+	public split(separator)
+		__extern("aves_String_split", locals=1);
 
 	/// Summary: Removes all leading and trailing white space characters from
 	///          the string.
@@ -580,7 +596,8 @@ public class String
 		return padInner(minLength, char, StringPad.end);
 	}
 
-	private padInner(minLength, char, side)				__extern("aves_String_padInner");
+	private padInner(minLength, char, side)
+		__extern("aves_String_padInner");
 
 	private static getPaddingChar(char)
 	{
@@ -596,14 +613,20 @@ public class String
 		return char;
 	}
 
-	public toUpper()						__extern("aves_String_toUpper");
-	public toLower()						__extern("aves_String_toLower");
+	public toUpper()
+		__extern("aves_String_toUpper");
+	public toLower()
+		__extern("aves_String_toLower");
 
-	public getCharacter(i)					__extern("aves_String_getCharacter");
-	public getCodepoint(i)					__extern("aves_String_getCodepoint");
+	public getCharacter(i)
+		__extern("aves_String_getCharacter");
+	public getCodepoint(i)
+		__extern("aves_String_getCodepoint");
 
-	public getCategory(i)					__extern("aves_String_getCategory");
-	public isSurrogatePair(i)				__extern("aves_String_isSurrogatePair");
+	public getCategory(i)
+		__extern("aves_String_getCategory");
+	public isSurrogatePair(i)
+		__extern("aves_String_isSurrogatePair");
 	public isControl(i)
 	{
 		return getCharacter(i).isControl;
@@ -649,15 +672,18 @@ public class String
 	///          value as this string.
 	/// Returns: The system's reference to the interned string with the same value
 	///          as this string, or null if the string is not interned.
-	public getInterned()					__extern("aves_String_getInterned");
+	public getInterned()
+		__extern("aves_String_getInterned");
 	/// Summary: Interns the current string. If the intern table already contains
 	///          a string with this value, that string is returned. Otherwise, the
 	///          current string is added to the intern table and returned.
 	/// Returns: The system's reference to the interned string with the same value
 	///          as this string.
-	public intern()							__extern("aves_String_intern");
+	public intern()
+		__extern("aves_String_intern");
 
-	override getHashCode()					__extern("aves_String_getHashCode");
+	override getHashCode()
+		__extern("aves_String_getHashCode");
 	override toString()
 	{
 		return this;
@@ -677,13 +703,17 @@ public class String
 	/// Remarks: If {cp} refers to a surrogate code point, then the resulting
 	///          string will contain a single surrogate character with that
 	///          code point.
-	public static fromCodepoint(cp)			__extern("aves_String_fromCodepoint");
+	public static fromCodepoint(cp)
+		__extern("aves_String_fromCodepoint");
 
 	public const empty = "";
 
-	operator ==(a, b)						__extern("aves_String_opEquals");
-	operator <=>(a, b)						__extern("aves_String_opCompare");
-	operator *(str, times)					__extern("aves_String_opMultiply");
+	operator ==(a, b)
+		__extern("aves_String_opEquals");
+	operator <=>(a, b)
+		__extern("aves_String_opCompare");
+	operator *(str, times)
+		__extern("aves_String_opMultiply");
 
 	iter
 	{

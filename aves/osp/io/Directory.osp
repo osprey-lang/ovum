@@ -15,5 +15,6 @@ public static class Directory
 
 		return existsInternal(string(pathName));
 	}
-	private static existsInternal(pathName)				__extern("io_Directory_existsInternal");
+	private static existsInternal(pathName)
+		__extern("io_Directory_existsInternal");
 }

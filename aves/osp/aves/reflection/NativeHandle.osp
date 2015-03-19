@@ -9,7 +9,9 @@ private class NativeHandle __primitive
 		return +this;
 	}
 
-	operator ==(a, b)		__extern("aves_reflection_NativeHandle_opEquals");
+	operator ==(a, b)
+		__extern("aves_reflection_NativeHandle_opEquals");
 
-	operator +(a)			__extern("aves_reflection_NativeHandle_opPlus");
+	operator +(a)
+		__extern("aves_reflection_NativeHandle_opPlus");
 }

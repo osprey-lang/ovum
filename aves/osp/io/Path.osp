@@ -4,8 +4,10 @@ namespace io;
 
 public static class Path
 {
-	public static get directorySeparator				__extern("io_Path_get_directorySeparator");
-	public static get altDirectorySeparator				__extern("io_Path_get_altDirectorySeparator");
+	public static get directorySeparator
+		__extern("io_Path_get_directorySeparator");
+	public static get altDirectorySeparator
+		__extern("io_Path_get_altDirectorySeparator");
 
 	public static getInvalidPathChars()
 	{
@@ -16,15 +18,22 @@ public static class Path
 		return getInvalidFileNameCharsString().split("");
 	}
 
-	private static getInvalidPathCharsString()			__extern("io_Path_getInvalidPathCharsString");
-	private static getInvalidFileNameCharsString()		__extern("io_Path_getInvalidFileNameCharsString");
+	private static getInvalidPathCharsString()
+		__extern("io_Path_getInvalidPathCharsString");
+	private static getInvalidFileNameCharsString()
+		__extern("io_Path_getInvalidFileNameCharsString");
 
-	public static isAbsolute(path)						__extern("io_Path_isAbsolute");
+	public static isAbsolute(path)
+		__extern("io_Path_isAbsolute");
 
-	public static join(path1, path2)					__extern("io_Path_join", locals=1);
-	public static join(path1, path2, path3)				__extern("io_Path_join", locals=1);
-	public static join(path1, path2, path3, path4)		__extern("io_Path_join", locals=1);
-	public static join(path1, path2, path3, path4, path5) __extern("io_Path_join", locals=1);
+	public static join(path1, path2)
+		__extern("io_Path_join", locals=1);
+	public static join(path1, path2, path3)
+		__extern("io_Path_join", locals=1);
+	public static join(path1, path2, path3, path4)
+		__extern("io_Path_join", locals=1);
+	public static join(path1, path2, path3, path4, path5)
+		__extern("io_Path_join", locals=1);
 
 	public static getFullPath(path)
 	{
@@ -32,7 +41,8 @@ public static class Path
 			throw new ArgumentNullError("path");
 		return getFullPathInternal(string(path));
 	}
-	private static getFullPathInternal(path)			__extern("io_Path_getFullPath");
+	private static getFullPathInternal(path)
+		__extern("io_Path_getFullPath");
 
 	public static getFileName(path)
 	{
@@ -40,7 +50,8 @@ public static class Path
 			throw new ArgumentNullError("path");
 		return getFileNameInternal(string(path));
 	}
-	private static getFileNameInternal(path)			__extern("io_Path_getFileName");
+	private static getFileNameInternal(path)
+		__extern("io_Path_getFileName");
 
 	public static getDirectory(path)
 	{
@@ -48,7 +59,8 @@ public static class Path
 			throw new ArgumentNullError("path");
 		return getDirectoryInternal(string(path));
 	}
-	private static getDirectoryInternal(path)			__extern("io_Path_getDirectory");
+	private static getDirectoryInternal(path)
+		__extern("io_Path_getDirectory");
 
 	public static getExtension(path)
 	{
@@ -69,9 +81,13 @@ public static class Path
 		return changeExtensionInternal(string(path), ext);
 	}
 
-	private static getExtensionInternal(path)			__extern("io_Path_getExtension");
-	private static hasExtensionInternal(path)			__extern("io_Path_hasExtension");
-	private static changeExtensionInternal(path, ext)	__extern("io_Path_changeExtension", locals=1);
+	private static getExtensionInternal(path)
+		__extern("io_Path_getExtension");
+	private static hasExtensionInternal(path)
+		__extern("io_Path_hasExtension");
+	private static changeExtensionInternal(path, ext)
+		__extern("io_Path_changeExtension", locals=1);
 
-	private static validatePath(path, checkWildcards)	__extern("io_Path_validatePath");
+	private static validatePath(path, checkWildcards)
+		__extern("io_Path_validatePath");
 }

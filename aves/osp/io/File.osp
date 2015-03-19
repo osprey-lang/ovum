@@ -11,7 +11,8 @@ public static class File
 
 		return existsInternal(string(fileName));
 	}
-	private static existsInternal(fileName)			__extern("io_File_existsInternal");
+	private static existsInternal(fileName)
+		__extern("io_File_existsInternal");
 
 	public static getSize(fileName)
 	{
@@ -20,7 +21,8 @@ public static class File
 
 		return getSizeInternal(string(fileName));
 	}
-	private static getSizeInternal(fileName)		__extern("io_File_getSizeInternal");
+	private static getSizeInternal(fileName)
+		__extern("io_File_getSizeInternal");
 
 	public static delete(fileName)
 	{
@@ -29,7 +31,8 @@ public static class File
 
 		return deleteInternal(string(fileName));
 	}
-	private static deleteInternal(fileName)			__extern("io_File_deleteInternal");
+	private static deleteInternal(fileName)
+		__extern("io_File_deleteInternal");
 
 	public static move(srcName, destName)
 	{
@@ -38,7 +41,8 @@ public static class File
 
 		return moveInternal(string(srcName), string(destName));
 	}
-	private static moveInternal(srcName, destName)	__extern("io_File_moveInternal");
+	private static moveInternal(srcName, destName)
+		__extern("io_File_moveInternal");
 
 	public static open(fileName)
 	{

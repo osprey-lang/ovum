@@ -1,18 +1,25 @@
 namespace aves;
 
-public function uint(value)		__extern("aves_uint");
+public function uint(value)
+	__extern("aves_uint");
 	
 public class UInt __primitive
 {
 	private new();
 
-	public asInt()				__extern("aves_number_asInt");
-	public asUInt()				__extern("aves_number_asUInt");
-	public asReal()				__extern("aves_number_asReal");
+	public asInt()
+		__extern("aves_number_asInt");
+	public asUInt()
+		__extern("aves_number_asUInt");
+	public asReal()
+		__extern("aves_number_asReal");
 
-	override getHashCode()		__extern("aves_UInt_getHashCode");
-	override toString()			__extern("aves_UInt_toString");
-	public toString(format)		__extern("aves_UInt_toStringf");
+	override getHashCode()
+		__extern("aves_UInt_getHashCode");
+	override toString()
+		__extern("aves_UInt_toString");
+	public toString(format)
+		__extern("aves_UInt_toStringf");
 
 	public static parse(str)
 	{
@@ -64,19 +71,19 @@ public class UInt __primitive
 	public const min = 0u;
 	public const max = __named_const(uint: max);
 
-	operator ==(a, b)			__extern("aves_UInt_opEquals");
-	operator <=>(a, b)			__extern("aves_UInt_opCompare");
-	operator <<(a, b)			__extern("aves_UInt_opShiftLeft");
-	operator >>(a, b)			__extern("aves_UInt_opShiftRight");
-	operator +(a, b)			__extern("aves_UInt_opAdd");
-	operator -(a, b)			__extern("aves_UInt_opSubtract");
-	operator |(a, b)			__extern("aves_UInt_opOr");
-	operator ^(a, b)			__extern("aves_UInt_opXor");
-	operator *(a, b)			__extern("aves_UInt_opMultiply");
-	operator /(a, b)			__extern("aves_UInt_opDivide");
-	operator %(a, b)			__extern("aves_UInt_opModulo");
-	operator &(a, b)			__extern("aves_UInt_opAnd");
-	operator **(a, b)			__extern("aves_UInt_opPower");
-	operator +(a)				__extern("aves_UInt_opPlus");
-	operator ~(a)				__extern("aves_UInt_opNot");
+	operator ==(a, b)  __extern("aves_UInt_opEquals");
+	operator <=>(a, b) __extern("aves_UInt_opCompare");
+	operator <<(a, b)  __extern("aves_UInt_opShiftLeft");
+	operator >>(a, b)  __extern("aves_UInt_opShiftRight");
+	operator +(a, b)   __extern("aves_UInt_opAdd");
+	operator -(a, b)   __extern("aves_UInt_opSubtract");
+	operator |(a, b)   __extern("aves_UInt_opOr");
+	operator ^(a, b)   __extern("aves_UInt_opXor");
+	operator *(a, b)   __extern("aves_UInt_opMultiply");
+	operator /(a, b)   __extern("aves_UInt_opDivide");
+	operator %(a, b)   __extern("aves_UInt_opModulo");
+	operator &(a, b)   __extern("aves_UInt_opAnd");
+	operator **(a, b)  __extern("aves_UInt_opPower");
+	operator +(a)      __extern("aves_UInt_opPlus");
+	operator ~(a)      __extern("aves_UInt_opNot");
 }

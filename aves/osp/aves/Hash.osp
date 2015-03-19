@@ -56,12 +56,14 @@ public inheritable Hash
 
 	/// Summary: Gets the total number of key–value pairs contained in the hash.
 	/// Returns: The total number of key–value pairs in the hash, as an Int.
-	public get length							__extern("aves_Hash_get_length");
+	public get length
+		__extern("aves_Hash_get_length");
 
 	/// Summary: Gets the capacity of the hash; that is, the number of entries
 	///          it can contain before needing to be resized.
 	/// Returns: The capacity of the hash, as an Int.
-	public get capacity							__extern("aves_Hash_get_capacity");
+	public get capacity
+		__extern("aves_Hash_get_capacity");
 
 	/// Summary: Determines whether the hash table is empty.
 	/// Returns: True if {length} is zero; otherwise, false.
@@ -78,14 +80,19 @@ public inheritable Hash
 	///          values in the hash table.
 	public get values = new KeyOrValueIterable(this, false);
 
-	private get version							__extern("aves_Hash_get_version");
-	private get entryCount						__extern("aves_Hash_get_entryCount");
+	private get version
+		__extern("aves_Hash_get_version");
+	private get entryCount
+		__extern("aves_Hash_get_entryCount");
 
-	private initialize(capacity)				__extern("aves_Hash_initialize");
+	private initialize(capacity)
+		__extern("aves_Hash_initialize");
 
-	private getItemInternal(key, hash)			__extern("aves_Hash_getItemInternal");
+	private getItemInternal(key, hash)
+		__extern("aves_Hash_getItemInternal");
 
-	private getEntry(index)						__extern("aves_Hash_getEntry");
+	private getEntry(index)
+		__extern("aves_Hash_getEntry");
 
 	/// Summary: Adds the specified key–value pair to the hash table.
 	/// Param key:   The key to add.
@@ -99,7 +106,8 @@ public inheritable Hash
 	{
 		insert(key, getHash(key), value, true);
 	}
-	private insert(key, hash, value, add)		__extern("aves_Hash_insert");
+	private insert(key, hash, value, add)
+		__extern("aves_Hash_insert");
 
 	/// Summary: Determines whether the hash table contains an entry with
 	///          the specified key.
@@ -110,12 +118,14 @@ public inheritable Hash
 	{
 		return hasKeyInternal(key, getHash(key));
 	}
-	private hasKeyInternal(key, hash)			__extern("aves_Hash_hasKeyInternal");
+	private hasKeyInternal(key, hash)
+		__extern("aves_Hash_hasKeyInternal");
 
 	/// Summary: Determines whether the hash table contains the specified value.
 	/// Param value: The value to look for.
 	/// Returns: True if the hash table contains the specified value; otherwise, false.
-	public hasValue(value)						__extern("aves_Hash_hasValue");
+	public hasValue(value)
+		__extern("aves_Hash_hasValue");
 
 	/// Summary: Tries to read the specified key from the hash table. If successful,
 	///          {value} is updated to contain the value, and the method returns true.
@@ -133,7 +143,8 @@ public inheritable Hash
 	{
 		return tryGetInternal(key, getHash(key), ref value);
 	}
-	private tryGetInternal(key, hash, ref value)	__extern("aves_Hash_tryGetInternal");
+	private tryGetInternal(key, hash, ref value)
+		__extern("aves_Hash_tryGetInternal");
 
 	/// Summary: Removes the entry at the specified index from the hash table.
 	/// Param key: The key to remove.
@@ -146,10 +157,13 @@ public inheritable Hash
 	{
 		return removeInternal(key, getHash(key));
 	}
-	private removeInternal(key, hash)			__extern("aves_Hash_removeInternal");
+	private removeInternal(key, hash)
+		__extern("aves_Hash_removeInternal");
 
-	private pinEntries()						__extern("aves_Hash_pinEntries");
-	private unpinEntries()						__extern("aves_Hash_unpinEntries");
+	private pinEntries()
+		__extern("aves_Hash_pinEntries");
+	private unpinEntries()
+		__extern("aves_Hash_unpinEntries");
 
 	// Higher-order functions!
 
@@ -408,10 +422,14 @@ public inheritable Hash
 // move and then this pointer would be invalidated.
 private class HashEntry __primitive
 {
-	public get hashCode		__extern("aves_HashEntry_get_hashCode");
-	public get nextIndex	__extern("aves_HashEntry_get_nextIndex");
-	public get key			__extern("aves_HashEntry_get_key");
-	public get value		__extern("aves_HashEntry_get_value");
+	public get hashCode
+		__extern("aves_HashEntry_get_hashCode");
+	public get nextIndex
+		__extern("aves_HashEntry_get_nextIndex");
+	public get key
+		__extern("aves_HashEntry_get_key");
+	public get value
+		__extern("aves_HashEntry_get_value");
 }
 
 private class HashIterator is Iterator
@@ -513,10 +531,15 @@ private static class HashUtils
 {
 	public const hashHasChanged = "The hash has changed since the iteration started.";
 
-	public static getVersion(hash)				__extern("aves_Hash_get_version");
-	public static getEntryCount(hash)			__extern("aves_Hash_get_entryCount");
-	public static getEntry(hash, index)			__extern("aves_Hash_getEntry");
+	public static getVersion(hash)
+		__extern("aves_Hash_get_version");
+	public static getEntryCount(hash)
+		__extern("aves_Hash_get_entryCount");
+	public static getEntry(hash, index)
+		__extern("aves_Hash_getEntry");
 
-	public static pinEntries(hash)				__extern("aves_Hash_pinEntries");
-	public static unpinEntries(hash)			__extern("aves_Hash_unpinEntries");
+	public static pinEntries(hash)
+		__extern("aves_Hash_pinEntries");
+	public static unpinEntries(hash)
+		__extern("aves_Hash_unpinEntries");
 }

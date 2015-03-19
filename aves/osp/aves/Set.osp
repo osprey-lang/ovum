@@ -8,9 +8,11 @@ public inheritable Set is Iterable
 	{
 		new this(0);
 	}
-	public new(capacity)					__extern("aves_Set_new");
+	public new(capacity)
+		__extern("aves_Set_new");
 
-	public get length						__extern("aves_Set_get_length");
+	public get length
+		__extern("aves_Set_get_length");
 
 	public get isEmpty = length == 0;
 
@@ -30,7 +32,8 @@ public inheritable Set is Iterable
 	{
 		return add(item) or not remove(item);
 	}
-	public clear()							__extern("aves_Set_clear");
+	public clear()
+		__extern("aves_Set_clear");
 	public clone()
 	{
 		var output = new Set(this.length);
@@ -39,9 +42,12 @@ public inheritable Set is Iterable
 		return output;
 	}
 
-	private containsInternal(item, hash)	__extern("aves_Set_containsInternal");
-	private addInternal(item, hash)			__extern("aves_Set_addInternal");
-	private removeInternal(item, hash)		__extern("aves_Set_removeInternal");
+	private containsInternal(item, hash)
+		__extern("aves_Set_containsInternal");
+	private addInternal(item, hash)
+		__extern("aves_Set_addInternal");
+	private removeInternal(item, hash)
+		__extern("aves_Set_removeInternal");
 
 	public intersect(other)
 	{
@@ -189,8 +195,12 @@ private class SetIterator is Iterator
 		return false;
 	}
 
-	private static getVersion(_set)			__extern("aves_Set_get_version");
-	private static getEntryCount(_set)		__extern("aves_Set_get_entryCount");
-	private static hasEntryAt(_set, i)		__extern("aves_Set_hasEntryAt");
-	private static getEntryAt(_set, i)		__extern("aves_Set_getEntryAt");
+	private static getVersion(_set)
+		__extern("aves_Set_get_version");
+	private static getEntryCount(_set)
+		__extern("aves_Set_get_entryCount");
+	private static hasEntryAt(_set, i)
+		__extern("aves_Set_hasEntryAt");
+	private static getEntryAt(_set, i)
+		__extern("aves_Set_getEntryAt");
 }

@@ -4,18 +4,24 @@ public class Field is Member
 {
 	__init_type("aves_reflection_Field_init");
 
-	public new(handle)							__extern("aves_reflection_Field_new");
+	public new(handle)
+		__extern("aves_reflection_Field_new");
 
-	private get handle							__extern("aves_reflection_Field_get_handle");
+	private get handle
+		__extern("aves_reflection_Field_get_handle");
 
 	override get kind = MemberKind.field;
 
-	override get accessLevel					__extern("aves_reflection_Field_get_accessLevel");
+	override get accessLevel
+		__extern("aves_reflection_Field_get_accessLevel");
 
-	override get name							__extern("aves_reflection_Field_get_name");
+	override get name
+		__extern("aves_reflection_Field_get_name");
 
-	private get _fullName						__extern("aves_reflection_Field_get_f_fullName");
-	private set _fullName						__extern("aves_reflection_Field_set_f_fullName");
+	private get _fullName
+		__extern("aves_reflection_Field_get_f_fullName");
+	private set _fullName
+		__extern("aves_reflection_Field_set_f_fullName");
 
 	override get fullName
 	{
@@ -24,7 +30,8 @@ public class Field is Member
 		return _fullName;
 	}
 
-	override get declaringType					__extern("aves_reflection_Field_get_declaringType");
+	override get declaringType
+		__extern("aves_reflection_Field_get_declaringType");
 
 	override get declaringModule				//__extern("aves_reflection_Field_get_declaringModule");
 	{
@@ -46,7 +53,8 @@ public class Field is Member
 
 	/// Summary: Gets a value that indicates whether the field is static.
 	/// Returns: True if the field is static; otherwise, false.
-	public get isStatic							__extern("aves_reflection_Field_get_isStatic");
+	public get isStatic
+		__extern("aves_reflection_Field_get_isStatic");
 
 	/// Summary: Gets the value of this field in the specified instance.
 	///          The instance must be of the field’s declaring type or
@@ -71,7 +79,8 @@ public class Field is Member
 		}
 		return getValueInternal(null);
 	}
-	private getValueInternal(instance)			__extern("aves_reflection_Field_getValue");
+	private getValueInternal(instance)
+		__extern("aves_reflection_Field_getValue");
 
 	/// Summary: Sets the value of this field in the specified instance
 	///          to the specified value. The instance must be of the field’s
@@ -98,7 +107,8 @@ public class Field is Member
 		else
 			setValueInternal(null, value);
 	}
-	private setValueInternal(instance, value)	__extern("aves_reflection_Field_setValue");
+	private setValueInternal(instance, value)
+		__extern("aves_reflection_Field_setValue");
 
 	override toString()
 	{

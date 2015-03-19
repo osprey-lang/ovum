@@ -4,11 +4,13 @@ public class Method
 {
 	__init_type("aves_Method_init");
 
-	private new(value)			__extern("aves_Method_new");
+	private new(value)
+		__extern("aves_Method_new");
 
 	/// Summary: Gets a value that indicates whether the method is
 	///          bound to an instance.
-	public get hasInstance		__extern("aves_Method_get_hasInstance");
+	public get hasInstance
+		__extern("aves_Method_get_hasInstance");
 
 	public this(args...)
 	{
@@ -23,7 +25,8 @@ public class Method
 	///          otherwise, false.
 	/// Throws TypeError:
 	///          {argCount} could not be converted to an Int.
-	public accepts(argCount)	__extern("aves_Method_accepts");
+	public accepts(argCount)
+		__extern("aves_Method_accepts");
 
 	/// Summary: Extracts a method from the specified value. If the value is already
 	///          a {Method} instance, it is returned as is. Otherwise, a new {Method}
@@ -58,7 +61,8 @@ public class Method
 	///          `1.toString == 1.toString // true` \
 	///          `new T().toString == new T().toString // false` \
 	///          `"x".toString == "x".toString // true, because of interning`
-	operator ==(a, b)			__extern("aves_Method_opEquals");
+	operator ==(a, b)
+		__extern("aves_Method_opEquals");
 
 	/// Summary: Returns a new {Method} which, when invoked with one argument,
 	///          calls {right} with that value, then calls {left} with the return
