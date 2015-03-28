@@ -563,6 +563,18 @@ AVES_API NATIVE_FUNCTION(aves_String_getHashCode)
 	RETURN_SUCCESS;
 }
 
+AVES_API NATIVE_FUNCTION(aves_String_getHashCodeSubstr)
+{
+	// getHashCodeSubstr(index is Int, count is Int)
+	// index and count are range-checked in the wrapper function.
+	int32_t index = (int32_t)args[1].integer;
+	int32_t count = (int32_t)args[2].integer;
+	int32_t hashCode = String_GetHashCodeSubstr(THISV.common.string, index, count);
+
+	VM_PushInt(thread, hashCode);
+	RETURN_SUCCESS;
+}
+
 AVES_API BEGIN_NATIVE_FUNCTION(aves_String_fromCodepoint)
 {
 	if (args[0].type != Types::Char)
