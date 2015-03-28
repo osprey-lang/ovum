@@ -684,6 +684,34 @@ public class String
 
 	override getHashCode()
 		__extern("aves_String_getHashCode");
+
+	/// Summary: Computes a hash code for a part of this string.
+	/// Param index: The first index of the substring to hash.
+	/// Param count: The number of code units to hash from this string.
+	/// Returns: An Int with a hash code for the specified substring.
+	/// Throws TypeError:
+	///          {index} or {count} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {index} is less than zero or greater than the length of the string.
+	///
+	///          {index} + {count} is beyond the end of this string.
+	public getHashCode(index, count)
+	{
+		index = int(index);
+		count = int(index);
+		if index < 0 or index > length:
+			throw new ArgumentRangeError("index");
+		if index + count > length:
+			throw new ArgumentRangeError("count");
+
+		if count == this.length:
+			return getHashCode();
+
+		return getHashCodeSubstr(index, count);
+	}
+	private getHashCodeSubstr(index, count)
+		__extern("aves_String_getHashCodeSubstr");
+
 	override toString()
 	{
 		return this;

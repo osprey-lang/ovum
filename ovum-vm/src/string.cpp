@@ -91,6 +91,11 @@ OVUM_API int32_t String_GetHashCode(String *str)
 	return str->hashCode;
 }
 
+OVUM_API int32_t String_GetHashCodeSubstr(const String *str, int32_t index, int32_t count)
+{
+	return String_GetHashCode(count, &str->firstChar + index);
+}
+
 OVUM_API bool String_Equals(const String *a, const String *b)
 {
 	if (!a || !b || a == b)

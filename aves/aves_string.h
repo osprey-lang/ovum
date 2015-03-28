@@ -41,6 +41,7 @@ AVES_API NATIVE_FUNCTION(aves_String_getInterned);
 AVES_API NATIVE_FUNCTION(aves_String_intern);
 
 AVES_API NATIVE_FUNCTION(aves_String_getHashCode);
+AVES_API NATIVE_FUNCTION(aves_String_getHashCodeSubstr);
 
 AVES_API NATIVE_FUNCTION(aves_String_fromCodepoint);
 

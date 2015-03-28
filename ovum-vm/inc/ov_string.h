@@ -6,6 +6,7 @@
 #include "ov_vm.h"
 
 OVUM_API int32_t String_GetHashCode(String *str);
+OVUM_API int32_t String_GetHashCodeSubstr(const String *str, int32_t index, int32_t count);
 
 OVUM_API bool String_Equals(const String *a, const String *b);
 OVUM_API bool String_EqualsIgnoreCase(const String *a, const String *b);
