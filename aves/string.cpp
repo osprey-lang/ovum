@@ -689,7 +689,7 @@ int32_t string::LastIndexOf(const String *str, const String *part)
 {
 	const uchar *strp = &str->firstChar;
 
-	for (int32_t i = str->length - part->length; i >= 0; i++)
+	for (int32_t i = str->length - part->length; i >= 0; i--)
 	{
 		if (strp[i] == part->firstChar &&
 			String_SubstringEquals(str, i, part))
