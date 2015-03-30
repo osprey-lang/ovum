@@ -34,7 +34,7 @@ enum class ModuleMemberFlags : uint32_t
 
 	TYPE     = 0x0001,
 	FUNCTION = 0x0002,
-	CONSTANT = 0x0003,
+	CONSTANT = 0x0004,
 
 	PROTECTION = 0x00f0,
 	PUBLIC     = 0x0010,
