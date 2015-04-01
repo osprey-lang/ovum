@@ -880,7 +880,7 @@ int ScanFormatIdentifier(ThreadHandle thread, LitString<BufLen> &buffer,
 	// in the second character class.
 
 	bool surrogate;
-	UnicodeCategory cat = UC_GetCategory(chp, 0, surrogate);
+	UnicodeCategory cat = UC_GetCategory(chp, 0, &surrogate);
 	if ((cat & UC_TOP_CATEGORY_MASK) != UC_LETTER &&
 		cat != UC_NUMBER_LETTER && *chp != '_')
 		goto formatError;
@@ -899,7 +899,7 @@ int ScanFormatIdentifier(ThreadHandle thread, LitString<BufLen> &buffer,
 		index  += skip;
 		length += skip;
 
-		cat = UC_GetCategory(chp, 0, surrogate);
+		cat = UC_GetCategory(chp, 0, &surrogate);
 		if (!((cat & UC_TOP_CATEGORY_MASK) == UC_LETTER ||
 			cat == UC_NUMBER_LETTER || cat == UC_NUMBER_DECIMAL ||
 			cat == UC_MARK_NONSPACING || cat == UC_MARK_SPACING ||
