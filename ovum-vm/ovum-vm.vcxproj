@@ -141,7 +141,7 @@
     <ClInclude Include="src\os\windows.h" />
     <ClInclude Include="inc\ov_type.h" />
     <ClInclude Include="inc\ov_unicode.h" />
-    <ClInclude Include="src\unicode.h" />
+    <ClInclude Include="src\unicode\unicode.h" />
     <ClInclude Include="inc\ov_value.h" />
     <ClInclude Include="src\value.h" />
     <ClInclude Include="inc\ov_vm.h" />
@@ -174,8 +174,8 @@
     <ClCompile Include="src\thread.method_initializer.cpp" />
     <ClCompile Include="src\thread.opcodes.cpp" />
     <ClCompile Include="src\type.cpp" />
-    <ClCompile Include="src\unicode.cpp" />
-    <ClCompile Include="src\unicode.data.cpp" />
+    <ClCompile Include="src\unicode\unicode.cpp" />
+    <ClCompile Include="src\unicode\unicode.data.cpp" />
     <ClCompile Include="src\value.cpp" />
     <ClCompile Include="src\vm.cpp" />
   </ItemGroup>

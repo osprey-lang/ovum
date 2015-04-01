@@ -34,6 +34,12 @@
     <Filter Include="Header Files\inc">
       <UniqueIdentifier>{5ce89956-3411-466b-a7c9-215cb39cf6aa}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\src\unicode">
+      <UniqueIdentifier>{3abf5801-8ae5-4ad0-8a46-37e736dcc30f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\unicode">
+      <UniqueIdentifier>{c47895ed-2183-4abe-81ed-9e48be50f7f4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\os\windows.h">
@@ -105,9 +111,6 @@
     <ClInclude Include="src\type.h">
       <Filter>Header Files\src</Filter>
     </ClInclude>
-    <ClInclude Include="src\unicode.h">
-      <Filter>Header Files\src</Filter>
-    </ClInclude>
     <ClInclude Include="src\value.h">
       <Filter>Header Files\src</Filter>
     </ClInclude>
@@ -174,6 +177,9 @@
     <ClInclude Include="src\os\windows\mmf.h">
       <Filter>Header Files\src\os\windows</Filter>
     </ClInclude>
+    <ClInclude Include="src\unicode\unicode.h">
+      <Filter>Header Files\src\unicode</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\module.cpp">
@@ -215,12 +221,6 @@
     <ClCompile Include="src\type.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\unicode.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\unicode.data.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\value.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -244,6 +244,12 @@
     </ClCompile>
     <ClCompile Include="src\os\windows\filesystem.cpp">
       <Filter>Source Files\os\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="src\unicode\unicode.cpp">
+      <Filter>Source Files\unicode</Filter>
+    </ClCompile>
+    <ClCompile Include="src\unicode\unicode.data.cpp">
+      <Filter>Source Files\unicode</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
