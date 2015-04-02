@@ -32,26 +32,21 @@ public abstract class Iterator
 	///          when the iterator has reached its end, it stays there.
 	public abstract moveNext();
 
-	/// Summary: Determines whether all items in the sequence match
-	///          the given predicate.
-	/// Param predicate: An invokable value that takes one argument
-	///          (the current element) and returns a truthy value if
-	///          the element matches the predicate, or a falsy value
-	///          otherwise.
-	/// Returns: True if all items in the sequence match the predicate;
+	/// Summary: Determines whether any item in the sequence is a truthy
+	///          value.
+	/// Returns: True if any item in the sequence is a truthy value;
 	///          otherwise, false.
-	/// Throws ArgumentNullError: {predicate} is null.
-	public all(predicate)
+	/// Remarks: This method returns false if the sequence is empty.
+	public any()
 	{
-		if predicate is null:
-			throw new ArgumentNullError("predicate");
-
+		// This method could equivalently be written as:
+		// return any(bool);
+		// but it's nice to avoid the function call for large sequences.
 		while moveNext():
-			if not predicate(current):
-				return false;
-		return true;
+			if current:
+				return true;
+		return false;
 	}
-
 	/// Summary: Determines whether any item in the sequence matches
 	///          the given predicate.
 	/// Param predicate: An invokable value that takes one argument
@@ -70,6 +65,41 @@ public abstract class Iterator
 			if predicate(current):
 				return true;
 		return false;
+	}
+
+	/// Summary: Determines whether all items in the sequence are
+	///          truthy values.
+	/// Returns: True if all items in the sequence are truthy values;
+	///          otherwise, false.
+	/// Remarks: This method returns true if the sequence is empty.
+	public all()
+	{
+		// This method could equivalently be written as:
+		// return all(bool);
+		// but it's nice to avoid the function call for large sequences.
+		while moveNext():
+			if not current:
+				return false;
+		return true;
+	}
+	/// Summary: Determines whether all items in the sequence match
+	///          the given predicate.
+	/// Param predicate: An invokable value that takes one argument
+	///          (the current element) and returns a truthy value if
+	///          the element matches the predicate, or a falsy value
+	///          otherwise.
+	/// Returns: True if all items in the sequence match the predicate;
+	///          otherwise, false.
+	/// Throws ArgumentNullError: {predicate} is null.
+	public all(predicate)
+	{
+		if predicate is null:
+			throw new ArgumentNullError("predicate");
+
+		while moveNext():
+			if not predicate(current):
+				return false;
+		return true;
 	}
 
 	/// Summary: Calls a function once with each item in the sequence.

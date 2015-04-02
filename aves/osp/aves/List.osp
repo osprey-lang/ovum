@@ -286,28 +286,18 @@ public inheritable List
 
 	// Higher-order functions
 
-	/// Summary: Determines whether all items in the list match the given predicate.
-	/// Param predicate: An invokable value that accepts one argument and returns
-	///                  a truthy value if the item matches some condition, or a falsy
-	///                  value otherwise.
-	/// Returns: True if {predicate} returns true for all items in the list, or the list
-	///          is empty. Otherwise, false.
-	/// Remarks: The iteration stops as soon as {predicate} returns false for an item.
-	///          This method is in other words not guaranteed to run through all the
-	///          items in the list. For that, use {each}.
-	public all(predicate)
+	/// Summary: Determines whether any items in the list is a truthy value.
+	/// Returns: True if any item in the list is a truthy value; otherwise, false.
+	/// Remarks: This method returns false if the list is empty.
+	public any()
 	{
-		var startVersion = version;
-
 		for i in [0 to length - 1]
 		{
-			if startVersion != version:
-				throw new InvalidStateError(listHasChanged);
-			if not predicate(this[i]):
-				return false;
+			if this[i]:
+				return true;
 		}
 
-		return true;
+		return false;
 	}
 	/// Summary: Determines whether any items in the list match the given predicate.
 	/// Param predicate: An invokable value that accepts one argument and returns
@@ -332,6 +322,44 @@ public inheritable List
 
 		return false;
 	}
+
+	/// Summary: Determines whether all items in the list are truthy values.
+	/// Returns: True if all items in the list are truthy values; otherwise, false.
+	/// Remarks: This method returns true if the list is empty.
+	public all()
+	{
+		for i in [0 to length - 1]
+		{
+			if not this[i]:
+				return false;
+		}
+
+		return true;
+	}
+	/// Summary: Determines whether all items in the list match the given predicate.
+	/// Param predicate: An invokable value that accepts one argument and returns
+	///                  a truthy value if the item matches some condition, or a falsy
+	///                  value otherwise.
+	/// Returns: True if {predicate} returns true for all items in the list, or the list
+	///          is empty. Otherwise, false.
+	/// Remarks: The iteration stops as soon as {predicate} returns false for an item.
+	///          This method is in other words not guaranteed to run through all the
+	///          items in the list. For that, use {each}.
+	public all(predicate)
+	{
+		var startVersion = version;
+
+		for i in [0 to length - 1]
+		{
+			if startVersion != version:
+				throw new InvalidStateError(listHasChanged);
+			if not predicate(this[i]):
+				return false;
+		}
+
+		return true;
+	}
+
 	/// Summary: Invokes the specified value once for each value in the list.
 	/// Param func: An invokable value that takes one argument.
 	///             The return value is ignored.
@@ -349,6 +377,7 @@ public inheritable List
 
 		return this;
 	}
+
 	/// Summary: Returns a new list containing items from this list that match the
 	///          specified predicate.
 	/// Param predicate: An invokable value that accepts one argument and returns
@@ -372,6 +401,7 @@ public inheritable List
 
 		return output;
 	}
+
 	/// Summary: Returns a new list containing items from this list transformed by
 	///          the specified map function, if the original item matches the given
 	///          predicate.
@@ -411,6 +441,7 @@ public inheritable List
 
 		return output;
 	}
+
 	/// Summary: Returns the first item that matches the specified predicate.
 	/// Param predicate: An invokable value that accepts one argument and returns
 	///                  a truthy value if the item matches some condition, or a falsy
@@ -432,6 +463,7 @@ public inheritable List
 
 		return null;
 	}
+
 	/// Summary: Applies an accumulator function over the list, from low to high index.
 	/// Param func: In invokable value that accepts two arguments (the current accumulator
 	///             value and the current list item) and returns the new accumulator value.
@@ -458,6 +490,20 @@ public inheritable List
 	{
 		return foldInternal(init, func, 0);
 	}
+	private foldInternal(init, func, startIndex)
+	{
+		var startVersion = version;
+
+		for i in [startIndex to length - 1]
+		{
+			if startVersion != version:
+				throw new InvalidStateError(listHasChanged);
+			init = func(init, this[i]);
+		}
+
+		return init;
+	}
+
 	public foldr(func)
 	{
 		if length == 0:
@@ -469,6 +515,21 @@ public inheritable List
 	{
 		return foldrInternal(init, func, length - 1);
 	}
+	private foldrInternal(init, func, startIndex)
+	{
+		var startVersion = version;
+
+		while startIndex >= 0
+		{
+			if startVersion != version:
+				throw new InvalidStateError(listHasChanged);
+			init = func(init, this[startIndex]);
+			startIndex -= 1;
+		}
+
+		return init;
+	}
+
 	public indexOfFirst(predicate)
 	{
 		var startVersion = version;
@@ -483,6 +544,7 @@ public inheritable List
 
 		return null;
 	}
+
 	public indexOfLast(predicate)
 	{
 		var startVersion = version;
@@ -497,6 +559,7 @@ public inheritable List
 
 		return null;
 	}
+
 	public last(predicate)
 	{
 		var startVersion = version;
@@ -512,6 +575,7 @@ public inheritable List
 
 		return null;
 	}
+
 	public map(func)
 	{
 		var output = new List(length);
@@ -525,35 +589,6 @@ public inheritable List
 		}
 
 		return output;
-	}
-
-	private foldInternal(init, func, startIndex)
-	{
-		var startVersion = version;
-
-		for i in [startIndex to length - 1]
-		{
-			if startVersion != version:
-				throw new InvalidStateError(listHasChanged);
-			init = func(init, this[i]);
-		}
-
-		return init;
-	}
-
-	private foldrInternal(init, func, startIndex)
-	{
-		var startVersion = version;
-
-		while startIndex >= 0
-		{
-			if startVersion != version:
-				throw new InvalidStateError(listHasChanged);
-			init = func(init, this[startIndex]);
-			startIndex -= 1;
-		}
-
-		return init;
 	}
 
 	/// Summary: Gets a read-only {Iterable} that encapsulates the list.
