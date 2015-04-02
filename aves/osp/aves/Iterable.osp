@@ -1,0 +1,373 @@
+namespace aves;
+
+/// Summary: Exposes a read-only interface that can be used to iterate
+///          over a collection any number of times. Often, an {Iterable}
+///          represents a collection, but it may also be a lazy-evaluated
+///          sequence, or any other kind of iterable object.
+///
+///          This class is abstract. Classes that inherit from this must
+///          provide an iterator.
+public abstract class Iterable
+{
+	/// Summary: Creates a new Iterable.
+	public new();
+
+	/// Summary: Determines whether all items in the sequence match
+	///          the given predicate.
+	/// Param predicate: An invokable value that takes one argument
+	///          (the current element) and returns a truthy value if
+	///          the element matches the predicate, or a falsy value
+	///          otherwise.
+	/// Returns: True if all items in the sequence match the predicate;
+	///          otherwise, false.
+	/// Throws ArgumentNullError: {predicate} is null.
+	public overridable any(predicate)
+	{
+		return this.iter.any(predicate);
+	}
+
+	/// Summary: Determines whether any item in the sequence matches
+	///          the given predicate.
+	/// Param predicate: An invokable value that takes one argument
+	///          (the current element) and returns a truthy value if
+	///          the element matches the predicate, or a falsy value
+	///          otherwise.
+	/// Returns: True if any item in the sequence matches the predicate;
+	///          otherwise, false.
+	/// Throws ArgumentNullError: {predicate} is null.
+	public overridable all(predicate)
+	{
+		return this.iter.all(predicate);
+	}
+
+	/// Summary: Counts the items in the collection.
+	/// Returns: The number of items in the collection, as an Int.
+	public overridable count()
+	{
+		var length = 0;
+		var iterator = this.iter;
+		while iterator.moveNext():
+			length += 1;
+		return length;
+	}
+	/// Summary: Counts all the items in the collection that match the
+	///          the specified predicate.
+	/// Param predicate: An invokable value that takes one argument
+	///          (the current element) and returns a truthy value if
+	///          the element matches the predicate, or a falsy value
+	///          otherwise.
+	/// Returns: The number of items that match {predicate}, as an Int.
+	/// Throws ArgumentNullError: {predicate} is null.
+	public overridable count(predicate)
+	{
+		if predicate is null:
+			throw new ArgumentNullError("predicate");
+
+		var length = 0;
+		var iterator = this.iter;
+		while iterator.moveNext():
+			if predicate(iterator.current):
+				length += 1;
+		return length;
+	}
+
+	public overridable each(func)
+	{
+		if func is null:
+			throw new ArgumentNullError("func");
+
+        this.iter.each(func);
+	}
+
+	public overridable filter(predicate)
+	{
+		if predicate is null:
+			throw new ArgumentNullError("predicate");
+
+		return new FilterIterable(this, predicate);
+	}
+
+	public overridable first()
+	{
+		return this.iter.first();
+	}
+	public overridable first(predicate)
+	{
+		return this.iter.first(predicate);
+	}
+
+	public overridable firstOrNull()
+	{
+		return this.iter.firstOrNull();
+	}
+	public overridable firstOrNull(predicate)
+	{
+		return this.iter.firstOrNull(predicate);
+	}
+
+	public overridable fold(func)
+	{
+		return this.iter.fold(func);
+	}
+	public overridable fold(init, func)
+	{
+		return this.iter.fold(init, func);
+	}
+
+	public overridable join(sep)
+	{
+		return this.iter.join(sep);
+	}
+
+	public overridable group(func)
+	{
+		if func is null:
+			throw new ArgumentNullError("func");
+
+		return new GroupIterable(this, func);
+	}
+	public overridable group(keyFunc, valueFunc)
+	{
+		if keyFunc is null:
+			throw new ArgumentNullError("keyFunc");
+		if valueFunc is null:
+			throw new ArgumentNullError("valueFunc");
+
+		return new GroupIterable(this, keyFunc, valueFunc);
+	}
+
+	public overridable groupEvery(frequency)
+	{
+		frequency = int(frequency);
+		if frequency < 0:
+			throw new ArgumentRangeError("frequency");
+
+		return new GroupEveryIterable(this, frequency);
+	}
+
+	public overridable intersperse(value)
+	{
+		return new IntersperseIterable(this, value);
+	}
+	public overridable intersperse(value, frequency)
+	{
+		frequency = int(frequency);
+		if frequency <= 0:
+			throw new ArgumentRangeError("frequency");
+
+		return new IntersperseIterable(this, value, frequency);
+	}
+
+	public overridable last()
+	{
+		return this.iter.last();
+	}
+	public overridable last(predicate)
+	{
+		return this.iter.last(predicate);
+	}
+
+	public overridable lastOrNull()
+	{
+		return this.iter.lastOrNull();
+	}
+	public overridable lastOrNull(predicate)
+	{
+		return this.iter.lastOrNull(predicate);
+	}
+
+	public overridable map(func)
+	{
+		if func is null:
+			throw new ArgumentNullError("func");
+
+		return new MapIterable(this, func);
+	}
+
+	public overridable take(count)
+	{
+		count = int(count);
+		if count < 0:
+			throw new ArgumentRangeError("count");
+
+		return new TakeIterable(this, count);
+	}
+
+	public overridable skip(count)
+	{
+		count = int(count);
+		if count < 0:
+			throw new ArgumentRangeError("count");
+
+		return new SkipIterable(this, count);
+	}
+
+	public overridable zip(other)
+	{
+		if other is null:
+			throw new ArgumentNullError("other");
+
+		return new ZipIterable(this, other, null);
+	}
+	public overridable zip(other, func)
+	{
+		if other is null:
+			throw new ArgumentNullError("other");
+		if func is null:
+			throw new ArgumentNullError("func");
+
+		return new ZipIterable(this, other, func);
+	}
+
+	/// Summary: Collects all the items in the iterable into a {List}.
+	/// Returns: A {List} containing all the items of the iterable.
+	/// Remarks: This method will attempt to enumerate the iterable all the
+	///          way to the end. If the iterable represents an infinite
+	///          sequence, the program will attempt to allocate a lot of
+	///          memory before throwing a {MemoryError}.
+	public overridable toList()
+	{
+		return this.iter.toList();
+	}
+
+	iter
+	{
+		throw new InvalidStateError("Iterable does not provide an iterator.");
+	}
+
+	public static get empty = new CollectionIterable();
+
+	public static range(start, count)
+	{
+		start = int(start);
+		count = int(count);
+		if count < 0:
+			throw new ArgumentRangeError("count");
+
+		return new RangeIterable(start, count);
+	}
+}
+
+private class FilterIterable is Iterable
+{
+	public new(this.inner, this.predicate);
+
+	private inner, predicate;
+
+	iter
+	{
+		return inner.iter.filter(predicate);
+	}
+}
+
+private class MapIterable is Iterable
+{
+	public new(this.inner, this.func);
+
+	private inner, func;
+
+	iter
+	{
+		return inner.iter.map(func);
+	}
+}
+
+private class IntersperseIterable is Iterable
+{
+	public new(this.inner, this.value);
+	public new(this.inner, this.value, this.frequency);
+
+	private inner, value, frequency = -1;
+
+	iter
+	{
+		var i = inner.iter;
+		if frequency > 0:
+			return i.intersperse(value, frequency);
+		else
+			return i.intersperse(value);
+	}
+}
+
+private class GroupIterable is Iterable
+{
+	public new(this.inner, this.keyFunc);
+	public new(this.inner, this.keyFunc, this.valueFunc);
+
+	private inner, keyFunc, valueFunc;
+
+	iter
+	{
+		if valueFunc is not null:
+			return inner.iter.group(keyFunc, valueFunc);
+		return inner.iter.group(keyFunc);
+	}
+}
+
+private class GroupEveryIterable is Iterable
+{
+	public new(this.inner, this.frequency);
+
+	private inner, frequency;
+
+	iter
+	{
+		return inner.iter.groupEvery(frequency);
+	}
+}
+
+private class TakeIterable is Iterable
+{
+	public new(this.inner, this.takeCount);
+
+	private inner, takeCount;
+
+	iter
+	{
+		return inner.iter.take(takeCount);
+	}
+}
+
+private class SkipIterable is Iterable
+{
+	public new(this.inner, this.skipCount);
+
+	private inner, skipCount;
+
+	iter
+	{
+		return inner.iter.skip(skipCount);
+	}
+}
+
+private class ZipIterable is Iterable
+{
+	public new(this.one, this.two, this.func);
+
+	private one, two, func;
+
+	iter
+	{
+		if func is null:
+			return one.iter.zip(two.iter);
+		return one.iter.zip(two.iter, func);
+	}
+}
+
+private class RangeIterable is Iterable
+{
+	public new(this.start, this.rangeCount);
+
+	private start, rangeCount;
+
+	iter
+	{
+		var i = start;
+		var end = start + rangeCount;
+		while i < end
+		{
+			yield i;
+			i += 1;
+		}
+	}
+}

@@ -1,0 +1,255 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Source Files\os">
+      <UniqueIdentifier>{035d6fea-734f-4a5e-9f07-810cbbc6e8fc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\os\windows">
+      <UniqueIdentifier>{fcec8b00-0df6-4e23-b52f-fb1af50015f3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\src">
+      <UniqueIdentifier>{92a6a12d-8a18-47e3-aeae-6602f0533510}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\src\os">
+      <UniqueIdentifier>{9cc4e743-0f34-4be6-a4b4-2d8323d832db}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\src\os\windows">
+      <UniqueIdentifier>{5027c15d-862f-4fab-a421-9ac9f6e2f4a8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\src\os\_template">
+      <UniqueIdentifier>{9bda7611-4e5b-4b18-a015-95590361fe53}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\inc">
+      <UniqueIdentifier>{5ce89956-3411-466b-a7c9-215cb39cf6aa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\src\unicode">
+      <UniqueIdentifier>{3abf5801-8ae5-4ad0-8a46-37e736dcc30f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\unicode">
+      <UniqueIdentifier>{c47895ed-2183-4abe-81ed-9e48be50f7f4}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\os\windows.h">
+      <Filter>Header Files\src\os</Filter>
+    </ClInclude>
+    <ClInclude Include="src\os\windows\def.h">
+      <Filter>Header Files\src\os\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="src\os\_template\def.h">
+      <Filter>Header Files\src\os\_template</Filter>
+    </ClInclude>
+    <ClInclude Include="src\os\_template\filesystem.h">
+      <Filter>Header Files\src\os\_template</Filter>
+    </ClInclude>
+    <ClInclude Include="src\os\_template\mem.h">
+      <Filter>Header Files\src\os\_template</Filter>
+    </ClInclude>
+    <ClInclude Include="src\os\windows\mem.h">
+      <Filter>Header Files\src\os\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="src\os\_template\threading.h">
+      <Filter>Header Files\src\os\_template</Filter>
+    </ClInclude>
+    <ClInclude Include="src\os\windows\threading.h">
+      <Filter>Header Files\src\os\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="src\os\windows\filesystem.h">
+      <Filter>Header Files\src\os\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="src\instructions.h">
+      <Filter>Header Files\src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\membertable.h">
+      <Filter>Header Files\src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gc.h">
+      <Filter>Header Files\src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\methodbuilder.h">
+      <Filter>Header Files\src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\methodinitexception.h">
+      <Filter>Header Files\src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\methodinitializer.h">
+      <Filter>Header Files\src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\modulereader.h">
+      <Filter>Header Files\src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\debug_symbols.h">
+      <Filter>Header Files\src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\module.h">
+      <Filter>Header Files\src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\static_strings.h">
+      <Filter>Header Files\src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\stringbuffer.h">
+      <Filter>Header Files\src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thread.h">
+      <Filter>Header Files\src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thread.opcodes.h">
+      <Filter>Header Files\src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\type.h">
+      <Filter>Header Files\src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\value.h">
+      <Filter>Header Files\src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\vm.h">
+      <Filter>Header Files\src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\pathname.h">
+      <Filter>Header Files\src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\refsignature.h">
+      <Filter>Header Files\src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\string_hash.h">
+      <Filter>Header Files\src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\string_table.h">
+      <Filter>Header Files\src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\sync.h">
+      <Filter>Header Files\src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\tls.h">
+      <Filter>Header Files\src</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\ov_unicode.h">
+      <Filter>Header Files\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\ov_compat.h">
+      <Filter>Header Files\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\ov_gc.h">
+      <Filter>Header Files\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\ov_helpers.h">
+      <Filter>Header Files\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\ov_module.h">
+      <Filter>Header Files\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\ov_pathchar.h">
+      <Filter>Header Files\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\ov_string.h">
+      <Filter>Header Files\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\ov_stringbuffer.h">
+      <Filter>Header Files\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\ov_thread.h">
+      <Filter>Header Files\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\ov_type.h">
+      <Filter>Header Files\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\ov_value.h">
+      <Filter>Header Files\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\ov_vm.h">
+      <Filter>Header Files\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="src\os\_template\mmf.h">
+      <Filter>Header Files\src\os\_template</Filter>
+    </ClInclude>
+    <ClInclude Include="src\os\windows\mmf.h">
+      <Filter>Header Files\src\os\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="src\unicode\unicode.h">
+      <Filter>Header Files\src\unicode</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\module.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\modulereader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\debug_symbols.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\helpers.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\string_table.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\string.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\static_strings.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\stringbuffer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\thread.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\thread.method_initializer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\thread.opcodes.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\type.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\value.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\vm.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\pathname.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\methodbuilder.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\instructions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\methodinitializer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\os\windows\dllmain.cpp">
+      <Filter>Source Files\os\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="src\os\windows\filesystem.cpp">
+      <Filter>Source Files\os\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="src\unicode\unicode.cpp">
+      <Filter>Source Files\unicode</Filter>
+    </ClCompile>
+    <ClCompile Include="src\unicode\unicode.data.cpp">
+      <Filter>Source Files\unicode</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,65 @@
+namespace aves.reflection;
+
+/// Summary: Represents a single parameter in a method or constructor overload.
+public class Parameter
+{
+	__init_type("aves_reflection_Parameter_init");
+
+	public new(overload, index)
+		__extern("aves_reflection_Parameter_new");
+
+	/// Summary: Gets the overload that the parameter belongs to.
+	/// Returns: The {Overload} that the parameter belongs to.
+	public get overload
+		__extern("aves_reflection_Parameter_get_overload");
+
+	/// Summary: Gets the index of this parameter within the parameter list.
+	///          The first parameter is at index 0.
+	/// Returns: The index of the parameter in the parameter list, as an Int.
+	public get index
+		__extern("aves_reflection_Parameter_get_index");
+
+	/// Summary: Gets the name of the parameter.
+	/// Returns: The name of the parameter, as a String.
+	public get name
+		__extern("aves_reflection_Parameter_get_name");
+
+	/// Summary: Gets a value that indicates whether the parameter is passed by reference.
+	/// Returns: True if the parameter is passed by reference; otherwise, false.
+	public get isByRef
+		__extern("aves_reflection_Parameter_get_isByRef");
+
+	/// Summary: Gets a value that indicates whether the parameter is optional.
+	/// Returns: True if the parameter is optional; otherwise, false.
+	/// Remarks: All optional parameters have the default value `null`. The default value
+	///          that is specified in the parameter list, such as `xyz` in `a = xyz`, is
+	///          actually assigned in the method body. For this reason, there is no way
+	///          to get the default value specified in the parameter list.
+	public get isOptional
+		__extern("aves_reflection_Parameter_get_isOptional");
+
+	/// Summary: Gets a value that indicates whether the parameter is variadic.
+	/// Returns: True if the parameter is variadic; otherwise, false.
+	/// Remarks: In Osprey, a variadic parameter is declared with the `...` operator.
+	///          For example, in the parameter list `(a, b, c...)`, `c` is variadic.
+	///          It is possible to pass zero arguments into a variadic parameter; hence,
+	///          such parameters are effectively optional, and {isOptional} is always
+	///          true for them.
+	///
+	///          A variadic parameter can only ever be the first or the last parameter
+	///          in the parameter list. 
+	public get isVariadic
+		__extern("aves_reflection_Parameter_get_isVariadic");
+
+	override toString()
+	{
+		return "<Parameter {0} of {1}>".format([name, overload]);
+	}
+
+	operator ==(a, b)
+	{
+		return b is Parameter and
+			a.index == b.index and
+			a.overload == b.overload;
+	}
+}

@@ -1,0 +1,130 @@
+namespace aves;
+
+public class Version
+{
+	public new(major, minor)
+	{
+		checkComponent("major", ref major);
+		checkComponent("minor", ref minor);
+		init(major, minor, -1, -1);
+	}
+	public new(major, minor, build)
+	{
+		checkComponent("major", ref major);
+		checkComponent("minor", ref minor);
+		checkComponent("build", ref build);
+		init(major, minor, build, -1);
+	}
+	public new(major, minor, build, revision)
+	{
+		checkComponent("major", ref major);
+		checkComponent("minor", ref minor);
+		checkComponent("build", ref build);
+		checkComponent("revision", ref revision);
+		init(major, minor, build, revision);
+	}
+
+	private init(major, minor, build, revision)
+	{
+		_major = major;
+		_minor = minor;
+		_build = build;
+		_revision = revision;
+	}
+
+	// Note: unspecified fields contain -1 rather than null,
+	// because we want such fields to compare less than all
+	// other values.
+	private _major, _minor, _build, _revision;
+
+	/// Summary: Gets the major component of the version number.
+	/// Returns: The major component of the version number, as an Int.
+	public get major = _major;
+	/// Summary: Gets the minor component of the version number.
+	/// Returns: The minor component of the version number, as an Int.
+	public get minor = _minor;
+	/// Summary: Gets the build component of the version number.
+	/// Returns: The build component of the version number, as an Int,
+	///          or -1 if it not set.
+	public get build = _build;
+	/// Summary: Gets the revision component of the version number.
+	/// Returns: The revision component of the version number, as an Int,
+	///          or -1 if it not set.
+	public get revision = _revision;
+
+	override getHashCode()
+	{
+		// Most version numbers are likely to be quite small; it's probably
+		// okay to just OR together some of the lower bits.
+		var result = _revision & 0xfff;
+		result |= _build & 0xff << 12;
+		result |= _minor & 0xff << 20;
+		result |= _major & 0x0f << 28;
+
+		return result;
+	}
+
+	override toString()
+	{
+		var result = major :: "." :: minor;
+		if build >= 0:
+			result ::= "." :: build;
+		if revision >= 0:
+			result ::= "." :: revision;
+
+		return result;
+	}
+
+	public toString(fieldCount)
+	{
+		fieldCount = int(fieldCount);
+		var maxFields = revision >= 0 ? 4 :
+			build >= 0 ? 3 :
+			2;
+		if fieldCount <= 0 or fieldCount > maxFields:
+			throw new ArgumentRangeError("fieldCount");
+
+		var result = major.toString();
+		if fieldCount > 1:
+			result ::= "." :: minor;
+		if fieldCount > 2:
+			result ::= "." :: build;
+		if fieldCount > 3:
+			result ::= "." :: revision;
+
+		return result;
+	}
+
+	private static checkComponent(paramName, ref component)
+	{
+		component = int(component);
+		if component < 0:
+			throw new ArgumentRangeError(paramName);
+	}
+
+	operator ==(a, b)
+	{
+		return b is Version and
+			a._major == b._major and
+			a._minor == b._minor and
+			a._build == b._build and
+			a._revision == b._revision;
+	}
+
+	operator <=>(a, b)
+	{
+		if b is not Version:
+			throw new TypeError("The right-hand operand must be an aves.Version.");
+
+		if a._major != b._major:
+			return a._major <=> b._major;
+		if a._minor != b._minor:
+			return a._minor <=> b._minor;
+		if a._build != b._build:
+			return a._build <=> b._build;
+		if a._revision != b._revision:
+			return a._revision <=> b._revision;
+
+		return 0;
+	}
+}

@@ -1,0 +1,248 @@
+use namespace aves;
+
+namespace io;
+
+public static class File
+{
+	public static exists(fileName)
+	{
+		if fileName is null:
+			throw new ArgumentNullError("fileName");
+
+		return existsInternal(string(fileName));
+	}
+	private static existsInternal(fileName)
+		__extern("io_File_existsInternal");
+
+	public static getSize(fileName)
+	{
+		if fileName is null:
+			throw new ArgumentNullError("fileName");
+
+		return getSizeInternal(string(fileName));
+	}
+	private static getSizeInternal(fileName)
+		__extern("io_File_getSizeInternal");
+
+	public static delete(fileName)
+	{
+		if fileName is null:
+			throw new ArgumentNullError("fileName");
+
+		return deleteInternal(string(fileName));
+	}
+	private static deleteInternal(fileName)
+		__extern("io_File_deleteInternal");
+
+	public static move(srcName, destName)
+	{
+		if srcName is null or destName is null:
+			throw new ArgumentNullError(srcName is null ? "srcName" : "destName");
+
+		return moveInternal(string(srcName), string(destName));
+	}
+	private static moveInternal(srcName, destName)
+		__extern("io_File_moveInternal");
+
+	public static open(fileName)
+	{
+		return new FileStream(fileName);
+	}
+	public static open(fileName, mode)
+	{
+		return new FileStream(fileName, mode);
+	}
+	public static open(fileName, mode, access)
+	{
+		return new FileStream(fileName, mode, access);
+	}
+	public static open(fileName, mode, access, share)
+	{
+		return new FileStream(fileName, mode, access, share);
+	}
+
+	public static openRead(fileName)
+	{
+		return new FileStream(fileName, FileMode.open, FileAccess.read, FileShare.read);
+	}
+
+	public static openWrite(fileName)
+	{
+		return new FileStream(fileName, FileMode.openOrCreate, FileAccess.write, FileShare.none);
+	}
+
+	public static create(fileName)
+	{
+		return new FileStream(fileName, FileMode.create, FileAccess.readWrite, FileShare.none);
+	}
+
+	public static readAllBytes(fileName)
+	{
+		// Can't simply call the other overload - we need to open the file
+		// to see how big it is before we even construct the buffer.
+		var buf;
+		with f = new FileStream(fileName, FileMode.open, FileAccess.read, FileShare.read)
+		{
+			var length = f.length;
+			buf = new Buffer(length);
+			f.readInto(buf, 0, length);
+		}
+
+		return buf;
+	}
+	public static readAllBytes(fileName, buf, offset)
+	{
+		// Stream.readInto performs the same checks, but
+		// let's do this before actually opening the file.
+		buf = Buffer.fromValue(buf);
+		offset = int(offset);
+
+		if offset < 0 or offset > buf.size:
+			throw new ArgumentRangeError("offset");
+
+		var length;
+		with f = new FileStream(fileName, FileMode.open, FileAccess.read, FileShare.read)
+		{
+			length = f.length;
+			f.readInto(buf, offset, length);
+		}
+
+		return length;
+	}
+
+	public static readAllText(fileName)
+	{
+		if fileName is null:
+			throw new ArgumentNullError("fileName");
+		fileName = string(fileName);
+
+		// Without an explicit encoding, we try to read the first
+		// two bytes of the file:
+		//   FE FF -> Encoding.utf16BigEndian
+		//   FF FE -> Encoding.utf16
+		//   EF BB -> read one more byte: if it's BF, Encoding.utf8
+		// If we find a suitable BOM, we pass the stream on to
+		// readAllTextHelper. Otherwise, we back up to the beginning
+		// of the stream, and use Encoding.utf8.
+
+		var result;
+		with stream = openRead(fileName)
+		{
+			var b1 = stream.readByte();
+			if b1 == -1:
+				// Empty file? Empty string.
+				result = "";
+			else
+			{
+				var b2 = stream.readByte();
+				// Note: b2 may be -1. That's fine; the file may contain only one byte.
+				var encoding = null;
+				if b1 == 0xFE and b2 == 0xFF:
+					encoding = Encoding.utf16BigEndian;
+				else if b1 == 0xFF and b2 == 0xFE:
+					encoding = Encoding.utf16;
+				else if b1 == 0xEF and b2 == 0xBB
+				{
+					b2 = stream.readByte();
+					if b2 == 0xBF:
+						encoding = Encoding.utf8;
+				}
+
+				if encoding is null
+				{
+					encoding = Encoding.utf8;
+					stream.seek(0, SeekOrigin.start);
+				}
+
+				result = readAllTextHelper(stream, encoding);
+			}
+		}
+
+		return result;
+	}
+	public static readAllText(fileName, encoding)
+	{
+		if fileName is null:
+			throw new ArgumentNullError("fileName");
+		if encoding is null:
+			throw new ArgumentNullError("encoding");
+		if encoding is not Encoding:
+			throw new TypeError("The encoding must be an aves.Encoding instance.");
+		fileName = string(fileName);
+
+		var result;
+		with stream = openRead(fileName)
+		{
+			result = readAllTextHelper(stream, encoding);
+		}
+
+		return result;
+	}
+
+	private static readAllTextHelper(stream, encoding)
+	{
+		var decoder = encoding.getDecoder();
+
+		var buf = new Buffer(4k);
+		var sb = new StringBuffer(2k);
+
+		var bytesRead;
+		do
+		{
+			bytesRead = stream.readMax(buf, 0, 4k);
+			decoder.getChars(buf, 0, bytesRead, sb, bytesRead == 0);
+		} while bytesRead > 0;
+
+		return sb.toString();
+	}
+
+	public static writeAllBytes(fileName, buf)
+	{
+		if buf is null:
+			throw new ArgumentNullError("buf");
+		else if buf is BufferView:
+			buf = buf.buffer;
+		else if buf is not Buffer:
+			throw new TypeError("buf must be an aves.Buffer.");
+
+		with f = new FileStream(fileName, FileMode.create, FileAccess.write, FileShare.none)
+		{
+			f.write(buf, 0, buf.size);
+		}
+	}
+
+	public static writeAllText(fileName, contents)
+	{
+		writeAllText(fileName, contents, Encoding.utf8);
+	}
+	public static writeAllText(fileName, contents, encoding)
+	{
+		if fileName is null:
+			throw new ArgumentNullError("fileName");
+		if encoding is null:
+			throw new ArgumentNullError("encoding");
+		if encoding is not Encoding:
+			throw new ArgumentError("encoding must be an aves.Encoding instance.", "encoding");
+		contents = string(contents);
+		fileName = string(fileName);
+
+		with f = create(fileName)
+		{
+			if encoding is Utf16Encoding:
+				// Emit UTF-16 identifier specially for UTF-16, U+FEFF
+				if encoding.bigEndian
+				{
+					f.writeByte(0xFE);
+					f.writeByte(0xFF);
+				}
+				else
+				{
+					f.writeByte(0xFF);
+					f.writeByte(0xFE);
+				}
+
+			var buf = encoding.getBytes(contents);
+			f.write(buf, 0, buf.size);
+		}
+	}
+}

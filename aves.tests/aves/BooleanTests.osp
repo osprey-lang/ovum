@@ -1,0 +1,154 @@
+use namespace aves;
+use namespace testing.unit;
+
+namespace aves.tests;
+
+// Tests for the class aves.Boolean
+
+public class BooleanTests is TestFixture
+{
+	public new() { new base("aves.Boolean tests"); }
+
+	// Don't turn into consts - we don't want constant folding to occur
+	private trueValue = true;
+	private falseValue = false;
+
+	public test_Truth()
+	{
+		Assert.isTrue(trueValue);
+		Assert.isTrue(not falseValue);
+	}
+
+	public test_Falsehood()
+	{
+		Assert.isFalse(falseValue);
+		Assert.isFalse(not trueValue);
+	}
+
+	public test_EqualityWithBoolean()
+	{
+		Assert.areEqual(trueValue, true);
+		Assert.areEqual(falseValue, false);
+	}
+
+	public test_TrueInequalityWithBoolean()
+	{
+		Assert.areNotEqual(trueValue, falseValue);
+		Assert.areNotEqual(falseValue, trueValue);
+	}
+
+	public test_TrueInequalityWithNonBoolean()
+	{
+		// Using the == operator, Boolean values do not compare equal
+		// to anything other than Boolean values.
+		Assert.areNotEqual(trueValue, 0);
+		Assert.areNotEqual(trueValue, 1);
+		Assert.areNotEqual(trueValue, "true");
+	}
+
+	public test_FalseInequalityWithNonBoolean()
+	{
+		Assert.areNotEqual(falseValue, 0);
+		Assert.areNotEqual(falseValue, 1);
+		Assert.areNotEqual(falseValue, "");
+		Assert.areNotEqual(falseValue, "false");
+	}
+
+	public test_ReferenceEqualityWithBoolean()
+	{
+		Assert.areSameRef(trueValue, trueValue);
+		Assert.areSameRef(falseValue, falseValue);
+	}
+
+	public test_ReferenceInequalityWithBoolean()
+	{
+		Assert.areNotSameRef(trueValue, falseValue);
+		Assert.areNotSameRef(falseValue, trueValue);
+	}
+
+	public test_ReferenceInequalityWithNonBoolean()
+	{
+		Assert.areNotSameRef(trueValue, 1);
+		Assert.areNotSameRef(falseValue, 0);
+	}
+
+	public test_CompareWithBoolean()
+	{
+		// false is ordered before true
+		Assert.isLess(falseValue, trueValue);
+		Assert.isGreater(trueValue, falseValue);
+		Assert.areEqual(falseValue <=> falseValue, 0);
+		Assert.areEqual(trueValue <=> trueValue, 0);
+	}
+
+	public test_CompareWithNonBoolean()
+	{
+		// Operator <=> can only be applied to (Boolean, Boolean),
+		// and no other combination of types.
+		Assert.throws(typeof(TypeError), @= trueValue <=> 1);
+		Assert.throws(typeof(TypeError), @= falseValue <=> 0);
+	}
+
+	public test_UnaryPlusOperator()
+	{
+		// +true refeq 1, and +false refeq 0
+		// Note that we must use reference equality because the boolean unary +
+		// operator is NOT allowed to return values of any type other than Int.
+		Assert.areSameRef(+trueValue, 1);
+		Assert.areSameRef(+falseValue, 0);
+	}
+
+	public test_GetHashCode()
+	{
+		// Boolean.getHashCode() should return the same value as unary +.
+		Assert.areSameRef(trueValue.getHashCode(), 1);
+		Assert.areSameRef(falseValue.getHashCode(), 0);
+	}
+
+	public test_TrueToString()
+	{
+		// true always stringifies as "true".
+		Assert.areEqual(trueValue.toString(), "true");
+	}
+
+	public test_FalseToString()
+	{
+		// And false always stringifies as "false".
+		Assert.areEqual(falseValue.toString(), "false");
+	}
+
+	public test_ParseValidTrue()
+	{
+		// Boolean.parse ignores case; hence true, True, tRue,
+		// trUE, and so on are all allowed. Same with false.
+		Assert.areEqual(Boolean.parse("true"), true);
+		Assert.areEqual(Boolean.parse("TRUE"), true);
+		Assert.areEqual(Boolean.parse("tRuE"), true);
+		// Leading and trailing white space is allowed
+		Assert.areEqual(Boolean.parse("\t true "), true);
+	}
+
+	public test_ParseValidFalse()
+	{
+		Assert.areEqual(Boolean.parse("false"), false);
+		Assert.areEqual(Boolean.parse("FALSE"), false);
+		Assert.areEqual(Boolean.parse("FaLSe"), false);
+		// U+2028 = Line Separator
+		Assert.areEqual(Boolean.parse(" \u2028    false  "), false);
+	}
+
+	public test_ParseInvalid()
+	{
+		// Boolean.parse returns null when the input is invalid.
+		Assert.isNull(Boolean.parse("false=~"));
+		Assert.isNull(Boolean.parse("not true"));
+		Assert.isNull(Boolean.parse("hello"));
+		Assert.isNull(Boolean.parse(123));
+	}
+
+	public test_BoolFunction()
+	{
+		Assert.isTrue(bool(trueValue));
+		Assert.isFalse(bool(falseValue));
+	}
+}

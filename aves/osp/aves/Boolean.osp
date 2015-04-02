@@ -1,0 +1,72 @@
+namespace aves;
+
+/// Summary: Converts a value to a {Boolean}.
+/// Param value: The value to convert.
+/// Returns: True if {value} is a truthy value; otherwise, false.
+public function bool(value)
+{
+	return not not value;
+}
+
+/// Summary: Represents a boolean value, which is either true or false.
+///          This class does not have a public constructor; boolean values
+///          can only be created using the `true` and `false` keywords,
+///          or one of the operators that return a boolean value.
+public class Boolean __primitive
+{
+	private new();
+
+	override getHashCode()
+	{
+		return this ? 1 : 0;
+	}
+	override toString()
+	{
+		return this ? trueString : falseString;
+	}
+
+	/// Summary: Parses a string value into a boolean.
+	/// Param str: The value to parse.
+	/// Returns: True or false if the string contains a string representation
+	///          of a boolean value, or null if it does not.
+	/// Remarks: This method matches the strings “true” and “false” with any
+	///          character casing, optionally with leading and trailing white
+	///          space characters. No other string values are interpreted as
+	///          boolean values.
+	public static parse(str)
+	{
+		str = string(str).trim();
+		if str.equalsIgnoreCase(trueString):
+			return true;
+		if str.equalsIgnoreCase(falseString):
+			return false;
+		return null;
+	}
+
+	private const trueString = "true";
+	private const falseString = "false";
+
+	/// Summary: The smallest boolean value, for ordering purposes. This field
+	///          contains the value false.
+	public const min = false;
+	/// Summary: The largest boolean value, for ordering purposes. This field
+	///          contains the value true.
+	public const max = true;
+
+	operator ==(a, b)
+		__extern("aves_Boolean_opEquals");
+	/// Summary: Compares two boolean values for ordering.
+	/// Param a: The first value to compare. (Boolean)
+	/// Param b: The second value to compare. (Boolean)
+	/// Returns: -1 if {a} is less than {b}; 1 if {a} is greater than {b}; and
+	///          0 otherwise. False is ordered before true.
+	operator <=>(a, b)
+		__extern("aves_Boolean_opCompare");
+	/// Summary: Converts the boolean to a numeric value.
+	/// Param a: The value to convert.
+	/// Returns: 1 if {a} is true, or 0 otherwise.
+	operator +(a)
+	{
+		return a ? 1 : 0;
+	}
+}

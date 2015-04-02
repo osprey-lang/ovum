@@ -1,0 +1,522 @@
+use namespace aves;
+use namespace testing.unit;
+
+namespace aves.tests;
+
+// Tests for the type aves.BufferView
+
+public class BufferViewTests is TestFixture
+{
+	public new() { new base("aves.BufferView tests"); }
+
+	private buffer;
+
+	override setUp()
+	{
+		buffer = new Buffer(8);
+	}
+
+	// Note: Normally it would probably be okay to let Buffer deal with
+	// value conversions and range checks, thus putting those tests in
+	// BufferTests. However, BufferView does not actually call Buffer
+	// methods for reading/writing data: for performance reasons, its
+	// behaviour is implemented in native code, using a C++ switch on
+	// the buffer kind. Therefore, it makes sense to test whether the
+	// buffer view also converts between types correctly.
+
+	// Byte view tests
+
+	public test_ConstructionByte()
+	{
+		var kind = BufferViewKind.byte;
+		var view;
+		Assert.doesNotThrow(@{ view = new BufferView(buffer, kind); });
+		Assert.areEqual(view.kind, kind);
+		Assert.areSameRef(view.buffer, buffer);
+		Assert.areEqual(view.length, buffer.size);
+	}
+
+	public test_ReadWriteByte()
+	{
+		var view = new BufferView(buffer, BufferViewKind.byte);
+		var value = 0xFF;
+		view[0] = value;
+
+		Assert.areEqual(view[0], value);
+	}
+
+	public test_ReadWriteByteClipped()
+	{
+		var view = new BufferView(buffer, BufferViewKind.byte);
+		var value = 0xFFFF;
+		view[0] = value;
+
+		Assert.areEqual(view[0], 0xFF);
+		Assert.areEqual(view[1], 0);
+	}
+
+	public test_ReadWriteByteOutOfBounds()
+	{
+		var view = new BufferView(buffer, BufferViewKind.byte);
+		Assert.throws(typeof(ArgumentRangeError), @= view[view.length]);
+		Assert.throws(typeof(ArgumentRangeError), @{ view[view.length] = 0; });
+	}
+
+	public test_WriteByteWrongType()
+	{
+		var view = new BufferView(buffer, BufferViewKind.byte);
+		Assert.throws(typeof(TypeError), @{ view[0] = 0.0; });
+	}
+
+	public test_IterateByte()
+	{
+		var view = new BufferView(buffer, BufferViewKind.byte);
+
+		// Fill the buffer with FF bytes
+		buffer.writeInt64(0, -1);
+
+		// All bytes should be FF now, and we should find view.length of them.
+		var count = 0;
+		for byte in view
+		{
+			Assert.areEqual(byte, 0xFF);
+			count += 1;
+		}
+		Assert.areEqual(count, view.length);
+	}
+
+	// End byte view tests
+
+	// SByte view tests
+
+	public test_ConstructionSByte()
+	{
+		var kind = BufferViewKind.sbyte;
+		var view;
+		Assert.doesNotThrow(@{ view = new BufferView(buffer, kind); });
+		Assert.areEqual(view.kind, kind);
+		Assert.areSameRef(view.buffer, buffer);
+		Assert.areEqual(view.length, buffer.size);
+	}
+
+	public test_ReadWriteSByte()
+	{
+		var view = new BufferView(buffer, BufferViewKind.sbyte);
+		var value = -1;
+		view[0] = value;
+
+		Assert.areEqual(view[0], value);
+	}
+
+	public test_ReadWriteSByteClipped()
+	{
+		var view = new BufferView(buffer, BufferViewKind.sbyte);
+		var value = 0xFFFF;
+		view[0] = value;
+
+		Assert.areEqual(view[0], -1);
+		Assert.areEqual(view[1], 0);
+	}
+
+	public test_ReadWriteSByteOutOfBounds()
+	{
+		var view = new BufferView(buffer, BufferViewKind.sbyte);
+		Assert.throws(typeof(ArgumentRangeError), @= view[view.length]);
+		Assert.throws(typeof(ArgumentRangeError), @{ view[view.length] = 0; });
+	}
+
+	public test_WriteSByteWrongType()
+	{
+		var view = new BufferView(buffer, BufferViewKind.sbyte);
+		Assert.throws(typeof(TypeError), @{ view[0] = 0.0; });
+	}
+
+	public test_IterateSByte()
+	{
+		var view = new BufferView(buffer, BufferViewKind.sbyte);
+
+		// Fill the buffer with FF bytes
+		buffer.writeInt64(0, -1);
+
+		// All sbytes should be -1 now, and we should find view.length of them
+		var count = 0;
+		for sbyte in view
+		{
+			Assert.areEqual(sbyte, -1);
+			count += 1;
+		}
+		Assert.areEqual(count, view.length);
+	}
+
+	// End byte view tests
+
+	// Int16 view tests
+
+	public test_ConstructionInt16()
+	{
+		var kind = BufferViewKind.int16;
+		var view;
+		Assert.doesNotThrow(@{ view = new BufferView(buffer, kind); });
+		Assert.areEqual(view.kind, kind);
+		Assert.areSameRef(view.buffer, buffer);
+		Assert.areEqual(view.length, buffer.size / 2);
+	}
+
+	public test_ReadWriteInt16()
+	{
+		var view = new BufferView(buffer, BufferViewKind.int16);
+		var value = -1;
+		view[0] = value;
+
+		Assert.areEqual(view[0], value);
+	}
+
+	public test_ReadWriteInt16Clipped()
+	{
+		var view = new BufferView(buffer, BufferViewKind.int16);
+		var value = 0xFFFFFFFF;
+		view[0] = value;
+
+		Assert.areEqual(view[0], -1);
+		Assert.areEqual(view[1], 0);
+	}
+
+	public test_ReadWriteInt16OutOfBounds()
+	{
+		var view = new BufferView(buffer, BufferViewKind.int16);
+		Assert.throws(typeof(ArgumentRangeError), @= view[view.length]);
+		Assert.throws(typeof(ArgumentRangeError), @{ view[view.length] = 0; });
+	}
+
+	public test_WriteInt16WrongType()
+	{
+		var view = new BufferView(buffer, BufferViewKind.int16);
+		Assert.throws(typeof(TypeError), @{ view[0] = 0.0; });
+	}
+
+	public test_IterateInt16()
+	{
+		var view = new BufferView(buffer, BufferViewKind.int16);
+
+		// Fill the buffer with FF bytes
+		buffer.writeInt64(0, -1);
+
+		// All int16s should be -1 now, and we should find view.length of them
+		var count = 0;
+		for int16 in view
+		{
+			Assert.areEqual(int16, -1);
+			count += 1;
+		}
+		Assert.areEqual(count, view.length);
+	}
+
+	// End int16 view tests
+
+	// UInt16 view tests
+
+	public test_ConstructionUInt16()
+	{
+		var kind = BufferViewKind.uint16;
+		var view;
+		Assert.doesNotThrow(@{ view = new BufferView(buffer, kind); });
+		Assert.areEqual(view.kind, kind);
+		Assert.areSameRef(view.buffer, buffer);
+		Assert.areEqual(view.length, buffer.size / 2);
+	}
+
+	public test_ReadWriteUInt16()
+	{
+		var view = new BufferView(buffer, BufferViewKind.uint16);
+		var value = 0xFFFF;
+		view[0] = value;
+
+		Assert.areEqual(view[0], value);
+	}
+
+	public test_ReadWriteUInt16Clipped()
+	{
+		var view = new BufferView(buffer, BufferViewKind.uint16);
+		var value = 0xFFFFFFFF;
+		view[0] = value;
+
+		Assert.areEqual(view[0], 0xFFFF);
+		Assert.areEqual(view[1], 0);
+	}
+
+	public test_ReadWriteUInt16OutOfBounds()
+	{
+		var view = new BufferView(buffer, BufferViewKind.uint16);
+		Assert.throws(typeof(ArgumentRangeError), @= view[view.length]);
+		Assert.throws(typeof(ArgumentRangeError), @{ view[view.length] = 0; });
+	}
+
+	public test_WriteUInt16WrongType()
+	{
+		var view = new BufferView(buffer, BufferViewKind.uint16);
+		Assert.throws(typeof(TypeError), @{ view[0] = 0.0; });
+	}
+
+	public test_IterateUInt16()
+	{
+		var view = new BufferView(buffer, BufferViewKind.uint16);
+
+		// Fill the buffer with FF bytes
+		buffer.writeInt64(0, -1);
+
+		// All uint16s should be 0xFFFF now, and we should find view.length of them
+		var count = 0;
+		for uint16 in view
+		{
+			Assert.areEqual(uint16, 0xFFFF);
+			count += 1;
+		}
+		Assert.areEqual(count, view.length);
+	}
+
+	// End uint16 view tests
+
+	// Int32 view tests
+
+	public test_ConstructionInt32()
+	{
+		var kind = BufferViewKind.int32;
+		var view;
+		Assert.doesNotThrow(@{ view = new BufferView(buffer, kind); });
+		Assert.areEqual(view.kind, kind);
+		Assert.areSameRef(view.buffer, buffer);
+		Assert.areEqual(view.length, buffer.size / 4);
+	}
+
+	public test_ReadWriteInt32()
+	{
+		var view = new BufferView(buffer, BufferViewKind.int32);
+		var value = -1;
+		view[0] = value;
+
+		Assert.areEqual(view[0], value);
+	}
+
+	public test_ReadWriteInt32Clipped()
+	{
+		var view = new BufferView(buffer, BufferViewKind.int32);
+		var value = 0x7FFFFFFFFFFFFFFF;
+		view[0] = value;
+
+		Assert.areEqual(view[0], -1);
+		Assert.areEqual(view[1], 0);
+	}
+
+	public test_ReadWriteInt32OutOfBounds()
+	{
+		var view = new BufferView(buffer, BufferViewKind.int32);
+		Assert.throws(typeof(ArgumentRangeError), @= view[view.length]);
+		Assert.throws(typeof(ArgumentRangeError), @{ view[view.length] = 0; });
+	}
+
+	public test_WriteInt32WrongType()
+	{
+		var view = new BufferView(buffer, BufferViewKind.int32);
+		Assert.throws(typeof(TypeError), @{ view[0] = 0.0; });
+	}
+
+	public test_IterateInt32()
+	{
+		var view = new BufferView(buffer, BufferViewKind.int32);
+
+		// Fill the buffer with FF bytes
+		buffer.writeInt64(0, -1);
+
+		// All int32s should be -1 now, and we should find view.length of them
+		var count = 0;
+		for int32 in view
+		{
+			Assert.areEqual(int32, -1);
+			count += 1;
+		}
+		Assert.areEqual(count, view.length);
+	}
+
+	// End int32 view tests
+
+	// UInt32 view tests
+
+	public test_ConstructionUInt32()
+	{
+		var kind = BufferViewKind.uint32;
+		var view;
+		Assert.doesNotThrow(@{ view = new BufferView(buffer, kind); });
+		Assert.areEqual(view.kind, kind);
+		Assert.areSameRef(view.buffer, buffer);
+		Assert.areEqual(view.length, buffer.size / 4);
+	}
+
+	public test_ReadWriteUInt32()
+	{
+		var view = new BufferView(buffer, BufferViewKind.uint32);
+		var value = 0x7FFFFFFFFFFFFFFF;
+		view[0] = value;
+
+		Assert.areEqual(view[0], 0xFFFFFFFF);
+	}
+
+	public test_ReadWriteUInt32Clipped()
+	{
+		var view = new BufferView(buffer, BufferViewKind.uint32);
+		var value = 0x7FFFFFFFFFFFFFFF;
+		view[0] = value;
+
+		Assert.areEqual(view[0], 0xFFFFFFFF);
+		Assert.areEqual(view[1], 0);
+	}
+
+	public test_ReadWriteUInt32OutOfBounds()
+	{
+		var view = new BufferView(buffer, BufferViewKind.uint32);
+		Assert.throws(typeof(ArgumentRangeError), @= view[view.length]);
+		Assert.throws(typeof(ArgumentRangeError), @{ view[view.length] = 0; });
+	}
+
+	public test_WriteUInt32WrongType()
+	{
+		var view = new BufferView(buffer, BufferViewKind.uint32);
+		Assert.throws(typeof(TypeError), @{ view[0] = 0.0; });
+	}
+
+	public test_IterateUInt32()
+	{
+		var view = new BufferView(buffer, BufferViewKind.uint32);
+
+		// Fill the buffer with FF bytes
+		buffer.writeInt64(0, -1);
+
+		// All uint32s should be 0xFFFFFFFF now, and we should find view.length of them
+		var count = 0;
+		for uint32 in view
+		{
+			Assert.areEqual(uint32, 0xFFFFFFFF);
+			count += 1;
+		}
+		Assert.areEqual(count, view.length);
+	}
+
+	// End uint32 view tests
+
+	// Int64 view tests
+
+	public test_ConstructionInt64()
+	{
+		var kind = BufferViewKind.int64;
+		var view;
+		Assert.doesNotThrow(@{ view = new BufferView(buffer, kind); });
+		Assert.areEqual(view.kind, kind);
+		Assert.areSameRef(view.buffer, buffer);
+		Assert.areEqual(view.length, buffer.size / 8);
+	}
+
+	public test_ReadWriteInt64()
+	{
+		var view = new BufferView(buffer, BufferViewKind.int64);
+		var value = -1;
+		view[0] = value;
+
+		Assert.areEqual(view[0], value);
+	}
+
+	public test_ReadWriteInt64OutOfBounds()
+	{
+		var view = new BufferView(buffer, BufferViewKind.int64);
+		Assert.throws(typeof(ArgumentRangeError), @= view[view.length]);
+		Assert.throws(typeof(ArgumentRangeError), @{ view[view.length] = 0; });
+	}
+
+	public test_WriteInt64WrongType()
+	{
+		var view = new BufferView(buffer, BufferViewKind.int64);
+		Assert.throws(typeof(TypeError), @{ view[0] = 0.0; });
+	}
+
+	public test_IterateInt64()
+	{
+		var view = new BufferView(buffer, BufferViewKind.int64);
+
+		// Fill the buffer with FF bytes
+		buffer.writeInt64(0, -1);
+
+		// All int64s should be -1 now, and we should find view.length of them
+		var count = 0;
+		for int64 in view
+		{
+			Assert.areEqual(int64, -1);
+			count += 1;
+		}
+		Assert.areEqual(count, view.length);
+	}
+
+	// End int64 view tests
+
+	// UInt64 view tests
+
+	public test_ConstructionUInt64()
+	{
+		var kind = BufferViewKind.uint64;
+		var view;
+		Assert.doesNotThrow(@{ view = new BufferView(buffer, kind); });
+		Assert.areEqual(view.kind, kind);
+		Assert.areSameRef(view.buffer, buffer);
+		Assert.areEqual(view.length, buffer.size / 8);
+	}
+
+	public test_ReadWriteUInt64()
+	{
+		var view = new BufferView(buffer, BufferViewKind.uint64);
+		var value = 0xFFFFFFFFFFFFFFFFu;
+		view[0] = value;
+
+		Assert.areEqual(view[0], value);
+	}
+
+	public test_ReadWriteUInt64OutOfBounds()
+	{
+		var view = new BufferView(buffer, BufferViewKind.uint64);
+		Assert.throws(typeof(ArgumentRangeError), @= view[view.length]);
+		Assert.throws(typeof(ArgumentRangeError), @{ view[view.length] = 0; });
+	}
+
+	public test_WriteUInt64WrongType()
+	{
+		var view = new BufferView(buffer, BufferViewKind.uint64);
+		Assert.throws(typeof(TypeError), @{ view[0] = 0.0; });
+	}
+
+	public test_IterateUInt64()
+	{
+		var view = new BufferView(buffer, BufferViewKind.uint64);
+
+		// Fill the buffer with FF bytes
+		buffer.writeInt64(0, -1);
+
+		// All uint64s should be 0xFFFFFFFFFFFFFFFFu now, and we should find view.length of them
+		var count = 0;
+		for uint64 in view
+		{
+			Assert.areEqual(uint64, 0xFFFFFFFFFFFFFFFFu);
+			count += 1;
+		}
+		Assert.areEqual(count, view.length);
+	}
+
+	// End uint64 view tests
+
+	public test_ConstructInvalidBuffer()
+	{
+		Assert.throws(typeof(ArgumentNullError), @= new BufferView(null, BufferViewKind.byte));
+		Assert.throws(typeof(TypeError), @= new BufferView(new Object(), BufferViewKind.byte));
+	}
+
+	public test_ConstructInvalidKind()
+	{
+		Assert.throws(typeof(TypeError), @= new BufferView(buffer, null));
+		Assert.throws(typeof(TypeError), @= new BufferView(buffer, +BufferViewKind.int32));
+	}
+}

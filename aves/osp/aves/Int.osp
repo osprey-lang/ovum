@@ -1,0 +1,112 @@
+namespace aves;
+
+public function int(value)
+	__extern("aves_int");
+	
+public class Int __primitive
+{
+	private new();
+
+	public asInt()
+		__extern("aves_number_asInt");
+	public asUInt()
+		__extern("aves_number_asUInt");
+	public asReal()
+		__extern("aves_number_asReal");
+
+	override getHashCode()
+		__extern("aves_Int_getHashCode");
+	override toString()
+		__extern("aves_Int_toString");
+	public toString(format)
+		__extern("aves_Int_toStringf");
+
+	public static parse(str)
+	{
+		str = string(str);
+		var strLength = str.length;
+
+		var i = 0;
+		while i < strLength and str.isWhiteSpace(i):
+			i += 1;
+
+		var neg = false;
+
+		var cp;
+		if i < strLength
+		{
+			cp = str.getCodepoint(i);
+			if cp == 0x2D /*-*/ or cp == 0x2212 /*− (minus)*/
+			{
+				neg = true;
+				i += 1;
+			}
+			else if cp == 0x2B /*+*/:
+				i += 1;
+		}
+
+		parse: do
+		{
+			const digit0 = 0x30;
+			const digit9 = 0x39;
+
+			if i == strLength or (cp = str.getCodepoint(i)) < digit0 or cp > digit9:
+				break parse; // next character must be a digit!
+
+			var result = 0;
+			try
+			{
+				if neg
+				{
+					do
+					{
+						result = 10*result - (cp - digit0);
+						i += 1;
+					} while i < strLength and (cp = str.getCodepoint(i)) >= digit0 and cp <= digit9;
+				}
+				else
+				{
+					do
+					{
+						result = 10*result + (cp - digit0);
+						i += 1;
+					} while i < strLength and (cp = str.getCodepoint(i)) >= digit0 and cp <= digit9;
+				}
+			}
+			catch OverflowError
+			{
+				break parse;
+			}
+
+			while i < strLength and str.isWhiteSpace(i):
+				i += 1;
+
+			if i != strLength:
+				break parse;
+
+			return result;
+		};
+
+		return null;
+	}
+
+	public const min = __named_const(int: min);
+	public const max = __named_const(int: max);
+
+	operator ==(a, b)  __extern("aves_Int_opEquals");
+	operator <=>(a, b) __extern("aves_Int_opCompare");
+	operator <<(a, b)  __extern("aves_Int_opShiftLeft");
+	operator >>(a, b)  __extern("aves_Int_opShiftRight");
+	operator +(a, b)   __extern("aves_Int_opAdd");
+	operator -(a, b)   __extern("aves_Int_opSubtract");
+	operator |(a, b)   __extern("aves_Int_opOr");
+	operator ^(a, b)   __extern("aves_Int_opXor");
+	operator *(a, b)   __extern("aves_Int_opMultiply");
+	operator /(a, b)   __extern("aves_Int_opDivide");
+	operator %(a, b)   __extern("aves_Int_opModulo");
+	operator &(a, b)   __extern("aves_Int_opAnd");
+	operator **(a, b)  __extern("aves_Int_opPower");
+	operator +(a)      __extern("aves_Int_opPlus");
+	operator -(a)      __extern("aves_Int_opNegate");
+	operator ~(a)      __extern("aves_Int_opNot");
+}

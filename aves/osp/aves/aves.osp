@@ -1,0 +1,72 @@
+// These files should be listed in alphabetical order
+use "ArgumentError.osp";
+use "ArgumentNullError.osp";
+use "ArgumentRangeError.osp";
+use "Boolean.osp";
+use "Buffer.osp";
+use "Char.osp";
+use "CollectionIterable.osp";
+use "Console.osp";
+use "ConsoleColor.osp";
+use "ConsoleKey.osp";
+use "Decoder.osp";
+use "DivideByZeroError.osp";
+use "DuplicateKeyError.osp";
+use "Encoder.osp";
+use "Encoding.osp";
+use "Enum.osp";
+use "Env.osp";
+use "Error.osp";
+use "GC.osp";
+use "Hash.osp";
+use "Int.osp";
+use "InvalidStateError.osp";
+use "Iterable.osp";
+use "Iterator.osp";
+use "List.osp";
+use "MemoryError.osp";
+use "Method.osp";
+use "MethodIterable.osp";
+use "NoOverloadError.osp";
+use "NotSupportedError.osp";
+use "NullReferenceError.osp";
+use "Object.osp";
+use "OverflowError.osp";
+use "Queue.osp";
+use "Real.osp";
+use "Set.osp";
+use "Stack.osp";
+use "String.osp";
+use "StringBuffer.osp";
+use "TypeError.osp";
+use "UInt.osp";
+use "UnicodeCategory.osp";
+use "Utf16Encoding.osp";
+use "Utf8Encoding.osp";
+use "Version.osp";
+use "reflection/reflection.osp";
+
+namespace aves;
+
+/// Summary: Prints a value to the standard output, followed by a line terminator.
+/// Param value: The value to print.
+/// Remarks: If the value is null, it is treated the same as `""`.
+///          If the value is any other non-string value, `.toString()` is called on it.
+public function print(value)
+	__extern("aves_print");
+
+/// Summary: Prints a formatted value.
+/// Param format: The format string. Must be of type String.
+/// Param values: The values to pass into String.format().
+public function print(format, values)
+{
+	if format is not String:
+		throw new TypeError("The format string must be a string.");
+	print(format.format(values));
+}
+
+/// Summary: Exits the application immediately.
+/// Param code: The exit code to pass to the calling environment.
+///          (Int, UInt or Real)
+public function exit(code)
+	__extern("aves_exit");

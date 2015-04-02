@@ -1,0 +1,21 @@
+use namespace aves;
+
+namespace io;
+
+public inheritable EndOfFileError is IOError
+{
+	public new()
+	{
+		new base(defaultMessage);
+	}
+	public new(message)
+	{
+		new base(message ?? defaultMessage);
+	}
+	public new(message, innerError)
+	{
+		new base(message ?? defaultMessage, innerError);
+	}
+
+	private const defaultMessage = "Unexpected end of file encountered.";
+}

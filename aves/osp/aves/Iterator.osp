@@ -1,0 +1,570 @@
+namespace aves;
+
+/// Summary: Exposes a read-only interface for iterating over a sequence.
+///          The method {moveNext} is used to move to the next element in
+///          the sequence, and {current} is used to obtain the current value.
+/// Remarks: The {Iterator} class only allows for a single iteration over
+///          the sequence. To obtain a read-only wrapper for a collection
+///          that can be iterated any number of times, consider using the
+///          {Iterable} class. See that class for more details.
+public abstract class Iterator
+{
+	public new();
+
+	/// Summary: Gets the current value in the sequence.
+	/// Remarks: This return value of this getter is undefined before
+	///          {moveNext} has been called for the first time, and
+	///          after {moveNext} has returned false.
+	public abstract get current;
+	/// Summary: Moves to the next value in the sequence, and returns a
+	///          value to indicate whether the end has been reached.
+	/// Returns: True if the iterator advanced to a new element, or false
+	///          if the end of the sequence has been reached.
+	/// Remarks: The iterator is initially positioned before the first
+	///          element; the first time {moveNext} is called on the
+	///          iterator, it moves to the first element.
+	///
+	///          When there are no more elements to consume, {moveNext}
+	///          must return false, and the value of {current} is undefined.
+	///
+	///          When {moveNext} has returned false, it must continue to
+	///          return false for every subsequent call. In other words,
+	///          when the iterator has reached its end, it stays there.
+	public abstract moveNext();
+
+	/// Summary: Determines whether all items in the sequence match
+	///          the given predicate.
+	/// Param predicate: An invokable value that takes one argument
+	///          (the current element) and returns a truthy value if
+	///          the element matches the predicate, or a falsy value
+	///          otherwise.
+	/// Returns: True if all items in the sequence match the predicate;
+	///          otherwise, false.
+	/// Throws ArgumentNullError: {predicate} is null.
+	public all(predicate)
+	{
+		if predicate is null:
+			throw new ArgumentNullError("predicate");
+
+		while moveNext():
+			if not predicate(current):
+				return false;
+		return true;
+	}
+
+	/// Summary: Determines whether any item in the sequence matches
+	///          the given predicate.
+	/// Param predicate: An invokable value that takes one argument
+	///          (the current element) and returns a truthy value if
+	///          the element matches the predicate, or a falsy value
+	///          otherwise.
+	/// Returns: True if any item in the sequence matches the predicate;
+	///          otherwise, false.
+	/// Throws ArgumentNullError: {predicate} is null.
+	public any(predicate)
+	{
+		if predicate is null:
+			throw new ArgumentNullError("predicate");
+
+		while moveNext():
+			if predicate(current):
+				return true;
+		return false;
+	}
+
+	/// Summary: Calls a function once with each item in the sequence.
+	/// Param func: An invokable value that takes one argument (the
+	///           current element). The return value is discarded.
+	/// Throws ArgumentNullError: {func} is null.
+	public each(func)
+	{
+		if func is null:
+			throw new ArgumentNullError("func");
+
+		while moveNext():
+			func(current);
+	}
+
+	/// Summary: Returns a new {Iterator} which produces the items from
+	///          this sequence that match the given predicate.
+	/// Param predicate: An invokable value that takes one argument
+	///          (the current element) and returns a truthy value if
+	///          the element matches the predicate, or a falsy value
+	///          otherwise.
+	/// Returns: A new {Iterator} which, when iterated over, produces
+	///          those items from this sequence that match the predicate.
+	/// Throws ArgumentNullError: {predicate} is null.
+	public filter(predicate)
+	{
+		if predicate is null:
+			throw new ArgumentNullError("predicate");
+
+		return new FilterIterator(this, predicate);
+	}
+
+	/// Summary: Returns the first element in the sequence.
+	/// Returns: The first element in the sequence.
+	/// Throws InvalidStateError: The collection is empty.
+	public first()
+	{
+		if moveNext():
+			return current;
+
+		throw new InvalidStateError(emptySequence);
+	}
+	/// Summary: Returns the first element in the sequence that matches
+	///          the given predicate.
+	/// Param predicate: An invokable value that takes one argument
+	///          (the current element) and returns a truthy value if
+	///          the element matches the predicate, or a falsy value
+	///          otherwise.
+	/// Returns: The first element in the sequence that matches the
+	///          predicate.
+	/// Throws ArgumentNullError: {predicate} is null.
+	/// Throws InvalidStateError:
+	///          The collection is empty.
+	///
+	///          No item in the collection matched the predicate.
+	public first(predicate)
+	{
+		if predicate is null:
+			throw new ArgumentNullError("predicate");
+		if not moveNext():
+			throw new InvalidStateError(emptySequence);
+
+		do
+		{
+			var value = current;
+			if predicate(value):
+				return value;
+		} while moveNext();
+
+		throw new InvalidStateError(noMatchFound);
+	}
+
+	public firstOrNull()
+	{
+		if moveNext():
+			return current;
+
+		return null;
+	}
+	public firstOrNull(predicate)
+	{
+		if predicate is null:
+			throw new ArgumentNullError("predicate");
+
+		while moveNext()
+		{
+			var value = current;
+			if predicate(value):
+				return value;
+		}
+
+		return null;
+	}
+
+	public fold(func)
+	{
+		if func is null:
+			throw new ArgumentNullError("func");
+		if not moveNext():
+			throw new InvalidStateError("Cannot fold an empty Iterator without an initial value.");
+
+		var init = current;
+		while moveNext():
+			init = func(init, current);
+
+		return init;
+	}
+	public fold(init, func)
+	{
+		if func is null:
+			throw new ArgumentNullError("func");
+
+		while moveNext():
+			init = func(init, current);
+
+		return init;
+	}
+
+	public join(sep)
+	{
+		sep = string(sep);
+		var output = new StringBuffer();
+
+		var first = true;
+		while moveNext()
+		{
+			if not first:
+				output.append(sep);
+			else
+				first = false;
+
+			output.append(current);
+		}
+
+		return output.toString();
+	}
+
+	public group(func)
+	{
+		if func is null:
+			throw new ArgumentNullError("func");
+
+		var result = {};
+
+		while moveNext()
+		{
+			var key = func(current);
+			if not result.hasKey(key):
+				result[key] = [];
+			result[key].add(current);
+		}
+
+		return result;
+	}
+	public group(keyFunc, valueFunc)
+	{
+		if keyFunc is null:
+			throw new ArgumentNullError("keyFunc");
+		if valueFunc is null:
+			throw new ArgumentNullError("valueFunc");
+
+		var result = {};
+
+		while moveNext()
+		{
+			var key = keyFunc(current);
+			if not result.hasKey(key):
+				result[key] = [];
+			result[key].add(valueFunc(current));
+		}
+
+		return result;
+	}
+
+	public groupEvery(frequency)
+	{
+		frequency = int(frequency);
+		if frequency <= 0:
+			throw new ArgumentRangeError("frequency");
+
+		return groupEveryInner(frequency);
+	}
+	private groupEveryInner(frequency)
+	{
+		var curList = null;
+
+		while moveNext()
+		{
+			if curList is null:
+				curList = new List(frequency);
+
+			curList.add(current);
+
+			if curList.length == frequency
+			{
+				yield curList;
+				curList = null;
+			}
+		}
+
+		if curList is not null:
+			yield curList;
+	}
+
+	public intersperse(value)
+	{
+		if moveNext()
+		{
+			yield current;
+
+			while moveNext()
+			{
+				yield value;
+				yield current;
+			}
+		}
+	}
+	public intersperse(value, frequency)
+	{
+		frequency = int(frequency);
+		if frequency <= 0:
+			throw new ArgumentRangeError("frequency");
+
+		return intersperseInner(value, frequency);
+	}
+	private intersperseInner(value, frequency)
+	{
+		if moveNext()
+		{
+			yield current;
+
+			var i = 1 % frequency;
+			while moveNext()
+			{
+				if i == 0:
+					yield value;
+				i = (i + 1) % frequency;
+				yield current;
+			}
+		}
+	}
+
+	public last()
+	{
+		if not moveNext():
+			throw new InvalidStateError(emptySequence);
+
+		var output;
+		do
+		{
+			output = current;
+		} while moveNext();
+
+		return output;
+	}
+	public last(predicate)
+	{
+		if predicate is null:
+			throw new ArgumentNullError("predicate");
+		if not moveNext():
+			throw new InvalidStateError(emptySequence);
+
+		var hasMatch = false;
+		var output = null;
+
+		while moveNext()
+		{
+			var value = current;
+			if predicate(value)
+			{
+				hasMatch = true;
+				output = value;
+			}
+		}
+
+		if not hasMatch:
+			throw new InvalidStateError(noMatchFound);
+
+		return output;
+	}
+
+	public lastOrNull()
+	{
+		if not moveNext():
+			return null;
+
+		var output;
+		do
+		{
+			output = current;
+		} while moveNext();
+
+		return output;
+	}
+	public lastOrNull(predicate)
+	{
+		if predicate is null:
+			throw new ArgumentNullError("predicate");
+
+		var hasMatch = false;
+		var output = null;
+
+		while moveNext()
+		{
+			var value = current;
+			if predicate(value)
+			{
+				hasMatch = true;
+				output = value;
+			}
+		}
+
+		if hasMatch:
+			return output;
+		return null;
+	}
+
+	public map(func)
+	{
+		if func is null:
+			throw new ArgumentNullError("func");
+		return new MapIterator(this, func);
+	}
+
+	public take(count)
+	{
+		count = int(count);
+		if count < 0:
+			throw new ArgumentRangeError("count");
+		if count == 0:
+			return empty;
+
+		return new TakeIterator(this, count);
+	}
+
+	public skip(count)
+	{
+		count = int(count);
+		if count < 0:
+			throw new ArgumentRangeError("count");
+
+		return new SkipIterator(this, count);
+	}
+
+	public zip(other)
+	{
+		if other is null:
+			throw new ArgumentNullError("other");
+		if other is not Iterator:
+			other = other.iter;
+
+		return zipIter(other, defaultZipFunc);
+	}
+	public zip(other, func)
+	{
+		if other is null:
+			throw new ArgumentNullError("other");
+		if other is not Iterator:
+			other = other.iter;
+		if func is null:
+			throw new ArgumentNullError("func");
+
+		return zipIter(other, func);
+	}
+	private zipIter(other, func)
+	{
+		while this.moveNext() and other.moveNext():
+			yield func(this.current, other.current);
+	}
+
+	/// Summary: Collects all the items in the iterator into a {List}.
+	/// Returns: A {List} containing all the items of the iterator.
+	/// Remarks: This method will attempt to enumerate the iterator all the
+	///          way to the end. If the iterator represents an infinite
+	///          sequence, the program will attempt to allocate a lot of
+	///          memory before throwing a {MemoryError}.
+	public toList()
+	{
+		var output = [];
+
+		while moveNext():
+			output.add(current);
+
+		return output;
+	}
+
+	public static get empty = new EmptyIterator();
+
+	private const emptySequence = "The sequence is empty.";
+	private const noMatchFound = "No matching item found.";
+
+	private static defaultZipFunc = @(a, b) = [a, b];
+
+	iter { return this; }
+}
+
+private class FilterIterator is Iterator
+{
+	public new(this.inner, this.predicate);
+
+	private inner, predicate, ended = false;
+
+	override get current = inner.current;
+	override moveNext()
+	{
+		if not ended
+		{
+			while inner.moveNext():
+				if predicate(inner.current):
+					return true;
+
+			ended = true;
+		}
+
+		return false;
+	}
+}
+
+private class MapIterator is Iterator
+{
+	public new(this.inner, this.func);
+
+	private inner, func, cur, ended = false;
+
+	override get current = cur;
+	override moveNext()
+	{
+		if not ended
+		{
+			if inner.moveNext()
+			{
+				cur = func(inner.current);
+				return true;
+			}
+
+			cur = null;
+			ended = true;
+		}
+
+		return false;
+	}
+}
+
+private class TakeIterator is Iterator
+{
+	public new(this.inner, this.count);
+
+	private inner, count;
+
+	override get current = inner.current;
+	override moveNext()
+	{
+		if count > 0
+		{
+			if inner.moveNext()
+			{
+				count -= 1;
+				return true;
+			}
+
+			count = 0;
+		}
+		return false;
+	}
+}
+
+private class SkipIterator is Iterator
+{
+	public new(this.inner, this.count);
+
+	private inner, count, hasMore = true;
+
+	override get current = inner.current;
+	override moveNext()
+	{
+		if hasMore
+		{
+			while count > 0
+			{
+				if not inner.moveNext()
+				{
+					hasMore = false;
+					return false;
+				}
+				count -= 1;
+			}
+
+			return hasMore = inner.moveNext();
+		}
+		return false;
+	}
+}
+
+private class EmptyIterator is Iterator
+{
+	override get current = null;
+	override moveNext() { return false; }
+}	

@@ -1,0 +1,122 @@
+namespace aves.reflection;
+
+public class Field is Member
+{
+	__init_type("aves_reflection_Field_init");
+
+	public new(handle)
+		__extern("aves_reflection_Field_new");
+
+	private get handle
+		__extern("aves_reflection_Field_get_handle");
+
+	override get kind = MemberKind.field;
+
+	override get accessLevel
+		__extern("aves_reflection_Field_get_accessLevel");
+
+	override get name
+		__extern("aves_reflection_Field_get_name");
+
+	private get _fullName
+		__extern("aves_reflection_Field_get_f_fullName");
+	private set _fullName
+		__extern("aves_reflection_Field_set_f_fullName");
+
+	override get fullName
+	{
+		if _fullName is null:
+			_fullName = declaringType.fullName :: "." :: name;
+		return _fullName;
+	}
+
+	override get declaringType
+		__extern("aves_reflection_Field_get_declaringType");
+
+	override get declaringModule				//__extern("aves_reflection_Field_get_declaringModule");
+	{
+		// Not implemented just yet
+		throw new NotSupportedError();
+	}
+
+	/// Summary: Gets a value that indicates whether the field is public.
+	/// Returns: True if the field is public; otherwise, false.
+	public get isPublic = accessLevel == AccessLevel.isPublic;
+
+	/// Summary: Gets a value that indicates whether the field is protected.
+	/// Returns: True if the field is protected; otherwise, false.
+	public get isProtected = accessLevel == AccessLevel.isProtected;
+
+	/// Summary: Gets a value that indicates whether the field is private.
+	/// Returns: True if the field is private; otherwise, false.
+	public get isPrivate = accessLevel == AccessLevel.isPrivate;
+
+	/// Summary: Gets a value that indicates whether the field is static.
+	/// Returns: True if the field is static; otherwise, false.
+	public get isStatic
+		__extern("aves_reflection_Field_get_isStatic");
+
+	/// Summary: Gets the value of this field in the specified instance.
+	///          The instance must be of the field’s declaring type or
+	///          of a type derived from it.
+	/// Param instance:
+	///          The object to get the field value from. If the field
+	///          is static, this parameter is ignored.
+	/// Returns: The value of this field in {instance}.
+	/// Throws ArgumentNullError:
+	///          The field is not static and {instance} is null.
+	/// Throws TypeError:
+	///          {instance} is not of the field’s declaring type or of
+	///          a type derived from it.
+	public getValue(instance)
+	{
+		if not isStatic
+		{
+			if instance is null:
+				throw new ArgumentNullError("instance");
+			// Note: getValueInternal checks the instance type
+			return getValueInternal(instance);
+		}
+		return getValueInternal(null);
+	}
+	private getValueInternal(instance)
+		__extern("aves_reflection_Field_getValue");
+
+	/// Summary: Sets the value of this field in the specified instance
+	///          to the specified value. The instance must be of the field’s
+	///          declaring type or of a type derived from it.
+	/// Param instance:
+	///          The object to set the field value on. If the field is
+	///          static, this parameter is ignored.
+	/// Param value:
+	///          The value to set the field to.
+	/// Throws ArgumentNullError:
+	///          The field is not static and {instance} is null.
+	/// Throws TypeError:
+	///          {instance} is not of the field’s declaring type or of
+	///          a type derived from it.
+	public setValue(instance, value)
+	{
+		if not isStatic
+		{
+			if instance is null:
+				throw new ArgumentNullError("instance");
+			// Note: setValueInternal checks the instance type
+			setValueInternal(instance, value);
+		}
+		else
+			setValueInternal(null, value);
+	}
+	private setValueInternal(instance, value)
+		__extern("aves_reflection_Field_setValue");
+
+	override toString()
+	{
+		return "<Field {0}>".format([fullName]);
+	}
+
+	operator ==(a, b)
+	{
+		return b is Field and a.handle == b.handle;
+	}
+}

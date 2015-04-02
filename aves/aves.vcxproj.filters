@@ -1,0 +1,279 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Source Files\aves">
+      <UniqueIdentifier>{7f84ad72-728b-419c-a460-67516f177827}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\aves">
+      <UniqueIdentifier>{9cd2651b-1241-4607-a3c3-42aadbeb0604}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\io">
+      <UniqueIdentifier>{e98e0139-f083-4654-aeee-37bc5f310978}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\io">
+      <UniqueIdentifier>{02adfbd2-1117-4163-8e89-fe37abd2594d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\aves\reflection">
+      <UniqueIdentifier>{b14bb0a4-d7bb-4f24-90a2-90bb94d8bd97}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\aves\reflection">
+      <UniqueIdentifier>{fbc194d0-0d31-40aa-92d7-5ff5e4949bee}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Windows">
+      <UniqueIdentifier>{fe639808-8420-43c4-ba42-e9c06a50535f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Windows">
+      <UniqueIdentifier>{30545b8a-5f2a-49bf-b5f9-be15b84c5ab3}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="aves_math.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dtoa.config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_uint.h">
+      <Filter>Header Files\aves</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_boolean.h">
+      <Filter>Header Files\aves</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_buffer.h">
+      <Filter>Header Files\aves</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_console.h">
+      <Filter>Header Files\aves</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_enum.h">
+      <Filter>Header Files\aves</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_env.h">
+      <Filter>Header Files\aves</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_error.h">
+      <Filter>Header Files\aves</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_hash.h">
+      <Filter>Header Files\aves</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_helpers.h">
+      <Filter>Header Files\aves</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_int.h">
+      <Filter>Header Files\aves</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_list.h">
+      <Filter>Header Files\aves</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_method.h">
+      <Filter>Header Files\aves</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_ns.h">
+      <Filter>Header Files\aves</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_object.h">
+      <Filter>Header Files\aves</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_real.h">
+      <Filter>Header Files\aves</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_set.h">
+      <Filter>Header Files\aves</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_string.h">
+      <Filter>Header Files\aves</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_stringbuffer.h">
+      <Filter>Header Files\aves</Filter>
+    </ClInclude>
+    <ClInclude Include="aves.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="io_path.h">
+      <Filter>Header Files\io</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_io.h">
+      <Filter>Header Files\io</Filter>
+    </ClInclude>
+    <ClInclude Include="io_file.h">
+      <Filter>Header Files\io</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_shared_strings.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_utf8encoding.h">
+      <Filter>Header Files\aves</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_utf16encoding.h">
+      <Filter>Header Files\aves</Filter>
+    </ClInclude>
+    <ClInclude Include="io_directory.h">
+      <Filter>Header Files\io</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_char.h">
+      <Filter>Header Files\aves</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_gc.h">
+      <Filter>Header Files\aves</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_type.h">
+      <Filter>Header Files\aves\reflection</Filter>
+    </ClInclude>
+    <ClInclude Include="windows\windows.h">
+      <Filter>Header Files\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_nativehandle.h">
+      <Filter>Header Files\aves\reflection</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_field.h">
+      <Filter>Header Files\aves\reflection</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_overload.h">
+      <Filter>Header Files\aves\reflection</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_methodbase.h">
+      <Filter>Header Files\aves\reflection</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_property.h">
+      <Filter>Header Files\aves\reflection</Filter>
+    </ClInclude>
+    <ClInclude Include="aves_module.h">
+      <Filter>Header Files\aves\reflection</Filter>
+    </ClInclude>
+    <ClInclude Include="io_textreader.h">
+      <Filter>Header Files\io</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="aves.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="math.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="boolean.cpp">
+      <Filter>Source Files\aves</Filter>
+    </ClCompile>
+    <ClCompile Include="buffer.cpp">
+      <Filter>Source Files\aves</Filter>
+    </ClCompile>
+    <ClCompile Include="console.cpp">
+      <Filter>Source Files\aves</Filter>
+    </ClCompile>
+    <ClCompile Include="enum.cpp">
+      <Filter>Source Files\aves</Filter>
+    </ClCompile>
+    <ClCompile Include="env.cpp">
+      <Filter>Source Files\aves</Filter>
+    </ClCompile>
+    <ClCompile Include="error.cpp">
+      <Filter>Source Files\aves</Filter>
+    </ClCompile>
+    <ClCompile Include="hash.cpp">
+      <Filter>Source Files\aves</Filter>
+    </ClCompile>
+    <ClCompile Include="helpers.cpp">
+      <Filter>Source Files\aves</Filter>
+    </ClCompile>
+    <ClCompile Include="int.cpp">
+      <Filter>Source Files\aves</Filter>
+    </ClCompile>
+    <ClCompile Include="list.cpp">
+      <Filter>Source Files\aves</Filter>
+    </ClCompile>
+    <ClCompile Include="method.cpp">
+      <Filter>Source Files\aves</Filter>
+    </ClCompile>
+    <ClCompile Include="object.cpp">
+      <Filter>Source Files\aves</Filter>
+    </ClCompile>
+    <ClCompile Include="real.cpp">
+      <Filter>Source Files\aves</Filter>
+    </ClCompile>
+    <ClCompile Include="set.cpp">
+      <Filter>Source Files\aves</Filter>
+    </ClCompile>
+    <ClCompile Include="string.cpp">
+      <Filter>Source Files\aves</Filter>
+    </ClCompile>
+    <ClCompile Include="stringbuffer.cpp">
+      <Filter>Source Files\aves</Filter>
+    </ClCompile>
+    <ClCompile Include="uint.cpp">
+      <Filter>Source Files\aves</Filter>
+    </ClCompile>
+    <ClCompile Include="dtoa.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="path.cpp">
+      <Filter>Source Files\io</Filter>
+    </ClCompile>
+    <ClCompile Include="io.cpp">
+      <Filter>Source Files\io</Filter>
+    </ClCompile>
+    <ClCompile Include="file.cpp">
+      <Filter>Source Files\io</Filter>
+    </ClCompile>
+    <ClCompile Include="shared_strings.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utf8encoding.cpp">
+      <Filter>Source Files\aves</Filter>
+    </ClCompile>
+    <ClCompile Include="utf16encoding.cpp">
+      <Filter>Source Files\aves</Filter>
+    </ClCompile>
+    <ClCompile Include="directory.cpp">
+      <Filter>Source Files\io</Filter>
+    </ClCompile>
+    <ClCompile Include="char.cpp">
+      <Filter>Source Files\aves</Filter>
+    </ClCompile>
+    <ClCompile Include="gc.cpp">
+      <Filter>Source Files\aves</Filter>
+    </ClCompile>
+    <ClCompile Include="type.cpp">
+      <Filter>Source Files\aves\reflection</Filter>
+    </ClCompile>
+    <ClCompile Include="windows\dllmain.cpp">
+      <Filter>Source Files\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="windows\windows.cpp">
+      <Filter>Source Files\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="nativehandle.cpp">
+      <Filter>Source Files\aves\reflection</Filter>
+    </ClCompile>
+    <ClCompile Include="field.cpp">
+      <Filter>Source Files\aves\reflection</Filter>
+    </ClCompile>
+    <ClCompile Include="overload.cpp">
+      <Filter>Source Files\aves\reflection</Filter>
+    </ClCompile>
+    <ClCompile Include="methodbase.cpp">
+      <Filter>Source Files\aves\reflection</Filter>
+    </ClCompile>
+    <ClCompile Include="property.cpp">
+      <Filter>Source Files\aves\reflection</Filter>
+    </ClCompile>
+    <ClCompile Include="module.cpp">
+      <Filter>Source Files\aves\reflection</Filter>
+    </ClCompile>
+    <ClCompile Include="textreader.cpp">
+      <Filter>Source Files\io</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

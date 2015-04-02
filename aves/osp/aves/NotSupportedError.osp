@@ -1,0 +1,22 @@
+namespace aves;
+
+/// Summary: An error thrown when a particular operation is not supported
+///          by design. For example, using {io.FileStream} to attempt to
+///          open anything other than a disk file.
+public inheritable NotSupportedError is Error
+{
+	public new()
+	{
+		new base(defaultMessage);
+	}
+	public new(message)
+	{
+		new base(message ?? defaultMessage);
+	}
+	public new(message, innerError)
+	{
+		new base(message ?? defaultMessage, innerError);
+	}
+
+	private const defaultMessage = "Not supported.";
+}

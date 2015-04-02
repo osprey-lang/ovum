@@ -1,0 +1,35 @@
+use namespace aves;
+
+namespace io;
+
+public inheritable FileNotFoundError is IOError
+{
+	public new(pathName)
+	{
+		new base(defaultMessage);
+		this._pathName = pathName ?! string(pathName);
+	}
+	public new(pathName, message)
+	{
+		new base(message ?? defaultMessage);
+		this._pathName = pathName ?! string(pathName);
+	}
+	public new(pathName, message, innerError)
+	{
+		new base(message ?? defaultMessage, innerError);
+		this._pathName = pathName ?! string(pathName);
+	}
+
+	private _pathName;
+	/// Summary: Gets the path name that could not be found.
+	public get pathName = _pathName;
+
+	overridable override get message
+	{
+		if _pathName is not null:
+			return "{0} (pathName: {1})".format([base.message, _pathName]);
+		return base.message;
+	}
+
+	private const defaultMessage = "The file or directory does not exist.";
+}

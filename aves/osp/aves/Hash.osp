@@ -1,0 +1,545 @@
+namespace aves;
+
+/// Summary: This class represents a hash table, which maps arbitrary keys
+///          to arbitrary values. The keys can be of any type, as long as
+///          they are not null.
+///
+///          Hash codes are calculated using `getHashCode`, and keys are
+///          compared for equality using the `==` operator.
+///
+///          The Hash is one of the fundamental collection types in Osprey,
+///          alongside {List} and {Set}.
+public inheritable Hash
+{
+	__init_type("aves_Hash_init");
+
+	/// Summary: Creates a new, empty hash with the default capacity.
+	public new() { } // Intentionally empty (initialize(0) does nothing anyway)
+	/// Summary: Creates a new, empty hash with the specified initial capacity.
+	/// Param capacity: The capacity of the hash. (Int, UInt or Real)
+	/// Throws TypeError: {capacity} could not be converted to an Int.
+	/// Throws ArgumentRangeError: {capacity} is less than zero, or greater
+	///          than 2,147,483,647 (0x7fffffff).
+	public new(capacity)
+	{
+		capacity = int(capacity);
+		if capacity < 0 or capacity > 0x7fffffff:
+			throw new ArgumentRangeError("capacity");
+
+		initialize(capacity);
+	}
+
+	/// Summary: Gets the value associated with the specified key.
+	/// Param key: The key to look up.
+	/// Returns: The value associated with the specified key.
+	/// Throws ArgumentNullError: {key} is null.
+	/// Throws ArgumentError: The hash table does not contain the specified key. 
+	/// Throws TypeError:
+	///          The `getHashCode` implementation of {key} did not
+	///          return an Int or UInt.
+	public get this[key]
+	{
+		return getItemInternal(key, getHash(key));
+	}
+	/// Summary: Sets the value associated with the specified key.
+	///          If the hash table does not contain the key, it will
+	///          be added.
+	/// Param key: The key to set the value of.
+	/// Throws ArgumentNullError: {key} is null.
+	/// Throws TypeError:
+	///          The `getHashCode` implementation of {key} did not
+	///          return an Int or UInt.
+	public set this[key]
+	{
+		insert(key, getHash(key), value, false);
+	}
+
+	/// Summary: Gets the total number of key–value pairs contained in the hash.
+	/// Returns: The total number of key–value pairs in the hash, as an Int.
+	public get length
+		__extern("aves_Hash_get_length");
+
+	/// Summary: Gets the capacity of the hash; that is, the number of entries
+	///          it can contain before needing to be resized.
+	/// Returns: The capacity of the hash, as an Int.
+	public get capacity
+		__extern("aves_Hash_get_capacity");
+
+	/// Summary: Determines whether the hash table is empty.
+	/// Returns: True if {length} is zero; otherwise, false.
+	public get isEmpty = length == 0;
+
+	/// Summary: Gets an {Iterable} that can be used to iterate over
+	///          the keys in the hash table.
+	/// Returns: A new {Iterable} instance that iterates over the
+	///          keys in the hash table.
+	public get keys   = new KeyOrValueIterable(this, true);
+	/// Summary: Gets an {Iterable} that can be used to iterate over
+	///          the values in the hash table.
+	/// Returns: A new {Iterable} instance that iterates over the
+	///          values in the hash table.
+	public get values = new KeyOrValueIterable(this, false);
+
+	private get version
+		__extern("aves_Hash_get_version");
+	private get entryCount
+		__extern("aves_Hash_get_entryCount");
+
+	private initialize(capacity)
+		__extern("aves_Hash_initialize");
+
+	private getItemInternal(key, hash)
+		__extern("aves_Hash_getItemInternal");
+
+	private getEntry(index)
+		__extern("aves_Hash_getEntry");
+
+	/// Summary: Adds the specified key–value pair to the hash table.
+	/// Param key:   The key to add.
+	/// Param value: The value to associate with the key.
+	/// Throws ArgumentNullError: {key} is null.
+	/// Throws DuplicateKeyError: The hash table already contains the specified key.
+	/// Throws TypeError:
+	///          The `getHashCode` implementation of {key} did not
+	///          return an Int or UInt.
+	public add(key, value)
+	{
+		insert(key, getHash(key), value, true);
+	}
+	private insert(key, hash, value, add)
+		__extern("aves_Hash_insert");
+
+	/// Summary: Determines whether the hash table contains an entry with
+	///          the specified key.
+	/// Param key: The key to look for.
+	/// Returns: True if the hash table contains the specified key; otherwise, false.
+	/// Throws ArgumentNullError: {key} is null.
+	public hasKey(key)
+	{
+		return hasKeyInternal(key, getHash(key));
+	}
+	private hasKeyInternal(key, hash)
+		__extern("aves_Hash_hasKeyInternal");
+
+	/// Summary: Determines whether the hash table contains the specified value.
+	/// Param value: The value to look for.
+	/// Returns: True if the hash table contains the specified value; otherwise, false.
+	public hasValue(value)
+		__extern("aves_Hash_hasValue");
+
+	/// Summary: Tries to read the specified key from the hash table. If successful,
+	///          {value} is updated to contain the value, and the method returns true.
+	///          Otherwise, the method returns false.
+	/// Param key:   The key to look up.
+	/// Param value: (ref) A variable that receives the value of the key, if the key
+	///              exists in the hash table.
+	/// Returns: True if the hash table contains the specified key; otherwise, false.
+	/// Remarks: Calling this method usually performs better than first calling
+	///          {hasKey} and then indexing into the hash table.
+	///
+	///          If the hash table does not contain the specified key, {value} is not
+	///          modified.
+	public tryGet(key, ref value)
+	{
+		return tryGetInternal(key, getHash(key), ref value);
+	}
+	private tryGetInternal(key, hash, ref value)
+		__extern("aves_Hash_tryGetInternal");
+
+	/// Summary: Removes the entry at the specified index from the hash table.
+	/// Param key: The key to remove.
+	/// Returns: True if the key was in the hash table; otherwise, false.
+	/// Throws ArgumentNullError: {key} is null.
+	/// Throws TypeError:
+	///          The `getHashCode` implementation of {key} did not
+	///          return an Int or UInt.
+	public remove(key)
+	{
+		return removeInternal(key, getHash(key));
+	}
+	private removeInternal(key, hash)
+		__extern("aves_Hash_removeInternal");
+
+	private pinEntries()
+		__extern("aves_Hash_pinEntries");
+	private unpinEntries()
+		__extern("aves_Hash_unpinEntries");
+
+	// Higher-order functions!
+
+	/// Summary: Determines whether all the entries in the hash table match the specified
+	///          predicate.
+	/// Param predicate: An invokable value that accepts two arguments (the key and the
+	///                  value) for each entry, and returns a truthy value if the entry
+	///                  matches some condition, and a falsy value otherwise.
+	/// Returns: True if {predicate} returns true for all entries in the table, or the
+	///          hash is empty. Otherwise, false.
+	/// Remarks: The iteration stops as soon as {predicate} returns false for an entry.
+	///          This method is in other words not guaranteed to iterate over the entire
+	///          hash table. For that, use {each}.
+	public all(predicate)
+	{
+		var startVersion = version;
+
+		try
+		{
+			pinEntries();
+			for i in [0 to entryCount - 1]
+			{
+				if startVersion != version:
+					throw new InvalidStateError(HashUtils.hashHasChanged);
+				var entry = getEntry(i);
+				if entry is not null and
+					not predicate(entry.key, entry.value):
+					return false;
+			}
+		}
+		finally
+		{
+			unpinEntries();
+		}
+
+		return true;
+	}
+
+	/// Summary: Determines whether any entry in the hash table matches the specified
+	///          predicate.
+	/// Param predicate: An invokable value that accepts two arguments (the key and the
+	///                  value) for each entry, and returns a truthy value if the entry
+	///                  matches some condition, and a falsy value otherwise.
+	/// Returns: True if {predicate} returns true for any entry in the table. Otherwise
+	///          (including if the hash is entry), false.
+	/// Remarks: The iteration stops as soon as {predicate} returns true for an entry.
+	///          This method is in other words not guaranteed to iterate over the entire
+	///          hash table. For that, use {each}.
+	public any(predicate)
+	{
+		var startVersion = version;
+
+		try
+		{
+			pinEntries();
+			for i in [0 to entryCount - 1]
+			{
+				if startVersion != version:
+					throw new InvalidStateError(HashUtils.hashHasChanged);
+				var entry = getEntry(i);
+				if entry is not null and
+					predicate(entry.key, entry.value):
+					return true;
+			}
+		}
+		finally
+		{
+			unpinEntries();
+		}
+
+		return false;
+	}
+
+	public each(func)
+	{
+		var startVersion = version;
+
+		try
+		{
+			pinEntries();
+			for i in [0 to entryCount - 1]
+			{
+				if startVersion != version:
+					throw new InvalidStateError(HashUtils.hashHasChanged);
+				var entry =	getEntry(i);
+				if entry is not null:
+					func(entry.key, entry.value);
+			}
+		}
+		finally
+		{
+			unpinEntries();
+		}
+
+		return this;
+	}
+
+	public filter(predicate)
+	{
+		var output = new Hash(length);
+		var startVersion = version;
+
+		try
+		{
+			pinEntries();
+			for i in [0 to entryCount - 1]
+			{
+				if startVersion != version:
+					throw new InvalidStateError(HashUtils.hashHasChanged);
+				var entry = getEntry(i);
+				if entry is not null and predicate(entry.key, entry.value):
+					output.add(entry.key, entry.value);
+			}
+		}
+		finally
+		{
+			unpinEntries();
+		}
+
+		return output;
+	}
+
+	public mapKeys(func)
+	{
+		var output = new Hash(length);
+		var startVersion = version;
+
+		try
+		{
+			pinEntries();
+			for i in [0 to entryCount - 1]
+			{
+				if startVersion != version:
+					throw new InvalidStateError(HashUtils.hashHasChanged);
+				var entry = getEntry(i);
+				if entry is not null:
+					output.add(func(entry.key, entry.value), entry.value);
+			}
+		}
+		finally
+		{
+			unpinEntries();
+		}
+
+		return output;
+	}
+
+	public mapValues(func)
+	{
+		var output = new Hash(length);
+		var startVersion = version;
+
+		try
+		{
+			pinEntries();
+			for i in [0 to entryCount - 1]
+			{
+				if startVersion != version:
+					throw new InvalidStateError(HashUtils.hashHasChanged);
+				var entry = getEntry(i);
+				if entry is not null:
+					output.add(entry.key, func(entry.key, entry.value));
+			}
+		}
+		finally
+		{
+			unpinEntries();
+		}
+
+		return output;
+	}
+
+	/// Summary: Gets a read-only {Iterable} that encapsulates the hash table.
+	public toIterable()
+	{
+		// TODO: Create a dedicated HashIterable, with specialised code
+		return new CollectionIterable(this);
+	}
+
+	private static getHash(key)
+	{
+		if key is null:
+			throw new ArgumentNullError("key");
+
+		var h = key.getHashCode();
+
+		if h is not Int and h is not UInt:
+			throw new TypeError("The return value of getHashCode() must be of type Int or UInt.");
+
+		return h;
+	}
+
+	overridable override getHashCode()
+	{
+		return base.getHashCode();
+	}
+
+	overridable override toString()
+	{
+		return "Hash[length = {0}]".format([length]);
+	}
+
+	/// Summary: Constructs a new hash table by extracting the values of the specified
+	///          members of an object.
+	/// Param object: The object to get member values from.
+	/// Param keys: (variadic) The names of the members to load values of.
+	/// Returns: A new Hash instance with the specified keys.
+	/// Remarks: The keys in {keys} will be converted to strings, as all member names
+	///          must be strings.
+	///
+	///          Examples: \
+	///             `Hash.fromObject(o, "a", "b", "c") // => {a: o.a, b: o.b, c: o.c}` \
+	///             `Hash.fromObject(pt, "x", "y")     // => {x: pt.x, y: pt.y}`
+	/// Throws ArgumentNullError:
+	///          {object} is null.
+	/// Throws ArgumentError:
+	///          One of the values in {keys} is null.
+	/// Throws DuplicateKeyError:
+	///          One of the values in {keys} occurs more than once.
+	/// Throws TypeError:
+	///          One of the values in {keys} could not be converted to a string.
+	///
+	///          One of the values in {keys} does not correspond to a public member of {object}.
+	public static fromObject(object, keys...)
+	{
+		if object is null:
+			throw new ArgumentNullError("object");
+
+		var output = new Hash(keys.length);
+		for k in keys
+		{
+			if k is null:
+				throw new ArgumentError("The keys list cannot contain any null values.", "keys");
+			var stringKey = string(k);
+			output.add(stringKey, helpers.loadMember(object, stringKey));
+		}
+
+		return output;
+	}
+
+	iter
+	{
+		return new HashIterator(this);
+	}
+}
+
+// This class is a thin wrapper around the native code's HashEntry struct.
+// Internally, it contains a pointer to the HashEntry. Marked primitive to
+// prevent the GC from trying to reclaim it.
+//
+// NOTE: Instances of HashEntry MUST NOT leave the code of methods inside
+// Hash or HashIterator. Do not return values of this type, as the hash
+// itself may be released at any point by the GC, and there is no reference
+// back to it. You must also pin the entries array (see Hash.pin/unpinEntries)
+// for as long as you have a HashEntry,  or a GC cycle could make the array
+// move and then this pointer would be invalidated.
+private class HashEntry __primitive
+{
+	public get hashCode
+		__extern("aves_HashEntry_get_hashCode");
+	public get nextIndex
+		__extern("aves_HashEntry_get_nextIndex");
+	public get key
+		__extern("aves_HashEntry_get_key");
+	public get value
+		__extern("aves_HashEntry_get_value");
+}
+
+private class HashIterator is Iterator
+{
+	public new(this.hash)
+	{
+		version = HashUtils.getVersion(hash);
+	}
+
+	private hash;
+	private version;
+	private i = -1;
+	private cur = null;
+
+	override get current = cur;
+	override moveNext()
+	{
+		if HashUtils.getVersion(hash) != version:
+			throw new InvalidStateError(HashUtils.hashHasChanged);
+
+		while i < HashUtils.getEntryCount(hash) - 1
+		{
+			i += 1;
+			try
+			{
+				HashUtils.pinEntries(hash);
+				var entry = HashUtils.getEntry(hash, i);
+				if entry is not null
+				{
+					cur = [entry.key, entry.value];
+					return true;
+				}
+			}
+			finally
+			{
+				HashUtils.unpinEntries(hash);
+			}
+		}
+
+		return false;
+	}
+}
+
+private class KeyOrValueIterable is Iterable
+{
+	public new(this.hash, this.useKey);
+
+	private hash, useKey;
+
+	iter
+	{
+		return new KeyOrValueIterator(hash, useKey);
+	}
+}
+
+private class KeyOrValueIterator is Iterator
+{
+	public new(this.hash, this.useKey)
+	{
+		version = HashUtils.getVersion(hash);
+	}
+
+	private hash;
+	private version;
+	private useKey;
+	private i = -1;
+	private cur = null;
+
+	override get current = cur;
+	override moveNext()
+	{
+		if HashUtils.getVersion(hash) != version:
+			throw new InvalidStateError(HashUtils.hashHasChanged);
+
+		while i < HashUtils.getEntryCount(hash) - 1
+		{
+			i += 1;
+			try
+			{
+				HashUtils.pinEntries(hash);
+				var entry = HashUtils.getEntry(hash, i);
+				if entry is not null
+				{
+					cur = useKey ? entry.key : entry.value;
+					return true;
+				}
+			}
+			finally
+			{
+				HashUtils.unpinEntries(hash);
+			}
+		}
+
+		return false;
+	}
+}
+
+private static class HashUtils
+{
+	public const hashHasChanged = "The hash has changed since the iteration started.";
+
+	public static getVersion(hash)
+		__extern("aves_Hash_get_version");
+	public static getEntryCount(hash)
+		__extern("aves_Hash_get_entryCount");
+	public static getEntry(hash, index)
+		__extern("aves_Hash_getEntry");
+
+	public static pinEntries(hash)
+		__extern("aves_Hash_pinEntries");
+	public static unpinEntries(hash)
+		__extern("aves_Hash_unpinEntries");
+}

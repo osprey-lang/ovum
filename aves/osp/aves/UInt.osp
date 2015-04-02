@@ -1,0 +1,89 @@
+namespace aves;
+
+public function uint(value)
+	__extern("aves_uint");
+	
+public class UInt __primitive
+{
+	private new();
+
+	public asInt()
+		__extern("aves_number_asInt");
+	public asUInt()
+		__extern("aves_number_asUInt");
+	public asReal()
+		__extern("aves_number_asReal");
+
+	override getHashCode()
+		__extern("aves_UInt_getHashCode");
+	override toString()
+		__extern("aves_UInt_toString");
+	public toString(format)
+		__extern("aves_UInt_toStringf");
+
+	public static parse(str)
+	{
+		str = string(str);
+		var strLength = str.length;
+
+		var result = 0u;
+
+		var i = 0;
+		while i < strLength and str.isWhiteSpace(i):
+			i += 1;
+
+		var cp;
+		if i < strLength and (cp = str.getCodepoint(i)) == 0x2B /*+*/:
+			i += 1;
+
+		do
+		{
+			const digit0 = 0x30;
+			const digit9 = 0x39;
+
+			if i == strLength or (cp = str.getCodepoint(i)) < digit0 or cp > digit9:
+				break; // next character must be a digit!
+			try
+			{
+				do
+				{
+					result = 10u*result + (cp - digit0);
+					i += 1;
+				} while i < strLength and (cp = str.getCodepoint(i)) >= digit0 and cp <= digit9;
+			}
+			catch OverflowError
+			{
+				break;
+			}
+
+			while i < strLength and str.isWhiteSpace(i):
+				i += 1;
+
+			if i != strLength:
+				break;
+			
+			return result;
+		};
+
+		return null;
+	}
+
+	public const min = 0u;
+	public const max = __named_const(uint: max);
+
+	operator ==(a, b)  __extern("aves_UInt_opEquals");
+	operator <=>(a, b) __extern("aves_UInt_opCompare");
+	operator <<(a, b)  __extern("aves_UInt_opShiftLeft");
+	operator >>(a, b)  __extern("aves_UInt_opShiftRight");
+	operator +(a, b)   __extern("aves_UInt_opAdd");
+	operator -(a, b)   __extern("aves_UInt_opSubtract");
+	operator |(a, b)   __extern("aves_UInt_opOr");
+	operator ^(a, b)   __extern("aves_UInt_opXor");
+	operator *(a, b)   __extern("aves_UInt_opMultiply");
+	operator /(a, b)   __extern("aves_UInt_opDivide");
+	operator %(a, b)   __extern("aves_UInt_opModulo");
+	operator &(a, b)   __extern("aves_UInt_opAnd");
+	operator **(a, b)  __extern("aves_UInt_opPower");
+	operator +(a)      __extern("aves_UInt_opPlus");
+	operator ~(a)      __extern("aves_UInt_opNot");
+}

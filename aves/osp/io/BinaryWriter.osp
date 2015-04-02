@@ -1,0 +1,411 @@
+use namespace aves;
+
+namespace io;
+
+/// Summary: Writes data in various primitive formats to a stream.
+public inheritable BinaryWriter
+{
+	/// Summary: Creates a new {BinaryWriter} from the specified stream.
+	///          The encoding is set to UTF-8, and {bigEndian} and {keepOpen}
+	///          are both set to false.
+	/// Param stream: The stream to write to.
+	/// Throws ArgumentNullError:
+	///          {stream} is null.
+	/// Throws TypeError:
+	///          {stream} is not an {io.Stream}.
+	/// Throws ArgumentError:
+	///          {stream} is not writable.
+	public new(stream)
+	{
+		new this(stream, Encoding.utf8, false, false);
+	}
+	/// Summary: Creates a new {BinaryWriter} from the specified stream and
+	///          with the specified encoding. {bigEndian} and {keepOpen} are
+	///          both set to false.
+	/// Param stream:   The stream to write to.
+	/// Param encoding: The character encoding of the data in the stream.
+	/// Throws ArgumentNullError:
+	///          {stream} or {encoding} is null.
+	/// Throws TypeError:
+	///          {stream} is not an {io.Stream}.
+	///
+	///          {encoding} is not an {aves.Encoding}.
+	/// Throws ArgumentError:
+	///          {stream} is not writable.
+	public new(stream, encoding)
+	{
+		new this(stream, encoding, false, false);
+	}
+	/// Summary: Creates a new {BinaryWriter} from the specified stream and
+	///          with the specified encoding and endianness. {keepOpen} is
+	///          set to false.
+	/// Param stream:    The stream to write to.
+	/// Param encoding:  The character encoding of the data in the stream.
+	/// Param bigEndian: True if the data is in the big-endian byte order;
+	///                  false for little-endian.
+	/// Throws ArgumentNullError:
+	///          {stream} or {encoding} is null.
+	/// Throws TypeError:
+	///          {stream} is not an {io.Stream}.
+	///
+	///          {encoding} is not an {aves.Encoding}.
+	/// Throws ArgumentError:
+	///          {stream} is not writable.
+	public new(stream, encoding, bigEndian)
+	{
+		new this(stream, encoding, false, false);
+	}
+	/// Summary: Creates a new {BinaryWriter} from the specified stream and
+	///          with the specified encoding and endianness. The stream is
+	///          optionally closed when the writer is closed.
+	/// Param stream:    The stream to write to.
+	/// Param encoding:  The character encoding of the data in the stream.
+	/// Param bigEndian: True if the data is in the big-endian byte order;
+	///                  false for little-endian.
+	/// Param keepOpen:  True to leave {stream} open when {close} is called
+	///                  on the binary writer; false to close it.
+	/// Throws ArgumentNullError:
+	///          {stream} or {encoding} is null.
+	/// Throws TypeError:
+	///          {stream} is not an {io.Stream}.
+	///
+	///          {encoding} is not an {aves.Encoding}.
+	/// Throws ArgumentError:
+	///          {stream} is not writable.
+	public new(stream, encoding, bigEndian, keepOpen)
+	{
+		if stream is null:
+			throw new ArgumentNullError("stream");
+		if stream is not Stream:
+			throw new TypeError("stream must be an io.Stream instance.");
+		if not stream.canWrite:
+			throw new ArgumentError("The stream must be writable.", "stream");
+		if encoding is null:
+			throw new ArgumentNullError("encoding");
+		if encoding is not Encoding:
+			throw new TypeError("encoding must be an aves.Encoding instance.");
+
+		_stream = stream;
+		_encoding = encoding;
+		_bigEndian = bool(bigEndian);
+		_keepOpen = bool(keepOpen);
+	}
+
+	private _stream;
+	/// Summary: Gets a reference to the stream that is being written to.
+	public get stream = _stream;
+
+	private _encoding;
+	/// Summary: Gets the character encoding that the binary writer uses.
+	public get encoding = _encoding;
+
+	private _bigEndian;
+	/// Summary: Gets a value indicating whether the stream data is written
+	///          in the big-endian byte order. If false, the byte order is
+	///          little-endian.
+	public get bigEndian = _bigEndian;
+
+	private _keepOpen;
+	/// Summary: Determines whether the binary writer closes the stream
+	///          when the {close} method is called. If true, the stream
+	///          will be kept open.
+	public get keepOpen = _keepOpen;
+	/// Summary: Sets a value that determines whether the binary writer
+	///          closes the stream when the {close} method is called. If
+	///          true, the stream will be kept open.
+	public set keepOpen { _keepOpen = bool(value); }
+
+	/// Summary: Gets the current position of the the stream’s cursor.
+	public get position = _stream.position;
+	/// Summary: Sets the position of the stream’s cursor.
+	public set position { _stream.position = value; }
+
+	// Buffer is somewhat larger than needed for numeric values (8) so
+	// that we don't allocate new buffers every time a string is read,
+	// unless the string is longish.
+	private const bufferSize = 512;
+	private _buffer = new Buffer(bufferSize);
+	/// Summary: Gets a reference to the internal buffer used by the writer.
+	protected get buffer = _buffer;
+
+	/// Summary: If {keepOpen} is false, closes the underlying stream.
+	///          Otherwise, does nothing.
+	public overridable close()
+	{
+		try
+		{
+			if not keepOpen:
+				_stream.close();
+		}
+		finally
+		{
+			_stream = null;
+		}
+	}
+
+	/// Summary: Writes a boolean value, and advances the stream by 1 byte.
+	/// Param value: The value to write.
+	/// Remarks: This method writes the byte value 0 if {value} is false,
+	///          or 1 if it is true.
+	public overridable writeBoolean(value)
+	{
+		if _stream is null:
+			errorHelpers.writerClosed();
+
+		_stream.writeByte(value ? 1 : 0);
+	}
+
+	/// Summary: Writes an unsigned byte, and advances the stream by 1 byte.
+	///          The value written is in the range 0 to 255, inclusive.
+	/// Param value: The value to write. (Int, UInt or Real)
+	/// Throws TypeError:
+	///          {value} could not be converted to an Int.
+	public overridable writeByte(value)
+	{
+		if _stream is null:
+			errorHelpers.writerClosed();
+
+		value = int(value);
+		_buffer.writeByte(0, value);
+		write(1);
+	}
+	/// Summary: Writes a signed byte, and advances the stream by 1 byte.
+	///          The value written is in the range -128 to 127, inclusive.
+	/// Param value: The value to write. (Int, UInt or Real)
+	/// Throws TypeError:
+	///          {value} could not be converted to an Int.
+	public overridable writeSByte(value)
+	{
+		if _stream is null:
+			errorHelpers.writerClosed();
+
+		value = int(value);
+		_buffer.writeSByte(0, value);
+		write(1);
+	}
+
+	/// Summary: Writes a signed 16-bit integer, and advances the stream
+	///          by 2 bytes. The value written is in the range -32,768 to
+	///          32,767, inclusive.
+	/// Param value: The value to write. (Int, UInt or Real)
+	/// Throws TypeError:
+	///          {value} could not be converted to an Int.
+	public overridable writeInt16(value)
+	{
+		if _stream is null:
+			errorHelpers.writerClosed();
+
+		value = int(value);
+		_buffer.writeInt16(0, value);
+		if _bigEndian != Env.bigEndian:
+			binHelpers.reverse2(_buffer);
+		write(2);
+	}
+	/// Summary: Writes a signed 32-bit integer, and advances the stream
+	///          by 4 bytes. The value written is in the range -2,147,483,648
+	///          to 2,147,483,647, inclusive.
+	/// Param value: The value to write. (Int, UInt or Real)
+	/// Throws TypeError:
+	///          {value} could not be converted to an Int.
+	public overridable writeInt32(value)
+	{
+		if _stream is null:
+			errorHelpers.writerClosed();
+
+		value = int(value);
+		_buffer.writeInt32(0, value);
+		if _bigEndian != Env.bigEndian:
+			binHelpers.reverse4(_buffer);
+		write(4);
+	}
+	/// Summary: Writes a signed 64-bit integer, and advances the stream
+	///          by 8 bytes. The value written is in the range
+	///          -9,223,372,036,854,775,808 to 9,223,372,036,854,775,807,
+	///          inclusive.
+	/// Param value: The value to write. (Int, UInt or Real)
+	/// Throws TypeError:
+	///          {value} could not be converted to an Int.
+	public overridable writeInt64(value)
+	{
+		if _stream is null:
+			errorHelpers.writerClosed();
+
+		value = int(value);
+		_buffer.writeInt64(0, value);
+		if _bigEndian != Env.bigEndian:
+			binHelpers.reverse8(_buffer);
+		write(8);
+	}
+
+	/// Summary: Writes an integer value 7 bits at a time. The stream is
+	///          advanced by at least one and at most five bytes. See the
+	///          remarks for more details on the encoding.
+	/// Param value: The value to write. (Int, UInt or Real)
+	/// Remarks: The value is written 7 bits at a time, and the most significant
+	///          bit of each byte is set if there is another byte in the value.
+	///          For example, here is how the value 28,472 would be encoded:
+	///
+	///          In binary, 28,472 is `110111100111000`. The seven first (least
+	///          significant) bits are `0111000`, so those will become part of
+	///          the first output byte. Since 28,472 is larger than 127 (0x7F),
+	///          the largest value representable in 7 bits, the most significant
+	///          bit is set. The first output byte becomes `10111000`. This is
+	///          repeated for the next seven bits, `1011110`, and then the one
+	///          remaining bit, `1`. The bytes written, in the order they are
+	///          written, will be:
+	///
+	///          `10111000 11011110 00000001`
+	/// Throws TypeError:
+	///          {value} could not be converted to an Int.
+	public writePackedInt(value)
+	{
+		if _stream is null:
+			errorHelpers.writerClosed();
+
+		// Use UInt so that shifting right will not
+		// perform sign extension
+		value = int(value).asUInt();
+
+		while value >= 0x80
+		{
+			_stream.writeByte(value & 0x7f | 0x80);
+			value >>= 7;
+		}
+		_stream.writeByte(value);
+	}
+
+	/// Summary: Writes an unsigned 16-bit integer, and advances the stream
+	///          by 2 bytes. The value written is in the range 0 to 65,535,
+	///          inclusive.
+	/// Param value: The value to write. (Int, UInt or Real)
+	/// Throws TypeError:
+	///          {value} could not be converted to a UInt.
+	public overridable writeUInt16(value)
+	{
+		if _stream is null:
+			errorHelpers.writerClosed();
+
+		value = int(value);
+		_buffer.writeUInt16(0, value);
+		if _bigEndian != Env.bigEndian:
+			binHelpers.reverse2(_buffer);
+		write(2);
+	}
+	/// Summary: Writes an unsigned 32-bit integer, and advances the stream
+	///          by 4 bytes. The value written is in the range 0 to
+	///          4,294,967,295, inclusive.
+	/// Param value: The value to write. (Int, UInt or Real)
+	/// Throws TypeError:
+	///          {value} could not be converted to a UInt.
+	public overridable writeUInt32(value)
+	{
+		if _stream is null:
+			errorHelpers.writerClosed();
+
+		value = int(value);
+		_buffer.writeUInt32(0, value);
+		if _bigEndian != Env.bigEndian:
+			binHelpers.reverse4(_buffer);
+		write(4);
+	}
+	/// Summary: Writes an unsigned 64-bit integer, and advances the stream
+	///          by 8 bytes. The value written is in the range 0 to
+	///          18,446,744,073,709,551,615, inclusive.
+	/// Param value: The value to write. (Int, UInt or Real)
+	/// Throws TypeError:
+	///          {value} could not be converted to a UInt.
+	public overridable writeUInt64(value)
+	{
+		if _stream is null:
+			errorHelpers.writerClosed();
+
+		value = int(value);
+		_buffer.writeUInt64(0, value);
+		if _bigEndian != Env.bigEndian:
+			binHelpers.reverse8(_buffer);
+		write(8);
+	}
+
+	/// Summary: Writes a single-precision (32-bit) floating-point number,
+	///          and advances the stream by 4 bytes.
+	/// Param value: The value to write. (Int, UInt or Real)
+	/// Remarks: The value will be converted first to a Real and then to a
+	///          single-precision floating-point number. This conversion may
+	///          result in a loss of precision, as Real is double-precision.
+	///          However, “not a number” (NaN) values as well as positive
+	///          and negative infinity are guaranteed to be preserved.
+	/// Throws TypeError:
+	///          {value} could not be converted to a Real.
+	public overridable writeFloat32(value)
+	{
+		if _stream is null:
+			errorHelpers.writerClosed();
+
+		value = real(value);
+		_buffer.writeFloat32(0, value);
+		if _bigEndian != Env.bigEndian:
+			binHelpers.reverse4(_buffer);
+		write(4);
+	}
+	/// Summary: Writes a double-precision (64-bit) floating-point number,
+	///          and advances the stream by 8 bytes.
+	/// Param value: The value to write. (Int, UInt or Real)
+	/// Throws TypeError:
+	///          {value} could not be converted to a Real.
+	public overridable writeFloat64(value)
+	{
+		if _stream is null:
+			errorHelpers.writerClosed();
+
+		value = real(value);
+		_buffer.writeFloat64(0, value);
+		if _bigEndian != Env.bigEndian:
+			binHelpers.reverse8(_buffer);
+		write(8);
+	}
+
+	/// Summary: Writes a length-prefixed string using the encoding of the
+	///          binary writer. The stream is advanced by the number of
+	///          bytes written.
+	/// Param str: The string to write.
+	/// Remarsk: The length prefix contains the number of bytes required for
+	///          the string in the encoding of the binary writer. The length
+	///          is in the same 7-bit encoding format that is used by
+	///          {writePackedInt}.
+	public overridable writeString(str)
+	{
+		if _stream is null:
+			errorHelpers.writerClosed();
+
+		str = string(str);
+		var byteCount = _encoding.getByteCount(str);
+		writePackedInt(byteCount);
+
+		var buf = byteCount <= bufferSize ?
+			_buffer :
+			new Buffer(byteCount);
+
+		_encoding.getBytes(str, buf, 0);
+
+		_stream.write(buf, 0, byteCount);
+	}
+
+	private write(size)
+	{
+		_stream.write(_buffer, 0, size);
+	}
+
+	/// Summary: Moves the underlying stream’s cursor to a new position.
+	/// Param amount: The distance (in number of bytes) to seek, relative
+	///               to the seek origin. (Int, UInt or Real)
+	/// Param origin: A {SeekOrigin} that determines which position in the
+	///               stream the seek amount is relative to.
+	/// Returns: The new position of the stream cursor after seeking,
+	///          as an Int.
+	/// Remarks: This method is equivalent to calling `seek` on {stream}
+	///          with the same arguments.
+	public overridable seek(amount, origin)
+	{
+		return _stream.seek(amount, origin);
+	}
+}

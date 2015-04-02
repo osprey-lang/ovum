@@ -1,0 +1,296 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+	<Type Name="Value_S">
+		<DisplayString Condition="type == 0">&lt;null&gt;</DisplayString>
+		<DisplayString Condition="(type->flags &amp; TypeFlags::PRIMITIVE) == TypeFlags::PRIMITIVE">{{type={&amp;type->fullName->firstChar,sub} int={integer} uint={uinteger} real={real}}}</DisplayString>
+		<DisplayString>{{type={&amp;type->fullName->firstChar,sub} instance={(void*)instance,p}}}</DisplayString>
+		<Expand>
+			<Item Name="[type]" Condition="type != 0">type</Item>
+			<Item Name="[int val]" Condition="type != 0 &amp;&amp; (type->flags &amp; TypeFlags::PRIMITIVE) == TypeFlags::PRIMITIVE">integer</Item>
+			<Item Name="[uint val]" Condition="type != 0 &amp;&amp; (type->flags &amp; TypeFlags::PRIMITIVE) == TypeFlags::PRIMITIVE">uinteger</Item>
+			<Item Name="[real val]" Condition="type != 0 &amp;&amp; (type->flags &amp; TypeFlags::PRIMITIVE) == TypeFlags::PRIMITIVE">real</Item>
+			<Synthetic Name="[string]" Condition="type == VM::vm->types.String">
+				<DisplayString>{common.string}</DisplayString>
+				<Expand>
+					<ExpandedItem>common.string</ExpandedItem>
+				</Expand>
+			</Synthetic>
+			<Synthetic Name="[list]" Condition="type == VM::vm->types.List">
+				<DisplayString>{common.list}</DisplayString>
+				<Expand>
+					<ExpandedItem>common.list</ExpandedItem>
+				</Expand>
+			</Synthetic>
+			<Synthetic Name="[hash]" Condition="type == VM::vm->types.Hash">
+				<DisplayString>{common.hash}</DisplayString>
+				<Expand>
+					<ExpandedItem>common.hash</ExpandedItem>
+				</Expand>
+			</Synthetic>
+			<Synthetic Name="[method]" Condition="type == VM::vm->types.Method">
+				<DisplayString>{common.method}</DisplayString>
+				<Expand>
+					<ExpandedItem>common.method</ExpandedItem>
+				</Expand>
+			</Synthetic>
+			<!--
+				ErrorInst is excluded because, most of the time, you don't actually throw an aves.Error;
+				you throw a type derived from it
+			-->
+			<Item Name="[instance]" Condition="type != 0 &amp;&amp; (type->flags &amp; TypeFlags::PRIMITIVE) != TypeFlags::PRIMITIVE">(void*)instance,p</Item>
+			<!--<Synthetic Name="[field names]" Condition="type != 0 &amp;&amp; (type->flags &amp; TypeFlags::PRIMITIVE) != TypeFlags::PRIMITIVE">
+				<DisplayString>Names of instance fields (excluding base types)</DisplayString>
+				<Expand>
+					<IndexListItems>
+						<Size>type->fieldCount</Size>
+						<ValueNode Condition="(type->members.entries[$i].value->flags &amp; MemberFlags::KIND) == MemberFlags::FIELD &amp;&amp;
+							(type->members.entries[$i].value->flags &amp; MemberFlags::INSTANCE) == MemberFlags::INSTANCE">
+							&amp;type->members.entries[$i].key->firstChar,sub
+						</ValueNode>
+					</IndexListItems>
+				</Expand>
+			</Synthetic>
+			<Synthetic Name="[field values]" Condition="type != 0 &amp;&amp; (type->flags &amp; TypeFlags::PRIMITIVE) != TypeFlags::PRIMITIVE">
+				<DisplayString>Values of instance fields (excluding base types)</DisplayString>
+				<Expand>
+					<IndexListItems>
+						<Size>type->fieldCount</Size>
+						<ValueNode Condition="(type->members.entries[$i].value->flags &amp; MemberFlags::KIND) == MemberFlags::FIELD &amp;&amp;
+							(type->members.entries[$i].value->flags &amp; MemberFlags::INSTANCE) == MemberFlags::INSTANCE">
+							(Value*)((char*)instance + ((Field*)type->members.entries[$i].value)->offset)
+						</ValueNode>
+					</IndexListItems>
+				</Expand>
+			</Synthetic>-->
+		</Expand>
+	</Type>
+
+	<Type Name="String_S">
+		<DisplayString>{&amp;firstChar,su}</DisplayString>
+		<StringView>&amp;firstChar,su</StringView>
+	</Type>
+
+	<Type Name="ovum::StringTable">
+		<DisplayString>{{size={count - freeCount}}}</DisplayString>
+		<Expand>
+			<Item Name="[size]">count - freeCount</Item>
+			<Item Name="[capacity]">capacity</Item>
+			<ArrayItems>
+				<Size>capacity</Size>
+				<ValuePointer>entries</ValuePointer>
+			</ArrayItems>
+		</Expand>
+	</Type>
+
+	<Type Name="ovum::StringTable::Entry">
+		<DisplayString>{{{value}}}</DisplayString>
+	</Type>
+
+	<Type Name="ovum::StringHash&lt;*&gt;">
+		<DisplayString>{{size={count}, type={"$T1",s8b}}}</DisplayString>
+		<Expand>
+			<Item Name="[size]">count</Item>
+			<Item Name="[capacity]">capacity</Item>
+			<Synthetic Name="[entries]" Condition="count > 0">
+				<DisplayString>{{size={count}}}</DisplayString>
+				<Expand>
+					<ArrayItems>
+						<Size>count</Size>
+						<ValuePointer>entries</ValuePointer>
+					</ArrayItems>
+				</Expand>
+			</Synthetic>
+			<Synthetic Name="[buckets]" Condition="capacity > 0">
+				<DisplayString>{{size={capacity}}}</DisplayString>
+				<Expand>
+					<ArrayItems>
+						<Size>capacity</Size>
+						<ValuePointer>buckets</ValuePointer>
+					</ArrayItems>
+				</Expand>
+			</Synthetic>
+		</Expand>
+	</Type>
+
+	<Type Name="ovum::StringHashEntry&lt;*&gt;">
+		<DisplayString>[{&amp;key->firstChar,su} : {value}]</DisplayString>
+		<Expand>
+			<Item Name="[key]">key</Item>
+			<Item Name="[value]">value</Item>
+		</Expand>
+	</Type>
+
+	<Type Name="ovum::Member">
+		<DisplayString Condition="(flags &amp; ovum::MemberFlags::KIND) == ovum::MemberFlags::METHOD">[Method: {&amp;name->firstChar,sub}]</DisplayString>
+		<DisplayString Condition="(flags &amp; ovum::MemberFlags::KIND) == ovum::MemberFlags::FIELD">[Field: {&amp;name->firstChar,sub}]</DisplayString>
+		<DisplayString Condition="(flags &amp; ovum::MemberFlags::KIND) == ovum::MemberFlags::PROPERTY">[Property: {&amp;name->firstChar,sub}]</DisplayString>
+		<DisplayString>[???: {&amp;name->firstChar,sub}]</DisplayString>
+		<Expand>
+			<ExpandedItem Condition="(flags &amp; ovum::MemberFlags::KIND) == ovum::MemberFlags::METHOD">(Method*)this</ExpandedItem>
+			<ExpandedItem Condition="(flags &amp; ovum::MemberFlags::KIND) == ovum::MemberFlags::FIELD">(Field*)this</ExpandedItem>
+			<ExpandedItem Condition="(flags &amp; ovum::MemberFlags::KIND) == ovum::MemberFlags::PROPERTY">(Property*)this</ExpandedItem>
+		</Expand>
+	</Type>
+
+	<Type Name="ovum::Type">
+		<DisplayString Condition="baseType == 0">{{name={&amp;fullName->firstChar,sub} members={members.count} module={module}}}</DisplayString>
+		<DisplayString>{{name={&amp;fullName->firstChar,sub} baseType={&amp;baseType->fullName->firstChar,sub} members={members.count} module={module}}}</DisplayString>
+	</Type>
+
+	<Type Name="ovum::Module">
+		<DisplayString>[{&amp;name->firstChar,sub}, {version.major}.{version.minor}.{version.build}.{version.revision}]</DisplayString>
+	</Type>
+
+	<Type Name="ModuleVersion_S">
+		<DisplayString>[{major}.{minor}.{build}.{revision}]</DisplayString>
+	</Type>
+
+	<Type Name="ovum::ModuleMember">
+		<DisplayString Condition="(flags &amp; ovum::ModuleMemberFlags::KIND) == ovum::ModuleMemberFlags::TYPE">[Type: {&amp;type->fullName->firstChar,sub}]</DisplayString>
+		<DisplayString Condition="(flags &amp; ovum::ModuleMemberFlags::KIND) == ovum::ModuleMemberFlags::FUNCTION">[Function: {&amp;function->name->firstChar,sub}]</DisplayString>
+		<DisplayString Condition="(flags &amp; ovum::ModuleMemberFlags::KIND) == ovum::ModuleMemberFlags::CONSTANT">[Constant: {constant}]</DisplayString>
+		<DisplayString>[???]</DisplayString>
+		<Expand>
+			<ExpandedItem Condition="(flags &amp; ovum::ModuleMemberFlags::KIND) == ovum::ModuleMemberFlags::TYPE">type</ExpandedItem>
+			<ExpandedItem Condition="(flags &amp; ovum::ModuleMemberFlags::KIND) == ovum::ModuleMemberFlags::FUNCTION">function</ExpandedItem>
+			<ExpandedItem Condition="(flags &amp; ovum::ModuleMemberFlags::KIND) == ovum::ModuleMemberFlags::CONSTANT">constant</ExpandedItem>
+		</Expand>
+	</Type>
+
+	<Type Name="ovum::MemberTable&lt;*&gt;">
+		<DisplayString>{{size={length} type={"$T1",s8b}}}</DisplayString>
+		<Expand>
+			<Item Name="[size]">length</Item>
+			<Item Name="[capacity]">capacity</Item>
+			<ArrayItems>
+				<Size>length</Size>
+				<ValuePointer>entries</ValuePointer>
+			</ArrayItems>
+		</Expand>
+	</Type>
+
+	<Type Name="ovum::StackFrame">
+		<DisplayString>{{stackCount={stackCount} argc={argc} method={method}}}</DisplayString>
+		<Expand>
+			<Synthetic Name="[eval stack]" Condition="stackCount == 0">
+				<DisplayString>(empty)</DisplayString>
+			</Synthetic>
+			<Synthetic Name="[eval stack]" Condition="stackCount &gt; 0">
+				<DisplayString>{{height={stackCount}}}</DisplayString>
+				<Expand>
+					<ArrayItems>
+						<Size>stackCount</Size>
+						<ValuePointer>evalStack</ValuePointer>
+					</ArrayItems>
+				</Expand>
+			</Synthetic>
+			<Synthetic Name="[arguments]">
+				<DisplayString>{{count={argc}}}</DisplayString>
+				<Expand>
+					<ArrayItems>
+						<Size>argc</Size>
+						<ValuePointer>reinterpret_cast&lt;::Value_S*&gt;(&amp;stackCount) - method->paramCount - ((int)(method->flags &amp; MethodFlags::INSTANCE) >> 3)</ValuePointer>
+					</ArrayItems>
+				</Expand>
+			</Synthetic>
+			<Synthetic Name="[locals]" Condition="method->locals &gt; 0">
+				<DisplayString>{{count={method->locals}}}</DisplayString>
+				<Expand>
+					<ArrayItems>
+						<Size>method->locals</Size>
+						<ValuePointer>evalStack - method->locals</ValuePointer>
+					</ArrayItems>
+				</Expand>
+			</Synthetic>
+			<Synthetic Name="[method]" Condition="method->declType == 0">
+				<DisplayString>{&amp;method->group->name->firstChar,sub}</DisplayString>
+				<Expand>
+					<ExpandedItem>method</ExpandedItem>
+				</Expand>
+			</Synthetic>
+			<Synthetic Name="[method]" Condition="method->declType != 0">
+				<DisplayString>{&amp;method->group->name->firstChar,sub} in {&amp;method->declType->fullName->firstChar,sub}</DisplayString>
+				<Expand>
+					<ExpandedItem>method</ExpandedItem>
+				</Expand>
+			</Synthetic>
+			<Item Name="[type]" Condition="method->declType != 0">method->declType</Item>
+		</Expand>
+	</Type>
+
+	<Type Name="ovum::GCObject">
+		<DisplayString>{{size={size} mark={(int)(flags &amp; GCOFlags::MARK)} type={&amp;type->fullName->firstChar,sub}}}</DisplayString>
+		<Expand>
+			<Item Name="[size]">size</Item>
+			<Item Name="[type]">type</Item>
+			<Item Name="[mark]">(int)(flags &amp; GCOFlags::MARK)</Item>
+			<Item Name="[flags]">flags</Item>
+			<Item Name="[pinCount]">pinCount</Item>
+			<Synthetic Name="[chain]">
+				<DisplayString>Other GCObjects in this chain</DisplayString>
+				<Expand>
+					<LinkedListItems>
+						<HeadPointer>next</HeadPointer>
+						<NextPointer>next</NextPointer>
+						<ValueNode>this</ValueNode>
+					</LinkedListItems>
+				</Expand>
+			</Synthetic>
+		</Expand>
+	</Type>
+
+	<Type Name="ovum::instr::Instruction">
+		<DisplayString Condition="(flags &amp; ovum::instr::InstrFlags::BRANCH) != ovum::instr::InstrFlags::NONE">{{{opcode}, target={((Branch*)this)->target}}}</DisplayString>
+		<DisplayString Condition="(flags &amp; (ovum::instr::InstrFlags::LOAD_LOCAL | ovum::instr::InstrFlags::STORE_LOCAL)) != ovum::instr::InstrFlags::NONE">{{{opcode}, source={((ovum::instr::MoveLocal*)this)-&gt;source}, target={((ovum::instr::MoveLocal*)this)-&gt;target}}}</DisplayString>
+		<DisplayString>{{{opcode}}}</DisplayString>
+	</Type>
+
+	<Type Name="ovum::instr::MethodBuilder::InstrDesc">
+		<DisplayString Condition="removed">{{instr={instr}, removed}}</DisplayString>
+		<DisplayString Condition="stackHeight == -1">{{instr={instr}, unvisited}}</DisplayString>
+		<DisplayString>{{instr={instr}, stackHeight={stackHeight}}}</DisplayString>
+	</Type>
+
+	<Type Name="ListInst_S">
+		<DisplayString>{{List length={length} capacity={capacity}}}</DisplayString>
+		<Expand>
+			<Item Name="[length]">length</Item>
+			<Item Name="[capacity]">capacity</Item>
+			<Synthetic Name="[values]">
+				<DisplayString>Expand to view list values</DisplayString>
+				<Expand>
+					<ArrayItems Condition="length &gt; 0">
+						<Size>length</Size>
+						<ValuePointer>values</ValuePointer>
+					</ArrayItems>
+				</Expand>
+			</Synthetic>
+		</Expand>
+	</Type>
+
+	<Type Name="HashInst_S">
+		<DisplayString>{{Hash length={count - freeCount}, capacity={capacity}}}</DisplayString>
+		<Expand>
+			<Item Name="[length]">count - freeCount</Item>
+			<Item Name="[capacity]">capacity</Item>
+			<Synthetic Name="[buckets]">
+				<DisplayString>Expand to view hash buckets</DisplayString>
+				<Expand>
+					<ArrayItems Condition="capacity &gt; 0">
+						<Size>capacity</Size>
+						<ValuePointer>buckets</ValuePointer>
+					</ArrayItems>
+				</Expand>
+			</Synthetic>
+			<Synthetic Name="[entries]">
+				<DisplayString>Expand to view hash entries</DisplayString>
+				<Expand>
+					<ArrayItems Condition="count &gt; 0">
+						<Size>count</Size>
+						<ValuePointer>entries</ValuePointer>
+					</ArrayItems>
+				</Expand>
+			</Synthetic>
+		</Expand>
+	</Type>
+</AutoVisualizer>

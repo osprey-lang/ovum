@@ -1,0 +1,40 @@
+use testing.unit;
+use namespace aves;
+use namespace aves.reflection; // for Module
+use namespace testing.unit;
+
+namespace aves.tests;
+
+private function main(args)
+{
+	var module = Module.getCurrentModule();
+	if args.isEmpty
+	{
+		// Run all tests
+		TestFixture.runAll(module);
+	}
+	else
+	{
+		var testFixtureType = typeof(TestFixture);
+		// args contains a list of test fixture class names,
+		// without the "aves.tests." prefix.
+		for arg in args
+		{
+			var className = "aves.tests." :: arg;
+			var type = module.getType(className);
+			if type is null
+			{
+				Console.writeLineErr("Test class not found: " :: className);
+				next;
+			}
+			if not type.inheritsFrom(testFixtureType)
+			{
+				Console.writeLineErr("Class is not a testing.unit.TestFixture: " :: className);
+				next;
+			}
+
+			var instance = type.createInstance(null);
+			instance.run();
+		}
+	}
+}

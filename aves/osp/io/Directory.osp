@@ -1,0 +1,20 @@
+use namespace aves;
+
+namespace io;
+
+public static class Directory
+{
+	/// Summary: Gets the path of the current working directory.
+	/// Returns: The current working directory, as a string.
+	public static get currentDirectory = Env.currentDirectory;
+
+	public static exists(pathName)
+	{
+		if pathName is null:
+			throw new ArgumentNullError("pathName");
+
+		return existsInternal(string(pathName));
+	}
+	private static existsInternal(pathName)
+		__extern("io_Directory_existsInternal");
+}

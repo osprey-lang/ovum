@@ -1,0 +1,13 @@
+namespace aves.reflection.helpers;
+
+// Extracts the last component in a dotted path, such as "C" from "a.b.C"
+private function getLastComponent(fullName)
+{
+	fullName = string(fullName);
+
+	var i = fullName.lastIndexOf(".");
+	if i is null:
+		return fullName;
+	else
+		return fullName.substr(i + 1);
+}

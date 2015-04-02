@@ -1,0 +1,50 @@
+namespace aves;
+
+public abstract class Decoder
+{
+	public abstract getCharCount(buf, offset, count, flush);
+
+	public overridable getChars(buf, strBuf, flush)
+	{
+		buf = Buffer.fromValue(buf);
+		flush = bool(flush);
+
+		return getChars(buf, 0, buf.size, strBuf, flush);
+	}
+	public abstract getChars(buf, offset, count, strBuf, flush);
+
+	public overridable getString(buf, flush)
+	{
+		buf = Buffer.fromValue(buf);
+		flush = bool(flush);
+
+		return getString(buf, 0, buf.size, flush);
+	}
+	public overridable getString(buf, offset, count, flush)
+	{
+		buf = Buffer.fromValue(buf);
+		offset = int(offset);
+		count = int(count);
+		flush = bool(flush);
+
+		buf.verifyRange(offset, count);
+
+		// getCharCount requires iterating over the buffer, but without
+		// an initial capacity, we may have to resize the string buffer
+		// a lot, if there is a particularly high number of characters
+		// to decode. As a tradeoff, we only call getCharCount if the
+		// size of the buffer is > 16k; anything smaller than that and
+		// the string buffer will manage just fine.
+		var sb;
+		if buf.size > 16k:
+			sb = new StringBuffer(getCharCount(buf, offset, count, flush));
+		else:
+			sb = new StringBuffer();
+
+		getChars(buf, offset, count, sb, flush);
+
+		return sb.toString();
+	}
+
+	public abstract reset();
+}

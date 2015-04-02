@@ -1,0 +1,18 @@
+use namespace aves;
+
+namespace io.errorHelpers;
+
+private function endOfFile()
+{
+	throw new EndOfFileError();
+}
+
+private function readerClosed()
+{
+	throw new InvalidStateError("The reader is closed.");
+}
+
+private function writerClosed()
+{
+	throw new InvalidStateError("The writer is closed.");
+}

@@ -1,0 +1,465 @@
+use namespace aves;
+
+namespace io;
+
+/// Summary: Represents a general interface for interacting with
+///          sequences of bytes. Streams can be used for reading
+///          from or writing to files, network connections,
+///          in-memory buffers, and other locations.
+/// Remarks: Due to the abstractness and general-purpose nature
+///          of this class, it is impossible to predict exactly
+///          what errors might be thrown by implementations of it.
+///
+///          It is recommended that concrete implementations make use
+///          of {io.IOError} and derivatives for error conditions that
+///          occur during regular stream interaction, but this is not
+///          a strict requirement. The documentation for each abstract
+///          and overridable method contains a base set of error types
+///          that should always be thrown for the error conditions as
+///          described.
+///
+///          All stream classes support a `close` method, which should
+///          always be called when the stream is no longer needed.
+///          This will ensure that file handles, network connections
+///          and so on are properly closed. To ensure proper cleanup,
+///          consider using the `with` keyword, as in this example:
+///
+///          ``` \
+///          with stream = getStream(...) \
+///          { \
+///              // ... use stream ... \
+///          } \
+///          ```
+///
+///          Once a stream has been closed, it is no longer possible
+///          to read from, write to or seek within it. Attempting to do
+///          so throws an {InvalidStateError}.
+///
+///          When a method takes a buffer as an argument, implementations
+///          should use {Buffer.fromValue} to ensure the argument is indeed
+///          a buffer. This method extracts the {Buffer} from a {BufferView},
+///          or throws a {TypeError} if the argument is not a {Buffer}
+///          instance. Additionally, {Buffer.verifyRange} should be used to
+///          verify that the offset and count are actually within the buffer.
+///          For example,
+///
+///          ``` \
+///          override readMax(buf, offset, count) { \
+///             buf = Buffer.fromValue(buf); \
+///             offset = int(offset); \
+///             count = int(count); \
+///             buf.verifyRange(offset, count); \
+///             // ... rest of method ... \
+///          } \
+///          ```
+public abstract class Stream
+{
+	public new();
+
+	/// Summary: Determines whether the stream can be read from.
+	/// Returns: True if the stream is readable; otherwise, false.
+	/// Remarks: This property should always return false after
+	///          the stream has been closed.
+	public abstract get canRead;
+	/// Summary: Determines whether the stream can be written to.
+	/// Returns: True if the stream is writable; otherwise, false.
+	/// Remarks: This property should always return false after
+	///          the stream has been closed.
+	public abstract get canWrite;
+	/// Summary: Determines whether it is possible to seek within
+	///          the stream, as well as whether the {length} of the
+	///          stream is known.
+	/// Returns: True if the stream is seekable; otherwise, false.
+	/// Remarks: This property should always return false after
+	///          the stream has been closed.
+	public abstract get canSeek;
+
+	/// Summary: Gets the size (in bytes) of the underlying data
+	///          source.
+	/// Returns: The size of the underlying byte sequence, as an Int.
+	/// Throws InvalidStateError:
+	///          The stream does not support seeking.
+	///
+	///          The stream has been closed.
+	public abstract get length;
+
+	/// Summary: Gets the position of the stream cursor within the
+	///          byte sequence, relative to the beginning of the data.
+	/// Returns: The current position of the stream cursor, as an Int.
+	/// Throws InvalidStateError:
+	///          The stream does not support seeking.
+	///
+	///          The stream has been closed.
+	public abstract get position;
+	/// Summary: Sets the position of the stream cursor, relative to
+	///          the beginning of the data.
+	/// Remarks: Setting this member is equivalent to calling {seek}
+	///          with the value as the offset and {SeekOrigin.start}.
+	/// Throws InvalidStateError:
+	///          The stream does not support seeking.
+	///
+	///          The stream has been closed.
+	/// Throws TypeError:
+	///          The value could not be converted to an Int.
+	public abstract set position;
+
+	/// Summary: Reads a single byte from the stream, and advances the
+	///          cursor by one byte.
+	///          The method blocks until the byte has been read.
+	/// Returns: An Int in the range 0 to 255, inclusive, containing the
+	///          value of the byte that was read, or -1 if the end of the
+	///          stream was reached.
+	public abstract readByte(); // → 0..255 if not EOF, -1 otherwise
+	/// Summary: Reads at most {count} bytes into the specified buffer,
+	///          beginning at the specified offset in the buffer.
+	///          The stream cursor is advanced by {count} bytes.
+	///          The method blocks until the requested bytes have been read.
+	/// Param buf:    A {Buffer} or {BufferView} object into which to
+	///               read data from the stream.
+	/// Param offset: The offset within the buffer at which to start
+	///               placing data from the stream. (Int, UInt or Real)
+	/// Param count:  The maximum number of bytes to read from the
+	///               stream. (Int, UInt or Real)
+	/// Returns: The actual number of bytes read from the stream, as an Int.
+	///          If the end of the stream has been reached, returns 0.
+	/// Remarks: This method may read fewer than the requested number
+	///          of bytes, for example if the end of the stream is
+	///          encountered, or an internal buffer is exhausted.
+	/// Throws InvalidStateError:
+	///          The stream has been closed.
+	/// Throws TypeError:
+	///          {buf} is not a {Buffer} or {BufferView}.
+	///
+	///          {offset} or {count} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {offset} or {count} is less than zero.
+	/// Throws ArgumentNullError:
+	////         {buf} is null.
+	/// Throws ArgumentError:
+	///          {offset} + {count} is greater than the size of {buf}.
+	public abstract readMax(buf, offset, count); // → >0 if not EOF, 0 otherwise
+
+	/// Summary: Reads exactly {count} bytes into a new buffer, advances
+	///          the stream cursor by that many bytes, and returns the buffer.
+	///          The method blocks until the requested bytes have been read.
+	/// Param count: The number of bytes to read. (Int, UInt or Real)
+	/// Returns: A new {Buffer} object containing {count} bytes from
+	///          the stream, starting at offset 0.
+	/// Remarks: The default implementation of this method uses {readInto}
+	///          to populate the buffer.
+	/// Throws InvalidStateError:
+	///          The stream has been closed.
+	///
+	///          The stream does not support reading.
+	/// Throws EndOfFileError:
+	///          The end of the stream was reached before the requested
+	///          number of bytes could be read.
+	/// Throws TypeError:
+	///          {count} could not be converted to an Int.
+	public overridable read(count)
+	{
+		count = int(count);
+
+		var buf = new Buffer(count);
+		readInto(buf, 0, count);
+
+		return buf;
+	}
+
+	/// Summary: Reads exactly {count} bytes into the specified buffer,
+	///          starting at the specified offset within the buffer, and
+	///          advances the stream cursor that many bytes.
+	///          The method blocks until the requested bytes have been read.
+	/// Param buf:    A {Buffer} or {BufferView} object to read bytes into.
+	/// Param offset: The offset within the buffer at which to start placing
+	///               bytes from the stream. (Int, UInt or Real)
+	/// Param count:  The total number of bytes to read. (Int, UInt or Real)
+	/// Remarks: The default implementation of this method calls {readMax}
+	///          one or more times to populate the buffer, until the requested
+	///          number of bytes have been read.
+	/// Throws InvalidStateError:
+	///          The stream has been closed.
+	///
+	///          The stream does not support reading.
+	/// Throws EndOfFileError:
+	///          The end of the stream was reached before the requested
+	///          number of bytes could be read.
+	/// Throws ArgumentRangeError:
+	///          {offset} or {count} is less than zero.
+	/// Throws ArgumentNullError:
+	////         {buf} is null.
+	/// Throws ArgumentError:
+	///          {offset} + {count} is greater than the size of the buffer.
+	/// Throws TypeError:
+	///          {buf} is not a {Buffer} or {BufferView}.
+	///
+	///          {offset} or {count} could not be converted to an Int.
+	public overridable readInto(buf, offset, count)
+	{
+		buf = Buffer.fromValue(buf);
+		offset = int(offset);
+		count = int(count);
+
+		buf.verifyRange(offset, count);
+
+		var bytesRead = 0;
+		do
+		{
+			var c = readMax(buf, offset, count - bytesRead);
+			if c == 0:
+				errorHelpers.endOfFile();
+			bytesRead += c;
+			offset += c;
+		} while bytesRead < count;
+	}
+
+	/// Summary: Writes a single byte to the stream, and advances the
+	///          stream cursor by one byte. The method blocks until
+	///          the data has been written.
+	/// Param value: The byte value to write to the stream. Only the
+	///              lowest-order byte of this argument is used; the
+	///              rest is discarded. (Int, UInt or Real)
+	/// Remarks: The default implementation of this method allocates
+	///          a single-byte buffer, puts {value} in it, and calls
+	///          {write} with that buffer. As a result, it is not very
+	///          efficient. Derived classes are strongly recommended
+	///          to override this method.
+	public overridable writeByte(value)
+	{
+		var buf = new Buffer(1);
+		buf.writeByte(0, value);
+		write(buf, 0, 1);
+	}
+
+	/// Summary: Writes the entire contents of the specified buffer
+	///          to the stream. The method blocks until the data has
+	///          been written.
+	/// Param buf: A {Buffer} or {BufferView} object containing the
+	///            bytes to write to the stream.
+	/// Throws InvalidStateError:
+	///          The stream has been closed.
+	///
+	///          The stream does not support writing.
+	/// Throws ArgumentNullError:
+	////         {buf} is null.
+	/// Throws TypeError:
+	///          {buf} is not a {Buffer} or {BufferView}.
+	public overridable write(buf)
+	{
+		buf = Buffer.fromValue(buf);
+		write(buf, 0, buf.size);
+	}
+	/// Summary: Writes part of the specified buffer to the stream.
+	///          The method blocks until the data has been written.
+	/// Param buf:    A {Buffer} or {BufferView} object containing
+	///               the bytes to write to the stream.
+	/// Param offset: The offset within the buffer that the first
+	///               byte to write to the stream is at.
+	///               (Int, UInt or Real)
+	/// Param count:  The number of bytes to write to the stream.
+	///               (Int, UInt or Real)
+	/// Throws InvalidStateError:
+	///          The stream has been closed.
+	///
+	///          The stream does not support writing.
+	/// Throws ArgumentRangeError:
+	///          {offset} or {count} is less than zero.
+	/// Throws ArgumentNullError:
+	////         {buf} is null.
+	/// Throws ArgumentError:
+	///          {offset} + {count} is greater than the size of {buf}.
+	/// Throws TypeError:
+	///          {buf} is not a {Buffer} or {BufferView}.
+	///
+	///          {offset} or {count} could not be converted to an Int.
+	public abstract write(buf, offset, count);
+
+	/// Summary: Writes the entire byte contents of this stream into
+	///          the specified destination stream.
+	/// Param dest: The stream to write bytes into.
+	/// Returns: The total number of bytes written to {dest}, as an Int.
+	/// Throws ArgumentNullError:
+	///          {dest} is null.
+	/// Throws TypeError:
+	///          {dest} is not a {Stream}.
+	/// Throws ArgumentError:
+	///          {dest} is not writable.
+	public copyTo(dest)
+	{
+		return copy(this, dest);
+	}
+	/// Summary: Writes the entire byte contents of the specified
+	///          source stream into this stream.
+	/// Param source: The stream to read bytes from.
+	/// Returns: The total number of bytes read from {source}, as an Int.
+	/// Throws ArgumentNullError:
+	///          {source} is null.
+	/// Throws TypeError:
+	///          {source} is not a {Stream}.
+	/// Throws ArgumentError:
+	///          {source} is not readable.
+	public copyFrom(source)
+	{
+		return copy(source, this);
+	}
+
+	/// Summary: Flushes any pending write buffers, causing their data
+	///          to be immediately written to the underlying storage.
+	/// Throws InvalidStateError:
+	///          The stream has been closed.
+	///
+	///          The stream does not support writing.
+	public abstract flush();
+
+	/// Summary: Moves the stream cursor to a new position within the
+	///          underlying byte sequence.
+	/// Param amount: The distance (in number of bytes) to seek, relative
+	///               to the seek origin. (Int, UInt or Real)
+	/// Param origin: A {SeekOrigin} that determines which position in the
+	///               stream the seek amount is relative to.
+	/// Returns: The new position of the stream cursor after seeking,
+	///          as an Int.
+	/// Throws InvalidStateError:
+	///          The stream has been closed.
+	///
+	///          The stream does not support seeking.
+	/// Throws ArgumentRangeError:
+	///          {amount} specifies a seek offset that is outside the
+	///          range of the stream, such as before the beginning or
+	///          past the end.
+	/// Throws TypeError:
+	///          {amount} could not be converted to an Int.
+	///
+	///          {origin} is not a {SeekOrigin} value.
+	public abstract seek(amount, origin);
+
+	/// Summary: Closes the stream. This close any file handles, network
+	///          connections and other resources opened by the stream, as
+	///          well as flushing any pending write buffers.
+	/// Remarks: Once a stream has been closed, it can no longer be used
+	///          to read from, write to or seek in. Hence, {canRead}, {canWrite}
+	///          and {canSeek} must return false after a stream has been
+	///          closed.
+	///
+	///          Implementations must ensure that it is safe to call this
+	///          method multiple times.
+	///
+	///          There is no property that can be used to determine whether
+	///          a stream is closed. Rather, consumers of streams should
+	///          use {canRead}, {canWrite} and {canSeek} to determine which
+	///          operations are possible on any given stream.
+	public abstract close();
+
+	/// Summary: Gets an instance of a stream that always returns end-of-file
+	///          and discards any data written to it.
+	public static get void = new VoidStream();
+
+	/// Summary: Reads all the bytes from the source stream, up to the end,
+	///          and writes them to the destination stream.
+	/// Param source: The stream to read bytes from.
+	/// Param dest:   The stream to write bytes to.
+	/// Returns: The total number of bytes copied, as an Int.
+	/// Throws ArgumentNullError:
+	///          {source} or {dest} is null.
+	/// Throws TypeError:
+	///          {source} or {dest} is not a {Stream}.
+	/// Throws ArgumentError:
+	///          {source} is not readable.
+	///
+	///          {dest} is not writable.
+	public static copy(source, dest)
+	{
+		return copy(source, dest, 64k);
+	}
+
+	/// Summary: Reads all the bytes from the source stream, up to the end,
+	///          and writes them to the destination stream, using the specified
+	///          buffer size.
+	/// Param source: The stream to read bytes from.
+	/// Param dest:   The stream to write bytes to.
+	/// Param bufferSize: The size of the buffer. (Int, UInt or Real)
+	/// Returns: The total number of bytes copied, as an Int.
+	/// Throws ArgumentNullError:
+	///          {source} or {dest} is null.
+	/// Throws TypeError:
+	///          {source} or {dest} is not a {Stream}.
+	///
+	///          {bufferSize} could not be converted to an Int.
+	/// Throws ArgumentError:
+	///          {source} is not readable.
+	///
+	///          {dest} is not writable.
+	/// Throws ArgumentRangeError:
+	///          {bufferSize} is less than or equal to zero.
+	public static copy(source, dest, bufferSize)
+	{
+		bufferSize = int(bufferSize);
+		if source is null or dest is null:
+			throw new ArgumentNullError(source is null ? "source" : "dest");
+		if source is not Stream:
+			throw new TypeError("source must be an instance of io.Stream.");
+		if dest is not Stream:
+			throw new TypeError("dest must be an instance of io.Stream.");
+		if not source.canRead:
+			throw new ArgumentError("The source stream must be readable.", "source");
+		if not dest.canWrite:
+			throw new ArgumentError("The destination stream must be writable.", "dest");
+		if bufferSize <= 0:
+			throw new ArgumentRangeError("bufferSize");
+
+		var buf = new Buffer(bufferSize);
+		var totalBytes = 0;
+
+		var bytesRead;
+		do
+		{
+			bytesRead = source.readMax(buf, 0, bufferSize);
+			dest.write(buf, 0, bytesRead);
+			totalBytes += bytesRead;
+		} while bytesRead != 0;
+
+		return totalBytes;
+	}
+}
+
+private class VoidStream is Stream
+{
+	override get canRead = true;
+	override get canWrite = true;
+	override get canSeek = true;
+
+	override get length = 0;
+
+	override get position = 0;
+	override set position { }
+
+	override readByte() { return -1; }
+	override readMax(buf, offset, count) { return 0; }
+
+	override writeByte(value) { }
+	override write(buf, offset, count) { }
+
+	override flush() { }
+	override close() { }
+
+	override seek(amount, origin) { return 0; }
+}
+
+/// Summary: Specifies the position within a file that
+///          a seek operation is relative to.
+public enum SeekOrigin
+{
+	/// Summary: The seek offset is relative to the start
+	///          of the file.
+	start = 1,
+	/// Summary: The seek offset is relative to the current
+	///          position of the stream cursor.
+	current = 2,
+	/// Summary: The seek offset is relative to the end
+	///          of the file.
+	/// Remarks: A positive seek offset still seeks forward,
+	///          while a negative offset is required to back up.
+	///          For example, to seek to the 16th byte before the
+	///          end, call `stream.seek(-16, SeekOrigin.end)`.
+	end = 3,
+}

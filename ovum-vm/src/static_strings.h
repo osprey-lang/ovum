@@ -1,0 +1,36 @@
+#pragma once
+
+#ifndef VM__STATIC_STRINGS_INTERNAL_H
+#define VM__STATIC_STRINGS_INTERNAL_H
+
+#include "vm.h"
+
+// Contains various string values that are used by various parts of the VM.
+// These are all initialised (in static_strings.cpp) from LitString<>s, and
+// as such have the STR_STATIC flag set.
+
+namespace ovum
+{
+
+namespace static_strings
+{
+	extern String *empty;   // ""
+
+	extern String *_new;    // ".new"
+	extern String *_iter;   // ".iter"
+	extern String *_call;   // ".call"
+	extern String *_init;	// ".init"
+	extern String *_item;   // ".item"
+
+	extern String *message; // "message"
+	extern String *toString; // "toString"
+
+	namespace errors
+	{
+		extern String *ToStringWrongType;
+	}
+}
+
+} // namespace ovum
+
+#endif // VM__STATIC_STRINGS_INTERNAL_H

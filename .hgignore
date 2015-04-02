@@ -1,0 +1,15 @@
+syntax: glob
+
+Debug
+Release
+ipch
+
+*.vcxproj.user
+*.sdf
+*.suo
+*.opensdf
+aves.bat
+aves.tests.bat
+
+*.ovm
+*.ovm.dbg

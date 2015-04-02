@@ -1,0 +1,311 @@
+use namespace aves;
+use namespace testing.unit;
+
+namespace aves.tests;
+
+// Tests for the class aves.String
+
+public class StringTests is TestFixture
+{
+	public new() { new base("aves.String tests"); }
+
+	// Booleanness tests
+
+	public test_Truth()
+	{
+		// All string values are true, even the empty string.
+		Assert.isTrue("");
+		Assert.isTrue(" ");
+		Assert.isTrue("false");
+		Assert.isTrue("plumage");
+	}
+
+	// End booleanness tests
+
+	// Padding tests
+
+	// Pad start tests
+
+	public test_PadStartSpace()
+	{
+		var str = "aaa";
+		var minLength = 6;
+
+		var padded1 = str.padStart(minLength);
+		var padded2 = str.pad(minLength, StringPad.start);
+
+		Assert.areEqual(padded1, "   aaa");
+		Assert.areEqual(padded2, "   aaa");
+		Assert.areEqual(padded1.length, minLength);
+		Assert.areEqual(padded2.length, minLength);
+	}
+
+	public test_PadStartSpaceWithInvalidLength()
+	{
+		var str = "aaa";
+		var minLength = -1;
+
+		Assert.throws(typeof(ArgumentRangeError), @= str.padStart(minLength));
+		Assert.throws(typeof(ArgumentRangeError), @= str.pad(minLength, StringPad.start));
+	}
+
+	public test_PadStartWithChar()
+	{
+		var str = "aaa";
+		var minLength = 6;
+		var char = 'x';
+
+		var padded1 = str.padStart(minLength, char);
+		var padded2 = str.pad(minLength, char, StringPad.start);
+
+		Assert.areEqual(padded1, "xxxaaa");
+		Assert.areEqual(padded2, "xxxaaa");
+		Assert.areEqual(padded1.length, minLength);
+		Assert.areEqual(padded2.length, minLength);
+	}
+
+	public test_PadStartWithString()
+	{
+		var str = "aaa";
+		var minLength = 6;
+		var char = "x";
+
+		var padded1 = str.padStart(minLength, char);
+		var padded2 = str.pad(minLength, char, StringPad.start);
+
+		Assert.areEqual(padded1, "xxxaaa");
+		Assert.areEqual(padded2, "xxxaaa");
+		Assert.areEqual(padded1.length, minLength);
+		Assert.areEqual(padded2.length, minLength);
+	}
+
+	public test_PadStartWithInvalidChar()
+	{
+		var str = "aaa";
+		var minLength = 6;
+		var char = 123;
+
+		Assert.throws(typeof(TypeError), @= str.padStart(minLength, char));
+		Assert.throws(typeof(TypeError), @= str.pad(minLength, char, StringPad.start));
+	}
+
+	public test_PadStartWithCharAndInvalidLength()
+	{
+		var str = "aaa";
+		var minLength = -1;
+		var char = 'x';
+
+		Assert.throws(typeof(ArgumentRangeError), @= str.padStart(minLength, char));
+		Assert.throws(typeof(ArgumentRangeError), @= str.pad(minLength, char, StringPad.start));
+	}
+
+	public test_PadStartWithOverlongPaddingChar()
+	{
+		var str = "aaa";
+		var minLength = 6;
+		var char = '\U0001D11E'; // Musical Symbol G Clef (two UTF-16 code units)
+
+		Assert.throws(typeof(ArgumentError), @= str.padStart(minLength, char));
+		Assert.throws(typeof(ArgumentError), @= str.pad(minLength, char, StringPad.start));
+	}
+
+	public test_PadStartWithOverlongPaddingString()
+	{
+		var str = "aaa";
+		var minLength = 6;
+		var char = "xyz";
+
+		Assert.throws(typeof(ArgumentError), @= str.padStart(minLength, char));
+		Assert.throws(typeof(ArgumentError), @= str.pad(minLength, char, StringPad.start));
+	}
+
+	// End pad start tests
+
+	// Pad end tests
+
+	public test_PadEndSpace()
+	{
+		var str = "aaa";
+		var minLength = 6;
+
+		var padded1 = str.padEnd(minLength);
+		var padded2 = str.pad(minLength, StringPad.end);
+
+		Assert.areEqual(padded1, "aaa   ");
+		Assert.areEqual(padded2, "aaa   ");
+		Assert.areEqual(padded1.length, minLength);
+		Assert.areEqual(padded2.length, minLength);
+	}
+
+	public test_PadEndSpaceWithInvalidLength()
+	{
+		var str = "aaa";
+		var minLength = -1;
+
+		Assert.throws(typeof(ArgumentRangeError), @= str.padEnd(minLength));
+		Assert.throws(typeof(ArgumentRangeError), @= str.pad(minLength, StringPad.end));
+	}
+
+	public test_PadEndWithChar()
+	{
+		var str = "aaa";
+		var minLength = 6;
+		var char = 'x';
+
+		var padded1 = str.padEnd(minLength, char);
+		var padded2 = str.pad(minLength, char, StringPad.end);
+
+		Assert.areEqual(padded1, "aaaxxx");
+		Assert.areEqual(padded2, "aaaxxx");
+		Assert.areEqual(padded1.length, minLength);
+		Assert.areEqual(padded2.length, minLength);
+	}
+
+	public test_PadEndWithString()
+	{
+		var str = "aaa";
+		var minLength = 6;
+		var char = "x";
+
+		var padded1 = str.padEnd(minLength, char);
+		var padded2 = str.pad(minLength, char, StringPad.end);
+
+		Assert.areEqual(padded1, "aaaxxx");
+		Assert.areEqual(padded2, "aaaxxx");
+		Assert.areEqual(padded1.length, minLength);
+		Assert.areEqual(padded2.length, minLength);
+	}
+
+	public test_PadEndWithInvalidPaddingChar()
+	{
+		var str = "aaa";
+		var minLength = 6;
+		var char = 123;
+
+		Assert.throws(typeof(TypeError), @= str.padEnd(minLength, char));
+		Assert.throws(typeof(TypeError), @= str.pad(minLength, char, StringPad.end));
+	}
+
+	public test_PadEndWithCharAndInvalidLength()
+	{
+		var str = "aaa";
+		var minLength = -1;
+		var char = 'x';
+
+		Assert.throws(typeof(ArgumentRangeError), @= str.padEnd(minLength, char));
+		Assert.throws(typeof(ArgumentRangeError), @= str.pad(minLength, char, StringPad.end));
+	}
+
+	public test_PadEndWithOverlongPaddingChar()
+	{
+		var str = "aaa";
+		var minLength = 6;
+		var char = '\U0001D11E'; // Musical Symbol G Clef (two UTF-16 code units)
+
+		Assert.throws(typeof(ArgumentError), @= str.padEnd(minLength, char));
+		Assert.throws(typeof(ArgumentError), @= str.pad(minLength, char, StringPad.end));
+	}
+
+	public test_PadEndWithOverlongPaddingString()
+	{
+		var str = "aaa";
+		var minLength = 6;
+		var char = "xyz";
+
+		Assert.throws(typeof(ArgumentError), @= str.padEnd(minLength, char));
+		Assert.throws(typeof(ArgumentError), @= str.pad(minLength, char, StringPad.end));
+	}
+
+	// End pad end tests
+
+	// Pad both tests
+
+	public test_PadBothSpace()
+	{
+		var str = "aaa";
+		var minLength = 6;
+
+		var padded = str.pad(minLength, StringPad.both);
+
+		// When the number of padding characters is odd,
+		// StringPad.both aligns the value to the left
+		Assert.areEqual(padded, " aaa  ");
+		Assert.areEqual(padded.length, minLength);
+	}
+
+	public test_PadBothSpaceWithInvalidLength()
+	{
+		var str = "aaa";
+		var minLength = -1;
+
+		Assert.throws(typeof(ArgumentRangeError), @= str.pad(minLength, StringPad.both));
+	}
+
+	public test_PadBothWithChar()
+	{
+		var str = "aaa";
+		var minLength = 6;
+		var char = 'x';
+
+		var padded = str.pad(minLength, char, StringPad.both);
+
+		// When the number of padding characters is odd,
+		// StringPad.both aligns the value to the left
+		Assert.areEqual(padded, "xaaaxx");
+		Assert.areEqual(padded.length, minLength);
+	}
+
+	public test_PadBothWithString()
+	{
+		var str = "aaa";
+		var minLength = 6;
+		var char = "x";
+
+		var padded = str.pad(minLength, char, StringPad.both);
+
+		// When the number of padding characters is odd,
+		// StringPad.both aligns the value to the left
+		Assert.areEqual(padded, "xaaaxx");
+		Assert.areEqual(padded.length, minLength);
+	}
+
+	public test_PadBothWithInvalidPaddingChar()
+	{
+		var str = "aaa";
+		var minLength = 6;
+		var char = 123;
+
+		Assert.throws(typeof(TypeError), @= str.pad(minLength, char, StringPad.both));
+	}
+
+	public test_PadBothWithCharAndInvalidLength()
+	{
+		var str = "aaa";
+		var minLength = -1;
+		var char = 'x';
+
+		Assert.throws(typeof(ArgumentRangeError), @= str.pad(minLength, char, StringPad.both));
+	}
+
+	public test_PadBothWithOverlongPaddingChar()
+	{
+		var str = "aaa";
+		var minLength = 6;
+		var char = '\U0001D11E'; // Musical Symbol G Clef (two UTF-16 code units)
+
+		Assert.throws(typeof(ArgumentError), @= str.pad(minLength, char, StringPad.both));
+	}
+
+	public test_PadBothWithOverlongPaddingString()
+	{
+		var str = "aaa";
+		var minLength = 6;
+		var char = "xyz";
+
+		Assert.throws(typeof(ArgumentError), @= str.pad(minLength, char, StringPad.both));
+	}
+
+	// End pad both tests
+
+	// End padding tests
+}

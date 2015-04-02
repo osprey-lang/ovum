@@ -1,0 +1,206 @@
+namespace aves;
+
+public inheritable Set is Iterable
+{
+	__init_type("aves_Set_init");
+
+	public new()
+	{
+		new this(0);
+	}
+	public new(capacity)
+		__extern("aves_Set_new");
+
+	public get length
+		__extern("aves_Set_get_length");
+
+	public get isEmpty = length == 0;
+
+	public contains(item)
+	{
+		return containsInternal(item, getHash(item));
+	}
+	public add(item)
+	{
+		return addInternal(item, getHash(item));
+	}
+	public remove(item)
+	{
+		return removeInternal(item, getHash(item));
+	}
+	public toggle(item)
+	{
+		return add(item) or not remove(item);
+	}
+	public clear()
+		__extern("aves_Set_clear");
+	public clone()
+	{
+		var output = new Set(this.length);
+		for value in this:
+			output.add(value);
+		return output;
+	}
+
+	private containsInternal(item, hash)
+		__extern("aves_Set_containsInternal");
+	private addInternal(item, hash)
+		__extern("aves_Set_addInternal");
+	private removeInternal(item, hash)
+		__extern("aves_Set_removeInternal");
+
+	public intersect(other)
+	{
+		if other is not Set:
+			throw new TypeError();
+
+		var smallest = this;
+		if other.length < this.length:
+			// swap the two
+			smallest, other = other, this;
+
+		var output = new Set(smallest.length);
+
+		for item in smallest:
+			if other.contains(item):
+				output.add(item);
+
+		return output;
+	}
+
+	public union(other)
+	{
+		if other is not Set:
+			throw new TypeError();
+
+		var output = this.clone();
+
+		for item in other:
+			output.add(item);
+
+		return output;
+	}
+
+	public difference(other)
+	{
+		if other is not Set:
+			throw new TypeError();
+
+		var output = new Set(this.length);
+
+		for item in this:
+			if not other.contains(item):
+				output.add(item);
+
+		return output;
+	}
+
+	public symmetricDifference(other)
+	{
+		if other is not Set:
+			throw new TypeError();
+
+		var output = this.clone();
+
+		for item in other:
+			output.toggle(item);
+
+		return output;
+	}
+
+	private static getHash(object)
+	{
+		if object is null:
+			return 0;
+
+		var h = object.getHashCode();
+		if h is not Int and h is not UInt:
+			throw new TypeError("The return value of getHashCode() must be of type Int or UInt.");
+
+		return h;
+	}
+
+	public static fromCollection(collection)
+	{
+		var output = new Set();
+		for item in collection:
+			output.add(item);
+		return output;
+	}
+
+	override toString()
+	{
+		return "Set[length = {0}]".format([length]);
+	}
+
+	operator &(a, b)
+	{
+		return a.intersect(b);
+	}
+
+	operator ^(a, b)
+	{
+		return a.symmetricDifference(b);
+	}
+
+	operator +(a, b)
+	{
+		return a.union(b);
+	}
+
+	operator -(a, b)
+	{
+		return a.difference(b);
+	}
+
+	operator |(a, b)
+	{
+		return a.union(b);
+	}
+
+	iter
+	{
+		return new SetIterator(this);
+	}
+}
+
+private class SetIterator is Iterator
+{
+	public new(this._set)
+	{
+		version = getVersion(_set);
+	}
+
+	private _set;
+	private version;
+	private i = -1;
+	private cur = null;
+
+	override get current = cur;
+	override moveNext()
+	{
+		if getVersion(_set) != version:
+			throw new InvalidStateError("The set has changed since the iteration started.");
+
+		while i < getEntryCount(_set) - 1
+		{
+			i += 1;
+			if hasEntryAt(_set, i)
+			{
+				cur = getEntryAt(_set, i);
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	private static getVersion(_set)
+		__extern("aves_Set_get_version");
+	private static getEntryCount(_set)
+		__extern("aves_Set_get_entryCount");
+	private static hasEntryAt(_set, i)
+		__extern("aves_Set_hasEntryAt");
+	private static getEntryAt(_set, i)
+		__extern("aves_Set_getEntryAt");
+}

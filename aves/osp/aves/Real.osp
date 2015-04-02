@@ -1,0 +1,81 @@
+namespace aves;
+
+public function real(value)
+	__extern("aves_real");
+
+public class Real __primitive
+{
+	private new();
+
+	public get isNaN
+		__extern("aves_Real_get_isNaN");
+	public get isInfinite
+		__extern("aves_Real_get_isInfinite");
+
+	public asInt()
+		__extern("aves_number_asInt");
+	public asUInt()
+		__extern("aves_number_asUInt");
+	public asReal()
+		__extern("aves_number_asReal");
+
+	override getHashCode()
+		__extern("aves_Real_getHashCode");
+	override toString()
+		__extern("aves_Real_toString");
+
+	public static parse(str)
+	{
+		str = string(str);
+
+		verify: do
+		{
+			var strLength = str.length;
+			// Skip leading and trailing whitespace
+			var start = 0;
+			while start < strLength and str.isWhiteSpace(start):
+				start += 1;
+
+			var end = strLength - 1;
+			while end >= 0 and str.isWhiteSpace(end):
+				end -= 1;
+
+			if start > end:
+				// Only whitespace in string :(
+				break;
+
+			// The string can only contain ASCII characters,
+			// because that's all dtoa's strtod accepts.
+			var i = start;
+			while i < strLength
+			{
+				if str.getCodepoint(i) > 255:
+					break verify;
+				i += 1;
+			}
+
+			return parseInternal(str, start, end);
+		};
+
+		return null;
+	}
+	private static parseInternal(str, start, end)
+		__extern("aves_Real_parseInternal");
+
+	public const min     = __named_const(real: min);
+	public const max     = __named_const(real: max);
+	public const epsilon = __named_const(real: epsilon);
+	public const NaN     = __named_const(real: NaN);
+	public const inf     = __named_const(real: inf);
+
+	operator ==(a, b)  __extern("aves_Real_opEquals");
+	operator <=>(a, b) __extern("aves_Real_opCompare");
+	operator +(a, b)   __extern("aves_Real_opAdd");
+	operator -(a, b)   __extern("aves_Real_opSubtract");
+	operator *(a, b)   __extern("aves_Real_opMultiply");
+	operator /(a, b)   __extern("aves_Real_opDivide");
+	operator %(a, b)   __extern("aves_Real_opModulo");
+	operator **(a, b)  __extern("aves_Real_opPower");
+	operator +(a)      __extern("aves_Real_opPlus");
+	operator -(a)      __extern("aves_Real_opNegate");
+}

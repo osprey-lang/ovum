@@ -1,0 +1,19 @@
+namespace aves;
+
+public inheritable MemoryError is Error
+{
+	public new()
+	{
+		new base(defaultMessage);
+	}
+	public new(message)
+	{
+		new base(message ?? defaultMessage);
+	}
+	public new(message, innerError)
+	{
+		new base(message ?? defaultMessage, innerError);
+	}
+
+	private const defaultMessage = "There was not enough memory to perform the operation.";
+}

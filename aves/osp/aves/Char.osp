@@ -1,0 +1,141 @@
+namespace aves;
+
+public class Char __primitive
+{
+	private new();
+
+	/// Summary: Gets the length (in number of UTF-16 code units) required
+	///          by this Unicode character when encoded as UTF-16.
+	/// Returns: The number of code units required to encode this Unicode
+	///          character as UTF-16, as an Int.
+	/// Remarks: This property always returns 1 or 2.
+	public get length
+		__extern("aves_Char_get_length");
+
+	/// Summary: Gets the Unicode category of this Unicode character.
+	public get category
+		__extern("aves_Char_get_category");
+
+	/// Summary: Gets a value that indicates whether the Unicode character is
+	///          a surrogate character.
+	/// Returns: True if the character is a surrogate character; otherwise, false.
+	/// Remarks: Surrogate characters comprise the codepoints U+D800 to U+DFFF.
+	///          This property does not distinguish between lead and trail
+	///          surrogates.
+	public get isSurrogateChar
+	{
+		// Avoid category lookup. It's not super slow, but this is faster.
+		var cp = +this;
+		return cp >= 0xD800 and cp <= 0xDFFF;
+	}
+	/// Summary: Gets a value that indicates whether the Unicode character is
+	///          classified as a control character (category Cc).
+	/// Returns: True if the character is a control character; otherwise, false.
+	public get isControl = category == UnicodeCategory.control;
+	/// Summary: Gets a value that indicates whether the Unicode character is
+	///          classified as a decimal digit (category Nd).
+	/// Returns: True if the character is a decimal digit; otherwise, false.
+	public get isDigit = category == UnicodeCategory.decimalNumber;
+	/// Summary: Gets a value that indicates whether the Unicode character is
+	///          classified as a letter (categories Lu, Ll, Lt, Lm and Lo).
+	/// Returns: True if the character is a letter; otherwise, false.
+	public get isLetter = category & UnicodeCategory.letter != UnicodeCategory.none;
+	/// Summary: Gets a value that indicates whether the Unicode character is
+	///          classified as a lowercase letter (category Ll).
+	/// Returns: True if the character is a lowercase letter; otherwise, false.
+	public get isLower = category == UnicodeCategory.lowercaseLetter;
+	/// Summary: Gets a value that indicates whether the Unicode character is
+	///          classified as an uppercase letter (category Lu).
+	/// Returns: True if the character is an uppercase letter; otherwise, false.
+	public get isUpper = category == UnicodeCategory.uppercaseLetter;
+	/// Summary: Gets a value that indicates whether the Unicode character is
+	///          classified as a number (categories Nd, Nl and No).
+	/// Returns: True if the character is a number; otherwise, false.
+	public get isNumber = category & UnicodeCategory.number != UnicodeCategory.none;
+	/// Summary: Gets a value that indicates whether the Unicode character is
+	///          classified as a puntuation character (categories Pc, Pd, Ps,
+	///          Pe, Pi, Pf and Po).
+	/// Returns: True if the character is a punctuation character; otherwise, false.
+	public get isPunct = category & UnicodeCategory.punct != UnicodeCategory.none;
+	/// Summary: Gets a value that indicates whether the Unicode character is
+	///          classified as a symbol (categories Sm, Sc, Sk and So).
+	/// Returns: True if the character is a symbol; otherwise, false.
+	public get isSymbol = category & UnicodeCategory.symbol != UnicodeCategory.none;
+	/// Summary: Gets a value that indicates whether the Unicode character is
+	///          assigned.
+	/// Returns: True if the character is assigned; otherwise, false.
+	public get isAssigned = category != UnicodeCategory.unassigned;
+	/// Summary: Gets a value that indicates whether the Unicode character is
+	///          classified as white space (see remarks).
+	/// Returns: True if the character is white space; otherwise, false.
+	/// Remarks: A character is considered white space if it belongs to one of
+	///          the Unicode categories Zs (space separator), Zl (line separator)
+	///          or Zp (paragraph separator).
+	///
+	///          Additionally, there are several Unicode characters which are
+	///          normally considered white space but are categorised as control
+	///          characters. Namely,
+	///              U+0009 (Character Tabulation, `'\t'`),
+	///              U+000A (Line Feed, `'\n'`),
+	///              U+000B (Line Tabulation),
+	///              U+000C (Form Feed)
+	///              U+000D (Carriage Return, `'\r'`), and
+	///              U+0085 (Next Line).
+	///          This property returns true for these characters as well.
+	public get isWhiteSpace
+	{
+		var cp = +this;
+		// The following code points are considered white space,
+		// even though they are categorised as control characters:
+		//   U+0009  Character Tabulation (\t)
+		//   U+000A  Line Feed (\n)
+		//   U+000B  Line Tabulation
+		//   U+000C  Form Feed
+		//   U+000D  Carriage Return (\r)
+		//   U+0085  Next Line
+		return cp >= 0x0009 and cp <= 0x000D or cp == 0x0085 or
+			category & UnicodeCategory.separator != UnicodeCategory.none;
+	}
+
+	/// Summary: Gets the Unicode codepoint of this character.
+	/// Returns: An Int with the Unicode codepoint of this character.
+	///          The value is in the range 0 to 1,114,111 (0x10FFFF).
+	public get codepoint = +this;
+
+	/// Summary: Converts this character to uppercase.
+	/// Returns: A new Char that contains the value of this character
+	///          converted to uppercase.
+	public toUpper()
+		__extern("aves_Char_toUpper");
+	/// Summary: Converts this character to lowercase.
+	/// Returns: A new Char that contains the value of this character
+	///          converted to lowercase.
+	public toLower()
+		__extern("aves_Char_toLower");
+
+	override getHashCode()
+		__extern("aves_Char_getHashCode");
+	override toString()
+		__extern("aves_Char_toString");
+
+	/// Summary: Returns a new Char that represents the Unicode character
+	///          at the specified codepoint.
+	/// Param cp: The Unicode codepoint, in the range 0 to 1,114,111 (0x10FFFF).
+	///           (Int, UInt or Real)
+	/// Returns: A new Char value with the specified codepoint.
+	/// Throws TypeError:
+	///          {cp} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {cp} is less than zero or greater than 1,114,111 (0x10FFFF).
+	public static fromCodepoint(cp)
+		__extern("aves_Char_fromCodepoint");
+
+	operator ==(a, b)
+		__extern("aves_Char_opEquals");
+	operator <=>(a, b)
+		__extern("aves_Char_opCompare");
+	operator *(ch, times)
+		__extern("aves_Char_opMultiply");
+	operator +(ch)
+		__extern("aves_Char_opPlus");
+}

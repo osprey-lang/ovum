@@ -1,0 +1,139 @@
+namespace aves;
+
+public class Utf16Encoding is Encoding
+{
+	__init_type("aves_Utf16Encoding_init");
+
+	public new()
+		__extern("aves_Utf16Encoding_new");
+	public new(bigEndian)
+		__extern("aves_Utf16Encoding_new");
+
+	public get bigEndian
+		__extern("aves_Utf16Encoding_get_bigEndian");
+
+	override get name = bigEndian ? "UTF-16BE" : "UTF-16";
+
+	override getEncoder()
+	{
+		return new Utf16Encoder(bigEndian);
+	}
+	override getDecoder()
+	{
+		return new Utf16Decoder(bigEndian);
+	}
+
+	override getByteCount(str)
+		__extern("aves_Utf16Encoding_getByteCount");
+	override getBytes(str, buf, offset)
+	{
+		str = string(str);
+		buf = Buffer.fromValue(buf);
+		offset = int(offset);
+
+		if offset < 0 or offset >= buf.size:
+			throw new ArgumentRangeError("offset");
+
+		return getBytesInternal(str, buf, offset);
+	}
+	private getBytesInternal(str, buf, offset)
+		__extern("aves_Utf16Encoding_getBytesInternal");
+
+	override getCharCount(buf, offset, count)
+	{
+		buf = Buffer.fromValue(buf);
+		offset = int(offset);
+		count = int(count);
+
+		buf.verifyRange(offset, count);
+
+		return getCharCountInternal(buf, offset, count);
+	}
+	override getChars(buf, offset, count, stringBuf)
+	{
+		buf = Buffer.fromValue(buf);
+		offset = int(offset);
+		count = int(count);
+		if stringBuf is not StringBuffer:
+			throw new TypeError("stringBuf must be a StringBuffer.");
+
+		buf.verifyRange(offset, count);
+
+		return getCharsInternal(buf, offset, count, stringBuf);
+	}
+
+	private getCharCountInternal(buf, offset, count)
+		__extern("aves_Utf16Encoding_getCharCountInternal");
+	private getCharsInternal(buf, offset, count, sb)
+		__extern("aves_Utf16Encoding_getCharsInternal");
+}
+
+private class Utf16Encoder is Encoder
+{
+	__init_type("aves_Utf16Encoder_init");
+
+	public new(bigEndian)
+		__extern("aves_Utf16Encoder_new");
+
+	override getByteCount(str, flush)
+		__extern("aves_Utf16Encoder_getByteCount");
+
+	override getBytes(str, buf, offset, flush)
+	{
+		str = string(str);
+		buf = Buffer.fromValue(buf);
+		offset = int(offset);
+		flush = bool(flush);
+
+		if offset < 0 or offset >= buf.size:
+			throw new ArgumentRangeError("offset");
+
+		return getBytesInternal(str, buf, offset, flush);
+	}
+	private getBytesInternal(str, buf, offset, flush)
+		__extern("aves_Utf16Encoder_getBytesInternal");
+
+	override reset()
+		__extern("aves_Utf16Encoder_reset");
+}
+
+private class Utf16Decoder is Decoder
+{
+	__init_type("aves_Utf16Decoder_init");
+
+	public new(bigEndian)
+		__extern("aves_Utf16Decoder_new");
+
+	override getCharCount(buf, offset, count, flush)
+	{
+		buf = Buffer.fromValue(buf);
+		offset = int(offset);
+		count = int(count);
+		flush = bool(flush);
+
+		buf.verifyRange(offset, count);
+
+		return getCharCountInternal(buf, offset, count, flush);
+	}
+	private getCharCountInternal(buf, offset, count, flush)
+		__extern("aves_Utf16Decoder_getCharCountInternal");
+
+	override getChars(buf, offset, count, strBuf, flush)
+	{
+		buf = Buffer.fromValue(buf);
+		offset = int(offset);
+		count = int(count);
+
+		if strBuf is not StringBuffer:
+			throw new TypeError("strBuf must be a StringBuffer.");
+
+		buf.verifyRange(offset, count);
+
+		return getCharsInternal(buf, offset, count, strBuf, flush);
+	}
+	private getCharsInternal(buf, offset, count, sb, flush)
+		__extern("aves_Utf16Decoder_getCharsInternal");
+
+	override reset()
+		__extern("aves_Utf16Decoder_reset");
+}

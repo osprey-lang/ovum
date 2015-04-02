@@ -1,0 +1,416 @@
+use namespace aves;
+
+namespace io;
+
+namespace binHelpers
+{
+	private function reverse2(buf)
+	{
+		buf[0], buf[1] = buf[1], buf[0];
+	}
+	private function reverse4(buf)
+	{
+		buf[0], buf[3] = buf[3], buf[0];
+		buf[1], buf[2] = buf[2], buf[1];
+	}
+	private function reverse8(buf)
+	{
+		buf[0], buf[7] = buf[7], buf[0];
+		buf[1], buf[6] = buf[6], buf[1];
+		buf[2], buf[5] = buf[5], buf[2];
+		buf[3], buf[4] = buf[4], buf[3];
+	}
+}
+
+/// Summary: Reads binary data from a stream into primitive formats.
+public inheritable BinaryReader
+{
+	/// Summary: Creates a new {BinaryReader} from the specified stream.
+	///          The encoding is set to UTF-8, and {bigEndian} and {keepOpen}
+	///          are both set to false.
+	/// Param stream: The stream to read from.
+	/// Throws ArgumentNullError:
+	///          {stream} is null.
+	/// Throws TypeError:
+	///          {stream} is not an {io.Stream}.
+	/// Throws ArgumentError:
+	///          {stream} is not readable.
+	public new(stream)
+	{
+		new this(stream, Encoding.utf8, false, false);
+	}
+	/// Summary: Creates a new {BinaryReader} from the specified stream and
+	///          with the specified encoding. {bigEndian} and {keepOpen} are
+	///          both set to false.
+	/// Param stream:   The stream to read from.
+	/// Param encoding: The character encoding of the data in the stream.
+	/// Throws ArgumentNullError:
+	///          {stream} or {encoding} is null.
+	/// Throws TypeError:
+	///          {stream} is not an {io.Stream}.
+	///
+	///          {encoding} is not an {aves.Encoding}.
+	/// Throws ArgumentError:
+	///          {stream} is not readable.
+	public new(stream, encoding)
+	{
+		new this(stream, encoding, false, false);
+	}
+	/// Summary: Creates a new {BinaryReader} from the specified stream and
+	///          with the specified encoding and endianness. {keepOpen} is
+	///          set to false.
+	/// Param stream:    The stream to read from.
+	/// Param encoding:  The character encoding of the data in the stream.
+	/// Param bigEndian: True if the data is in the big-endian byte order;
+	///                  false for little-endian.
+	/// Throws ArgumentNullError:
+	///          {stream} or {encoding} is null.
+	/// Throws TypeError:
+	///          {stream} is not an {io.Stream}.
+	///
+	///          {encoding} is not an {aves.Encoding}.
+	/// Throws ArgumentError:
+	///          {stream} is not readable.
+	public new(stream, encoding, bigEndian)
+	{
+		new this(stream, encoding, false, false);
+	}
+	/// Summary: Creates a new {BinaryReader} from the specified stream and
+	///          with the specified encoding and endianness. The stream is
+	///          optionally closed when the reader is closed.
+	/// Param stream:    The stream to read from.
+	/// Param encoding:  The character encoding of the data in the stream.
+	/// Param bigEndian: True if the data is in the big-endian byte order;
+	///                  false for little-endian.
+	/// Param keepOpen:  True to leave {stream} open when {close} is called
+	///                  on the binary reader; false to close it.
+	/// Throws ArgumentNullError:
+	///          {stream} or {encoding} is null.
+	/// Throws TypeError:
+	///          {stream} is not an {io.Stream}.
+	///
+	///          {encoding} is not an {aves.Encoding}.
+	/// Throws ArgumentError:
+	///          {stream} is not readable.
+	public new(stream, encoding, bigEndian, keepOpen)
+	{
+		if stream is null:
+			throw new ArgumentNullError("stream");
+		if stream is not Stream:
+			throw new TypeError("stream must be an io.Stream instance.");
+		if not stream.canRead:
+			throw new ArgumentError("The stream must be readable.", "stream");
+		if encoding is null:
+			throw new ArgumentNullError("encoding");
+		if encoding is not Encoding:
+			throw new TypeError("encoding must be an aves.Encoding instance.");
+
+		_stream = stream;
+		_encoding = encoding;
+		_bigEndian = bool(bigEndian);
+		_keepOpen = bool(keepOpen);
+	}
+
+	private _stream;
+	/// Summary: Gets a reference to the stream that is being read from.
+	public get stream = _stream;
+
+	private _encoding;
+	/// Summary: Gets the character encoding that the binary reader uses.
+	public get encoding = _encoding;
+
+	private _bigEndian;
+	/// Summary: Gets a value indicating whether the stream data is read
+	///          in the big-endian byte order. If false, the byte order is
+	///          little-endian.
+	public get bigEndian = _bigEndian;
+
+	private _keepOpen;
+	/// Summary: Determines whether the binary reader closes the stream
+	///          when the {close} method is called. If true, the stream
+	///          will be kept open.
+	public get keepOpen = _keepOpen;
+	/// Summary: Sets a value that determines whether the binary reader
+	///          closes the stream when the {close} method is called. If
+	///          true, the stream will be kept open.
+	public set keepOpen { _keepOpen = bool(value); }
+
+	/// Summary: Gets the current position of the the stream’s cursor.
+	public get position = _stream.position;
+	/// Summary: Sets the position of the stream’s cursor.
+	public set position { _stream.position = value; }
+
+	// Buffer is somewhat larger than needed for numeric values (8) so
+	// that we don't allocate new buffers every time a string is read,
+	// unless the string is longish.
+	private const bufferSize = 512;
+	private _buffer = new Buffer(bufferSize);
+	/// Summary: Gets a reference to the internal buffer used by the reader.
+	protected get buffer = _buffer;
+
+	/// Summary: If {keepOpen} is false, closes the underlying stream.
+	///          Otherwise, does nothing.
+	public overridable close()
+	{
+		try
+		{
+			if not keepOpen:
+				_stream.close();
+		}
+		finally
+		{
+			_stream = null;
+		}
+	}
+
+	/// Summary: Reads a boolean value, and advances the stream by 1 byte.
+	/// Returns: False if the next byte is 0, true otherwise.
+	/// Throws EndOfFileError:
+	///          There are no more bytes to read from the stream.
+	public overridable readBoolean()
+	{
+		if _stream is null:
+			errorHelpers.readerClosed();
+
+		var b = _stream.readByte();
+		if b == -1:
+			errorHelpers.endOfFile();
+
+		return b > 0;
+	}
+
+	/// Summary: Reads an unsigned byte, and advances the stream by 1 byte.
+	/// Returns: The value of the next byte, as an Int. The returned value
+	///          is in the range 0 to 255, inclusive.
+	/// Throws EndOfFileError:
+	///          There are no more bytes to read from the stream.
+	public overridable readByte()
+	{
+		if _stream is null:
+			errorHelpers.readerClosed();
+
+		var b = _stream.readByte();
+		if b == -1:
+			errorHelpers.endOfFile();
+
+		return b;
+	}
+	/// Summary: Reads a signed byte, and advances the stream by 1 byte.
+	/// Returns: The value of the next byte, as an Int. The returned value
+	///          is in the range -128 to 127, inclusive.
+	/// Throws EndOfFileError:
+	///          There are no more bytes to read from the stream.
+	public overridable readSByte()
+	{
+		if _stream is null:
+			errorHelpers.readerClosed();
+
+		var b = _stream.readByte();
+		if b == -1:
+			errorHelpers.endOfFile();
+
+		if b > 127:
+			b = (b & 0x7f) - 128;
+
+		return b;
+	}
+
+	/// Summary: Reads a signed 16-bit integer, and advances the stream by
+	///          2 bytes.
+	/// Returns: An Int in the range -32,768 to 32,767, inclusive.
+	/// Throws EndOfFileError:
+	///          The end of the stream was encountered before 2 bytes could
+	///          be read.
+	public overridable readInt16()
+	{
+		if _stream is null:
+			errorHelpers.readerClosed();
+
+		_stream.readInto(_buffer, 0, 2);
+		if _bigEndian != Env.bigEndian:
+			binHelpers.reverse2(_buffer);
+		return _buffer.readInt16(0);
+	}
+	/// Summary: Reads a signed 32-bit integer, and advances the stream by
+	///          4 bytes.
+	/// Returns: An Int in the range -2,147,483,648 to 2,147,483,647, inclusive.
+	/// Throws EndOfFileError:
+	///          The end of the stream was encountered before 4 bytes could
+	///          be read.
+	public overridable readInt32()
+	{
+		if _stream is null:
+			errorHelpers.readerClosed();
+
+		_stream.readInto(_buffer, 0, 4);
+		if _bigEndian != Env.bigEndian:
+			binHelpers.reverse4(_buffer);
+		return _buffer.readInt32(0);
+	}
+	/// Summary: Reads a signed 64-bit integer, and advances the stream by
+	///          8 bytes.
+	/// Returns: An Int in the range -9,223,372,036,854,775,808 to
+	///          9,223,372,036,854,775,807, inclusive.
+	/// Throws EndOfFileError:
+	///          The end of the stream was encountered before 8 bytes could
+	///          be read.
+	public overridable readInt64()
+	{
+		if _stream is null:
+			errorHelpers.readerClosed();
+
+		_stream.readInto(_buffer, 0, 8);
+		if _bigEndian != Env.bigEndian:
+			binHelpers.reverse8(_buffer);
+		return _buffer.readInt64(0);
+	}
+
+	/// Summary: Reads a variable-length, 7-bit-encoded integer value, and
+	///          advances the stream by the number of bytes consumed.
+	/// Returns: An Int containing the decoded value.
+	/// Remarks: This method reads bytes from the stream as long as the most
+	///          significant bit of the last read byte is set. For more details
+	///          on the 7-bit encoding, see the Remarks section of
+	///          {BinaryWriter.writePackedInt}.
+	public readPackedInt()
+	{
+		if _stream is null:
+			errorHelpers.readerClosed();
+
+		var output = 0, shift = 0;
+
+		var b;
+		do
+		{
+			b = _stream.readByte();
+			if b == -1:
+				throw new EndOfFileError();
+
+			output |= (b & 0x7f) << shift;
+
+			shift += 7;
+		} while b & 0x80;
+
+		return output;
+	}
+
+	/// Summary: Reads an unsigned 16-bit integer, and advances the stream by
+	///          2 bytes.
+	/// Returns: A UInt in the range 0 to 65,535, inclusive.
+	/// Throws EndOfFileError:
+	///          The end of the stream was encountered before 2 bytes could
+	///          be read.
+	public overridable readUInt16()
+	{
+		if _stream is null:
+			errorHelpers.readerClosed();
+
+		_stream.readInto(_buffer, 0, 2);
+		if _bigEndian != Env.bigEndian:
+			binHelpers.reverse2(_buffer);
+		return _buffer.readUInt16(0);
+	}
+	/// Summary: Reads an unsigned 32-bit integer, and advances the stream by
+	///          4 bytes.
+	/// Returns: A UInt in the range 0 to 4,294,967,295, inclusive.
+	/// Throws EndOfFileError:
+	///          The end of the stream was encountered before 4 bytes could
+	///          be read.
+	public overridable readUInt32()
+	{
+		if _stream is null:
+			errorHelpers.readerClosed();
+
+		_stream.readInto(_buffer, 0, 4);
+		if _bigEndian != Env.bigEndian:
+			binHelpers.reverse4(_buffer);
+		return _buffer.readUInt32(0);
+	}
+	/// Summary: Reads an unsigned 64-bit integer, and advances the stream by
+	///          8 bytes.
+	/// Returns: A UInt in the range 0 to 18,446,744,073,709,551,615, inclusive.
+	/// Throws EndOfFileError:
+	///          The end of the stream was encountered before 8 bytes could
+	///          be read.
+	public overridable readUInt64()
+	{
+		if _stream is null:
+			errorHelpers.readerClosed();
+
+		_stream.readInto(_buffer, 0, 8);
+		if _bigEndian != Env.bigEndian:
+			binHelpers.reverse8(_buffer);
+		return _buffer.readUInt64(0);
+	}
+
+	/// Summary: Reads a single-precision (32-bit) floating-point number, and
+	///          advances the stream by 4 bytes.
+	/// Returns: A Real containing the value that was read from the stream.
+	/// Throws EndOfFileError:
+	///          The end of the stream was encountered before 4 bytes could
+	///          be read.
+	public overridable readFloat32()
+	{
+		if _stream is null:
+			errorHelpers.readerClosed();
+
+		_stream.readInto(_buffer, 0, 4);
+		if _bigEndian != Env.bigEndian:
+			binHelpers.reverse4(_buffer);
+		return _buffer.readFloat32(0);
+	}
+	/// Summary: Reads a double-precision (64-bit) floating-point number, and
+	///          advances the stream by 8 bytes.
+	/// Returns: A Real containing the value that was read from the stream.
+	/// Throws EndOfFileError:
+	///          The end of the stream was encountered before 8 bytes could
+	///          be read.
+	public overridable readFloat64()
+	{
+		if _stream is null:
+			errorHelpers.readerClosed();
+
+		_stream.readInto(_buffer, 0, 8);
+		if _bigEndian != Env.bigEndian:
+			binHelpers.reverse8(_buffer);
+		return _buffer.readFloat64(0);
+	}
+
+	/// Summary: Read a length-prefixed string, using the encoding of the
+	///          binary reader. The stream is advanced by the number of
+	///          bytes read.
+	/// Returns: A String value containing the decoded string.
+	/// Throws EndOfFileError:
+	///          The end of the stream was encountered before the length or the
+	///          character data could be fully read.
+	/// Remarks: The length prefix contains the number of bytes consumed by the
+	///          encoded string. The length is in the same 7-bit encoding format
+	///          that is used by {readPackedInt}.
+	public overridable readString()
+	{
+		if _stream is null:
+			errorHelpers.readerClosed();
+
+		var byteCount = readPackedInt();
+		var buf = byteCount <= bufferSize ?
+			_buffer :
+			new Buffer(byteCount);
+
+		_stream.readInto(buf, 0, byteCount);
+		return _encoding.getString(buf, 0, byteCount);
+	}
+
+	/// Summary: Moves the underlying stream’s cursor to a new position.
+	/// Param amount: The distance (in number of bytes) to seek, relative
+	///               to the seek origin. (Int, UInt or Real)
+	/// Param origin: A {SeekOrigin} that determines which position in the
+	///               stream the seek amount is relative to.
+	/// Returns: The new position of the stream cursor after seeking,
+	///          as an Int.
+	/// Remarks: This method is equivalent to calling `seek` on {stream}
+	///          with the same arguments.
+	public overridable seek(amount, origin)
+	{
+		return _stream.seek(amount, origin);
+	}
+}
