@@ -258,9 +258,9 @@ namespace real
 		//   NaN < -∞ < ... < -ε < -0.0 = +0.0 < +ε < ... < +∞
 		// Notice that NaN is ordered before all other values.
 
-		if (isnan(left) | isnan(right))
-			return isnan(right) - isnan(left);
-
+		int nan = isnan(right) - isnan(left);
+		if (nan != 0)
+			return nan;
 		if (left < right)
 			return -1;
 		if (left > right)
