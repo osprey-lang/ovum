@@ -2,6 +2,7 @@
 #include <cassert>
 #include <memory>
 #include "aves_uint.h"
+#include "aves_real.h"
 
 #define LEFT  (args[0])
 #define RIGHT (args[1])
@@ -101,9 +102,7 @@ AVES_API NATIVE_FUNCTION(aves_UInt_opCompare)
 	{
 		double left  = (double)LEFT.uinteger;
 		double right = RIGHT.real;
-		result = left < right ? -1 :
-			left > right ? 1 :
-			0;
+		result = real::Compare(left, right);
 	}
 	else
 		return VM_ThrowTypeError(thread);
