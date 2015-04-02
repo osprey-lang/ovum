@@ -36,7 +36,7 @@ where `DLLDIR` is the directory containing `aves.dll`, and `OUTDIR` is the outpu
 
 ## The aves.tests project
 
-This pure-Osprey project contains unit tests for the public API of aves. It depends on the [`testing.unit`](http://bitbucket.org/Heurlinius/testing.unit) module. This project is a work in progress; the vast majority of aves is *not* tested by it. However, it will be gradually expanded to cover as much as possible.
+This pure-Osprey project contains unit tests for the public API of aves. It depends on the [`testing.unit`][testing.unit] module. This project is a work in progress; the vast majority of aves is *not* tested by it. However, it will be gradually expanded to cover as much as possible.
 
 The aves.tests project should be compiled with the following options:
 
@@ -55,4 +55,5 @@ When running the tests, the module can be invoked with any number of command-lin
 Usually, all tests should be run.
 
 
-  [osp]: http://bitbucket.org/Heurlinius/osprey
+  [osp]: http://bitbucket.org/OspreyLang/osprey
+  [testing.unit]: http://bitbucket.org/OspreyLang/testing.unit
