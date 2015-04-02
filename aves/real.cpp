@@ -198,21 +198,8 @@ AVES_API NATIVE_FUNCTION(aves_Real_opCompare)
 	else
 		return VM_ThrowTypeError(thread);
 
-	double left = LEFT.real;
+	int result = real::Compare(LEFT.real, right);
 
-	// Real values are ordered as follows:
-	//   NaN < -∞ < ... < -ε < -0.0 = +0.0 < +ε < ... < +∞
-	// Notice that NaN is ordered before all other values.
-
-	if (isnan(left))
-	{
-		VM_PushInt(thread, isnan(right) ? 0 : -1);
-		RETURN_SUCCESS;
-	}
-
-	int result = left < right ? -1 :
-		left > right ? 1 :
-		0;
 	VM_PushInt(thread, result);
 	RETURN_SUCCESS;
 }
@@ -261,4 +248,23 @@ AVES_API NATIVE_FUNCTION(aves_Real_opNegate)
 {
 	VM_PushReal(thread, -args[0].real);
 	RETURN_SUCCESS;
+}
+
+namespace real
+{
+	int Compare(double left, double right)
+	{
+		// Real values are ordered as follows:
+		//   NaN < -∞ < ... < -ε < -0.0 = +0.0 < +ε < ... < +∞
+		// Notice that NaN is ordered before all other values.
+
+		if (isnan(left) | isnan(right))
+			return isnan(right) - isnan(left);
+
+		if (left < right)
+			return -1;
+		if (left > right)
+			return 1;
+		return 0;
+	}
 }

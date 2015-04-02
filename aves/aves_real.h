@@ -26,4 +26,9 @@ AVES_API NATIVE_FUNCTION(aves_Real_opPower);
 AVES_API NATIVE_FUNCTION(aves_Real_opPlus);
 AVES_API NATIVE_FUNCTION(aves_Real_opNegate);
 
+namespace real
+{
+	int Compare(double left, double right);
+}
+
 #endif // AVES__REAL_H
