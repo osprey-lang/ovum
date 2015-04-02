@@ -12,6 +12,15 @@ public abstract class Iterable
 	/// Summary: Creates a new Iterable.
 	public new();
 
+	/// Summary: Determines whether any item in the sequence is a truthy
+	///          value.
+	/// Returns: True if any item in the sequence is a truthy value;
+	///          otherwise, false.
+	/// Remarks: This method returns false if the sequence is empty.
+	public any()
+	{
+		return this.iter.any();
+	}
 	/// Summary: Determines whether all items in the sequence match
 	///          the given predicate.
 	/// Param predicate: An invokable value that takes one argument
@@ -26,6 +35,15 @@ public abstract class Iterable
 		return this.iter.any(predicate);
 	}
 
+	/// Summary: Determines whether all items in the sequence are
+	///          truthy values.
+	/// Returns: True if all items in the sequence are truthy values;
+	///          otherwise, false.
+	/// Remarks: This method returns true if the sequence is empty.
+	public all()
+	{
+		return this.iter.all();
+	}
 	/// Summary: Determines whether any item in the sequence matches
 	///          the given predicate.
 	/// Param predicate: An invokable value that takes one argument
@@ -76,7 +94,7 @@ public abstract class Iterable
 		if func is null:
 			throw new ArgumentNullError("func");
 
-        this.iter.each(func);
+		this.iter.each(func);
 	}
 
 	public overridable filter(predicate)
@@ -232,7 +250,7 @@ public abstract class Iterable
 
 	iter
 	{
-		throw new InvalidStateError("Iterable does not provide an iterator.");
+		throw new InvalidStateError("Iterable does not provide a default iterator.");
 	}
 
 	public static get empty = new CollectionIterable();
