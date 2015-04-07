@@ -22,13 +22,9 @@ This project contains the virtual machine implementation, and is responsible for
 
 This is the standard library of Ovum/Osprey. It is written partly in C++ (for the things that must be implemented natively), partly in Osprey. To compile it, you must first compile the native library, then compile the Osprey module, linking with the DLL file you just created.
 
-The module produced by this project is required by the [Osprey compiler][osp], unless you specifically compile with the `/nostdlib` option. Incidentally, aves should be compiled with the `/nostdlib` option.
+All modules compiled by the [Osprey compiler][osp] rely on the aves module, unless you specifically compile with the `/nostdlib` option.
 
-In fact, aves should be compiled with the following options (assuming the working directory is the repository’s `aves/osp`):
-
-    /nativelib DLLDIR\aves.dll /meta meta.txt /type module /nostdlib /out OUTDIR\aves.ovm /doc OUTDIR\aves.ovm.json aves.osp
-
-where `DLLDIR` is the directory containing `aves.dll`, and `OUTDIR` is the output directory.
+To compile the Osprey part of aves, run the [`build.bat` script][aves.build]. There are paths in this file that need to be configured.
 
 ### Why “aves”?
 
@@ -36,13 +32,9 @@ where `DLLDIR` is the directory containing `aves.dll`, and `OUTDIR` is the outpu
 
 ## The aves.tests project
 
-This pure-Osprey project contains unit tests for the public API of aves. It depends on the [`testing.unit`][testing.unit] module. This project is a work in progress; the vast majority of aves is *not* tested by it. However, it will be gradually expanded to cover as much as possible.
+This pure-Osprey project contains unit tests for the public API of aves. It depends on the [testing.unit][testing.unit] module. This project is a work in progress; the vast majority of aves is *not* tested by it. However, it will gradually be expanded to cover as much as possible.
 
-The aves.tests project should be compiled with the following options:
-
-	/libpath LIBPATH /main aves.tests.main /r *.osp
-
-where `LIBPATH` is the module library path. Note the use of `/r *.osp` to include all `.osp` files: unlike the aves project, this project does not contain a list of `use` directives that name all test files. This may be changed in the future.
+To compile aves.tests, run the [`build.bat` script][aves.tests.build]. To build and run all tests, use [`run.bat`][aves.tests.run] instead. There are paths in these files that need to be configured.
 
 When running the tests, the module can be invoked with any number of command-line arguments. If invoked with none, it will simply run all the tests in the module. Otherwise, each argument is treated as the name of a test class, without the `aves.tests.` prefix. For example,
 
@@ -57,3 +49,6 @@ Usually, all tests should be run.
 
   [osp]: http://bitbucket.org/OspreyLang/osprey
   [testing.unit]: http://bitbucket.org/OspreyLang/testing.unit
+  [aves.build]: http://bitbucket.org/OspreyLang/aves/src/tip/aves/osp/build.bat
+  [aves.tests.build]: http://bitbucket.org/OspreyLang/aves/src/tip/aves.tests/build.bat
+  [aves.tests.run]: http://bitbucket.org/OspreyLang/aves/src/tip/aves.tests/run.bat
