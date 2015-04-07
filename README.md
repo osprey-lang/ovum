@@ -49,6 +49,6 @@ Usually, all tests should be run.
 
   [osp]: http://bitbucket.org/OspreyLang/osprey
   [testing.unit]: http://bitbucket.org/OspreyLang/testing.unit
-  [aves.build]: http://bitbucket.org/OspreyLang/aves/src/tip/aves/osp/build.bat
-  [aves.tests.build]: http://bitbucket.org/OspreyLang/aves/src/tip/aves.tests/build.bat
-  [aves.tests.run]: http://bitbucket.org/OspreyLang/aves/src/tip/aves.tests/run.bat
+  [aves.build]: http://bitbucket.org/OspreyLang/ovum/src/tip/aves/osp/build.bat
+  [aves.tests.build]: http://bitbucket.org/OspreyLang/ovum/src/tip/aves.tests/build.bat
+  [aves.tests.run]: http://bitbucket.org/OspreyLang/ovum/src/tip/aves.tests/run.bat
