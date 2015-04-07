@@ -8,8 +8,8 @@ ipch
 *.sdf
 *.suo
 *.opensdf
-aves.bat
-aves.tests.bat
+build.bat
+run.bat
 
 *.ovm
 *.ovm.dbg
