@@ -33,7 +33,7 @@ public inheritable Hash
 	/// Param key: The key to look up.
 	/// Returns: The value associated with the specified key.
 	/// Throws ArgumentNullError: {key} is null.
-	/// Throws ArgumentError: The hash table does not contain the specified key. 
+	/// Throws ArgumentError: The hash table does not contain the specified key.
 	/// Throws TypeError:
 	///          The `getHashCode` implementation of {key} did not
 	///          return an Int or UInt.
@@ -417,8 +417,8 @@ public inheritable Hash
 // NOTE: Instances of HashEntry MUST NOT leave the code of methods inside
 // Hash or HashIterator. Do not return values of this type, as the hash
 // itself may be released at any point by the GC, and there is no reference
-// back to it. You must also pin the entries array (see Hash.pin/unpinEntries)
-// for as long as you have a HashEntry,  or a GC cycle could make the array
+// back to it. You must also pin the entries array (see HashUtils.pin/unpinEntries)
+// for as long as you have a HashEntry, or a GC cycle could make the array
 // move and then this pointer would be invalidated.
 private class HashEntry __primitive
 {

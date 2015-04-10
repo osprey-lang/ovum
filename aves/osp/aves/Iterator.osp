@@ -37,7 +37,7 @@ public abstract class Iterator
 	/// Returns: True if any item in the sequence is a truthy value;
 	///          otherwise, false.
 	/// Remarks: This method returns false if the sequence is empty.
-	public any()
+	public overridable any()
 	{
 		// This method could equivalently be written as:
 		// return any(bool);
@@ -56,7 +56,7 @@ public abstract class Iterator
 	/// Returns: True if any item in the sequence matches the predicate;
 	///          otherwise, false.
 	/// Throws ArgumentNullError: {predicate} is null.
-	public any(predicate)
+	public overridable any(predicate)
 	{
 		if predicate is null:
 			throw new ArgumentNullError("predicate");
@@ -72,7 +72,7 @@ public abstract class Iterator
 	/// Returns: True if all items in the sequence are truthy values;
 	///          otherwise, false.
 	/// Remarks: This method returns true if the sequence is empty.
-	public all()
+	public overridable all()
 	{
 		// This method could equivalently be written as:
 		// return all(bool);
@@ -91,7 +91,7 @@ public abstract class Iterator
 	/// Returns: True if all items in the sequence match the predicate;
 	///          otherwise, false.
 	/// Throws ArgumentNullError: {predicate} is null.
-	public all(predicate)
+	public overridable all(predicate)
 	{
 		if predicate is null:
 			throw new ArgumentNullError("predicate");
@@ -106,7 +106,7 @@ public abstract class Iterator
 	/// Param func: An invokable value that takes one argument (the
 	///           current element). The return value is discarded.
 	/// Throws ArgumentNullError: {func} is null.
-	public each(func)
+	public overridable each(func)
 	{
 		if func is null:
 			throw new ArgumentNullError("func");
@@ -124,7 +124,7 @@ public abstract class Iterator
 	/// Returns: A new {Iterator} which, when iterated over, produces
 	///          those items from this sequence that match the predicate.
 	/// Throws ArgumentNullError: {predicate} is null.
-	public filter(predicate)
+	public overridable filter(predicate)
 	{
 		if predicate is null:
 			throw new ArgumentNullError("predicate");
@@ -135,7 +135,7 @@ public abstract class Iterator
 	/// Summary: Returns the first element in the sequence.
 	/// Returns: The first element in the sequence.
 	/// Throws InvalidStateError: The collection is empty.
-	public first()
+	public overridable first()
 	{
 		if moveNext():
 			return current;
@@ -155,7 +155,7 @@ public abstract class Iterator
 	///          The collection is empty.
 	///
 	///          No item in the collection matched the predicate.
-	public first(predicate)
+	public overridable first(predicate)
 	{
 		if predicate is null:
 			throw new ArgumentNullError("predicate");
@@ -172,14 +172,14 @@ public abstract class Iterator
 		throw new InvalidStateError(noMatchFound);
 	}
 
-	public firstOrNull()
+	public overridable firstOrNull()
 	{
 		if moveNext():
 			return current;
 
 		return null;
 	}
-	public firstOrNull(predicate)
+	public overridable firstOrNull(predicate)
 	{
 		if predicate is null:
 			throw new ArgumentNullError("predicate");
@@ -194,7 +194,7 @@ public abstract class Iterator
 		return null;
 	}
 
-	public fold(func)
+	public overridable fold(func)
 	{
 		if func is null:
 			throw new ArgumentNullError("func");
@@ -207,7 +207,7 @@ public abstract class Iterator
 
 		return init;
 	}
-	public fold(init, func)
+	public overridable fold(init, func)
 	{
 		if func is null:
 			throw new ArgumentNullError("func");
@@ -218,7 +218,7 @@ public abstract class Iterator
 		return init;
 	}
 
-	public join(sep)
+	public overridable join(sep)
 	{
 		sep = string(sep);
 		var output = new StringBuffer();
@@ -237,7 +237,7 @@ public abstract class Iterator
 		return output.toString();
 	}
 
-	public group(func)
+	public overridable group(func)
 	{
 		if func is null:
 			throw new ArgumentNullError("func");
@@ -254,7 +254,7 @@ public abstract class Iterator
 
 		return result;
 	}
-	public group(keyFunc, valueFunc)
+	public overridable group(keyFunc, valueFunc)
 	{
 		if keyFunc is null:
 			throw new ArgumentNullError("keyFunc");
@@ -274,7 +274,7 @@ public abstract class Iterator
 		return result;
 	}
 
-	public groupEvery(frequency)
+	public overridable groupEvery(frequency)
 	{
 		frequency = int(frequency);
 		if frequency <= 0:
@@ -304,7 +304,7 @@ public abstract class Iterator
 			yield curList;
 	}
 
-	public intersperse(value)
+	public overridable intersperse(value)
 	{
 		if moveNext()
 		{
@@ -317,7 +317,7 @@ public abstract class Iterator
 			}
 		}
 	}
-	public intersperse(value, frequency)
+	public overridable intersperse(value, frequency)
 	{
 		frequency = int(frequency);
 		if frequency <= 0:
@@ -342,7 +342,7 @@ public abstract class Iterator
 		}
 	}
 
-	public last()
+	public overridable last()
 	{
 		if not moveNext():
 			throw new InvalidStateError(emptySequence);
@@ -355,7 +355,7 @@ public abstract class Iterator
 
 		return output;
 	}
-	public last(predicate)
+	public overridable last(predicate)
 	{
 		if predicate is null:
 			throw new ArgumentNullError("predicate");
@@ -381,7 +381,7 @@ public abstract class Iterator
 		return output;
 	}
 
-	public lastOrNull()
+	public overridable lastOrNull()
 	{
 		if not moveNext():
 			return null;
@@ -394,7 +394,7 @@ public abstract class Iterator
 
 		return output;
 	}
-	public lastOrNull(predicate)
+	public overridable lastOrNull(predicate)
 	{
 		if predicate is null:
 			throw new ArgumentNullError("predicate");
@@ -417,14 +417,14 @@ public abstract class Iterator
 		return null;
 	}
 
-	public map(func)
+	public overridable map(func)
 	{
 		if func is null:
 			throw new ArgumentNullError("func");
 		return new MapIterator(this, func);
 	}
 
-	public take(count)
+	public overridable take(count)
 	{
 		count = int(count);
 		if count < 0:
@@ -435,7 +435,7 @@ public abstract class Iterator
 		return new TakeIterator(this, count);
 	}
 
-	public skip(count)
+	public overridable skip(count)
 	{
 		count = int(count);
 		if count < 0:
@@ -444,7 +444,7 @@ public abstract class Iterator
 		return new SkipIterator(this, count);
 	}
 
-	public zip(other)
+	public overridable zip(other)
 	{
 		if other is null:
 			throw new ArgumentNullError("other");
@@ -453,7 +453,7 @@ public abstract class Iterator
 
 		return zipIter(other, defaultZipFunc);
 	}
-	public zip(other, func)
+	public overridable zip(other, func)
 	{
 		if other is null:
 			throw new ArgumentNullError("other");
@@ -476,7 +476,7 @@ public abstract class Iterator
 	///          way to the end. If the iterator represents an infinite
 	///          sequence, the program will attempt to allocate a lot of
 	///          memory before throwing a {MemoryError}.
-	public toList()
+	public overridable toList()
 	{
 		var output = [];
 
@@ -597,4 +597,4 @@ private class EmptyIterator is Iterator
 {
 	override get current = null;
 	override moveNext() { return false; }
-}	
+}

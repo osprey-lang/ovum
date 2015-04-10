@@ -17,7 +17,7 @@ public abstract class Iterable
 	/// Returns: True if any item in the sequence is a truthy value;
 	///          otherwise, false.
 	/// Remarks: This method returns false if the sequence is empty.
-	public any()
+	public overridable any()
 	{
 		return this.iter.any();
 	}
@@ -40,7 +40,7 @@ public abstract class Iterable
 	/// Returns: True if all items in the sequence are truthy values;
 	///          otherwise, false.
 	/// Remarks: This method returns true if the sequence is empty.
-	public all()
+	public overridable all()
 	{
 		return this.iter.all();
 	}
