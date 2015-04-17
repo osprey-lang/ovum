@@ -1,11 +1,15 @@
 namespace aves;
 
-/// Summary: Exposes a read-only {Iterable} that lets you iterate over
-///          a single collection object.
-/// Remarks: Unlike {Iterator} objects, {Iterable} can be iterated over
-///          any number of times. Because {Iterator} instances can only
-///          be iterated over once, you cannot pass an {Iterator} an
-///          instance into the {CollectionIterable} constructor.
+/// Summary: Exposes a read-only {Iterable} that lets you iterate over a single
+///          collection object. The primary difference between this and {Iterable}
+///          is that this class completely hides methods methods that the wrapped
+///          collection exposes. In other words, it turns the wrapped collection
+///          into a read-only sequence. By contrast, {Iterator} is a base class
+///          used by many collection types, and is usually augmented with members
+///          that add and remove items as well as indexers.
+/// Remarks: Unlike {Iterator} objects, {Iterable} can be iterated over any number
+///          of times. Because {Iterator} instances can only be iterated over once,
+///          you cannot pass an {Iterator} to the {CollectionIterable} constructor.
 public inheritable CollectionIterable is Iterable
 {
 	/// Summary: Creates a new {CollectionIterable} representing an empty collection.
