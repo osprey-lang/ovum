@@ -5,6 +5,16 @@ namespace aves;
 ///          represents a collection, but it may also be a lazy-evaluated
 ///          sequence, or any other kind of iterable object.
 ///
+///          Since {Iterable} supports all kinds types that represent a
+///          sequence of values, some of which may be infinite, this class
+///          does not declare a `length` member.
+///
+///          {Iterable} contains a variety of methods for manipulating the
+///          sequence, such as {map}, {filter}, {group}, {fold}, {take},
+///          {skip}, {intersperse} and {zip}. When these methods need to
+///          return new sequences, they create a new {Iterable} that is
+///          always lazy-evaluated.
+///
 ///          This class is abstract. Classes that inherit from this must
 ///          provide an iterator.
 public abstract class Iterable
