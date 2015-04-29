@@ -68,8 +68,8 @@ public abstract class Iterable
 		return this.iter.all(predicate);
 	}
 
-	/// Summary: Counts the items in the collection.
-	/// Returns: The number of items in the collection, as an Int.
+	/// Summary: Counts the items in the sequence.
+	/// Returns: The number of items in the sequence, as an Int.
 	public overridable count()
 	{
 		var length = 0;
@@ -78,7 +78,7 @@ public abstract class Iterable
 			length += 1;
 		return length;
 	}
-	/// Summary: Counts all the items in the collection that match the
+	/// Summary: Counts all the items in the sequence that match the
 	///          the specified predicate.
 	/// Param predicate: An invokable value that takes one argument
 	///          (the current element) and returns a truthy value if
@@ -142,9 +142,14 @@ public abstract class Iterable
 		return this.iter.fold(init, func);
 	}
 
-	public overridable join(sep)
+	public overridable join(separator)
 	{
-		return this.iter.join(sep);
+		return this.iter.join(separator);
+	}
+
+	public overridable joinNatural(separator, lastSeparator)
+	{
+		return this.iter.joinNatural(separator, lastSeparator);
 	}
 
 	public overridable group(func)

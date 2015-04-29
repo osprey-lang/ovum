@@ -1,0 +1,52 @@
+use namespace aves;
+use namespace testing.unit;
+
+namespace aves.tests;
+
+// Tests for the class aves.Iterator
+// These tests make use of WrappedIterator with items from a list. Since this
+// is done so much, the utility method `wrap()` will take a list and wrap it
+// in a WrappedIterator.
+
+public class IteratorTests is TestFixture
+{
+	public new() { new base("aves.Iterator tests"); }
+
+	// Wrap a List (other other iterable) in a WrappedIterator.
+	private wrap(list)
+	{
+		return new WrappedIterator(list.iter);
+	}
+
+	// joinNatural
+
+	public test_JoinNaturalEmpty()
+	{
+		var iterator = Iterator.empty;
+		Assert.areEqual(iterator.joinNatural(",", "&"), "");
+	}
+
+	public test_JoinNaturalOne()
+	{
+		var iterator = wrap(["a"]);
+		Assert.areEqual(iterator.joinNatural(",", "&"), "a");
+	}
+
+	public test_JoinNaturalTwo()
+	{
+		var iterator = wrap(["a", "b"]);
+		Assert.areEqual(iterator.joinNatural(",", "&"), "a&b");
+	}
+
+	public test_JoinNaturalThree()
+	{
+		var iterator = wrap(["a", "b", "c"]);
+		Assert.areEqual(iterator.joinNatural(",", "&"), "a,b&c");
+	}
+
+	public test_JoinNaturalFour()
+	{
+		var iterator = wrap(["a", "b", "c", "d"]);
+		Assert.areEqual(iterator.joinNatural(",", "&"), "a,b,c&d");
+	}
+}

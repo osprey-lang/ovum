@@ -72,6 +72,7 @@ public inheritable List
 	/// Returns: The index at which the item was inserted.
 	public add(item)
 		__extern("aves_List_add");
+
 	/// Summary: Inserts an item at the specified index.
 	/// Param index: The index at which to insert the item. If negative,
 	///              the index is relative to the end of the list, e.g. -2
@@ -84,6 +85,7 @@ public inheritable List
 	///          at the end of the list.
 	public insert(index, item)
 		__extern("aves_List_insert");
+
 	/// Summary: Determines whether the list contains the specified item.
 	/// Param item: The item to look for.
 	/// Returns: True if the item is in the list; otherwise, false.
@@ -93,6 +95,7 @@ public inheritable List
 	{
 		return indexOf(item) is not null;
 	}
+
 	/// Summary: Returns the index of the first occurrence of the
 	///          specified item within this list, or null if it could
 	///          not be found.
@@ -107,6 +110,7 @@ public inheritable List
 
 		return null;
 	}
+
 	/// Summary: Returns the index of the last occurrence of the
 	///          specified item within this list, or null if it could
 	///          not be found.
@@ -121,6 +125,7 @@ public inheritable List
 
 		return null;
 	}
+
 	/// Summary: Removes the first occurrence of the specified item
 	///          from this list.
 	/// Param item: The item to remove.
@@ -135,6 +140,7 @@ public inheritable List
 		}
 		return false;
 	}
+
 	/// Summary: Removes the item at the specified index.
 	/// Param index: The index to remove an item from. If negative, the index is
 	///              relative to the end of the list, e.g. -2 is the second to
@@ -144,9 +150,11 @@ public inheritable List
 	///          {index} is less than -{length}, or greater than or equal to {length}.
 	public removeAt(index)
 		__extern("aves_List_removeAt");
+
 	/// Summary: Removes all items from the list.
 	public clear()
 		__extern("aves_List_clear");
+
 	/// Summary: Copies items from this list into a new list, starting at the
 	///          specified index, up to the end of this list.
 	/// Param start: The index at which the slice starts (inclusive). If negative,
@@ -160,6 +168,7 @@ public inheritable List
 	/// Remarks: If {start} is equal to {length}, the returned list will be empty.
 	public slice(start)
 		__extern("aves_List_slice1", locals=1);
+
 	/// Summary: Copies items form this list into a new list, starting at the
 	///          specified start index, up to the specified exclusive end index.
 	/// Param start: The index at which the slice starts (inclusive). If negative,
@@ -190,18 +199,20 @@ public inheritable List
 	///          (as long as {end} is also valid).
 	public slice(start, end)
 		__extern("aves_List_slice2", locals=1);
+
 	/// Summary: Joins the values of this list into a string, separated by the
 	///          specified separator.
-	/// Param sep: The separator to be put between items in the list.
-	/// Returns: A String value containing the items of this list converted to strings
-	///          and separated by the {sep} value.
-	/// Throws TypeError: {sep} could not be converted to a string.
-	/// Remarks: This method uses {aves.string} to convert each item in the list to its
-	///          string representation, and does not catch any error thrown by that function.
-	///          As a result, null values get turned into the empty string.
-	public join(sep)
+	/// Param separator: The separator to put between items in the list.
+	/// Returns: A String value containing the items of this list converted to
+	///          strings and separated by the {separator} value.
+	/// Throws TypeError: {separator} could not be converted to a string.
+	/// Remarks: This method uses {aves.string} to convert each item in the list
+	///          to its string representation, and does not catch any error thrown
+	///          by that function. As a result, null values get turned into the
+	///          empty string.
+	public join(separator)
 	{
-		sep = string(sep);
+		separator = string(separator);
 		var output = new StringBuffer();
 
 		var startVersion = version;
@@ -211,12 +222,13 @@ public inheritable List
 			if startVersion != version:
 				throw new InvalidStateError(listHasChanged);
 			if i > 0:
-				output.append(sep);
+				output.append(separator);
 			output.append(this[i]);
 		}
 
 		return output.toString();
 	}
+
 	/// Summary: Reverses the order of the items in this list in-place.
 	/// Returns: The current list.
 	public reverse()

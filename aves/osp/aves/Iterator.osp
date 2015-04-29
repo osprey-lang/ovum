@@ -218,21 +218,82 @@ public abstract class Iterator
 		return init;
 	}
 
-	public overridable join(sep)
+	/// Summary: Joins the values of the sequence into a string, separated by the
+	///          specified separator.
+	/// Param separator: The separator to put between items in the sequence.
+	/// Returns: A String value containing the items of this sequence converted to
+	///          strings and separated by the {separator} value.
+	/// Throws TypeError: {separator} could not be converted to a string.
+	/// Remarks: This method uses {aves.string} to convert each item in the sequence
+	///          to its string representation, and does not catch any error thrown
+	///          by that function. As a result, null values get turned into the
+	///          empty string.
+	public overridable join(separator)
 	{
-		sep = string(sep);
+		separator = string(separator);
 		var output = new StringBuffer();
 
 		var first = true;
 		while moveNext()
 		{
 			if not first:
-				output.append(sep);
-			else
+				output.append(separator);
+			else:
 				first = false;
 
 			output.append(current);
 		}
+
+		return output.toString();
+	}
+
+	/// Summary: Joins the values of the sequence into a “natural” list, where the
+	///          last pair in the list uses a different separator. This is typically
+	///          used to create lists such as “a, b, c and d”.
+	/// Param separator: The separator to put between items in the sequence,
+	///          except the last pair.
+	/// Param lastSeparator: The separator to put between the last pair of items
+	///          in the sequence.
+	/// Returns: A String value containing the items of this sequence converted to
+	///          strings and separated by one of the separator values.
+	/// Remarks: This method uses {aves.string} to convert each item in the sequence
+	///          to its string representation, and does not catch any error thrown
+	///          by that function. As a result, null values get turned into the
+	///          empty string.
+	public overridable joinNatural(separator, lastSeparator)
+	{
+		separator = string(separator);
+		lastSeparator = string(lastSeparator);
+
+		if not moveNext():
+			return "";
+
+		var output = new StringBuffer();
+		var first = true;
+		var prevItem = current;
+		while moveNext()
+		{
+			// If we get here, we know prevItem definitely isn't
+			// the last item in the sequence. So we can append it
+			// to the output buffer.
+			if not first
+			{
+				output.append(separator);
+				output.append(prevItem);
+			}
+			else
+			{
+				output.append(prevItem);
+				first = false;
+			}
+			prevItem = current;
+		}
+		// And once we get here, we know prevItem was definitely
+		// the last item. If it wasn't also the first, we can
+		// append the lastSeparator.
+		if not first:
+			output.append(lastSeparator);
+		output.append(prevItem);
 
 		return output.toString();
 	}
