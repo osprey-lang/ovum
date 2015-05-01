@@ -678,7 +678,8 @@ private class ListIterator is Iterator
 		// Don't throw if i + count is past the end; just let the resulting iterator be empty.
 		return new ListIterator(list) with
 		{
-			i: i + count
+			i: i + count,
+			version: version,
 		};
 	}
 
