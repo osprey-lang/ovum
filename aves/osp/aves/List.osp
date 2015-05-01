@@ -476,30 +476,40 @@ public inheritable List
 		return null;
 	}
 
-	/// Summary: Applies an accumulator function over the list, from low to high index.
+	/// Summary: Applies an accumulator function over the list.
 	/// Param func: In invokable value that accepts two arguments (the current accumulator
 	///             value and the current list item) and returns the new accumulator value.
-	///             The accumulator value starts out as the first item in the list.
+	///             The initial value of the accumulator is the first item in the list.
 	/// Returns: The final accumulator value. If the list contains only one item, then
 	///          that item is returned.
+	/// Throws ArgumentNullError:
+	///          {func} is null.
 	/// Throws InvalidStateError:
 	///          The list is empty. To fold an empty list, use the overload that takes
 	///          an initial accumulator value.
 	public fold(func)
 	{
+		if func is null:
+			throw new ArgumentNullError("func");
 		if length == 0:
 			throw new InvalidStateError("Cannot fold an empty list without initial value.");
 
 		return foldInternal(this[0], func, 1);
 	}
-	/// Summary: Applies an accumulator function over the list, from low to high index.
+	/// Summary: Applies an accumulator function over the list using the specified initial
+	///          accumulator value.
 	/// Param init: The initial accumulator value.
 	/// Param func: In invokable value that accepts two arguments (the current accumulator
 	///             value and the current list item) and returns the new accumulator value.
-	///             The accumulator value starts out as {init}.
+	///             The initial value of the accumulator is {init}.
 	/// Returns: The final accumulator value. If the list is empty, {init} is returned.
+	/// Throws ArgumentNullError:
+	///          {func} is null.
 	public fold(init, func)
 	{
+		if func is null:
+			throw new ArgumentNullError("func");
+
 		return foldInternal(init, func, 0);
 	}
 	private foldInternal(init, func, startIndex)
