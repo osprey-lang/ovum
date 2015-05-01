@@ -614,6 +614,15 @@ private class TakeIterable is Iterable
 
 	private inner, takeCount;
 
+	override take(count)
+	{
+		count = int(count);
+		if count < 0:
+			throw new ArgumentRangeError("count");
+
+		return new TakeIterable(inner, math.min(count, takeCount));
+	}
+
 	iter
 	{
 		return inner.iter.take(takeCount);
@@ -625,6 +634,15 @@ private class SkipIterable is Iterable
 	public new(this.inner, this.skipCount);
 
 	private inner, skipCount;
+
+	override skip(count)
+	{
+		count = int(count);
+		if count < 0:
+			throw new ArgumentRangeError("count");
+
+		return new SkipIterable(inner, skipCount + count);
+	}
 
 	iter
 	{
