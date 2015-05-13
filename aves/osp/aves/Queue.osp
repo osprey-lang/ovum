@@ -75,7 +75,7 @@ public inheritable Queue is Iterable
 
 	override toString()
 	{
-		return "Queue[length = 0]".format([length]);
+		return "Queue[length = {0}]".format([length]);
 	}
 
 	iter
