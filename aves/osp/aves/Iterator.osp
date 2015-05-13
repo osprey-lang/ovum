@@ -767,6 +767,7 @@ private class FilterIterator is Iterator
 	private inner, predicate, ended = false;
 
 	override get current = inner.current;
+
 	override moveNext()
 	{
 		if not ended
@@ -789,6 +790,7 @@ private class MapIterator is Iterator
 	private inner, func, cur, ended = false;
 
 	override get current = cur;
+
 	override moveNext()
 	{
 		if not ended
@@ -814,6 +816,7 @@ private class TakeIterator is Iterator
 	private inner, count;
 
 	override get current = inner.current;
+
 	override moveNext()
 	{
 		if count > 0
@@ -837,6 +840,7 @@ private class SkipIterator is Iterator
 	private inner, count, hasMore = true;
 
 	override get current = inner.current;
+
 	override moveNext()
 	{
 		if hasMore
@@ -860,5 +864,6 @@ private class SkipIterator is Iterator
 private class EmptyIterator is Iterator
 {
 	override get current = null;
+
 	override moveNext() { return false; }
 }
