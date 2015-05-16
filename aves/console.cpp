@@ -74,7 +74,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_write)
 	if (!IsString(thread, args))
 		CHECKED(StringFromValue(thread, args));
 
-	VM_Print(args->common.string);
+	VM_Print(args->v.string);
 }
 END_NATIVE_FUNCTION
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_writeErr)
@@ -84,7 +84,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_writeErr)
 	if (!IsString(thread, args))
 		CHECKED(StringFromValue(thread, args));
 
-	VM_PrintErr(args->common.string);
+	VM_PrintErr(args->v.string);
 }
 END_NATIVE_FUNCTION
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_writeLineErr)
@@ -94,7 +94,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_writeLineErr)
 	else if (!IsString(thread, args))
 		CHECKED(StringFromValue(thread, args));
 
-	VM_PrintErrLn(args->common.string);
+	VM_PrintErrLn(args->v.string);
 }
 END_NATIVE_FUNCTION
 
@@ -170,12 +170,12 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_readKey)
 	{
 		Value charValue;
 		charValue.type = Types::Char;
-		charValue.integer = (uint32_t)ir.Event.KeyEvent.uChar.UnicodeChar;
+		charValue.v.integer = (uint32_t)ir.Event.KeyEvent.uChar.UnicodeChar;
 		VM_Push(thread, &charValue);
 
 		Value keyCodeValue;
 		keyCodeValue.type = Types::ConsoleKeyCode;
-		keyCodeValue.integer = ir.Event.KeyEvent.wVirtualKeyCode;
+		keyCodeValue.v.integer = ir.Event.KeyEvent.wVirtualKeyCode;
 		VM_Push(thread, &keyCodeValue);
 
 		DWORD state = ir.Event.KeyEvent.dwControlKeyState;
@@ -343,7 +343,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_get_textColor)
 	Value result;
 	result.type = Types::ConsoleColor;
 	// Foreground color occupies the lowest 4 bits
-	result.integer = currentAttrs & 0x0f;
+	result.v.integer = currentAttrs & 0x0f;
 	VM_Push(thread, &result);
 }
 END_NATIVE_FUNCTION
@@ -356,7 +356,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_set_textColor)
 
 	WORD currentAttrs;
 	CHECKED(Console::GetCurrentAttrs(thread, currentAttrs));
-	SetConsoleTextAttribute(Console::StdOut, (currentAttrs & ~0x0f) | (WORD)args->integer);
+	SetConsoleTextAttribute(Console::StdOut, (currentAttrs & ~0x0f) | (WORD)args->v.integer);
 }
 END_NATIVE_FUNCTION
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_get_backColor)
@@ -367,7 +367,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_get_backColor)
 	Value result;
 	result.type = Types::ConsoleColor;
 	// Background color occupies bits 4–7
-	result.integer = (currentAttrs & 0xf0) >> 4;
+	result.v.integer = (currentAttrs & 0xf0) >> 4;
 	VM_Push(thread, &result);
 }
 END_NATIVE_FUNCTION
@@ -380,7 +380,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_set_backColor)
 
 	WORD currentAttrs;
 	CHECKED(Console::GetCurrentAttrs(thread, currentAttrs));
-	SetConsoleTextAttribute(Console::StdOut, (currentAttrs & ~0xf0) | ((WORD)args->integer << 4));
+	SetConsoleTextAttribute(Console::StdOut, (currentAttrs & ~0xf0) | ((WORD)args->v.integer << 4));
 }
 END_NATIVE_FUNCTION
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_setColors)
@@ -394,8 +394,8 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_setColors)
 	WORD currentAttrs;
 	CHECKED(Console::GetCurrentAttrs(thread, currentAttrs));
 	SetConsoleTextAttribute(Console::StdOut, (currentAttrs & ~0xff) |
-		((WORD)args[0].integer & 0x0f) | // foreground
-		(((WORD)args[1].integer & 0x0f) << 4)); // background
+		((WORD)args[0].v.integer & 0x0f) | // foreground
+		(((WORD)args[1].v.integer & 0x0f) << 4)); // background
 }
 END_NATIVE_FUNCTION
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_resetColors)
@@ -452,7 +452,7 @@ int AssertValidCoord(ThreadHandle thread, Value *v, String *paramName)
 	int r = IntFromValue(thread, v);
 	if (r == OVUM_SUCCESS)
 	{
-		if (v->integer < 0 || v->integer > SHRT_MAX)
+		if (v->v.integer < 0 || v->v.integer > SHRT_MAX)
 		{
 			VM_PushString(thread, paramName);
 			r = VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 1);
@@ -475,7 +475,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_set_cursorX)
 	COORD pos;
 	CHECKED(Console::GetCursorPosition(thread, pos));
 	Console::SetCursorPosition(thread,
-		(SHORT)args[0].integer, pos.Y);
+		(SHORT)args[0].v.integer, pos.Y);
 }
 END_NATIVE_FUNCTION
 
@@ -493,7 +493,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_set_cursorY)
 	COORD pos;
 	CHECKED(Console::GetCursorPosition(thread, pos));
 	Console::SetCursorPosition(thread,
-		pos.X, (SHORT)args[0].integer);
+		pos.X, (SHORT)args[0].v.integer);
 }
 END_NATIVE_FUNCTION
 
@@ -502,7 +502,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_setCursorPosition)
 	CHECKED(AssertValidCoord(thread, args + 0, strings::x));
 	CHECKED(AssertValidCoord(thread, args + 1, strings::y));
 
-	Console::SetCursorPosition(thread, (SHORT)args[0].integer, (SHORT)args[1].integer);
+	Console::SetCursorPosition(thread, (SHORT)args[0].v.integer, (SHORT)args[1].v.integer);
 }
 END_NATIVE_FUNCTION
 
@@ -540,8 +540,8 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_setBufferSize)
 {
 	CHECKED(IntFromValue(thread, args + 0));
 	CHECKED(IntFromValue(thread, args + 1));
-	int64_t width  = args[0].integer;
-	int64_t height = args[1].integer;
+	int64_t width  = args[0].v.integer;
+	int64_t height = args[1].v.integer;
 
 	CONSOLE_SCREEN_BUFFER_INFO csbi;
 	CHECKED(Console::GetBufferInfo(thread, csbi));
@@ -567,8 +567,8 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_setWindowSize)
 {
 	CHECKED(IntFromValue(thread, args + 0));
 	CHECKED(IntFromValue(thread, args + 1));
-	int64_t width64  = args[0].integer;
-	int64_t height64 = args[1].integer;
+	int64_t width64  = args[0].v.integer;
+	int64_t height64 = args[1].v.integer;
 
 	if (width64 < 0 || width64 > INT32_MAX)
 	{

@@ -3,8 +3,6 @@
 #include "aves_error.h"
 #include <cstddef>
 
-#define _E(value)	((value).common.error)
-
 LitString<30> _DefaultErrorMessage = LitString<30>::FromCString("An unspecified error occurred.");
 String *DefaultErrorMessage = _S(_DefaultErrorMessage);
 
@@ -31,7 +29,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Error_new)
 	if (argc > 1 && !IS_NULL(args[1]))
 	{
 		CHECKED(StringFromValue(thread, args + 1));
-		err->message = args[1].common.string;
+		err->message = args[1].v.string;
 	}
 	else
 		err->message = DefaultErrorMessage;
@@ -43,13 +41,13 @@ END_NATIVE_FUNCTION
 
 AVES_API NATIVE_FUNCTION(aves_Error_get_message)
 {
-	ErrorInst *err = _E(THISV);
+	ErrorInst *err = THISV.v.error;
 	VM_PushString(thread, err->message);
 	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_Error_get_stackTrace)
 {
-	ErrorInst *err = _E(THISV);
+	ErrorInst *err = THISV.v.error;
 	if (err->stackTrace == nullptr)
 		VM_PushNull(thread);
 	else
@@ -58,13 +56,13 @@ AVES_API NATIVE_FUNCTION(aves_Error_get_stackTrace)
 }
 AVES_API NATIVE_FUNCTION(aves_Error_get_innerError)
 {
-	ErrorInst *err = _E(THISV);
+	ErrorInst *err = THISV.v.error;
 	VM_Push(thread, &err->innerError);
 	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_Error_get_data)
 {
-	ErrorInst *err = _E(THISV);
+	ErrorInst *err = THISV.v.error;
 	VM_Push(thread, &err->data);
 	RETURN_SUCCESS;
 }

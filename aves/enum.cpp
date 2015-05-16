@@ -3,7 +3,7 @@
 
 AVES_API NATIVE_FUNCTION(aves_Enum_getHashCode)
 {
-	VM_PushInt(thread, THISV.integer);
+	VM_PushInt(thread, THISV.v.integer);
 	RETURN_SUCCESS;
 }
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Enum_toString)
@@ -21,7 +21,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Enum_toString)
 		{
 			Value value;
 			CHECKED(VM_LoadStaticField(thread, field, &value));
-			if (value.type == thisType && value.integer == THISV.integer)
+			if (value.type == thisType && value.v.integer == THISV.v.integer)
 			{
 				VM_PushString(thread, Member_GetName((MemberHandle)field));
 				RETURN_SUCCESS;
@@ -30,7 +30,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Enum_toString)
 	}
 
 	// Nothing found, stringify the integer value instead
-	VM_PushInt(thread, THISV.integer);
+	VM_PushInt(thread, THISV.v.integer);
 	CHECKED(VM_InvokeMember(thread, strings::toString, 0, nullptr));
 	RETURN_SUCCESS;
 }
@@ -41,7 +41,7 @@ AVES_API NATIVE_FUNCTION(aves_Enum_opEquals)
 	if (args[0].type != args[1].type)
 		VM_PushBool(thread, false);
 	else
-		VM_PushBool(thread, args[0].integer == args[1].integer);
+		VM_PushBool(thread, args[0].v.integer == args[1].v.integer);
 	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_Enum_opCompare)
@@ -49,8 +49,8 @@ AVES_API NATIVE_FUNCTION(aves_Enum_opCompare)
 	if (args[0].type != args[1].type)
 		return VM_ThrowTypeError(thread);
 
-	int64_t left = args[0].integer;
-	int64_t right = args[0].integer;
+	int64_t left = args[0].v.integer;
+	int64_t right = args[0].v.integer;
 
 	VM_PushInt(thread, left < right ? -1 :
 		left > right ? 1 :
@@ -59,7 +59,7 @@ AVES_API NATIVE_FUNCTION(aves_Enum_opCompare)
 }
 AVES_API NATIVE_FUNCTION(aves_Enum_opPlus)
 {
-	VM_PushInt(thread, THISV.integer);
+	VM_PushInt(thread, THISV.v.integer);
 	RETURN_SUCCESS;
 }
 
@@ -68,7 +68,7 @@ AVES_API NATIVE_FUNCTION(aves_EnumSet_hasFlag)
 	if (THISV.type != args[1].type)
 		return VM_ThrowTypeError(thread);
 
-	VM_PushBool(thread, (THISV.integer & args[1].integer) == args[1].integer);
+	VM_PushBool(thread, (THISV.v.integer & args[1].v.integer) == args[1].v.integer);
 	RETURN_SUCCESS;
 }
 AVES_API BEGIN_NATIVE_FUNCTION(aves_EnumSet_toString)
@@ -76,7 +76,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_EnumSet_toString)
 	StringBuffer buf;
 	CHECKED_MEM(buf.Init(256));
 
-	int64_t remainingFlags = THISV.integer;
+	int64_t remainingFlags = THISV.v.integer;
 	bool foundField = false;
 
 	TypeHandle thisType = THISV.type;
@@ -93,7 +93,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_EnumSet_toString)
 			{
 				// If the value matches THISV.integer entirely, we always
 				// prefer the name of that field.
-				if (THISV.integer == value.integer)
+				if (THISV.v.integer == value.v.integer)
 				{
 					// Don't append the string to the buffer; we don't want
 					// to allocate a whole new string for it upon returning.
@@ -102,15 +102,15 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_EnumSet_toString)
 				}
 				// Let's see if the value matches any of the remaining flags,
 				// and no other
-				else if ((remainingFlags & value.integer) != 0 &&
-					(~remainingFlags & value.integer) == 0)
+				else if ((remainingFlags & value.v.integer) != 0 &&
+					(~remainingFlags & value.v.integer) == 0)
 				{
 					// value.integer covers some or all of the remaining flags,
 					// so let's append the name of that field!
 					if (buf.GetLength() > 0)
 						CHECKED_MEM(buf.Append(3, " | "));
 					CHECKED_MEM(buf.Append(Member_GetName((MemberHandle)field)));
-					remainingFlags &= ~(remainingFlags & value.integer);
+					remainingFlags &= ~(remainingFlags & value.v.integer);
 
 					if (remainingFlags == 0)
 						break; // Done!
@@ -149,7 +149,7 @@ AVES_API NATIVE_FUNCTION(aves_EnumSet_opOr)
 
 	Value output;
 	output.type = args[0].type;
-	output.integer = args[0].integer | args[1].integer;
+	output.v.integer = args[0].v.integer | args[1].v.integer;
 	VM_Push(thread, &output);
 	RETURN_SUCCESS;
 }
@@ -160,7 +160,7 @@ AVES_API NATIVE_FUNCTION(aves_EnumSet_opXor)
 
 	Value output;
 	output.type = args[0].type;
-	output.integer = args[0].integer ^ args[1].integer;
+	output.v.integer = args[0].v.integer ^ args[1].v.integer;
 	VM_Push(thread, &output);
 	RETURN_SUCCESS;
 }
@@ -171,7 +171,7 @@ AVES_API NATIVE_FUNCTION(aves_EnumSet_opAnd)
 
 	Value output;
 	output.type = args[0].type;
-	output.integer = args[0].integer & args[1].integer;
+	output.v.integer = args[0].v.integer & args[1].v.integer;
 	VM_Push(thread, &output);
 	RETURN_SUCCESS;
 }
@@ -179,7 +179,7 @@ AVES_API NATIVE_FUNCTION(aves_EnumSet_opNot)
 {
 	Value output;
 	output.type = args[0].type;
-	output.integer = ~args[0].integer;
+	output.v.integer = ~args[0].v.integer;
 	VM_Push(thread, &output);
 	RETURN_SUCCESS;
 }

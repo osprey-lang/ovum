@@ -2,8 +2,6 @@
 #include "aves_method.h"
 #include <cstddef>
 
-#define _M(value)	((value).common.method)
-
 AVES_API void CDECL aves_Method_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(MethodInst));
@@ -19,7 +17,7 @@ AVES_API NATIVE_FUNCTION(aves_Method_new)
 		return VM_ThrowErrorOfType(thread, Types::ArgumentNullError, 1);
 	}
 
-	MemberHandle invocator = Type_FindMember(args[1].type, strings::_call, args[0].type);
+	MemberHandle invocator = Type_FindMember(args[1].type, strings::_call, THISV.type);
 	if (invocator == nullptr ||
 		Member_GetKind(invocator) != MemberKind::METHOD ||
 		Member_IsStatic(invocator))
@@ -29,7 +27,7 @@ AVES_API NATIVE_FUNCTION(aves_Method_new)
 		return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 2);
 	}
 
-	MethodInst *method = args[0].common.method;
+	MethodInst *method = THISV.v.method;
 	method->instance = args[1];
 	method->method = (MethodHandle)invocator;
 	RETURN_SUCCESS;
@@ -37,7 +35,7 @@ AVES_API NATIVE_FUNCTION(aves_Method_new)
 
 AVES_API NATIVE_FUNCTION(aves_Method_get_hasInstance)
 {
-	MethodInst *method = _M(THISV);
+	MethodInst *method = THISV.v.method;
 
 	VM_PushBool(thread, !IS_NULL(method->instance));
 	RETURN_SUCCESS;
@@ -45,10 +43,10 @@ AVES_API NATIVE_FUNCTION(aves_Method_get_hasInstance)
 
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Method_accepts)
 {
-	MethodInst *method = _M(THISV);
+	MethodInst *method = THISV.v.method;
 
 	CHECKED(IntFromValue(thread, args + 1));
-	int64_t argCount = args[1].integer;
+	int64_t argCount = args[1].v.integer;
 
 	if (argCount < 0 || argCount > INT_MAX)
 		VM_PushBool(thread, false);
@@ -65,8 +63,8 @@ AVES_API NATIVE_FUNCTION(aves_Method_opEquals)
 		RETURN_SUCCESS;
 	}
 
-	MethodInst *a = _M(args[0]);
-	MethodInst *b = _M(args[1]);
+	MethodInst *a = args[0].v.method;
+	MethodInst *b = args[1].v.method;
 
 	VM_PushBool(thread, a->method == b->method &&
 		IsSameReference(&a->instance, &b->instance));

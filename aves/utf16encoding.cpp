@@ -9,14 +9,14 @@ AVES_API void aves_Utf16Encoding_init(TypeHandle type)
 
 AVES_API NATIVE_FUNCTION(aves_Utf16Encoding_new)
 {
-	Utf16Encoding *encoding = reinterpret_cast<Utf16Encoding*>(THISV.instance);
+	Utf16Encoding *encoding = THISV.Get<Utf16Encoding>();
 	encoding->bigEndian = IsTrue(args + 1);
 	RETURN_SUCCESS;
 }
 
 AVES_API NATIVE_FUNCTION(aves_Utf16Encoding_get_bigEndian)
 {
-	Utf16Encoding *encoding = reinterpret_cast<Utf16Encoding*>(THISV.instance);
+	Utf16Encoding *encoding = THISV.Get<Utf16Encoding>();
 	VM_PushBool(thread, encoding->bigEndian);
 	RETURN_SUCCESS;
 }
@@ -26,10 +26,10 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Utf16Encoding_getByteCount)
 	// getByteCount(str)
 	CHECKED(StringFromValue(thread, args + 1));
 
-	Utf16Encoding *encoding = reinterpret_cast<Utf16Encoding*>(THISV.instance);
+	Utf16Encoding *encoding = THISV.Get<Utf16Encoding>();
 
 	Utf16Encoder enc(encoding->bigEndian);
-	int32_t byteCount = enc.GetByteCount(thread, args[1].common.string, true);
+	int32_t byteCount = enc.GetByteCount(thread, args[1].v.string, true);
 
 	VM_PushInt(thread, byteCount);
 }
@@ -37,13 +37,14 @@ END_NATIVE_FUNCTION
 AVES_API NATIVE_FUNCTION(aves_Utf16Encoding_getBytesInternal)
 {
 	// getBytesInternal(str is String, buf is Buffer, offset is Int)
-	Utf16Encoding *encoding = reinterpret_cast<Utf16Encoding*>(THISV.instance);
+	Utf16Encoding *encoding = THISV.Get<Utf16Encoding>();
 
 	Utf16Encoder enc(encoding->bigEndian);
 	int32_t byteCount = enc.GetBytes(thread,
-		args[1].common.string,
-		reinterpret_cast<Buffer*>(args[2].instance),
-		(int32_t)args[3].integer, true);
+		args[1].v.string,
+		args[2].Get<Buffer>(),
+		(int32_t)args[3].v.integer,
+		true);
 	if (byteCount < 0)
 		return ~byteCount;
 
@@ -54,12 +55,13 @@ AVES_API NATIVE_FUNCTION(aves_Utf16Encoding_getBytesInternal)
 AVES_API NATIVE_FUNCTION(aves_Utf16Encoding_getCharCountInternal)
 {
 	// getCharCountInternal(buf is Buffer, offset is Int, count is Int)
-	Utf16Encoding *encoding = reinterpret_cast<Utf16Encoding*>(THISV.instance);
+	Utf16Encoding *encoding = THISV.Get<Utf16Encoding>();
 
 	Utf16Decoder dec(encoding->bigEndian);
 	int32_t charCount = dec.GetCharCount(thread,
-		reinterpret_cast<Buffer*>(args[1].instance),
-		(int32_t)args[2].integer, (int32_t)args[3].integer,
+		args[1].Get<Buffer>(),
+		(int32_t)args[2].v.integer,
+		(int32_t)args[3].v.integer,
 		true);
 
 	VM_PushInt(thread, charCount);
@@ -68,13 +70,14 @@ AVES_API NATIVE_FUNCTION(aves_Utf16Encoding_getCharCountInternal)
 AVES_API NATIVE_FUNCTION(aves_Utf16Encoding_getCharsInternal)
 {
 	// getCharsInternal(buf is Buffer, offset is Int, count is Int, sb is StringBuffer)
-	Utf16Encoding *encoding = reinterpret_cast<Utf16Encoding*>(THISV.instance);
+	Utf16Encoding *encoding = THISV.Get<Utf16Encoding>();
 
 	Utf16Decoder dec(encoding->bigEndian);
 	int32_t charCount = dec.GetChars(thread,
-		reinterpret_cast<Buffer*>(args[1].instance),
-		(int32_t)args[2].integer, (int32_t)args[3].integer,
-		reinterpret_cast<StringBuffer*>(args[4].instance),
+		args[1].Get<Buffer>(),
+		(int32_t)args[2].v.integer,
+		(int32_t)args[3].v.integer,
+		args[4].Get<StringBuffer>(),
 		true);
 	if (charCount < 0)
 		return ~charCount;
@@ -132,7 +135,7 @@ AVES_API void aves_Utf16Encoder_init(TypeHandle type)
 
 AVES_API NATIVE_FUNCTION(aves_Utf16Encoder_new)
 {
-	Utf16Encoder *enc = reinterpret_cast<Utf16Encoder*>(THISV.instance);
+	Utf16Encoder *enc = THISV.Get<Utf16Encoder>();
 	new(enc) Utf16Encoder(IsTrue(args + 1));
 	RETURN_SUCCESS;
 }
@@ -140,11 +143,11 @@ AVES_API NATIVE_FUNCTION(aves_Utf16Encoder_new)
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Utf16Encoder_getByteCount)
 {
 	// getByteCount(str, flush)
-	Utf16Encoder *enc = reinterpret_cast<Utf16Encoder*>(THISV.instance);
+	Utf16Encoder *enc = THISV.Get<Utf16Encoder>();
 	CHECKED(StringFromValue(thread, args + 1));
 
 	int32_t byteCount = enc->GetByteCount(thread,
-		args[1].common.string, IsTrue(args + 2));
+		args[1].v.string, IsTrue(args + 2));
 
 	VM_PushInt(thread, byteCount);
 }
@@ -152,12 +155,13 @@ END_NATIVE_FUNCTION
 AVES_API NATIVE_FUNCTION(aves_Utf16Encoder_getBytesInternal)
 {
 	// getBytesInternal(str is String, buf is Buffer, offset is Int, flush is Boolean)
-	Utf16Encoder *enc = reinterpret_cast<Utf16Encoder*>(THISV.instance);
+	Utf16Encoder *enc = THISV.Get<Utf16Encoder>();
 
 	int32_t byteCount = enc->GetBytes(thread,
-		args[1].common.string,
-		reinterpret_cast<Buffer*>(args[2].instance),
-		(int32_t)args[3].integer, !!args[4].integer);
+		args[1].v.string,
+		args[2].Get<Buffer>(),
+		(int32_t)args[3].v.integer,
+		!!args[4].v.integer);
 	if (byteCount < 0)
 		return ~byteCount;
 
@@ -166,7 +170,7 @@ AVES_API NATIVE_FUNCTION(aves_Utf16Encoder_getBytesInternal)
 }
 AVES_API NATIVE_FUNCTION(aves_Utf16Encoder_reset)
 {
-	reinterpret_cast<Utf16Encoder*>(THISV.instance)->Reset();
+	THISV.Get<Utf16Encoder>()->Reset();
 	RETURN_SUCCESS;
 }
 
@@ -246,7 +250,7 @@ AVES_API void aves_Utf16Decoder_init(TypeHandle type)
 
 AVES_API NATIVE_FUNCTION(aves_Utf16Decoder_new)
 {
-	Utf16Decoder *dec = reinterpret_cast<Utf16Decoder*>(THISV.instance);
+	Utf16Decoder *dec = THISV.Get<Utf16Decoder>();
 	new(dec) Utf16Decoder(IsTrue(args + 1));
 	RETURN_SUCCESS;
 }
@@ -254,12 +258,13 @@ AVES_API NATIVE_FUNCTION(aves_Utf16Decoder_new)
 AVES_API NATIVE_FUNCTION(aves_Utf16Decoder_getCharCountInternal)
 {
 	// getCharCountInternal(buf is Buffer, offset is Int, count is Int, flush is Boolean)
-	Utf16Decoder *dec = reinterpret_cast<Utf16Decoder*>(THISV.instance);
+	Utf16Decoder *dec = THISV.Get<Utf16Decoder>();
 
 	int32_t charCount = dec->GetCharCount(thread,
-		reinterpret_cast<Buffer*>(args[1].instance),
-		(int32_t)args[2].integer, (int32_t)args[3].integer,
-		!!args[4].integer);
+		args[1].Get<Buffer>(),
+		(int32_t)args[2].v.integer,
+		(int32_t)args[3].v.integer,
+		!!args[4].v.integer);
 
 	VM_PushInt(thread, charCount);
 	RETURN_SUCCESS;
@@ -267,13 +272,14 @@ AVES_API NATIVE_FUNCTION(aves_Utf16Decoder_getCharCountInternal)
 AVES_API NATIVE_FUNCTION(aves_Utf16Decoder_getCharsInternal)
 {
 	// getCharsInternal(buf is Buffer, offset is Int, count is Int, sb is StringBuffer, flush is Boolean)
-	Utf16Decoder *dec = reinterpret_cast<Utf16Decoder*>(THISV.instance);
+	Utf16Decoder *dec = THISV.Get<Utf16Decoder>();
 
 	int32_t charCount = dec->GetChars(thread,
-		reinterpret_cast<Buffer*>(args[1].instance),
-		(int32_t)args[2].integer, (int32_t)args[3].integer,
-		reinterpret_cast<StringBuffer*>(args[4].instance),
-		!!args[4].integer);
+		args[1].Get<Buffer>(),
+		(int32_t)args[2].v.integer,
+		(int32_t)args[3].v.integer,
+		args[4].Get<StringBuffer>(),
+		!!args[4].v.integer);
 	if (charCount < 0)
 		return ~charCount;
 
@@ -282,6 +288,6 @@ AVES_API NATIVE_FUNCTION(aves_Utf16Decoder_getCharsInternal)
 }
 AVES_API NATIVE_FUNCTION(aves_Utf16Decoder_reset)
 {
-	reinterpret_cast<Utf16Decoder*>(THISV.instance)->Reset();
+	THISV.Get<Utf16Decoder>()->Reset();
 	RETURN_SUCCESS;
 }

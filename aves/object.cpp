@@ -25,7 +25,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Object_toString)
 
 	String *valueString;
 	if ((Type_GetFlags(THISV.type) & TypeFlags::PRIMITIVE) == TypeFlags::PRIMITIVE)
-		valueString = integer::ToString(thread, THISV.integer, 10, 0, false);
+		valueString = integer::ToString(thread, THISV.v.integer, 10, 0, false);
 	else
 		valueString = uinteger::ToString(thread, GC_GetObjectHashCode(THISP), 16, 8, false);
 	CHECKED_MEM(valueString);

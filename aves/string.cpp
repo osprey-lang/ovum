@@ -19,7 +19,7 @@ int GetIndex(ThreadHandle thread, String *str, Value *arg, int32_t &result)
 {
 	int r = IntFromValue(thread, arg);
 	if (r != OVUM_SUCCESS) return r;
-	int64_t index = arg->integer;
+	int64_t index = arg->v.integer;
 	if (index < 0 || index >= str->length)
 	{
 		VM_PushString(thread, strings::index); // paramName
@@ -33,27 +33,27 @@ int GetIndex(ThreadHandle thread, String *str, Value *arg, int32_t &result)
 
 AVES_API BEGIN_NATIVE_FUNCTION(aves_String_get_item)
 {
-	String *str = THISV.common.string;
+	String *str = THISV.v.string;
 
 	int32_t index;
 	CHECKED(GetIndex(thread, str, args + 1, index));
 
 	Value output;
 	output.type = Types::Char;
-	output.integer = (&str->firstChar)[index];
+	output.v.integer = (&str->firstChar)[index];
 	VM_Push(thread, &output);
 }
 END_NATIVE_FUNCTION
 
 AVES_API NATIVE_FUNCTION(aves_String_get_length)
 {
-	VM_PushInt(thread, THISV.common.string->length);
+	VM_PushInt(thread, THISV.v.string->length);
 	RETURN_SUCCESS;
 }
 
 AVES_API NATIVE_FUNCTION(aves_String_get_isInterned)
 {
-	String *str = THISV.common.string;
+	String *str = THISV.v.string;
 	VM_PushBool(thread, (str->flags & StringFlags::INTERN) == StringFlags::INTERN);
 	RETURN_SUCCESS;
 }
@@ -62,11 +62,11 @@ AVES_API NATIVE_FUNCTION(aves_String_equalsIgnoreCase)
 {
 	bool eq;
 	if (args[1].type == Types::String)
-		eq = String_EqualsIgnoreCase(THISV.common.string, args[1].common.string);
+		eq = String_EqualsIgnoreCase(THISV.v.string, args[1].v.string);
 	else if (args[1].type == Types::Char)
 	{
-		LitString<2> other = Char::ToLitString((wuchar)args[1].integer);
-		eq = String_EqualsIgnoreCase(THISV.common.string, _S(other));
+		LitString<2> other = Char::ToLitString((wuchar)args[1].v.integer);
+		eq = String_EqualsIgnoreCase(THISV.v.string, _S(other));
 	}
 	else
 		eq = false;
@@ -78,11 +78,11 @@ AVES_API NATIVE_FUNCTION(aves_String_contains)
 {
 	bool result;
 	if (args[1].type == Types::String)
-		result = String_Contains(THISV.common.string, args[1].common.string);
+		result = String_Contains(THISV.v.string, args[1].v.string);
 	else if (args[1].type == Types::Char)
 	{
-		LitString<2> value = Char::ToLitString((wuchar)args[1].integer);
-		result = String_Contains(THISV.common.string, _S(value));
+		LitString<2> value = Char::ToLitString((wuchar)args[1].v.integer);
+		result = String_Contains(THISV.v.string, _S(value));
 	}
 	else
 		return VM_ThrowTypeError(thread);
@@ -92,14 +92,14 @@ AVES_API NATIVE_FUNCTION(aves_String_contains)
 }
 AVES_API NATIVE_FUNCTION(aves_String_startsWith)
 {
-	String *str = THISV.common.string;
+	String *str = THISV.v.string;
 
 	bool result;
 	if (args[1].type == Types::String)
-		result = String_SubstringEquals(str, 0, args[1].common.string);
+		result = String_SubstringEquals(str, 0, args[1].v.string);
 	else if (args[1].type == Types::Char)
 	{
-		LitString<2> part = Char::ToLitString((wuchar)args[1].integer);
+		LitString<2> part = Char::ToLitString((wuchar)args[1].v.integer);
 		result = String_SubstringEquals(str, 0, _S(part));
 	}
 	else
@@ -110,17 +110,17 @@ AVES_API NATIVE_FUNCTION(aves_String_startsWith)
 }
 AVES_API NATIVE_FUNCTION(aves_String_endsWith)
 {
-	String *str = THISV.common.string;
+	String *str = THISV.v.string;
 
 	bool result;
 	if (args[1].type == Types::String)
 	{
-		String *part = args[1].common.string;
+		String *part = args[1].v.string;
 		result = String_SubstringEquals(str, str->length - part->length, part);
 	}
 	else if (args[1].type == Types::Char)
 	{
-		LitString<2> part = Char::ToLitString((wuchar)args[1].integer);
+		LitString<2> part = Char::ToLitString((wuchar)args[1].v.integer);
 		result = String_SubstringEquals(str, str->length - part.length, _S(part));
 	}
 	else
@@ -131,14 +131,14 @@ AVES_API NATIVE_FUNCTION(aves_String_endsWith)
 }
 AVES_API NATIVE_FUNCTION(aves_String_indexOf)
 {
-	String *str = THISV.common.string;
+	String *str = THISV.v.string;
 
 	int32_t index;
 	if (args[1].type == Types::String)
-		index = string::IndexOf(str, args[1].common.string);
+		index = string::IndexOf(str, args[1].v.string);
 	else if (args[1].type == Types::Char)
 	{
-		LitString<2> part = Char::ToLitString((wuchar)args[1].integer);
+		LitString<2> part = Char::ToLitString((wuchar)args[1].v.integer);
 		index = string::IndexOf(str, _S(part));
 	}
 	else
@@ -152,14 +152,14 @@ AVES_API NATIVE_FUNCTION(aves_String_indexOf)
 }
 AVES_API NATIVE_FUNCTION(aves_String_lastIndexOf)
 {
-	String *str = THISV.common.string;
+	String *str = THISV.v.string;
 
 	int32_t index;
 	if (args[1].type == Types::String)
-		index = string::LastIndexOf(str, args[1].common.string);
+		index = string::LastIndexOf(str, args[1].v.string);
 	else if (args[1].type == Types::Char)
 	{
-		LitString<2> part = Char::ToLitString((wuchar)args[1].integer);
+		LitString<2> part = Char::ToLitString((wuchar)args[1].v.integer);
 		index = string::LastIndexOf(str, _S(part));
 	}
 	else
@@ -175,12 +175,12 @@ AVES_API NATIVE_FUNCTION(aves_String_lastIndexOf)
 AVES_API BEGIN_NATIVE_FUNCTION(aves_String_reverse)
 {
 	String *outputString;
-	CHECKED_MEM(outputString = GC_ConstructString(thread, THISV.common.string->length, nullptr));
+	CHECKED_MEM(outputString = GC_ConstructString(thread, THISV.v.string->length, nullptr));
 
 	Value *output = VM_Local(thread, 0);
 	SetString(thread, output, outputString);
 
-	const uchar *srcp = &THISV.common.string->firstChar;
+	const uchar *srcp = &THISV.v.string->firstChar;
 	uchar *dstp = const_cast<uchar*>(&outputString->firstChar + outputString->length - 1);
 
 	int32_t remaining = outputString->length;
@@ -203,7 +203,7 @@ END_NATIVE_FUNCTION
 AVES_API BEGIN_NATIVE_FUNCTION(aves_String_substr1)
 {
 	// substr(start)
-	String *str = THISV.common.string;
+	String *str = THISV.v.string;
 
 	int32_t start;
 	CHECKED(GetIndex(thread, str, args + 1, start));
@@ -229,12 +229,12 @@ END_NATIVE_FUNCTION
 AVES_API BEGIN_NATIVE_FUNCTION(aves_String_substr2)
 {
 	// substr(start, count)
-	String *str = THISV.common.string;
+	String *str = THISV.v.string;
 
 	int32_t start;
 	CHECKED(GetIndex(thread, str, args + 1, start));
 	CHECKED(IntFromValue(thread, args + 2));
-	int64_t count = args[2].integer;
+	int64_t count = args[2].v.integer;
 	if (start + count > str->length)
 		return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 0);
 
@@ -262,9 +262,9 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_format)
 	String *result = nullptr;
 	{ Pinned str(THISP);
 		if (IsType(values, GetType_List(thread)))
-			CHECKED(string::Format(thread, str->common.string, values->common.list, result));
+			CHECKED(string::Format(thread, str->v.string, values->v.list, result));
 		else if (IsType(values, GetType_Hash(thread)))
-			CHECKED(string::Format(thread, str->common.string, values, result));
+			CHECKED(string::Format(thread, str->v.string, values, result));
 		else
 			return VM_ThrowTypeError(thread, error_strings::FormatValueType);
 	}
@@ -278,7 +278,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_replaceInner)
 	// replaceInner(oldValue is String, newValue is String, maxTimes is Int)
 	// (Public-facing methods ensure the types are correct)
 
-	String *oldValue = args[1].common.string;
+	String *oldValue = args[1].v.string;
 	if (oldValue->length == 0)
 	{
 		VM_PushString(thread, error_strings::ReplaceEmptyString);
@@ -286,19 +286,19 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_replaceInner)
 		return VM_ThrowErrorOfType(thread, Types::ArgumentError, 2);
 	}
 
-	if (args[3].integer == 0) // No replacements to perform! Return 'this'.
+	if (args[3].v.integer == 0) // No replacements to perform! Return 'this'.
 	{
-		VM_PushString(thread, THISV.common.string);
+		VM_PushString(thread, THISV.v.string);
 		RETURN_SUCCESS;
 	}
 
-	String *newValue = args[2].common.string;
+	String *newValue = args[2].v.string;
 
 	String *result;
 	if (oldValue->length == 1 && newValue->length == 1)
-		result = string::Replace(thread, THISV.common.string, oldValue->firstChar, newValue->firstChar, args[3].integer);
+		result = string::Replace(thread, THISV.v.string, oldValue->firstChar, newValue->firstChar, args[3].v.integer);
 	else
-		result = string::Replace(thread, THISV.common.string, oldValue, newValue, args[3].integer);
+		result = string::Replace(thread, THISV.v.string, oldValue, newValue, args[3].v.integer);
 	CHECKED_MEM(result);
 
 	VM_PushString(thread, result);
@@ -393,21 +393,21 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_padInner)
 	// The public-facing methods make sure char is of length 1, so
 	// we can safely cast it to uchar here.
 
-	int64_t minLength64 = args[1].integer;
+	int64_t minLength64 = args[1].v.integer;
 	if (minLength64 < 0 || minLength64 > INT32_MAX)
 	{
 		VM_PushString(thread, strings::minLength); // paramName
 		return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 1);
 	}
 
-	StringPad side = (StringPad)args[3].integer;
+	StringPad side = (StringPad)args[3].v.integer;
 	if (side < PAD_START || side > PAD_BOTH)
 	{
 		VM_PushString(thread, strings::side); // paramName
 		return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 1);
 	}
 
-	String *str = THISV.common.string;
+	String *str = THISV.v.string;
 	int32_t padLength = (int32_t)minLength64 - str->length;
 	if (padLength <= 0)
 	{
@@ -420,7 +420,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_padInner)
 		CHECKED_MEM(result = GC_ConstructString(thread, str->length + padLength, nullptr));
 		uchar *resultp = const_cast<uchar*>(&result->firstChar);
 
-		uchar ch = (uchar)args[2].integer;
+		uchar ch = (uchar)args[2].v.integer;
 		switch (side)
 		{
 		case PAD_START:
@@ -459,14 +459,14 @@ END_NATIVE_FUNCTION
 
 AVES_API NATIVE_FUNCTION(aves_String_toUpper)
 {
-	String *result = String_ToUpper(thread, THISV.common.string);
+	String *result = String_ToUpper(thread, THISV.v.string);
 	if (result == nullptr) return OVUM_ERROR_NO_MEMORY;
 	VM_PushString(thread, result);
 	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_String_toLower)
 {
-	String *result = String_ToLower(thread, THISV.common.string);
+	String *result = String_ToLower(thread, THISV.v.string);
 	if (result == nullptr) return OVUM_ERROR_NO_MEMORY;
 	VM_PushString(thread, result);
 	RETURN_SUCCESS;
@@ -474,7 +474,7 @@ AVES_API NATIVE_FUNCTION(aves_String_toLower)
 
 AVES_API BEGIN_NATIVE_FUNCTION(aves_String_getCharacter)
 {
-	String *str = THISV.common.string;
+	String *str = THISV.v.string;
 	int32_t index;
 	CHECKED(GetIndex(thread, str, args + 1, index));
 
@@ -488,13 +488,13 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_getCharacter)
 
 	Value character;
 	character.type = Types::Char;
-	character.integer = result;
+	character.v.integer = result;
 	VM_Push(thread, &character);
 }
 END_NATIVE_FUNCTION
 AVES_API BEGIN_NATIVE_FUNCTION(aves_String_getCodepoint)
 {
-	String *str = THISV.common.string;
+	String *str = THISV.v.string;
 	int32_t index;
 	CHECKED(GetIndex(thread, str, args + 1, index));
 
@@ -512,7 +512,7 @@ END_NATIVE_FUNCTION
 
 AVES_API BEGIN_NATIVE_FUNCTION(aves_String_getCategory)
 {
-	String *str = THISV.common.string;
+	String *str = THISV.v.string;
 	int32_t index;
 	CHECKED(GetIndex(thread, str, args + 1, index));
 
@@ -523,13 +523,13 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_getCategory)
 
 	Value output;
 	output.type = Types::UnicodeCategory;
-	output.integer = unicode::OvumCategoryToAves(cat);
+	output.v.integer = unicode::OvumCategoryToAves(cat);
 	VM_Push(thread, &output);
 }
 END_NATIVE_FUNCTION
 AVES_API BEGIN_NATIVE_FUNCTION(aves_String_isSurrogatePair)
 {
-	String *str = THISV.common.string;
+	String *str = THISV.v.string;
 	int32_t index;
 	CHECKED(GetIndex(thread, str, args + 1, index));
 
@@ -540,7 +540,7 @@ END_NATIVE_FUNCTION
 
 AVES_API NATIVE_FUNCTION(aves_String_getInterned)
 {
-	String *str = THISV.common.string;
+	String *str = THISV.v.string;
 	str = String_GetInterned(thread, str);
 	if (str == nullptr)
 		VM_PushNull(thread);
@@ -550,14 +550,14 @@ AVES_API NATIVE_FUNCTION(aves_String_getInterned)
 }
 AVES_API NATIVE_FUNCTION(aves_String_intern)
 {
-	String *str = THISV.common.string;
+	String *str = THISV.v.string;
 	VM_PushString(thread, String_Intern(thread, str));
 	RETURN_SUCCESS;
 }
 
 AVES_API NATIVE_FUNCTION(aves_String_getHashCode)
 {
-	int32_t hashCode = String_GetHashCode(THISV.common.string);
+	int32_t hashCode = String_GetHashCode(THISV.v.string);
 
 	VM_PushInt(thread, hashCode);
 	RETURN_SUCCESS;
@@ -567,9 +567,9 @@ AVES_API NATIVE_FUNCTION(aves_String_getHashCodeSubstr)
 {
 	// getHashCodeSubstr(index is Int, count is Int)
 	// index and count are range-checked in the wrapper function.
-	int32_t index = (int32_t)args[1].integer;
-	int32_t count = (int32_t)args[2].integer;
-	int32_t hashCode = String_GetHashCodeSubstr(THISV.common.string, index, count);
+	int32_t index = (int32_t)args[1].v.integer;
+	int32_t count = (int32_t)args[2].v.integer;
+	int32_t hashCode = String_GetHashCodeSubstr(THISV.v.string, index, count);
 
 	VM_PushInt(thread, hashCode);
 	RETURN_SUCCESS;
@@ -579,7 +579,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_fromCodepoint)
 {
 	if (args[0].type != Types::Char)
 		CHECKED(IntFromValue(thread, args));
-	int64_t cp64 = args[0].integer;
+	int64_t cp64 = args[0].v.integer;
 
 	if (cp64 < 0 || cp64 > 0x10FFFF)
 	{
@@ -609,11 +609,11 @@ AVES_API NATIVE_FUNCTION(aves_String_opEquals)
 {
 	bool eq;
 	if (args[1].type == Types::String)
-		eq = String_Equals(args[0].common.string, args[1].common.string);
+		eq = String_Equals(args[0].v.string, args[1].v.string);
 	else if (args[1].type == Types::Char)
 	{
-		LitString<2> right = Char::ToLitString((wuchar)args[1].integer);
-		eq = String_Equals(args[0].common.string, _S(right));
+		LitString<2> right = Char::ToLitString((wuchar)args[1].v.integer);
+		eq = String_Equals(args[0].v.string, _S(right));
 	}
 	else
 		eq = false;
@@ -625,11 +625,11 @@ AVES_API NATIVE_FUNCTION(aves_String_opCompare)
 {
 	int result;
 	if (args[1].type == Types::String)
-		result = String_Compare(args[0].common.string, args[1].common.string);
+		result = String_Compare(args[0].v.string, args[1].v.string);
 	else if (args[1].type == Types::Char)
 	{
-		LitString<2> right = Char::ToLitString((wuchar)args[1].integer);
-		result = String_Compare(args[0].common.string, _S(right));
+		LitString<2> right = Char::ToLitString((wuchar)args[1].v.integer);
+		result = String_Compare(args[0].v.string, _S(right));
 	}
 	else
 		return VM_ThrowTypeError(thread);
@@ -641,14 +641,14 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_opMultiply)
 {
 	CHECKED(IntFromValue(thread, args + 1));
 
-	int64_t times = args[1].integer;
+	int64_t times = args[1].v.integer;
 	if (times == 0)
 	{
 		VM_PushString(thread, strings::Empty);
 		RETURN_SUCCESS;
 	}
 
-	String *str = THISV.common.string;
+	String *str = THISV.v.string;
 	int64_t length;
 	if (Int_MultiplyChecked(times, str->length, length) != OVUM_SUCCESS)
 		return VM_ThrowOverflowError(thread);
@@ -828,7 +828,7 @@ int string::Format(ThreadHandle thread, const String *format, ListInst *list, St
 				*value = list->values[placeholderIndex];
 				CHECKED_F(StringFromValue(thread, value));
 
-				CHECKED_F(AppendAlignedFormatString(buf, value->common.string, alignment, alignmentWidth));
+				CHECKED_F(AppendAlignedFormatString(buf, value->v.string, alignment, alignmentWidth));
 			}
 
 			start = ++index;
@@ -1002,7 +1002,7 @@ int string::Format(ThreadHandle thread, const String *format, Value *hash, Strin
 				// Convert it to a string
 				CHECKED_F(StringFromValue(thread, value));
 				// And append it
-				CHECKED_F(AppendAlignedFormatString(buf, value->common.string, alignment, alignmentWidth));
+				CHECKED_F(AppendAlignedFormatString(buf, value->v.string, alignment, alignmentWidth));
 			}
 
 			start = ++index;

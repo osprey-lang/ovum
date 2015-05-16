@@ -80,9 +80,9 @@ int VM::Run()
 		{
 			if (returnValue.type == types.Int ||
 				returnValue.type == types.UInt)
-				r = (int)returnValue.integer;
+				r = (int)returnValue.v.integer;
 			else if (returnValue.type == types.Real)
-				r = (int)returnValue.real;
+				r = (int)returnValue.v.real;
 		}
 		else if (r == OVUM_ERROR_THROWN)
 			PrintUnhandledError(mainThread);
@@ -180,7 +180,7 @@ int VM::InitArgs(int argCount, const wchar_t *args[])
 
 		Value argValue;
 		argValue.type = types.String;
-		argValue.common.string = argString;
+		argValue.v.string = argString;
 
 		StaticRef *ref = gc->AddStaticReference(nullptr, argValue);
 		if (!ref) return OVUM_ERROR_NO_MEMORY;
@@ -190,7 +190,7 @@ int VM::InitArgs(int argCount, const wchar_t *args[])
 		if (this->verbose)
 		{
 			wprintf(L"Argument %d: ", i);
-			PrintLn(argValue.common.string);
+			PrintLn(argValue.v.string);
 		}
 	}
 
@@ -220,7 +220,7 @@ int VM::GetMainMethodOverload(Method *method, unsigned int &argc, MethodOverload
 
 		Value argsValue;
 		argsValue.type = types.List;
-		argsValue.instance = reinterpret_cast<uint8_t*>(argsList);
+		argsValue.v.instance = reinterpret_cast<uint8_t*>(argsList);
 		mainThread->Push(&argsValue);
 	}
 	else
@@ -309,16 +309,16 @@ void VM::PrintUnhandledError(Thread *const thread)
 			Value result;
 			int r = thread->InvokeMethod(msgProp->getter, 0, &result);
 			if (r == OVUM_SUCCESS && result.type == types.String)
-				message = result.common.string;
+				message = result.v.string;
 		}
 	}
 	if (message == nullptr)
-		message = error.common.error->message;
+		message = error.v.error->message;
 	if (message != nullptr)
 		PrintErrLn(message);
 
-	if (error.common.error->stackTrace)
-		PrintErrLn(error.common.error->stackTrace);
+	if (error.v.error->stackTrace)
+		PrintErrLn(error.v.error->stackTrace);
 }
 void VM::PrintMethodInitException(MethodInitException &e)
 {
@@ -379,7 +379,7 @@ int VM::GetArgs(int destLength, String *dest[])
 	const int maxIndex = min(destLength, argCount);
 
 	for (int i = 0; i < maxIndex; i++)
-		dest[i] = argValues[i]->common.string;
+		dest[i] = argValues[i]->v.string;
 
 	return maxIndex;
 }

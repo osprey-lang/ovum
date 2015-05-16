@@ -66,7 +66,7 @@ public:
 	inline String *PeekString(unsigned int n = 0) const
 	{
 		assert(n <= stackCount);
-		return evalStack[stackCount - n - 1].common.string;
+		return evalStack[stackCount - n - 1].v.string;
 	}
 
 	inline void Shift(uint16_t offset)
@@ -194,31 +194,31 @@ public:
 	{
 		Value *top = currentFrame->NextStackSlot();
 		top->type = vm->types.Boolean;
-		top->integer = value;
+		top->v.integer = value;
 	}
 	inline void PushInt(int64_t value)
 	{
 		Value *top = currentFrame->NextStackSlot();
 		top->type = vm->types.Int;
-		top->integer = value;
+		top->v.integer = value;
 	}
 	inline void PushUInt(uint64_t value)
 	{
 		Value *top = currentFrame->NextStackSlot();
 		top->type = vm->types.UInt;
-		top->uinteger = value;
+		top->v.uinteger = value;
 	}
 	inline void PushReal(double value)
 	{
 		Value *top = currentFrame->NextStackSlot();
 		top->type = vm->types.Real;
-		top->real = value;
+		top->v.real = value;
 	}
 	inline void PushString(String *value)
 	{
 		Value *top = currentFrame->NextStackSlot();
 		top->type = vm->types.String;
-		top->common.string = value;
+		top->v.string = value;
 	}
 	inline void PushNull()
 	{

@@ -1,7 +1,6 @@
 #include "aves_set.h"
 #include <cstddef>
 
-#define _Set(value)         reinterpret_cast<::SetInst*>((value).instance)
 #define U64_TO_HASH(value)  ((int32_t)(value) ^ (int32_t)((value) >> 32))
 
 AVES_API void CDECL aves_Set_init(TypeHandle type)
@@ -59,8 +58,8 @@ int ResizeSet(ThreadHandle thread, SetInst *set)
 
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Set_new)
 {
-	SetInst *set = _Set(THISV);
-	int64_t capacity = args[1].integer;
+	SetInst *set = THISV.Get<SetInst>();
+	int64_t capacity = args[1].v.integer;
 	if (capacity < 0 || capacity > INT32_MAX)
 	{
 		VM_PushString(thread, strings::capacity);
@@ -77,14 +76,14 @@ END_NATIVE_FUNCTION
 
 AVES_API NATIVE_FUNCTION(aves_Set_get_length)
 {
-	SetInst *set = _Set(THISV);
+	SetInst *set = THISV.Get<SetInst>();
 	VM_PushInt(thread, set->count - set->freeCount);
 	RETURN_SUCCESS;
 }
 
 AVES_API NATIVE_FUNCTION(aves_Set_clear)
 {
-	SetInst *set = _Set(THISV);
+	SetInst *set = THISV.Get<SetInst>();
 
 	memset(set->buckets, -1, set->capacity * sizeof(int32_t*));
 	memset(set->entries, 0, set->count * sizeof(SetEntry));
@@ -98,11 +97,11 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Set_containsInternal)
 {
 	// Arguments: (item, hash is Int|UInt)
 	Pinned s(THISP);
-	SetInst *set = _Set(THISV);
+	SetInst *set = THISV.Get<SetInst>();
 
 	if (set->buckets != nullptr)
 	{
-		int32_t hash = U64_TO_HASH(args[2].uinteger) & INT32_MAX;
+		int32_t hash = U64_TO_HASH(args[2].v.uinteger) & INT32_MAX;
 		int32_t bucket = hash % set->capacity;
 
 		for (int32_t i = set->buckets[bucket]; i >= 0; i = set->entries[i].next)
@@ -129,11 +128,11 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Set_addInternal)
 {
 	// Arguments: (item, hash is Int|UInt)
 	Pinned s(THISP);
-	SetInst *set = _Set(THISV);
+	SetInst *set = THISV.Get<SetInst>();
 	if (set->buckets == nullptr)
 		CHECKED(InitializeBuckets(thread, set, 0));
 
-	int32_t hash = U64_TO_HASH(args[2].uinteger) & INT32_MAX;
+	int32_t hash = U64_TO_HASH(args[2].v.uinteger) & INT32_MAX;
 	int32_t bucket = hash % set->capacity;
 
 	for (int32_t i = set->buckets[bucket]; i >= 0; i = set->entries[i].next)
@@ -183,11 +182,11 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Set_removeInternal)
 {
 	// Arguments: (item, hash is Int|UInt)
 	Pinned s(THISP);
-	SetInst *set = _Set(THISV);
+	SetInst *set = THISV.Get<SetInst>();
 
 	if (set->buckets != nullptr)
 	{
-		int32_t hash = U64_TO_HASH(args[2].uinteger) & INT32_MAX;
+		int32_t hash = U64_TO_HASH(args[2].v.uinteger) & INT32_MAX;
 		int32_t bucket = hash % set->capacity;
 		int32_t lastEntry = -1;
 
@@ -228,27 +227,27 @@ END_NATIVE_FUNCTION
 
 AVES_API NATIVE_FUNCTION(aves_Set_get_version)
 {
-	SetInst *set = _Set(THISV);
+	SetInst *set = THISV.Get<SetInst>();
 	VM_PushInt(thread, set->version);
 	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_Set_get_entryCount)
 {
-	SetInst *set = _Set(THISV);
+	SetInst *set = THISV.Get<SetInst>();
 	VM_PushInt(thread, set->count);
 	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_Set_hasEntryAt)
 {
-	SetInst *set = _Set(THISV);
-	int32_t index = (int32_t)args[1].integer;
+	SetInst *set = THISV.Get<SetInst>();
+	int32_t index = (int32_t)args[1].v.integer;
 	VM_PushBool(thread, set->entries[index].hashCode >= 0);
 	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_Set_getEntryAt)
 {
-	SetInst *set = _Set(THISV);
-	int32_t index = (int32_t)args[1].integer;
+	SetInst *set = THISV.Get<SetInst>();
+	int32_t index = (int32_t)args[1].v.integer;
 	VM_Push(thread, &set->entries[index].value);
 	RETURN_SUCCESS;
 }

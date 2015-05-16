@@ -3,7 +3,7 @@
 
 AVES_API BEGIN_NATIVE_FUNCTION(io_Directory_existsInternal)
 {
-	String *pathName = args[0].common.string;
+	String *pathName = args[0].v.string;
 	CHECKED(Path::ValidatePath(thread, pathName, false));
 
 	WIN32_FILE_ATTRIBUTE_DATA data;

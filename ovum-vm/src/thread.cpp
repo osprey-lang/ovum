@@ -185,7 +185,7 @@ int Thread::InvokeLL(unsigned int argCount, Value *value, Value *result, uint32_
 
 	if (value->type == vm->types.Method)
 	{
-		MethodInst *methodInst = value->common.method;
+		MethodInst *methodInst = value->v.method;
 		if (mo = methodInst->method->ResolveOverload(argCount))
 		{
 			if (!IS_NULL(methodInst->instance))
@@ -440,7 +440,7 @@ int Thread::InvokeApplyLL(Value *args, Value *result)
 		return ThrowNullReferenceError();
 
 	// Then, unpack it onto the evaluation stack!
-	ListInst *argsList = args[1].common.list;
+	ListInst *argsList = args[1].v.list;
 	currentFrame->stackCount--;
 	CopyMemoryT(currentFrame->evalStack + currentFrame->stackCount, argsList->values, argsList->length);
 	currentFrame->stackCount += argsList->length;
@@ -471,11 +471,11 @@ int Thread::InvokeApplyMethodLL(Method *method, Value *args, Value *result)
 
 	assert((method->flags & MemberFlags::INSTANCE) == MemberFlags::NONE);
 
-	ListInst *argsList = args->common.list;
+	ListInst *argsList = args->v.list;
 
 	// Then, find an appropriate overload!
 	MethodOverload *mo = nullptr;
-	if (args->common.list->length <= UINT16_MAX)
+	if (args->v.list->length <= UINT16_MAX)
 		mo = method->ResolveOverload(argsList->length);
 	if (mo == nullptr)
 		return ThrowNoOverloadError(argsList->length);
@@ -525,7 +525,7 @@ int Thread::Compare(int64_t *result)
 	Value *args = currentFrame->evalStack + currentFrame->stackCount - 2;
 	int r = CompareLL(args, args);
 	if (r == OVUM_SUCCESS)
-		*result = args[0].integer;
+		*result = args[0].v.integer;
 	return r;
 }
 
@@ -561,16 +561,16 @@ int Thread::ConcatLL(Value *args, Value *result)
 		Value output;
 		CHECKED(GetGC()->Alloc(this, vm->types.List, sizeof(ListInst), &output));
 
-		int32_t length = a->common.list->length + b->common.list->length;
+		int32_t length = a->v.list->length + b->v.list->length;
 		CHECKED(vm->functions.initListInstance(this,
-			output.common.list, length));
+			output.v.list, length));
 
 		if (length > 0)
 		{
-			CopyMemoryT(output.common.list->values, a->common.list->values, a->common.list->length);
-			CopyMemoryT(output.common.list->values + a->common.list->length, b->common.list->values, b->common.list->length);
+			CopyMemoryT(output.v.list->values, a->v.list->values, a->v.list->length);
+			CopyMemoryT(output.v.list->values + a->v.list->length, b->v.list->values, b->v.list->length);
 		}
-		output.common.list->length = length;
+		output.v.list->length = length;
 
 		*result = output;
 	}
@@ -587,15 +587,15 @@ int Thread::ConcatLL(Value *args, Value *result)
 
 		CHECKED(GetGC()->Alloc(this, vm->types.Hash, sizeof(HashInst), hash));
 		CHECKED(vm->functions.initHashInstance(this,
-			hash->common.hash,
-			max(a->common.hash->count, b->common.hash->count)));
+			hash->v.hash,
+			max(a->v.hash->count, b->v.hash->count)));
 
 		MethodOverload *hashSetItem = GetHashIndexerSetter();
 		do
 		{
-			for (int32_t i = 0; i < a->common.hash->count; i++)
+			for (int32_t i = 0; i < a->v.hash->count; i++)
 			{
-				HashEntry *e = &a->common.hash->entries[i];
+				HashEntry *e = &a->v.hash->entries[i];
 				hash[1] = hash[0]; // dup the hash
 				hash[2] = e->key;
 				hash[3] = e->value;
@@ -616,7 +616,7 @@ int Thread::ConcatLL(Value *args, Value *result)
 		CHECKED(StringFromValue(this, b));
 
 		String *str;
-		CHECKED_MEM(str = String_Concat(this, a->common.string, b->common.string));
+		CHECKED_MEM(str = String_Concat(this, a->v.string, b->v.string));
 		SetString_(vm, result, str);
 	}
 	currentFrame->stackCount -= 2;
@@ -667,28 +667,28 @@ int Thread::CompareLL(Value *args, Value *result)
 int Thread::CompareLessThanLL(Value *args, bool &result)
 {
 	COMPARE_BASE(args);
-	result = args[0].integer < 0;
+	result = args[0].v.integer < 0;
 	RETURN_SUCCESS;
 }
 
 int Thread::CompareGreaterThanLL(Value *args, bool &result)
 {
 	COMPARE_BASE(args);
-	result = args[0].integer > 0;
+	result = args[0].v.integer > 0;
 	RETURN_SUCCESS;
 }
 
 int Thread::CompareLessEqualsLL(Value *args, bool &result)
 {
 	COMPARE_BASE(args);
-	result = args[0].integer <= 0;
+	result = args[0].v.integer <= 0;
 	RETURN_SUCCESS;
 }
 
 int Thread::CompareGreaterEqualsLL(Value *args, bool &result)
 {
 	COMPARE_BASE(args);
-	result = args[0].integer >= 0;
+	result = args[0].v.integer >= 0;
 	RETURN_SUCCESS;
 }
 
@@ -735,8 +735,8 @@ int Thread::LoadMemberLL(Value *instance, String *member, Value *result)
 			if (r != OVUM_SUCCESS)
 				break;
 
-			output.common.method->instance = *instance;
-			output.common.method->method = (Method*)m;
+			output.v.method->instance = *instance;
+			output.v.method->method = (Method*)m;
 			*result = output;
 			currentFrame->Pop(1); // Done with the instance!
 		}
@@ -895,7 +895,7 @@ int Thread::LoadFieldRefLL(Value *inst, Field *field)
 
 	Value fieldRef;
 	fieldRef.type = (Type*)~(field->offset + GCO_SIZE);
-	fieldRef.reference = inst->instance + field->offset;
+	fieldRef.v.reference = inst->v.instance + field->offset;
 	Push(&fieldRef);
 
 	RETURN_SUCCESS;
@@ -917,7 +917,7 @@ int Thread::LoadMemberRefLL(Value *inst, String *member)
 	Field *field = static_cast<Field*>(m);
 	Value fieldRef;
 	fieldRef.type = (Type*)~(field->offset + GCO_SIZE);
-	fieldRef.reference = inst->instance + field->offset;
+	fieldRef.v.reference = inst->v.instance + field->offset;
 	Push(&fieldRef);
 
 	RETURN_SUCCESS;
@@ -1020,7 +1020,7 @@ int Thread::Throw(bool rethrow)
 	if (!rethrow)
 	{
 		currentError = currentFrame->Peek(0);
-		if (!(currentError.common.error->stackTrace = GetStackTrace()))
+		if (!(currentError.v.error->stackTrace = GetStackTrace()))
 			return OVUM_ERROR_NO_MEMORY;
 	}
 	assert(!IS_NULL(currentError));
@@ -1262,7 +1262,7 @@ int Thread::PrepareVariadicArgs(MethodFlags flags, uint32_t argCount, uint32_t p
 	int r = GetGC()->Alloc(this, vm->types.List, sizeof(ListInst), &listValue);
 	if (r != OVUM_SUCCESS) return r;
 
-	ListInst *list = listValue.common.list;
+	ListInst *list = listValue.v.list;
 	r = vm->functions.initListInstance(this, list, count);
 	if (r != OVUM_SUCCESS) return r;
 	list->length = count;
@@ -1412,7 +1412,7 @@ void Thread::AppendArgumentType(StringBuffer &buf, Value *arg)
 		if (type == vm->types.Method)
 		{
 			// Append some information about the instance and method group, too.
-			MethodInst *method = arg->common.method;
+			MethodInst *method = arg->v.method;
 			buf.Append(6, "(this=");
 			AppendArgumentType(buf, &method->instance);
 			buf.Append(2, ", ");

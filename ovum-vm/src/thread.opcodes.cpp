@@ -16,27 +16,27 @@ namespace ovum
 #define SET_BOOL(ptarg, bvalue) \
 	{                                       \
 		(ptarg)->type = vm->types.Boolean;  \
-		(ptarg)->integer = bvalue;          \
+		(ptarg)->v.integer = bvalue;          \
 	}
 #define SET_INT(ptarg, ivalue) \
 	{                                       \
 		(ptarg)->type = vm->types.Int;      \
-		(ptarg)->integer = ivalue;          \
+		(ptarg)->v.integer = ivalue;          \
 	}
 #define SET_UINT(ptarg, uvalue) \
 	{                                       \
 		(ptarg)->type = vm->types.UInt;     \
-		(ptarg)->uinteger = uvalue;         \
+		(ptarg)->v.uinteger = uvalue;         \
 	}
 #define SET_REAL(ptarg, rvalue) \
 	{                                       \
 		(ptarg)->type = vm->types.Real;     \
-		(ptarg)->real = rvalue;             \
+		(ptarg)->v.real = rvalue;             \
 	}
 #define SET_STRING(ptarg, svalue) \
 	{                                       \
 		(ptarg)->type = vm->types.String;   \
-		(ptarg)->common.string = svalue;    \
+		(ptarg)->v.string = svalue;    \
 	}
 
 int Thread::Evaluate()
@@ -257,7 +257,7 @@ int Thread::Evaluate()
 				OPC_ARGS(oa::LoadEnum);
 				register Value *const dest = args->Dest(f);
 				dest->type = args->type;
-				dest->integer = args->value;
+				dest->v.integer = args->value;
 				ip += oa::LOAD_ENUM_SIZE;
 			}
 			NEXT_INSTR();
@@ -266,7 +266,7 @@ int Thread::Evaluate()
 				OPC_ARGS(oa::LoadEnum);
 				register Value *const dest = args->Dest(f);
 				dest->type = args->type;
-				dest->integer = args->value;
+				dest->v.integer = args->value;
 				ip += oa::LOAD_ENUM_SIZE;
 				f->stackCount++;
 			}
@@ -297,7 +297,7 @@ int Thread::Evaluate()
 				OPC_ARGS(oa::LocalAndValue<int32_t>);
 				Value result; // Can't put it in dest until it's fully initialized
 				CHK(GetGC()->Alloc(this, vm->types.List, sizeof(ListInst), &result));
-				CHK(vm->functions.initListInstance(this, result.common.list, args->value));
+				CHK(vm->functions.initListInstance(this, result.v.list, args->value));
 				*args->Local(f) = result;
 
 				ip += oa::LOCAL_AND_VALUE<int32_t>::SIZE;
@@ -308,7 +308,7 @@ int Thread::Evaluate()
 				OPC_ARGS(oa::LocalAndValue<int32_t>);
 				Value result; // Can't put it in dest until it's fully initialized
 				CHK(GetGC()->Alloc(this, vm->types.List, sizeof(ListInst), &result));
-				CHK(vm->functions.initListInstance(this, result.common.list, args->value));
+				CHK(vm->functions.initListInstance(this, result.v.list, args->value));
 				*args->Local(f) = result;
 
 				ip += oa::LOCAL_AND_VALUE<int32_t>::SIZE;
@@ -322,7 +322,7 @@ int Thread::Evaluate()
 				OPC_ARGS(oa::LocalAndValue<int32_t>);
 				Value result; // Can't put it in dest until it's fully initialized
 				CHK(GetGC()->Alloc(this, vm->types.Hash, sizeof(HashInst), &result));
-				CHK(vm->functions.initHashInstance(this, result.common.hash, args->value));
+				CHK(vm->functions.initHashInstance(this, result.v.hash, args->value));
 				*args->Local(f) = result;
 
 				ip += oa::LOCAL_AND_VALUE<int32_t>::SIZE;
@@ -333,7 +333,7 @@ int Thread::Evaluate()
 				OPC_ARGS(oa::LocalAndValue<int32_t>);
 				Value result; // Can't put it in dest until it's fully initialized
 				CHK(GetGC()->Alloc(this, vm->types.Hash, sizeof(HashInst), &result));
-				CHK(vm->functions.initHashInstance(this, result.common.hash, args->value));
+				CHK(vm->functions.initHashInstance(this, result.v.hash, args->value));
 				*args->Local(f) = result;
 
 				ip += oa::LOCAL_AND_VALUE<int32_t>::SIZE;
@@ -476,7 +476,7 @@ int Thread::Evaluate()
 				OPC_ARGS(oa::LocalAndValue<Method*>);
 				register Value *const dest = args->Local(f);
 				CHK(GetGC()->Alloc(this, vm->types.Method, sizeof(MethodInst), dest));
-				dest->common.method->method = args->value;
+				dest->v.method->method = args->value;
 
 				ip += oa::LOCAL_AND_VALUE<Method*>::SIZE;
 			}
@@ -486,7 +486,7 @@ int Thread::Evaluate()
 				OPC_ARGS(oa::LocalAndValue<Method*>);
 				register Value *const dest = args->Local(f);
 				CHK(GetGC()->Alloc(this, vm->types.Method, sizeof(MethodInst), dest));
-				dest->common.method->method = args->value;
+				dest->v.method->method = args->value;
 
 				ip += oa::LOCAL_AND_VALUE<Method*>::SIZE;
 				f->stackCount++;
@@ -705,8 +705,8 @@ int Thread::Evaluate()
 				if (value->type != vm->types.Int)
 					return ThrowTypeError();
 
-				if (value->integer >= 0 && value->integer < args->count)
-					ip += (&args->firstOffset)[(int32_t)value->integer];
+				if (value->v.integer >= 0 && value->v.integer < args->count)
+					ip += (&args->firstOffset)[(int32_t)value->v.integer];
 
 				ip += oa::SWITCH_SIZE(args->count);
 			}
@@ -718,8 +718,8 @@ int Thread::Evaluate()
 				if (value->type != vm->types.Int)
 					return ThrowTypeError();
 
-				if (value->integer >= 0 && value->integer < args->count)
-					ip += (&args->firstOffset)[(int32_t)value->integer];
+				if (value->v.integer >= 0 && value->v.integer < args->count)
+					ip += (&args->firstOffset)[(int32_t)value->v.integer];
 
 				ip += oa::SWITCH_SIZE(args->count);
 				f->stackCount--;
@@ -1119,7 +1119,7 @@ int Thread::Evaluate()
 				OPC_ARGS(oa::OneLocal);
 				register Value *const dest = f->evalStack + f->stackCount++;
 				dest->type = (Type*)LOCAL_REFERENCE;
-				dest->reference = args->Local(f);
+				dest->v.reference = args->Local(f);
 				ip += oa::ONE_LOCAL_SIZE;
 			}
 			NEXT_INSTR();
@@ -1164,7 +1164,7 @@ int Thread::Evaluate()
 				OPC_ARGS(oa::SingleValue<Field*>);
 				register Value *const dest = f->evalStack + f->stackCount++;
 				dest->type = (Type*)STATIC_REFERENCE;
-				dest->reference = args->value->staticValue;
+				dest->v.reference = args->value->staticValue;
 				ip += oa::SINGLE_VALUE<Field*>::SIZE;
 			}
 			NEXT_INSTR();
@@ -1178,15 +1178,15 @@ int Thread::Evaluate()
 				register Value *const source = args->Source(f);
 
 				if ((uintptr_t)source->type == LOCAL_REFERENCE)
-					*args->Dest(f) = *reinterpret_cast<Value*>(source->reference);
+					*args->Dest(f) = *reinterpret_cast<Value*>(source->v.reference);
 				else if ((uintptr_t)source->type == STATIC_REFERENCE)
-					reinterpret_cast<StaticRef*>(source->reference)->Read(args->Dest(f));
+					reinterpret_cast<StaticRef*>(source->v.reference)->Read(args->Dest(f));
 				else
 				{
 					uintptr_t offset = ~(uintptr_t)source->type;
-					GCObject *gco = reinterpret_cast<GCObject*>((char*)source->reference - offset);
+					GCObject *gco = reinterpret_cast<GCObject*>((char*)source->v.reference - offset);
 					gco->fieldAccessLock.Enter();
-					*args->Dest(f) = *reinterpret_cast<Value*>(source->reference);
+					*args->Dest(f) = *reinterpret_cast<Value*>(source->v.reference);
 					gco->fieldAccessLock.Leave();
 				}
 
@@ -1199,15 +1199,15 @@ int Thread::Evaluate()
 				register Value *const source = args->Source(f);
 
 				if ((uintptr_t)source->type == LOCAL_REFERENCE)
-					*args->Dest(f) = *reinterpret_cast<Value*>(source->reference);
+					*args->Dest(f) = *reinterpret_cast<Value*>(source->v.reference);
 				else if ((uintptr_t)source->type == STATIC_REFERENCE)
-					reinterpret_cast<StaticRef*>(source->reference)->Read(args->Dest(f));
+					reinterpret_cast<StaticRef*>(source->v.reference)->Read(args->Dest(f));
 				else
 				{
 					uintptr_t offset = ~(uintptr_t)source->type;
-					GCObject *gco = reinterpret_cast<GCObject*>((char*)source->reference - offset);
+					GCObject *gco = reinterpret_cast<GCObject*>((char*)source->v.reference - offset);
 					gco->fieldAccessLock.Enter();
-					*args->Dest(f) = *reinterpret_cast<Value*>(source->reference);
+					*args->Dest(f) = *reinterpret_cast<Value*>(source->v.reference);
 					gco->fieldAccessLock.Leave();
 				}
 
@@ -1221,15 +1221,15 @@ int Thread::Evaluate()
 				register Value *const dest = args->Dest(f);
 
 				if ((uintptr_t)dest->type == LOCAL_REFERENCE)
-					*reinterpret_cast<Value*>(dest->reference) = *args->Source(f);
+					*reinterpret_cast<Value*>(dest->v.reference) = *args->Source(f);
 				else if ((uintptr_t)dest->type == STATIC_REFERENCE)
-					reinterpret_cast<StaticRef*>(dest->reference)->Write(args->Source(f));
+					reinterpret_cast<StaticRef*>(dest->v.reference)->Write(args->Source(f));
 				else
 				{
 					uint32_t offset = ~(uint32_t)dest->type;
-					GCObject *gco = reinterpret_cast<GCObject*>(dest->instance - offset);
+					GCObject *gco = reinterpret_cast<GCObject*>(dest->v.instance - offset);
 					gco->fieldAccessLock.Enter();
-					*reinterpret_cast<Value*>(dest->instance) = *args->Source(f);
+					*reinterpret_cast<Value*>(dest->v.instance) = *args->Source(f);
 					gco->fieldAccessLock.Leave();
 				}
 
@@ -1242,15 +1242,15 @@ int Thread::Evaluate()
 				register Value *const dest = args->Dest(f);
 
 				if ((uintptr_t)dest->type == LOCAL_REFERENCE)
-					*reinterpret_cast<Value*>(dest->reference) = *args->Source(f);
+					*reinterpret_cast<Value*>(dest->v.reference) = *args->Source(f);
 				else if ((uintptr_t)dest->type == STATIC_REFERENCE)
-					reinterpret_cast<StaticRef*>(dest->reference)->Write(args->Source(f));
+					reinterpret_cast<StaticRef*>(dest->v.reference)->Write(args->Source(f));
 				else
 				{
 					uintptr_t offset = ~(uintptr_t)dest->type;
-					GCObject *gco = reinterpret_cast<GCObject*>((char*)dest->reference - offset);
+					GCObject *gco = reinterpret_cast<GCObject*>((char*)dest->v.reference - offset);
 					gco->fieldAccessLock.Enter();
-					*reinterpret_cast<Value*>(dest->reference) = *args->Source(f);
+					*reinterpret_cast<Value*>(dest->v.reference) = *args->Source(f);
 					gco->fieldAccessLock.Leave();
 				}
 

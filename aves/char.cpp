@@ -22,9 +22,14 @@ LitString<2> Char::ToLitString(const wuchar ch)
 	return output;
 }
 
+wuchar Char::FromValue(Value *value)
+{
+	return (wuchar)value->v.integer;
+}
+
 AVES_API NATIVE_FUNCTION(aves_Char_get_length)
 {
-	wuchar ch = (wuchar)THISV.integer;
+	wuchar ch = Char::FromValue(THISP);
 
 	VM_PushInt(thread, ch > 0xFFFF ? 2 : 1);
 	RETURN_SUCCESS;
@@ -32,7 +37,7 @@ AVES_API NATIVE_FUNCTION(aves_Char_get_length)
 
 AVES_API NATIVE_FUNCTION(aves_Char_get_category)
 {
-	wuchar ch = (wuchar)THISV.integer;
+	wuchar ch = Char::FromValue(THISP);
 
 	UnicodeCategory cat = UC_GetCategoryW(ch);
 
@@ -41,7 +46,7 @@ AVES_API NATIVE_FUNCTION(aves_Char_get_category)
 
 	Value catValue;
 	catValue.type = Types::UnicodeCategory;
-	catValue.integer = unicode::OvumCategoryToAves(cat);
+	catValue.v.integer = unicode::OvumCategoryToAves(cat);
 
 	VM_Push(thread, &catValue);
 	RETURN_SUCCESS;
@@ -49,22 +54,22 @@ AVES_API NATIVE_FUNCTION(aves_Char_get_category)
 
 AVES_API NATIVE_FUNCTION(aves_Char_toUpper)
 {
-	wuchar ch = (wuchar)THISV.integer;
+	wuchar ch = Char::FromValue(THISP);
 
 	Value upper;
 	upper.type = Types::Char;
-	upper.integer = (int32_t)UC_GetCaseMapW(ch).upper;
+	upper.v.integer = (int32_t)UC_GetCaseMapW(ch).upper;
 
 	VM_Push(thread, &upper);
 	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_Char_toLower)
 {
-	wuchar ch = (wuchar)THISV.integer;
+	wuchar ch = Char::FromValue(THISP);
 
 	Value lower;
 	lower.type = Types::Char;
-	lower.integer = (int32_t)UC_GetCaseMapW(ch).lower;
+	lower.v.integer = (int32_t)UC_GetCaseMapW(ch).lower;
 
 	VM_Push(thread, &lower);
 	RETURN_SUCCESS;
@@ -72,7 +77,7 @@ AVES_API NATIVE_FUNCTION(aves_Char_toLower)
 
 AVES_API NATIVE_FUNCTION(aves_Char_getHashCode)
 {
-	wuchar ch = (wuchar)THISV.integer;
+	wuchar ch = Char::FromValue(THISP);
 	LitString<2> str = Char::ToLitString(ch);
 
 	VM_PushInt(thread, String_GetHashCode(_S(str)));
@@ -80,7 +85,7 @@ AVES_API NATIVE_FUNCTION(aves_Char_getHashCode)
 }
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Char_toString)
 {
-	wuchar ch = (wuchar)THISV.integer;
+	wuchar ch = Char::FromValue(THISP);
 	LitString<2> litStr = Char::ToLitString(ch);
 
 	String *str;
@@ -95,7 +100,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Char_fromCodepoint)
 {
 	CHECKED(IntFromValue(thread, args + 0));
 
-	int64_t cp = args[0].integer;
+	int64_t cp = args[0].v.integer;
 	if (cp < 0 || cp > 0x10FFFF)
 	{
 		VM_PushString(thread, strings::cp);
@@ -104,7 +109,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Char_fromCodepoint)
 
 	Value character;
 	character.type = Types::Char;
-	character.integer = cp;
+	character.v.integer = cp;
 	VM_Push(thread, &character);
 }
 END_NATIVE_FUNCTION
@@ -113,11 +118,11 @@ AVES_API NATIVE_FUNCTION(aves_Char_opEquals)
 {
 	bool eq;
 	if (args[1].type == Types::Char)
-		eq = args[0].integer == args[1].integer;
+		eq = args[0].v.integer == args[1].v.integer;
 	else if (args[1].type == Types::String)
 	{
-		LitString<2> left = Char::ToLitString((wuchar)args[0].integer);
-		eq = String_Equals(_S(left), args[1].common.string);
+		LitString<2> left = Char::ToLitString((wuchar)args[0].v.integer);
+		eq = String_Equals(_S(left), args[1].v.string);
 	}
 	else
 		eq = false;
@@ -130,11 +135,11 @@ AVES_API NATIVE_FUNCTION(aves_Char_opCompare)
 	int result;
 
 	if (args[1].type == Types::Char)
-		result = (int32_t)args[0].integer - (int32_t)args[1].integer;
+		result = (int32_t)args[0].v.integer - (int32_t)args[1].v.integer;
 	else if (args[1].type == Types::String)
 	{
-		LitString<2> left = Char::ToLitString((wuchar)args[0].integer);
-		result = String_Compare(_S(left), args[1].common.string);
+		LitString<2> left = Char::ToLitString((wuchar)args[0].v.integer);
+		result = String_Compare(_S(left), args[1].v.string);
 	}
 	else
 		VM_ThrowTypeError(thread);
@@ -146,14 +151,14 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Char_opMultiply)
 {
 	CHECKED(IntFromValue(thread, args + 1));
 
-	int64_t times = args[1].integer;
+	int64_t times = args[1].v.integer;
 	if (times == 0)
 	{
 		VM_PushString(thread, strings::Empty);
 		RETURN_SUCCESS;
 	}
 
-	LitString<2> str = Char::ToLitString((wuchar)args[0].integer);
+	LitString<2> str = Char::ToLitString((wuchar)args[0].v.integer);
 	int64_t length;
 	if (Int_MultiplyChecked(times, str.length, length))
 		return VM_ThrowOverflowError(thread);
@@ -176,6 +181,6 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Char_opMultiply)
 END_NATIVE_FUNCTION
 AVES_API NATIVE_FUNCTION(aves_Char_opPlus)
 {
-	VM_PushInt(thread, args[0].integer);
+	VM_PushInt(thread, args[0].v.integer);
 	RETURN_SUCCESS;
 }

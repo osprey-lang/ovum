@@ -7,7 +7,7 @@
 #include "ov_compat.h"
 
 
-// All Osprey strings are UTF-16, guaranteed.
+// All Ovum strings are UTF-16, guaranteed.
 #if OVUM_WCHAR_SIZE == 2
 // If sizeof(wchar_t) is 2, we assume it's UTF-16, and
 // define uchar to be of that type.
@@ -50,7 +50,7 @@ typedef struct String_S
 	// If the flags contain StringFlags::HASHED, then hashCode contains the string's
 	// hash code. Otherwise, don't rely on it.
 	StringFlags flags;
-	// The first character.
+	// The first character. The rest of the string is laid out directly afert this field.
 	const uchar firstChar;
 } String;
 
@@ -91,12 +91,23 @@ typedef struct HashInst_S HashInst;
 typedef struct ErrorInst_S ErrorInst;
 typedef struct MethodInst_S MethodInst;
 
-// Represents a single value. If the value is of a primtive type
-// (that is, (type->flags & TYPE_PRIMITIVE) != TYPE_NONE), then
-// the integer, uinteger or real fields contain the instance data.
-// Otherwise, the instance field contains a pointer to the instance.
-// If the value is a reference (IS_REFERENCE(value)), then the
-// reference field points to the referent's storage location.
+// The Value struct is the primary means of representing a value as
+// seen by the VM. A Value consists of a type handle (which may be
+// null to represent the null reference), and up to eight bytes of
+// instance data.
+// The instance data is typically a pointer to some memory, typical-
+// ly containing several adjacent Values with the field values of
+// the instance. If the type is primitive (IS_PRIMITIVE(value) is
+// true), then the eight bytes of instance data directly contain the
+// value of the instance. Usually the 'integer', 'uinteger' or 'real'
+// field is used for this purpose. Finally, a Value may represent a
+// reference (IS_REFERENCE(value) is true), in which case the 'reference'
+// field points to the referent's storage location.
+// The value of a Value (as it were) should usually only be touched
+// directly by the methods in the Value's type, and by the VM. Many
+// types with native implementations store custom C structs or C++
+// classes behind the instance pointer. Do not rely on it pointing
+// to an array of Value fields.
 typedef struct Value_S Value;
 struct Value_S
 {
@@ -104,24 +115,53 @@ struct Value_S
 
 	union
 	{
+		// Primitive values get eight (8) bytes to play with.
+		// The 'integer', 'uinteger' or 'real' field is usually
+		// used instead.
+		unsigned char raw[8];
 		int64_t integer;
 		uint64_t uinteger;
 		double real;
 
 		// The instance is just a pointer to some bytes.
 		uint8_t *instance;
-		union
-		{
-			String *string;
-			ListInst *list;
-			HashInst *hash;
-			ErrorInst *error;
-			MethodInst *method;
-		} common;
+
+		// Let's make some common, fixed-layout types easily available.
+		String *string;
+		ListInst *list;
+		HashInst *hash;
+		ErrorInst *error;
+		MethodInst *method;
+
+		// References make use of this field. It does NOT always point
+		// to a Value! Use the ReadReference and WriteReference functions
+		// to access references.
 		void *reference;
-	};
+	} v;
+
+#ifdef __cplusplus
+	// Gets the instance data as a specific type. This method does not
+	// verify that the instance data actually is of the specified type;
+	// it merely casts the instance pointer.
+	template<class T>
+	inline T *Get()
+	{
+		return reinterpret_cast<T*>(v.instance);
+	}
+
+	// Gets the instance data as a specific type, from a given offset
+	// relative to the instance data pointer. This method does not verify
+	// that the instance data actually is of the specified type; it merely
+	// casts the instance pointer.
+	template<class T>
+	inline T *Get(uint32_t offset)
+	{
+		return reinterpret_cast<T*>(v.instance + offset);
+	}
+#endif
 };
 
+#define IS_PRIMITIVE(value) ((Type_GetFlags((value).type) & TypeFlags::PRIMITIVE) == TypeFlags::PRIMITIVE)
 #define IS_REFERENCE(value) (((uintptr_t)(value).type & 1) == 1)
 
 
@@ -187,56 +227,56 @@ inline void SetNull(Value *target)
 inline void SetBool(ThreadHandle thread, Value &target, bool value)
 {
 	target.type = GetType_Boolean(thread);
-	target.integer = value;
+	target.v.integer = value;
 }
 inline void SetBool(ThreadHandle thread, Value *target, bool value)
 {
 	target->type = GetType_Boolean(thread);
-	target->integer = value;
+	target->v.integer = value;
 }
 
 inline void SetInt(ThreadHandle thread, Value &target, int64_t value)
 {
 	target.type = GetType_Int(thread);
-	target.integer = value;
+	target.v.integer = value;
 }
 inline void SetInt(ThreadHandle thread, Value *target, int64_t value)
 {
 	target->type = GetType_Int(thread);
-	target->integer = value;
+	target->v.integer = value;
 }
 
 inline void SetUInt(ThreadHandle thread, Value &target, uint64_t value)
 {
 	target.type = GetType_UInt(thread);
-	target.uinteger = value;
+	target.v.uinteger = value;
 }
 inline void SetUInt(ThreadHandle thread, Value *target, uint64_t value)
 {
 	target->type = GetType_UInt(thread);
-	target->uinteger = value;
+	target->v.uinteger = value;
 }
 
 inline void SetReal(ThreadHandle thread, Value &target, double value)
 {
 	target.type = GetType_Real(thread);
-	target.real = value;
+	target.v.real = value;
 }
 inline void SetReal(ThreadHandle thread, Value *target, double value)
 {
 	target->type = GetType_Real(thread);
-	target->real = value;
+	target->v.real = value;
 }
 
 inline void SetString(ThreadHandle thread, Value &target, String *value)
 {
 	target.type = GetType_String(thread);
-	target.common.string = value;
+	target.v.string = value;
 }
 inline void SetString(ThreadHandle thread, Value *target, String *value)
 {
 	target->type = GetType_String(thread);
-	target->common.string = value;
+	target->v.string = value;
 }
 
 
@@ -276,11 +316,11 @@ public:
 
 	inline T *operator->() const
 	{
-		return reinterpret_cast<T*>(value->instance);
+		return reinterpret_cast<T*>(value->v.instance);
 	}
 	inline T *operator*() const
 	{
-		return reinterpret_cast<T*>(value->instance);
+		return reinterpret_cast<T*>(value->v.instance);
 	}
 
 	inline TypeHandle GetType() const

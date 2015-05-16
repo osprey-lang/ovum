@@ -770,10 +770,10 @@ void Module::ReadConstantDefs(ModuleReader &reader, int32_t headerConstantCount)
 			String *str = FindString((TokenId)value);
 			if (str == nullptr)
 				throw ModuleLoadException(reader.GetFileName(), "Unresolved String token ID in ConstantDef.");
-			constant.common.string = str;
+			constant.v.string = str;
 		}
 		else
-			constant.integer = value;
+			constant.v.integer = value;
 
 		members.Add(name, ModuleMember(name, constant, (flags & CONST_PRIVATE) == CONST_PRIVATE));
 	}
@@ -1089,10 +1089,10 @@ void Module::SetConstantFieldValue(ModuleReader &reader, Field *field, Type *con
 		String *str = FindString((TokenId)value);
 		if (!str)
 			throw ModuleLoadException(reader.GetFileName(), "Unresolved String token ID in constant FieldDef.");
-		constantValue.common.string = str;
+		constantValue.v.string = str;
 	}
 	else
-		constantValue.integer = value;
+		constantValue.v.integer = value;
 
 	field->staticValue = GetGC()->AddStaticReference(nullptr, constantValue);
 	if (!field->staticValue)
