@@ -2,8 +2,6 @@
 #include <cstddef>
 #include <cassert>
 
-#define _L(value)    ((value).common.list)
-
 AVES_API void CDECL aves_List_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(ListInst));
@@ -15,7 +13,7 @@ int GetIndex(ThreadHandle thread, ListInst *list, Value indexValue, bool canEqua
 {
 	int r = IntFromValue(thread, &indexValue);
 	if (r != OVUM_SUCCESS) return r;
-	int64_t index = indexValue.integer;
+	int64_t index = indexValue.v.integer;
 
 	if (index < 0)
 		index += list->length;
@@ -31,37 +29,37 @@ int GetIndex(ThreadHandle thread, ListInst *list, Value indexValue, bool canEqua
 
 AVES_API NATIVE_FUNCTION(aves_List_new)
 {
-	return InitListInstance(thread, _L(THISV), 0);
+	return InitListInstance(thread, THISV.v.list, 0);
 }
 AVES_API BEGIN_NATIVE_FUNCTION(aves_List_newCap)
 {
 	CHECKED(IntFromValue(thread, args + 1));
-	int64_t capacity = args[1].integer;
+	int64_t capacity = args[1].v.integer;
 	if (capacity < 0 || capacity > INT32_MAX)
 	{
 		VM_PushString(thread, strings::capacity);
 		return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 1);
 	}
 
-	CHECKED(InitListInstance(thread, _L(THISV), (int32_t)capacity));
+	CHECKED(InitListInstance(thread, THISV.v.list, (int32_t)capacity));
 }
 END_NATIVE_FUNCTION
 
 AVES_API NATIVE_FUNCTION(aves_List_get_length)
 {
-	VM_PushInt(thread, _L(THISV)->length);
+	VM_PushInt(thread, THISV.v.list->length);
 	RETURN_SUCCESS;
 }
 
 AVES_API NATIVE_FUNCTION(aves_List_get_capacity)
 {
-	VM_PushInt(thread, _L(THISV)->capacity);
+	VM_PushInt(thread, THISV.v.list->capacity);
 	RETURN_SUCCESS;
 }
 AVES_API BEGIN_NATIVE_FUNCTION(aves_List_set_capacity)
 {
 	CHECKED(IntFromValue(thread, args + 1));
-	int64_t capacity = args[1].integer;
+	int64_t capacity = args[1].v.integer;
 	if (capacity < 0 || capacity > INT32_MAX)
 	{
 		VM_PushString(thread, strings::capacity);
@@ -75,14 +73,14 @@ END_NATIVE_FUNCTION
 
 AVES_API NATIVE_FUNCTION(aves_List_get_version)
 {
-	ListInst *inst = _L(THISV);
+	ListInst *inst = THISV.v.list;
 	VM_PushInt(thread, inst->version);
 	RETURN_SUCCESS;
 }
 
 AVES_API BEGIN_NATIVE_FUNCTION(aves_List_get_item)
 {
-	ListInst *list = _L(THISV);
+	ListInst *list = THISV.v.list;
 	int32_t index;
 	CHECKED(GetIndex(thread, list, args[1], false, index));
 
@@ -92,7 +90,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_List_get_item)
 END_NATIVE_FUNCTION
 AVES_API BEGIN_NATIVE_FUNCTION(aves_List_set_item)
 {
-	ListInst *list = _L(THISV);
+	ListInst *list = THISV.v.list;
 	int32_t index;
 	CHECKED(GetIndex(thread, list, args[1], false, index));
 
@@ -130,7 +128,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_List_insert)
 END_NATIVE_FUNCTION
 AVES_API BEGIN_NATIVE_FUNCTION(aves_List_removeAt)
 {
-	ListInst *list = _L(THISV);
+	ListInst *list = THISV.v.list;
 
 	int32_t index;
 	CHECKED(GetIndex(thread, list, args[1], false, index));
@@ -145,7 +143,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_List_removeAt)
 END_NATIVE_FUNCTION
 AVES_API NATIVE_FUNCTION(aves_List_clear)
 {
-	ListInst *list = _L(THISV);
+	ListInst *list = THISV.v.list;
 	for (int32_t i = 0; i < list->length; i++)
 		list->values[i].type = nullptr;
 	list->length = 0;
@@ -190,7 +188,7 @@ END_NATIVE_FUNCTION
 AVES_API NATIVE_FUNCTION(aves_List_reverse)
 {
 	// Reverse in-place
-	ListInst *list = _L(THISV);
+	ListInst *list = THISV.v.list;
 	ReverseArray(list->length, list->values);
 	list->version++;
 	RETURN_SUCCESS;
@@ -261,7 +259,7 @@ int SliceList(ThreadHandle thread, ListInst *list, int32_t startIndex, int32_t e
 
 	if (sliceLength > 0)
 	{
-		ListInst *outputList = output->common.list;
+		ListInst *outputList = output->v.list;
 		assert(outputList->capacity >= sliceLength);
 
 		// Copy the elements across

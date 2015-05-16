@@ -39,18 +39,18 @@ OVUM_API int IntFromValue(ThreadHandle thread, Value *v)
 	{
 		if (v->type == vm->types.UInt)
 		{
-			if (v->uinteger > INT64_MAX)
+			if (v->v.uinteger > INT64_MAX)
 				return thread->ThrowOverflowError();
 			v->type = vm->types.Int; // This is safe: v is passed by value.
 		}
 		else if (v->type == vm->types.Real)
 		{
 			// TODO: Verify that this is safe; if not, find another way of doing this.
-			if (v->real > INT64_MAX || v->real < INT64_MIN)
+			if (v->v.real > INT64_MAX || v->v.real < INT64_MIN)
 				return thread->ThrowOverflowError();
 
 			v->type = vm->types.Int;
-			v->integer = (int64_t)v->real;
+			v->v.integer = (int64_t)v->v.real;
 		}
 		else
 			return thread->ThrowTypeError(errors::toIntFailed);
@@ -65,18 +65,18 @@ OVUM_API int UIntFromValue(ThreadHandle thread, Value *v)
 	{
 		if (v->type == vm->types.Int)
 		{
-			if (v->integer < 0) // simple! This is even safe if the architecture doesn't use 2's complement!
+			if (v->v.integer < 0) // simple! This is even safe if the architecture doesn't use 2's complement!
 				return thread->ThrowOverflowError();
 			v->type = vm->types.UInt; // This is safe: v is passed by value
 		}
 		else if (v->type == vm->types.Real)
 		{
 			// TODO: Verify that this is safe; if not, find another way of doing this.
-			if (v->real > UINT64_MAX || v->real < 0)
+			if (v->v.real > UINT64_MAX || v->v.real < 0)
 				return thread->ThrowOverflowError();
 
 			v->type = vm->types.UInt;
-			v->uinteger = (uint64_t)v->real;
+			v->v.uinteger = (uint64_t)v->v.real;
 		}
 		else
 			return thread->ThrowTypeError(errors::toUIntFailed);
@@ -93,9 +93,9 @@ OVUM_API int RealFromValue(ThreadHandle thread, Value *v)
 	if (v->type != vm->types.Real)
 	{
 		if (v->type == vm->types.Int)
-			ovum::SetReal_(vm, v, (double)v->integer);
+			ovum::SetReal_(vm, v, (double)v->v.integer);
 		else if (v->type == vm->types.UInt)
-			ovum::SetReal_(vm, v, (double)v->uinteger);
+			ovum::SetReal_(vm, v, (double)v->v.uinteger);
 		else
 			return thread->ThrowTypeError(errors::toRealFailed);
 	}

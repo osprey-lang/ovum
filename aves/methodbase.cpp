@@ -1,8 +1,6 @@
 #include "aves_methodbase.h"
 #include <stddef.h>
 
-#define _M(val)     reinterpret_cast<MethodBaseInst*>((val).instance)
-
 AVES_API void CDECL aves_reflection_MethodBase_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(MethodBaseInst));
@@ -21,18 +19,18 @@ AVES_API NATIVE_FUNCTION(aves_reflection_MethodBase_new)
 		return VM_ThrowErrorOfType(thread, Types::ArgumentError, 2);
 	}
 
-	MethodBaseInst *inst = _M(THISV);
-	inst->method = (MethodHandle)args[1].instance;
+	MethodBaseInst *inst = THISV.Get<MethodBaseInst>();
+	inst->method = (MethodHandle)args[1].v.instance;
 	RETURN_SUCCESS;
 }
 
 AVES_API NATIVE_FUNCTION(aves_reflection_MethodBase_get_accessLevel)
 {
-	MethodBaseInst *inst = _M(THISV);
+	MethodBaseInst *inst = THISV.Get<MethodBaseInst>();
 
 	Value access;
 	access.type = Types::reflection.AccessLevel;
-	access.integer = (int)Member_GetAccessLevel(inst->method);
+	access.v.integer = (int)Member_GetAccessLevel(inst->method);
 	VM_Push(thread, &access);
 
 	RETURN_SUCCESS;
@@ -40,11 +38,11 @@ AVES_API NATIVE_FUNCTION(aves_reflection_MethodBase_get_accessLevel)
 
 AVES_API NATIVE_FUNCTION(aves_reflection_MethodBase_get_handle)
 {
-	MethodBaseInst *inst = _M(THISV);
+	MethodBaseInst *inst = THISV.Get<MethodBaseInst>();
 
 	Value handle;
 	handle.type = Types::reflection.NativeHandle;
-	handle.instance = (uint8_t*)inst->method;
+	handle.v.instance = (uint8_t*)inst->method;
 
 	VM_Push(thread, &handle);
 	RETURN_SUCCESS;
@@ -52,14 +50,14 @@ AVES_API NATIVE_FUNCTION(aves_reflection_MethodBase_get_handle)
 
 AVES_API NATIVE_FUNCTION(aves_reflection_MethodBase_get_internalName)
 {
-	MethodBaseInst *inst = _M(THISV);
+	MethodBaseInst *inst = THISV.Get<MethodBaseInst>();
 	VM_PushString(thread, Member_GetName(inst->method));
 	RETURN_SUCCESS;
 }
 
 AVES_API NATIVE_FUNCTION(aves_reflection_MethodBase_get_cachedName)
 {
-	MethodBaseInst *inst = _M(THISV);
+	MethodBaseInst *inst = THISV.Get<MethodBaseInst>();
 
 	if (inst->cachedName == nullptr)
 		VM_PushNull(thread);
@@ -69,17 +67,17 @@ AVES_API NATIVE_FUNCTION(aves_reflection_MethodBase_get_cachedName)
 }
 AVES_API NATIVE_FUNCTION(aves_reflection_MethodBase_set_cachedName)
 {
-	MethodBaseInst *inst = _M(THISV);
+	MethodBaseInst *inst = THISV.Get<MethodBaseInst>();
 	if (IS_NULL(args[1]))
 		inst->cachedName = nullptr;
 	else
-		inst->cachedName = args[1].common.string;
+		inst->cachedName = args[1].v.string;
 	RETURN_SUCCESS;
 }
 
 AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_MethodBase_get_declaringType)
 {
-	MethodBaseInst *inst = _M(THISV);
+	MethodBaseInst *inst = THISV.Get<MethodBaseInst>();
 
 	Value typeToken;
 	CHECKED(Type_GetTypeToken(thread, Member_GetDeclType(inst->method), &typeToken));
@@ -92,35 +90,35 @@ AVES_API NATIVE_FUNCTION(aves_reflection_MethodBase_get_declaringModule);
 
 AVES_API NATIVE_FUNCTION(aves_reflection_MethodBase_get_isGlobal)
 {
-	MethodBaseInst *inst = _M(THISV);
+	MethodBaseInst *inst = THISV.Get<MethodBaseInst>();
 	VM_PushBool(thread, Member_GetDeclType(inst->method) == nullptr);
 	RETURN_SUCCESS;
 }
 
 AVES_API NATIVE_FUNCTION(aves_reflection_MethodBase_get_isStatic)
 {
-	MethodBaseInst *inst = _M(THISV);
+	MethodBaseInst *inst = THISV.Get<MethodBaseInst>();
 	VM_PushBool(thread, Member_IsStatic(inst->method));
 	RETURN_SUCCESS;
 }
 
 AVES_API NATIVE_FUNCTION(aves_reflection_MethodBase_get_isConstructor)
 {
-	MethodBaseInst *inst = _M(THISV);
+	MethodBaseInst *inst = THISV.Get<MethodBaseInst>();
 	VM_PushBool(thread, Method_IsConstructor(inst->method));
 	RETURN_SUCCESS;
 }
 
 AVES_API NATIVE_FUNCTION(aves_reflection_MethodBase_get_isImpl)
 {
-	MethodBaseInst *inst = _M(THISV);
+	MethodBaseInst *inst = THISV.Get<MethodBaseInst>();
 	VM_PushBool(thread, Member_IsImpl(inst->method));
 	RETURN_SUCCESS;
 }
 
 AVES_API NATIVE_FUNCTION(aves_reflection_MethodBase_get_overloadCount)
 {
-	MethodBaseInst *inst = _M(THISV);
+	MethodBaseInst *inst = THISV.Get<MethodBaseInst>();
 	VM_PushInt(thread, Method_GetOverloadCount(inst->method));
 	RETURN_SUCCESS;
 }
@@ -128,12 +126,12 @@ AVES_API NATIVE_FUNCTION(aves_reflection_MethodBase_get_overloadCount)
 AVES_API NATIVE_FUNCTION(aves_reflection_MethodBase_getOverloadHandle)
 {
 	// getOverloadHandle(index is Int)
-	MethodBaseInst *inst = _M(THISV);
-	int32_t index = (int32_t)args[1].integer;
+	MethodBaseInst *inst = THISV.Get<MethodBaseInst>();
+	int32_t index = (int32_t)args[1].v.integer;
 
 	Value handle;
 	handle.type = Types::reflection.NativeHandle;
-	handle.instance = (uint8_t*)Method_GetOverload(inst->method, index);
+	handle.v.instance = (uint8_t*)Method_GetOverload(inst->method, index);
 	VM_Push(thread, &handle);
 
 	RETURN_SUCCESS;
@@ -143,7 +141,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_MethodBase_invoke)
 {
 	// invoke(instance, arguments is List|null)
 
-	MethodBaseInst *inst = _M(THISV);
+	MethodBaseInst *inst = THISV.Get<MethodBaseInst>();
 
 	// Push instance
 	VM_Push(thread, args + 1);
@@ -151,7 +149,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_MethodBase_invoke)
 	uint32_t argCount = 0;
 	if (!IS_NULL(args[2]))
 	{
-		ListInst *arguments = args[2].common.list;
+		ListInst *arguments = args[2].v.list;
 		argCount = (uint32_t)arguments->length;
 		for (int32_t i = 0; i < arguments->length; i++)
 			VM_Push(thread, arguments->values + i);
@@ -164,14 +162,14 @@ END_NATIVE_FUNCTION
 
 AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Method_get_baseMethod)
 {
-	MethodBaseInst *inst = _M(THISV);
+	MethodBaseInst *inst = THISV.Get<MethodBaseInst>();
 
 	MethodHandle baseMethod = Method_GetBaseMethod(inst->method);
 	if (baseMethod != nullptr)
 	{
 		Value handle;
 		handle.type = Types::reflection.NativeHandle;
-		handle.instance = (uint8_t*)baseMethod;
+		handle.v.instance = (uint8_t*)baseMethod;
 		VM_Push(thread, &handle);
 
 		CHECKED(GC_Construct(thread, Types::reflection.Method, 1, nullptr));

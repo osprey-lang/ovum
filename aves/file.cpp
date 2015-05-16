@@ -23,7 +23,7 @@ int io::ReadFileAttributes(ThreadHandle thread, String *fileName, WIN32_FILE_ATT
 
 AVES_API BEGIN_NATIVE_FUNCTION(io_File_existsInternal)
 {
-	String *fileName = args[0].common.string;
+	String *fileName = args[0].v.string;
 	CHECKED(Path::ValidatePath(thread, fileName, false));
 
 	WIN32_FILE_ATTRIBUTE_DATA data;
@@ -43,7 +43,7 @@ END_NATIVE_FUNCTION
 
 AVES_API BEGIN_NATIVE_FUNCTION(io_File_getSizeInternal)
 {
-	String *fileName = args[0].common.string;
+	String *fileName = args[0].v.string;
 	CHECKED(Path::ValidatePath(thread, fileName, false));
 
 	bool _;
@@ -58,7 +58,7 @@ END_NATIVE_FUNCTION
 
 AVES_API BEGIN_NATIVE_FUNCTION(io_File_deleteInternal)
 {
-	String *fileName = args[0].common.string;
+	String *fileName = args[0].v.string;
 	CHECKED(Path::ValidatePath(thread, fileName, false));
 
 	BOOL r;
@@ -77,8 +77,8 @@ END_NATIVE_FUNCTION
 
 AVES_API BEGIN_NATIVE_FUNCTION(io_File_moveInternal)
 {
-	String *srcName = args[0].common.string;
-	String *destName = args[1].common.string;
+	String *srcName = args[0].v.string;
+	String *destName = args[1].v.string;
 
 	CHECKED(Path::ValidatePath(thread, srcName, false));
 	CHECKED(Path::ValidatePath(thread, destName, false));
@@ -126,14 +126,14 @@ AVES_API BEGIN_NATIVE_FUNCTION(io_FileStream_init)
 {
 	// Args: (fileName is String, mode is FileMode, access is FileAccess, share is FileShare)
 
-	String *fileName = args[1].common.string;
+	String *fileName = args[1].v.string;
 	CHECKED(Path::ValidatePath(thread, fileName, true));
 
 	// Let's turn mode, access and share into appropriate arguments for CreateFile()
 	// 'mode' corresponds to the dwCreationDisposition parameter.
 	DWORD mode, access, share;
 
-	switch (args[2].integer) // mode
+	switch (args[2].v.integer) // mode
 	{
 	case FileMode::OPEN:           mode = OPEN_EXISTING;     break;
 	case FileMode::OPEN_OR_CREATE: mode = OPEN_ALWAYS;       break;
@@ -147,7 +147,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(io_FileStream_init)
 		return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 1);
 	}
 
-	switch (args[3].integer) // access
+	switch (args[3].v.integer) // access
 	{
 	case FileAccess::READ:       access = GENERIC_READ; break;
 	case FileAccess::WRITE:      access = GENERIC_WRITE; break;
@@ -158,7 +158,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(io_FileStream_init)
 		VM_PushString(thread, strings::access);
 		return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 1);
 	}
-	if ((FileMode)args[2].integer == FileMode::APPEND)
+	if ((FileMode)args[2].v.integer == FileMode::APPEND)
 	{
 		if (access != GENERIC_WRITE)
 		{
@@ -171,7 +171,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(io_FileStream_init)
 		access = FILE_APPEND_DATA;
 	}
 
-	if (args[4].uinteger > 7) // uinteger so that negative numbers are > 0
+	if (args[4].v.uinteger > 7) // uinteger so that negative numbers are > 0
 	{
 		VM_PushString(thread, strings::share);
 		return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 1);
@@ -179,7 +179,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(io_FileStream_init)
 	// By a genuine coincidence, io.FileShare's values perfectly match those
 	// used by the Windows API, so we can just assign the value as-is.
 	// Great minds assign values alike, I guess!
-	share = (DWORD)args[4].integer;
+	share = (DWORD)args[4].v.integer;
 
 	HANDLE handle;
 	{ Pinned fn(args + 1);
@@ -202,16 +202,16 @@ AVES_API BEGIN_NATIVE_FUNCTION(io_FileStream_init)
 		return VM_ThrowErrorOfType(thread, Types::NotSupportedError, 1);
 	}
 
-	FileStream *stream = _FS(THISV);
+	FileStream *stream = THISV.Get<FileStream>();
 	stream->handle = handle;
-	stream->access = (FileAccess)args[3].integer;
+	stream->access = (FileAccess)args[3].v.integer;
 	stream->fileName = fileName;
 }
 END_NATIVE_FUNCTION
 
 AVES_API NATIVE_FUNCTION(io_FileStream_get_canRead)
 {
-	FileStream *stream = _FS(THISV);
+	FileStream *stream = THISV.Get<FileStream>();
 	if (stream->handle == NULL)
 		VM_PushBool(thread, false); // The handle has been closed
 	else
@@ -220,7 +220,7 @@ AVES_API NATIVE_FUNCTION(io_FileStream_get_canRead)
 }
 AVES_API NATIVE_FUNCTION(io_FileStream_get_canWrite)
 {
-	FileStream *stream = _FS(THISV);
+	FileStream *stream = THISV.Get<FileStream>();
 	if (stream->handle == NULL)
 		VM_PushBool(thread, false); // The handle has been closed
 	else
@@ -229,7 +229,7 @@ AVES_API NATIVE_FUNCTION(io_FileStream_get_canWrite)
 }
 AVES_API NATIVE_FUNCTION(io_FileStream_get_canSeek)
 {
-	FileStream *stream = _FS(THISV);
+	FileStream *stream = THISV.Get<FileStream>();
 	if (stream->handle == NULL)
 		VM_PushBool(thread, false); // The handle has been closed
 	else
@@ -242,7 +242,7 @@ AVES_API NATIVE_FUNCTION(io_FileStream_get_canSeek)
 
 AVES_API BEGIN_NATIVE_FUNCTION(io_FileStream_get_length)
 {
-	FileStream *stream = _FS(THISV);
+	FileStream *stream = THISV.Get<FileStream>();
 	CHECKED(stream->EnsureOpen(thread));
 
 	HANDLE handle = stream->handle;
@@ -263,14 +263,14 @@ END_NATIVE_FUNCTION
 
 AVES_API NATIVE_FUNCTION(io_FileStream_get_fileName)
 {
-	FileStream *stream = _FS(THISV);
+	FileStream *stream = THISV.Get<FileStream>();
 	VM_PushString(thread, stream->fileName);
 	RETURN_SUCCESS;
 }
 
 AVES_API BEGIN_NATIVE_FUNCTION(io_FileStream_readByte)
 {
-	FileStream *stream = _FS(THISV);
+	FileStream *stream = THISV.Get<FileStream>();
 	CHECKED(stream->EnsureOpen(thread));
 
 	HANDLE handle = stream->handle;
@@ -297,15 +297,15 @@ AVES_API BEGIN_NATIVE_FUNCTION(io_FileStream_readMaxInternal)
 	// Args: (buf is Buffer, offset is Int, count is Int)
 	// FileStream.readMax verifies that offset and count are
 	// within the buffer, and that buf is actually a Buffer.
-	FileStream *stream = _FS(THISV);
+	FileStream *stream = THISV.Get<FileStream>();
 	CHECKED(stream->EnsureOpen(thread));
 
 	HANDLE handle = stream->handle;
 	// The GC will never move the Buffer::bytes pointer
-	uint8_t *buffer = reinterpret_cast<Buffer*>(args[1].instance)->bytes;
-	buffer += (int32_t)args[2].integer;
+	uint8_t *buffer = reinterpret_cast<Buffer*>(args[1].v.instance)->bytes;
+	buffer += (int32_t)args[2].v.integer;
 
-	int32_t count = (int32_t)args[3].integer;
+	int32_t count = (int32_t)args[3].v.integer;
 
 	VM_EnterUnmanagedRegion(thread);
 
@@ -323,7 +323,7 @@ END_NATIVE_FUNCTION
 
 AVES_API BEGIN_NATIVE_FUNCTION(io_FileStream_writeByte)
 {
-	FileStream *stream = _FS(THISV);
+	FileStream *stream = THISV.Get<FileStream>();
 	CHECKED(stream->EnsureOpen(thread));
 
 	CHECKED(IntFromValue(thread, args + 1));
@@ -333,7 +333,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(io_FileStream_writeByte)
 	VM_EnterUnmanagedRegion(thread);
 
 	DWORD bytesWritten;
-	uint8_t byte = (uint8_t)args[1].integer;
+	uint8_t byte = (uint8_t)args[1].v.integer;
 	BOOL r = WriteFile(handle, &byte, 1, &bytesWritten, nullptr);
 
 	VM_LeaveUnmanagedRegion(thread);
@@ -348,16 +348,16 @@ AVES_API BEGIN_NATIVE_FUNCTION(io_FileStream_writeInternal)
 	// Args: (buf is Buffer, offset is Int, count is Int)
 	// FileStream.write verifies that offset and count are
 	// within the buffer, and that buf is actually a Buffer.
-	FileStream *stream = _FS(THISV);
+	FileStream *stream = THISV.Get<FileStream>();
 	CHECKED(stream->EnsureOpen(thread));
 
 	HANDLE handle = stream->handle;
 	// The GC will never move the Buffer::bytes pointer,
 	// no need to pin it
-	uint8_t *buffer = reinterpret_cast<Buffer*>(args[1].instance)->bytes;
-	buffer += (int32_t)args[2].integer;
+	uint8_t *buffer = reinterpret_cast<Buffer*>(args[1].v.instance)->bytes;
+	buffer += (int32_t)args[2].v.integer;
 
-	int32_t count = (int32_t)args[3].integer;
+	int32_t count = (int32_t)args[3].v.integer;
 
 	VM_EnterUnmanagedRegion(thread);
 
@@ -373,7 +373,7 @@ END_NATIVE_FUNCTION
 
 AVES_API BEGIN_NATIVE_FUNCTION(io_FileStream_flush)
 {
-	FileStream *stream = _FS(THISV);
+	FileStream *stream = THISV.Get<FileStream>();
 	CHECKED(stream->EnsureOpen(thread));
 
 	if ((stream->access & FileAccess::WRITE) != FileAccess::WRITE)
@@ -398,11 +398,11 @@ END_NATIVE_FUNCTION
 AVES_API BEGIN_NATIVE_FUNCTION(io_FileStream_seekInternal)
 {
 	// Args: (offset is Int, origin is SeekOrigin)
-	FileStream *stream = _FS(THISV);
+	FileStream *stream = THISV.Get<FileStream>();
 	CHECKED(stream->EnsureOpen(thread));
 
 	DWORD seekOrigin;
-	switch (args[2].integer)
+	switch (args[2].v.integer)
 	{
 	case SeekOrigin::START:   seekOrigin = FILE_BEGIN;   break;
 	case SeekOrigin::CURRENT: seekOrigin = FILE_CURRENT; break;
@@ -414,7 +414,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(io_FileStream_seekInternal)
 
 	HANDLE handle = stream->handle;
 	LARGE_INTEGER seekOffset;
-	seekOffset.QuadPart = args[1].integer;
+	seekOffset.QuadPart = args[1].v.integer;
 
 	VM_EnterUnmanagedRegion(thread);
 

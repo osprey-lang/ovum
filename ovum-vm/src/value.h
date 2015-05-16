@@ -26,56 +26,56 @@ inline void SetNull_(Value *target)
 inline void SetBool_(VM *vm, Value &target, const bool value)
 {
 	target.type = vm->types.Boolean;
-	target.integer = value;
+	target.v.integer = value;
 }
 inline void SetBool_(VM *vm, Value *target, const bool value)
 {
 	target->type = vm->types.Boolean;
-	target->integer = value;
+	target->v.integer = value;
 }
 
 inline void SetInt_(VM *vm, Value &target, const int64_t value)
 {
 	target.type = vm->types.Int;
-	target.integer = value;
+	target.v.integer = value;
 }
 inline void SetInt_(VM *vm, Value *target, const int64_t value)
 {
 	target->type = vm->types.Int;
-	target->integer = value;
+	target->v.integer = value;
 }
 
 inline void SetUInt_(VM *vm, Value &target, const uint64_t value)
 {
 	target.type = vm->types.UInt;
-	target.uinteger = value;
+	target.v.uinteger = value;
 }
 inline void SetUInt_(VM *vm, Value *target, const uint64_t value)
 {
 	target->type = vm->types.UInt;
-	target->uinteger = value;
+	target->v.uinteger = value;
 }
 
 inline void SetReal_(VM *vm, Value &target, const double value)
 {
 	target.type = vm->types.Real;
-	target.real = value;
+	target.v.real = value;
 }
 inline void SetReal_(VM *vm, Value *target, const double value)
 {
 	target->type = vm->types.Real;
-	target->real = value;
+	target->v.real = value;
 }
 
 inline void SetString_(VM *vm, Value &target, String *value)
 {
 	target.type = vm->types.String;
-	target.common.string = value;
+	target.v.string = value;
 }
 inline void SetString_(VM *vm, Value *target, String *value)
 {
 	target->type = vm->types.String;
-	target->common.string = value;
+	target->v.string = value;
 }
 
 
@@ -85,26 +85,26 @@ inline bool IsTrue_(Value value)
 {
 	return value.type != nullptr &&
 		(!value.type->IsPrimitive() ||
-		value.integer != 0);
+		value.v.integer != 0);
 }
 inline bool IsTrue_(Value *value)
 {
 	return value->type != nullptr &&
 		(!value->type->IsPrimitive() ||
-		value->integer != 0);
+		value->v.integer != 0);
 }
 
 inline bool IsFalse_(Value value)
 {
 	return value.type == nullptr ||
 		value.type->IsPrimitive() &&
-		value.integer == 0;
+		value.v.integer == 0;
 }
 inline bool IsFalse_(Value *value)
 {
 	return value->type == nullptr ||
 		value->type->IsPrimitive() &&
-		value->integer == 0;
+		value->v.integer == 0;
 }
 
 inline bool IsSameReference_(Value a, Value b)
@@ -115,8 +115,8 @@ inline bool IsSameReference_(Value a, Value b)
 	if (a.type == nullptr)
 		return true; // both are null
 	if (a.type->IsPrimitive())
-		return a.integer == b.integer;
-	return a.instance == b.instance;
+		return a.v.integer == b.v.integer;
+	return a.v.instance == b.v.instance;
 }
 inline bool IsSameReference_(Value *a, Value *b)
 {
@@ -126,8 +126,8 @@ inline bool IsSameReference_(Value *a, Value *b)
 	if (a->type == nullptr)
 		return true;
 	if (a->type->IsPrimitive())
-		return a->integer == b->integer;
-	return a->instance == b->instance;
+		return a->v.integer == b->v.integer;
+	return a->v.instance == b->v.instance;
 }
 
 }

@@ -191,7 +191,7 @@ inline GCObject *GCObject::FromInst(void *inst)
 }
 inline GCObject *GCObject::FromValue(Value *value)
 {
-	return FromInst(value->instance);
+	return FromInst(value->v.instance);
 }
 
 // This is identical to String except that all the 'const' modifiers
@@ -391,7 +391,7 @@ public:
 		if (r == OVUM_SUCCESS)
 		{
 			output->type = type;
-			output->instance = gco->InstanceBase();
+			output->v.instance = gco->InstanceBase();
 		}
 		return r;
 	}
@@ -472,7 +472,7 @@ private:
 			return false;
 
 		if (val->type == vm->types.String &&
-			(val->common.string->flags & StringFlags::STATIC) == StringFlags::STATIC)
+			(val->v.string->flags & StringFlags::STATIC) == StringFlags::STATIC)
 			return false;
 
 		// If gco is a non-pinned gen0 object, set *hasGen0Refs to true.
@@ -526,7 +526,7 @@ private:
 				if ((uintptr_t)v->type != LOCAL_REFERENCE &&
 					(uintptr_t)v->type != STATIC_REFERENCE)
 				{
-					GCObject *gco = reinterpret_cast<GCObject*>((char*)v->reference - ~(uintptr_t)v->type);
+					GCObject *gco = reinterpret_cast<GCObject*>((char*)v->v.reference - ~(uintptr_t)v->type);
 					if ((gco->flags & GCOFlags::MARK) == currentCollectMark)
 						MarkForProcessing(gco);
 				}
@@ -553,7 +553,7 @@ private:
 			return false;
 
 		if (val->type == vm->types.String &&
-			(val->common.string->flags & StringFlags::STATIC) == StringFlags::STATIC)
+			(val->v.string->flags & StringFlags::STATIC) == StringFlags::STATIC)
 			return false;
 
 		return GCObject::FromValue(val)->IsMoved();
@@ -561,7 +561,7 @@ private:
 	inline void TryUpdateRef(Value *value)
 	{
 		if (ShouldUpdateRef(value))
-			value->instance = GCObject::FromValue(value)->newAddress->InstanceBase();
+			value->v.instance = GCObject::FromValue(value)->newAddress->InstanceBase();
 	}
 	static inline void TryUpdateStringRef(String **str)
 	{
@@ -589,9 +589,9 @@ private:
 					(uintptr_t)v->type != STATIC_REFERENCE)
 				{
 					uintptr_t offset = ~(uintptr_t)v->type;
-					GCObject *gco = reinterpret_cast<GCObject*>((char*)v->reference - offset);
+					GCObject *gco = reinterpret_cast<GCObject*>((char*)v->v.reference - offset);
 					if (gco->IsMoved())
-						v->reference = (char*)gco->newAddress + offset;
+						v->v.reference = (char*)gco->newAddress + offset;
 				}
 			}
 			else

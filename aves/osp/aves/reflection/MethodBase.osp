@@ -162,7 +162,7 @@ public abstract class MethodBase is Member
 		{
 			if instance is null:
 				throw new ArgumentNullError("instance");
-			if not typeof(instance).inheritsFrom(declaringType):
+			if not declaringType.isInstance(instance):
 				throw new TypeError();
 		}
 		if arguments is not null and arguments is not List:

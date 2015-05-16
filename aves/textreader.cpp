@@ -28,114 +28,114 @@ AVES_API void CDECL io_TextReader_init(TypeHandle type)
 
 AVES_API NATIVE_FUNCTION(io_TextReader_get_stream)
 {
-	TextReaderInst *tr = _TR(THISV);
+	TextReaderInst *tr = THISV.Get<TextReaderInst>();
 	VM_Push(thread, &tr->stream);
 	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(io_TextReader_set_stream)
 {
-	TextReaderInst *tr = _TR(THISV);
+	TextReaderInst *tr = THISV.Get<TextReaderInst>();
 	tr->stream = args[1];
 	RETURN_SUCCESS;
 }
 
 AVES_API NATIVE_FUNCTION(io_TextReader_get_encoding)
 {
-	TextReaderInst *tr = _TR(THISV);
+	TextReaderInst *tr = THISV.Get<TextReaderInst>();
 	VM_Push(thread, &tr->encoding);
 	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(io_TextReader_set_encoding)
 {
-	TextReaderInst *tr = _TR(THISV);
+	TextReaderInst *tr = THISV.Get<TextReaderInst>();
 	tr->encoding = args[1];
 	RETURN_SUCCESS;
 }
 
 AVES_API NATIVE_FUNCTION(io_TextReader_get_keepOpen)
 {
-	TextReaderInst *tr = _TR(THISV);
+	TextReaderInst *tr = THISV.Get<TextReaderInst>();
 	VM_PushBool(thread, tr->keepOpen);
 	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(io_TextReader_set_keepOpen)
 {
-	TextReaderInst *tr = _TR(THISV);
-	tr->keepOpen = !!args[1].integer;
+	TextReaderInst *tr = THISV.Get<TextReaderInst>();
+	tr->keepOpen = !!args[1].v.integer;
 	RETURN_SUCCESS;
 }
 
 AVES_API NATIVE_FUNCTION(io_TextReader_get_decoder)
 {
-	TextReaderInst *tr = _TR(THISV);
+	TextReaderInst *tr = THISV.Get<TextReaderInst>();
 	VM_Push(thread, &tr->decoder);
 	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(io_TextReader_set_decoder)
 {
-	TextReaderInst *tr = _TR(THISV);
+	TextReaderInst *tr = THISV.Get<TextReaderInst>();
 	tr->decoder = args[1];
 	RETURN_SUCCESS;
 }
 
 AVES_API NATIVE_FUNCTION(io_TextReader_get_byteBuffer)
 {
-	TextReaderInst *tr = _TR(THISV);
+	TextReaderInst *tr = THISV.Get<TextReaderInst>();
 	VM_Push(thread, &tr->byteBuffer);
 	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(io_TextReader_set_byteBuffer)
 {
-	TextReaderInst *tr = _TR(THISV);
+	TextReaderInst *tr = THISV.Get<TextReaderInst>();
 	tr->byteBuffer = args[1];
 	RETURN_SUCCESS;
 }
 
 AVES_API NATIVE_FUNCTION(io_TextReader_get_charBuffer)
 {
-	TextReaderInst *tr = _TR(THISV);
+	TextReaderInst *tr = THISV.Get<TextReaderInst>();
 	VM_Push(thread, &tr->charBuffer);
 	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(io_TextReader_set_charBuffer)
 {
-	TextReaderInst *tr = _TR(THISV);
+	TextReaderInst *tr = THISV.Get<TextReaderInst>();
 	tr->charBuffer = args[1];
 	RETURN_SUCCESS;
 }
 
 AVES_API NATIVE_FUNCTION(io_TextReader_get_charCount)
 {
-	TextReaderInst *tr = _TR(THISV);
+	TextReaderInst *tr = THISV.Get<TextReaderInst>();
 	VM_PushInt(thread, tr->charCount);
 	RETURN_SUCCESS;
 }
 AVES_API BEGIN_NATIVE_FUNCTION(io_TextReader_set_charCount)
 {
 	CHECKED(IntFromValue(thread, args + 1));
-	TextReaderInst *tr = _TR(THISV);
-	tr->charCount = (int32_t)args[1].integer;
+	TextReaderInst *tr = THISV.Get<TextReaderInst>();
+	tr->charCount = (int32_t)args[1].v.integer;
 }
 END_NATIVE_FUNCTION
 
 AVES_API NATIVE_FUNCTION(io_TextReader_get_charOffset)
 {
-	TextReaderInst *tr = _TR(THISV);
+	TextReaderInst *tr = THISV.Get<TextReaderInst>();
 	VM_PushInt(thread, tr->charOffset);
 	RETURN_SUCCESS;
 }
 AVES_API BEGIN_NATIVE_FUNCTION(io_TextReader_set_charOffset)
 {
 	CHECKED(IntFromValue(thread, args + 1));
-	TextReaderInst *tr = _TR(THISV);
-	tr->charOffset = (int32_t)args[1].integer;
+	TextReaderInst *tr = THISV.Get<TextReaderInst>();
+	tr->charOffset = (int32_t)args[1].v.integer;
 }
 END_NATIVE_FUNCTION
 
 AVES_API BEGIN_NATIVE_FUNCTION(io_TextReader_readLine)
 {
 	Pinned reader(THISP);
-	TextReaderInst *tr = _TR(THISV);
+	TextReaderInst *tr = THISV.Get<TextReaderInst>();
 
 	if (tr->charOffset == tr->charCount)
 	{
@@ -153,7 +153,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(io_TextReader_readLine)
 	}
 
 	Pinned charBuffer(&tr->charBuffer);
-	StringBuffer *cb = reinterpret_cast<StringBuffer*>(tr->charBuffer.instance);
+	StringBuffer *cb = reinterpret_cast<StringBuffer*>(tr->charBuffer.v.instance);
 
 	StringBuffer sb; // Initialize on demand only
 	do

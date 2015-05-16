@@ -10,6 +10,8 @@ class Char
 {
 public:
 	static LitString<2> ToLitString(const wuchar ch);
+
+	static wuchar FromValue(Value *value);
 };
 
 AVES_API NATIVE_FUNCTION(aves_Char_get_length);

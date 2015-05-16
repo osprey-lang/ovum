@@ -185,7 +185,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(io_Path_isAbsolute)
 {
 	CHECKED(StringFromValue(thread, args));
 
-	String *path = args[0].common.string;
+	String *path = args[0].v.string;
 	CHECKED(Path::ValidatePath(thread, path, false));
 
 	VM_PushBool(thread, Path::IsAbsolute(path));
@@ -200,22 +200,22 @@ AVES_API BEGIN_NATIVE_FUNCTION(io_Path_join)
 	{
 		CHECKED(StringFromValue(thread, args + i));
 
-		String *path = args[i].common.string;
+		String *path = args[i].v.string;
 		CHECKED(Path::ValidatePath(thread, path, false));
 		if (i == 0 || Path::IsAbsolute(path))
 			SetString(thread, output, path);
 		else
 		{
 			String *outputStr;
-			uchar lastChar = (&output->common.string->firstChar)[output->common.string->length - 1];
+			uchar lastChar = (&output->v.string->firstChar)[output->v.string->length - 1];
 			if (Path::IsPathSep(lastChar)
 #if OVUM_WINDOWS
 				|| lastChar == Path::VolumeSeparator
 #endif
 				)
-				outputStr = String_Concat(thread, output->common.string, path);
+				outputStr = String_Concat(thread, output->v.string, path);
 			else
-				outputStr = String_Concat3(thread, output->common.string, _S(Path::DirSeparatorString), path);
+				outputStr = String_Concat3(thread, output->v.string, _S(Path::DirSeparatorString), path);
 			CHECKED_MEM(outputStr);
 			SetString(thread, output, outputStr);
 		}
@@ -227,7 +227,7 @@ END_NATIVE_FUNCTION
 
 AVES_API BEGIN_NATIVE_FUNCTION(io_Path_getFullPath)
 {
-	String *path = args[0].common.string;
+	String *path = args[0].v.string;
 	CHECKED(Path::ValidatePath(thread, path, false));
 
 	String *fullPath;
@@ -238,7 +238,7 @@ END_NATIVE_FUNCTION
 
 AVES_API BEGIN_NATIVE_FUNCTION(io_Path_getFileName)
 {
-	String *path = args[0].common.string;
+	String *path = args[0].v.string;
 	CHECKED(Path::ValidatePath(thread, path, false));
 
 	const uchar *chp = &path->firstChar;
@@ -259,7 +259,7 @@ END_NATIVE_FUNCTION
 
 AVES_API BEGIN_NATIVE_FUNCTION(io_Path_getDirectory)
 {
-	String *path = args[0].common.string;
+	String *path = args[0].v.string;
 	CHECKED(Path::ValidatePath(thread, path, false));
 
 	int32_t root = Path::GetRootLength(path);
@@ -282,7 +282,7 @@ END_NATIVE_FUNCTION
 
 AVES_API BEGIN_NATIVE_FUNCTION(io_Path_getExtension)
 {
-	String *path = args[0].common.string;
+	String *path = args[0].v.string;
 	CHECKED(Path::ValidatePath(thread, path, false));
 
 	int32_t extIdx = Path::GetExtensionIndex(path);
@@ -301,9 +301,9 @@ END_NATIVE_FUNCTION
 
 AVES_API BEGIN_NATIVE_FUNCTION(io_Path_hasExtension)
 {
-	CHECKED(Path::ValidatePath(thread, args[0].common.string, false));
+	CHECKED(Path::ValidatePath(thread, args[0].v.string, false));
 
-	VM_PushBool(thread, Path::GetExtensionIndex(args[0].common.string) != -1);
+	VM_PushBool(thread, Path::GetExtensionIndex(args[0].v.string) != -1);
 }
 END_NATIVE_FUNCTION
 
@@ -311,7 +311,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(io_Path_changeExtension)
 {
 	static LitString<1> dot = { 1, 0, StringFlags::STATIC, '.',0 };
 
-	String *path = args[0].common.string;
+	String *path = args[0].v.string;
 	CHECKED(Path::ValidatePath(thread, path, false));
 
 	if (!IS_NULL(args[1]))
@@ -332,10 +332,10 @@ AVES_API BEGIN_NATIVE_FUNCTION(io_Path_changeExtension)
 	if (!IS_NULL(args[1]))
 	{
 		String *retString;
-		if (args[1].common.string->firstChar == '.')
-			retString = String_Concat(thread, retval->common.string, args[1].common.string);
+		if (args[1].v.string->firstChar == '.')
+			retString = String_Concat(thread, retval->v.string, args[1].v.string);
 		else
-			retString = String_Concat3(thread, retval->common.string, _S(dot), args[1].common.string);
+			retString = String_Concat3(thread, retval->v.string, _S(dot), args[1].v.string);
 		CHECKED_MEM(retString);
 		SetString(thread, retval, retString);
 	}
@@ -346,5 +346,5 @@ END_NATIVE_FUNCTION
 
 AVES_API NATIVE_FUNCTION(io_Path_validatePath)
 {
-	return Path::ValidatePath(thread, args[0].common.string, args[1].integer ? true : false);
+	return Path::ValidatePath(thread, args[0].v.string, args[1].v.integer ? true : false);
 }

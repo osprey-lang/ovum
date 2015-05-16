@@ -16,8 +16,8 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Env_get_args)
 		VM_PushInt(thread, argCount); // list capacity
 		CHECKED(GC_Construct(thread, GetType_List(thread), 1, EnvArgsField));
 
-		VM_GetArgValues(thread, argCount, EnvArgsField->common.list->values);
-		EnvArgsField->common.list->length = argCount;
+		VM_GetArgValues(thread, argCount, EnvArgsField->v.list->values);
+		EnvArgsField->v.list->length = argCount;
 	}
 
 	VM_Push(thread, EnvArgsField);

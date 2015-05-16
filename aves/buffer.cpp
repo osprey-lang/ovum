@@ -14,14 +14,14 @@ AVES_API void aves_Buffer_init(TypeHandle type)
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_new)
 {
 	CHECKED(IntFromValue(thread, args + 1));
-	int64_t size64 = args[1].integer;
+	int64_t size64 = args[1].v.integer;
 	if (size64 < 0 || size64 > UINT32_MAX)
 	{
 		VM_PushString(thread, strings::size);
 		return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 1);
 	}
 
-	Buffer *buf = (Buffer*)THISV.instance;
+	Buffer *buf = THISV.Get<Buffer>();
 
 	buf->size = (uint32_t)size64;
 	if (buf->size > 0)
@@ -34,7 +34,7 @@ END_NATIVE_FUNCTION
 
 AVES_API NATIVE_FUNCTION(aves_Buffer_get_size)
 {
-	Buffer *buf = (Buffer*)THISV.instance;
+	Buffer *buf = THISV.Get<Buffer>();
 	VM_PushInt(thread, buf->size);
 	RETURN_SUCCESS;
 }
@@ -43,7 +43,7 @@ int GetBufferIndex(ThreadHandle thread, Buffer *buf, Value indexValue, int value
 {
 	int r;
 	if ((r = IntFromValue(thread, &indexValue)) != OVUM_SUCCESS) return r;
-	int64_t index64 = indexValue.integer;
+	int64_t index64 = indexValue.v.integer;
 	if (index64 < 0 || index64 >= buf->size / valueSize)
 	{
 		VM_PushString(thread, strings::index);
@@ -56,7 +56,7 @@ int GetBufferIndex(ThreadHandle thread, Buffer *buf, Value indexValue, int value
 
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_readByte)
 {
-	Buffer *buf = (Buffer*)THISV.instance;
+	Buffer *buf = THISV.Get<Buffer>();
 	unsigned int index;
 	CHECKED(GetBufferIndex(thread, buf, args[1], 1, index));
 
@@ -65,7 +65,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_readByte)
 END_NATIVE_FUNCTION
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_readSByte)
 {
-	Buffer *buf = (Buffer*)THISV.instance;
+	Buffer *buf = THISV.Get<Buffer>();
 	unsigned int index;
 	CHECKED(GetBufferIndex(thread, buf, args[1], 1, index));
 
@@ -74,7 +74,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_readSByte)
 END_NATIVE_FUNCTION
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_readInt16)
 {
-	Buffer *buf = (Buffer*)THISV.instance;
+	Buffer *buf = THISV.Get<Buffer>();
 	unsigned int index;
 	CHECKED(GetBufferIndex(thread, buf, args[1], 2, index));
 
@@ -83,7 +83,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_readInt16)
 END_NATIVE_FUNCTION
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_readInt32)
 {
-	Buffer *buf = (Buffer*)THISV.instance;
+	Buffer *buf = THISV.Get<Buffer>();
 	unsigned int index;
 	CHECKED(GetBufferIndex(thread, buf, args[1], 4, index));
 
@@ -92,7 +92,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_readInt32)
 END_NATIVE_FUNCTION
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_readInt64)
 {
-	Buffer *buf = (Buffer*)THISV.instance;
+	Buffer *buf = THISV.Get<Buffer>();
 	unsigned int index;
 	CHECKED(GetBufferIndex(thread, buf, args[1], 8, index));
 
@@ -101,7 +101,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_readInt64)
 END_NATIVE_FUNCTION
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_readUInt16)
 {
-	Buffer *buf = (Buffer*)THISV.instance;
+	Buffer *buf = THISV.Get<Buffer>();
 	unsigned int index;
 	CHECKED(GetBufferIndex(thread, buf, args[1], 2, index));
 
@@ -110,7 +110,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_readUInt16)
 END_NATIVE_FUNCTION
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_readUInt32)
 {
-	Buffer *buf = (Buffer*)THISV.instance;
+	Buffer *buf = THISV.Get<Buffer>();
 	unsigned int index;
 	CHECKED(GetBufferIndex(thread, buf, args[1], 4, index));
 
@@ -119,7 +119,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_readUInt32)
 END_NATIVE_FUNCTION
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_readUInt64)
 {
-	Buffer *buf = (Buffer*)THISV.instance;
+	Buffer *buf = THISV.Get<Buffer>();
 	unsigned int index;
 	CHECKED(GetBufferIndex(thread, buf, args[1], 8, index));
 
@@ -128,7 +128,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_readUInt64)
 END_NATIVE_FUNCTION
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_readFloat32)
 {
-	Buffer *buf = (Buffer*)THISV.instance;
+	Buffer *buf = THISV.Get<Buffer>();
 	unsigned int index;
 	CHECKED(GetBufferIndex(thread, buf, args[1], 4, index));
 
@@ -137,7 +137,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_readFloat32)
 END_NATIVE_FUNCTION
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_readFloat64)
 {
-	Buffer *buf = (Buffer*)THISV.instance;
+	Buffer *buf = THISV.Get<Buffer>();
 	unsigned int index;
 	CHECKED(GetBufferIndex(thread, buf, args[1], 8, index));
 
@@ -147,122 +147,122 @@ END_NATIVE_FUNCTION
 
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_writeByte)
 {
-	Buffer *buf = (Buffer*)THISV.instance;
+	Buffer *buf = THISV.Get<Buffer>();
 	unsigned int index;
 	CHECKED(GetBufferIndex(thread, buf, args[1], 1, index));
 
 	if (args[2].type != Types::Int && args[2].type != Types::UInt)
 		return VM_ThrowTypeError(thread);
 
-	buf->bytes[index] = (uint8_t)args[2].uinteger;
+	buf->bytes[index] = (uint8_t)args[2].v.uinteger;
 }
 END_NATIVE_FUNCTION
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_writeSByte)
 {
-	Buffer *buf = (Buffer*)THISV.instance;
+	Buffer *buf = THISV.Get<Buffer>();
 	unsigned int index;
 	CHECKED(GetBufferIndex(thread, buf, args[1], 1, index));
 
 	if (args[2].type != Types::Int && args[2].type != Types::UInt)
 		return VM_ThrowTypeError(thread);
 
-	buf->sbytes[index] = (int8_t)args[2].integer;
+	buf->sbytes[index] = (int8_t)args[2].v.integer;
 }
 END_NATIVE_FUNCTION
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_writeInt16)
 {
-	Buffer *buf = (Buffer*)THISV.instance;
+	Buffer *buf = THISV.Get<Buffer>();
 	unsigned int index;
 	CHECKED(GetBufferIndex(thread, buf, args[1], 2, index));
 
 	if (args[2].type != Types::Int && args[2].type != Types::UInt)
 		return VM_ThrowTypeError(thread);
 
-	buf->int16s[index] = (int16_t)args[2].integer;
+	buf->int16s[index] = (int16_t)args[2].v.integer;
 }
 END_NATIVE_FUNCTION
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_writeInt32)
 {
-	Buffer *buf = (Buffer*)THISV.instance;
+	Buffer *buf = THISV.Get<Buffer>();
 	unsigned int index;
 	CHECKED(GetBufferIndex(thread, buf, args[1], 4, index));
 
 	if (args[2].type != Types::Int && args[2].type != Types::UInt)
 		return VM_ThrowTypeError(thread);
 
-	buf->int32s[index] = (int32_t)args[2].integer;
+	buf->int32s[index] = (int32_t)args[2].v.integer;
 }
 END_NATIVE_FUNCTION
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_writeInt64)
 {
-	Buffer *buf = (Buffer*)THISV.instance;
+	Buffer *buf = THISV.Get<Buffer>();
 	unsigned int index;
 	CHECKED(GetBufferIndex(thread, buf, args[1], 8, index));
 
 	if (args[2].type != Types::Int && args[2].type != Types::UInt)
 		return VM_ThrowTypeError(thread);
 
-	buf->int64s[index] = args[2].integer;
+	buf->int64s[index] = args[2].v.integer;
 }
 END_NATIVE_FUNCTION
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_writeUInt16)
 {
-	Buffer *buf = (Buffer*)THISV.instance;
+	Buffer *buf = THISV.Get<Buffer>();
 	unsigned int index;
 	CHECKED(GetBufferIndex(thread, buf, args[1], 2, index));
 
 	if (args[2].type != Types::Int && args[2].type != Types::UInt)
 		return VM_ThrowTypeError(thread);
 
-	buf->uint16s[index] = (uint16_t)args[2].uinteger;
+	buf->uint16s[index] = (uint16_t)args[2].v.uinteger;
 }
 END_NATIVE_FUNCTION
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_writeUInt32)
 {
-	Buffer *buf = (Buffer*)THISV.instance;
+	Buffer *buf = THISV.Get<Buffer>();
 	unsigned int index;
 	CHECKED(GetBufferIndex(thread, buf, args[1], 4, index));
 
 	if (args[2].type != Types::Int && args[2].type != Types::UInt)
 		return VM_ThrowTypeError(thread);
 
-	buf->uint32s[index] = (uint32_t)args[2].uinteger;
+	buf->uint32s[index] = (uint32_t)args[2].v.uinteger;
 }
 END_NATIVE_FUNCTION
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_writeUInt64)
 {
-	Buffer *buf = (Buffer*)THISV.instance;
+	Buffer *buf = THISV.Get<Buffer>();
 	unsigned int index;
 	CHECKED(GetBufferIndex(thread, buf, args[1], 8, index));
 
 	if (args[2].type != Types::Int && args[2].type != Types::UInt)
 		return VM_ThrowTypeError(thread);
 
-	buf->uint64s[index] = args[2].uinteger;
+	buf->uint64s[index] = args[2].v.uinteger;
 }
 END_NATIVE_FUNCTION
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_writeFloat32)
 {
-	Buffer *buf = (Buffer*)THISV.instance;
+	Buffer *buf = THISV.Get<Buffer>();
 	unsigned int index;
 	CHECKED(GetBufferIndex(thread, buf, args[1], 4, index));
 
 	if (args[2].type != Types::Real)
 		return VM_ThrowTypeError(thread);
 
-	buf->floats[index] = (float)args[2].real;
+	buf->floats[index] = (float)args[2].v.real;
 }
 END_NATIVE_FUNCTION
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_writeFloat64)
 {
-	Buffer *buf = (Buffer*)THISV.instance;
+	Buffer *buf = THISV.Get<Buffer>();
 	unsigned int index;
 	CHECKED(GetBufferIndex(thread, buf, args[1], 8, index));
 
 	if (args[2].type != Types::Real)
 		return VM_ThrowTypeError(thread);
 
-	buf->doubles[index] = args[2].real;
+	buf->doubles[index] = args[2].v.real;
 }
 END_NATIVE_FUNCTION
 
@@ -271,11 +271,11 @@ AVES_API NATIVE_FUNCTION(aves_Buffer_copyInternal)
 	// copyInternal(source is Buffer, sourceIndex is Int, dest is Buffer, destIndex is Int, count is Int)
 	// The public-facing method checks all the types and also
 	// range-checks the indexes and count.
-	Buffer *src = (Buffer*)args[0].instance;
-	Buffer *dest = (Buffer*)args[2].instance;
-	int32_t srcIndex = (int32_t)args[1].integer;
-	int32_t destIndex = (int32_t)args[3].integer;
-	int32_t count = (int32_t)args[4].integer;
+	Buffer *src = (Buffer*)args[0].v.instance;
+	Buffer *dest = (Buffer*)args[2].v.instance;
+	int32_t srcIndex = (int32_t)args[1].v.integer;
+	int32_t destIndex = (int32_t)args[3].v.integer;
+	int32_t count = (int32_t)args[4].v.integer;
 
 	// Copying the data could take a while if there's a lot to copy,
 	// so let's enter an unmanaged region during the copying, so we
@@ -300,7 +300,7 @@ AVES_API uint8_t *aves_Buffer_getDataPointer(Value *buffer, uint32_t *bufferSize
 	if (buffer == nullptr || !IsType(buffer, BufferType))
 		return nullptr;
 
-	Buffer *buf = (Buffer*)buffer->instance;
+	Buffer *buf = buffer->Get<Buffer>();
 	if (bufferSize != nullptr)
 		*bufferSize = buf->size;
 
@@ -323,23 +323,23 @@ AVES_API NATIVE_FUNCTION(aves_BufferView_new)
 		return VM_ThrowTypeError(thread);
 	if (!IsType(args + 2, Types::BufferViewKind))
 		return VM_ThrowTypeError(thread);
-	if (args[2].integer < BufferView::BYTE ||
-		args[2].integer > BufferView::FLOAT64)
+	if (args[2].v.integer < BufferView::BYTE ||
+		args[2].v.integer > BufferView::FLOAT64)
 	{
 		VM_PushString(thread, strings::kind);
 		return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 1);
 	}
 
-	BufferView *view = (BufferView*)THISV.instance;
+	BufferView *view = THISV.Get<BufferView>();
 	view->buffer = args[1];
-	view->kind = (BufferView::BufferViewKind)args[2].integer;
+	view->kind = (BufferView::BufferViewKind)args[2].v.integer;
 	RETURN_SUCCESS;
 }
 
 AVES_API BEGIN_NATIVE_FUNCTION(aves_BufferView_get_item)
 {
-	BufferView *view = (BufferView*)THISV.instance;
-	Buffer *buf = (Buffer*)view->buffer.instance;
+	BufferView *view = THISV.Get<BufferView>();
+	Buffer *buf = view->buffer.Get<Buffer>();
 
 	int valueSize = -1;
 	switch (view->kind)
@@ -404,8 +404,8 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_BufferView_get_item)
 END_NATIVE_FUNCTION
 AVES_API BEGIN_NATIVE_FUNCTION(aves_BufferView_set_item)
 {
-	BufferView *view = (BufferView*)THISV.instance;
-	Buffer *buf = (Buffer*)view->buffer.instance;
+	BufferView *view = THISV.Get<BufferView>();
+	Buffer *buf = view->buffer.Get<Buffer>();
 
 	if (view->kind >= BufferView::BYTE && view->kind <= BufferView::UINT64)
 	{
@@ -444,34 +444,34 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_BufferView_set_item)
 	switch (view->kind)
 	{
 	case BufferView::BYTE:
-		buf->bytes[index] = (uint8_t)args[2].integer;
+		buf->bytes[index] = (uint8_t)args[2].v.integer;
 		break;
 	case BufferView::SBYTE:
-		buf->sbytes[index] = (int8_t)args[2].integer;
+		buf->sbytes[index] = (int8_t)args[2].v.integer;
 		break;
 	case BufferView::INT16:
-		buf->int16s[index] = (int16_t)args[2].integer;
+		buf->int16s[index] = (int16_t)args[2].v.integer;
 		break;
 	case BufferView::INT32:
-		buf->int32s[index] = (int32_t)args[2].integer;
+		buf->int32s[index] = (int32_t)args[2].v.integer;
 		break;
 	case BufferView::INT64:
-		buf->int64s[index] = args[2].integer;
+		buf->int64s[index] = args[2].v.integer;
 		break;
 	case BufferView::UINT16:
-		buf->uint16s[index] = (uint16_t)args[2].uinteger;
+		buf->uint16s[index] = (uint16_t)args[2].v.uinteger;
 		break;
 	case BufferView::UINT32:
-		buf->uint32s[index] = (uint32_t)args[2].uinteger;
+		buf->uint32s[index] = (uint32_t)args[2].v.uinteger;
 		break;
 	case BufferView::UINT64:
-		buf->uint64s[index] = args[2].uinteger;
+		buf->uint64s[index] = args[2].v.uinteger;
 		break;
 	case BufferView::FLOAT32:
-		buf->floats[index] = (float)args[2].real;
+		buf->floats[index] = (float)args[2].v.real;
 		break;
 	case BufferView::FLOAT64:
-		buf->doubles[index] = args[2].real;
+		buf->doubles[index] = args[2].v.real;
 		break;
 	}
 }
@@ -479,8 +479,8 @@ END_NATIVE_FUNCTION
 
 AVES_API NATIVE_FUNCTION(aves_BufferView_get_length)
 {
-	BufferView *view = (BufferView*)THISV.instance;
-	Buffer *buf = (Buffer*)view->buffer.instance;
+	BufferView *view = THISV.Get<BufferView>();
+	Buffer *buf = view->buffer.Get<Buffer>();
 
 	int valueSize = -1;
 	switch (view->kind)
@@ -511,16 +511,16 @@ AVES_API NATIVE_FUNCTION(aves_BufferView_get_length)
 
 AVES_API NATIVE_FUNCTION(aves_BufferView_get_buffer)
 {
-	BufferView *view = (BufferView*)THISV.instance;
+	BufferView *view = THISV.Get<BufferView>();
 	VM_Push(thread, &view->buffer);
 	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_BufferView_get_kind)
 {
-	BufferView *view = (BufferView*)THISV.instance;
+	BufferView *view = THISV.Get<BufferView>();
 	Value kind;
 	kind.type = Types::BufferViewKind;
-	kind.integer = view->kind;
+	kind.v.integer = view->kind;
 	VM_Push(thread, &kind);
 	RETURN_SUCCESS;
 }

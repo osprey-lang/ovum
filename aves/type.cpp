@@ -1,8 +1,6 @@
 #include "aves_type.h"
 #include <stddef.h>
 
-#define _T(val)		reinterpret_cast<TypeInst*>((val).instance)
-
 AVES_API void CDECL aves_reflection_Type_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(TypeInst));
@@ -19,7 +17,7 @@ int GetMemberSearchFlags(ThreadHandle thread, Value *arg, MemberSearchFlags *res
 		return VM_ThrowErrorOfType(thread, Types::ArgumentError, 2);
 	}
 
-	*result = (MemberSearchFlags)arg->integer;
+	*result = (MemberSearchFlags)arg->v.integer;
 	RETURN_SUCCESS;
 }
 
@@ -94,7 +92,7 @@ int HandleToMember(ThreadHandle thread, MemberHandle member)
 	{
 		Value handle;
 		handle.type = Types::reflection.NativeHandle;
-		handle.instance = (uint8_t*)member;
+		handle.v.instance = (uint8_t*)member;
 		VM_Push(thread, &handle);
 
 		TypeHandle type;
@@ -159,11 +157,11 @@ __retStatus:
 
 AVES_API NATIVE_FUNCTION(aves_reflection_Type_get_handle)
 {
-	TypeInst *inst = _T(THISV);
+	TypeInst *inst = THISV.Get<TypeInst>();
 
 	Value handle;
 	handle.type = Types::reflection.NativeHandle;
-	handle.instance = (uint8_t*)inst->type;
+	handle.v.instance = (uint8_t*)inst->type;
 	VM_Push(thread, &handle);
 
 	RETURN_SUCCESS;
@@ -171,7 +169,7 @@ AVES_API NATIVE_FUNCTION(aves_reflection_Type_get_handle)
 
 AVES_API NATIVE_FUNCTION(aves_reflection_Type_get_f_name)
 {
-	TypeInst *inst = _T(THISV);
+	TypeInst *inst = THISV.Get<TypeInst>();
 
 	if (inst->name == nullptr)
 		VM_PushNull(thread);
@@ -181,17 +179,17 @@ AVES_API NATIVE_FUNCTION(aves_reflection_Type_get_f_name)
 }
 AVES_API NATIVE_FUNCTION(aves_reflection_Type_set_f_name)
 {
-	TypeInst *inst = _T(THISV);
+	TypeInst *inst = THISV.Get<TypeInst>();
 	if (IS_NULL(args[1]))
 		inst->name = nullptr;
 	else
-		inst->name = args[1].common.string;
+		inst->name = args[1].v.string;
 	RETURN_SUCCESS;
 }
 
 AVES_API NATIVE_FUNCTION(aves_reflection_Type_get_fullName)
 {
-	TypeInst *inst = _T(THISV);
+	TypeInst *inst = THISV.Get<TypeInst>();
 	VM_PushString(thread, Type_GetFullName(inst->type));
 	RETURN_SUCCESS;
 }
@@ -200,7 +198,7 @@ AVES_API NATIVE_FUNCTION(aves_reflection_Type_get_declaringModule);
 
 AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Type_get_baseType)
 {
-	TypeInst *inst = _T(THISV);
+	TypeInst *inst = THISV.Get<TypeInst>();
 
 	TypeHandle baseType = Type_GetBaseType(inst->type);
 	if (baseType == nullptr)
@@ -217,7 +215,7 @@ END_NATIVE_FUNCTION
 
 AVES_API NATIVE_FUNCTION(aves_reflection_Type_get_isPrivate)
 {
-	TypeInst *inst = _T(THISV);
+	TypeInst *inst = THISV.Get<TypeInst>();
 	TypeFlags flags = Type_GetFlags(inst->type);
 	VM_PushBool(thread, (flags & TypeFlags::PRIVATE) == TypeFlags::PRIVATE);
 	RETURN_SUCCESS;
@@ -225,7 +223,7 @@ AVES_API NATIVE_FUNCTION(aves_reflection_Type_get_isPrivate)
 
 AVES_API NATIVE_FUNCTION(aves_reflection_Type_get_isAbstract)
 {
-	TypeInst *inst = _T(THISV);
+	TypeInst *inst = THISV.Get<TypeInst>();
 	TypeFlags flags = Type_GetFlags(inst->type);
 	VM_PushBool(thread, (flags & TypeFlags::ABSTRACT) == TypeFlags::ABSTRACT);
 	RETURN_SUCCESS;
@@ -233,7 +231,7 @@ AVES_API NATIVE_FUNCTION(aves_reflection_Type_get_isAbstract)
 
 AVES_API NATIVE_FUNCTION(aves_reflection_Type_get_isInheritable)
 {
-	TypeInst *inst = _T(THISV);
+	TypeInst *inst = THISV.Get<TypeInst>();
 	TypeFlags flags = Type_GetFlags(inst->type);
 	VM_PushBool(thread, (flags & TypeFlags::SEALED) == TypeFlags::NONE);
 	RETURN_SUCCESS;
@@ -241,7 +239,7 @@ AVES_API NATIVE_FUNCTION(aves_reflection_Type_get_isInheritable)
 
 AVES_API NATIVE_FUNCTION(aves_reflection_Type_get_isStatic)
 {
-	TypeInst *inst = _T(THISV);
+	TypeInst *inst = THISV.Get<TypeInst>();
 	TypeFlags flags = Type_GetFlags(inst->type);
 	VM_PushBool(thread, (flags & TypeFlags::STATIC) == TypeFlags::STATIC);
 	RETURN_SUCCESS;
@@ -249,7 +247,7 @@ AVES_API NATIVE_FUNCTION(aves_reflection_Type_get_isStatic)
 
 AVES_API NATIVE_FUNCTION(aves_reflection_Type_get_isPrimitive)
 {
-	TypeInst *inst = _T(THISV);
+	TypeInst *inst = THISV.Get<TypeInst>();
 	TypeFlags flags = Type_GetFlags(inst->type);
 	VM_PushBool(thread, (flags & TypeFlags::PRIMITIVE) == TypeFlags::PRIMITIVE);
 	RETURN_SUCCESS;
@@ -257,7 +255,7 @@ AVES_API NATIVE_FUNCTION(aves_reflection_Type_get_isPrimitive)
 
 AVES_API NATIVE_FUNCTION(aves_reflection_Type_get_canIterate)
 {
-	TypeInst *inst = _T(THISV);
+	TypeInst *inst = THISV.Get<TypeInst>();
 
 	bool result = false;
 	// If there is a public method called ".iter", we can iterate over the type.
@@ -276,10 +274,10 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Type_createInstance)
 {
 	// createInstance(arguments is List|null, nonPublic is Boolean)
 
-	TypeInst *inst = _T(THISV);
+	TypeInst *inst = THISV.Get<TypeInst>();
 
 	MemberHandle ctor = Type_GetMember(inst->type, strings::_new);
-	if (args[2].integer == 0 && Member_GetAccessLevel(ctor) != MemberAccess::PUBLIC)
+	if (args[2].v.integer == 0 && Member_GetAccessLevel(ctor) != MemberAccess::PUBLIC)
 		// No public constructor, and nonPublic is false
 		return VM_ThrowErrorOfType(thread, Types::InvalidStateError, 0);
 
@@ -287,7 +285,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Type_createInstance)
 	uint32_t argCount = 0;
 	if (!IS_NULL(args[1]))
 	{
-		ListInst *arguments = args[1].common.list;
+		ListInst *arguments = args[1].v.list;
 		argCount = (uint32_t)arguments->length;
 		for (int32_t i = 0; i < arguments->length; i++)
 			VM_Push(thread, arguments->values + i);
@@ -302,8 +300,8 @@ AVES_API NATIVE_FUNCTION(aves_reflection_Type_inheritsFromInternal)
 	// This is written in native code so we don't have
 	// to construct type tokens for every base type
 
-	TypeHandle self  = _T(THISV)->type;
-	TypeHandle other = _T(args[1])->type;
+	TypeHandle self  = THISV.Get<TypeInst>()->type;
+	TypeHandle other = args[1].Get<TypeInst>()->type;
 
 	while (self && self != other)
 		self = Type_GetBaseType(self);
@@ -315,7 +313,7 @@ AVES_API NATIVE_FUNCTION(aves_reflection_Type_inheritsFromInternal)
 AVES_API NATIVE_FUNCTION(aves_reflection_Type_isInstance)
 {
 	// isInstance(value)
-	TypeHandle thisType  = _T(THISV)->type;
+	TypeHandle thisType  = THISV.Get<TypeInst>()->type;
 	TypeHandle valueType = args[1].type;
 
 	bool isType = false;
@@ -337,10 +335,10 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Type_getField)
 {
 	// getField(name, flags)
 
-	TypeInst *inst = _T(THISV);
+	TypeInst *inst = THISV.Get<TypeInst>();
 
 	CHECKED(StringFromValue(thread, args + 1));
-	String *name = args[1].common.string;
+	String *name = args[1].v.string;
 
 	MemberSearchFlags flags;
 	CHECKED(GetMemberSearchFlags(thread, args + 2, &flags));
@@ -352,7 +350,7 @@ END_NATIVE_FUNCTION
 AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Type_getFields)
 {
 	// getFields(flags)
-	TypeInst *inst = _T(THISV);
+	TypeInst *inst = THISV.Get<TypeInst>();
 
 	MemberSearchFlags flags;
 	CHECKED(GetMemberSearchFlags(thread, args + 1, &flags));
@@ -365,10 +363,10 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Type_getMethod)
 {
 	// getMethod(name, flags)
 
-	TypeInst *inst = _T(THISV);
+	TypeInst *inst = THISV.Get<TypeInst>();
 
 	CHECKED(StringFromValue(thread, args + 1));
-	String *name = args[1].common.string;
+	String *name = args[1].v.string;
 
 	MemberSearchFlags flags;
 	CHECKED(GetMemberSearchFlags(thread, args + 2, &flags));
@@ -380,7 +378,7 @@ END_NATIVE_FUNCTION
 AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Type_getMethods)
 {
 	// getMethods(flags)
-	TypeInst *inst = _T(THISV);
+	TypeInst *inst = THISV.Get<TypeInst>();
 
 	MemberSearchFlags flags;
 	CHECKED(GetMemberSearchFlags(thread, args + 1, &flags));
@@ -393,10 +391,10 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Type_getProperty)
 {
 	// getProperty(name, flags)
 
-	TypeInst *inst = _T(THISV);
+	TypeInst *inst = THISV.Get<TypeInst>();
 
 	CHECKED(StringFromValue(thread, args + 1));
-	String *name = args[1].common.string;
+	String *name = args[1].v.string;
 
 	MemberSearchFlags flags;
 	CHECKED(GetMemberSearchFlags(thread, args + 2, &flags));
@@ -408,7 +406,7 @@ END_NATIVE_FUNCTION
 AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Type_getProperties)
 {
 	// getProperties(flags)
-	TypeInst *inst = _T(THISV);
+	TypeInst *inst = THISV.Get<TypeInst>();
 
 	MemberSearchFlags flags;
 	CHECKED(GetMemberSearchFlags(thread, args + 1, &flags));
@@ -421,10 +419,10 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Type_getMember)
 {
 	// getMember(name, flags)
 
-	TypeInst *inst = _T(THISV);
+	TypeInst *inst = THISV.Get<TypeInst>();
 
 	CHECKED(StringFromValue(thread, args + 1));
-	String *name = args[1].common.string;
+	String *name = args[1].v.string;
 
 	MemberSearchFlags flags;
 	CHECKED(GetMemberSearchFlags(thread, args + 2, &flags));
@@ -436,7 +434,7 @@ END_NATIVE_FUNCTION
 AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Type_getMembers)
 {
 	// getMembers(flags)
-	TypeInst *inst = _T(THISV);
+	TypeInst *inst = THISV.Get<TypeInst>();
 
 	MemberSearchFlags flags;
 	CHECKED(GetMemberSearchFlags(thread, args + 1, &flags));

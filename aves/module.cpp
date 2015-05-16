@@ -2,8 +2,6 @@
 #include "aves_type.h"
 #include <stddef.h>
 
-#define _M(val)     reinterpret_cast<ModuleInst*>((val).instance)
-
 AVES_API void CDECL aves_reflection_Module_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(ModuleInst));
@@ -24,7 +22,7 @@ int GetMemberSearchFlags(ThreadHandle thread, Value *arg, ModuleMemberFlags *res
 		return r;
 	}
 
-	MemberSearchFlags flags = (MemberSearchFlags)arg->integer;
+	MemberSearchFlags flags = (MemberSearchFlags)arg->v.integer;
 
 	switch (flags & MemberSearchFlags::ACCESSIBILITY)
 	{
@@ -83,7 +81,7 @@ int ResultToMember(ThreadHandle thread, Value *module, GlobalMember *member)
 		{
 			Value handle;
 			handle.type = Types::reflection.NativeHandle;
-			handle.instance = (uint8_t*)member->function;
+			handle.v.instance = (uint8_t*)member->function;
 			VM_Push(thread, &handle);
 			r = GC_Construct(thread, Types::reflection.Method, 1, nullptr);
 		}
@@ -152,18 +150,18 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Module_new)
 		return VM_Throw(thread);
 	}
 
-	ModuleInst *inst = _M(THISV);
-	inst->module = (ModuleHandle)args[1].instance;
+	ModuleInst *inst = THISV.Get<ModuleInst>();
+	inst->module = (ModuleHandle)args[1].v.instance;
 }
 END_NATIVE_FUNCTION
 
 AVES_API NATIVE_FUNCTION(aves_reflection_Module_get_handle)
 {
-	ModuleInst *inst = _M(THISV);
+	ModuleInst *inst = THISV.Get<ModuleInst>();
 
 	Value handle;
 	handle.type = Types::reflection.NativeHandle;
-	handle.instance = (uint8_t*)inst->module;
+	handle.v.instance = (uint8_t*)inst->module;
 	VM_Push(thread, &handle);
 
 	RETURN_SUCCESS;
@@ -171,14 +169,14 @@ AVES_API NATIVE_FUNCTION(aves_reflection_Module_get_handle)
 
 AVES_API NATIVE_FUNCTION(aves_reflection_Module_get_name)
 {
-	ModuleInst *inst = _M(THISV);
+	ModuleInst *inst = THISV.Get<ModuleInst>();
 	VM_PushString(thread, Module_GetName(inst->module));
 	RETURN_SUCCESS;
 }
 
 AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Module_get_version)
 {
-	ModuleInst *inst = _M(THISV);
+	ModuleInst *inst = THISV.Get<ModuleInst>();
 
 	if (IS_NULL(inst->version))
 	{
@@ -197,7 +195,7 @@ END_NATIVE_FUNCTION
 
 AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Module_get_fileName)
 {
-	ModuleInst *inst = _M(THISV);
+	ModuleInst *inst = THISV.Get<ModuleInst>();
 
 	if (inst->fileName == nullptr)
 		CHECKED_MEM(inst->fileName = Module_GetFileName(thread, inst->module));
@@ -213,10 +211,10 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Module_getType)
 {
 	// getType(name, flags)
 
-	ModuleInst *inst = _M(THISV);
+	ModuleInst *inst = THISV.Get<ModuleInst>();
 
 	CHECKED(StringFromValue(thread, args + 1));
-	String *name = args[1].common.string;
+	String *name = args[1].v.string;
 
 	ModuleMemberFlags flags;
 	CHECKED(GetMemberSearchFlags(thread, args + 2, &flags));
@@ -232,7 +230,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Module_getTypes)
 {
 	// getTypes(flags)
 
-	ModuleInst *inst = _M(THISV);
+	ModuleInst *inst = THISV.Get<ModuleInst>();
 
 	ModuleMemberFlags flags;
 	CHECKED(GetMemberSearchFlags(thread, args + 1, &flags));
@@ -245,10 +243,10 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Module_getFunction)
 {
 	// getFunction(name, flags)
 
-	ModuleInst *inst = _M(THISV);
+	ModuleInst *inst = THISV.Get<ModuleInst>();
 
 	CHECKED(StringFromValue(thread, args + 1));
-	String *name = args[1].common.string;
+	String *name = args[1].v.string;
 
 	ModuleMemberFlags flags;
 	CHECKED(GetMemberSearchFlags(thread, args + 2, &flags));
@@ -264,7 +262,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Module_getFunctions)
 {
 	// getFunctions(flags)
 
-	ModuleInst *inst = _M(THISV);
+	ModuleInst *inst = THISV.Get<ModuleInst>();
 
 	ModuleMemberFlags flags;
 	CHECKED(GetMemberSearchFlags(thread, args + 1, &flags));
@@ -277,10 +275,10 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Module_getGlobalConstant)
 {
 	// getGlobalConstant(name, flags)
 
-	ModuleInst *inst = _M(THISV);
+	ModuleInst *inst = THISV.Get<ModuleInst>();
 
 	CHECKED(StringFromValue(thread, args + 1));
-	String *name = args[1].common.string;
+	String *name = args[1].v.string;
 
 	ModuleMemberFlags flags;
 	CHECKED(GetMemberSearchFlags(thread, args + 2, &flags));
@@ -296,7 +294,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Module_getGlobalConstants)
 {
 	// getGlobalConstants(flags)
 
-	ModuleInst *inst = _M(THISV);
+	ModuleInst *inst = THISV.Get<ModuleInst>();
 
 	ModuleMemberFlags flags;
 	CHECKED(GetMemberSearchFlags(thread, args + 1, &flags));
@@ -309,10 +307,10 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Module_getMember)
 {
 	// getMember(name, flags)
 
-	ModuleInst *inst = _M(THISV);
+	ModuleInst *inst = THISV.Get<ModuleInst>();
 
 	CHECKED(StringFromValue(thread, args + 1));
-	String *name = args[1].common.string;
+	String *name = args[1].v.string;
 
 	ModuleMemberFlags flags;
 	CHECKED(GetMemberSearchFlags(thread, args + 2, &flags));
@@ -328,7 +326,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Module_getMembers)
 {
 	// getMembers(flags)
 
-	ModuleInst *inst = _M(THISV);
+	ModuleInst *inst = THISV.Get<ModuleInst>();
 
 	ModuleMemberFlags flags;
 	CHECKED(GetMemberSearchFlags(thread, args + 1, &flags));
@@ -353,7 +351,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Module_getCurrentModule)
 	// Module's constructor takes a handle
 	Value handle;
 	handle.type = Types::reflection.NativeHandle;
-	handle.instance = (uint8_t*)module;
+	handle.v.instance = (uint8_t*)module;
 	VM_Push(thread, &handle);
 
 	CHECKED(GC_Construct(thread, Types::reflection.Module, 1, nullptr));
@@ -375,19 +373,19 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Module_find)
 		// major
 		VM_Push(thread, args + 1);
 		CHECKED(VM_LoadMember(thread, strings::major, &field));
-		version.major = (int32_t)field.integer;
+		version.major = (int32_t)field.v.integer;
 		// minor
 		VM_Push(thread, args + 1);
 		CHECKED(VM_LoadMember(thread, strings::minor, &field));
-		version.minor = (int32_t)field.integer;
+		version.minor = (int32_t)field.v.integer;
 		// build
 		VM_Push(thread, args + 1);
 		CHECKED(VM_LoadMember(thread, strings::build, &field));
-		version.build = (int32_t)field.integer;
+		version.build = (int32_t)field.v.integer;
 		// revision
 		VM_Push(thread, args + 1);
 		CHECKED(VM_LoadMember(thread, strings::revision, &field));
-		version.revision = (int32_t)field.integer;
+		version.revision = (int32_t)field.v.integer;
 
 		result = FindModule(thread, *name, &version);
 	}
@@ -396,7 +394,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Module_find)
 	{
 		Value handle;
 		handle.type = Types::reflection.NativeHandle;
-		handle.instance = (uint8_t*)result;
+		handle.v.instance = (uint8_t*)result;
 		VM_Push(thread, &handle);
 		CHECKED(GC_Construct(thread, Types::reflection.Module, 1, nullptr));
 	}

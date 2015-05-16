@@ -21,18 +21,18 @@ AVES_API NATIVE_FUNCTION(aves_reflection_Property_new)
 		return VM_ThrowErrorOfType(thread, Types::ArgumentError, 2);
 	}
 
-	PropertyInst *inst = _P(THISV);
-	inst->property = (PropertyHandle)args[1].instance;
+	PropertyInst *inst = THISV.Get<PropertyInst>();
+	inst->property = (PropertyHandle)args[1].v.instance;
 	RETURN_SUCCESS;
 }
 
 AVES_API NATIVE_FUNCTION(aves_reflection_Property_get_accessLevel)
 {
-	PropertyInst *inst = _P(THISV);
+	PropertyInst *inst = THISV.Get<PropertyInst>();
 
 	Value access;
 	access.type = Types::reflection.AccessLevel;
-	access.integer = (int)Member_GetAccessLevel(inst->property);
+	access.v.integer = (int)Member_GetAccessLevel(inst->property);
 	VM_Push(thread, &access);
 
 	RETURN_SUCCESS;
@@ -40,11 +40,11 @@ AVES_API NATIVE_FUNCTION(aves_reflection_Property_get_accessLevel)
 
 AVES_API NATIVE_FUNCTION(aves_reflection_Property_get_handle)
 {
-	PropertyInst *inst = _P(THISV);
+	PropertyInst *inst = THISV.Get<PropertyInst>();
 
 	Value handleValue;
 	handleValue.type = Types::reflection.NativeHandle;
-	handleValue.instance = (uint8_t*)inst->property;
+	handleValue.v.instance = (uint8_t*)inst->property;
 
 	VM_Push(thread, &handleValue);
 	RETURN_SUCCESS;
@@ -52,14 +52,14 @@ AVES_API NATIVE_FUNCTION(aves_reflection_Property_get_handle)
 
 AVES_API NATIVE_FUNCTION(aves_reflection_Property_get_name)
 {
-	PropertyInst *inst = _P(THISV);
+	PropertyInst *inst = THISV.Get<PropertyInst>();
 	VM_PushString(thread, Member_GetName(inst->property));
 	RETURN_SUCCESS;
 }
 
 AVES_API NATIVE_FUNCTION(aves_reflection_Property_get_f_fullName)
 {
-	PropertyInst *inst = _P(THISV);
+	PropertyInst *inst = THISV.Get<PropertyInst>();
 
 	if (inst->fullName == nullptr)
 		VM_PushNull(thread);
@@ -69,17 +69,17 @@ AVES_API NATIVE_FUNCTION(aves_reflection_Property_get_f_fullName)
 }
 AVES_API NATIVE_FUNCTION(aves_reflection_Property_set_f_fullName)
 {
-	PropertyInst *inst = _P(THISV);
+	PropertyInst *inst = THISV.Get<PropertyInst>();
 	if (IS_NULL(args[1]))
 		inst->fullName = nullptr;
 	else
-		inst->fullName = args[1].common.string;
+		inst->fullName = args[1].v.string;
 	RETURN_SUCCESS;
 }
 
 AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Property_get_declaringType)
 {
-	PropertyInst *inst = _P(THISV);
+	PropertyInst *inst = THISV.Get<PropertyInst>();
 
 	Value typeToken;
 	CHECKED(Type_GetTypeToken(thread, Member_GetDeclType(inst->property), &typeToken));
@@ -92,28 +92,28 @@ AVES_API NATIVE_FUNCTION(aves_reflection_Property_get_declaringModule);
 
 AVES_API NATIVE_FUNCTION(aves_reflection_Property_get_isStatic)
 {
-	PropertyInst *inst = _P(THISV);
+	PropertyInst *inst = THISV.Get<PropertyInst>();
 	VM_PushBool(thread, Member_IsStatic(inst->property));
 	RETURN_SUCCESS;
 }
 
 AVES_API NATIVE_FUNCTION(aves_reflection_Property_get_canRead)
 {
-	PropertyInst *inst = _P(THISV);
+	PropertyInst *inst = THISV.Get<PropertyInst>();
 	VM_PushBool(thread, Property_GetGetter(inst->property) != nullptr);
 	RETURN_SUCCESS;
 }
 
 AVES_API NATIVE_FUNCTION(aves_reflection_Property_get_canWrite)
 {
-	PropertyInst *inst = _P(THISV);
+	PropertyInst *inst = THISV.Get<PropertyInst>();
 	VM_PushBool(thread, Property_GetSetter(inst->property) != nullptr);
 	RETURN_SUCCESS;
 }
 
 AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Property_get_getterMethod)
 {
-	PropertyInst *inst = _P(THISV);
+	PropertyInst *inst = THISV.Get<PropertyInst>();
 
 	MethodHandle getter = Property_GetGetter(inst->property);
 	if (getter == nullptr)
@@ -124,7 +124,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Property_get_getterMethod)
 
 	Value handle;
 	handle.type = Types::reflection.NativeHandle;
-	handle.instance = (uint8_t*)getter;
+	handle.v.instance = (uint8_t*)getter;
 	VM_Push(thread, &handle);
 
 	CHECKED(GC_Construct(thread, Types::reflection.Method, 1, nullptr));
@@ -133,7 +133,7 @@ END_NATIVE_FUNCTION
 
 AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Property_get_setterMethod)
 {
-	PropertyInst *inst = _P(THISV);
+	PropertyInst *inst = THISV.Get<PropertyInst>();
 
 	MethodHandle setter = Property_GetSetter(inst->property);
 	if (setter == nullptr)
@@ -144,7 +144,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Property_get_setterMethod)
 
 	Value handle;
 	handle.type = Types::reflection.NativeHandle;
-	handle.instance = (uint8_t*)setter;
+	handle.v.instance = (uint8_t*)setter;
 	VM_Push(thread, &handle);
 
 	CHECKED(GC_Construct(thread, Types::reflection.Method, 1, nullptr));

@@ -113,7 +113,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_print)
 	else if (!IsString(thread, args))
 		CHECKED(StringFromValue(thread, args));
 
-	VM_PrintLn(args->common.string);
+	VM_PrintLn(args->v.string);
 }
 END_NATIVE_FUNCTION
 
@@ -121,11 +121,11 @@ AVES_API NATIVE_FUNCTION(aves_exit)
 {
 	int exitCode;
 	if (args[0].type == Types::Int)
-		exitCode = (int)args[0].integer;
+		exitCode = (int)args[0].v.integer;
 	else if (args[0].type == Types::UInt)
-		exitCode = (int)args[0].uinteger;
+		exitCode = (int)args[0].v.uinteger;
 	else if (args[0].type == Types::Real)
-		exitCode = (int)args[0].real;
+		exitCode = (int)args[0].v.real;
 	else
 		exitCode = 0;
 
@@ -135,16 +135,16 @@ AVES_API NATIVE_FUNCTION(aves_exit)
 
 AVES_API NATIVE_FUNCTION(aves_number_asInt)
 {
-	VM_PushInt(thread, THISV.integer);
+	VM_PushInt(thread, THISV.v.integer);
 	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_number_asUInt)
 {
-	VM_PushUInt(thread, THISV.uinteger);
+	VM_PushUInt(thread, THISV.v.uinteger);
 	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_number_asReal)
 {
-	VM_PushReal(thread, THISV.real);
+	VM_PushReal(thread, THISV.v.real);
 	RETURN_SUCCESS;
 }

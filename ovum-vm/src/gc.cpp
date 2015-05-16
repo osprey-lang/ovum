@@ -316,7 +316,7 @@ int GC::ConstructLL(Thread *const thread, Type *type, const uint16_t argc, Value
 	}
 
 	framePointer->type = type;
-	framePointer->instance = gco->InstanceBase();
+	framePointer->v.instance = gco->InstanceBase();
 	thread->currentFrame->stackCount++;
 
 	Value ignore; // all Ovum methods return values, even the constructor
@@ -325,7 +325,7 @@ int GC::ConstructLL(Thread *const thread, Type *type, const uint16_t argc, Value
 	if (r == OVUM_SUCCESS)
 	{
 		output->type = type;
-		output->instance = gco->InstanceBase();
+		output->v.instance = gco->InstanceBase();
 	}
 
 	return r;

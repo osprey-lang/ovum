@@ -135,7 +135,7 @@ private:
 
 public:
 	inline PinnedAlias(Value *value)
-		: instance(value->instance)
+		: instance(value->v.instance)
 	{
 		GC_Pin(value);
 	}
