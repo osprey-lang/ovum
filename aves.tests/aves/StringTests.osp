@@ -7,7 +7,7 @@ namespace aves.tests;
 
 public class StringTests is TestFixture
 {
-	public new() { new base("aves.String tests"); }
+	public new() { new base("aves.String tests: general"); }
 
 	// Booleanness tests
 
@@ -21,8 +21,141 @@ public class StringTests is TestFixture
 	}
 
 	// End booleanness tests
+}
 
-	// Padding tests
+public class StringEqualityTests is TestFixture
+{
+	public new() { new base("aves.String tests: equality"); }
+
+	// Begin equalsIgnoreCase tests
+
+	// TODO: Failure cases for equalsIgnoreCase
+
+	public test_EqualsIgnoreCaseAscii()
+	{
+		var str1 = "abc";
+		var str2 = "ABC";
+		Assert.isTrue(str1.equalsIgnoreCase(str2));
+	}
+
+	public test_EqualsIgnoreCaseBmp()
+	{
+		// These strings contain only characters in the Basic Multilingual Plane;
+		// that is, no surrogate pairs.
+		var str1 = "αβγабвաբգ";
+		var str2 = "ΑΒΓАБВԱԲԳ";
+		Assert.isTrue(str1.equalsIgnoreCase(str2));
+	}
+
+	public test_EqualsIgnoreCaseSharpS()
+	{
+		// ß should NOT compare equal to S, because ß does not have any simple
+		// uppercase mapping (that is, when uppercased, it should become "SS",
+		// which String does not support).
+		var str1 = "heiß";
+		var str2 = "HEIS";  // should not equal this
+		var str3 = "HEISS"; // or this
+		var str4 = "HEIß";  // but should equal this
+		Assert.isFalse(str1.equalsIgnoreCase(str2));
+		Assert.isFalse(str1.equalsIgnoreCase(str3));
+		Assert.isTrue(str1.equalsIgnoreCase(str4));
+	}
+
+	public test_EqualsIgnoreCaseSigma()
+	{
+		// equalsIgnoreCase should consider both σ and ς equal to Σ,
+		// and the two lowercase forms should compare equal too.
+		var upperSigma = "Σ";
+		var lowerSigma1 = "σ";
+		var lowerSigma2 = "ς";
+		Assert.isTrue(lowerSigma1.equalsIgnoreCase(upperSigma));
+		Assert.isTrue(lowerSigma2.equalsIgnoreCase(upperSigma));
+		Assert.isTrue(lowerSigma1.equalsIgnoreCase(lowerSigma2));
+	}
+
+	public test_EqualsIgnoreCaseSurrogatePair()
+	{
+		var str1 = "\U0001040C"; // Deseret Capital Letter Ay
+		var str2 = "\U00010434"; // Deseret Small Letter Ay
+		Assert.isTrue(str1.equalsIgnoreCase(str2));
+	}
+
+	// Upon encountering an unmatched surrogate lead, equalsIgnoreCase
+	// should compare a single UTF-16 code unit against the corresponding
+	// such in the other string. It should not attempt to skip the code
+	// unit immediately following the unmatched surrogate lead.
+	// Surrogate trails should act the same way.
+
+	public test_EqualsIgnoreCaseUnmatchedSurrogateLeadBeforePair()
+	{
+		// U+D800 = first surrogate lead
+		// U+1040C = Deseret Capital Letter Ay
+		// U+10434 = Deseret Small Letter Ay
+		var str1 = "\uD800\U0001040C";
+		var str2 = "\uD800\U00010434";
+		Assert.isTrue(str1.equalsIgnoreCase(str2));
+	}
+
+	public test_EqualsIgnoreCaseUnmatchedSurrogateLeadAfterPair()
+	{
+		// U+D800 = first surrogate lead
+		// U+1040C = Deseret Capital Letter Ay
+		// U+10434 = Deseret Small Letter Ay
+		var str1 = "\U0001040C\uD800";
+		var str2 = "\U00010434\uD800";
+		Assert.isTrue(str1.equalsIgnoreCase(str2));
+	}
+
+	public test_EqualsIgnoreCaseUnmatchedSurrogateLeadBetweenPair()
+	{
+		// U+D800 = first surrogate lead
+		// U+1040C = Deseret Capital Letter Ay
+		// U+1041F = Deseret Capital Letter Esh
+		// U+10434 = Deseret Small Letter Ay
+		// U+10447 = Deseret Small Letter Esh
+		var str1 = "\U0001040C\uD800\U0001041F";
+		var str2 = "\U00010434\uD800\U00010447";
+		Assert.isTrue(str1.equalsIgnoreCase(str2));
+	}
+
+	public test_EqualsIgnoreCaseUnmatchedSurrogateTrailBeforePair()
+	{
+		// U+DC00 = first surrogate trail
+		// U+1040C = Deseret Capital Letter Ay
+		// U+10434 = Deseret Small Letter Ay
+		var str1 = "\uDC00\U0001040C";
+		var str2 = "\uDC00\U00010434";
+		Assert.isTrue(str1.equalsIgnoreCase(str2));
+	}
+
+	public test_EqualsIgnoreCaseUnmatchedSurrogateTrailAfterPair()
+	{
+		// U+DC00 = first surrogate trail
+		// U+1040C = Deseret Capital Letter Ay
+		// U+10434 = Deseret Small Letter Ay
+		var str1 = "\U0001040C\uDC00";
+		var str2 = "\U00010434\uDC00";
+		Assert.isTrue(str1.equalsIgnoreCase(str2));
+	}
+
+	public test_EqualsIgnoreCaseUnmatchedSurrogateTrailBetweenPair()
+	{
+		// U+DC00 = first surrogate trail
+		// U+1040C = Deseret Capital Letter Ay
+		// U+1041F = Deseret Capital Letter Esh
+		// U+10434 = Deseret Small Letter Ay
+		// U+10447 = Deseret Small Letter Esh
+		var str1 = "\U0001040C\uDC00\U0001041F";
+		var str2 = "\U00010434\uDC00\U00010447";
+		Assert.isTrue(str1.equalsIgnoreCase(str2));
+	}
+
+	// End equalsIgnoreCase tests
+}
+
+public class StringPadTests is TestFixture
+{
+	public new() { new base("aves.String tests: padding"); }
 
 	// Pad start tests
 
@@ -306,6 +439,4 @@ public class StringTests is TestFixture
 	}
 
 	// End pad both tests
-
-	// End padding tests
 }
