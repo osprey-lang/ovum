@@ -9,7 +9,7 @@ namespace strings
 }
 
 MethodHandle TextReaderInst::FillBuffer;
-String *TextReaderInst::FillBufferName = _S(strings::_FillBufferName);
+String *TextReaderInst::FillBufferName = strings::_FillBufferName.AsString();
 
 #define _TR(val)     reinterpret_cast<TextReaderInst*>((val).instance)
 

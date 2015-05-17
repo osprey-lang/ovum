@@ -5,13 +5,13 @@ namespace strings
 	#define SFS ::StringFlags::STATIC
 
 	LitString<0> _Empty = { 0, 0, SFS, 0 };
-	String *Empty = _S(_Empty);
+	String *Empty = _Empty.AsString();
 
 	LitString<6> _format   = { 6, 0, SFS, 'f','o','r','m','a','t',0 };
 	LitString<8> _toString = { 8, 0, SFS, 't','o','S','t','r','i','n','g',0 };
 
-	String *format   = _S(_format);
-	String *toString = _S(_toString);
+	String *format   = _format.AsString();
+	String *toString = _toString.AsString();
 
 	LitString<3> _str       = { 3, 0, SFS, 's','t','r',0 };
 	LitString<1> _i         = { 1, 0, SFS, 'i',0 };
@@ -50,42 +50,42 @@ namespace strings
 	LitString<5> __iter     = { 5, 0, SFS, '.','i','t','e','r',0 };
 	LitString<4> __new      = { 4, 0, SFS, '.','n','e','w',0 };
 
-	String *str       = _S(_str);
-	String *i         = _S(_i);
-	String *cur       = _S(_cur);
-	String *index     = _S(_index);
-	String *capacity  = _S(_capacity);
-	String *values    = _S(_values);
-	String *value     = _S(_value);
-	String *times     = _S(_times);
-	String *oldValue  = _S(_oldValue);
-	String *kind      = _S(_kind);
-	String *key       = _S(_key);
-	String *cp        = _S(_cp);
-	String *_args     = _S(__args);
-	String *x         = _S(_x);
-	String *y         = _S(_y);
-	String *width     = _S(_width);
-	String *height    = _S(_height);
-	String *add       = _S(_add);
-	String *path      = _S(_path);
-	String *mode      = _S(_mode);
-	String *access    = _S(_access);
-	String *share     = _S(_share);
-	String *origin    = _S(_origin);
-	String *handle    = _S(_handle);
-	String *flags     = _S(_flags);
-	String *overload  = _S(_overload);
-	String *major     = _S(_major);
-	String *minor     = _S(_minor);
-	String *build     = _S(_build);
-	String *revision  = _S(_revision);
-	String *minLength = _S(_minLength);
-	String *side      = _S(_side);
-	String *size      = _S(_size);
-	String *_call     = _S(__call);
-	String *_iter     = _S(__iter);
-	String *_new      = _S(__new);
+	String *str       = _str.AsString();
+	String *i         = _i.AsString();
+	String *cur       = _cur.AsString();
+	String *index     = _index.AsString();
+	String *capacity  = _capacity.AsString();
+	String *values    = _values.AsString();
+	String *value     = _value.AsString();
+	String *times     = _times.AsString();
+	String *oldValue  = _oldValue.AsString();
+	String *kind      = _kind.AsString();
+	String *key       = _key.AsString();
+	String *cp        = _cp.AsString();
+	String *_args     = __args.AsString();
+	String *x         = _x.AsString();
+	String *y         = _y.AsString();
+	String *width     = _width.AsString();
+	String *height    = _height.AsString();
+	String *add       = _add.AsString();
+	String *path      = _path.AsString();
+	String *mode      = _mode.AsString();
+	String *access    = _access.AsString();
+	String *share     = _share.AsString();
+	String *origin    = _origin.AsString();
+	String *handle    = _handle.AsString();
+	String *flags     = _flags.AsString();
+	String *overload  = _overload.AsString();
+	String *major     = _major.AsString();
+	String *minor     = _minor.AsString();
+	String *build     = _build.AsString();
+	String *revision  = _revision.AsString();
+	String *minLength = _minLength.AsString();
+	String *side      = _side.AsString();
+	String *size      = _size.AsString();
+	String *_call     = __call.AsString();
+	String *_iter     = __iter.AsString();
+	String *_new      = __new.AsString();
 
 #if OVUM_WINDOWS
 	LitString<2> _newline = { 2, 0, SFS, '\r','\n',0 };
@@ -93,7 +93,7 @@ namespace strings
 	LitString<1> _newline = { 1, 0, SFS, '\n',0 };
 #endif
 
-	String *newline  = _S(_newline);
+	String *newline  = _newline.AsString();
 }
 
 namespace error_strings
@@ -109,14 +109,14 @@ namespace error_strings
 	LitString<42> _EncodingBufferOverrun = LitString<42>::FromCString("Cannot write beyond the end of the buffer.");
 	LitString<37> _ValueNotInvokable = LitString<37>::FromCString("The specified value is not invokable.");
 
-	String *EndIndexLessThanStart     = _S(_EndIndexLessThanStart);
-	String *HashKeyNotFound           = _S(_HashKeyNotFound);
-	String *RadixOutOfRange           = _S(_RadixOutOfRange);
-	String *InvalidIntegerFormat      = _S(_InvalidIntegerFormat);
-	String *FileHandleClosed          = _S(_FileHandleClosed);
-	String *AppendMustBeWriteOnly     = _S(_AppendMustBeWriteOnly);
-	String *CannotFlushReadOnlyStream = _S(_CannotFlushReadOnlyStream);
-	String *FileStreamWithNonFile     = _S(_FileStreamWithNonFile);
-	String *EncodingBufferOverrun     = _S(_EncodingBufferOverrun);
-	String *ValueNotInvokable         = _S(_ValueNotInvokable);
+	String *EndIndexLessThanStart     = _EndIndexLessThanStart.AsString();
+	String *HashKeyNotFound           = _HashKeyNotFound.AsString();
+	String *RadixOutOfRange           = _RadixOutOfRange.AsString();
+	String *InvalidIntegerFormat      = _InvalidIntegerFormat.AsString();
+	String *FileHandleClosed          = _FileHandleClosed.AsString();
+	String *AppendMustBeWriteOnly     = _AppendMustBeWriteOnly.AsString();
+	String *CannotFlushReadOnlyStream = _CannotFlushReadOnlyStream.AsString();
+	String *FileStreamWithNonFile     = _FileStreamWithNonFile.AsString();
+	String *EncodingBufferOverrun     = _EncodingBufferOverrun.AsString();
+	String *ValueNotInvokable         = _ValueNotInvokable.AsString();
 }

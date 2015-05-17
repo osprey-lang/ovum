@@ -12,9 +12,9 @@ namespace io_errors
 		static LitString<27> _SeekFailed   = LitString<27>::FromCString("Could not seek in the file.");
 	}
 
-	static String *AccessDenied = _S(_AccessDenied);
-	static String *DiskFull     = _S(_DiskFull);
-	static String *SeekFailed   = _S(_SeekFailed);
+	static String *AccessDenied = _AccessDenied.AsString();
+	static String *DiskFull     = _DiskFull.AsString();
+	static String *SeekFailed   = _SeekFailed.AsString();
 }
 
 int io::ThrowIOError(ThreadHandle thread, ErrorCode code, String *pathName)

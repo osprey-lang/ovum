@@ -13,8 +13,8 @@ namespace gc_strings
 	LitString<47> _ObjectTooBig  = LitString<47>::FromCString("The size of the requested object was too large.");
 	LitString<33> _CStringTooBig = LitString<33>::FromCString("GC_ConvertString: input too long.");
 
-	String *ObjectTooBig  = _S(_ObjectTooBig);
-	String *CStringTooBig = _S(_CStringTooBig);
+	String *ObjectTooBig  = _ObjectTooBig.AsString();
+	String *CStringTooBig = _CStringTooBig.AsString();
 }
 
 int GC::Create(VM *owner, GC *&result)

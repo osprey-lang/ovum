@@ -11,9 +11,9 @@ namespace errors
 		LitString<43> _toRealFailed = LitString<43>::FromCString("The value could not be converted to a Real.");
 	}
 
-	String *toIntFailed  = _S(_toIntFailed);
-	String *toUIntFailed = _S(_toUIntFailed);
-	String *toRealFailed = _S(_toRealFailed);
+	String *toIntFailed  = _toIntFailed.AsString();
+	String *toUIntFailed = _toUIntFailed.AsString();
+	String *toRealFailed = _toRealFailed.AsString();
 }
 
 namespace hash_helper

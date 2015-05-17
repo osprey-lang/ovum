@@ -207,7 +207,7 @@ String *ModuleReader::ReadShortString(const int32_t length)
 	// Fill the buffer with contents from the file
 	Read(const_cast<uchar*>(buf.chars), sizeof(uchar) * length);
 
-	String *intern = GetGC()->GetInternedString(nullptr, _S(buf));
+	String *intern = GetGC()->GetInternedString(nullptr, buf.AsString());
 	if (intern == nullptr)
 	{
 		// Not interned, have to allocate!

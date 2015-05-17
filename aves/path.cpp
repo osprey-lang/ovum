@@ -215,7 +215,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(io_Path_join)
 				)
 				outputStr = String_Concat(thread, output->v.string, path);
 			else
-				outputStr = String_Concat3(thread, output->v.string, _S(Path::DirSeparatorString), path);
+				outputStr = String_Concat3(thread, output->v.string, Path::DirSeparatorString.AsString(), path);
 			CHECKED_MEM(outputStr);
 			SetString(thread, output, outputStr);
 		}
@@ -335,7 +335,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(io_Path_changeExtension)
 		if (args[1].v.string->firstChar == '.')
 			retString = String_Concat(thread, retval->v.string, args[1].v.string);
 		else
-			retString = String_Concat3(thread, retval->v.string, _S(dot), args[1].v.string);
+			retString = String_Concat3(thread, retval->v.string, dot.AsString(), args[1].v.string);
 		CHECKED_MEM(retString);
 		SetString(thread, retval, retString);
 	}

@@ -19,25 +19,22 @@ namespace static_strings
 		LitString<8> _toString = { 8, 0, StringFlags::STATIC, 't','o','S','t','r','i','n','g',0 };
 	}
 
-	String *empty = _S(_empty);
+	String *empty = _empty.AsString();
 
-	String *_new  = _S(__new);
-	String *_iter = _S(__iter);
-	String *_call = _S(__call);
-	String *_init = _S(__init);
-	String *_item = _S(__item);
+	String *_new  = __new.AsString();
+	String *_iter = __iter.AsString();
+	String *_call = __call.AsString();
+	String *_init = __init.AsString();
+	String *_item = __item.AsString();
 
-	String *message = _S(_message);
-	String *toString = _S(_toString);
+	String *message = _message.AsString();
+	String *toString = _toString.AsString();
 
 	namespace errors
 	{
-		namespace
-		{
-			LitString<48> _ToStringWrongType = LitString<48>::FromCString("The return value of toString() must be a string.");
-		}
+		LitString<48> _ToStringWrongType = LitString<48>::FromCString("The return value of toString() must be a string.");
 
-		String *ToStringWrongType = _S(_ToStringWrongType);
+		String *ToStringWrongType = _ToStringWrongType.AsString();
 	}
 }
 
