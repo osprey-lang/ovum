@@ -187,7 +187,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_readKey)
 		if (argc == 0 || IsFalse(args + 0))
 		{
 			LitString<1> str = { 1, 0, StringFlags::STATIC, (uchar)ir.Event.KeyEvent.uChar.UnicodeChar, 0 };
-			VM_Print(_S(str));
+			VM_Print(str.AsString());
 		}
 	}
 }
@@ -639,5 +639,5 @@ int Console::ThrowConsoleError(ThreadHandle thread)
 {
 	if (VM_IsInUnmanagedRegion(thread))
 		VM_LeaveUnmanagedRegion(thread);
-	return VM_ThrowError(thread, _S(ConsoleIOError));
+	return VM_ThrowError(thread, ConsoleIOError.AsString());
 }

@@ -26,20 +26,20 @@ namespace thread_errors
 		LitString<36> _MemberIsNotAField           = LitString<36>::FromCString("The specified member is not a field.");
 	}
 
-	String *ConcatTypes                 = _S(_ConcatTypes);
-	String *CompareType                 = _S(_CompareType);
-	String *NotInvokable                = _S(_NotInvokable);
-	String *NotComparable               = _S(_NotComparable);
-	String *MemberNotFound              = _S(_MemberNotFound);
-	String *MemberNotInvokable          = _S(_MemberNotInvokable);
-	String *AssigningToMethod           = _S(_AssigningToMethod);
-	String *StaticMemberThroughInstance = _S(_StaticMemberThroughInstance);
-	String *GettingWriteonlyProperty    = _S(_GettingWriteonlyProperty);
-	String *SettingReadonlyProperty     = _S(_SettingReadonlyProperty);
-	String *WrongApplyArgsType          = _S(_WrongApplyArgsType);
-	String *NoIndexerFound              = _S(_NoIndexerFound);
-	String *IncorrectReferenceness      = _S(_IncorrectReferenceness);
-	String *MemberIsNotAField           = _S(_MemberIsNotAField);
+	String *ConcatTypes                 = _ConcatTypes.AsString();
+	String *CompareType                 = _CompareType.AsString();
+	String *NotInvokable                = _NotInvokable.AsString();
+	String *NotComparable               = _NotComparable.AsString();
+	String *MemberNotFound              = _MemberNotFound.AsString();
+	String *MemberNotInvokable          = _MemberNotInvokable.AsString();
+	String *AssigningToMethod           = _AssigningToMethod.AsString();
+	String *StaticMemberThroughInstance = _StaticMemberThroughInstance.AsString();
+	String *GettingWriteonlyProperty    = _GettingWriteonlyProperty.AsString();
+	String *SettingReadonlyProperty     = _SettingReadonlyProperty.AsString();
+	String *WrongApplyArgsType          = _WrongApplyArgsType.AsString();
+	String *NoIndexerFound              = _NoIndexerFound.AsString();
+	String *IncorrectReferenceness      = _IncorrectReferenceness.AsString();
+	String *MemberIsNotAField           = _MemberIsNotAField.AsString();
 }
 
 TlsEntry<Thread> Thread::threadKey;
@@ -1150,7 +1150,7 @@ int Thread::ThrowMissingOperatorError(Operator op)
 	{
 		StringBuffer message;
 		message.Append(strlen(baseMessage), baseMessage);
-		message.Append(_S(operatorNames[(int)op]));
+		message.Append(operatorNames[(int)op].AsString());
 		message.Append(')');
 		String *messageStr = message.ToString(this);
 		if (messageStr == nullptr)

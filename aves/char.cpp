@@ -80,7 +80,7 @@ AVES_API NATIVE_FUNCTION(aves_Char_getHashCode)
 	wuchar ch = Char::FromValue(THISP);
 	LitString<2> str = Char::ToLitString(ch);
 
-	VM_PushInt(thread, String_GetHashCode(_S(str)));
+	VM_PushInt(thread, String_GetHashCode(str.AsString()));
 	RETURN_SUCCESS;
 }
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Char_toString)
@@ -122,7 +122,7 @@ AVES_API NATIVE_FUNCTION(aves_Char_opEquals)
 	else if (args[1].type == Types::String)
 	{
 		LitString<2> left = Char::ToLitString((wuchar)args[0].v.integer);
-		eq = String_Equals(_S(left), args[1].v.string);
+		eq = String_Equals(left.AsString(), args[1].v.string);
 	}
 	else
 		eq = false;
@@ -139,7 +139,7 @@ AVES_API NATIVE_FUNCTION(aves_Char_opCompare)
 	else if (args[1].type == Types::String)
 	{
 		LitString<2> left = Char::ToLitString((wuchar)args[0].v.integer);
-		result = String_Compare(_S(left), args[1].v.string);
+		result = String_Compare(left.AsString(), args[1].v.string);
 	}
 	else
 		VM_ThrowTypeError(thread);
@@ -172,7 +172,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Char_opMultiply)
 	CHECKED_MEM(buf.Init((int32_t)length));
 
 	for (int32_t i = 0; i < (int32_t)length; i++)
-		CHECKED_MEM(buf.Append(_S(str)));
+		CHECKED_MEM(buf.Append(str.AsString()));
 
 	String *result;
 	CHECKED_MEM(result = buf.ToString(thread));

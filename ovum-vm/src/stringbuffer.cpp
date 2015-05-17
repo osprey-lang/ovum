@@ -9,7 +9,7 @@ namespace buffer_errors
 {
 	LitString<70> _MemoryError = LitString<70>::FromCString("There was not enough memory to increase the size of the string buffer.");
 
-	String *MemoryError = _S(_MemoryError);
+	String *MemoryError = _MemoryError.AsString();
 }
 
 StringBuffer::StringBuffer(const int32_t capacity) : length(0), data(nullptr)

@@ -71,38 +71,38 @@ TypeHandle Types::FileNotFoundError;
 // Note: This is not declared in any header file. Only in this source file.
 AVES_API void CDECL OvumModuleMain(ModuleHandle module)
 {
-	Types::Int                = Module_FindType(module, _S(type_names::Int),                true);
-	Types::UInt               = Module_FindType(module, _S(type_names::UInt),               true);
-	Types::Real               = Module_FindType(module, _S(type_names::Real),               true);
-	Types::Char               = Module_FindType(module, _S(type_names::Char),               true);
-	Types::String             = Module_FindType(module, _S(type_names::String),             true);
-	Types::ArgumentError      = Module_FindType(module, _S(type_names::ArgumentError),      true);
-	Types::ArgumentNullError  = Module_FindType(module, _S(type_names::ArgumentNullError),  true);
-	Types::ArgumentRangeError = Module_FindType(module, _S(type_names::ArgumentRangeError), true);
-	Types::DuplicateKeyError  = Module_FindType(module, _S(type_names::DuplicateKeyError),  true);
-	Types::InvalidStateError  = Module_FindType(module, _S(type_names::InvalidStateError),  true);
-	Types::NotSupportedError  = Module_FindType(module, _S(type_names::NotSupportedError),  true);
-	Types::UnicodeCategory    = Module_FindType(module, _S(type_names::UnicodeCategory),    true);
-	Types::BufferViewKind     = Module_FindType(module, _S(type_names::BufferViewKind),     true);
-	Types::HashEntry          = Module_FindType(module, _S(type_names::HashEntry),          true);
-	Types::ConsoleColor       = Module_FindType(module, _S(type_names::ConsoleColor),       true);
-	Types::ConsoleKey         = Module_FindType(module, _S(type_names::ConsoleKey),         true);
-	Types::ConsoleKeyCode     = Module_FindType(module, _S(type_names::ConsoleKeyCode),     true);
-	Types::Version            = Module_FindType(module, _S(type_names::Version),            true);
+	Types::Int                = Module_FindType(module, type_names::Int.AsString(),                true);
+	Types::UInt               = Module_FindType(module, type_names::UInt.AsString(),               true);
+	Types::Real               = Module_FindType(module, type_names::Real.AsString(),               true);
+	Types::Char               = Module_FindType(module, type_names::Char.AsString(),               true);
+	Types::String             = Module_FindType(module, type_names::String.AsString(),             true);
+	Types::ArgumentError      = Module_FindType(module, type_names::ArgumentError.AsString(),      true);
+	Types::ArgumentNullError  = Module_FindType(module, type_names::ArgumentNullError.AsString(),  true);
+	Types::ArgumentRangeError = Module_FindType(module, type_names::ArgumentRangeError.AsString(), true);
+	Types::DuplicateKeyError  = Module_FindType(module, type_names::DuplicateKeyError.AsString(),  true);
+	Types::InvalidStateError  = Module_FindType(module, type_names::InvalidStateError.AsString(),  true);
+	Types::NotSupportedError  = Module_FindType(module, type_names::NotSupportedError.AsString(),  true);
+	Types::UnicodeCategory    = Module_FindType(module, type_names::UnicodeCategory.AsString(),    true);
+	Types::BufferViewKind     = Module_FindType(module, type_names::BufferViewKind.AsString(),     true);
+	Types::HashEntry          = Module_FindType(module, type_names::HashEntry.AsString(),          true);
+	Types::ConsoleColor       = Module_FindType(module, type_names::ConsoleColor.AsString(),       true);
+	Types::ConsoleKey         = Module_FindType(module, type_names::ConsoleKey.AsString(),         true);
+	Types::ConsoleKeyCode     = Module_FindType(module, type_names::ConsoleKeyCode.AsString(),     true);
+	Types::Version            = Module_FindType(module, type_names::Version.AsString(),            true);
 
-	Types::IOError            = Module_FindType(module, _S(type_names::IOError),            true);
-	Types::FileNotFoundError  = Module_FindType(module, _S(type_names::FileNotFoundError),  true);
+	Types::IOError            = Module_FindType(module, type_names::IOError.AsString(),            true);
+	Types::FileNotFoundError  = Module_FindType(module, type_names::FileNotFoundError.AsString(),  true);
 
-	Types::reflection.AccessLevel       = Module_FindType(module, _S(type_names::AccessLevel),       true);
-	Types::reflection.Field             = Module_FindType(module, _S(type_names::Field),             true);
-	Types::reflection.Method            = Module_FindType(module, _S(type_names::ReflMethod),        true);
-	Types::reflection.Property          = Module_FindType(module, _S(type_names::Property),          true);
-	Types::reflection.Constructor       = Module_FindType(module, _S(type_names::Constructor),       true);
-	Types::reflection.Overload          = Module_FindType(module, _S(type_names::Overload),          true);
-	Types::reflection.GlobalConstant    = Module_FindType(module, _S(type_names::GlobalConstant),    true);
-	Types::reflection.NativeHandle      = Module_FindType(module, _S(type_names::NativeHandle),      true);
-	Types::reflection.MemberSearchFlags = Module_FindType(module, _S(type_names::MemberSearchFlags), true);
-	Types::reflection.Module            = Module_FindType(module, _S(type_names::Module),            true);
+	Types::reflection.AccessLevel       = Module_FindType(module, type_names::AccessLevel.AsString(),       true);
+	Types::reflection.Field             = Module_FindType(module, type_names::Field.AsString(),             true);
+	Types::reflection.Method            = Module_FindType(module, type_names::ReflMethod.AsString(),        true);
+	Types::reflection.Property          = Module_FindType(module, type_names::Property.AsString(),          true);
+	Types::reflection.Constructor       = Module_FindType(module, type_names::Constructor.AsString(),       true);
+	Types::reflection.Overload          = Module_FindType(module, type_names::Overload.AsString(),          true);
+	Types::reflection.GlobalConstant    = Module_FindType(module, type_names::GlobalConstant.AsString(),    true);
+	Types::reflection.NativeHandle      = Module_FindType(module, type_names::NativeHandle.AsString(),      true);
+	Types::reflection.MemberSearchFlags = Module_FindType(module, type_names::MemberSearchFlags.AsString(), true);
+	Types::reflection.Module            = Module_FindType(module, type_names::Module.AsString(),            true);
 }
 
 

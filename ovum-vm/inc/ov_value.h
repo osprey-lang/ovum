@@ -69,6 +69,15 @@ public:
 
 	typedef const char CString[Len + 1];
 
+	// Reinterprets the LitString<> as a String*, by casting the 'this' pointer.
+	// If the LitString<> goes out of scope, the String* will be invalidated.
+	// Note: this method cannot be declared const, because String* is required
+	// to be mutable: the VM must be able to update the 'flags' field.
+	inline String *AsString()
+	{
+		return reinterpret_cast<String*>(this);
+	}
+
 	static inline LitString<Len> FromCString(CString data)
 	{
 		LitString<Len> output = { Len, 0, StringFlags::STATIC };
@@ -80,10 +89,6 @@ public:
 		return output;
 	}
 };
-
-// Reinterpret-casts a LitString<> to a String*.
-// NOTE: do not pass a LitString<> pointer into this!
-#define _S(ls)	reinterpret_cast<::String*>(&ls)
 
 // forward declarations
 typedef struct ListInst_S ListInst;

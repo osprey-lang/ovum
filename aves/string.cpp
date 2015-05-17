@@ -10,9 +10,9 @@ namespace error_strings
 	LitString<55> _FormatValueType    = LitString<55>::FromCString("The argument to String.format must be a List or a Hash.");
 	LitString<62> _ReplaceEmptyString = LitString<62>::FromCString("The oldValue in a replacement cannot be the empty string (\"\").");
 
-	String *IndexOutOfRange    = _S(_IndexOutOfRange);
-	String *FormatValueType    = _S(_FormatValueType);
-	String *ReplaceEmptyString = _S(_ReplaceEmptyString);
+	String *IndexOutOfRange    = _IndexOutOfRange.AsString();
+	String *FormatValueType    = _FormatValueType.AsString();
+	String *ReplaceEmptyString = _ReplaceEmptyString.AsString();
 }
 
 int GetIndex(ThreadHandle thread, String *str, Value *arg, int32_t &result)
@@ -66,7 +66,7 @@ AVES_API NATIVE_FUNCTION(aves_String_equalsIgnoreCase)
 	else if (args[1].type == Types::Char)
 	{
 		LitString<2> other = Char::ToLitString((wuchar)args[1].v.integer);
-		eq = String_EqualsIgnoreCase(THISV.v.string, _S(other));
+		eq = String_EqualsIgnoreCase(THISV.v.string, other.AsString());
 	}
 	else
 		eq = false;
@@ -82,7 +82,7 @@ AVES_API NATIVE_FUNCTION(aves_String_contains)
 	else if (args[1].type == Types::Char)
 	{
 		LitString<2> value = Char::ToLitString((wuchar)args[1].v.integer);
-		result = String_Contains(THISV.v.string, _S(value));
+		result = String_Contains(THISV.v.string, value.AsString());
 	}
 	else
 		return VM_ThrowTypeError(thread);
@@ -100,7 +100,7 @@ AVES_API NATIVE_FUNCTION(aves_String_startsWith)
 	else if (args[1].type == Types::Char)
 	{
 		LitString<2> part = Char::ToLitString((wuchar)args[1].v.integer);
-		result = String_SubstringEquals(str, 0, _S(part));
+		result = String_SubstringEquals(str, 0, part.AsString());
 	}
 	else
 		return VM_ThrowTypeError(thread);
@@ -121,7 +121,7 @@ AVES_API NATIVE_FUNCTION(aves_String_endsWith)
 	else if (args[1].type == Types::Char)
 	{
 		LitString<2> part = Char::ToLitString((wuchar)args[1].v.integer);
-		result = String_SubstringEquals(str, str->length - part.length, _S(part));
+		result = String_SubstringEquals(str, str->length - part.length, part.AsString());
 	}
 	else
 		return VM_ThrowTypeError(thread);
@@ -139,7 +139,7 @@ AVES_API NATIVE_FUNCTION(aves_String_indexOf)
 	else if (args[1].type == Types::Char)
 	{
 		LitString<2> part = Char::ToLitString((wuchar)args[1].v.integer);
-		index = string::IndexOf(str, _S(part));
+		index = string::IndexOf(str, part.AsString());
 	}
 	else
 		return VM_ThrowTypeError(thread);
@@ -160,7 +160,7 @@ AVES_API NATIVE_FUNCTION(aves_String_lastIndexOf)
 	else if (args[1].type == Types::Char)
 	{
 		LitString<2> part = Char::ToLitString((wuchar)args[1].v.integer);
-		index = string::LastIndexOf(str, _S(part));
+		index = string::LastIndexOf(str, part.AsString());
 	}
 	else
 		return VM_ThrowTypeError(thread);
@@ -613,7 +613,7 @@ AVES_API NATIVE_FUNCTION(aves_String_opEquals)
 	else if (args[1].type == Types::Char)
 	{
 		LitString<2> right = Char::ToLitString((wuchar)args[1].v.integer);
-		eq = String_Equals(args[0].v.string, _S(right));
+		eq = String_Equals(args[0].v.string, right.AsString());
 	}
 	else
 		eq = false;
@@ -629,7 +629,7 @@ AVES_API NATIVE_FUNCTION(aves_String_opCompare)
 	else if (args[1].type == Types::Char)
 	{
 		LitString<2> right = Char::ToLitString((wuchar)args[1].v.integer);
-		result = String_Compare(args[0].v.string, _S(right));
+		result = String_Compare(args[0].v.string, right.AsString());
 	}
 	else
 		return VM_ThrowTypeError(thread);
@@ -911,7 +911,7 @@ int ScanFormatIdentifier(ThreadHandle thread, LitString<BufLen> &buffer,
 	{
 		buffer.chars[length] = 0; // trailing 0, always!
 		*const_cast<int32_t*>(&buffer.length) = length;
-		SetString(thread, result, _S(buffer));
+		SetString(thread, result, buffer.AsString());
 	}
 	else
 	{
