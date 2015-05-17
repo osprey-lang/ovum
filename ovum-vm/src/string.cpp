@@ -117,11 +117,11 @@ OVUM_API bool String_Equals(const String *a, const String *b)
 	// Unroll the loop by 10 characters
 	while (length > 10)
 	{
-		if (*(int32_t*)ap != *(int32_t*)bp ||
-			*(int32_t*)(ap + 2) != *(int32_t*)(bp + 2) ||
-			*(int32_t*)(ap + 4) != *(int32_t*)(bp + 4) ||
-			*(int32_t*)(ap + 6) != *(int32_t*)(bp + 6) ||
-			*(int32_t*)(ap + 8) != *(int32_t*)(bp + 8)) break;
+		if (*(int32_t*)ap != *(int32_t*)bp) break;
+		if (*(int32_t*)(ap + 2) != *(int32_t*)(bp + 2)) break;
+		if (*(int32_t*)(ap + 4) != *(int32_t*)(bp + 4)) break;
+		if (*(int32_t*)(ap + 6) != *(int32_t*)(bp + 6)) break;
+		if (*(int32_t*)(ap + 8) != *(int32_t*)(bp + 8)) break;
 		ap += 10;
 		bp += 10;
 		length -= 10;
@@ -149,6 +149,10 @@ OVUM_API bool String_EqualsIgnoreCase(const String *a, const String *b)
 	// Note: unlike string::Equals, we cannot compare hash codes here,
 	// because the two strings could be differently-cased versions of
 	// the same text.
+	// Not 2: Unicode makes the guarantee that case folding does not
+	// change the plane of a character. Most notably, a BMP character
+	// cannot be case-folded out of the BMP, or vice versa. Hence, it
+	// is safe to use a length comparison as an additional check.
 	if (a->length != b->length)
 		return false;
 
@@ -161,55 +165,36 @@ OVUM_API bool String_EqualsIgnoreCase(const String *a, const String *b)
 
 	while (length)
 	{
-		// We only transform a surrogate pair into a wide character if both
-		// *ap and *bp are surrogate leads, and if both are followed by surrogate
-		// trails. In all other cases, the values of each character are compared.
-		if (UC_IsSurrogateLead(*ap) && UC_IsSurrogateLead(*bp))
+		// We only transform a surrogate pair into a wide character if we actually
+		// find a surrogate pair at the same location in each string. Otherwise,
+		// we can only skip the surrogate leads, never the character after.
+		// Consider:
+		//    a = lead, lead, trail
+		//    b = lead, lead, trail
+		// If we always skip the next character when we encounter a lead, we will
+		// never find the valid surrogate pair, which may make two matching strings
+		// compare as unequal.
+		// Note: strings are always zero-padded, and the zero padding is not part
+		// of the string's length.
+		if (UC_IsSurrogateLead(*ap) && UC_IsSurrogateLead(*bp) &&
+			UC_IsSurrogateTrail(*(ap + 1)) && UC_IsSurrogateTrail(*(bp + 1)))
 		{
-			const uchar aLead = *ap++;
-			const uchar bLead = *bp++;
-
-			if (length == 1 && aLead != bLead)
-				break; // couldn't possibly be a valid surrogate pair
-
-			// Skip surrogate lead! If this puts us past the end of the string,
-			// then IsSurrogateTrail() will return false for both *ap and *bp,
-			// which will dereference to '\0'. Once again, we're relying on the
-			// fact that strings are zero-terminated and this terminator is NOT
-			// part of the string length.
-			length--;
-
-			if (!UC_IsSurrogateTrail(*ap) || !UC_IsSurrogateTrail(*bp))
-			{
-				// Note: we do need to perform a case-insensitive comparison for *ap and *bp here,
-				// because *ap and *bp could be letters in a writing system with case distinction!
-				// We do not need to do that for aLead and bLead, however, because surrogate chars
-				// do not ever make a case distinction.
-				// Also note: it can never be the case that length == 0 && aLead != bLead at this
-				// point, because that would have been caught by an earlier condition. However, it
-				// is possible that length > 0, in which case it was > 1 in the earlier condition,
-				// so we still need to test aLead and bLead here.
-				if (aLead != bLead || UC_ToUpper(*ap) != UC_ToUpper(*bp))
-					break;
-				// If length == 0 at this point, it must mean that aLead == bLead, which means that
-				// the strings compare equal!
-				length--;
-				continue;
-			}
-
-			// *ap and *bp are surrogate trails at this point
-			const wuchar aWide = UC_ToWide(aLead, *ap++);
-			const wuchar bWide = UC_ToWide(bLead, *bp++);
+			wuchar aWide = UC_ToWide(*ap, *(ap + 1));
+			wuchar bWide = UC_ToWide(*bp, *(bp + 1));
 
 			if (UC_ToUpper(aWide) != UC_ToUpper(bWide))
 				break;
 
-			length--;
+			// Remember: we've read two characters
+			ap += 2;
+			bp += 2;
+			length -= 2;
 		}
 		else
 		{
 			if (UC_ToUpper(*ap) != UC_ToUpper(*bp))
 				break;
+
 			ap++;
 			bp++;
 			length--;
