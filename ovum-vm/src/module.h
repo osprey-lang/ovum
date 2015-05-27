@@ -157,6 +157,8 @@ private:
 	Method *mainMethod;
 
 	HMODULE nativeLib; // Handle to native library (null if not loaded)
+	void *staticState; // The module's static state (only used by the native library)
+	StaticStateDeallocator staticStateDeallocator; // Deallocation callback for the static state
 
 	debug::ModuleDebugData *debugData;
 
@@ -191,6 +193,13 @@ public:
 	{
 		return fileName;
 	}
+
+	inline void *GetStaticState() const
+	{
+		return staticState;
+	}
+
+	void InitStaticState(void *state, StaticStateDeallocator deallocator);
 
 	inline int32_t GetMemberCount() const
 	{

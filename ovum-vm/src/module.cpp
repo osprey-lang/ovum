@@ -35,6 +35,8 @@ Module::Module(uint32_t fileFormatVersion, ModuleMeta &meta, const PathName &fil
 	version(meta.version),
 	fileName(fileName),
 	fullyOpened(false),
+	staticState(nullptr),
+	staticStateDeallocator(nullptr),
 	// defs
 	functions(meta.functionCount),
 	types(meta.typeCount),
@@ -70,6 +72,8 @@ Module::~Module()
 
 	// Don't delete the refs here! They are in their own modules.
 
+	if (staticStateDeallocator)
+		staticStateDeallocator(staticState);
 	FreeNativeLibrary();
 
 	delete debugData;
@@ -216,7 +220,6 @@ Method *Module::GetMainMethod() const
 	return mainMethod;
 }
 
-
 void *Module::FindNativeFunction(const char *name)
 {
 	if (nativeLib != nullptr)
@@ -224,6 +227,14 @@ void *Module::FindNativeFunction(const char *name)
 	return nullptr;
 }
 
+void Module::InitStaticState(void *state, StaticStateDeallocator deallocator)
+{
+	if (fullyOpened || deallocator == nullptr)
+		return;
+
+	this->staticState = state;
+	this->staticStateDeallocator = deallocator;
+}
 
 Module *Module::Open(VM *vm, const PathName &fileName, ModuleVersion *requiredVersion)
 {
@@ -1403,6 +1414,26 @@ OVUM_API void Module_GetVersion(ModuleHandle module, ModuleVersion *version)
 OVUM_API String *Module_GetFileName(ThreadHandle thread, ModuleHandle module)
 {
 	return module->GetFileName().ToManagedString(thread);
+}
+
+OVUM_API void *Module_GetStaticState(ModuleHandle module)
+{
+	return module->GetStaticState();
+}
+
+OVUM_API void *Module_GetCurrentStaticState(ThreadHandle thread)
+{
+	const ovum::StackFrame *frame = thread->GetCurrentFrame();
+	if (frame == nullptr || frame->method == nullptr)
+		return nullptr;
+
+	ovum::Module *module = frame->method->group->declModule;
+	return module->GetStaticState();
+}
+
+OVUM_API void Module_InitStaticState(ModuleHandle module, void *state, StaticStateDeallocator deallocator)
+{
+	module->InitStaticState(state, deallocator);
 }
 
 OVUM_API bool Module_GetGlobalMember(ModuleHandle module, String *name, bool includeInternal, GlobalMember *result)
