@@ -54,6 +54,21 @@ typedef struct GlobalMember_S
 	};
 } GlobalMember;
 
+// A StaticStateDeallocator, as the name suggests, is responsible for deallocating
+// a native module's static state. The deallocator should free any memory used by
+// the static state, as well as close any open file handles and other resources.
+//
+// These functions should be fail-safe, as there is no way to return a status code
+// from a StaticStateDeallocator. This is by design: a StaticStateDeallocator is
+// only called when the module is about to be unloaded, which occurs when the VM
+// is shutting down. There is no opportunity for error handling at this point.
+//
+// Parameters:
+//   state:
+//     The module's static state. This will always be the same pointer that was
+//     passed to Module_InitStaticState.
+typedef void (*StaticStateDeallocator)(void *state);
+
 // Obtains a handle to the module with the specified name and version.
 //
 // Parameters:
@@ -74,6 +89,49 @@ OVUM_API void Module_GetVersion(ModuleHandle module, ModuleVersion *version);
 
 // Gets the name of the file from which the module was loaded.
 OVUM_API String *Module_GetFileName(ThreadHandle thread, ModuleHandle module);
+
+// Gets a pointer to the static state of the specified module, if the module has such a state.
+// The static state is initialized by calling Module_InitStaticState; see that function for
+// more details.
+//
+// Parameters:
+//   module:
+//     The module whose static state is to be looked up.
+// Returns:
+//   The module's static state, or null if it has none.
+OVUM_API void *Module_GetStaticState(ModuleHandle module);
+
+// Behaves exactly like Module_GetStaticState, except that it loads static state for the module
+// of the managed call that is currently on top of the call stack.
+//
+// Parameters:
+//   thread:
+//     The current thread.
+// Returns:
+//   The module's static state, or null if it has none.
+OVUM_API void *Module_GetCurrentStaticState(ThreadHandle thread);
+
+// Initializes the module's static state. The static state is shared across the entire instance
+// of the module, like a 'static' variable in Osprey. Unlike 'static' in C/C++, this function
+// does NOT share its state with other instances of Ovum running in the same process. Using this
+// function instead of C/C++ 'static' enables modules to be instantiated many times per process
+// without risk of cross-contamination.
+//
+// This function should only be used by modules with native code, and only when necessary. Code
+// in a managed language, like Osprey, should use that language's 'static' feature.
+//
+// Parameters:
+//   module:
+//     The module to initialize static state for. This function can only be called from the
+//     module's OvumModuleMain method, and only during initialization. The call will be ignored
+//     at all other times.
+//   state:
+//     The state to assign to the module. This pointer can be null.
+//   deallocator:
+//     A function that is called when the module is about to be unloaded. It is passed the value
+///    of the 'state' parameter, and must deallocate the memory used by it. If this function is
+//     null, the state is not applied to the module.
+OVUM_API void Module_InitStaticState(ModuleHandle module, void *state, StaticStateDeallocator deallocator);
 
 // Searches a module for a global member with the specified name.
 // If the member could not be found, or if the member is private and includeInternal is false,
