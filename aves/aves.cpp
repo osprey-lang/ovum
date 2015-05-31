@@ -1,12 +1,8 @@
-#include <string>
-#include <memory>
 #include "aves.h"
 #include "aves_state.h"
-#include "ov_string.h"
-
-#define SFS        ::StringFlags::STATIC
-#define AVES       'a','v','e','s','.'
-#define REFLECTION AVES,'r','e','f','l','e','c','t','i','o','n','.'
+#include <ov_string.h>
+#include <string>
+#include <memory>
 
 using namespace aves;
 

@@ -1,6 +1,6 @@
-#include "ov_string.h"
-#include "ov_stringbuffer.h"
 #include "aves_error.h"
+#include <ov_string.h>
+#include <ov_stringbuffer.h>
 #include <cstddef>
 
 LitString<30> _DefaultErrorMessage = LitString<30>::FromCString("An unspecified error occurred.");

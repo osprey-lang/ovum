@@ -5,7 +5,7 @@
 
 #include "aves.h"
 #include "aves_buffer.h"
-#include "ov_stringbuffer.h"
+#include <ov_stringbuffer.h>
 
 // Summary of UTF-8:
 //   U+0000 – U+007F:    0xxxxxxx
