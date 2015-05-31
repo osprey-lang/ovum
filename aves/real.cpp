@@ -2,8 +2,11 @@
 #include <cstdio>
 #include <memory>
 #include "aves_real.h"
+#include "aves_state.h"
 #include "ov_stringbuffer.h"
 #include "dtoa.config.h"
+
+using namespace aves;
 
 #ifdef _MSC_VER
 #define isnan    _isnan
@@ -26,6 +29,7 @@ AVES_API NATIVE_FUNCTION(aves_Real_get_isNaN)
 	VM_PushBool(thread, isnan(THISV.v.real) ? true : false);
 	RETURN_SUCCESS;
 }
+
 AVES_API NATIVE_FUNCTION(aves_Real_get_isInfinite)
 {
 	VM_PushBool(thread, isinf(THISV.v.real));
@@ -45,6 +49,7 @@ AVES_API NATIVE_FUNCTION(aves_Real_getHashCode)
 		VM_PushInt(thread, THISV.v.integer);
 	RETURN_SUCCESS;
 }
+
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Real_toString)
 {
 	using namespace std;
@@ -171,29 +176,34 @@ failure:
 
 AVES_API NATIVE_FUNCTION(aves_Real_opEquals)
 {
+	Aves *aves = Aves::Get(thread);
+
 	bool result = false;
-	if (RIGHT.type == Types::Real)
+	if (RIGHT.type == aves->aves.Real)
 	{
 		double left = LEFT.v.real;
 		double right = RIGHT.v.real;
 		result = isnan(left) && isnan(right) || left == right;
 	}
-	else if (RIGHT.type == Types::Int)
+	else if (RIGHT.type == aves->aves.Int)
 		result = LEFT.v.real == (double)RIGHT.v.integer;
-	else if (RIGHT.type == Types::UInt)
+	else if (RIGHT.type == aves->aves.UInt)
 		result = LEFT.v.real == (double)RIGHT.v.uinteger;
 
 	VM_PushBool(thread, result);
 	RETURN_SUCCESS;
 }
+
 AVES_API NATIVE_FUNCTION(aves_Real_opCompare)
 {
+	Aves *aves = Aves::Get(thread);
+
 	double right;
-	if (RIGHT.type == Types::Real)
+	if (RIGHT.type == aves->aves.Real)
 		right = RIGHT.v.real;
-	else if (RIGHT.type == Types::Int)
+	else if (RIGHT.type == aves->aves.Int)
 		right = (double)RIGHT.v.integer;
-	else if (RIGHT.type == Types::UInt)
+	else if (RIGHT.type == aves->aves.UInt)
 		right = (double)RIGHT.v.uinteger;
 	else
 		return VM_ThrowTypeError(thread);
@@ -203,47 +213,55 @@ AVES_API NATIVE_FUNCTION(aves_Real_opCompare)
 	VM_PushInt(thread, result);
 	RETURN_SUCCESS;
 }
+
 AVES_API NATIVE_FUNCTION(aves_Real_opAdd)
 {
 	CHECKED_TO_REAL(thread, &RIGHT);
 	VM_PushReal(thread, LEFT.v.real + RIGHT.v.real);
 	RETURN_SUCCESS;
 }
+
 AVES_API NATIVE_FUNCTION(aves_Real_opSubtract)
 {
 	CHECKED_TO_REAL(thread, &RIGHT);
 	VM_PushReal(thread, LEFT.v.real - RIGHT.v.real);
 	RETURN_SUCCESS;
 }
+
 AVES_API NATIVE_FUNCTION(aves_Real_opMultiply)
 {
 	CHECKED_TO_REAL(thread, &RIGHT);
 	VM_PushReal(thread, LEFT.v.real * RIGHT.v.real);
 	RETURN_SUCCESS;
 }
+
 AVES_API NATIVE_FUNCTION(aves_Real_opDivide)
 {
 	CHECKED_TO_REAL(thread, &RIGHT);
 	VM_PushReal(thread, LEFT.v.real / RIGHT.v.real);
 	RETURN_SUCCESS;
 }
+
 AVES_API NATIVE_FUNCTION(aves_Real_opModulo)
 {
 	CHECKED_TO_REAL(thread, &RIGHT);
 	VM_PushReal(thread, fmod(LEFT.v.real, RIGHT.v.real));
 	RETURN_SUCCESS;
 }
+
 AVES_API NATIVE_FUNCTION(aves_Real_opPower)
 {
 	CHECKED_TO_REAL(thread, &RIGHT);
 	VM_PushReal(thread, pow(LEFT.v.real, RIGHT.v.real));
 	RETURN_SUCCESS;
 }
+
 AVES_API NATIVE_FUNCTION(aves_Real_opPlus)
 {
 	VM_Push(thread, &LEFT);
 	RETURN_SUCCESS;
 }
+
 AVES_API NATIVE_FUNCTION(aves_Real_opNegate)
 {
 	VM_PushReal(thread, -args[0].v.real);

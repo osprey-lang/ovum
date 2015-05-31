@@ -1,6 +1,9 @@
 #include "aves_overload.h"
+#include "aves_state.h"
 #include <stddef.h>
 #include <cassert>
+
+using namespace aves;
 
 AVES_API void CDECL aves_reflection_Overload_init(TypeHandle type)
 {
@@ -12,12 +15,13 @@ AVES_API void CDECL aves_reflection_Overload_init(TypeHandle type)
 AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Overload_new)
 {
 	// new(handle, method, index)
+	Aves *aves = Aves::Get(thread);
 
-	if (args[1].type != Types::reflection.NativeHandle)
+	if (args[1].type != aves->aves.reflection.NativeHandle)
 	{
 		VM_PushNull(thread); // message
 		VM_PushString(thread, strings::handle); // paramName
-		return VM_ThrowErrorOfType(thread, Types::ArgumentError, 2);
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentError, 2);
 	}
 
 	CHECKED(IntFromValue(thread, args + 3));
@@ -31,10 +35,12 @@ END_NATIVE_FUNCTION
 
 AVES_API NATIVE_FUNCTION(aves_reflection_Overload_get_handle)
 {
+	Aves *aves = Aves::Get(thread);
+
 	OverloadInst *inst = THISV.Get<OverloadInst>();
 
 	Value handle;
-	handle.type = Types::reflection.NativeHandle;
+	handle.type = aves->aves.reflection.NativeHandle;
 	handle.v.instance = (uint8_t*)inst->overload;
 
 	VM_Push(thread, &handle);
@@ -104,6 +110,8 @@ AVES_API NATIVE_FUNCTION(aves_reflection_Overload_get_paramCount)
 
 AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Overload_getCurrentOverload)
 {
+	Aves *aves = Aves::Get(thread);
+
 	// Get the overload of the previous stack frame
 	OverloadHandle overload = VM_GetExecutingOverload(thread, 1);
 	if (overload == nullptr)
@@ -117,7 +125,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Overload_getCurrentOverload)
 
 	// Push a NativeHandle for the overload
 	Value handle;
-	handle.type = Types::reflection.NativeHandle;
+	handle.type = aves->aves.reflection.NativeHandle;
 	handle.v.instance = (uint8_t*)overload;
 	VM_Push(thread, &handle);
 
@@ -127,9 +135,9 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Overload_getCurrentOverload)
 	VM_Push(thread, &handle);
 
 	// Select type Method or Constructor based on the CTOR flag
-	TypeHandle type = Types::reflection.Method;
+	TypeHandle type = aves->aves.reflection.Method;
 	if ((Overload_GetFlags(overload) & MethodFlags::CTOR) == MethodFlags::CTOR)
-		type = Types::reflection.Constructor;
+		type = aves->aves.reflection.Constructor;
 
 	// Leave Method/Constructor on stack
 	CHECKED(GC_Construct(thread, type, 1, nullptr));
@@ -148,7 +156,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Overload_getCurrentOverload)
 	//  (top) index:  Int
 	// Let's call new Overload(handle, method, index), and
 	// return the result!
-	CHECKED(GC_Construct(thread, Types::reflection.Overload, 3, nullptr));
+	CHECKED(GC_Construct(thread, aves->aves.reflection.Overload, 3, nullptr));
 }
 END_NATIVE_FUNCTION
 
@@ -163,11 +171,13 @@ AVES_API void CDECL aves_reflection_Parameter_init(TypeHandle type)
 AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Parameter_new)
 {
 	// new(overload, index)
-	if (args[1].type != Types::reflection.Overload)
+	Aves *aves = Aves::Get(thread);
+
+	if (args[1].type != aves->aves.reflection.Overload)
 	{
 		VM_PushNull(thread); // message
 		VM_PushString(thread, strings::overload); // paramName
-		return VM_ThrowErrorOfType(thread, Types::ArgumentError, 2);
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentError, 2);
 	}
 	OverloadInst *ovl = args[1].Get<OverloadInst>();
 
@@ -180,7 +190,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Parameter_new)
 	if (!found)
 	{
 		VM_PushString(thread, strings::index);
-		return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 1);
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentRangeError, 1);
 	}
 
 	inst->index = (int32_t)args[2].v.integer;

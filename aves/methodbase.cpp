@@ -1,5 +1,8 @@
 #include "aves_methodbase.h"
+#include "aves_state.h"
 #include <stddef.h>
+
+using namespace aves;
 
 AVES_API void CDECL aves_reflection_MethodBase_init(TypeHandle type)
 {
@@ -11,12 +14,13 @@ AVES_API void CDECL aves_reflection_MethodBase_init(TypeHandle type)
 AVES_API NATIVE_FUNCTION(aves_reflection_MethodBase_new)
 {
 	// new(handle)
+	Aves *aves = Aves::Get(thread);
 
-	if (args[1].type != Types::reflection.NativeHandle)
+	if (args[1].type != aves->aves.reflection.NativeHandle)
 	{
 		VM_PushNull(thread); // message
 		VM_PushString(thread, strings::handle); // paramName
-		return VM_ThrowErrorOfType(thread, Types::ArgumentError, 2);
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentError, 2);
 	}
 
 	MethodBaseInst *inst = THISV.Get<MethodBaseInst>();
@@ -26,10 +30,12 @@ AVES_API NATIVE_FUNCTION(aves_reflection_MethodBase_new)
 
 AVES_API NATIVE_FUNCTION(aves_reflection_MethodBase_get_accessLevel)
 {
+	Aves *aves = Aves::Get(thread);
+
 	MethodBaseInst *inst = THISV.Get<MethodBaseInst>();
 
 	Value access;
-	access.type = Types::reflection.AccessLevel;
+	access.type = aves->aves.reflection.AccessLevel;
 	access.v.integer = (int)Member_GetAccessLevel(inst->method);
 	VM_Push(thread, &access);
 
@@ -38,10 +44,12 @@ AVES_API NATIVE_FUNCTION(aves_reflection_MethodBase_get_accessLevel)
 
 AVES_API NATIVE_FUNCTION(aves_reflection_MethodBase_get_handle)
 {
+	Aves *aves = Aves::Get(thread);
+
 	MethodBaseInst *inst = THISV.Get<MethodBaseInst>();
 
 	Value handle;
-	handle.type = Types::reflection.NativeHandle;
+	handle.type = aves->aves.reflection.NativeHandle;
 	handle.v.instance = (uint8_t*)inst->method;
 
 	VM_Push(thread, &handle);
@@ -125,12 +133,14 @@ AVES_API NATIVE_FUNCTION(aves_reflection_MethodBase_get_overloadCount)
 
 AVES_API NATIVE_FUNCTION(aves_reflection_MethodBase_getOverloadHandle)
 {
+	Aves *aves = Aves::Get(thread);
+
 	// getOverloadHandle(index is Int)
 	MethodBaseInst *inst = THISV.Get<MethodBaseInst>();
 	int32_t index = (int32_t)args[1].v.integer;
 
 	Value handle;
-	handle.type = Types::reflection.NativeHandle;
+	handle.type = aves->aves.reflection.NativeHandle;
 	handle.v.instance = (uint8_t*)Method_GetOverload(inst->method, index);
 	VM_Push(thread, &handle);
 
@@ -162,17 +172,19 @@ END_NATIVE_FUNCTION
 
 AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Method_get_baseMethod)
 {
+	Aves *aves = Aves::Get(thread);
+
 	MethodBaseInst *inst = THISV.Get<MethodBaseInst>();
 
 	MethodHandle baseMethod = Method_GetBaseMethod(inst->method);
 	if (baseMethod != nullptr)
 	{
 		Value handle;
-		handle.type = Types::reflection.NativeHandle;
+		handle.type = aves->aves.reflection.NativeHandle;
 		handle.v.instance = (uint8_t*)baseMethod;
 		VM_Push(thread, &handle);
 
-		CHECKED(GC_Construct(thread, Types::reflection.Method, 1, nullptr));
+		CHECKED(GC_Construct(thread, aves->aves.reflection.Method, 1, nullptr));
 	}
 	else
 		VM_PushNull(thread);

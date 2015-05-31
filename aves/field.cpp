@@ -1,5 +1,8 @@
 #include "aves_field.h"
+#include "aves_state.h"
 #include <stddef.h>
+
+using namespace aves;
 
 AVES_API void CDECL aves_reflection_Field_init(TypeHandle type)
 {
@@ -11,12 +14,13 @@ AVES_API void CDECL aves_reflection_Field_init(TypeHandle type)
 AVES_API NATIVE_FUNCTION(aves_reflection_Field_new)
 {
 	// new(handle)
+	Aves *aves = Aves::Get(thread);
 
-	if (args[1].type != Types::reflection.NativeHandle)
+	if (args[1].type != aves->aves.reflection.NativeHandle)
 	{
 		VM_PushNull(thread); // message
 		VM_PushString(thread, strings::handle); // paramName
-		return VM_ThrowErrorOfType(thread, Types::ArgumentError, 2);
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentError, 2);
 	}
 
 	FieldInst *inst = THISV.Get<FieldInst>();
@@ -26,10 +30,12 @@ AVES_API NATIVE_FUNCTION(aves_reflection_Field_new)
 
 AVES_API NATIVE_FUNCTION(aves_reflection_Field_get_accessLevel)
 {
+	Aves *aves = Aves::Get(thread);
+
 	FieldInst *inst = THISV.Get<FieldInst>();
 
 	Value access;
-	access.type = Types::reflection.AccessLevel;
+	access.type = aves->aves.reflection.AccessLevel;
 	access.v.integer = (int)Member_GetAccessLevel(inst->field);
 	VM_Push(thread, &access);
 
@@ -38,10 +44,12 @@ AVES_API NATIVE_FUNCTION(aves_reflection_Field_get_accessLevel)
 
 AVES_API NATIVE_FUNCTION(aves_reflection_Field_get_handle)
 {
+	Aves *aves = Aves::Get(thread);
+
 	FieldInst *inst = THISV.Get<FieldInst>();
 
 	Value handleValue;
-	handleValue.type = Types::reflection.NativeHandle;
+	handleValue.type = aves->aves.reflection.NativeHandle;
 	handleValue.v.instance = (uint8_t*)inst->field;
 
 	VM_Push(thread, &handleValue);

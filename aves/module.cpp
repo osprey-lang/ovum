@@ -1,6 +1,9 @@
 #include "aves_module.h"
 #include "aves_type.h"
+#include "aves_state.h"
 #include <stddef.h>
+
+using namespace aves;
 
 AVES_API void CDECL aves_reflection_Module_init(TypeHandle type)
 {
@@ -12,11 +15,13 @@ AVES_API void CDECL aves_reflection_Module_init(TypeHandle type)
 
 int GetMemberSearchFlags(ThreadHandle thread, Value *arg, ModuleMemberFlags *result)
 {
-	if (arg->type != Types::reflection.MemberSearchFlags)
+	Aves *aves = Aves::Get(thread);
+
+	if (arg->type != aves->aves.reflection.MemberSearchFlags)
 	{
 		VM_PushNull(thread); // message
 		VM_PushString(thread, strings::flags); // paramName
-		int r = GC_Construct(thread, Types::ArgumentError, 2, nullptr);
+		int r = GC_Construct(thread, aves->aves.ArgumentError, 2, nullptr);
 		if (r == OVUM_SUCCESS)
 			r = VM_Throw(thread);
 		return r;
@@ -65,6 +70,8 @@ bool GetSingleMember(ModuleHandle module, String *name, ModuleMemberFlags access
 
 int ResultToMember(ThreadHandle thread, Value *module, GlobalMember *member)
 {
+	Aves *aves = Aves::Get(thread);
+
 	int r = OVUM_SUCCESS;
 
 	switch (member->flags & ModuleMemberFlags::KIND)
@@ -80,10 +87,10 @@ int ResultToMember(ThreadHandle thread, Value *module, GlobalMember *member)
 	case ModuleMemberFlags::FUNCTION:
 		{
 			Value handle;
-			handle.type = Types::reflection.NativeHandle;
+			handle.type = aves->aves.reflection.NativeHandle;
 			handle.v.instance = (uint8_t*)member->function;
 			VM_Push(thread, &handle);
-			r = GC_Construct(thread, Types::reflection.Method, 1, nullptr);
+			r = GC_Construct(thread, aves->aves.reflection.Method, 1, nullptr);
 		}
 		break;
 	case ModuleMemberFlags::CONSTANT:
@@ -92,7 +99,7 @@ int ResultToMember(ThreadHandle thread, Value *module, GlobalMember *member)
 			VM_PushBool(thread, (member->flags & ModuleMemberFlags::INTERNAL) == ModuleMemberFlags::INTERNAL);
 			VM_PushString(thread, member->name);
 			VM_Push(thread, &member->constant);
-			r = GC_Construct(thread, Types::reflection.GlobalConstant, 4, nullptr);
+			r = GC_Construct(thread, aves->aves.reflection.GlobalConstant, 4, nullptr);
 		}
 		break;
 	default:
@@ -140,13 +147,15 @@ __retStatus:
 
 AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Module_new)
 {
+	Aves *aves = Aves::Get(thread);
+
 	// new(handle)
 
-	if (args[1].type != Types::reflection.NativeHandle)
+	if (args[1].type != aves->aves.reflection.NativeHandle)
 	{
 		VM_PushNull(thread); // message
 		VM_PushString(thread, strings::handle); // paramName
-		CHECKED(GC_Construct(thread, Types::ArgumentError, 2, nullptr));
+		CHECKED(GC_Construct(thread, aves->aves.ArgumentError, 2, nullptr));
 		return VM_Throw(thread);
 	}
 
@@ -157,10 +166,12 @@ END_NATIVE_FUNCTION
 
 AVES_API NATIVE_FUNCTION(aves_reflection_Module_get_handle)
 {
+	Aves *aves = Aves::Get(thread);
+
 	ModuleInst *inst = THISV.Get<ModuleInst>();
 
 	Value handle;
-	handle.type = Types::reflection.NativeHandle;
+	handle.type = aves->aves.reflection.NativeHandle;
 	handle.v.instance = (uint8_t*)inst->module;
 	VM_Push(thread, &handle);
 
@@ -176,6 +187,8 @@ AVES_API NATIVE_FUNCTION(aves_reflection_Module_get_name)
 
 AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Module_get_version)
 {
+	Aves *aves = Aves::Get(thread);
+
 	ModuleInst *inst = THISV.Get<ModuleInst>();
 
 	if (IS_NULL(inst->version))
@@ -186,7 +199,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Module_get_version)
 		VM_PushInt(thread, version.minor);
 		VM_PushInt(thread, version.build);
 		VM_PushInt(thread, version.revision);
-		CHECKED(GC_Construct(thread, Types::Version, 4, &inst->version));
+		CHECKED(GC_Construct(thread, aves->aves.Version, 4, &inst->version));
 	}
 
 	VM_Push(thread, &inst->version);
@@ -226,6 +239,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Module_getType)
 		VM_PushNull(thread);
 }
 END_NATIVE_FUNCTION
+
 AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Module_getTypes)
 {
 	// getTypes(flags)
@@ -258,6 +272,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Module_getFunction)
 		VM_PushNull(thread);
 }
 END_NATIVE_FUNCTION
+
 AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Module_getFunctions)
 {
 	// getFunctions(flags)
@@ -290,6 +305,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Module_getGlobalConstant)
 		VM_PushNull(thread);
 }
 END_NATIVE_FUNCTION
+
 AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Module_getGlobalConstants)
 {
 	// getGlobalConstants(flags)
@@ -322,6 +338,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Module_getMember)
 		VM_PushNull(thread);
 }
 END_NATIVE_FUNCTION
+
 AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Module_getMembers)
 {
 	// getMembers(flags)
@@ -337,6 +354,8 @@ END_NATIVE_FUNCTION
 
 AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Module_getCurrentModule)
 {
+	Aves *aves = Aves::Get(thread);
+
 	// Get the overload of the previous stack frame
 	OverloadHandle overload = VM_GetExecutingOverload(thread, 1);
 	if (overload == nullptr)
@@ -350,16 +369,18 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Module_getCurrentModule)
 
 	// Module's constructor takes a handle
 	Value handle;
-	handle.type = Types::reflection.NativeHandle;
+	handle.type = aves->aves.reflection.NativeHandle;
 	handle.v.instance = (uint8_t*)module;
 	VM_Push(thread, &handle);
 
-	CHECKED(GC_Construct(thread, Types::reflection.Module, 1, nullptr));
+	CHECKED(GC_Construct(thread, aves->aves.reflection.Module, 1, nullptr));
 }
 END_NATIVE_FUNCTION
 
 AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Module_find)
 {
+	Aves *aves = Aves::Get(thread);
+
 	// find(name is String, version is Version|null)
 
 	PinnedAlias<String> name(args + 0);
@@ -393,10 +414,10 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Module_find)
 	if (result)
 	{
 		Value handle;
-		handle.type = Types::reflection.NativeHandle;
+		handle.type = aves->aves.reflection.NativeHandle;
 		handle.v.instance = (uint8_t*)result;
 		VM_Push(thread, &handle);
-		CHECKED(GC_Construct(thread, Types::reflection.Module, 1, nullptr));
+		CHECKED(GC_Construct(thread, aves->aves.reflection.Module, 1, nullptr));
 	}
 	else
 		VM_PushNull(thread);

@@ -1,6 +1,9 @@
 #include "aves_list.h"
+#include "aves_state.h"
 #include <cstddef>
 #include <cassert>
+
+using namespace aves;
 
 AVES_API void CDECL aves_List_init(TypeHandle type)
 {
@@ -11,6 +14,8 @@ AVES_API void CDECL aves_List_init(TypeHandle type)
 
 int GetIndex(ThreadHandle thread, ListInst *list, Value indexValue, bool canEqualLength, int32_t &result)
 {
+	Aves *aves = Aves::Get(thread);
+
 	int r = IntFromValue(thread, &indexValue);
 	if (r != OVUM_SUCCESS) return r;
 	int64_t index = indexValue.v.integer;
@@ -20,7 +25,7 @@ int GetIndex(ThreadHandle thread, ListInst *list, Value indexValue, bool canEqua
 	if (index < 0 || (canEqualLength ? index > list->length : index >= list->length))
 	{
 		VM_PushString(thread, strings::index);
-		return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 1);
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentRangeError, 1);
 	}
 
 	result = (int32_t)index;
@@ -31,14 +36,17 @@ AVES_API NATIVE_FUNCTION(aves_List_new)
 {
 	return InitListInstance(thread, THISV.v.list, 0);
 }
+
 AVES_API BEGIN_NATIVE_FUNCTION(aves_List_newCap)
 {
+	Aves *aves = Aves::Get(thread);
+
 	CHECKED(IntFromValue(thread, args + 1));
 	int64_t capacity = args[1].v.integer;
 	if (capacity < 0 || capacity > INT32_MAX)
 	{
 		VM_PushString(thread, strings::capacity);
-		return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 1);
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentRangeError, 1);
 	}
 
 	CHECKED(InitListInstance(thread, THISV.v.list, (int32_t)capacity));
@@ -56,14 +64,17 @@ AVES_API NATIVE_FUNCTION(aves_List_get_capacity)
 	VM_PushInt(thread, THISV.v.list->capacity);
 	RETURN_SUCCESS;
 }
+
 AVES_API BEGIN_NATIVE_FUNCTION(aves_List_set_capacity)
 {
+	Aves *aves = Aves::Get(thread);
+
 	CHECKED(IntFromValue(thread, args + 1));
 	int64_t capacity = args[1].v.integer;
 	if (capacity < 0 || capacity > INT32_MAX)
 	{
 		VM_PushString(thread, strings::capacity);
-		return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 1);
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentRangeError, 1);
 	}
 
 	PinnedAlias<ListInst> list(THISP);
@@ -88,6 +99,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_List_get_item)
 	RETURN_SUCCESS;
 }
 END_NATIVE_FUNCTION
+
 AVES_API BEGIN_NATIVE_FUNCTION(aves_List_set_item)
 {
 	ListInst *list = THISV.v.list;
@@ -109,6 +121,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_List_add)
 	list->version++;
 }
 END_NATIVE_FUNCTION
+
 AVES_API BEGIN_NATIVE_FUNCTION(aves_List_insert)
 {
 	PinnedAlias<ListInst> list(THISP);
@@ -126,6 +139,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_List_insert)
 	list->version++;
 }
 END_NATIVE_FUNCTION
+
 AVES_API BEGIN_NATIVE_FUNCTION(aves_List_removeAt)
 {
 	ListInst *list = THISV.v.list;
@@ -141,6 +155,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_List_removeAt)
 	list->version++;
 }
 END_NATIVE_FUNCTION
+
 AVES_API NATIVE_FUNCTION(aves_List_clear)
 {
 	ListInst *list = THISV.v.list;
@@ -150,6 +165,7 @@ AVES_API NATIVE_FUNCTION(aves_List_clear)
 	list->version++;
 	RETURN_SUCCESS;
 }
+
 AVES_API BEGIN_NATIVE_FUNCTION(aves_List_slice1)
 {
 	// slice(start)
@@ -167,6 +183,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_List_slice1)
 	VM_Push(thread, output);
 }
 END_NATIVE_FUNCTION
+
 AVES_API BEGIN_NATIVE_FUNCTION(aves_List_slice2)
 {
 	// slice(start inclusive, end exclusive)
@@ -185,6 +202,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_List_slice2)
 	VM_Push(thread, output);
 }
 END_NATIVE_FUNCTION
+
 AVES_API NATIVE_FUNCTION(aves_List_reverse)
 {
 	// Reverse in-place
@@ -222,10 +240,12 @@ int EnsureMinCapacity(ThreadHandle thread, ListInst *list, const int32_t capacit
 
 int SetListCapacity(ThreadHandle thread, ListInst *list, const int32_t capacity)
 {
+	Aves *aves = Aves::Get(thread);
+
 	if (capacity < list->length)
 	{
 		VM_PushString(thread, strings::capacity);
-		return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 1);
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentRangeError, 1);
 	}
 
 	Value *newValues;
@@ -242,13 +262,15 @@ int SetListCapacity(ThreadHandle thread, ListInst *list, const int32_t capacity)
 
 int SliceList(ThreadHandle thread, ListInst *list, int32_t startIndex, int32_t endIndex, Value *output)
 {
+	Aves *aves = Aves::Get(thread);
+
 	int __status;
 
 	if (endIndex < startIndex)
 	{
 		VM_PushNull(thread); // paramName
 		VM_PushString(thread, error_strings::EndIndexLessThanStart); // message
-		return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 2);
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentRangeError, 2);
 	}
 
 	int32_t sliceLength = endIndex - startIndex;

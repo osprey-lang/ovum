@@ -15,6 +15,15 @@
 // Ovum
 #include "ov_vm.h"
 
+// Forward declarations
+
+namespace aves
+{
+	class Aves;
+}
+
+// OS-specific headers
+
 #if OVUM_WINDOWS
 # include "windows/windows.h"
 #else

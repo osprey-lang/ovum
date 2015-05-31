@@ -1,7 +1,8 @@
 #include "aves_property.h"
+#include "aves_state.h"
 #include <stddef.h>
 
-#define _P(val)     reinterpret_cast<PropertyInst*>((val).instance)
+using namespace aves;
 
 AVES_API void CDECL aves_reflection_Property_init(TypeHandle type)
 {
@@ -13,12 +14,13 @@ AVES_API void CDECL aves_reflection_Property_init(TypeHandle type)
 AVES_API NATIVE_FUNCTION(aves_reflection_Property_new)
 {
 	// new(handle)
+	Aves *aves = Aves::Get(thread);
 
-	if (args[1].type != Types::reflection.NativeHandle)
+	if (args[1].type != aves->aves.reflection.NativeHandle)
 	{
 		VM_PushNull(thread); // message
 		VM_PushString(thread, strings::handle); // paramName
-		return VM_ThrowErrorOfType(thread, Types::ArgumentError, 2);
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentError, 2);
 	}
 
 	PropertyInst *inst = THISV.Get<PropertyInst>();
@@ -28,10 +30,12 @@ AVES_API NATIVE_FUNCTION(aves_reflection_Property_new)
 
 AVES_API NATIVE_FUNCTION(aves_reflection_Property_get_accessLevel)
 {
+	Aves *aves = Aves::Get(thread);
+
 	PropertyInst *inst = THISV.Get<PropertyInst>();
 
 	Value access;
-	access.type = Types::reflection.AccessLevel;
+	access.type = aves->aves.reflection.AccessLevel;
 	access.v.integer = (int)Member_GetAccessLevel(inst->property);
 	VM_Push(thread, &access);
 
@@ -40,10 +44,12 @@ AVES_API NATIVE_FUNCTION(aves_reflection_Property_get_accessLevel)
 
 AVES_API NATIVE_FUNCTION(aves_reflection_Property_get_handle)
 {
+	Aves *aves = Aves::Get(thread);
+
 	PropertyInst *inst = THISV.Get<PropertyInst>();
 
 	Value handleValue;
-	handleValue.type = Types::reflection.NativeHandle;
+	handleValue.type = aves->aves.reflection.NativeHandle;
 	handleValue.v.instance = (uint8_t*)inst->property;
 
 	VM_Push(thread, &handleValue);
@@ -113,6 +119,8 @@ AVES_API NATIVE_FUNCTION(aves_reflection_Property_get_canWrite)
 
 AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Property_get_getterMethod)
 {
+	Aves *aves = Aves::Get(thread);
+
 	PropertyInst *inst = THISV.Get<PropertyInst>();
 
 	MethodHandle getter = Property_GetGetter(inst->property);
@@ -123,16 +131,18 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Property_get_getterMethod)
 	}
 
 	Value handle;
-	handle.type = Types::reflection.NativeHandle;
+	handle.type = aves->aves.reflection.NativeHandle;
 	handle.v.instance = (uint8_t*)getter;
 	VM_Push(thread, &handle);
 
-	CHECKED(GC_Construct(thread, Types::reflection.Method, 1, nullptr));
+	CHECKED(GC_Construct(thread, aves->aves.reflection.Method, 1, nullptr));
 }
 END_NATIVE_FUNCTION
 
 AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Property_get_setterMethod)
 {
+	Aves *aves = Aves::Get(thread);
+
 	PropertyInst *inst = THISV.Get<PropertyInst>();
 
 	MethodHandle setter = Property_GetSetter(inst->property);
@@ -143,10 +153,10 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Property_get_setterMethod)
 	}
 
 	Value handle;
-	handle.type = Types::reflection.NativeHandle;
+	handle.type = aves->aves.reflection.NativeHandle;
 	handle.v.instance = (uint8_t*)setter;
 	VM_Push(thread, &handle);
 
-	CHECKED(GC_Construct(thread, Types::reflection.Method, 1, nullptr));
+	CHECKED(GC_Construct(thread, aves->aves.reflection.Method, 1, nullptr));
 }
 END_NATIVE_FUNCTION

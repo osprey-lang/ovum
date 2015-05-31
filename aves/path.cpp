@@ -1,8 +1,11 @@
 #include "io_path.h"
 #include "aves_io.h"
+#include "aves_state.h"
 #include "ov_string.h"
 #include <memory>
 #include <cassert>
+
+using namespace aves;
 
 LitString<1> Path::DirSeparatorString = { 1, 0, StringFlags::STATIC, Path::DirSeparator,0 };
 
@@ -119,6 +122,8 @@ int32_t Path::GetRootLength(String *path)
 
 int Path::ValidatePath(ThreadHandle thread, String *path, bool checkWildcards)
 {
+	Aves *aves = Aves::Get(thread);
+
 	bool error = false;
 
 	const uchar *chp = &path->firstChar;
@@ -143,7 +148,7 @@ int Path::ValidatePath(ThreadHandle thread, String *path, bool checkWildcards)
 	{
 		VM_PushNull(thread); // message, use default
 		VM_PushString(thread, strings::path); // paramName
-		return VM_ThrowErrorOfType(thread, Types::ArgumentError, 2);
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentError, 2);
 	}
 
 	RETURN_SUCCESS;

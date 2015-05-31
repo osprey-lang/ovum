@@ -112,6 +112,7 @@
     <ClInclude Include="aves_real.h" />
     <ClInclude Include="aves_set.h" />
     <ClInclude Include="aves_shared_strings.h" />
+    <ClInclude Include="aves_state.h" />
     <ClInclude Include="aves_string.h" />
     <ClInclude Include="aves_stringbuffer.h" />
     <ClInclude Include="aves_type.h" />
@@ -138,6 +139,7 @@
     <ClCompile Include="nativehandle.cpp" />
     <ClCompile Include="overload.cpp" />
     <ClCompile Include="property.cpp" />
+    <ClCompile Include="state.cpp" />
     <ClCompile Include="textreader.cpp" />
     <ClCompile Include="windows\dllmain.cpp">
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</CompileAsManaged>

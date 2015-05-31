@@ -1,7 +1,10 @@
 #include "aves_char.h"
 #include "aves_string.h"
+#include "aves_state.h"
 #include "ov_string.h"
 #include "ov_stringbuffer.h"
+
+using namespace aves;
 
 LitString<2> Char::ToLitString(const wuchar ch)
 {
@@ -37,6 +40,8 @@ AVES_API NATIVE_FUNCTION(aves_Char_get_length)
 
 AVES_API NATIVE_FUNCTION(aves_Char_get_category)
 {
+	Aves *aves = Aves::Get(thread);
+
 	wuchar ch = Char::FromValue(THISP);
 
 	UnicodeCategory cat = UC_GetCategoryW(ch);
@@ -45,7 +50,7 @@ AVES_API NATIVE_FUNCTION(aves_Char_get_category)
 	// the values of the Osprey type, so we need to convert!
 
 	Value catValue;
-	catValue.type = Types::UnicodeCategory;
+	catValue.type = aves->aves.UnicodeCategory;
 	catValue.v.integer = unicode::OvumCategoryToAves(cat);
 
 	VM_Push(thread, &catValue);
@@ -54,10 +59,12 @@ AVES_API NATIVE_FUNCTION(aves_Char_get_category)
 
 AVES_API NATIVE_FUNCTION(aves_Char_toUpper)
 {
+	Aves *aves = Aves::Get(thread);
+
 	wuchar ch = Char::FromValue(THISP);
 
 	Value upper;
-	upper.type = Types::Char;
+	upper.type = aves->aves.Char;
 	upper.v.integer = (int32_t)UC_GetCaseMapW(ch).upper;
 
 	VM_Push(thread, &upper);
@@ -65,10 +72,12 @@ AVES_API NATIVE_FUNCTION(aves_Char_toUpper)
 }
 AVES_API NATIVE_FUNCTION(aves_Char_toLower)
 {
+	Aves *aves = Aves::Get(thread);
+
 	wuchar ch = Char::FromValue(THISP);
 
 	Value lower;
-	lower.type = Types::Char;
+	lower.type = aves->aves.Char;
 	lower.v.integer = (int32_t)UC_GetCaseMapW(ch).lower;
 
 	VM_Push(thread, &lower);
@@ -98,17 +107,19 @@ END_NATIVE_FUNCTION
 
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Char_fromCodepoint)
 {
+	Aves *aves = Aves::Get(thread);
+
 	CHECKED(IntFromValue(thread, args + 0));
 
 	int64_t cp = args[0].v.integer;
 	if (cp < 0 || cp > 0x10FFFF)
 	{
 		VM_PushString(thread, strings::cp);
-		return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 1);
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentRangeError, 1);
 	}
 
 	Value character;
-	character.type = Types::Char;
+	character.type = aves->aves.Char;
 	character.v.integer = cp;
 	VM_Push(thread, &character);
 }
@@ -116,10 +127,12 @@ END_NATIVE_FUNCTION
 
 AVES_API NATIVE_FUNCTION(aves_Char_opEquals)
 {
+	Aves *aves = Aves::Get(thread);
+
 	bool eq;
-	if (args[1].type == Types::Char)
+	if (args[1].type == aves->aves.Char)
 		eq = args[0].v.integer == args[1].v.integer;
-	else if (args[1].type == Types::String)
+	else if (args[1].type == aves->aves.String)
 	{
 		LitString<2> left = Char::ToLitString((wuchar)args[0].v.integer);
 		eq = String_Equals(left.AsString(), args[1].v.string);
@@ -132,11 +145,13 @@ AVES_API NATIVE_FUNCTION(aves_Char_opEquals)
 }
 AVES_API NATIVE_FUNCTION(aves_Char_opCompare)
 {
+	Aves *aves = Aves::Get(thread);
+
 	int result;
 
-	if (args[1].type == Types::Char)
+	if (args[1].type == aves->aves.Char)
 		result = (int32_t)args[0].v.integer - (int32_t)args[1].v.integer;
-	else if (args[1].type == Types::String)
+	else if (args[1].type == aves->aves.String)
 	{
 		LitString<2> left = Char::ToLitString((wuchar)args[0].v.integer);
 		result = String_Compare(left.AsString(), args[1].v.string);
@@ -149,6 +164,8 @@ AVES_API NATIVE_FUNCTION(aves_Char_opCompare)
 }
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Char_opMultiply)
 {
+	Aves *aves = Aves::Get(thread);
+
 	CHECKED(IntFromValue(thread, args + 1));
 
 	int64_t times = args[1].v.integer;
@@ -165,7 +182,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Char_opMultiply)
 	if (length > INT32_MAX)
 	{
 		VM_PushString(thread, strings::times);
-		return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 1);
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentRangeError, 1);
 	}
 
 	StringBuffer buf;
