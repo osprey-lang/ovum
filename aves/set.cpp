@@ -1,5 +1,8 @@
 #include "aves_set.h"
+#include "aves_state.h"
 #include <cstddef>
+
+using namespace aves;
 
 #define U64_TO_HASH(value)  ((int32_t)(value) ^ (int32_t)((value) >> 32))
 
@@ -58,12 +61,14 @@ int ResizeSet(ThreadHandle thread, SetInst *set)
 
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Set_new)
 {
+	Aves *aves = Aves::Get(thread);
+
 	SetInst *set = THISV.Get<SetInst>();
 	int64_t capacity = args[1].v.integer;
 	if (capacity < 0 || capacity > INT32_MAX)
 	{
 		VM_PushString(thread, strings::capacity);
-		return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 1);
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentRangeError, 1);
 	}
 
 	if (capacity > 0)
@@ -93,6 +98,7 @@ AVES_API NATIVE_FUNCTION(aves_Set_clear)
 	set->version++;
 	RETURN_SUCCESS;
 }
+
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Set_containsInternal)
 {
 	// Arguments: (item, hash is Int|UInt)
@@ -124,6 +130,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Set_containsInternal)
 	VM_PushBool(thread, false);
 }
 END_NATIVE_FUNCTION
+
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Set_addInternal)
 {
 	// Arguments: (item, hash is Int|UInt)
@@ -178,6 +185,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Set_addInternal)
 	VM_PushBool(thread, true); // Added new
 }
 END_NATIVE_FUNCTION
+
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Set_removeInternal)
 {
 	// Arguments: (item, hash is Int|UInt)
@@ -231,12 +239,14 @@ AVES_API NATIVE_FUNCTION(aves_Set_get_version)
 	VM_PushInt(thread, set->version);
 	RETURN_SUCCESS;
 }
+
 AVES_API NATIVE_FUNCTION(aves_Set_get_entryCount)
 {
 	SetInst *set = THISV.Get<SetInst>();
 	VM_PushInt(thread, set->count);
 	RETURN_SUCCESS;
 }
+
 AVES_API NATIVE_FUNCTION(aves_Set_hasEntryAt)
 {
 	SetInst *set = THISV.Get<SetInst>();
@@ -244,6 +254,7 @@ AVES_API NATIVE_FUNCTION(aves_Set_hasEntryAt)
 	VM_PushBool(thread, set->entries[index].hashCode >= 0);
 	RETURN_SUCCESS;
 }
+
 AVES_API NATIVE_FUNCTION(aves_Set_getEntryAt)
 {
 	SetInst *set = THISV.Get<SetInst>();

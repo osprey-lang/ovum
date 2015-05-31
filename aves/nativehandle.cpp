@@ -1,8 +1,13 @@
 #include "aves_nativehandle.h"
+#include "aves_state.h"
+
+using namespace aves;
 
 AVES_API NATIVE_FUNCTION(aves_reflection_NativeHandle_opEquals)
 {
-	if (args[1].type == Types::reflection.NativeHandle)
+	Aves *aves = Aves::Get(thread);
+
+	if (args[1].type == aves->aves.reflection.NativeHandle)
 		VM_PushBool(thread, args[0].v.instance == args[1].v.instance);
 	else
 		VM_PushBool(thread, false);

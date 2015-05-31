@@ -1,6 +1,9 @@
 #include <limits.h>
 #include "aves_method.h"
+#include "aves_state.h"
 #include <cstddef>
+
+using namespace aves;
 
 AVES_API void CDECL aves_Method_init(TypeHandle type)
 {
@@ -11,10 +14,12 @@ AVES_API void CDECL aves_Method_init(TypeHandle type)
 
 AVES_API NATIVE_FUNCTION(aves_Method_new)
 {
+	Aves *aves = Aves::Get(thread);
+
 	if (IS_NULL(args[1]))
 	{
 		VM_PushString(thread, strings::value);
-		return VM_ThrowErrorOfType(thread, Types::ArgumentNullError, 1);
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentNullError, 1);
 	}
 
 	MemberHandle invocator = Type_FindMember(args[1].type, strings::_call, THISV.type);
@@ -24,7 +29,7 @@ AVES_API NATIVE_FUNCTION(aves_Method_new)
 	{
 		VM_PushString(thread, error_strings::ValueNotInvokable); // message
 		VM_PushString(thread, strings::value); // paramName
-		return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 2);
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentRangeError, 2);
 	}
 
 	MethodInst *method = THISV.v.method;

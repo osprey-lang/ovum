@@ -1,5 +1,8 @@
 #include "aves_utf8encoding.h"
+#include "aves_state.h"
 #include "ov_unicode.h"
+
+using namespace aves;
 
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Utf8Encoding_getByteCount)
 {
@@ -236,8 +239,10 @@ void Utf8Encoder::Reset()
 
 int Utf8Encoder::BufferOverrunError(ThreadHandle thread)
 {
+	Aves *aves = Aves::Get(thread);
+
 	VM_PushString(thread, error_strings::EncodingBufferOverrun);
-	return VM_ThrowErrorOfType(thread, Types::ArgumentError, 1);
+	return VM_ThrowErrorOfType(thread, aves->aves.ArgumentError, 1);
 }
 
 AVES_API void aves_Utf8Encoder_init(TypeHandle type)

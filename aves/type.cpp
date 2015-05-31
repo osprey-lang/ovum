@@ -1,5 +1,8 @@
 #include "aves_type.h"
+#include "aves_state.h"
 #include <stddef.h>
+
+using namespace aves;
 
 AVES_API void CDECL aves_reflection_Type_init(TypeHandle type)
 {
@@ -10,11 +13,13 @@ AVES_API void CDECL aves_reflection_Type_init(TypeHandle type)
 
 int GetMemberSearchFlags(ThreadHandle thread, Value *arg, MemberSearchFlags *result)
 {
-	if (arg->type != Types::reflection.MemberSearchFlags)
+	Aves *aves = Aves::Get(thread);
+
+	if (arg->type != aves->aves.reflection.MemberSearchFlags)
 	{
 		VM_PushNull(thread); // message
 		VM_PushString(thread, strings::flags); // paramName
-		return VM_ThrowErrorOfType(thread, Types::ArgumentError, 2);
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentError, 2);
 	}
 
 	*result = (MemberSearchFlags)arg->v.integer;
@@ -87,11 +92,13 @@ MemberHandle GetSingleMember(ThreadHandle thread, TypeHandle type,
 
 int HandleToMember(ThreadHandle thread, MemberHandle member)
 {
+	Aves *aves = Aves::Get(thread);
+
 	int r = OVUM_SUCCESS;
 	if (member)
 	{
 		Value handle;
-		handle.type = Types::reflection.NativeHandle;
+		handle.type = aves->aves.reflection.NativeHandle;
 		handle.v.instance = (uint8_t*)member;
 		VM_Push(thread, &handle);
 
@@ -100,15 +107,15 @@ int HandleToMember(ThreadHandle thread, MemberHandle member)
 		{
 		case MemberKind::METHOD:
 			if (Method_IsConstructor(member))
-				type = Types::reflection.Constructor;
+				type = aves->aves.reflection.Constructor;
 			else
-				type = Types::reflection.Method;
+				type = aves->aves.reflection.Method;
 			break;
 		case MemberKind::FIELD:
-			type = Types::reflection.Field;
+			type = aves->aves.reflection.Field;
 			break;
 		case MemberKind::PROPERTY:
-			type = Types::reflection.Property;
+			type = aves->aves.reflection.Property;
 			break;
 		default:
 			return VM_ThrowError(thread);
@@ -157,10 +164,12 @@ __retStatus:
 
 AVES_API NATIVE_FUNCTION(aves_reflection_Type_get_handle)
 {
+	Aves *aves = Aves::Get(thread);
+
 	TypeInst *inst = THISV.Get<TypeInst>();
 
 	Value handle;
-	handle.type = Types::reflection.NativeHandle;
+	handle.type = aves->aves.reflection.NativeHandle;
 	handle.v.instance = (uint8_t*)inst->type;
 	VM_Push(thread, &handle);
 
@@ -177,6 +186,7 @@ AVES_API NATIVE_FUNCTION(aves_reflection_Type_get_f_name)
 		VM_PushString(thread, inst->name);
 	RETURN_SUCCESS;
 }
+
 AVES_API NATIVE_FUNCTION(aves_reflection_Type_set_f_name)
 {
 	TypeInst *inst = THISV.Get<TypeInst>();
@@ -273,13 +283,14 @@ AVES_API NATIVE_FUNCTION(aves_reflection_Type_get_canIterate)
 AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Type_createInstance)
 {
 	// createInstance(arguments is List|null, nonPublic is Boolean)
+	Aves *aves = Aves::Get(thread);
 
 	TypeInst *inst = THISV.Get<TypeInst>();
 
 	MemberHandle ctor = Type_GetMember(inst->type, strings::_new);
 	if (args[2].v.integer == 0 && Member_GetAccessLevel(ctor) != MemberAccess::PUBLIC)
 		// No public constructor, and nonPublic is false
-		return VM_ThrowErrorOfType(thread, Types::InvalidStateError, 0);
+		return VM_ThrowErrorOfType(thread, aves->aves.InvalidStateError, 0);
 
 	// Push arguments
 	uint32_t argCount = 0;
@@ -347,6 +358,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Type_getField)
 	CHECKED(HandleToMember(thread, member));
 }
 END_NATIVE_FUNCTION
+
 AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Type_getFields)
 {
 	// getFields(flags)
@@ -375,6 +387,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Type_getMethod)
 	CHECKED(HandleToMember(thread, member));
 }
 END_NATIVE_FUNCTION
+
 AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Type_getMethods)
 {
 	// getMethods(flags)
@@ -403,6 +416,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Type_getProperty)
 	CHECKED(HandleToMember(thread, member));
 }
 END_NATIVE_FUNCTION
+
 AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Type_getProperties)
 {
 	// getProperties(flags)
@@ -431,6 +445,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Type_getMember)
 	CHECKED(HandleToMember(thread, member));
 }
 END_NATIVE_FUNCTION
+
 AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Type_getMembers)
 {
 	// getMembers(flags)

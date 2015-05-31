@@ -1,7 +1,10 @@
 #include "aves_io.h"
+#include "aves_state.h"
 #ifndef _WIN32
 #include <errno.h>
 #endif
+
+using namespace aves;
 
 namespace io_errors
 {
@@ -19,6 +22,8 @@ namespace io_errors
 
 int io::ThrowIOError(ThreadHandle thread, ErrorCode code, String *pathName)
 {
+	Aves *aves = Aves::Get(thread);
+
 	String *message = nullptr;
 
 	int r = OVUM_SUCCESS;
@@ -28,7 +33,7 @@ int io::ThrowIOError(ThreadHandle thread, ErrorCode code, String *pathName)
 	case ERROR_FILE_NOT_FOUND:
 	case ERROR_PATH_NOT_FOUND:
 		VM_PushString(thread, pathName);
-		r = GC_Construct(thread, Types::FileNotFoundError, 1, nullptr);
+		r = GC_Construct(thread, aves->io.FileNotFoundError, 1, nullptr);
 		goto throwError;
 	case ERROR_ACCESS_DENIED:
 		message = io_errors::AccessDenied;
@@ -59,7 +64,7 @@ int io::ThrowIOError(ThreadHandle thread, ErrorCode code, String *pathName)
 		VM_PushNull(thread);
 	else
 		VM_PushString(thread, message);
-	r = GC_Construct(thread, Types::IOError, 1, nullptr);
+	r = GC_Construct(thread, aves->io.IOError, 1, nullptr);
 throwError:
 	if (r == OVUM_SUCCESS)
 		r = VM_Throw(thread);

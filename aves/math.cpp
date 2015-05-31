@@ -1,17 +1,22 @@
 #include <cmath>
 #include "aves_math.h"
+#include "aves_state.h"
+
+using namespace aves;
 
 #define GET_REAL_VALUE() CHECKED(RealFromValue(thread, args)); double value = args[0].v.real;
 
 AVES_API NATIVE_FUNCTION(aves_math_abs)
 {
+	Aves *aves = Aves::Get(thread);
+
 	TypeHandle type = args[0].type;
 
-	if (type == Types::UInt)
+	if (type == aves->aves.UInt)
 		VM_Push(thread, args + 0);
-	else if (type == Types::Real)
+	else if (type == aves->aves.Real)
 		VM_PushReal(thread, abs(args[0].v.real));
-	else if (type == Types::Int)
+	else if (type == aves->aves.Int)
 	{
 		int64_t integer = args[0].v.integer;
 		if (integer == INT64_MIN)
@@ -76,11 +81,13 @@ END_NATIVE_FUNCTION
 
 AVES_API NATIVE_FUNCTION(aves_math_ceil)
 {
+	Aves *aves = Aves::Get(thread);
+
 	TypeHandle type = args[0].type;
 
-	if (type == Types::Int || type == Types::UInt)
+	if (type == aves->aves.Int || type == aves->aves.UInt)
 		VM_Push(thread, args + 0);
-	else if (type == Types::Real)
+	else if (type == aves->aves.Real)
 		VM_PushReal(thread, ceil(args[0].v.real));
 	else
 		return VM_ThrowTypeError(thread);
@@ -113,11 +120,13 @@ END_NATIVE_FUNCTION
 
 AVES_API NATIVE_FUNCTION(aves_math_floor)
 {
+	Aves *aves = Aves::Get(thread);
+
 	TypeHandle type = args[0].type;
 
-	if (type == Types::Int || type == Types::UInt)
+	if (type == aves->aves.Int || type == aves->aves.UInt)
 		VM_Push(thread, args + 0);
-	else if (type == Types::Real)
+	else if (type == aves->aves.Real)
 		VM_PushReal(thread, floor(args[0].v.real));
 	else
 		return VM_ThrowTypeError(thread);
@@ -155,10 +164,12 @@ END_NATIVE_FUNCTION
 
 AVES_API NATIVE_FUNCTION(aves_math_sign)
 {
+	Aves *aves = Aves::Get(thread);
+
 	Value value = args[0];
-	if (value.type == Types::UInt)
+	if (value.type == aves->aves.UInt)
 		VM_PushInt(thread, value.v.uinteger > 0); // If value.uinteger > 0, then push 1; otherwise, 0!
-	else if (value.type == Types::Int)
+	else if (value.type == aves->aves.Int)
 	{
 		int64_t intValue = value.v.integer;
 		VM_PushInt(thread,
@@ -166,7 +177,7 @@ AVES_API NATIVE_FUNCTION(aves_math_sign)
 			intValue < 0 ? -1 :
 			0);
 	}
-	else if (value.type == Types::Real)
+	else if (value.type == aves->aves.Real)
 	{
 		double realValue = value.v.real;
 		VM_PushInt(thread,

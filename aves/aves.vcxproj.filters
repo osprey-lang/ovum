@@ -156,6 +156,9 @@
     <ClInclude Include="io_textreader.h">
       <Filter>Header Files\io</Filter>
     </ClInclude>
+    <ClInclude Include="aves_state.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="aves.cpp">
@@ -274,6 +277,9 @@
     </ClCompile>
     <ClCompile Include="textreader.cpp">
       <Filter>Source Files\io</Filter>
+    </ClCompile>
+    <ClCompile Include="state.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

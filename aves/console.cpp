@@ -2,7 +2,10 @@
 #include <memory>
 #include "aves_console.h"
 #include "aves_ns.h"
+#include "aves_state.h"
 #include "ov_string.h"
+
+using namespace aves;
 
 LitString<39> ConsoleIOError = LitString<39>::FromCString("An I/O error occurred with the console.");
 
@@ -115,6 +118,8 @@ bool IsAltKeyDown(INPUT_RECORD &ir)
 
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_readKey)
 {
+	Aves *aves = Aves::Get(thread);
+
 	static INPUT_RECORD cachedInputRecord = { };
 
 	INPUT_RECORD ir;
@@ -169,12 +174,12 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_readKey)
 
 	{
 		Value charValue;
-		charValue.type = Types::Char;
+		charValue.type = aves->aves.Char;
 		charValue.v.integer = (uint32_t)ir.Event.KeyEvent.uChar.UnicodeChar;
 		VM_Push(thread, &charValue);
 
 		Value keyCodeValue;
-		keyCodeValue.type = Types::ConsoleKeyCode;
+		keyCodeValue.type = aves->aves.ConsoleKeyCode;
 		keyCodeValue.v.integer = ir.Event.KeyEvent.wVirtualKeyCode;
 		VM_Push(thread, &keyCodeValue);
 
@@ -182,7 +187,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_readKey)
 		VM_PushBool(thread, (state & SHIFT_PRESSED) != 0);
 		VM_PushBool(thread, (state & (LEFT_ALT_PRESSED | RIGHT_ALT_PRESSED)) != 0);
 		VM_PushBool(thread, (state & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED)) != 0);
-		CHECKED(GC_Construct(thread, Types::ConsoleKey, 5, nullptr));
+		CHECKED(GC_Construct(thread, aves->aves.ConsoleKey, 5, nullptr));
 
 		if (argc == 0 || IsFalse(args + 0))
 		{
@@ -330,18 +335,22 @@ AVES_API NATIVE_FUNCTION(aves_Console_clear)
 
 int AssertIsConsoleColor(ThreadHandle thread, Value *arg)
 {
-	if (arg->type != Types::ConsoleColor)
+	Aves *aves = Aves::Get(thread);
+
+	if (arg->type != aves->aves.ConsoleColor)
 		return VM_ThrowTypeError(thread);
 	RETURN_SUCCESS;
 }
 
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_get_textColor)
 {
+	Aves *aves = Aves::Get(thread);
+
 	WORD currentAttrs;
 	CHECKED(Console::GetCurrentAttrs(thread, currentAttrs));
 
 	Value result;
-	result.type = Types::ConsoleColor;
+	result.type = aves->aves.ConsoleColor;
 	// Foreground color occupies the lowest 4 bits
 	result.v.integer = currentAttrs & 0x0f;
 	VM_Push(thread, &result);
@@ -361,11 +370,13 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_set_textColor)
 END_NATIVE_FUNCTION
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_get_backColor)
 {
+	Aves *aves = Aves::Get(thread);
+
 	WORD currentAttrs;
 	CHECKED(Console::GetCurrentAttrs(thread, currentAttrs));
 
 	Value result;
-	result.type = Types::ConsoleColor;
+	result.type = aves->aves.ConsoleColor;
 	// Background color occupies bits 4–7
 	result.v.integer = (currentAttrs & 0xf0) >> 4;
 	VM_Push(thread, &result);
@@ -449,13 +460,15 @@ void Console::SetCursorPosition(ThreadHandle thread, SHORT x, SHORT y)
 
 int AssertValidCoord(ThreadHandle thread, Value *v, String *paramName)
 {
+	Aves *aves = Aves::Get(thread);
+
 	int r = IntFromValue(thread, v);
 	if (r == OVUM_SUCCESS)
 	{
 		if (v->v.integer < 0 || v->v.integer > SHRT_MAX)
 		{
 			VM_PushString(thread, paramName);
-			r = VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 1);
+			r = VM_ThrowErrorOfType(thread, aves->aves.ArgumentRangeError, 1);
 		}
 	}
 	return r;
@@ -538,6 +551,8 @@ END_NATIVE_FUNCTION
 
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_setBufferSize)
 {
+	Aves *aves = Aves::Get(thread);
+
 	CHECKED(IntFromValue(thread, args + 0));
 	CHECKED(IntFromValue(thread, args + 1));
 	int64_t width  = args[0].v.integer;
@@ -549,12 +564,12 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_setBufferSize)
 	if (width < csbi.srWindow.Right + 1 || width >= SHRT_MAX)
 	{
 		VM_PushString(thread, strings::width);
-		return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 1);
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentRangeError, 1);
 	}
 	if (height < csbi.srWindow.Bottom + 1 || height >= SHRT_MAX)
 	{
 		VM_PushString(thread, strings::height);
-		return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 1);
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentRangeError, 1);
 	}
 
 	COORD size = { (SHORT)width, (SHORT)height };
@@ -565,6 +580,8 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_setBufferSize)
 END_NATIVE_FUNCTION
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_setWindowSize)
 {
+	Aves *aves = Aves::Get(thread);
+
 	CHECKED(IntFromValue(thread, args + 0));
 	CHECKED(IntFromValue(thread, args + 1));
 	int64_t width64  = args[0].v.integer;
@@ -573,12 +590,12 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_setWindowSize)
 	if (width64 < 0 || width64 > INT32_MAX)
 	{
 		VM_PushString(thread, strings::width);
-		return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 1);
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentRangeError, 1);
 	}
 	if (height64 < 0 || height64 > INT32_MAX)
 	{
 		VM_PushString(thread, strings::height);
-		return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 1);
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentRangeError, 1);
 	}
 
 	int32_t width  = (int32_t)width64;
@@ -597,7 +614,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_setWindowSize)
 		if (csbi.srWindow.Left >= SHRT_MAX - width)
 		{
 			VM_PushString(thread, strings::width);
-			return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 1);
+			return VM_ThrowErrorOfType(thread, aves->aves.ArgumentRangeError, 1);
 		}
 		newBufferSize.X = csbi.srWindow.Left + width;
 		resizeBuffer = true;
@@ -607,7 +624,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_setWindowSize)
 		if (csbi.srWindow.Top >= SHRT_MAX - height)
 		{
 			VM_PushString(thread, strings::height);
-			return VM_ThrowErrorOfType(thread, Types::ArgumentRangeError, 1);
+			return VM_ThrowErrorOfType(thread, aves->aves.ArgumentRangeError, 1);
 		}
 		newBufferSize.Y = csbi.srWindow.Top + height;
 		resizeBuffer = true;

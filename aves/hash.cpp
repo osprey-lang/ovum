@@ -1,7 +1,9 @@
 #include "aves_hash.h"
+#include "aves_state.h"
 #include <cstddef>
 
-#define _H(value)           ((value).common.hash)
+using namespace aves;
+
 #define U64_TO_HASH(value)  ((int32_t)(value) ^ (int32_t)((value) >> 32))
 
 AVES_API void CDECL aves_Hash_init(TypeHandle type)
@@ -117,7 +119,7 @@ AVES_API NATIVE_FUNCTION(aves_Hash_get_entryCount)
 
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Hash_initialize)
 {
-	// Args: (capacity: Int)
+	// initialize(capacity: Int)
 	HashInst *inst = THISV.Get<HashInst>();
 	inst->freeList = -1;
 
@@ -132,7 +134,9 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Hash_initialize)
 END_NATIVE_FUNCTION
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Hash_getItemInternal)
 {
-	// Args: (key: non-null, hash: Int|UInt)
+	// getItemInternal(key: non-null, hash: Int|UInt)
+	Aves *aves = Aves::Get(thread);
+
 	{ Pinned h(THISP);
 		HashInst *inst = THISV.Get<HashInst>();
 
@@ -148,11 +152,14 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Hash_getItemInternal)
 
 	VM_PushString(thread, error_strings::HashKeyNotFound); // message
 	VM_PushString(thread, strings::key); // paramName
-	return VM_ThrowErrorOfType(thread, Types::ArgumentError, 2);
+	return VM_ThrowErrorOfType(thread, aves->aves.ArgumentError, 2);
 }
 END_NATIVE_FUNCTION
+
 AVES_API NATIVE_FUNCTION(aves_Hash_getEntry)
 {
+	Aves *aves = Aves::Get(thread);
+
 	HashInst *inst = THISV.Get<HashInst>();
 
 	int32_t index = (int32_t)args[1].v.integer;
@@ -161,7 +168,7 @@ AVES_API NATIVE_FUNCTION(aves_Hash_getEntry)
 	if (entryPointer->hashCode >= 0)
 	{
 		Value entry;
-		entry.type = Types::HashEntry;
+		entry.type = aves->aves.HashEntry;
 		entry.v.instance = reinterpret_cast<uint8_t*>(entryPointer);
 
 		VM_Push(thread, &entry); // yay
@@ -170,9 +177,12 @@ AVES_API NATIVE_FUNCTION(aves_Hash_getEntry)
 		VM_PushNull(thread);
 	RETURN_SUCCESS;
 }
+
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Hash_insert)
 {
-	// Args: (key: non-null, hash: Int|UInt, value, add: Boolean)
+	// insert(key: non-null, hash: Int|UInt, value, add: Boolean)
+	Aves *aves = Aves::Get(thread);
+
 	Pinned h(THISP);
 	HashInst *inst = THISV.Get<HashInst>();
 
@@ -196,7 +206,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Hash_insert)
 			if (equals)
 			{
 				if (add)
-					return VM_ThrowErrorOfType(thread, Types::DuplicateKeyError, 0);
+					return VM_ThrowErrorOfType(thread, aves->aves.DuplicateKeyError, 0);
 
 				entry->value = args[3];
 				inst->version++;
@@ -236,6 +246,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Hash_insert)
 	inst->version++;
 }
 END_NATIVE_FUNCTION
+
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Hash_hasKeyInternal)
 {
 	// Args: (key: non-null, hash: Int|UInt)
@@ -248,6 +259,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Hash_hasKeyInternal)
 	VM_PushBool(thread, index >= 0);
 }
 END_NATIVE_FUNCTION
+
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Hash_hasValue)
 {
 	// Args: (value)
@@ -270,6 +282,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Hash_hasValue)
 	VM_PushBool(thread, false);
 }
 END_NATIVE_FUNCTION
+
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Hash_tryGetInternal)
 {
 	// tryGetInternal(key: non-null, hash: Int|UInt, ref value)
@@ -289,6 +302,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Hash_tryGetInternal)
 	VM_PushBool(thread, index >= 0);
 }
 END_NATIVE_FUNCTION
+
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Hash_removeInternal)
 {
 	// Args: (key: non-null, hash: Int|UInt)
@@ -336,12 +350,14 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Hash_removeInternal)
 	VM_PushBool(thread, false);
 }
 END_NATIVE_FUNCTION
+
 AVES_API NATIVE_FUNCTION(aves_Hash_pinEntries)
 {
 	HashInst *hash = THISV.Get<HashInst>();
 	GC_PinInst(hash->entries);
 	RETURN_SUCCESS;
 }
+
 AVES_API NATIVE_FUNCTION(aves_Hash_unpinEntries)
 {
 	HashInst *hash = THISV.Get<HashInst>();
@@ -355,18 +371,21 @@ AVES_API NATIVE_FUNCTION(aves_HashEntry_get_hashCode)
 	VM_PushInt(thread, e->hashCode);
 	RETURN_SUCCESS;
 }
+
 AVES_API NATIVE_FUNCTION(aves_HashEntry_get_nextIndex)
 {
 	HashEntry *e = THISV.Get<HashEntry>();
 	VM_PushInt(thread, e->next);
 	RETURN_SUCCESS;
 }
+
 AVES_API NATIVE_FUNCTION(aves_HashEntry_get_key)
 {
 	HashEntry *e = THISV.Get<HashEntry>();
 	VM_Push(thread, &e->key);
 	RETURN_SUCCESS;
 }
+
 AVES_API NATIVE_FUNCTION(aves_HashEntry_get_value)
 {
 	HashEntry *e = THISV.Get<HashEntry>();
