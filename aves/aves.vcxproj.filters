@@ -9,10 +9,6 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
     <Filter Include="Source Files\aves">
       <UniqueIdentifier>{7f84ad72-728b-419c-a460-67516f177827}</UniqueIdentifier>
     </Filter>
@@ -31,17 +27,26 @@
     <Filter Include="Source Files\aves\reflection">
       <UniqueIdentifier>{fbc194d0-0d31-40aa-92d7-5ff5e4949bee}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Windows">
+    <Filter Include="Header Files\os">
+      <UniqueIdentifier>{b5df2f5a-3531-4675-b9bb-c88958cf0b93}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\os\windows">
+      <UniqueIdentifier>{30545b8a-5f2a-49bf-b5f9-be15b84c5ab3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\os">
+      <UniqueIdentifier>{d166184b-d342-4343-9f5b-25427a25c3bd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\os\windows">
       <UniqueIdentifier>{fe639808-8420-43c4-ba42-e9c06a50535f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Windows">
-      <UniqueIdentifier>{30545b8a-5f2a-49bf-b5f9-be15b84c5ab3}</UniqueIdentifier>
+    <Filter Include="Source Files\ext">
+      <UniqueIdentifier>{011bc538-efde-4852-8d27-76df12ce7440}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ext">
+      <UniqueIdentifier>{d8b96132-f133-4937-b0fc-6fc1aab140c1}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="cpp\ext\dtoa.config.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="cpp\aves\uint.h">
       <Filter>Header Files\aves</Filter>
     </ClInclude>
@@ -130,7 +135,7 @@
       <Filter>Header Files\aves\reflection</Filter>
     </ClInclude>
     <ClInclude Include="cpp\os\windows\windows.h">
-      <Filter>Header Files\Windows</Filter>
+      <Filter>Header Files\os\windows</Filter>
     </ClInclude>
     <ClInclude Include="cpp\aves\reflection\nativehandle.h">
       <Filter>Header Files\aves\reflection</Filter>
@@ -159,12 +164,12 @@
     <ClInclude Include="cpp\aves\math.h">
       <Filter>Header Files\aves</Filter>
     </ClInclude>
+    <ClInclude Include="cpp\ext\dtoa.config.h">
+      <Filter>Header Files\ext</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cpp\aves.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="cpp\aves\math.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="cpp\aves\boolean.cpp">
@@ -218,9 +223,6 @@
     <ClCompile Include="cpp\aves\uint.cpp">
       <Filter>Source Files\aves</Filter>
     </ClCompile>
-    <ClCompile Include="cpp\ext\dtoa.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="cpp\io\path.cpp">
       <Filter>Source Files\io</Filter>
     </ClCompile>
@@ -249,10 +251,10 @@
       <Filter>Source Files\aves\reflection</Filter>
     </ClCompile>
     <ClCompile Include="cpp\os\windows\dllmain.cpp">
-      <Filter>Source Files\Windows</Filter>
+      <Filter>Source Files\os\windows</Filter>
     </ClCompile>
     <ClCompile Include="cpp\os\windows\windows.cpp">
-      <Filter>Source Files\Windows</Filter>
+      <Filter>Source Files\os\windows</Filter>
     </ClCompile>
     <ClCompile Include="cpp\aves\reflection\nativehandle.cpp">
       <Filter>Source Files\aves\reflection</Filter>
@@ -279,7 +281,13 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="cpp\io\directory.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\io</Filter>
+    </ClCompile>
+    <ClCompile Include="cpp\aves\math.cpp">
+      <Filter>Source Files\aves</Filter>
+    </ClCompile>
+    <ClCompile Include="cpp\ext\dtoa.c">
+      <Filter>Source Files\ext</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
