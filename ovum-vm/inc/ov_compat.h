@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef VM__COMPAT_H
 #define VM__COMPAT_H
 

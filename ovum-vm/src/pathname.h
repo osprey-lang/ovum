@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef VM__PATHNAME_INTERNAL_H
 #define VM__PATHNAME_INTERNAL_H
 

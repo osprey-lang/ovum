@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef AVES__SHARED_STRINGS_H
 #define AVES__SHARED_STRINGS_H
 

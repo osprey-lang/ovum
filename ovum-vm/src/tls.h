@@ -1,5 +1,3 @@
-#pragma once
-
 // This file contains a platform-independent API implementation
 // for dealing with thread-local storage.
 

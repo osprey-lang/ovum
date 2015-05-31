@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef IO__DIRECTORY_H
 #define IO__DIRECTORY_H
 

@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef VM__INSTRUCTIONS_INTERNAL_H
 #define VM__INSTRUCTIONS_INTERNAL_H
 

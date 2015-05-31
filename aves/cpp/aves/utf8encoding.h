@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef AVES__UTF8ENCODING
 #define AVES__UTF8ENCODING
 

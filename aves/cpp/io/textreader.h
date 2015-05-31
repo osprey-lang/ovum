@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef IO__TEXTREADER_H
 #define IO__TEXTREADER_H
 

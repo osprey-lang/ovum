@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef VM__STRINGBUFFER_INTERNAL_H
 #define VM__STRINGBUFFER_INTERNAL_H
 

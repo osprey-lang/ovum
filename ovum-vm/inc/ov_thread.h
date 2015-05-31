@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef VM__THREAD_H
 #define VM__THREAD_H
 

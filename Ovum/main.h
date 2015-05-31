@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef OVUM__MAIN_H
 #define OVUM__MAIN_H
 

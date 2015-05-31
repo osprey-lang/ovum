@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef VM__VM_OPCODES_H
 #define VM__VM_OPCODES_H
 

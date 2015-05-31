@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef IO__PATH_H
 #define IO__PATH_H
 

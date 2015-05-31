@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef AVES__PROPERTY_H
 #define AVES__PROPERTY_H
 

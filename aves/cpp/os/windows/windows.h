@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef AVES__WINDOWS_H
 #define AVES__WINDOWS_H
 

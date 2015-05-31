@@ -1,5 +1,3 @@
-#pragma once
-
 // This file includes all the internal features of the VM, which are not visible
 // if you just include "ov_vm.h". These are not supposed to be visible to users
 // of the VM API.

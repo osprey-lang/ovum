@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef AVES__STRINGBUFFER_H
 #define AVES__STRINGBUFFER_H
 

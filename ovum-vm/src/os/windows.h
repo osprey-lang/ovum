@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef VM__WINDOWS_H
 #define VM__WINDOWS_H
 

@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef AVES__HELPERS_H
 #define AVES__HELPERS_H
 
