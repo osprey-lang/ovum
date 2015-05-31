@@ -4,7 +4,7 @@
 #define AVES__CHAR_H
 
 #include "aves.h"
-#include "ov_unicode.h"
+#include <ov_unicode.h>
 
 class Char
 {

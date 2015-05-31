@@ -3,7 +3,7 @@
 #include "aves_console.h"
 #include "aves_ns.h"
 #include "aves_state.h"
-#include "ov_string.h"
+#include <ov_string.h>
 
 using namespace aves;
 

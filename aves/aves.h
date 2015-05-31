@@ -13,7 +13,7 @@
 #define AVES_API	extern "C" _AVES_API
 
 // Ovum
-#include "ov_vm.h"
+#include <ov_vm.h>
 
 // Forward declarations
 

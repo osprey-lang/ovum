@@ -4,7 +4,7 @@
 #define AVES__STRING_H
 
 #include "aves.h"
-#include "ov_unicode.h"
+#include <ov_unicode.h>
 
 AVES_API NATIVE_FUNCTION(aves_String_get_item);
 
