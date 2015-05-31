@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef VM__PATHCHAR_H
 #define VM__PATHCHAR_H
 

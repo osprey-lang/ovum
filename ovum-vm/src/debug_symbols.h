@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef VM__DEBUG_SYMBOLS_INTERNAL_H
 #define VM__DEBUG_SYMBOLS_INTERNAL_H
 

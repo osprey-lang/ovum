@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef VM__VALUE_INTERNAL_H
 #define VM__VALUE_INTERNAL_H
 

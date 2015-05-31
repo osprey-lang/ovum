@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef VM__REFSIGNATURE_INTERNAL_H
 #define VM__REFSIGNATURE_INTERNAL_H
 

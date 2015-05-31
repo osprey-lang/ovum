@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef AVES__CHAR_H
 #define AVES__CHAR_H
 

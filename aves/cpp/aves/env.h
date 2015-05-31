@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef AVES__ENV_H
 #define AVES__ENV_H
 

@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef AVES__BUFFER_H
 #define AVES__BUFFER_H
 

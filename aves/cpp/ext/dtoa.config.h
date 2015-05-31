@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef AVES__DTOA_CONFIG_H
 #define AVES__DTOA_CONFIG_H
 

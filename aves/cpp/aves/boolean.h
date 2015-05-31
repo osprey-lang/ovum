@@ -1,5 +1,3 @@
-#pragma once
-
 // Contains the implementation of aves.Boolean
 
 #ifndef AVES__BOOLEAN_H

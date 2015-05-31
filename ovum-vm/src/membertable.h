@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef VM__MEMBERTABLE_INTERNAL_H
 #define VM__MEMBERTABLE_INTERNAL_H
 

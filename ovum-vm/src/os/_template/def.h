@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef VM__OS_DEF_H
 #define VM__OS_DEF_H
 

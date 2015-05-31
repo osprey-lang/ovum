@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef VM__METHODBUILDER_INTERNAL_H
 #define VM__METHODBUILDER_INTERNAL_H
 

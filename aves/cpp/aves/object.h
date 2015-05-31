@@ -1,5 +1,3 @@
-#pragma once
-
 // Contains functions for the Object class, which is the root of the type hierarchy.
 
 #ifndef AVES__OBJECT_H

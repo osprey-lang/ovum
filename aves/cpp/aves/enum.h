@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef AVES__ENUM_H
 #define AVES__ENUM_H
 

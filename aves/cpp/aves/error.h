@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef AVES__ERROR_H
 #define AVES__ERROR_H
 

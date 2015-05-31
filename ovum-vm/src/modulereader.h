@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef VM__MODULEREADER_INTERNAL_H
 #define VM__MODULEREADER_INTERNAL_H
 

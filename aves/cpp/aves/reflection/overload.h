@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef AVES__OVERLOAD_H
 #define AVES__OVERLOAD_H
 

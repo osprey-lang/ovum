@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef VM__STATIC_STRINGS_INTERNAL_H
 #define VM__STATIC_STRINGS_INTERNAL_H
 

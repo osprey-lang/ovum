@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef AVES__HASH_H
 #define AVES__HASH_H
 

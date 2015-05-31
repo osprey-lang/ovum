@@ -1,5 +1,3 @@
-#pragma once
-
 // Contains global functions from the 'aves' namespace,
 // as well as general module initialization stuff.
 

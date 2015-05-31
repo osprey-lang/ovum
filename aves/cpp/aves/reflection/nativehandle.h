@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef AVES__NATIVEHANDLE_H
 #define AVES__NATIVEHANDLE_H
 

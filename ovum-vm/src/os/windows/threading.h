@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef VM__OS_THREADING_H
 #define VM__OS_THREADING_H
 

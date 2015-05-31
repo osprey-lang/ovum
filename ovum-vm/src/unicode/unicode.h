@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef VM__UNICODE_INTERNAL_H
 #define VM__UNICODE_INTERNAL_H
 

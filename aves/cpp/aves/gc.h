@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef AVES__GC_H
 #define AVES__GC_H
 

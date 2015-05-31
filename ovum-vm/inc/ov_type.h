@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef VM__TYPE_H
 #define VM__TYPE_H
 

@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef VM__GC_H
 #define VM__GC_H
 

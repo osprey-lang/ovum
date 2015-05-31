@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef VM__STRING_HASH_INTERNAL_H
 #define VM__STRING_HASH_INTERNAL_H
 
