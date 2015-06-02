@@ -176,6 +176,12 @@
     <ClInclude Include="src\unicode\unicode.h">
       <Filter>Header Files\src\unicode</Filter>
     </ClInclude>
+    <ClInclude Include="src\os\_template\dl.h">
+      <Filter>Header Files\src\os\_template</Filter>
+    </ClInclude>
+    <ClInclude Include="src\os\windows\dl.h">
+      <Filter>Header Files\src\os\windows</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\module.cpp">
@@ -238,14 +244,14 @@
     <ClCompile Include="src\os\windows\dllmain.cpp">
       <Filter>Source Files\os\windows</Filter>
     </ClCompile>
-    <ClCompile Include="src\os\windows\filesystem.cpp">
-      <Filter>Source Files\os\windows</Filter>
-    </ClCompile>
     <ClCompile Include="src\unicode\unicode.cpp">
       <Filter>Source Files\unicode</Filter>
     </ClCompile>
     <ClCompile Include="src\unicode\unicode.data.cpp">
       <Filter>Source Files\unicode</Filter>
+    </ClCompile>
+    <ClCompile Include="src\os\windows\windows.cpp">
+      <Filter>Source Files\os\windows</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

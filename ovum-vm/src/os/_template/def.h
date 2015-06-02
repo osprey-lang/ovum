@@ -13,4 +13,7 @@
 // Memory-mapped files (relies on types from filesystem.h)
 #include "mmf.h"
 
+// Dynamic/shared libraries
+#include "dl.h"
+
 #endif // VM__OS_DEF_H
