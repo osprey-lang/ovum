@@ -93,11 +93,16 @@
     <ClInclude Include="src\methodinitexception.h" />
     <ClInclude Include="src\methodinitializer.h" />
     <ClInclude Include="src\os\windows\def.h" />
+    <ClInclude Include="src\os\windows\dl.h" />
     <ClInclude Include="src\os\windows\filesystem.h" />
     <ClInclude Include="src\os\windows\mem.h" />
     <ClInclude Include="src\os\windows\mmf.h" />
     <ClInclude Include="src\os\windows\threading.h" />
     <ClInclude Include="src\os\_template\def.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="src\os\_template\dl.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClInclude>
@@ -154,7 +159,7 @@
     <ClCompile Include="src\instructions.cpp" />
     <ClCompile Include="src\methodbuilder.cpp" />
     <ClCompile Include="src\methodinitializer.cpp" />
-    <ClCompile Include="src\os\windows\filesystem.cpp" />
+    <ClCompile Include="src\os\windows\windows.cpp" />
     <ClCompile Include="src\pathname.cpp" />
     <ClCompile Include="src\os\windows\dllmain.cpp">
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</CompileAsManaged>

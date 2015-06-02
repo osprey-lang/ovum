@@ -51,7 +51,7 @@ Module::Module(uint32_t fileFormatVersion, ModuleMeta &meta, const PathName &fil
 	fieldRefs(0),
 	methodRefs(0),
 	methodStart(meta.methodStart),
-	nativeLib(nullptr),
+	nativeLib(),
 	mainMethod(nullptr),
 	debugData(nullptr),
 	vm(vm),
@@ -222,7 +222,7 @@ Method *Module::GetMainMethod() const
 
 void *Module::FindNativeFunction(const char *name)
 {
-	if (nativeLib != nullptr)
+	if (os::LibraryHandleIsValid(&nativeLib))
 		return FindNativeEntryPoint(name);
 	return nullptr;
 }
@@ -420,24 +420,23 @@ void Module::LoadNativeLibrary(String *nativeFileName, const PathName &path)
 	fileName.Join(nativeFileName);
 
 	// fileName should now contain a full path to the native module
-	this->nativeLib = LoadLibraryW(fileName.GetDataPointer());
+	os::LibraryStatus r = os::OpenLibrary(fileName.GetDataPointer(), &this->nativeLib);
 
-	// If this->nativeLib is null, then the library could not be loaded.
-	if (!this->nativeLib)
+	if (r != os::LIBRARY_OK)
 		throw ModuleLoadException(path, "Could not load native library file.");
 }
 
-void *Module::FindNativeEntryPoint(const char *name) const
+void *Module::FindNativeEntryPoint(const char *name)
 {
-	return GetProcAddress(this->nativeLib, name);
+	return os::FindLibraryFunction(&this->nativeLib, name);
 }
 
 void Module::FreeNativeLibrary()
 {
-	if (nativeLib)
+	if (os::LibraryHandleIsValid(&nativeLib))
 	{
-		FreeLibrary(this->nativeLib);
-		this->nativeLib = nullptr;
+		os::CloseLibrary(&nativeLib);
+		nativeLib = os::LibraryHandle();
 	}
 }
 

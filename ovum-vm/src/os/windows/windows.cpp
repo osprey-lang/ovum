@@ -1,5 +1,8 @@
 #include "def.h"
 
+// Implementations of various functions from the Windows-specific header files.
+// The sort of functions we want to discourage the compiler from inlining.
+
 namespace ovum
 {
 
@@ -58,6 +61,30 @@ namespace os
 		return FILE_OK;
 	}
 
+	LibraryStatus _LibraryStatusFromError(DWORD error)
+	{
+		switch (error)
+		{
+		case ERROR_FILE_NOT_FOUND:
+		case ERROR_PATH_NOT_FOUND:
+		case ERROR_MOD_NOT_FOUND:
+			// ERROR_MOD_NOT_FOUND appears to occur both when the library file
+			// itself cannot be found /and/ when one of its dependencies could
+			// not be loaded. We return LIBRARY_FILE_NOT_FOUND as a compromise.
+			return LIBRARY_FILE_NOT_FOUND;
+		case ERROR_DLL_NOT_FOUND:
+			return LIBRARY_MISSING_DEPENDENCY;
+		case ERROR_ACCESS_DENIED:
+			return LIBRARY_ACCESS_DENIED;
+		case ERROR_INVALID_DLL:
+			// This error may also occur as a result of a broken dependency,
+			// but this is the closest we'll get to a "broken DLL" error.
+			// (Don't use ERROR_INVALID_LIBRARY. That's for library folders.)
+			return LIBRARY_BAD_IMAGE;
+		default:
+			return LIBRARY_ERROR;
+		}
+	}
 
 } // namespace os
 

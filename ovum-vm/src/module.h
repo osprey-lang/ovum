@@ -154,7 +154,7 @@ private:
 	uint32_t methodStart; // The start offset of the method block in the file (set to 0 after opening)
 	Method *mainMethod;
 
-	HMODULE nativeLib; // Handle to native library (null if not loaded)
+	os::LibraryHandle nativeLib; // Handle to native library
 	void *staticState; // The module's static state (only used by the native library)
 	StaticStateDeallocator staticStateDeallocator; // Deallocation callback for the static state
 
@@ -221,7 +221,7 @@ public:
 
 private:
 	void LoadNativeLibrary(String *nativeFileName, const PathName &path);
-	void *FindNativeEntryPoint(const char *name) const;
+	void *FindNativeEntryPoint(const char *name);
 	void FreeNativeLibrary();
 
 	static const char *const NativeModuleIniterName;
