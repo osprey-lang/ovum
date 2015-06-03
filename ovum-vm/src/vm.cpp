@@ -96,7 +96,7 @@ int VM::Run()
 
 int VM::Create(VMStartParams &params, VM *&result)
 {
-	int __status;
+	int status__;
 	{
 		if (!vmKey.IsValid())
 			CHECKED_MEM(vmKey.Alloc());
@@ -115,9 +115,9 @@ int VM::Create(VMStartParams &params, VM *&result)
 		result = vm.release();
 	}
 
-	__status = OVUM_SUCCESS;
-__retStatus:
-	return __status;
+	status__ = OVUM_SUCCESS;
+retStatus__:
+	return status__;
 }
 
 int VM::LoadModules(VMStartParams &params)

@@ -112,7 +112,7 @@ int ResultToMember(ThreadHandle thread, Value *module, GlobalMember *member)
 int GetAllMembers(ThreadHandle thread, ModuleHandle module, Value *moduleValue,
                   ModuleMemberFlags access, ModuleMemberFlags kind)
 {
-	int __status;
+	int status__;
 	{
 		Value *list = VM_Local(thread, 0);
 		VM_PushInt(thread, 5);
@@ -140,9 +140,9 @@ int GetAllMembers(ThreadHandle thread, ModuleHandle module, Value *moduleValue,
 		}
 		// The list is on the top of the stack; just return now!
 	}
-	__status = OVUM_SUCCESS;
-__retStatus:
-	return __status;
+	status__ = OVUM_SUCCESS;
+retStatus__:
+	return status__;
 }
 
 AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Module_new)

@@ -264,7 +264,7 @@ int SliceList(ThreadHandle thread, ListInst *list, int32_t startIndex, int32_t e
 {
 	Aves *aves = Aves::Get(thread);
 
-	int __status;
+	int status__;
 
 	if (endIndex < startIndex)
 	{
@@ -292,7 +292,7 @@ int SliceList(ThreadHandle thread, ListInst *list, int32_t startIndex, int32_t e
 	// Return the new list
 	VM_Push(thread, output);
 
-	__status = OVUM_SUCCESS;
-__retStatus:
-	return __status;
+	status__ = OVUM_SUCCESS;
+retStatus__:
+	return status__;
 }

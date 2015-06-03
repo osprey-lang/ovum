@@ -131,7 +131,7 @@ int HandleToMember(ThreadHandle thread, MemberHandle member)
 int GetAllMembers(ThreadHandle thread, TypeHandle type,
                   MemberSearchFlags flags, MemberKind kind)
 {
-	int __status;
+	int status__;
 	{
 		Value *list = VM_Local(thread, 0);
 		VM_PushInt(thread, 5);
@@ -157,9 +157,9 @@ int GetAllMembers(ThreadHandle thread, TypeHandle type,
 		}
 		// The list is on the top of the stack; just return now!
 	}
-	__status = OVUM_SUCCESS;
-__retStatus:
-	return __status;
+	status__ = OVUM_SUCCESS;
+retStatus__:
+	return status__;
 }
 
 AVES_API NATIVE_FUNCTION(aves_reflection_Type_get_handle)

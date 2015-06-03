@@ -549,7 +549,7 @@ int Thread::ConcatLL(Value *args, Value *result)
 	// Note: result may overlap args, so we cannot assign to it
 	//       until we are absolutely 100% done.
 
-	int __status;
+	int status__;
 	register Value *a = args;
 	register Value *b = args + 1;
 	if (a->type == vm->types.List || b->type == vm->types.List)
@@ -622,7 +622,8 @@ int Thread::ConcatLL(Value *args, Value *result)
 	currentFrame->stackCount -= 2;
 	RETURN_SUCCESS;
 
-	__retStatus: return __status;
+retStatus__:
+	return status__;
 }
 
 MethodOverload *Thread::GetHashIndexerSetter()
