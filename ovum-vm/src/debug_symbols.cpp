@@ -73,7 +73,7 @@ namespace debug
 		{
 			ModuleReader reader(module->GetVM());
 			PathName fileName(moduleFile);
-			fileName.Append(_Path(".dbg"));
+			fileName.Append(OVUM_PATH(".dbg"));
 			reader.Open(fileName);
 
 			char magicNumber[4];

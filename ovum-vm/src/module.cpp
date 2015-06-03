@@ -25,7 +25,7 @@ namespace module_file
 	static const uint32_t MaxFileFormatVersion = 0x00000100u;
 
 	// The file extension
-	static const pathchar_t *const Extension = _Path(".ovm");
+	static const pathchar_t *const Extension = OVUM_PATH(".ovm");
 }
 
 Module::Module(uint32_t fileFormatVersion, ModuleMeta &meta, const PathName &fileName, VM *vm) :
@@ -352,7 +352,7 @@ Module *Module::OpenByName(VM *vm, String *name, ModuleVersion *requiredVersion)
 		//    path/$name-$version/$name.ovm
 		//    path/$name-$version.ovm
 		if (requiredVersion) {
-			moduleFileName.Append(_Path("-"));
+			moduleFileName.Append(OVUM_PATH("-"));
 			// The length for path/$name-$version
 			uint32_t versionedName = moduleFileName.Append(versionNumber);
 
@@ -397,7 +397,7 @@ Module *Module::OpenByName(VM *vm, String *name, ModuleVersion *requiredVersion)
 	if (vm->verbose)
 	{
 		VM::Printf(L"Loading module '%ls' ", name);
-		wprintf(L"from file '" PATHNWF L"'\n", moduleFileName.GetDataPointer());
+		wprintf(L"from file '" OVUM_PATHNWF L"'\n", moduleFileName.GetDataPointer());
 	}
 
 	output = Open(vm, moduleFileName, requiredVersion);
@@ -1367,7 +1367,7 @@ void Module::AppendVersionString(PathName &path, ModuleVersion &version)
 	for (int f = 0; f < fieldCount; f++)
 	{
 		if (f > 0)
-			path.Append(_Path("."));
+			path.Append(OVUM_PATH("."));
 
 		int32_t value = version.*(fields[f]);
 
@@ -1376,10 +1376,10 @@ void Module::AppendVersionString(PathName &path, ModuleVersion &version)
 		pathchar_t chars[charCount + 1];
 		pathchar_t *pch = chars + charCount;
 		// pch points to where we want \0
-		*pch = _Path('\0');
+		*pch = OVUM_PATH('\0');
 		do
 		{
-			*--pch = (pathchar_t)(_Path('0') + value % 10);
+			*--pch = (pathchar_t)(OVUM_PATH('0') + value % 10);
 			value /= 10;
 		} while (value != 0);
 
