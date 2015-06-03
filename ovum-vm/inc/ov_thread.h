@@ -5,15 +5,82 @@
 
 // Returns a successful status code. Semicolon intentionally missing.
 #define RETURN_SUCCESS             return OVUM_SUCCESS
+
+/*
+The macros BEGIN_NATIVE_FUNCTION, END_NATIVE_FUNCTION, CHECKED and CHECKED_MEM
+are intended to be used in the development of native modules. They are used as
+follows:
+
+    BEGIN_NATIVE_FUNCTION(function_name)
+    {
+      // Body of the function goes here
+
+      // If an error status is returned by VM_Invoke, CHECKED() will make sure it
+      // is immediately returned from the native function.
+      // Please note: if you have resources to clean up, you should either start
+      // relying on C++ destructors, or check the status codes manually.
+      CHECKED(VM_Invoke(...));
+
+      // CHECKED_MEM is used for things that return a null pointer on failure:
+      CHECKED_MEM(*value = GC_ConstructString(...));
+      // If the expression returns a null pointer, CHECKED_MEM will return from
+      // the native function with the status code OVUM_ERROR_NO_MEMORY.
+    }
+    END_NATIVE_FUNCTION
+
+BEGIN_NATIVE_FUNCTION does the same thing as NATIVE_FUNCTION, and adds an opening
+brace for the method body, followed by declaring an int variable named 'status__'.
+END_NATIVE_FUNCTION outputs a 'status__ = OVUM_SUCCESS;' statement, followed by a
+label named 'retStatus__', attached to a statement that returns 'status__'.
+The variable and the label are used by CHECKED and CHECKED_MEM: if an error status
+is returned by the checked expression, 'status__' is assigned an error code and a
+goto jump to 'retStatus__'.
+
+To make things clearer, the example above expands to code equivalent to:
+
+    NATIVE_FUNCTION(function_name)
+    {
+      int status__; // Note: uninitialized! Only used in case of an error.
+      {
+        if ((status__ = VM_Invoke(...)) != OVUM_SUCCESS)
+        {
+          goto retStatus__;
+        }
+
+        if (!(*value = GC_ConstructString(...)))
+        {
+          status__ = OVUM_ERROR_NO_MEMORY;
+          goto retStatus__;
+        }
+        // ...
+      }
+      status__ = OVUM_SUCCESS;
+      retStatus__: return status__;
+    }
+
+If a native function uses BEGIN_NATIVE_FUNCTION, it should always end with an
+END_NATIVE_FUNCITON. A semicolon should not be placed after either macro.
+
+The assignment to 'status__' in END_NATIVE_FUNCTION is to ensure the compiler does
+not produce an 'unused variable' warning if the function has no CHECKED statements.
+
+Note that the names 'status__' and 'retStatus__' are *guaranteed* to be used by
+BEGIN_ and END_NATIVE_FUNCTION. Code that wishes to make use of the CHECKED macros
+can therefore declare their own 'status__' and 'retStatus__'.
+
+It might be worth pointing out that CHECKED anc CHECKED_MEM cannot be used in an
+expression context. They must enclose an expression, however.
+*/
+
 #define BEGIN_NATIVE_FUNCTION(name) \
 	NATIVE_FUNCTION(name) { \
-		int __status;
+		int status__;
 #define END_NATIVE_FUNCTION \
-		RETURN_SUCCESS; \
-		__retStatus: return __status; \
+		status__ = OVUM_SUCCESS; \
+		retStatus__: return status__; \
 	}
-#define CHECKED(expr) do { if ((__status = (expr)) != OVUM_SUCCESS) goto __retStatus; } while (0)
-#define CHECKED_MEM(expr) do { if (!(expr)) { __status = OVUM_ERROR_NO_MEMORY; goto __retStatus; } } while (0)
+#define CHECKED(expr) do { if ((status__ = (expr)) != OVUM_SUCCESS) goto retStatus__; } while (0)
+#define CHECKED_MEM(expr) do { if (!(expr)) { status__ = OVUM_ERROR_NO_MEMORY; goto retStatus__; } } while (0)
 
 OVUM_API void VM_Push(ThreadHandle thread, Value *value);
 
