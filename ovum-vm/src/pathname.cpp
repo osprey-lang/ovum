@@ -150,7 +150,7 @@ bool PathName::IsRooted(uint32_t length, const pathchar_t *path)
 
 #if OVUM_WINDOWS
 	// Windows only: volume label + ':', e.g. C:\One or C:Two
-	if (length >= 2 && path[1] == _Path(':'))
+	if (length >= 2 && path[1] == OVUM_PATH(':'))
 		return true;
 #endif
 
@@ -167,7 +167,7 @@ uint32_t PathName::GetRootLength(uint32_t length, const pathchar_t *path)
 	}
 #if OVUM_WINDOWS
 	// Windows only: volume label + ':'
-	else if (length >= 2 && path[1] == _Path(':'))
+	else if (length >= 2 && path[1] == OVUM_PATH(':'))
 	{
 		index = 2;
 		// + optional path separator

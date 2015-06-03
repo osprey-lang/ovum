@@ -17,7 +17,7 @@ private:
 	typedef struct { } noinit_t;
 	static const noinit_t noinit;
 
-	static const pathchar_t ZERO = _Path('\0');
+	static const pathchar_t ZERO = OVUM_PATH('\0');
 
 	// Pointer to the first character in the string
 	pathchar_t *data;
@@ -223,7 +223,7 @@ private:
 				throw std::bad_alloc();
 
 			if (needSep)
-				this->data[length++] = PATH_SEPC;
+				this->data[length++] = OVUM_PATH_SEPC;
 			CopyMemoryT(this->data + length, path, count); // +1 for \0
 			length += count;
 			this->data[length] = ZERO;
@@ -234,7 +234,7 @@ private:
 
 	static inline bool IsPathSep(pathchar_t ch)
 	{
-		return ch == PATH_SEPC || ch == PATH_SEPC_ALT;
+		return ch == OVUM_PATH_SEPC || ch == OVUM_PATH_SEPC_ALT;
 	}
 
 	static bool IsRooted(uint32_t length, const pathchar_t *path);

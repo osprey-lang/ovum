@@ -129,7 +129,7 @@ int VM::LoadModules(VMStartParams &params)
 		this->startupPath->RemoveFileName();
 
 		this->startupPathLib = new PathName(*this->startupPath);
-		this->startupPathLib->Join(_Path("lib"));
+		this->startupPathLib->Join(OVUM_PATH("lib"));
 
 		this->modulePath = new PathName(params.modulePath);
 
@@ -144,7 +144,7 @@ int VM::LoadModules(VMStartParams &params)
 	{
 		const PathName &fileName = e.GetFileName();
 		if (fileName.GetLength() > 0)
-			fwprintf(stderr, L"Error loading module '" PATHNWF L"': " CSTR L"\n", fileName.GetDataPointer(), e.what());
+			fwprintf(stderr, L"Error loading module '" OVUM_PATHNWF L"': " CSTR L"\n", fileName.GetDataPointer(), e.what());
 		else
 			fwprintf(stderr, L"Error loading module: " CSTR L"\n", e.what());
 		return OVUM_ERROR_MODULE_LOAD;

@@ -4,62 +4,77 @@
 // This header file exports the following members:
 //   pathchar_t:
 //      Represents a character used in a path name.
-//   _Path:
+//   OVUM_PATH:
 //      A macro to turn a string literal into an appropriate path literal,
-//      e.g. _Path("abc.txt")
-//   PATH_SEP, PATH_SEP_ALT:
+//      e.g. OVUM_PATH("abc.txt")
+//   OVUM_PATH_SEP, OVUM_PATH_SEP_ALT:
 //      String literals containing the primary and secondary path separators,
-//      as determined by the OS, of a type suitable for pathchar_t and PathName.
+//      as determined by the OS, of a type suitable for pathchar_t.
 //      E.g. on Windows, they expand to L"\\" and L"/".
 //      These values may be identical.
-//   PATH_SEPC, PATH_SEPC_ALT:
+//   OVUM_PATH_SEPC, OVUM_PATH_SEPC_ALT:
 //      Character versions of the previous.
-//   PATHNF:
+//   OVUM_PATHNF:
 //      Format placeholder for pathchar_t* in printf, as a string literal.
-//   PATHNWF:
+//   OVUM_PATHNWF:
 //      Format placeholder for pathchar_t* in wprintf, as a wide-char string literal.
 //
-// Note: PATH_SEP[C][_ALT] and PATHN[W]F are macros so that they can be used
-// to concatenate string literals, if it should ever be necessary.
+// Note: OVUM_PATH_SEP[C][_ALT] and OVUM_PATHN[W]F are macros so that they can
+// be used to concatenate string literals, if it should ever be necessary.
 
 #include "ov_vm.h"
 
-#if OVUM_WINDOWS
-// pathchar_t is a wide character type, containing UTF-16.
-#define OVUM_WIDE_PATHCHAR 1
-#else
-// pathchar_t is the regular char type, containing UTF-8.
-#define OVUM_WIDE_PATHCHAR 0
-#endif
+// First, select an appropriate size for pathchar_t, if one isn't
+// defined already.
+// If OVUM_WIDE_PATHCHAR is 1, then it'll be two bytes (UTF-16);
+// otherwise, one-byte "characters" (UTF-8 or ASCII, usually).
+
+#ifndef OVUM_WIDE_PATHCHAR
+# if OVUM_WINDOWS
+#  define OVUM_WIDE_PATHCHAR 1
+# else
+#  define OVUM_WIDE_PATHCHAR 0
+# endif
+#endif // OVUM_WIDE_PATHCHAR
+
+// Define some basic macros for dealing with pathname literals.
 
 #if OVUM_WIDE_PATHCHAR
 
 typedef wchar_t pathchar_t;
 
-#define __Path(x)     L ## x
-#define _Path(x)      __Path(x)
+#define OVUM_PATH_(x)     L ## x
+#define OVUM_PATH(x)      OVUM_PATH_(x)
 
-#define PATH_SEP      _Path("\\")
-#define PATH_SEP_ALT  _Path("/")
-#define PATH_SEPC     _Path('\\')
-#define PATH_SEPC_ALT _Path('/')
-
-#define PATHNF        "%ls"
-#define PATHNWF       L"%ls"
+#define OVUM_PATHNF        "%ls"
+#define OVUM_PATHNWF       L"%ls"
 
 #else
 
 typedef char pathchar_t;
 
-#define _Path(x)      x
+#define OVUM_PATH(x)      x
 
-#define PATH_SEP      _Path("/")
-#define PATH_SEP_ALT  _Path("\\")
-#define PATH_SEPC     _Path('/')
-#define PATH_SEPC_ALT _Path('\\')
+#define OVUM_PATHNF        "%s"
+#define OVUM_PATHNWF       L"%s"
 
-#define PATHNF        "%s"
-#define PATHNWF       L"%s"
+#endif
+
+// Finally, define the platform-specific path separator macros.
+
+#if OVUM_WINDOWS
+
+#define OVUM_PATH_SEP      OVUM_PATH("\\")
+#define OVUM_PATH_SEP_ALT  OVUM_PATH("/")
+#define OVUM_PATH_SEPC     OVUM_PATH('\\')
+#define OVUM_PATH_SEPC_ALT OVUM_PATH('/')
+
+#else
+
+#define OVUM_PATH_SEP      OVUM_PATH("/")
+#define OVUM_PATH_SEP_ALT  OVUM_PATH("\\")
+#define OVUM_PATH_SEPC     OVUM_PATH('/')
+#define OVUM_PATH_SEPC_ALT OVUM_PATH('\\')
 
 #endif
 
