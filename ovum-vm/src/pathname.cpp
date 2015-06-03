@@ -132,7 +132,83 @@ bool PathName::EnsureMinCapacity(uint32_t minCapacity)
 	return true;
 }
 
-void PathName::ReplaceWith(uint32_t length, const pathchar_t *path)
+uint32_t PathName::RemoveFileName()
+{
+	uint32_t root = GetRootLength(length, data);
+	uint32_t i = length;
+	while (i > root && !IsPathSep(data[--i]))
+		;
+	// i is now at the path separator, or at the last
+	// character before the root. Time to truncate!
+	data[i] = ZERO;
+	length = i;
+	return i;
+}
+
+uint32_t PathName::ClipTo(uint32_t index, uint32_t length)
+{
+	if (index >= this->length || length == 0)
+	{
+		this->Clear();
+	}
+	else if (index == 0)
+	{
+		this->length = min(this->length, length);
+		data[this->length] = ZERO;
+	}
+	else
+	{
+		length = min(this->length - index, length);
+		// Copy one character at a time instead of using CopyMemoryT,
+		// to avoid potential problems with overlapping characters.
+		for (uint32_t i = 0; i < length; i++)
+			data[i] = data[index + i];
+		data[length] = ZERO;
+		this->length = length;
+	}
+	return this->length;
+}
+
+uint32_t PathName::AppendInner(uint32_t count, const pathchar_t *path)
+{
+	if (count > 0)
+	{
+		if (!EnsureMinCapacity(this->length + count))
+			throw std::bad_alloc();
+
+		CopyMemoryT(this->data + this->length, path, count);
+		this->length += count;
+		this->data[this->length] = ZERO;
+	}
+
+	return this->length;
+}
+
+uint32_t PathName::JoinInner(uint32_t count, const pathchar_t *path)
+{
+	if (IsRooted(count, path))
+	{
+		this->ReplaceWithInner(count, path);
+	}
+	else
+	{
+		pathchar_t last = this->data[length - 1];
+		bool needSep = !IsPathSep(last);
+
+		if (!EnsureMinCapacity(length + count + (needSep ? 1 : 0)))
+			throw std::bad_alloc();
+
+		if (needSep)
+			this->data[length++] = OVUM_PATH_SEPC;
+		CopyMemoryT(this->data + length, path, count); // +1 for \0
+		length += count;
+		this->data[length] = ZERO;
+	}
+
+	return this->length;
+}
+
+void PathName::ReplaceWithInner(uint32_t length, const pathchar_t *path)
 {
 	if (!EnsureMinCapacity(length))
 		throw std::bad_alloc();
