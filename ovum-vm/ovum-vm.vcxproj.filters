@@ -36,6 +36,54 @@
     <Filter Include="Source Files\unicode">
       <UniqueIdentifier>{c47895ed-2183-4abe-81ed-9e48be50f7f4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\src\ee">
+      <UniqueIdentifier>{ffa9032a-9e34-41ac-99bc-0e0c263a5e87}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\src\object">
+      <UniqueIdentifier>{9b35715d-127a-458d-96b4-eba7e34f31fe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\src\debug">
+      <UniqueIdentifier>{5c84fe6c-7023-46e7-9e97-8be52f6e9778}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\src\threading">
+      <UniqueIdentifier>{508152b2-c8b6-46ac-9fc0-457555c2b71e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\src\util">
+      <UniqueIdentifier>{e771e81c-3f6d-4c79-a6b6-21e79b9868c1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\src\module">
+      <UniqueIdentifier>{2881706a-0c14-4b91-8bfc-40896f53e790}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\src\gc">
+      <UniqueIdentifier>{83100e39-cf11-471d-b2ad-07bff71baf12}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\debug">
+      <UniqueIdentifier>{3a4bae2c-509f-4fdf-a143-998290213f8a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ee">
+      <UniqueIdentifier>{2808e904-cf8c-457a-bbff-106a9760576e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\gc">
+      <UniqueIdentifier>{29404543-5c0d-4822-896e-40f245ccba71}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\module">
+      <UniqueIdentifier>{8c4f62ec-c97a-48c8-8585-e8b2dcdb2dc3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\object">
+      <UniqueIdentifier>{cf55220c-717d-4a1a-88c5-ca5cc9b2968f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\threading">
+      <UniqueIdentifier>{9a877308-330d-443d-871c-5edd13346834}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\util">
+      <UniqueIdentifier>{3e4d5344-6470-407e-b528-f45613967583}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\src\res">
+      <UniqueIdentifier>{6402a295-aaea-4749-9038-c7c1538f6758}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\res">
+      <UniqueIdentifier>{9a7e0ef0-2048-42a0-bb40-6c94d067d657}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\os\windows.h">
