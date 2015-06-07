@@ -1,8 +1,8 @@
 #ifndef VM__TYPE_INTERNAL_H
 #define VM__TYPE_INTERNAL_H
 
-#include "vm.h"
-#include "sync.h"
+#include "../vm.h"
+#include "../threading/sync.h"
 #include <cassert>
 
 namespace ovum

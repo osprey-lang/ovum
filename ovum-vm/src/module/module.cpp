@@ -1,8 +1,8 @@
 #include "module.h"
 #include "modulereader.h"
-#include "stringbuffer.h"
-#include "debug_symbols.h"
-#include "refsignature.h"
+#include "../util/stringbuffer.h"
+#include "../debug/debug_symbols.h"
+#include "../ee/refsignature.h"
 #include <memory>
 
 namespace ovum

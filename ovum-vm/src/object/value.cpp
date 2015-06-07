@@ -1,4 +1,4 @@
-#include "vm.h"
+#include "../vm.h"
 
 const Value NULL_VALUE = NULL_CONSTANT;
 

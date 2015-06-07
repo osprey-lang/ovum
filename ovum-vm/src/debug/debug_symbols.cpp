@@ -1,7 +1,7 @@
 #include "debug_symbols.h"
-#include "module.h"
-#include "modulereader.h"
-#include "pathname.h"
+#include "../module/module.h"
+#include "../module/modulereader.h"
+#include "../util/pathname.h"
 #include <memory>
 #include <stdio.h>
 

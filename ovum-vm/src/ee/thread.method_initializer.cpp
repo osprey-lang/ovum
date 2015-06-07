@@ -1,4 +1,4 @@
-#include "vm.h"
+#include "../vm.h"
 #include "methodinitializer.h"
 #include "methodbuilder.h"
 

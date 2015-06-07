@@ -1,6 +1,6 @@
-#include "vm.h"
-#include "../inc/ov_unicode.h"
-#include "../inc/ov_string.h"
+#include "../vm.h"
+#include "../../inc/ov_unicode.h"
+#include "../../inc/ov_string.h"
 #include <memory>
 
 inline const bool IsHashed(const String *const str)

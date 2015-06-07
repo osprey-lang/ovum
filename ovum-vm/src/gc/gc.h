@@ -2,9 +2,9 @@
 #define VM__GC_INTERNAL_H
 
 #include <cassert>
-#include "vm.h"
+#include "../vm.h"
 #include "string_table.h"
-#include "sync.h"
+#include "../threading/sync.h"
 
 namespace ovum
 {

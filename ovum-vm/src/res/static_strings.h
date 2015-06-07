@@ -1,7 +1,7 @@
 #ifndef VM__STATIC_STRINGS_INTERNAL_H
 #define VM__STATIC_STRINGS_INTERNAL_H
 
-#include "vm.h"
+#include "../vm.h"
 
 // Contains various string values that are used by various parts of the VM.
 // These are all initialised (in static_strings.cpp) from LitString<>s, and

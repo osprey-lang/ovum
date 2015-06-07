@@ -1,4 +1,4 @@
-#include "vm.h"
+#include "../vm.h"
 #include "string_table.h"
 
 namespace ovum

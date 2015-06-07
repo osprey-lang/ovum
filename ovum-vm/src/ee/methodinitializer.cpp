@@ -1,10 +1,10 @@
 #include "methodinitializer.h"
-#include "module.h"
+#include "../module/module.h"
 #include "instructions.h"
 #include "methodbuilder.h"
 #include "methodinitexception.h"
 #include "refsignature.h"
-#include "debug_symbols.h"
+#include "../debug/debug_symbols.h"
 #include <queue>
 #include <memory>
 

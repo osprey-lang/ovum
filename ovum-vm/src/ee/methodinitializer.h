@@ -1,7 +1,7 @@
 #ifndef VM__METHODINITIALIZER_INTERNAL_H
 #define VM__METHODINITIALIZER_INTERNAL_H
 
-#include "vm.h"
+#include "../vm.h"
 #include "instructions.h"
 #include <vector>
 
