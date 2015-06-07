@@ -1,5 +1,5 @@
-#include "vm.h"
-#include "../inc/ov_helpers.h"
+#include "../vm.h"
+#include "../../inc/ov_helpers.h"
 #include <math.h>
 
 namespace errors

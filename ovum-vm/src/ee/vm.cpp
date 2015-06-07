@@ -1,6 +1,6 @@
-﻿#include "vm.h"
-#include "module.h"
-#include "pathname.h"
+﻿#include "../vm.h"
+#include "../module/module.h"
+#include "../util/pathname.h"
 #include "refsignature.h"
 #include "methodinitexception.h"
 #include <fcntl.h>

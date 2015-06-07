@@ -1,7 +1,7 @@
-#include "vm.h"
-#include "module.h"
-#include "../inc/ov_string.h"
-#include "refsignature.h"
+#include "../vm.h"
+#include "../module/module.h"
+#include "../../inc/ov_string.h"
+#include "../ee/refsignature.h"
 
 namespace ovum
 {

@@ -1,9 +1,9 @@
 #ifndef VM__THREAD_INTERNAL_H
 #define VM__THREAD_INTERNAL_H
 
-#include "vm.h"
-#include "sync.h"
-#include "tls.h"
+#include "../vm.h"
+#include "../threading/sync.h"
+#include "../threading/tls.h"
 #include <cassert>
 
 namespace ovum

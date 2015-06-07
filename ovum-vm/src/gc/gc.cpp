@@ -1,6 +1,6 @@
-#include "vm.h"
-#include "module.h"
-#include "debug_symbols.h"
+#include "../vm.h"
+#include "../module/module.h"
+#include "../debug/debug_symbols.h"
 #include <cstdlib>
 #include <cstring>
 #include <vector>

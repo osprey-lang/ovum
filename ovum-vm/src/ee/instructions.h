@@ -1,7 +1,7 @@
 #ifndef VM__INSTRUCTIONS_INTERNAL_H
 #define VM__INSTRUCTIONS_INTERNAL_H
 
-#include "vm.h"
+#include "../vm.h"
 #include "thread.opcodes.h"
 
 namespace ovum

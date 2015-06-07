@@ -1,7 +1,7 @@
 #ifndef VM__STRINGBUFFER_INTERNAL_H
 #define VM__STRINGBUFFER_INTERNAL_H
 
-#include "vm.h"
+#include "../vm.h"
 
 namespace ovum
 {

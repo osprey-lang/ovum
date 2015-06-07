@@ -1,7 +1,7 @@
 #ifndef VM__PATHNAME_INTERNAL_H
 #define VM__PATHNAME_INTERNAL_H
 
-#include "vm.h"
+#include "../vm.h"
 #include <new>
 
 namespace ovum
