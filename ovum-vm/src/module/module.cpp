@@ -1,7 +1,7 @@
 #include "module.h"
 #include "modulereader.h"
 #include "../util/stringbuffer.h"
-#include "../debug/debug_symbols.h"
+#include "../debug/debugsymbols.h"
 #include "../ee/refsignature.h"
 #include <memory>
 

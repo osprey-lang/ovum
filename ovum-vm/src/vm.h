@@ -169,8 +169,8 @@ public:
 
 } // namespace ovum
 
-#include "util/string_hash.h"
-#include "res/static_strings.h"
+#include "util/stringhash.h"
+#include "res/staticstrings.h"
 #include "object/value.h"
 #include "object/type.h"
 #include "ee/thread.h"

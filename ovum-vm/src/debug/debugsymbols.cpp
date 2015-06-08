@@ -1,4 +1,4 @@
-#include "debug_symbols.h"
+#include "debugsymbols.h"
 #include "../module/module.h"
 #include "../module/modulereader.h"
 #include "../util/pathname.h"

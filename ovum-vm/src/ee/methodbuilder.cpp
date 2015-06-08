@@ -1,6 +1,6 @@
 #include "methodbuilder.h"
 #include "thread.opcodes.h"
-#include "../debug/debug_symbols.h"
+#include "../debug/debugsymbols.h"
 #include "../ee/instructions.h"
 #include <memory>
 

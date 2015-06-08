@@ -16,27 +16,27 @@ namespace ovum
 #define SET_BOOL(ptarg, bvalue) \
 	{                                       \
 		(ptarg)->type = vm->types.Boolean;  \
-		(ptarg)->v.integer = bvalue;          \
+		(ptarg)->v.integer = bvalue;        \
 	}
 #define SET_INT(ptarg, ivalue) \
 	{                                       \
 		(ptarg)->type = vm->types.Int;      \
-		(ptarg)->v.integer = ivalue;          \
+		(ptarg)->v.integer = ivalue;        \
 	}
 #define SET_UINT(ptarg, uvalue) \
 	{                                       \
 		(ptarg)->type = vm->types.UInt;     \
-		(ptarg)->v.uinteger = uvalue;         \
+		(ptarg)->v.uinteger = uvalue;       \
 	}
 #define SET_REAL(ptarg, rvalue) \
 	{                                       \
 		(ptarg)->type = vm->types.Real;     \
-		(ptarg)->v.real = rvalue;             \
+		(ptarg)->v.real = rvalue;           \
 	}
 #define SET_STRING(ptarg, svalue) \
 	{                                       \
 		(ptarg)->type = vm->types.String;   \
-		(ptarg)->v.string = svalue;    \
+		(ptarg)->v.string = svalue;         \
 	}
 
 int Thread::Evaluate()
