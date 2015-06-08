@@ -127,24 +127,24 @@
     <ClInclude Include="src\module\membertable.h" />
     <ClInclude Include="src\module\modulereader.h" />
     <ClInclude Include="inc\ov_compat.h" />
-    <ClInclude Include="src\debug\debug_symbols.h" />
+    <ClInclude Include="src\debug\debugsymbols.h" />
     <ClInclude Include="inc\ov_gc.h" />
     <ClInclude Include="src\gc\gc.h" />
     <ClInclude Include="inc\ov_helpers.h" />
     <ClInclude Include="inc\ov_module.h" />
     <ClInclude Include="src\module\module.h" />
-    <ClInclude Include="src\res\static_strings.h" />
+    <ClInclude Include="src\res\staticstrings.h" />
     <ClInclude Include="inc\ov_string.h" />
     <ClInclude Include="inc\ov_stringbuffer.h" />
     <ClInclude Include="src\util\stringbuffer.h" />
     <ClInclude Include="src\util\pathname.h" />
     <ClInclude Include="src\ee\refsignature.h" />
-    <ClInclude Include="src\gc\string_table.h" />
+    <ClInclude Include="src\gc\stringtable.h" />
     <ClInclude Include="inc\ov_thread.h" />
     <ClInclude Include="src\ee\thread.h" />
     <ClInclude Include="src\object\type.h" />
     <ClInclude Include="src\ee\thread.opcodes.h" />
-    <ClInclude Include="src\util\string_hash.h" />
+    <ClInclude Include="src\util\stringhash.h" />
     <ClInclude Include="src\os\windows.h" />
     <ClInclude Include="inc\ov_type.h" />
     <ClInclude Include="inc\ov_unicode.h" />
@@ -155,7 +155,7 @@
     <ClInclude Include="src\vm.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\debug\debug_symbols.cpp" />
+    <ClCompile Include="src\debug\debugsymbols.cpp" />
     <ClCompile Include="src\ee\instructions.cpp" />
     <ClCompile Include="src\ee\methodbuilder.cpp" />
     <ClCompile Include="src\ee\methodinitializer.cpp" />
@@ -173,12 +173,12 @@
     <ClCompile Include="src\util\helpers.cpp" />
     <ClCompile Include="src\module\module.cpp" />
     <ClCompile Include="src\module\modulereader.cpp" />
-    <ClCompile Include="src\res\static_strings.cpp" />
+    <ClCompile Include="src\res\staticstrings.cpp" />
     <ClCompile Include="src\object\string.cpp" />
     <ClCompile Include="src\util\stringbuffer.cpp" />
-    <ClCompile Include="src\gc\string_table.cpp" />
+    <ClCompile Include="src\gc\stringtable.cpp" />
     <ClCompile Include="src\ee\thread.cpp" />
-    <ClCompile Include="src\ee\thread.method_initializer.cpp" />
+    <ClCompile Include="src\ee\thread.methodinitializer.cpp" />
     <ClCompile Include="src\ee\thread.opcodes.cpp" />
     <ClCompile Include="src\object\type.cpp" />
     <ClCompile Include="src\unicode\unicode.cpp" />

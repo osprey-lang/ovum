@@ -1,6 +1,6 @@
 #include "../vm.h"
 #include "../util/stringbuffer.h"
-#include "../debug/debug_symbols.h"
+#include "../debug/debugsymbols.h"
 #include <memory>
 
 namespace ovum

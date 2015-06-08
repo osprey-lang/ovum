@@ -4,7 +4,7 @@
 #include "methodbuilder.h"
 #include "methodinitexception.h"
 #include "refsignature.h"
-#include "../debug/debug_symbols.h"
+#include "../debug/debugsymbols.h"
 #include <queue>
 #include <memory>
 

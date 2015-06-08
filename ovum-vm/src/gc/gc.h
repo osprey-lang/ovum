@@ -3,7 +3,7 @@
 
 #include <cassert>
 #include "../vm.h"
-#include "string_table.h"
+#include "stringtable.h"
 #include "../threading/sync.h"
 
 namespace ovum
