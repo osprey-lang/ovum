@@ -15,38 +15,41 @@
 namespace ovum
 {
 
-class VM;
+class Field;
 class GC;
-class Thread;
-class Type;
-class Module;
+class GCObject;
 class Member;
 class Method;
-class MethodOverload;
-class Field;
-class Property;
-class StaticRef;
-
-class ModulePool;
-class RefSignaturePool;
-
 class MethodInitException;
 class MethodInitializer;
-class StackManager;
-
+class MethodOverload;
+class Module;
+class ModulePool;
 class PathName;
-
-namespace instr
-{
-	class Instruction;
-	class MethodBuilder;
-	class MethodBuffer;
-}
+class Property;
+class RefSignaturePool;
+class StackManager;
+class StaticRef;
+class StaticRefBlock;
+class Thread;
+class TryBlock;
+class Type;
+class VM;
+struct CatchBlock;
+struct CatchBlocks;
+struct FinallyBlock;
 
 namespace debug
 {
 	class DebugSymbols;
 	class ModuleDebugData;
+}
+
+namespace instr
+{
+	class Instruction;
+	class MethodBuffer;
+	class MethodBuilder;
 }
 
 } // namespace ovum
@@ -169,11 +172,6 @@ public:
 
 } // namespace ovum
 
-#include "util/stringhash.h"
 #include "res/staticstrings.h"
-#include "object/value.h"
-#include "object/type.h"
-#include "ee/thread.h"
-#include "gc/gc.h"
 
 #endif // VM__VM_INTERNAL

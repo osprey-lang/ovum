@@ -1,6 +1,7 @@
 #include "../vm.h"
 #include "methodinitializer.h"
 #include "methodbuilder.h"
+#include "../object/type.h"
 
 namespace ovum
 {

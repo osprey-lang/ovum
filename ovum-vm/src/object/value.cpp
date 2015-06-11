@@ -1,4 +1,7 @@
-#include "../vm.h"
+#include "value.h"
+#include "../gc/gcobject.h"
+#include "../gc/staticref.h"
+#include "../ee/thread.h"
 
 const Value NULL_VALUE = NULL_CONSTANT;
 
@@ -21,7 +24,6 @@ OVUM_API bool IsSameReference(Value *a, Value *b)
 {
 	return ovum::IsSameReference_(a, b);
 }
-
 
 OVUM_API bool IsBoolean(ThreadHandle thread, Value *value)
 {

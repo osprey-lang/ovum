@@ -1,6 +1,13 @@
-#include "../vm.h"
+#include "gc.h"
+#include "gcobject.h"
+#include "staticref.h"
+#include "../ee/thread.h"
 #include "../module/module.h"
+#include "../object/type.h"
+#include "../object/method.h"
+#include "../object/value.h"
 #include "../debug/debugsymbols.h"
+#include <cassert>
 #include <cstdlib>
 #include <cstring>
 #include <vector>
@@ -106,7 +113,6 @@ void GC::DestroyHeaps()
 	if (largeObjectHeap)
 		os::HeapDestroy(&largeObjectHeap);
 }
-
 
 GCObject *GC::AllocRaw(size_t size)
 {
@@ -232,6 +238,18 @@ int GC::Alloc(Thread *const thread, Type *type, size_t size, GCObject **output)
 	EndAlloc();
 
 	RETURN_SUCCESS;
+}
+
+int GC::Alloc(Thread *const thread, Type *type, size_t size, Value *output)
+{
+	GCObject *gco;
+	int r = Alloc(thread, type, size, &gco);
+	if (r == OVUM_SUCCESS)
+	{
+		output->type = type;
+		output->v.instance = gco->InstanceBase();
+	}
+	return r;
 }
 
 int GC::AllocArray(Thread *const thread, uint32_t length, size_t itemSize, void **output)
@@ -400,6 +418,30 @@ String *GC::ConstructModuleString(Thread *const thread, const int32_t length, co
 	return reinterpret_cast<String*>(str);
 }
 
+String *GC::GetInternedString(Thread *const thread, String *value)
+{
+	BeginAlloc(thread);
+	String *result = strings.GetInterned(value);
+	EndAlloc();
+	return result;
+}
+
+bool GC::HasInternedString(Thread *const thread, String *value)
+{
+	BeginAlloc(thread);
+	bool result = strings.HasInterned(value);
+	EndAlloc();
+	return result;
+}
+
+String *GC::InternString(Thread *const thread, String *value)
+{
+	BeginAlloc(thread);
+	String *result = strings.Intern(value);
+	EndAlloc();
+	return result;
+}
+
 void GC::Release(GCObject *gco)
 {
 	assert((gco->flags & GCOFlags::MARK) == currentCollectMark);
@@ -423,7 +465,6 @@ void GC::Release(GCObject *gco)
 	ReleaseRaw(gco); // goodbye, dear pointer.
 }
 
-
 void GC::AddMemoryPressure(Thread *const thread, const size_t size)
 {
 	// Not implemented yet
@@ -433,7 +474,6 @@ void GC::RemoveMemoryPressure(Thread *const thread, const size_t size)
 {
 	// Not implemented yet
 }
-
 
 StaticRef *GC::AddStaticReference(Thread *const thread, Value value)
 {
@@ -664,6 +704,77 @@ void GC::MarkRootSet()
 		for (unsigned int i = 0; i < staticRefs->count; i++)
 			TryMarkForProcessing(&staticRefs->values[i].value, &staticRefs->hasGen0Refs);
 		staticRefs = staticRefs->next;
+	}
+}
+
+bool GC::ShouldProcess(Value *val, bool *hasGen0Refs)
+{
+	if (val->type == nullptr || val->type->IsPrimitive())
+		return false;
+
+	if (val->type == vm->types.String &&
+		(val->v.string->flags & StringFlags::STATIC) == StringFlags::STATIC)
+		return false;
+
+	// If gco is a non-pinned gen0 object, set *hasGen0Refs to true.
+	GCOFlags flags = GCObject::FromValue(val)->flags;
+	if ((flags & GCOFlags::GEN_0) == GCOFlags::GEN_0 &&
+		(flags & GCOFlags::PINNED) == GCOFlags::NONE)
+		*hasGen0Refs = true;
+
+	return (flags & GCOFlags::MARK) == currentCollectMark;
+}
+
+void GC::TryMarkForProcessing(Value *value, bool *hasGen0Refs)
+{
+	if (ShouldProcess(value, hasGen0Refs))
+		MarkForProcessing(GCObject::FromValue(value));
+}
+
+void GC::TryMarkStringForProcessing(String *str, bool *hasGen0Refs)
+{
+	if (str && (str->flags & StringFlags::STATIC) == StringFlags::NONE)
+	{
+		GCObject *gco = GCObject::FromInst(str);
+		if ((gco->flags & GCOFlags::GEN_0) == GCOFlags::GEN_0)
+			*hasGen0Refs = true;
+		if ((gco->flags & GCOFlags::MARK) == currentCollectMark)
+			MarkForProcessing(gco);
+	}
+}
+
+void GC::ProcessFields(unsigned int fieldCount, Value fields[], bool *hasGen0Refs)
+{
+	for (unsigned int i = 0; i < fieldCount; i++)
+		// If the object is marked GCO_KEEP, we're done processing it.
+		// If it's marked GCO_PROCESS, it'll be processed eventually.
+		// Otherwise, mark it for processing!
+		TryMarkForProcessing(fields + i, hasGen0Refs);
+}
+
+void GC::ProcessLocalValues(unsigned int count, Value values[])
+{
+	bool _;
+	for (unsigned int i = 0; i < count; i++)
+	{
+		Value *v = values + i;
+		if ((uintptr_t)v->type & 1)
+		{
+			// There is no need to examine local or static field references;
+			// we'll get to the underlying storage locations when we examine
+			// the root set. Instance field references do need to be looked
+			// at, because the instance is still alive and we may have the
+			// only remaining reference to it.
+			if ((uintptr_t)v->type != LOCAL_REFERENCE &&
+				(uintptr_t)v->type != STATIC_REFERENCE)
+			{
+				GCObject *gco = reinterpret_cast<GCObject*>((char*)v->v.reference - ~(uintptr_t)v->type);
+				if ((gco->flags & GCOFlags::MARK) == currentCollectMark)
+					MarkForProcessing(gco);
+			}
+		}
+		else
+			TryMarkForProcessing(v, &_);
 	}
 }
 
@@ -1030,6 +1141,62 @@ int GC::UpdateFieldsCallback(void *state, unsigned int count, Value *values)
 {
 	reinterpret_cast<GC*>(state)->UpdateFields(count, values);
 	RETURN_SUCCESS;
+}
+
+bool GC::ShouldUpdateRef(Value *val)
+{
+	if (val->type == nullptr || val->type->IsPrimitive())
+		return false;
+
+	if (val->type == vm->types.String &&
+		(val->v.string->flags & StringFlags::STATIC) == StringFlags::STATIC)
+		return false;
+
+	return GCObject::FromValue(val)->IsMoved();
+}
+
+void GC::TryUpdateRef(Value *value)
+{
+	if (ShouldUpdateRef(value))
+		value->v.instance = GCObject::FromValue(value)->newAddress->InstanceBase();
+}
+
+void GC::TryUpdateStringRef(String **str)
+{
+	if (*str && ((*str)->flags & StringFlags::STATIC) == StringFlags::NONE)
+	{
+		GCObject *gco = GCObject::FromInst(*str);
+		if (gco->IsMoved())
+			*str = (String*)gco->newAddress->InstanceBase();
+	}
+}
+
+void GC::UpdateFields(unsigned int fieldCount, Value fields[])
+{
+	for (unsigned int i = 0; i < fieldCount; i++)
+		TryUpdateRef(fields + i);
+}
+
+void GC::UpdateLocals(unsigned int count, Value values[])
+{
+	for (unsigned int i = 0; i < count; i++)
+	{
+		Value *v = values + i;
+		if ((uintptr_t)v->type & 1)
+		{
+			// Local and static refs are immovable, but field refs are not.
+			if ((uintptr_t)v->type != LOCAL_REFERENCE &&
+				(uintptr_t)v->type != STATIC_REFERENCE)
+			{
+				uintptr_t offset = ~(uintptr_t)v->type;
+				GCObject *gco = reinterpret_cast<GCObject*>((char*)v->v.reference - offset);
+				if (gco->IsMoved())
+					v->v.reference = (char*)gco->newAddress + offset;
+			}
+		}
+		else
+			TryUpdateRef(v);
+	}
 }
 
 } // namespace ovum

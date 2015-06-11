@@ -3,6 +3,7 @@
 
 #include "../vm.h"
 #include "thread.opcodes.h"
+#include "../object/method.h"
 
 namespace ovum
 {

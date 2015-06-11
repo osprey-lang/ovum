@@ -1,5 +1,11 @@
-#include "../vm.h"
 #include "thread.opcodes.h"
+#include "../object/type.h"
+#include "../object/member.h"
+#include "../object/field.h"
+#include "../object/method.h"
+#include "../object/value.h"
+#include "../gc/gc.h"
+#include "../gc/staticref.h"
 #include <memory>
 
 namespace ovum
@@ -779,7 +785,7 @@ int Thread::Evaluate()
 				OPC_ARGS(oa::TwoLocals);
 				bool eq;
 				CHK(EqualsLL(args->Source(f), eq));
-				SetBool_(vm, args->Dest(f), eq);
+				SET_BOOL(args->Dest(f), eq);
 				ip += oa::TWO_LOCALS_SIZE;
 				// EqualsLL pops arguments off the stack
 			}
@@ -789,7 +795,7 @@ int Thread::Evaluate()
 				OPC_ARGS(oa::TwoLocals);
 				bool eq;
 				CHK(EqualsLL(args->Source(f), eq));
-				SetBool_(vm, args->Dest(f), eq);
+				SET_BOOL(args->Dest(f), eq);
 				ip += oa::TWO_LOCALS_SIZE;
 				// EqualsLL pops arguments off the stack
 				f->stackCount++;
@@ -821,7 +827,7 @@ int Thread::Evaluate()
 				OPC_ARGS(oa::TwoLocals);
 				bool result;
 				CHK(CompareLessThanLL(args->Source(f), result));
-				SetBool_(vm, args->Dest(f), result);
+				SET_BOOL(args->Dest(f), result);
 				ip += oa::TWO_LOCALS_SIZE;
 				// CompareLL pops arguments off the stack
 			}
@@ -831,7 +837,7 @@ int Thread::Evaluate()
 				OPC_ARGS(oa::TwoLocals);
 				bool result;
 				CHK(CompareLessThanLL(args->Source(f), result));
-				SetBool_(vm, args->Dest(f), result);
+				SET_BOOL(args->Dest(f), result);
 				ip += oa::TWO_LOCALS_SIZE;
 				// CompareLL pops arguments off the stack
 				f->stackCount++;
@@ -844,7 +850,7 @@ int Thread::Evaluate()
 				OPC_ARGS(oa::TwoLocals);
 				bool result;
 				CHK(CompareGreaterThanLL(args->Source(f), result));
-				SetBool_(vm, args->Dest(f), result);
+				SET_BOOL(args->Dest(f), result);
 				ip += oa::TWO_LOCALS_SIZE;
 				// CompareLL pops arguments off the stack
 			}
@@ -854,7 +860,7 @@ int Thread::Evaluate()
 				OPC_ARGS(oa::TwoLocals);
 				bool result;
 				CHK(CompareGreaterThanLL(args->Source(f), result));
-				SetBool_(vm, args->Dest(f), result);
+				SET_BOOL(args->Dest(f), result);
 				ip += oa::TWO_LOCALS_SIZE;
 				// CompareLL pops arguments off the stack
 				f->stackCount++;
@@ -867,7 +873,7 @@ int Thread::Evaluate()
 				OPC_ARGS(oa::TwoLocals);
 				bool result;
 				CHK(CompareLessEqualsLL(args->Source(f), result));
-				SetBool_(vm, args->Dest(f), result);
+				SET_BOOL(args->Dest(f), result);
 				ip += oa::TWO_LOCALS_SIZE;
 				// CompareLL pops arguments off the stack
 			}
@@ -877,7 +883,7 @@ int Thread::Evaluate()
 				OPC_ARGS(oa::TwoLocals);
 				bool result;
 				CHK(CompareLessEqualsLL(args->Source(f), result));
-				SetBool_(vm, args->Dest(f), result);
+				SET_BOOL(args->Dest(f), result);
 				ip += oa::TWO_LOCALS_SIZE;
 				// CompareLL pops arguments off the stack
 				f->stackCount++;
@@ -890,7 +896,7 @@ int Thread::Evaluate()
 				OPC_ARGS(oa::TwoLocals);
 				bool result;
 				CHK(CompareGreaterEqualsLL(args->Source(f), result));
-				SetBool_(vm, args->Dest(f), result);
+				SET_BOOL(args->Dest(f), result);
 				ip += oa::TWO_LOCALS_SIZE;
 				// CompareLL pops arguments off the stack
 			}
@@ -900,7 +906,7 @@ int Thread::Evaluate()
 				OPC_ARGS(oa::TwoLocals);
 				bool result;
 				CHK(CompareGreaterEqualsLL(args->Source(f), result));
-				SetBool_(vm, args->Dest(f), result);
+				SET_BOOL(args->Dest(f), result);
 				ip += oa::TWO_LOCALS_SIZE;
 				// CompareLL pops arguments off the stack
 				f->stackCount++;
@@ -1306,7 +1312,7 @@ exitMethod:
 
 int Thread::FindErrorHandler(int32_t maxIndex)
 {
-	typedef MethodOverload::TryBlock::TryKind TryKind;
+	typedef TryBlock::TryKind TryKind;
 
 	register StackFrame *frame = currentFrame;
 	MethodOverload *method = frame->method;
@@ -1317,7 +1323,7 @@ int Thread::FindErrorHandler(int32_t maxIndex)
 
 	for (int32_t t = 0; t < maxIndex; t++)
 	{
-		MethodOverload::TryBlock &tryBlock = method->tryBlocks[t];
+		TryBlock &tryBlock = method->tryBlocks[t];
 		if (offset >= tryBlock.tryStart && offset <= tryBlock.tryEnd)
 		{
 			// The ip is inside a try block! Let's find a catch or finally.
@@ -1326,7 +1332,7 @@ int Thread::FindErrorHandler(int32_t maxIndex)
 			case TryKind::CATCH:
 				for (int32_t c = 0; c < tryBlock.catches.count; c++)
 				{
-					MethodOverload::CatchBlock &catchBlock = tryBlock.catches.blocks[c];
+					CatchBlock &catchBlock = tryBlock.catches.blocks[c];
 					if (Type::ValueIsType(&currentError, catchBlock.caughtType))
 					{
 						frame->stackCount = 1;
@@ -1381,7 +1387,7 @@ int Thread::FindErrorHandler(int32_t maxIndex)
 
 int Thread::EvaluateLeave(register StackFrame *frame, int32_t target)
 {
-	typedef MethodOverload::TryBlock::TryKind TryKind;
+	typedef TryBlock::TryKind TryKind;
 
 	// Note: the IP currently points to the leave instruction.
 	// We must add the size of the instructions to get the right ipOffset and tOffset.
@@ -1394,7 +1400,7 @@ int Thread::EvaluateLeave(register StackFrame *frame, int32_t target)
 	const uint32_t tOffset  = ipOffset + target;
 	for (int32_t t = 0; t < method->tryBlockCount; t++)
 	{
-		MethodOverload::TryBlock &tryBlock = method->tryBlocks[t];
+		TryBlock &tryBlock = method->tryBlocks[t];
 		if (tryBlock.kind == TryKind::FINALLY &&
 			ipOffset >= tryBlock.tryStart && ipOffset <= tryBlock.tryEnd &&
 			(tOffset < tryBlock.tryStart || tOffset >= tryBlock.tryEnd) &&

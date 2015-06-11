@@ -1,7 +1,14 @@
 #include "module.h"
 #include "modulereader.h"
+#include "../object/type.h"
+#include "../object/member.h"
+#include "../object/field.h"
+#include "../object/property.h"
+#include "../object/method.h"
+#include "../gc/gc.h"
 #include "../util/stringbuffer.h"
 #include "../debug/debugsymbols.h"
+#include "../ee/thread.h"
 #include "../ee/refsignature.h"
 #include <memory>
 
@@ -27,6 +34,19 @@ namespace module_file
 	// The file extension
 	static const pathchar_t *const Extension = OVUM_PATH(".ovm");
 }
+
+ModuleMember::ModuleMember(Type *type, bool isInternal) :
+	type(type), name(type->fullName),
+	flags(ModuleMemberFlags::TYPE | (isInternal ? ModuleMemberFlags::INTERNAL : ModuleMemberFlags::PUBLIC))
+{ }
+ModuleMember::ModuleMember(Method *function, bool isInternal) :
+	function(function), name(function->name),
+	flags(ModuleMemberFlags::FUNCTION | (isInternal ? ModuleMemberFlags::INTERNAL : ModuleMemberFlags::PUBLIC))
+{ }
+ModuleMember::ModuleMember(String *name, Value value, bool isInternal) :
+	constant(value), name(name),
+	flags(ModuleMemberFlags::CONSTANT | (isInternal ? ModuleMemberFlags::INTERNAL : ModuleMemberFlags::PUBLIC))
+{ }
 
 Module::Module(uint32_t fileFormatVersion, ModuleMeta &meta, const PathName &fileName, VM *vm) :
 	// This initializer list is kind of silly
@@ -1193,7 +1213,7 @@ Method *Module::ReadSingleMethod(ModuleReader &reader)
 		// Header
 		{
 			int32_t tryCount = 0;
-			std::unique_ptr<MethodOverload::TryBlock[]> tries(nullptr);
+			std::unique_ptr<TryBlock[]> tries(nullptr);
 			if (flags & OV_SHORTHEADER)
 			{
 				ov->optionalParamCount = ov->locals = 0;
@@ -1204,7 +1224,7 @@ Method *Module::ReadSingleMethod(ModuleReader &reader)
 				ov->optionalParamCount = reader.ReadUInt16();
 				ov->locals = reader.ReadUInt16();
 				ov->maxStack = reader.ReadUInt16();
-				tries = std::unique_ptr<MethodOverload::TryBlock[]>(ReadTryBlocks(reader, tryCount));
+				tries = std::unique_ptr<TryBlock[]>(ReadTryBlocks(reader, tryCount));
 			}
 
 			ov->tryBlockCount = tryCount;
@@ -1254,17 +1274,17 @@ Method *Module::ReadSingleMethod(ModuleReader &reader)
 	return method.release();
 }
 
-MethodOverload::TryBlock *Module::ReadTryBlocks(ModuleReader &reader, int32_t &tryCount)
+TryBlock *Module::ReadTryBlocks(ModuleReader &reader, int32_t &tryCount)
 {
-	typedef MethodOverload::TryBlock::TryKind TryKind;
-	std::unique_ptr<MethodOverload::TryBlock[]> output(nullptr);
+	typedef TryBlock::TryKind TryKind;
+	std::unique_ptr<TryBlock[]> output(nullptr);
 
 	CHECKPOS_BEFORE();
 
 	const int32_t length = reader.ReadInt32();
 
-	output = std::unique_ptr<MethodOverload::TryBlock[]>(new MethodOverload::TryBlock[length]);
-	MethodOverload::TryBlock *tries = output.get();
+	output = std::unique_ptr<TryBlock[]>(new TryBlock[length]);
+	TryBlock *tries = output.get();
 
 	for (int32_t i = 0; i < length; i++)
 	{
@@ -1272,8 +1292,8 @@ MethodOverload::TryBlock *Module::ReadTryBlocks(ModuleReader &reader, int32_t &t
 		uint32_t tryStart = reader.ReadUInt32();
 		uint32_t tryEnd   = reader.ReadUInt32();
 
-		MethodOverload::TryBlock *curTry = tries + i;
-		*curTry = MethodOverload::TryBlock(kind, tryStart, tryEnd);
+		TryBlock *curTry = tries + i;
+		*curTry = TryBlock(kind, tryStart, tryEnd);
 
 		switch (kind)
 		{
@@ -1287,11 +1307,11 @@ MethodOverload::TryBlock *Module::ReadTryBlocks(ModuleReader &reader, int32_t &t
 				if (catchSize != 0)
 				{
 					int32_t catchLength = reader.ReadInt32();
-					std::unique_ptr<MethodOverload::CatchBlock[]> catches(new MethodOverload::CatchBlock[catchLength]);
+					std::unique_ptr<CatchBlock[]> catches(new CatchBlock[catchLength]);
 
 					for (int32_t i = 0; i < catchLength; i++)
 					{
-						MethodOverload::CatchBlock *curCatch = catches.get() + i;
+						CatchBlock *curCatch = catches.get() + i;
 
 						curCatch->caughtTypeId = reader.ReadToken();
 						// Try to resolve the type right away. If it fails, do it when the method

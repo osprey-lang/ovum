@@ -2,6 +2,7 @@
 #define VM__VM_OPCODES_H
 
 #include "../vm.h"
+#include "thread.h"
 #include <vector>
 #include <cassert>
 

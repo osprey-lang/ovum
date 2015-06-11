@@ -1,9 +1,11 @@
 #include "methodinitializer.h"
-#include "../module/module.h"
 #include "instructions.h"
 #include "methodbuilder.h"
 #include "methodinitexception.h"
 #include "refsignature.h"
+#include "../object/type.h"
+#include "../object/field.h"
+#include "../module/module.h"
 #include "../debug/debugsymbols.h"
 #include <queue>
 #include <memory>
@@ -363,11 +365,11 @@ void MethodInitializer::InitBranchOffsets(instr::MethodBuilder &builder)
 
 void MethodInitializer::InitTryBlockOffsets(instr::MethodBuilder &builder)
 {
-	typedef MethodOverload::TryBlock::TryKind TryKind;
+	typedef TryBlock::TryKind TryKind;
 
 	for (int32_t i = 0; i < method->tryBlockCount; i++)
 	{
-		MethodOverload::TryBlock &tryBlock = method->tryBlocks[i];
+		TryBlock &tryBlock = method->tryBlocks[i];
 		tryBlock.tryStart = builder.FindIndex(tryBlock.tryStart);
 		tryBlock.tryEnd = builder.FindIndex(tryBlock.tryEnd);
 
@@ -376,7 +378,7 @@ void MethodInitializer::InitTryBlockOffsets(instr::MethodBuilder &builder)
 		case TryKind::CATCH:
 			for (int32_t c = 0; c < tryBlock.catches.count; c++)
 			{
-				MethodOverload::CatchBlock &catchBlock = tryBlock.catches.blocks[c];
+				CatchBlock &catchBlock = tryBlock.catches.blocks[c];
 				if (catchBlock.caughtType == nullptr)
 					catchBlock.caughtType = TypeFromToken(catchBlock.caughtTypeId);
 				catchBlock.catchStart = builder.FindIndex(catchBlock.catchStart);
@@ -413,7 +415,7 @@ void MethodInitializer::InitDebugSymbolOffsets(instr::MethodBuilder &builder)
 void MethodInitializer::CalculateStackHeights(instr::MethodBuilder &builder, StackManager &stack)
 {
 	using namespace instr;
-	typedef MethodOverload::TryBlock::TryKind TryKind;
+	typedef TryBlock::TryKind TryKind;
 
 	// The first instruction is always reachable
 	stack.EnqueueBranch(0, 0);
@@ -423,7 +425,7 @@ void MethodInitializer::CalculateStackHeights(instr::MethodBuilder &builder, Sta
 	// reached by fallthrough or branching.
 	for (int32_t i = 0; i < method->tryBlockCount; i++)
 	{
-		MethodOverload::TryBlock &tryBlock = method->tryBlocks[i];
+		TryBlock &tryBlock = method->tryBlocks[i];
 		if (tryBlock.kind == TryKind::CATCH)
 		{
 			for (int32_t c = 0; c < tryBlock.catches.count; c++)
@@ -680,11 +682,11 @@ void MethodInitializer::WriteInitializedBody(instr::MethodBuilder &builder)
 
 void MethodInitializer::FinalizeTryBlockOffsets(instr::MethodBuilder &builder)
 {
-	typedef MethodOverload::TryBlock::TryKind TryKind;
+	typedef TryBlock::TryKind TryKind;
 
 	for (int32_t t = 0; t < method->tryBlockCount; t++)
 	{
-		MethodOverload::TryBlock &tryBlock = method->tryBlocks[t];
+		TryBlock &tryBlock = method->tryBlocks[t];
 		
 		tryBlock.tryStart = builder.GetNewOffset(tryBlock.tryStart);
 		tryBlock.tryEnd = builder.GetNewOffset(tryBlock.tryEnd);
@@ -694,14 +696,14 @@ void MethodInitializer::FinalizeTryBlockOffsets(instr::MethodBuilder &builder)
 		case TryKind::CATCH:
 			for (int32_t c = 0; c < tryBlock.catches.count; c++)
 			{
-				MethodOverload::CatchBlock &catchBlock = tryBlock.catches.blocks[c];
+				CatchBlock &catchBlock = tryBlock.catches.blocks[c];
 				catchBlock.catchStart = builder.GetNewOffset(catchBlock.catchStart);
 				catchBlock.catchEnd = builder.GetNewOffset(catchBlock.catchEnd);
 			}
 			break;
 		case TryKind::FINALLY:
 			{
-				MethodOverload::FinallyBlock &finallyBlock = tryBlock.finallyBlock;
+				FinallyBlock &finallyBlock = tryBlock.finallyBlock;
 				finallyBlock.finallyStart = builder.GetNewOffset(finallyBlock.finallyStart);
 				finallyBlock.finallyEnd = builder.GetNewOffset(finallyBlock.finallyEnd);
 			}

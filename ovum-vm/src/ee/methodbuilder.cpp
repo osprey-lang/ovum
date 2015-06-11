@@ -1,7 +1,8 @@
 #include "methodbuilder.h"
 #include "thread.opcodes.h"
-#include "../debug/debugsymbols.h"
+#include "../object/type.h"
 #include "../ee/instructions.h"
+#include "../debug/debugsymbols.h"
 #include <memory>
 
 namespace ovum
@@ -80,7 +81,7 @@ namespace instr
 
 	void MethodBuilder::PerformRemovalsInternal(int32_t newIndices[], MethodOverload *method)
 	{
-		typedef MethodOverload::TryBlock::TryKind TryKind;
+		typedef TryBlock::TryKind TryKind;
 		this->lastOffset = 0; // Must recalculate byte offsets as well
 
 		int32_t oldIndex = 0, newIndex = 0;
@@ -125,7 +126,7 @@ namespace instr
 
 		for (int32_t t = 0; t < method->tryBlockCount; t++)
 		{
-			MethodOverload::TryBlock *tryBlock = method->tryBlocks + t;
+			TryBlock *tryBlock = method->tryBlocks + t;
 			tryBlock->tryStart = newIndices[tryBlock->tryStart];
 			tryBlock->tryEnd = newIndices[tryBlock->tryEnd];
 
@@ -134,7 +135,7 @@ namespace instr
 			case TryKind::CATCH:
 				for (int32_t c = 0; c < tryBlock->catches.count; c++)
 				{
-					MethodOverload::CatchBlock *catchBlock = tryBlock->catches.blocks + c;
+					CatchBlock *catchBlock = tryBlock->catches.blocks + c;
 					catchBlock->catchStart = newIndices[catchBlock->catchStart];
 					catchBlock->catchEnd = newIndices[catchBlock->catchEnd];
 				}
