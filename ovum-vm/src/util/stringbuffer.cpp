@@ -1,5 +1,7 @@
 #include "stringbuffer.h"
 #include "../../inc/ov_unicode.h"
+#include "../ee/thread.h"
+#include "../gc/gc.h"
 #include <exception>
 
 namespace ovum

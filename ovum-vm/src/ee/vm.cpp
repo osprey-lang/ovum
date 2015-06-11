@@ -1,8 +1,14 @@
 ﻿#include "../vm.h"
-#include "../module/module.h"
-#include "../util/pathname.h"
+#include "thread.h"
 #include "refsignature.h"
 #include "methodinitexception.h"
+#include "../gc/gc.h"
+#include "../gc/staticref.h"
+#include "../object/type.h"
+#include "../object/property.h"
+#include "../object/method.h"
+#include "../module/module.h"
+#include "../util/pathname.h"
 #include <fcntl.h>
 #include <io.h>
 #include <cstdio>

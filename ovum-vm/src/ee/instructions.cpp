@@ -2,6 +2,7 @@
 #include "methodbuilder.h"
 #include "methodinitializer.h"
 #include "refsignature.h"
+#include "../object/type.h"
 
 namespace ovum
 {

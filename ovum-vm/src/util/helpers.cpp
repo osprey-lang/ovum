@@ -1,5 +1,7 @@
 #include "../vm.h"
 #include "../../inc/ov_helpers.h"
+#include "../ee/thread.h"
+#include "../object/value.h"
 #include <math.h>
 
 namespace errors
@@ -53,7 +55,9 @@ OVUM_API int IntFromValue(ThreadHandle thread, Value *v)
 			v->v.integer = (int64_t)v->v.real;
 		}
 		else
+		{
 			return thread->ThrowTypeError(errors::toIntFailed);
+		}
 	}
 	RETURN_SUCCESS;
 }
@@ -79,7 +83,9 @@ OVUM_API int UIntFromValue(ThreadHandle thread, Value *v)
 			v->v.uinteger = (uint64_t)v->v.real;
 		}
 		else
+		{
 			return thread->ThrowTypeError(errors::toUIntFailed);
+		}
 	}
 	RETURN_SUCCESS;
 }
@@ -92,12 +98,15 @@ OVUM_API int RealFromValue(ThreadHandle thread, Value *v)
 	// a double. This is not considered an error condition.
 	if (v->type != vm->types.Real)
 	{
+		double result;
 		if (v->type == vm->types.Int)
-			ovum::SetReal_(vm, v, (double)v->v.integer);
+			result = (double)v->v.integer;
 		else if (v->type == vm->types.UInt)
-			ovum::SetReal_(vm, v, (double)v->v.uinteger);
+			result = (double)v->v.uinteger;
 		else
 			return thread->ThrowTypeError(errors::toRealFailed);
+		v->type = vm->types.Real;
+		v->v.real = result;
 	}
 	RETURN_SUCCESS;
 }

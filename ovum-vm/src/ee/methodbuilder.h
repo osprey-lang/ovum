@@ -2,6 +2,7 @@
 #define VM__METHODBUILDER_INTERNAL_H
 
 #include "../vm.h"
+#include <cassert>
 #include <vector>
 #include <memory>
 

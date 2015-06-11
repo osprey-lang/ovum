@@ -7,6 +7,8 @@
 #include "../vm.h"
 #include "membertable.h"
 #include "../util/pathname.h"
+#include "../util/stringhash.h"
+#include "../../inc/ov_string.h"
 
 namespace ovum
 {
@@ -26,18 +28,9 @@ public:
 	inline ModuleMember() :
 		flags(ModuleMemberFlags::NONE), name(nullptr)
 	{ }
-	inline ModuleMember(Type *type, bool isInternal) :
-		type(type), name(type->fullName),
-		flags(ModuleMemberFlags::TYPE | (isInternal ? ModuleMemberFlags::INTERNAL : ModuleMemberFlags::PUBLIC))
-	{ }
-	inline ModuleMember(Method *function, bool isInternal) :
-		function(function), name(function->name),
-		flags(ModuleMemberFlags::FUNCTION | (isInternal ? ModuleMemberFlags::INTERNAL : ModuleMemberFlags::PUBLIC))
-	{ }
-	inline ModuleMember(String *name, Value value, bool isInternal) :
-		constant(value), name(name),
-		flags(ModuleMemberFlags::CONSTANT | (isInternal ? ModuleMemberFlags::INTERNAL : ModuleMemberFlags::PUBLIC))
-	{ }
+	ModuleMember(Type *type, bool isInternal);
+	ModuleMember(Method *function, bool isInternal);
+	ModuleMember(String *name, Value value, bool isInternal);
 };
 
 enum ModuleMemberId : uint32_t
@@ -255,7 +248,7 @@ private:
 	void SetConstantFieldValue(ModuleReader &reader, Field *field, Type *constantType, const int64_t value);
 
 	Method *ReadSingleMethod(ModuleReader &reader);
-	MethodOverload::TryBlock *ReadTryBlocks(ModuleReader &reader, int32_t &tryCount);
+	TryBlock *ReadTryBlocks(ModuleReader &reader, int32_t &tryCount);
 
 	void TryRegisterStandardType(Type *type, ModuleReader &reader);
 

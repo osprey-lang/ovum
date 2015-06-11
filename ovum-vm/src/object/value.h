@@ -1,8 +1,8 @@
 #ifndef VM__VALUE_INTERNAL_H
 #define VM__VALUE_INTERNAL_H
 
-#include "vm.h"
-#include "type.h"
+#include "../vm.h"
+#include "../object/type.h"
 
 namespace ovum
 {
@@ -21,45 +21,45 @@ inline void SetNull_(Value *target)
 	target->type = nullptr;
 }
 
-inline void SetBool_(VM *vm, Value &target, const bool value)
+inline void SetBool_(VM *vm, Value &target, bool value)
 {
 	target.type = vm->types.Boolean;
 	target.v.integer = value;
 }
-inline void SetBool_(VM *vm, Value *target, const bool value)
+inline void SetBool_(VM *vm, Value *target, bool value)
 {
 	target->type = vm->types.Boolean;
 	target->v.integer = value;
 }
 
-inline void SetInt_(VM *vm, Value &target, const int64_t value)
+inline void SetInt_(VM *vm, Value &target, int64_t value)
 {
 	target.type = vm->types.Int;
 	target.v.integer = value;
 }
-inline void SetInt_(VM *vm, Value *target, const int64_t value)
+inline void SetInt_(VM *vm, Value *target, int64_t value)
 {
 	target->type = vm->types.Int;
 	target->v.integer = value;
 }
 
-inline void SetUInt_(VM *vm, Value &target, const uint64_t value)
+inline void SetUInt_(VM *vm, Value &target, uint64_t value)
 {
 	target.type = vm->types.UInt;
 	target.v.uinteger = value;
 }
-inline void SetUInt_(VM *vm, Value *target, const uint64_t value)
+inline void SetUInt_(VM *vm, Value *target, uint64_t value)
 {
 	target->type = vm->types.UInt;
 	target->v.uinteger = value;
 }
 
-inline void SetReal_(VM *vm, Value &target, const double value)
+inline void SetReal_(VM *vm, Value &target, double value)
 {
 	target.type = vm->types.Real;
 	target.v.real = value;
 }
-inline void SetReal_(VM *vm, Value *target, const double value)
+inline void SetReal_(VM *vm, Value *target, double value)
 {
 	target->type = vm->types.Real;
 	target->v.real = value;
@@ -75,7 +75,6 @@ inline void SetString_(VM *vm, Value *target, String *value)
 	target->type = vm->types.String;
 	target->v.string = value;
 }
-
 
 // Similarly, these actually access the Type class directly.
 

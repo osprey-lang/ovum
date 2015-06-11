@@ -2,6 +2,7 @@
 #define VM__MEMBERTABLE_INTERNAL_H
 
 #include "../vm.h"
+#include <cassert>
 
 namespace ovum
 {
@@ -13,36 +14,6 @@ private:
 	int32_t capacity; // The total number of slots
 	int32_t length; // The total number of entries
 	T *entries;
-
-	inline void Init(const int32_t capacity)
-	{
-		// Init should only be called with a non-zero capacity once
-		assert(this->capacity == 0);
-
-		this->capacity = capacity;
-		if (capacity != 0)
-			this->entries = new T[capacity];
-		else
-			this->entries = nullptr;
-	}
-
-	inline void Add(const T item)
-	{
-		entries[length] = item;
-		length++;
-	}
-
-	inline void DeleteEntries()
-	{
-		for (int32_t i = 0; i < length; i++)
-			delete entries[i];
-	}
-
-	inline void FreeEntries()
-	{
-		for (int32_t i = 0; i < length; i++)
-			free(entries[i]);
-	}
 
 public:
 	inline MemberTable(const int32_t capacity)
@@ -79,6 +50,37 @@ public:
 	inline TokenId GetNextId(TokenId mask) const
 	{
 		return (length + 1) | mask;
+	}
+
+private:
+	inline void Init(const int32_t capacity)
+	{
+		// Init should only be called with a non-zero capacity once
+		assert(this->capacity == 0);
+
+		this->capacity = capacity;
+		if (capacity != 0)
+			this->entries = new T[capacity];
+		else
+			this->entries = nullptr;
+	}
+
+	inline void Add(const T item)
+	{
+		entries[length] = item;
+		length++;
+	}
+
+	inline void DeleteEntries()
+	{
+		for (int32_t i = 0; i < length; i++)
+			delete entries[i];
+	}
+
+	inline void FreeEntries()
+	{
+		for (int32_t i = 0; i < length; i++)
+			free(entries[i]);
 	}
 
 	friend class Module;

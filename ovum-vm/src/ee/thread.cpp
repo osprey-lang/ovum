@@ -1,6 +1,14 @@
-#include "../vm.h"
-#include "../util/stringbuffer.h"
+#include "thread.h"
+#include "../object/type.h"
+#include "../object/member.h"
+#include "../object/field.h"
+#include "../object/property.h"
+#include "../object/method.h"
+#include "../object/value.h"
+#include "../gc/gc.h"
+#include "../gc/staticref.h"
 #include "../debug/debugsymbols.h"
+#include "../util/stringbuffer.h"
 #include <memory>
 
 namespace ovum

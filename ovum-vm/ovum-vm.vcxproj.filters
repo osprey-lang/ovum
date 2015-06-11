@@ -230,6 +230,24 @@
     <ClInclude Include="src\util\stringhash.h">
       <Filter>Header Files\src\util</Filter>
     </ClInclude>
+    <ClInclude Include="src\object\member.h">
+      <Filter>Header Files\src\object</Filter>
+    </ClInclude>
+    <ClInclude Include="src\object\field.h">
+      <Filter>Header Files\src\object</Filter>
+    </ClInclude>
+    <ClInclude Include="src\object\property.h">
+      <Filter>Header Files\src\object</Filter>
+    </ClInclude>
+    <ClInclude Include="src\object\method.h">
+      <Filter>Header Files\src\object</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gc\gcobject.h">
+      <Filter>Header Files\src\gc</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gc\staticref.h">
+      <Filter>Header Files\src\gc</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\os\windows\dllmain.cpp">
@@ -300,6 +318,21 @@
     </ClCompile>
     <ClCompile Include="src\res\staticstrings.cpp">
       <Filter>Source Files\res</Filter>
+    </ClCompile>
+    <ClCompile Include="src\object\member.cpp">
+      <Filter>Source Files\object</Filter>
+    </ClCompile>
+    <ClCompile Include="src\object\field.cpp">
+      <Filter>Source Files\object</Filter>
+    </ClCompile>
+    <ClCompile Include="src\object\property.cpp">
+      <Filter>Source Files\object</Filter>
+    </ClCompile>
+    <ClCompile Include="src\object\method.cpp">
+      <Filter>Source Files\object</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gc\gcobject.cpp">
+      <Filter>Source Files\gc</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

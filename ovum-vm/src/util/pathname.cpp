@@ -1,4 +1,6 @@
 #include "pathname.h"
+#include "../ee/thread.h"
+#include "../gc/gc.h"
 #include <memory>
 
 namespace ovum
