@@ -9,7 +9,7 @@ typedef struct TypeInst_S
 	String *name; // cached value
 } TypeInst;
 
-AVES_API void CDECL aves_reflection_Type_init(TypeHandle type);
+AVES_API void OVUM_CDECL aves_reflection_Type_init(TypeHandle type);
 
 AVES_API NATIVE_FUNCTION(aves_reflection_Type_get_handle);
 
@@ -48,7 +48,7 @@ AVES_API NATIVE_FUNCTION(aves_reflection_Type_getProperties);
 AVES_API NATIVE_FUNCTION(aves_reflection_Type_getMember);
 AVES_API NATIVE_FUNCTION(aves_reflection_Type_getMembers);
 
-AVES_API int CDECL InitTypeToken(ThreadHandle thread, void *basePtr, TypeHandle type);
+AVES_API int OVUM_CDECL InitTypeToken(ThreadHandle thread, void *basePtr, TypeHandle type);
 
 // These values must be synchronised with those in aves/reflection/Type.osp
 enum class MemberSearchFlags : int32_t

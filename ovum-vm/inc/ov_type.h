@@ -3,9 +3,9 @@
 
 #include "ov_vm.h"
 
-typedef int (CDECL *NativeMethod)(ThreadHandle thread, const int argc, Value args[]);
+typedef int (OVUM_CDECL *NativeMethod)(ThreadHandle thread, const int argc, Value args[]);
 // Adds the magic parameters 'ThreadHandle thread', 'int argc' and 'Value args[]' to a function definition.
-#define NATIVE_FUNCTION(name)	int CDECL name(::ThreadHandle thread, const int argc, ::Value args[])
+#define NATIVE_FUNCTION(name)	int OVUM_CDECL name(::ThreadHandle thread, const int argc, ::Value args[])
 // The 'this' in a NATIVE_FUNCTION, which is always argument 0.
 #define THISV	(args[0])
 #define THISP   (args + 0)
@@ -236,7 +236,7 @@ OVUM_ENUM_OPS(TypeFlags, uint32_t);
 //     The number of values contained in 'values'. May be zero.
 //   values:
 //     An array of zero or more managed references.
-typedef int (CDECL *ReferenceVisitor)(void *cbState, unsigned int count, Value *values);
+typedef int (OVUM_CDECL *ReferenceVisitor)(void *cbState, unsigned int count, Value *values);
 
 // A ReferenceGetter produces an array of Values from a basePtr. This function
 // is called by the GC for two reasons:
@@ -273,7 +273,7 @@ typedef int (CDECL *ReferenceVisitor)(void *cbState, unsigned int count, Value *
 //
 // NOTENOTENOTE: basePtr is NOT relative to where the instance begins
 // in memory, but is rather instancePtr + type->fieldsOffset.
-typedef int (CDECL *ReferenceGetter)(void *basePtr, ReferenceVisitor callback, void *cbState);
+typedef int (OVUM_CDECL *ReferenceGetter)(void *basePtr, ReferenceVisitor callback, void *cbState);
 
 // A Finalizer is called when the object is about to be deleted.
 // If the type has the flag TYPE_CUSTOMPTR, it may have to supply
@@ -297,32 +297,32 @@ typedef int (CDECL *ReferenceGetter)(void *basePtr, ReferenceVisitor callback, v
 // that is about to be deleted, the GC WILL NOT CARE and will delete
 // the object anyway. Malicious native-code modules may freely insert
 // memory leaks here.
-typedef void (CDECL *Finalizer)(void *basePtr);
+typedef void (OVUM_CDECL *Finalizer)(void *basePtr);
 
 // Initializes a single type, which may involve setting flags or the size
 // of the instance. Type initializers should only be used for types with
 // native implementations.
-typedef void (CDECL *TypeInitializer)(TypeHandle type);
+typedef void (OVUM_CDECL *TypeInitializer)(TypeHandle type);
 
 // Initializes a ListInst* to a specific capacity.
 // This method is provided to avoid making any assumptions about the
 // underlying implementation of the aves.List class, and is taken from
 // the main module's exported method "InitListInstance".
 // When called, 'list' is guaranteed to refer to a valid ListInst*.
-typedef int (CDECL *ListInitializer)(ThreadHandle thread, ListInst *list, int32_t capacity);
+typedef int (OVUM_CDECL *ListInitializer)(ThreadHandle thread, ListInst *list, int32_t capacity);
 
 // Initializes a HashInst* to a specific capacity.
 // This method is provided to avoid making any assumptions about the
 // underlying implementation of the aves.Hash class, and is taken from
 // the main module's exported method "InitHashInstance".
 // When called, 'hash' is guaranteed to refer to a valid HashInst*.
-typedef int (CDECL *HashInitializer)(ThreadHandle thread, HashInst *hash, int32_t capacity);
+typedef int (OVUM_CDECL *HashInitializer)(ThreadHandle thread, HashInst *hash, int32_t capacity);
 
 // Initializes a value of the aves.reflection.Type class for a specific
 // underlying TypeHandle. The standard module must expose a method with
 // the name "InitTypeToken", with this signature, so that the VM can create
 // type tokens when they are requested.
-typedef int (CDECL *TypeTokenInitializer)(ThreadHandle thread, void *basePtr, TypeHandle type);
+typedef int (OVUM_CDECL *TypeTokenInitializer)(ThreadHandle thread, void *basePtr, TypeHandle type);
 
 OVUM_API TypeFlags Type_GetFlags(TypeHandle type);
 OVUM_API String *Type_GetFullName(TypeHandle type);

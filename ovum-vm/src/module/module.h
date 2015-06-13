@@ -269,7 +269,7 @@ private:
 	}
 	static void AppendVersionString(PathName &path, ModuleVersion &version);
 
-	typedef void (CDECL *NativeModuleMain)(ModuleHandle module);
+	typedef void (OVUM_CDECL *NativeModuleMain)(ModuleHandle module);
 
 	enum FileMethodFlags : uint32_t
 	{

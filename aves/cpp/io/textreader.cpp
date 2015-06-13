@@ -13,7 +13,7 @@ String *TextReaderInst::FillBufferName = strings::_FillBufferName.AsString();
 
 #define _TR(val)     reinterpret_cast<TextReaderInst*>((val).instance)
 
-AVES_API void CDECL io_TextReader_init(TypeHandle type)
+AVES_API void OVUM_CDECL io_TextReader_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(TextReaderInst));
 

@@ -21,7 +21,7 @@ typedef struct SetInst_S
 	SetEntry *entries;  // entries!
 } SetInst;
 
-AVES_API void CDECL aves_Set_init(TypeHandle type);
+AVES_API void OVUM_CDECL aves_Set_init(TypeHandle type);
 
 AVES_API NATIVE_FUNCTION(aves_Set_new);
 
@@ -37,6 +37,6 @@ AVES_API NATIVE_FUNCTION(aves_Set_get_entryCount);
 AVES_API NATIVE_FUNCTION(aves_Set_hasEntryAt);
 AVES_API NATIVE_FUNCTION(aves_Set_getEntryAt);
 
-int CDECL aves_Set_getReferences(void *basePtr, ReferenceVisitor callback, void *cbState);
+int OVUM_CDECL aves_Set_getReferences(void *basePtr, ReferenceVisitor callback, void *cbState);
 
 #endif // AVES__SET_H

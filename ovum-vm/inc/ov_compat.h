@@ -150,14 +150,14 @@ inline T NextPowerOfTwo(T n)
 	OVUM_DISABLE_COPY_AND_ASSIGN(TypeName)
 #endif // OVUM_DISABLE_IMPLICIT_CONSTRUCTION
 
-#ifndef CDECL
+#ifndef OVUM_CDECL
 # if defined(_MSC_VER)
-#  define CDECL __cdecl
+#  define OVUM_CDECL __cdecl
 # elif defined(__GNUC__)
-#  define CDECL __attribute__((cdecl))
+#  define OVUM_CDECL __attribute__((cdecl))
 # else
 // Disable the feature
-#  define CDECL
+#  define OVUM_CDECL
 # endif
 #endif
 

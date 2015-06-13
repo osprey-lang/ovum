@@ -3,7 +3,7 @@
 
 #include "../aves.h"
 
-AVES_API void CDECL aves_List_init(TypeHandle type);
+AVES_API void OVUM_CDECL aves_List_init(TypeHandle type);
 
 AVES_API NATIVE_FUNCTION(aves_List_new);
 AVES_API NATIVE_FUNCTION(aves_List_newCap);
@@ -26,7 +26,7 @@ AVES_API NATIVE_FUNCTION(aves_List_slice1);
 AVES_API NATIVE_FUNCTION(aves_List_slice2);
 AVES_API NATIVE_FUNCTION(aves_List_reverse);
 
-AVES_API int CDECL InitListInstance(ThreadHandle thread, ListInst *list, const int32_t capacity);
+AVES_API int OVUM_CDECL InitListInstance(ThreadHandle thread, ListInst *list, const int32_t capacity);
 
 int EnsureMinCapacity(ThreadHandle thread, ListInst *list, const int32_t capacity);
 

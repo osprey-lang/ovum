@@ -6,7 +6,7 @@ using namespace aves;
 
 #define U64_TO_HASH(value)  ((int32_t)(value) ^ (int32_t)((value) >> 32))
 
-AVES_API void CDECL aves_Hash_init(TypeHandle type)
+AVES_API void OVUM_CDECL aves_Hash_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(HashInst));
 	Type_SetReferenceGetter(type, aves_Hash_getReferences);
@@ -393,7 +393,7 @@ AVES_API NATIVE_FUNCTION(aves_HashEntry_get_value)
 	RETURN_SUCCESS;
 }
 
-AVES_API int CDECL InitHashInstance(ThreadHandle thread, HashInst *hash, const int32_t capacity)
+AVES_API int OVUM_CDECL InitHashInstance(ThreadHandle thread, HashInst *hash, const int32_t capacity)
 {
 	if (capacity > 0)
 	{
@@ -405,7 +405,7 @@ AVES_API int CDECL InitHashInstance(ThreadHandle thread, HashInst *hash, const i
 	RETURN_SUCCESS;
 }
 
-int CDECL aves_Hash_getReferences(void *basePtr, ReferenceVisitor callback, void *cbState)
+int OVUM_CDECL aves_Hash_getReferences(void *basePtr, ReferenceVisitor callback, void *cbState)
 {
 	HashInst *hash = (HashInst*)basePtr;
 	for (int32_t i = 0; i < hash->count; i++)

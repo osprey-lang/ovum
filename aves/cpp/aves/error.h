@@ -3,7 +3,7 @@
 
 #include "../aves.h"
 
-AVES_API void CDECL aves_Error_init(TypeHandle type);
+AVES_API void OVUM_CDECL aves_Error_init(TypeHandle type);
 
 AVES_API NATIVE_FUNCTION(aves_Error_new);
 
