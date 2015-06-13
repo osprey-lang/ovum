@@ -53,8 +53,6 @@ public:
 
 	void UpdateIntern(String *value);
 
-	void DebugBuckets();
-
 	friend class GC;
 };
 

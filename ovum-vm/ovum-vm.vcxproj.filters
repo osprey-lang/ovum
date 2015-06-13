@@ -251,6 +251,9 @@
     <ClInclude Include="src\module\modulepool.h">
       <Filter>Header Files\src\module</Filter>
     </ClInclude>
+    <ClInclude Include="src\ee\vm.h">
+      <Filter>Header Files\src\ee</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\os\windows\dllmain.cpp">

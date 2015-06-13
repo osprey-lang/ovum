@@ -2,6 +2,7 @@
 #define VM__MEMBERTABLE_INTERNAL_H
 
 #include "../vm.h"
+#include "module.h"
 #include <cassert>
 
 namespace ovum

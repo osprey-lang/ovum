@@ -2,6 +2,7 @@
 #define VM__MODULEREADER_INTERNAL_H
 
 #include "../vm.h"
+#include "../ee/vm.h"
 #include "../util/pathname.h"
 
 namespace ovum

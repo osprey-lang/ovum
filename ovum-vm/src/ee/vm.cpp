@@ -1,4 +1,4 @@
-﻿#include "../vm.h"
+﻿#include "vm.h"
 #include "thread.h"
 #include "refsignature.h"
 #include "methodinitexception.h"
