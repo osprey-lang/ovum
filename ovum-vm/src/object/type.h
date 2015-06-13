@@ -16,11 +16,11 @@ namespace ovum
 class Type
 {
 public:
-	typedef struct NativeField_S
+	struct NativeField
 	{
 		size_t offset;
 		NativeFieldType type;
-	} NativeField;
+	};
 
 	Type(Module *module, int32_t memberCount);
 	~Type();

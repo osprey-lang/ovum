@@ -46,6 +46,8 @@ namespace debug
 {
 	class DebugSymbols;
 	class ModuleDebugData;
+	struct SourceFile;
+	struct SourceLocation;
 } // namespace ovum::debug
 
 namespace instr

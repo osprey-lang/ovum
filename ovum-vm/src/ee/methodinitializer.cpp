@@ -26,12 +26,12 @@ public:
 	static const int MaxStack = 8;
 
 private:
-	typedef struct Branch_S
+	struct Branch
 	{
 		int32_t firstInstr;
 		uint32_t stackHeight;
 		StackEntry stack[MaxStack];
-	} Branch;
+	};
 
 	std::queue<Branch> branches;
 
