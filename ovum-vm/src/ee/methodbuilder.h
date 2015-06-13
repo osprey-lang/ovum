@@ -39,7 +39,7 @@ namespace instr
 		std::vector<InstrDesc> instructions;
 		std::vector<Type*> typesToInitialize;
 
-		DISABLE_COPY_AND_ASSIGN(MethodBuilder);
+		OVUM_DISABLE_COPY_AND_ASSIGN(MethodBuilder);
 
 	public:
 		inline MethodBuilder() : lastOffset(0), hasBranches(false) { }
@@ -132,7 +132,7 @@ namespace instr
 		uint8_t *current;
 		std::unique_ptr<uint8_t[]> buffer;
 
-		DISABLE_COPY_AND_ASSIGN(MethodBuffer);
+		OVUM_DISABLE_COPY_AND_ASSIGN(MethodBuffer);
 
 	public:
 		explicit MethodBuffer(int32_t size);

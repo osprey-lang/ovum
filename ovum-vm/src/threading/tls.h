@@ -18,7 +18,7 @@ private:
 	bool inited;
 	os::TlsKey key;
 
-	DISABLE_COPY_AND_ASSIGN(TlsEntry);
+	OVUM_DISABLE_COPY_AND_ASSIGN(TlsEntry);
 
 public:
 	inline TlsEntry() : inited(false)

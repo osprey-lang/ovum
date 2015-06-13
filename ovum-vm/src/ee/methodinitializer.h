@@ -14,7 +14,7 @@ private:
 	VM *vm;
 	MethodOverload *method;
 
-	DISABLE_COPY_AND_ASSIGN(MethodInitializer);
+	OVUM_DISABLE_COPY_AND_ASSIGN(MethodInitializer);
 
 public:
 	inline MethodInitializer(VM *vm) : vm(vm), method(nullptr)
