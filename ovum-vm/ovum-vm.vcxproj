@@ -94,6 +94,7 @@
     <ClInclude Include="src\ee\methodinitializer.h" />
     <ClInclude Include="src\gc\gcobject.h" />
     <ClInclude Include="src\gc\staticref.h" />
+    <ClInclude Include="src\module\modulepool.h" />
     <ClInclude Include="src\object\field.h" />
     <ClInclude Include="src\object\member.h" />
     <ClInclude Include="src\object\method.h" />
@@ -166,6 +167,7 @@
     <ClCompile Include="src\ee\methodbuilder.cpp" />
     <ClCompile Include="src\ee\methodinitializer.cpp" />
     <ClCompile Include="src\gc\gcobject.cpp" />
+    <ClCompile Include="src\module\modulepool.cpp" />
     <ClCompile Include="src\object\field.cpp" />
     <ClCompile Include="src\object\member.cpp" />
     <ClCompile Include="src\object\method.cpp" />

@@ -8,6 +8,7 @@
 #include "../object/property.h"
 #include "../object/method.h"
 #include "../module/module.h"
+#include "../module/modulepool.h"
 #include "../util/pathname.h"
 #include <fcntl.h>
 #include <io.h>
