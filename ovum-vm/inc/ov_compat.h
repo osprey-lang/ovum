@@ -118,13 +118,15 @@ inline T NextPowerOfTwo(T n)
 // can be fully evaluated at compile-time.
 #define OVUM_ALIGN_TO(size,alignment)  (((size) + (alignment) - 1) / (alignment) * (alignment))
 
+#ifndef OVUM_DELETE
 // Marks a function member as having been deleted, if the compiler supports it.
 // TODO: Better conditional definition based on compiler capabilities.
-#if defined(_MSC_VER) && _MSC_VER > 1800
-#define OVUM_DELETE =delete
-#else
-#define OVUM_DELETE
-#endif
+# if defined(_MSC_VER) && _MSC_VER > 1800
+#  define OVUM_DELETE =delete
+# else
+#  define OVUM_DELETE
+# endif
+#endif // OVUM_DELETE
 
 // When put in the 'private' section of a type definition, disables copying and
 // assignment, by declaring operator= and the T(const T&) constructor as private
