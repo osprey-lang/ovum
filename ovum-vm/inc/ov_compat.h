@@ -159,17 +159,17 @@ inline T NextPowerOfTwo(T n)
 // Disable the feature
 #  define OVUM_CDECL
 # endif
-#endif
+#endif // OVUM_CDECL
 
-#ifndef NOINLINE
+#ifndef OVUM_NOINLINE
 # if defined(_MSC_VER)
-#  define NOINLINE __declspec(noinline)
+#  define OVUM_NOINLINE __declspec(noinline)
 # elif defined(__GNUC__)
-#  define NOINLINE __attribute__((noinline))
+#  define OVUM_NOINLINE __attribute__((noinline))
 # else
 // Disable the feature
-#  define NOINLINE
+#  define OVUM_NOINLINE
 # endif
-#endif
+#endif // OVUM_NOINLINE
 
 #endif // VM__COMPAT_H

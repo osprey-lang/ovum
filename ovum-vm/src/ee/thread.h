@@ -122,7 +122,7 @@ OVUM_ENUM_OPS(ThreadFlags, int);
 class Thread
 {
 public:
-	NOINLINE static int Create(VM *owner, Thread *&result);
+	OVUM_NOINLINE static int Create(VM *owner, Thread *&result);
 
 	Thread(VM *owner, int &status);
 	~Thread();
@@ -269,14 +269,14 @@ public:
 
 	// Throw helpers!
 
-	NOINLINE int ThrowError(String *message = nullptr);
-	NOINLINE int ThrowTypeError(String *message = nullptr);
-	NOINLINE int ThrowMemoryError(String *message = nullptr);
-	NOINLINE int ThrowOverflowError(String *message = nullptr);
-	NOINLINE int ThrowDivideByZeroError(String *message = nullptr);
-	NOINLINE int ThrowNullReferenceError(String *message = nullptr);
-	NOINLINE int ThrowMemberNotFoundError(String *member);
-	NOINLINE int ThrowNoOverloadError(uint32_t argCount, String *message = nullptr);
+	OVUM_NOINLINE int ThrowError(String *message = nullptr);
+	OVUM_NOINLINE int ThrowTypeError(String *message = nullptr);
+	OVUM_NOINLINE int ThrowMemoryError(String *message = nullptr);
+	OVUM_NOINLINE int ThrowOverflowError(String *message = nullptr);
+	OVUM_NOINLINE int ThrowDivideByZeroError(String *message = nullptr);
+	OVUM_NOINLINE int ThrowNullReferenceError(String *message = nullptr);
+	OVUM_NOINLINE int ThrowMemberNotFoundError(String *member);
+	OVUM_NOINLINE int ThrowNoOverloadError(uint32_t argCount, String *message = nullptr);
 
 	bool IsSuspendedForGC() const;
 
@@ -322,16 +322,16 @@ private:
 
 	int PrepareVariadicArgs(MethodFlags flags, uint32_t argCount, uint32_t paramCount, StackFrame *frame);
 
-	NOINLINE void HandleRequest();
+	OVUM_NOINLINE void HandleRequest();
 
 	// Tells the thread to suspend itself as soon as possible.
 	// Thread::IsSuspendedForGC() returns true when this is done.
-	NOINLINE void PleaseSuspendForGCAsap();
+	OVUM_NOINLINE void PleaseSuspendForGCAsap();
 	// Tells the thread it doesn't have to suspend itself anymore,
 	// because the GC cycle has ended. This happens when the thread
 	// spends the entire GC cycle in an unmanaged region.
-	NOINLINE void EndGCSuspension();
-	NOINLINE void SuspendForGC();
+	OVUM_NOINLINE void EndGCSuspension();
+	OVUM_NOINLINE void SuspendForGC();
 
 	int Evaluate();
 	int FindErrorHandler(int32_t maxIndex);
