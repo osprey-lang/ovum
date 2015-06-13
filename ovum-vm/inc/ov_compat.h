@@ -16,12 +16,14 @@
 
 // For checked multiplication only
 // (uses the _mul128 function if available)
-#if !defined(__GNUC__) && defined(_M_AMD64)
-# include <intrin.h>
-# define OVUM_USE_INTRINSICS 1
-#else
-# define OVUM_USE_INTRINSICS 0
-#endif
+#ifndef OVUM_USE_INTRINSICS
+# if !defined(__GNUC__) && defined(_M_AMD64)
+#  include <intrin.h>
+#  define OVUM_USE_INTRINSICS 1
+# else
+#  define OVUM_USE_INTRINSICS 0
+# endif
+#endif // OVUM_USE_INTRINSICS
 
 
 template<class T>
