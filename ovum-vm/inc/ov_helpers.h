@@ -41,7 +41,7 @@ inline int UInt_SubtractChecked(const uint64_t left, const uint64_t right, uint6
 }
 inline int UInt_MultiplyChecked(const uint64_t left, const uint64_t right, uint64_t &result)
 {
-#if USE_INTRINSICS
+#if OVUM_USE_INTRINSICS
 	uint64_t high;
 	result = _umul128(left, right, &high);
 
@@ -145,7 +145,7 @@ inline int Int_SubtractChecked(const int64_t left, const int64_t right, int64_t 
 }
 inline int Int_MultiplyChecked(const int64_t left, const int64_t right, int64_t &result)
 {
-#if USE_INTRINSICS
+#if OVUM_USE_INTRINSICS
 	int64_t high;
 	result = _mul128(left, right, &high);
 
