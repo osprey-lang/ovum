@@ -5,7 +5,7 @@
  * This file contains various compatibility and utility macros and methods.
  */
 
-#define ENUM_OPS(TEnum,TInt) \
+#define OVUM_ENUM_OPS(TEnum,TInt) \
 	inline TEnum operator&(const TEnum a, const TEnum b) { return static_cast<TEnum>((TInt)a & (TInt)b); } \
 	inline TEnum operator|(const TEnum a, const TEnum b) { return static_cast<TEnum>((TInt)a | (TInt)b); } \
 	inline TEnum operator^(const TEnum a, const TEnum b) { return static_cast<TEnum>((TInt)a ^ (TInt)b); } \

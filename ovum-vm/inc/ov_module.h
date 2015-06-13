@@ -38,7 +38,7 @@ enum class ModuleMemberFlags : uint32_t
 	PUBLIC     = 0x0010,
 	INTERNAL   = 0x0020,
 };
-ENUM_OPS(ModuleMemberFlags, uint32_t);
+OVUM_ENUM_OPS(ModuleMemberFlags, uint32_t);
 
 typedef struct GlobalMember_S
 {

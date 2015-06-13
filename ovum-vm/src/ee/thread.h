@@ -117,7 +117,7 @@ enum class ThreadFlags : int
 	// See VM_EnterUnmanagedRegion for details.
 	IN_UNMANAGED_REGION = 0x01,
 };
-ENUM_OPS(ThreadFlags, int);
+OVUM_ENUM_OPS(ThreadFlags, int);
 
 class Thread
 {

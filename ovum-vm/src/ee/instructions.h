@@ -43,7 +43,7 @@ namespace instr
 		// The instruction pushes a reference onto the stack
 		PUSHES_REF  = 0x0400,
 	};
-	ENUM_OPS(InstrFlags, uint32_t);
+	OVUM_ENUM_OPS(InstrFlags, uint32_t);
 
 	class StackChange
 	{

@@ -40,7 +40,7 @@ enum class MemberFlags : uint32_t
 	// A mask for extracting the kind of a member.
 	KIND = 0x000f,
 };
-ENUM_OPS(MemberFlags, uint32_t);
+OVUM_ENUM_OPS(MemberFlags, uint32_t);
 
 class Member
 {
