@@ -4,7 +4,6 @@
 #include "../vm.h"
 #include "thread.h"
 #include <vector>
-#include <cassert>
 
 namespace ovum
 {
@@ -394,7 +393,7 @@ public:
 	{
 		// The local offset is never supposed to point into
 		// the stack frame itself.
-		assert(offset < 0 || offset >= STACK_FRAME_SIZE);
+		OVUM_ASSERT(offset < 0 || offset >= STACK_FRAME_SIZE);
 		return (Value*)((char*)frame + offset);
 	}
 };

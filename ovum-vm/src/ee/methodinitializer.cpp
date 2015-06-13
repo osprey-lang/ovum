@@ -81,7 +81,7 @@ public:
 		typedef StackEntry::StackEntryFlags EntryFlags;
 
 		Branch &cur = branches.front();
-		assert(cur.stackHeight - change.removed + change.added <= MaxStack);
+		OVUM_ASSERT(cur.stackHeight - change.removed + change.added <= MaxStack);
 		if (cur.stackHeight < change.removed)
 			return false; // Not enough values on stack
 
@@ -97,7 +97,7 @@ public:
 	virtual bool HasRefs(uint32_t argCount) const
 	{
 		const Branch &cur = branches.front();
-		assert(cur.stackHeight >= argCount && argCount <= MaxStack);
+		OVUM_ASSERT(cur.stackHeight >= argCount && argCount <= MaxStack);
 
 		for (uint32_t i = 1; i <= argCount; i++)
 			if (cur.stack[cur.stackHeight - i].flags & StackEntry::IS_REF)
@@ -109,7 +109,7 @@ public:
 	virtual bool IsRef(uint32_t stackSlot) const
 	{
 		const Branch &cur = branches.front();
-		assert(stackSlot < MaxStack);
+		OVUM_ASSERT(stackSlot < MaxStack);
 		StackEntry::StackEntryFlags flags = cur.stack[cur.stackHeight - 1 - stackSlot].flags;
 		return (flags & StackEntry::IS_REF) == StackEntry::IS_REF;
 	}
@@ -117,7 +117,7 @@ public:
 	virtual uint32_t GetRefSignature(uint32_t argCount) const
 	{
 		const Branch &cur = branches.front();
-		assert(cur.stackHeight >= argCount && argCount <= MaxStack);
+		OVUM_ASSERT(cur.stackHeight >= argCount && argCount <= MaxStack);
 
 		RefSignatureBuilder refBuilder(argCount);
 
@@ -226,7 +226,7 @@ public:
 		typedef StackEntry::StackEntryFlags EntryFlags;
 
 		Branch &cur = branches.front();
-		assert(cur.stackHeight - change.removed + change.added <= maxStack);
+		OVUM_ASSERT(cur.stackHeight - change.removed + change.added <= maxStack);
 		if (cur.stackHeight < change.removed)
 			return false; // Not enough values on stack
 
@@ -278,7 +278,7 @@ int MethodInitializer::Initialize(MethodOverload *method, Thread *const thread)
 {
 	using namespace instr;
 
-	assert(!method->IsInitialized());
+	OVUM_ASSERT(!method->IsInitialized());
 	this->method = method;
 
 	MethodBuilder builder;
@@ -618,7 +618,7 @@ void MethodInitializer::CalculateStackHeights(instr::MethodBuilder &builder, Sta
 							case OPI_GTE_L: case OPI_GTE_S: newOpcode = OPI_BRNGTE; break;
 							}
 						}
-						assert(newOpcode != OPI_NOP);
+						OVUM_ASSERT(newOpcode != OPI_NOP);
 
 						// Set the previous instruction to the new comparison thing
 						// (This also deletes the old Instruction*)
@@ -671,7 +671,7 @@ void MethodInitializer::WriteInitializedBody(instr::MethodBuilder &builder)
 		instr->WriteBytes(buffer, builder);
 
 		// The buffer should be properly aligned after each instruction
-		assert((buffer.GetCurrent() - buffer.GetBuffer()) % oa::ALIGNMENT == 0);
+		OVUM_ASSERT((buffer.GetCurrent() - buffer.GetBuffer()) % oa::ALIGNMENT == 0);
 	}
 
 	delete[] method->entry;

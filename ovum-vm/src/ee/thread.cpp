@@ -97,9 +97,9 @@ Thread::~Thread()
 
 int Thread::Start(unsigned int argCount, MethodOverload *mo, Value &result)
 {
-	assert(mo != nullptr);
-	assert(this->state == ThreadState::CREATED);
-	assert((mo->flags & MethodFlags::INSTANCE) == MethodFlags::NONE);
+	OVUM_ASSERT(mo != nullptr);
+	OVUM_ASSERT(this->state == ThreadState::CREATED);
+	OVUM_ASSERT((mo->flags & MethodFlags::INSTANCE) == MethodFlags::NONE);
 
 	state = ThreadState::RUNNING;
 
@@ -135,7 +135,7 @@ void Thread::EndGCSuspension()
 
 void Thread::SuspendForGC()
 {
-	assert(pendingRequest == ThreadRequest::SUSPEND_FOR_GC);
+	OVUM_ASSERT(pendingRequest == ThreadRequest::SUSPEND_FOR_GC);
 
 	state = ThreadState::SUSPENDED_BY_GC;
 	// Do nothing here. Just wait for the GC to finish.
@@ -370,12 +370,12 @@ int Thread::InvokeMethodOverload(MethodOverload *mo, unsigned int argCount,
 			// error is not one we can handle, fall through to
 			// restore the previous stack frame, then return r.
 		}
-#ifndef NDEBUG
+#if OVUM_DEBUG
 		else
 		{
 			// It should not be possible to return from a method with
 			// anything other than exactly one value on the stack!
-			assert(currentFrame->stackCount == 1);
+			OVUM_ASSERT(currentFrame->stackCount == 1);
 		}
 #endif
 	}
@@ -478,7 +478,7 @@ int Thread::InvokeApplyMethodLL(Method *method, Value *args, Value *result)
 	if (!Type::ValueIsType(args, vm->types.List))
 		return ThrowTypeError(thread_errors::WrongApplyArgsType);
 
-	assert((method->flags & MemberFlags::INSTANCE) == MemberFlags::NONE);
+	OVUM_ASSERT((method->flags & MemberFlags::INSTANCE) == MemberFlags::NONE);
 
 	ListInst *argsList = args->v.list;
 
@@ -519,7 +519,7 @@ int Thread::EqualsLL(Value *args, bool &result)
 	MethodOverload *method = args[0].type->operators[(int)Operator::EQ];
 	// Don't need to test method for nullness: every type supports ==,
 	// because Object supports ==.
-	assert(method != nullptr); // okay, fine, but only when debugging
+	OVUM_ASSERT(method != nullptr); // okay, fine, but only when debugging
 
 	// Save the result in the first argument
 	int r = InvokeMethodOverload(method, 2, args, args);
@@ -641,11 +641,11 @@ MethodOverload *Thread::GetHashIndexerSetter()
 	{
 		Member *m = vm->types.Hash->GetMember(static_strings::_item);
 
-		assert((m->flags & MemberFlags::KIND) == MemberFlags::PROPERTY);
-		assert(((Property*)m)->setter != nullptr);
+		OVUM_ASSERT((m->flags & MemberFlags::KIND) == MemberFlags::PROPERTY);
+		OVUM_ASSERT(((Property*)m)->setter != nullptr);
 
 		MethodOverload *result = ((Property*)m)->setter->ResolveOverload(2);
-		assert(result != nullptr);
+		OVUM_ASSERT(result != nullptr);
 		hashSetItem = result;
 	}
 	return hashSetItem;
@@ -853,8 +853,8 @@ int Thread::LoadIndexerLL(uint32_t argCount, Value *args, Value *result)
 		return ThrowTypeError(thread_errors::NoIndexerFound);
 
 	// The indexer, if present, MUST be an instance property.
-	assert((member->flags & MemberFlags::INSTANCE) == MemberFlags::INSTANCE);
-	assert((member->flags & MemberFlags::PROPERTY) == MemberFlags::PROPERTY);
+	OVUM_ASSERT((member->flags & MemberFlags::INSTANCE) == MemberFlags::INSTANCE);
+	OVUM_ASSERT((member->flags & MemberFlags::PROPERTY) == MemberFlags::PROPERTY);
 
 	if (((Property*)member)->getter == nullptr)
 		return ThrowTypeError(thread_errors::GettingWriteonlyProperty);
@@ -883,8 +883,8 @@ int Thread::StoreIndexerLL(uint32_t argCount, Value *args)
 		return ThrowTypeError(thread_errors::NoIndexerFound);
 
 	// The indexer, if present, MUST be an instance property.
-	assert((member->flags & MemberFlags::INSTANCE) == MemberFlags::INSTANCE);
-	assert((member->flags & MemberFlags::PROPERTY) == MemberFlags::PROPERTY);
+	OVUM_ASSERT((member->flags & MemberFlags::INSTANCE) == MemberFlags::INSTANCE);
+	OVUM_ASSERT((member->flags & MemberFlags::PROPERTY) == MemberFlags::PROPERTY);
 
 	if (((Property*)member)->setter == nullptr)
 		return ThrowTypeError(thread_errors::SettingReadonlyProperty);
@@ -1033,7 +1033,7 @@ int Thread::Throw(bool rethrow)
 		if (!(currentError.v.error->stackTrace = GetStackTrace()))
 			return OVUM_ERROR_NO_MEMORY;
 	}
-	assert(!IS_NULL(currentError));
+	OVUM_ASSERT(!IS_NULL(currentError));
 
 	return OVUM_ERROR_THROWN;
 }
@@ -1227,7 +1227,7 @@ void Thread::PushFirstStackFrame()
 // Note: argCount and args DO include the instance here!
 void Thread::PushStackFrame(uint32_t argCount, Value *args, MethodOverload *method)
 {
-	assert(currentFrame->stackCount >= argCount);
+	OVUM_ASSERT(currentFrame->stackCount >= argCount);
 	currentFrame->stackCount -= argCount; // pop the arguments (including the instance) off the current frame
 
 	register uint32_t paramCount = method->GetEffectiveParamCount();

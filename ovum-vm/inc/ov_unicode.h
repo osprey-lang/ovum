@@ -1,7 +1,6 @@
 #ifndef VM__UNICODE_H
 #define VM__UNICODE_H
 
-#include <cassert>
 #include "ov_vm.h"
 
 // Each value is a Unicode general category. Categories are made up of two
@@ -89,7 +88,7 @@ OVUM_API UnicodeCategory UC_GetCategoryW(wuchar ch);
 // the uppercase and lowercase mappings of a given Unicode code point.
 OVUM_API CaseMap UC_GetCaseMapW(wuchar ch);
 
-#define assert_valid_wuchar(ch)  assert((ch) >= 0x10000 && (ch) <= 0x10FFFF)
+#define OVUM_ASSERT_NON_BMP(ch) OVUM_ASSERT((ch) >= 0x10000 && (ch) <= 0x10FFFF)
 
 // UTF-16 code unit functions
 
@@ -172,7 +171,7 @@ inline bool UC_NeedsSurrogatePair(wuchar ch)
 
 inline SurrogatePair UC_ToSurrogatePair(wuchar ch)
 {
-	assert_valid_wuchar(ch);
+	OVUM_ASSERT_NON_BMP(ch);
 	wuchar ch2 = ch - 0x10000;
 	SurrogatePair output = { 0xD800 + ((ch2 >> 10) & 0x3FF), 0xDC00 + (ch2 & 0x3FF) };
 	return output;

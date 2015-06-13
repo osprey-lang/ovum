@@ -1,7 +1,6 @@
 #include "overload.h"
 #include "../../aves_state.h"
 #include <stddef.h>
-#include <cassert>
 
 using namespace aves;
 
@@ -147,7 +146,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Overload_getCurrentOverload)
 	for (int32_t count = Method_GetOverloadCount(method); index < count; index++)
 		if (Method_GetOverload(method, index) == overload)
 			break;
-	assert(index < Method_GetOverloadCount(method));
+	OVUM_ASSERT(index < Method_GetOverloadCount(method));
 	VM_PushInt(thread, index);
 
 	// Stack now contains:

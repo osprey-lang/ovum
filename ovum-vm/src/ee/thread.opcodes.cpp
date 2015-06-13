@@ -75,14 +75,14 @@ int Thread::Evaluate()
 
 		TARGET(OPI_RET)
 			{
-				assert(f->stackCount == 1);
+				OVUM_ASSERT(f->stackCount == 1);
 			}
 			retCode = OVUM_SUCCESS;
 			goto ret;
 
 		TARGET(OPI_RETNULL)
 			{
-				assert(f->stackCount == 0);
+				OVUM_ASSERT(f->stackCount == 0);
 				f->evalStack->type = nullptr;
 				f->stackCount++;
 			}
@@ -1304,7 +1304,7 @@ int Thread::Evaluate()
 	}
 
 ret:
-	assert(f->stackCount == 1);
+	OVUM_ASSERT(f->stackCount == 1);
 	// And then we just fall through and return!
 exitMethod:
 	return retCode;

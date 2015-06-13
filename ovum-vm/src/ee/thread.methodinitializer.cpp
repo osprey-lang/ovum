@@ -8,7 +8,7 @@ namespace ovum
 
 int Thread::InitializeMethod(MethodOverload *method)
 {
-	assert(!method->IsInitialized());
+	OVUM_ASSERT(!method->IsInitialized());
 
 	MethodInitializer initer(this->vm);
 	int r = initer.Initialize(method, this);

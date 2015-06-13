@@ -1,7 +1,6 @@
 #include "../vm.h"
 #include "../../inc/ov_string.h"
 #include "stringtable.h"
-#include <cassert>
 
 namespace ovum
 {
@@ -107,10 +106,10 @@ String *StringTable::Intern(String *value)
 bool StringTable::RemoveIntern(String *value)
 {
 	// The string MUST be an interned string here. Must be.
-	assert((value->flags & StringFlags::INTERN) == StringFlags::INTERN);
+	OVUM_ASSERT((value->flags & StringFlags::INTERN) == StringFlags::INTERN);
 	// It also has to be hashed. Kinda hard to intern it
 	// without hashing it, but let's check it anyway.
-	assert((value->flags & StringFlags::HASHED) == StringFlags::HASHED);
+	OVUM_ASSERT((value->flags & StringFlags::HASHED) == StringFlags::HASHED);
 
 	int32_t bucket = (value->hashCode & INT32_MAX) % capacity;
 	Entry *lastEntry = nullptr;
@@ -144,9 +143,9 @@ bool StringTable::RemoveIntern(String *value)
 void StringTable::UpdateIntern(String *value)
 {
 	// The string should be interned already.
-	assert((value->flags & StringFlags::INTERN) == StringFlags::INTERN);
+	OVUM_ASSERT((value->flags & StringFlags::INTERN) == StringFlags::INTERN);
 	// It should also not be possible to have a non-hashed intern.
-	assert((value->flags & StringFlags::HASHED) == StringFlags::HASHED);
+	OVUM_ASSERT((value->flags & StringFlags::HASHED) == StringFlags::HASHED);
 
 	int32_t hashCode = value->hashCode & INT32_MAX;
 	Entry *entry;

@@ -5,7 +5,6 @@
 #include "vm.h"
 #include "../threading/sync.h"
 #include "../threading/tls.h"
-#include <cassert>
 
 namespace ovum
 {
@@ -43,28 +42,28 @@ public:
 
 	inline Value Pop()
 	{
-		assert(stackCount > 0);
+		OVUM_ASSERT(stackCount > 0);
 		return evalStack[--stackCount];
 	}
 	inline void Pop(unsigned int n)
 	{
-		assert(n <= stackCount);
+		OVUM_ASSERT(n <= stackCount);
 		stackCount -= n;
 	}
 
 	inline Value Peek(unsigned int n = 0) const
 	{
-		assert(n <= stackCount);
+		OVUM_ASSERT(n <= stackCount);
 		return evalStack[stackCount - n - 1];
 	}
 	inline Type *PeekType(unsigned int n = 0) const
 	{
-		assert(n <= stackCount);
+		OVUM_ASSERT(n <= stackCount);
 		return evalStack[stackCount - n - 1].type;
 	}
 	inline String *PeekString(unsigned int n = 0) const
 	{
-		assert(n <= stackCount);
+		OVUM_ASSERT(n <= stackCount);
 		return evalStack[stackCount - n - 1].v.string;
 	}
 

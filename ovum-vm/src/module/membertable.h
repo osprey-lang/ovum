@@ -3,7 +3,6 @@
 
 #include "../vm.h"
 #include "module.h"
-#include <cassert>
 
 namespace ovum
 {
@@ -57,7 +56,7 @@ private:
 	inline void Init(const int32_t capacity)
 	{
 		// Init should only be called with a non-zero capacity once
-		assert(this->capacity == 0);
+		OVUM_ASSERT(this->capacity == 0);
 
 		this->capacity = capacity;
 		if (capacity != 0)

@@ -261,7 +261,7 @@ namespace instr
 
 		inline virtual void UpdateInput(const LocalOffset offset, bool isOnStack)
 		{
-			assert(isOnStack);
+			OVUM_ASSERT(isOnStack);
 			source = offset;
 		}
 		inline virtual void UpdateOutput(const LocalOffset offset, bool isOnStack)
@@ -455,7 +455,7 @@ namespace instr
 
 		inline virtual void UpdateInput(const LocalOffset offset, bool isOnStack)
 		{
-			assert(isOnStack);
+			OVUM_ASSERT(isOnStack);
 			this->args = offset;
 		}
 		inline virtual void UpdateOutput(const LocalOffset offset, bool isOnStack)
@@ -568,7 +568,7 @@ namespace instr
 
 		inline virtual void UpdateInput(const LocalOffset offset, bool isOnStack)
 		{
-			assert(isOnStack);
+			OVUM_ASSERT(isOnStack);
 			instance = offset;
 		}
 		inline virtual void UpdateOutput(const LocalOffset offset, bool isOnStack)
@@ -601,7 +601,7 @@ namespace instr
 
 		inline virtual void UpdateInput(const LocalOffset offset, bool isOnStack)
 		{
-			assert(isOnStack);
+			OVUM_ASSERT(isOnStack);
 			args = offset;
 		}
 
@@ -630,7 +630,7 @@ namespace instr
 
 		inline virtual void UpdateInput(const LocalOffset offset, bool isOnStack)
 		{
-			assert(isOnStack);
+			OVUM_ASSERT(isOnStack);
 			this->instance = offset;
 		}
 		inline virtual void UpdateOutput(const LocalOffset offset, bool isOnStack)
@@ -663,7 +663,7 @@ namespace instr
 
 		inline virtual void UpdateInput(const LocalOffset offset, bool isOnStack)
 		{
-			assert(isOnStack);
+			OVUM_ASSERT(isOnStack);
 			args = offset;
 		}
 
@@ -738,7 +738,7 @@ namespace instr
 
 		inline virtual void UpdateInput(const LocalOffset offset, bool isOnStack)
 		{
-			assert(isOnStack);
+			OVUM_ASSERT(isOnStack);
 			value = offset;
 		}
 		inline virtual void UpdateOutput(const LocalOffset offset, bool isOnStack)
@@ -771,7 +771,7 @@ namespace instr
 
 		inline virtual void UpdateInput(const LocalOffset offset, bool isOnStack)
 		{
-			assert(isOnStack);
+			OVUM_ASSERT(isOnStack);
 			source = offset;
 		}
 		inline virtual void UpdateOutput(const LocalOffset offset, bool isOnStack)
@@ -805,7 +805,7 @@ namespace instr
 
 		inline virtual void UpdateInput(const LocalOffset offset, bool isOnStack)
 		{
-			assert(isOnStack);
+			OVUM_ASSERT(isOnStack);
 			args = offset;
 		}
 		inline virtual void UpdateOutput(const LocalOffset offset, bool isOnStack)
@@ -838,7 +838,7 @@ namespace instr
 
 		inline virtual void UpdateInput(const LocalOffset offset, bool isOnStack)
 		{
-			assert(isOnStack);
+			OVUM_ASSERT(isOnStack);
 			args = offset;
 		}
 
@@ -868,7 +868,7 @@ namespace instr
 
 		inline virtual void UpdateInput(const LocalOffset offset, bool isOnStack)
 		{
-			assert(isOnStack);
+			OVUM_ASSERT(isOnStack);
 			args = offset;
 		}
 		inline virtual void UpdateOutput(const LocalOffset offset, bool isOnStack)
@@ -907,7 +907,7 @@ namespace instr
 
 		inline virtual void UpdateInput(const LocalOffset offset, bool isOnStack)
 		{
-			assert(isOnStack);
+			OVUM_ASSERT(isOnStack);
 			args = offset;
 		}
 		inline virtual void UpdateOutput(const LocalOffset offset, bool isOnStack)
@@ -946,7 +946,7 @@ namespace instr
 
 		inline virtual void UpdateInput(const LocalOffset offset, bool isOnStack)
 		{
-			assert(isOnStack);
+			OVUM_ASSERT(isOnStack);
 			args = offset;
 		}
 		inline virtual void UpdateOutput(const LocalOffset offset, bool isOnStack)
@@ -982,7 +982,7 @@ namespace instr
 
 		inline virtual void UpdateInput(const LocalOffset offset, bool isOnStack)
 		{
-			assert(isOnStack);
+			OVUM_ASSERT(isOnStack);
 			args = offset;
 		}
 		inline virtual void UpdateOutput(const LocalOffset offset, bool isOnStack)
@@ -1016,7 +1016,7 @@ namespace instr
 
 		inline virtual void UpdateInput(const LocalOffset offset, bool isOnStack)
 		{
-			assert(isOnStack);
+			OVUM_ASSERT(isOnStack);
 			args = offset;
 		}
 		inline virtual void UpdateOutput(const LocalOffset offset, bool isOnStack)
@@ -1168,7 +1168,7 @@ namespace instr
 
 		inline virtual void UpdateInput(const LocalOffset offset, bool isOnStack)
 		{
-			assert(isOnStack);
+			OVUM_ASSERT(isOnStack);
 			args = offset;
 		}
 
@@ -1197,7 +1197,7 @@ namespace instr
 
 		inline virtual void UpdateInput(const LocalOffset offset, bool isOnStack)
 		{
-			assert(isOnStack);
+			OVUM_ASSERT(isOnStack);
 			args = offset;
 		}
 
@@ -1248,7 +1248,7 @@ namespace instr
 
 		inline virtual void UpdateInput(const LocalOffset offset, bool isOnStack)
 		{
-			assert(isOnStack);
+			OVUM_ASSERT(isOnStack);
 			args = offset;
 		}
 		inline virtual void UpdateOutput(const LocalOffset offset, bool isOnStack)

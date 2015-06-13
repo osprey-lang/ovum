@@ -95,7 +95,7 @@ bool Member::IsAccessibleProtectedWithSharedType(const Type *instType, const Typ
 
 Type *Member::GetOriginatingType() const
 {
-	assert((flags & MemberFlags::ACCESS_LEVEL) == MemberFlags::PROTECTED);
+	OVUM_ASSERT((flags & MemberFlags::ACCESS_LEVEL) == MemberFlags::PROTECTED);
 	const Method *method = nullptr;
 
 	if ((flags & MemberFlags::KIND) == MemberFlags::METHOD)

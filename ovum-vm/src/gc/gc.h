@@ -1,7 +1,6 @@
 #ifndef VM__GC_INTERNAL_H
 #define VM__GC_INTERNAL_H
 
-#include <cassert>
 #include "../vm.h"
 #include "gcobject.h"
 #include "stringtable.h"

@@ -1,7 +1,6 @@
 #include "list.h"
 #include "../aves_state.h"
 #include <cstddef>
-#include <cassert>
 
 using namespace aves;
 
@@ -282,7 +281,7 @@ int SliceList(ThreadHandle thread, ListInst *list, int32_t startIndex, int32_t e
 	if (sliceLength > 0)
 	{
 		ListInst *outputList = output->v.list;
-		assert(outputList->capacity >= sliceLength);
+		OVUM_ASSERT(outputList->capacity >= sliceLength);
 
 		// Copy the elements across
 		CopyMemoryT(outputList->values, list->values + startIndex, sliceLength);

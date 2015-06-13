@@ -208,7 +208,7 @@ OVUM_API bool String_EqualsIgnoreCase(const String *a, const String *b)
 
 OVUM_API bool String_SubstringEquals(const String *str, const int32_t startIndex, const String *part)
 {
-	assert(str != nullptr);
+	OVUM_ASSERT(str != nullptr);
 	if (startIndex >= str->length)
 		return false;
 	if (part == nullptr || part->length == 0)
@@ -291,7 +291,7 @@ OVUM_API int String_Compare(const String *a, const String *b)
 
 OVUM_API bool String_Contains(const String *str, const String *value)
 {
-	assert(str != nullptr);
+	OVUM_ASSERT(str != nullptr);
 	if (value == nullptr || value->length == 0)
 		return true;
 	if (value->length > str->length)
