@@ -114,7 +114,7 @@ private:
 
 public:
 	// Creates a garbage collector instance.
-	NOINLINE static int Create(VM *owner, GC *&gc);
+	OVUM_NOINLINE static int Create(VM *owner, GC *&gc);
 
 	GC(VM *owner);
 	~GC();
