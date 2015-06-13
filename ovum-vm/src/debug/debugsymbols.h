@@ -6,13 +6,8 @@
 namespace ovum
 {
 
-class ModuleReader;
-
 namespace debug
 {
-	typedef struct SourceFile_S SourceFile;
-	typedef struct SourceLocation_S SourceLocation;
-
 	class DebugSymbols
 	{
 	public:
@@ -26,13 +21,13 @@ namespace debug
 		SourceLocation *FindSymbol(uint32_t offset);
 	};
 
-	struct SourceFile_S
+	struct SourceFile
 	{
 		String *fileName;
 		uint8_t hash[20]; // SHA-1 hash
 	};
 
-	struct SourceLocation_S
+	struct SourceLocation
 	{
 		SourceFile *file;
 
@@ -68,7 +63,7 @@ namespace debug
 
 		friend class GC;
 	};
-} // namespace debug
+} // namespace ovum::debug
 
 } // namespace ovum
 

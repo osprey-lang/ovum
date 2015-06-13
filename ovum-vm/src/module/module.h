@@ -52,7 +52,7 @@ enum ModuleMemberId : uint32_t
 };
 
 // Types that are specific to module loading
-typedef struct ModuleMeta_S
+struct ModuleMeta
 {
 	String *name; // The name of the module
 	ModuleVersion version;
@@ -65,7 +65,7 @@ typedef struct ModuleMeta_S
 	int32_t fieldCount;
 	int32_t methodCount;
 	uint32_t methodStart;
-} ModuleMeta;
+};
 
 // And then the actual Module class! Hurrah!
 class Module

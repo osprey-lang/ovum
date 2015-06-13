@@ -17,13 +17,13 @@ namespace ovum
 // There are exceptionally few circumstances that warrant the use
 // of mutable strings.
 // IF STRING CHANGES, MUTABLESTRING MUST BE UPDATED TO REFLECT THAT.
-typedef struct MutableString_S
+struct MutableString
 {
 	uint32_t length;
 	uint32_t hashCode;
 	StringFlags flags;
 	uchar firstChar;
-} MutableString;
+};
 
 class GC
 {

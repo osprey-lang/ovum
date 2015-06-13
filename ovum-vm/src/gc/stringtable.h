@@ -1,9 +1,7 @@
 #ifndef VM__STRING_TABLE_INTERNAL_H
 #define VM__STRING_TABLE_INTERNAL_H
 
-#include <cstdint>
-
-typedef struct String_S String;
+#include "../vm.h"
 
 namespace ovum
 {

@@ -46,7 +46,7 @@ private:
 class StackManager
 {
 public:
-	typedef struct StackEntry_S
+	struct StackEntry
 	{
 		enum StackEntryFlags : uint8_t
 		{
@@ -54,7 +54,7 @@ public:
 			THIS_ARG = 2,
 			IS_REF   = 4,
 		} flags;
-	} StackEntry;
+	};
 
 	inline StackManager(RefSignaturePool *refSignatures)
 		: refSignatures(refSignatures)
