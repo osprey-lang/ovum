@@ -115,10 +115,12 @@ inline T NextPowerOfTwo(T n)
 	return n + 1;
 }
 
+#ifndef OVUM_ALIGN_TO
 // This macro is effectively equivalent to ceil(size / alignment) * alignment,
 // but for integer types, and if size and alignment are both constant values, it
 // can be fully evaluated at compile-time.
-#define OVUM_ALIGN_TO(size,alignment)  (((size) + (alignment) - 1) / (alignment) * (alignment))
+# define OVUM_ALIGN_TO(size,alignment)  (((size) + (alignment) - 1) / (alignment) * (alignment))
+#endif // OVUM_ALIGN_TO
 
 #ifndef OVUM_DELETE
 // Marks a function member as having been deleted, if the compiler supports it.
