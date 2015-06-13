@@ -160,6 +160,7 @@
     <ClInclude Include="src\object\value.h" />
     <ClInclude Include="inc\ov_vm.h" />
     <ClInclude Include="src\vm.h" />
+    <ClInclude Include="src\ee\vm.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\debug\debugsymbols.cpp" />

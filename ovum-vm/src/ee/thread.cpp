@@ -1,4 +1,5 @@
 #include "thread.h"
+#include "vm.h"
 #include "../object/type.h"
 #include "../object/member.h"
 #include "../object/field.h"

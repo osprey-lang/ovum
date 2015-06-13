@@ -161,36 +161,4 @@ void StringTable::UpdateIntern(String *value)
 	}
 }
 
-void StringTable::DebugBuckets()
-{
-	using namespace std;
-
-	int32_t bucketsUsed = 0;
-	int32_t mostCollidedBucket = 0;
-	int32_t maxCollisionCount = 0;
-
-	for (int32_t i = 0; i < capacity; i++)
-	{
-		if (i > 0)
-			wprintf(L", ");
-		wprintf(L"%d", buckets[i]);
-		if (buckets[i] >= 0)
-		{
-			bucketsUsed++;
-			int32_t collisions = 0;
-			for (int32_t k = buckets[i]; k >= 0; k = entries[k].next)
-				collisions++;
-			if (collisions > maxCollisionCount)
-			{
-				maxCollisionCount = collisions;
-				mostCollidedBucket = i;
-			}
-		}
-	}
-	wprintf(L"\n");
-
-	wprintf(L"Used %d out of %d buckets\n", bucketsUsed, capacity);
-	wprintf(L"Most collided bucket: %d (%d)\n", mostCollidedBucket, maxCollisionCount);
-}
-
 } // namespace ovum

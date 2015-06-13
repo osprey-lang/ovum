@@ -2,6 +2,7 @@
 #define VM__TYPE_INTERNAL_H
 
 #include "../vm.h"
+#include "../ee/vm.h"
 #include "../threading/sync.h"
 #include "../util/stringhash.h"
 #include <cassert>

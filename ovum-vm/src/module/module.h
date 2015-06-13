@@ -6,6 +6,7 @@
 #include <exception>
 #include "../vm.h"
 #include "membertable.h"
+#include "../ee/vm.h"
 #include "../util/pathname.h"
 #include "../util/stringhash.h"
 #include "../../inc/ov_string.h"

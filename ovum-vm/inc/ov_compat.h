@@ -116,7 +116,7 @@ inline T NextPowerOfTwo(T n)
 // This macro is effectively equivalent to ceil(size / alignment) * alignment,
 // but for integer types, and if size and alignment are both constant values, it
 // can be fully evaluated at compile-time.
-#define ALIGN_TO(size,alignment)  ((size + (alignment) - 1) / (alignment) * (alignment))
+#define ALIGN_TO(size,alignment)  (((size) + (alignment) - 1) / (alignment) * (alignment))
 
 // Marks a function member as having been deleted, if the compiler supports it.
 // TODO: Better conditional definition based on compiler capabilities.
