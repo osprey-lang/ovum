@@ -63,6 +63,6 @@ enum class MemberSearchFlags : int32_t
 	ACCESSIBILITY = PUBLIC | NON_PUBLIC,
 	INSTANCENESS  = INSTANCE | STATIC,
 };
-ENUM_OPS(MemberSearchFlags, int32_t);
+OVUM_ENUM_OPS(MemberSearchFlags, int32_t);
 
 #endif // AVES__TYPE_H

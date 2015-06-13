@@ -30,7 +30,7 @@ enum class StringFlags : uint32_t
 	// is collected.
 	INTERN = 4,
 };
-ENUM_OPS(StringFlags, uint32_t);
+OVUM_ENUM_OPS(StringFlags, uint32_t);
 
 // Note: Strings are variable-size instances, and should never be passed by value.
 // Always pass String pointers around. To get the character data, take the address

@@ -23,7 +23,7 @@ enum class FileAccess
 	WRITE      = 2,
 	READ_WRITE = READ | WRITE,
 };
-ENUM_OPS(FileAccess, int);
+OVUM_ENUM_OPS(FileAccess, int);
 
 enum class FileShare
 {
@@ -33,7 +33,7 @@ enum class FileShare
 	READ_WRITE = READ | WRITE,
 	DELETE_    = 4, // Windows headers define a DELETE macro, sigh
 };
-ENUM_OPS(FileShare, int);
+OVUM_ENUM_OPS(FileShare, int);
 
 enum class SeekOrigin
 {

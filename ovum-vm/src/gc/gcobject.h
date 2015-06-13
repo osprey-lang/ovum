@@ -53,7 +53,7 @@ enum class GCOFlags : uint32_t
 	// we have no idea what it contains.
 	ARRAY         = 0x0200,
 };
-ENUM_OPS(GCOFlags, uint32_t);
+OVUM_ENUM_OPS(GCOFlags, uint32_t);
 
 class GCObject
 {

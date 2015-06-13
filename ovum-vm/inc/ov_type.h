@@ -84,7 +84,7 @@ enum class MethodFlags : int32_t
 	// A mask for extracting the variadic flags of a method.
 	VARIADIC = VAR_END | VAR_START,
 };
-ENUM_OPS(MethodFlags, int32_t);
+OVUM_ENUM_OPS(MethodFlags, int32_t);
 
 OVUM_API MethodFlags Overload_GetFlags(OverloadHandle overload);
 
@@ -219,7 +219,7 @@ enum class TypeFlags : uint32_t
 	// which must be run before the value is collected.
 	HAS_FINALIZER       = 0x0400,
 };
-ENUM_OPS(TypeFlags, uint32_t);
+OVUM_ENUM_OPS(TypeFlags, uint32_t);
 
 // A ReferenceVisitor receives a set of zero or more managed references stored
 // in an object with a native implementation.
