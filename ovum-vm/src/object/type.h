@@ -5,7 +5,6 @@
 #include "../ee/vm.h"
 #include "../threading/sync.h"
 #include "../util/stringhash.h"
-#include <cassert>
 
 namespace ovum
 {

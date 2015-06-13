@@ -1,9 +1,8 @@
-#include <cassert>
-#include <cmath>
-#include <memory>
 #include "int.h"
 #include "real.h"
 #include "../aves_state.h"
+#include <memory>
+#include <cmath>
 
 using namespace aves;
 
@@ -472,7 +471,7 @@ int32_t integer::ToStringRadix(ThreadHandle thread, const int64_t value,
 {
 	// The radix is supposed to be range checked outside of this method.
 	// Also, use ToStringDecimal and ToStringHex for base 10 and 16, respectively.
-	assert(radix >= 2 && radix <= 36 && (radix != 10 && radix != 16 || value == INT64_MIN));
+	OVUM_ASSERT(radix >= 2 && radix <= 36 && (radix != 10 && radix != 16 || value == INT64_MIN));
 
 	uchar *chp = buf + bufferSize;
 

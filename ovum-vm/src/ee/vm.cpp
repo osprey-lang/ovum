@@ -220,7 +220,7 @@ int VM::GetMainMethodOverload(Method *method, unsigned int &argc, MethodOverload
 		r = functions.initListInstance(mainThread, argsList, this->argCount);
 		if (r != OVUM_SUCCESS) return r;
 
-		assert(argsList->capacity >= this->argCount);
+		OVUM_ASSERT(argsList->capacity >= this->argCount);
 
 		GetArgValues(this->argCount, argsList->values);
 		argsList->length = this->argCount;

@@ -82,4 +82,25 @@
 # endif
 #endif // OVUM_NOINLINE
 
+#ifndef OVUM_DEBUG
+# if defined(DEBUG)
+#  define OVUM_DEBUG 1
+# elif defined(_DEBUG) // MSVC
+#  define OVUM_DEBUG 1
+# else
+#  define OVUM_DEBUG 0
+# endif
+#endif // OVUM_DEBUG
+
+#ifndef OVUM_ASSERT
+# if OVUM_DEBUG
+// Only include this source file in debug mode! Otherwise OVUM_DEBUG is empty.
+#  include <assert.h>
+#  define OVUM_ASSERT_(expr) assert(expr)
+#  define OVUM_ASSERT(expr) OVUM_ASSERT_(expr)
+# else
+#  define OVUM_ASSERT(expr) ((void)0)
+# endif
+#endif // OVUM_ASSERT
+
 #endif // VM__COMPAT_H

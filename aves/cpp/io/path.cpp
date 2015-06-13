@@ -3,7 +3,6 @@
 #include "../aves_state.h"
 #include <ov_string.h>
 #include <memory>
-#include <cassert>
 
 using namespace aves;
 

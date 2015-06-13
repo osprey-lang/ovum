@@ -2,7 +2,6 @@
 #include "module.h"
 #include "../gc/gc.h"
 #include <memory>
-#include <cassert>
 
 namespace ovum
 {
@@ -86,10 +85,10 @@ void ModuleReader::Read(void *dest, uint32_t count)
 		while (count > 0)
 		{
 			// Must be at the end of the buffer here
-			assert(bufferDataSize == 0 || bufferIndex == bufferDataSize);
+			OVUM_ASSERT(bufferDataSize == 0 || bufferIndex == bufferDataSize);
 
 			FillBuffer();
-			assert(bufferIndex == 0);
+			OVUM_ASSERT(bufferIndex == 0);
 
 			uint32_t bufCount = min(bufferDataSize, count);
 			memcpy(destp, buffer, bufCount);

@@ -99,7 +99,7 @@ void Type::InitOperators()
 	if (!baseType)
 		return;
 
-	assert((baseType->flags & TypeFlags::OPS_INITED) == TypeFlags::OPS_INITED);
+	OVUM_ASSERT((baseType->flags & TypeFlags::OPS_INITED) == TypeFlags::OPS_INITED);
 	for (int op = 0; op < OPERATOR_COUNT; op++)
 	{
 		if (!this->operators[op])
@@ -209,7 +209,7 @@ int Type::RunStaticCtor(Thread *const thread)
 		if (member)
 		{
 			// If there is a member '.init', it must be a method!
-			assert((member->flags & MemberFlags::METHOD) == MemberFlags::METHOD);
+			OVUM_ASSERT((member->flags & MemberFlags::METHOD) == MemberFlags::METHOD);
 
 			MethodOverload *mo = ((Method*)member)->ResolveOverload(0);
 			if (!mo)

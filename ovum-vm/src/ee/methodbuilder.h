@@ -2,7 +2,6 @@
 #define VM__METHODBUILDER_INTERNAL_H
 
 #include "../vm.h"
-#include <cassert>
 #include <vector>
 #include <memory>
 
@@ -86,8 +85,8 @@ namespace instr
 		inline void SetStackHeight(int32_t index, const uint16_t stackHeight)
 		{
 			InstrDesc &instrDesc = instructions[index];
-			assert(!instrDesc.removed);
-			assert(instrDesc.stackHeight < 0);
+			OVUM_ASSERT(!instrDesc.removed);
+			OVUM_ASSERT(instrDesc.stackHeight < 0);
 			instrDesc.stackHeight = stackHeight;
 		}
 

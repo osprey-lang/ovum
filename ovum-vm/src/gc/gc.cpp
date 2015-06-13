@@ -8,10 +8,6 @@
 #include "../object/method.h"
 #include "../object/value.h"
 #include "../debug/debugsymbols.h"
-#include <cassert>
-#include <cstdlib>
-#include <cstring>
-#include <vector>
 
 namespace ovum
 {
@@ -118,7 +114,7 @@ void GC::DestroyHeaps()
 GCObject *GC::AllocRaw(size_t size)
 {
 	using namespace std;
-	assert(size >= GCO_SIZE);
+	OVUM_ASSERT(size >= GCO_SIZE);
 
 	GCObject *result;
 	if (size > LARGE_OBJECT_SIZE)
@@ -445,7 +441,7 @@ String *GC::InternString(Thread *const thread, String *value)
 
 void GC::Release(GCObject *gco)
 {
-	assert((gco->flags & GCOFlags::MARK) == currentCollectMark);
+	OVUM_ASSERT((gco->flags & GCOFlags::MARK) == currentCollectMark);
 
 	if (gco->IsEarlyString() || gco->type == vm->types.String)	
 	{
@@ -566,7 +562,7 @@ void GC::RunCycle(Thread *const thread, bool collectGen1)
 			item = next;
 		} while (item);
 	}
-	assert(gcoLists.process == nullptr);
+	OVUM_ASSERT(gcoLists.process == nullptr);
 
 	// Step 3: Process gen0 survivors.
 	// For each object:
@@ -576,7 +572,7 @@ void GC::RunCycle(Thread *const thread, bool collectGen1)
 	// * Then, if the object has gen0 refs, add it to the list of such objects;
 	//   otherwise, move it to the Keep list (nothing more to process).
 	MoveGen0Survivors();
-	assert(gcoLists.survivors.gen0 == nullptr);
+	OVUM_ASSERT(gcoLists.survivors.gen0 == nullptr);
 
 	// Step 4: Update objects with gen0 references.
 	// An astute reader may have noticed that pinned objects with gen0 refs
@@ -586,7 +582,7 @@ void GC::RunCycle(Thread *const thread, bool collectGen1)
 	// We must also not forget to update root references; unfortunately,
 	// this means we have to walk through the entire root set.
 	UpdateGen0References();
-	assert(gcoLists.survivors.withGen0Refs == nullptr);
+	OVUM_ASSERT(gcoLists.survivors.withGen0Refs == nullptr);
 
 	// Step 5: Collect garbage.
 	// Finalize any collectible dead objects with finalizers, and release the
@@ -618,10 +614,10 @@ void GC::RunCycle(Thread *const thread, bool collectGen1)
 
 	// The Keep and Pinned lists should contain all the live objects now,
 	// and all other lists should be empty.
-	assert(gcoLists.survivors.gen0         == nullptr);
-	assert(gcoLists.survivors.withGen0Refs == nullptr);
-	assert(gcoLists.process                == nullptr);
-	assert(collectList                     == nullptr);
+	OVUM_ASSERT(gcoLists.survivors.gen0 == nullptr);
+	OVUM_ASSERT(gcoLists.survivors.withGen0Refs == nullptr);
+	OVUM_ASSERT(gcoLists.process == nullptr);
+	OVUM_ASSERT(collectList == nullptr);
 
 	// Step 6: Swap currentCollectMark and currentKeepMark for
 	// next cycle and set current Keep list to Collect.
@@ -677,7 +673,7 @@ void GC::MarkRootSet()
 	ModulePool *loadedModules = vm->GetModulePool();
 	for (int i = 0; i < loadedModules->GetLength(); i++)
 	{
-#ifndef NDEBUG
+#if OVUM_DEBUG
 		hasGen0Refs = false;
 #endif
 
@@ -695,7 +691,7 @@ void GC::MarkRootSet()
 		}
 
 		// Module strings are supposed to be all in gen1
-		assert(!hasGen0Refs);
+		OVUM_ASSERT(!hasGen0Refs);
 	}
 
 	// And then we have all the beautiful, lovely static references.
@@ -782,14 +778,14 @@ void GC::ProcessLocalValues(unsigned int count, Value values[])
 void GC::MarkForProcessing(GCObject *gco)
 {
 	// Must move from collect to process.
-	assert((gco->flags & GCOFlags::MARK) == currentCollectMark);
+	OVUM_ASSERT((gco->flags & GCOFlags::MARK) == currentCollectMark);
 
 	gco->RemoveFromList(gco == pinnedList ? &pinnedList : &collectList);
 	// If gco->type is null, then the gco must be an EARLY_STRING or an ARRAY;
 	// in both cases, we couldn't possibly have any instance fields. If the
 	// type is GC_VALUE_ARRAY or has a size greater than zero, we might find
 	// some fields after all.
-	assert(gco->IsEarlyString() ? gco->type == nullptr :
+	OVUM_ASSERT(gco->IsEarlyString() ? gco->type == nullptr :
 		gco->IsArray() ? gco->type == nullptr || gco->type == (Type*)GC_VALUE_ARRAY :
 		gco->type != nullptr);
 	bool couldHaveFields = gco->type != nullptr &&
@@ -828,9 +824,9 @@ void GC::AddSurvivor(GCObject *gco)
 void GC::ProcessObjectAndFields(GCObject *gco)
 {
 	// The object is not supposed to be anything but GCOFlags::PROCESS at this point.
-	assert((gco->flags & GCOFlags::MARK) == GCOFlags::PROCESS);
+	OVUM_ASSERT((gco->flags & GCOFlags::MARK) == GCOFlags::PROCESS);
 	// It's also not supposed to be a value type, but could be a GC value array.
-	assert(!gco->type || gco->type == (Type*)GC_VALUE_ARRAY || !gco->type->IsPrimitive());
+	OVUM_ASSERT(!gco->type || gco->type == (Type*)GC_VALUE_ARRAY || !gco->type->IsPrimitive());
 
 	// Do this first, so that objects referencing this object will not
 	// attempt to re-mark it for processing
@@ -990,10 +986,10 @@ void GC::AddPinnedObject(GCObject *gco)
 			root = &(*root)->prev;
 		else if (gco > *root)
 			root = &(*root)->next;
-#if !defined(NDEBUG) || NDEBUG == 0
+#if OVUM_DEBUG
 		else
 		{
-			assert(!"Failed to insert pinned object into tree; it's probably in the tree already!");
+			OVUM_ASSERT(!"Failed to insert pinned object into tree; it's probably in the tree already!");
 			break; // fail :(
 		}
 #endif
