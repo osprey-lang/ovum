@@ -134,7 +134,7 @@ OVUM_API int StringFromValue(ThreadHandle thread, Value *v)
 
 // HASH HELPERS
 
-bool HashHelper_IsPrime(const int32_t n)
+bool HashHelper_IsPrime(int32_t n)
 {
 	if ((n & 1) == 0)
 		// 2 is the only even prime!
@@ -148,7 +148,7 @@ bool HashHelper_IsPrime(const int32_t n)
 	return true;
 }
 
-OVUM_API int32_t HashHelper_GetPrime(const int32_t min)
+OVUM_API int32_t HashHelper_GetPrime(int32_t min)
 {
 	// Check the table first
 	for (int i = 0; i < hash_helper::PrimeCount; i++)
