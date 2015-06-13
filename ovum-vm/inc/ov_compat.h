@@ -18,9 +18,9 @@
 // (uses the _mul128 function if available)
 #if !defined(__GNUC__) && defined(_M_AMD64)
 # include <intrin.h>
-# define USE_INTRINSICS 1
+# define OVUM_USE_INTRINSICS 1
 #else
-# define USE_INTRINSICS 0
+# define OVUM_USE_INTRINSICS 0
 #endif
 
 
