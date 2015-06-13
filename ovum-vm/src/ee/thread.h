@@ -83,7 +83,7 @@ public:
 	Value *Locals() const;
 };
 
-static const size_t STACK_FRAME_SIZE = ALIGN_TO(sizeof(::ovum::StackFrame), 8);
+static const size_t STACK_FRAME_SIZE = OVUM_ALIGN_TO(sizeof(::ovum::StackFrame), 8);
 
 inline Value *StackFrame::Locals() const
 {

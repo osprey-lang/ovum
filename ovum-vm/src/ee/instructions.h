@@ -73,7 +73,7 @@ namespace instr
 
 		inline uint32_t GetSize() const
 		{
-			return ALIGN_TO(sizeof(IntermediateOpcode), oa::ALIGNMENT) + GetArgsSize();
+			return OVUM_ALIGN_TO(sizeof(IntermediateOpcode), oa::ALIGNMENT) + GetArgsSize();
 		}
 
 		inline virtual uint32_t GetArgsSize() const { return 0; }

@@ -62,7 +62,7 @@ int Thread::Evaluate()
 	{
 		this->ip = ip;
 		// Always skip the opcode
-		ip += ALIGN_TO(sizeof(IntermediateOpcode), oa::ALIGNMENT);
+		ip += OVUM_ALIGN_TO(sizeof(IntermediateOpcode), oa::ALIGNMENT);
 		switch (*this->ip)
 		{
 		TARGET(OPI_NOP) NEXT_INSTR(); // Really, do nothing!
@@ -1392,7 +1392,7 @@ int Thread::EvaluateLeave(register StackFrame *frame, int32_t target)
 	// Note: the IP currently points to the leave instruction.
 	// We must add the size of the instructions to get the right ipOffset and tOffset.
 	const size_t TOTAL_INSTR_SIZE = // including the opcode, not just its args
-		ALIGN_TO(sizeof(IntermediateOpcode), opcode_args::ALIGNMENT) +
+		OVUM_ALIGN_TO(sizeof(IntermediateOpcode), opcode_args::ALIGNMENT) +
 		opcode_args::BRANCH_SIZE;
 
 	MethodOverload *method = frame->method;

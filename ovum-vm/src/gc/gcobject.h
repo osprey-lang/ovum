@@ -162,7 +162,7 @@ public:
 	static GCObject *FromValue(Value *value);
 };
 
-static const size_t GCO_SIZE = ALIGN_TO(sizeof(GCObject), 8);
+static const size_t GCO_SIZE = OVUM_ALIGN_TO(sizeof(GCObject), 8);
 
 } // namespace ovum
 

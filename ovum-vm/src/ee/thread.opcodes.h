@@ -412,7 +412,7 @@ namespace opcode_args
 			return local + frame;
 		}
 	};
-	static const size_t ONE_LOCAL_SIZE = ALIGN_TO(sizeof(OneLocal), ALIGNMENT);
+	static const size_t ONE_LOCAL_SIZE = OVUM_ALIGN_TO(sizeof(OneLocal), ALIGNMENT);
 
 	struct TwoLocals
 	{
@@ -430,7 +430,7 @@ namespace opcode_args
 			return dest + frame;
 		}
 	};
-	static const size_t TWO_LOCALS_SIZE = ALIGN_TO(sizeof(TwoLocals), ALIGNMENT);
+	static const size_t TWO_LOCALS_SIZE = OVUM_ALIGN_TO(sizeof(TwoLocals), ALIGNMENT);
 
 	template<typename T>
 	struct LocalAndValue
@@ -446,7 +446,7 @@ namespace opcode_args
 	template<typename T>
 	struct LOCAL_AND_VALUE
 	{
-		static const size_t SIZE = ALIGN_TO(sizeof(LocalAndValue<T>), ALIGNMENT);
+		static const size_t SIZE = OVUM_ALIGN_TO(sizeof(LocalAndValue<T>), ALIGNMENT);
 	};
 
 	template<typename T>
@@ -470,7 +470,7 @@ namespace opcode_args
 	template<typename T>
 	struct TWO_LOCALS_AND_VALUE
 	{
-		static const size_t SIZE = ALIGN_TO(sizeof(TwoLocalsAndValue<T>), ALIGNMENT);
+		static const size_t SIZE = OVUM_ALIGN_TO(sizeof(TwoLocalsAndValue<T>), ALIGNMENT);
 	};
 
 	struct LoadEnum
@@ -484,7 +484,7 @@ namespace opcode_args
 			return dest + frame;
 		}
 	};
-	static const size_t LOAD_ENUM_SIZE = ALIGN_TO(sizeof(LoadEnum), ALIGNMENT);
+	static const size_t LOAD_ENUM_SIZE = OVUM_ALIGN_TO(sizeof(LoadEnum), ALIGNMENT);
 
 	struct NewObject
 	{
@@ -502,7 +502,7 @@ namespace opcode_args
 			return dest + frame;
 		}
 	};
-	static const size_t NEW_OBJECT_SIZE = ALIGN_TO(sizeof(NewObject), ALIGNMENT);
+	static const size_t NEW_OBJECT_SIZE = OVUM_ALIGN_TO(sizeof(NewObject), ALIGNMENT);
 
 	struct Call
 	{
@@ -519,7 +519,7 @@ namespace opcode_args
 			return dest + frame;
 		}
 	};
-	static const size_t CALL_SIZE = ALIGN_TO(sizeof(Call), ALIGNMENT);
+	static const size_t CALL_SIZE = OVUM_ALIGN_TO(sizeof(Call), ALIGNMENT);
 
 	struct StaticCall
 	{
@@ -537,7 +537,7 @@ namespace opcode_args
 			return dest + frame;
 		}
 	};
-	static const size_t STATIC_CALL_SIZE = ALIGN_TO(sizeof(StaticCall), ALIGNMENT);
+	static const size_t STATIC_CALL_SIZE = OVUM_ALIGN_TO(sizeof(StaticCall), ALIGNMENT);
 
 	struct CallMember
 	{
@@ -555,7 +555,7 @@ namespace opcode_args
 			return dest + frame;
 		}
 	};
-	static const size_t CALL_MEMBER_SIZE = ALIGN_TO(sizeof(CallMember), ALIGNMENT);
+	static const size_t CALL_MEMBER_SIZE = OVUM_ALIGN_TO(sizeof(CallMember), ALIGNMENT);
 
 	struct CallRef
 	{
@@ -573,7 +573,7 @@ namespace opcode_args
 			return dest + frame;
 		}
 	};
-	static const size_t CALL_REF_SIZE = ALIGN_TO(sizeof(CallRef), ALIGNMENT);
+	static const size_t CALL_REF_SIZE = OVUM_ALIGN_TO(sizeof(CallRef), ALIGNMENT);
 
 	struct CallMemberRef
 	{
@@ -592,13 +592,13 @@ namespace opcode_args
 			return dest + frame;
 		}
 	};
-	static const size_t CALL_MEMBER_REF_SIZE = ALIGN_TO(sizeof(CallMemberRef), ALIGNMENT);
+	static const size_t CALL_MEMBER_REF_SIZE = OVUM_ALIGN_TO(sizeof(CallMemberRef), ALIGNMENT);
 
 	struct Branch
 	{
 		int32_t offset;
 	};
-	static const size_t BRANCH_SIZE = ALIGN_TO(sizeof(Branch), ALIGNMENT);
+	static const size_t BRANCH_SIZE = OVUM_ALIGN_TO(sizeof(Branch), ALIGNMENT);
 
 	struct ConditionalBranch
 	{
@@ -610,7 +610,7 @@ namespace opcode_args
 			return value + frame;
 		}
 	};
-	static const size_t CONDITIONAL_BRANCH_SIZE = ALIGN_TO(sizeof(ConditionalBranch), ALIGNMENT);
+	static const size_t CONDITIONAL_BRANCH_SIZE = OVUM_ALIGN_TO(sizeof(ConditionalBranch), ALIGNMENT);
 
 	struct BranchIfType
 	{
@@ -623,7 +623,7 @@ namespace opcode_args
 			return value + frame;
 		}
 	};
-	static const size_t BRANCH_IF_TYPE_SIZE = ALIGN_TO(sizeof(BranchIfType), ALIGNMENT);
+	static const size_t BRANCH_IF_TYPE_SIZE = OVUM_ALIGN_TO(sizeof(BranchIfType), ALIGNMENT);
 
 	struct Switch
 	{
@@ -642,7 +642,7 @@ namespace opcode_args
 		// The expression sizeof(Switch) - sizeof(int32_t) can be calculated at compile time,
 		// so we can do without the subtraction.
 		size_t size = sizeof(Switch) - sizeof(int32_t) + count * sizeof(int32_t);
-		return ALIGN_TO(size, ALIGNMENT);
+		return OVUM_ALIGN_TO(size, ALIGNMENT);
 	}
 
 	template<typename T>
@@ -653,7 +653,7 @@ namespace opcode_args
 	template<typename T>
 	struct SINGLE_VALUE
 	{
-		static const size_t SIZE = ALIGN_TO(sizeof(SingleValue<T>), ALIGNMENT);
+		static const size_t SIZE = OVUM_ALIGN_TO(sizeof(SingleValue<T>), ALIGNMENT);
 	};
 } // namespace opcode_args
 

@@ -158,7 +158,7 @@ GCObject *GC::AllocRaw(size_t size)
 				// InsertIntoList updates the prev and next pointers
 				// on the GCObject.
 				pinned->InsertIntoList(&collectList);
-				gen0Current = (char*)pinned + ALIGN_TO(pinned->size, 8);
+				gen0Current = (char*)pinned + OVUM_ALIGN_TO(pinned->size, 8);
 
 				pinned = next;
 			}
@@ -166,7 +166,7 @@ GCObject *GC::AllocRaw(size_t size)
 		}
 
 		result = (GCObject*)gen0Current;
-		gen0Current += ALIGN_TO(size, 8);
+		gen0Current += OVUM_ALIGN_TO(size, 8);
 		if (gen0Current > gen0End)
 		{
 			// Not enough space in gen0. Return null, which forces a cycle.
