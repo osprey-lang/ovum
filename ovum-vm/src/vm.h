@@ -25,6 +25,7 @@ class MethodInitializer;
 class MethodOverload;
 class Module;
 class ModulePool;
+class ModuleReader;
 class PathName;
 class Property;
 class RefSignaturePool;

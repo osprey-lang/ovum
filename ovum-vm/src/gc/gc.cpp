@@ -3,6 +3,7 @@
 #include "staticref.h"
 #include "../ee/thread.h"
 #include "../module/module.h"
+#include "../module/modulepool.h"
 #include "../object/type.h"
 #include "../object/method.h"
 #include "../object/value.h"

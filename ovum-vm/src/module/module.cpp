@@ -1,4 +1,5 @@
 #include "module.h"
+#include "modulepool.h"
 #include "modulereader.h"
 #include "../object/type.h"
 #include "../object/member.h"

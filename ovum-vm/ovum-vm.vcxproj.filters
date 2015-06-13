@@ -248,6 +248,9 @@
     <ClInclude Include="src\gc\staticref.h">
       <Filter>Header Files\src\gc</Filter>
     </ClInclude>
+    <ClInclude Include="src\module\modulepool.h">
+      <Filter>Header Files\src\module</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\os\windows\dllmain.cpp">
@@ -333,6 +336,9 @@
     </ClCompile>
     <ClCompile Include="src\gc\gcobject.cpp">
       <Filter>Source Files\gc</Filter>
+    </ClCompile>
+    <ClCompile Include="src\module\modulepool.cpp">
+      <Filter>Source Files\module</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

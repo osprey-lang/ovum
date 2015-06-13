@@ -50,8 +50,6 @@ enum ModuleMemberId : uint32_t
 	IDMASK_METHODREF   = 0x54000000u,
 };
 
-class ModuleReader; // Defined in modulereader.internal.h
-
 // Types that are specific to module loading
 typedef struct ModuleMeta_S
 {
@@ -312,105 +310,6 @@ private:
 	friend class ModuleReader;
 	friend class GC;
 	friend class debug::ModuleDebugData;
-};
-
-class ModulePool
-{
-private:
-	int capacity;
-	int length;
-	Module **data;
-
-	inline void Init(int capacity)
-	{
-		capacity = max(capacity, 4);
-
-		data = new Module*[capacity];
-		memset(data, 0, sizeof(Module*) * capacity);
-
-		this->capacity = capacity;
-	}
-
-	inline void Resize()
-	{
-		int newCap = capacity * 2;
-
-		Module **newData = new Module*[newCap];
-		CopyMemoryT(newData, this->data, capacity);
-
-		capacity = newCap;
-		delete[] this->data;
-		this->data = newData;
-	}
-
-public:
-	inline ModulePool() : capacity(0), length(0), data(nullptr)
-	{
-		Init(0);
-	}
-	inline ModulePool(int capacity) : capacity(0), length(0), data(nullptr)
-	{
-		Init(capacity);
-	}
-	inline ~ModulePool()
-	{
-		for (int i = 0; i < length; i++)
-			delete data[i];
-		delete[] data;
-	}
-
-	inline int GetLength() const { return length; }
-
-	inline Module *Get(int index) const
-	{
-		return data[index];
-	}
-	inline Module *Get(String *name) const
-	{
-		for (int i = 0; i < length; i++)
-			if (String_Equals(data[i]->name, name))
-				return data[i];
-		return nullptr;
-	}
-	inline Module *Get(String *name, ModuleVersion *version) const
-	{
-		for (int i = 0; i < length; i++)
-		{
-			Module *module = data[i];
-			if (String_Equals(module->name, name) && module->version == *version)
-				return module;
-		}
-		return nullptr;
-	}
-
-	inline void Set(int index, Module *value)
-	{
-		data[index] = value;
-	}
-
-	inline int Add(Module *value)
-	{
-		if (length == capacity)
-			Resize();
-		int index = length++;
-		data[index] = value;
-		return index;
-	}
-
-	inline bool Remove(Module *value)
-	{
-		bool found = false;
-		for (int i = 0; i < length; i++)
-		{
-			if (found)
-				data[i - 1] = data[i];
-			else
-				found = data[i] == value;
-		}
-		if (found)
-			length--;
-		return found;
-	}
 };
 
 class ModuleLoadException : public std::exception
