@@ -359,7 +359,7 @@ OVUM_API void Type_SetInstanceSize(TypeHandle type, size_t size)
 	if ((type->flags & TypeFlags::INITED) == TypeFlags::NONE)
 	{
 		// Ensure the effective size is a multiple of 8
-		type->size = ALIGN_TO(size, 8);
+		type->size = OVUM_ALIGN_TO(size, 8);
 		type->flags |= TypeFlags::CUSTOMPTR;
 	}
 }
