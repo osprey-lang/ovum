@@ -13,6 +13,93 @@ OVUM_API int RealFromValue(ThreadHandle thread, Value *v);
 
 OVUM_API int StringFromValue(ThreadHandle thread, Value *v);
 
+template<class T>
+inline T Clamp(T value, T max, T min)
+{
+	return value < min ? min :
+		value > max ? max :
+		value;
+}
+
+template<int min, int max>
+inline int Clamp(int value)
+{
+	return value < min ? min :
+		value > max ? max :
+		value;
+}
+
+template<long min, long max>
+inline long Clamp(long value)
+{
+	return value < min ? min :
+		value > max ? max :
+		value;
+}
+
+template<long long min, long long max>
+inline long long Clamp(long long value)
+{
+	return value < min ? min :
+		value > max ? max :
+		value;
+}
+
+template<class T>
+inline void ReverseArray(size_t length, T values[])
+{
+	T *left = values;
+	T *right = values + length - 1;
+
+	while (left < right)
+	{
+		T temp = *left;
+		*left = *right;
+		*right = temp;
+
+		left++;
+		right--;
+	}
+}
+
+// Copies the values from source to destination, in reverse order.
+// 'length' is the total number of values to copy.
+template<class T>
+inline void CopyReversed(T destination[], const T source[], size_t length)
+{
+	const T *sourcePointer = source;
+	T *destPointer = destination + length - 1;
+
+	while (destPointer >= destination)
+	{
+		*destPointer = *sourcePointer;
+		destPointer--;
+		sourcePointer++;
+	}
+}
+
+// This is really just a paper-thin type-safe wrapper around memcpy.
+// The only real difference is that it uses a template.
+// The size is multiplied by sizeof(T), by the way, so you don't have
+// to worry about that either.
+template<class T>
+inline void CopyMemoryT(T *destination, const T *source, size_t size)
+{
+	memcpy(destination, source, sizeof(T) * size);
+}
+
+// Finds the smallest power of two that is greater than or equal to the given number.
+template<class T>
+inline T NextPowerOfTwo(T n)
+{
+	n--; // When n == 0, this overflows on purpose
+	n |= n >> 1;
+	n |= n >> 2;
+	n |= n >> 4;
+	n |= n >> 8;
+	n |= n >> 16;
+	return n + 1;
+}
 
 // Checked arithmetics
 
@@ -22,8 +109,8 @@ OVUM_API int StringFromValue(ThreadHandle thread, Value *v);
 #define RETURN_OVERFLOW  return OVUM_ERROR_OVERFLOW
 #define RETURN_DIV_ZERO  return OVUM_ERROR_DIVIDE_BY_ZERO
 
-// UINT
-inline int UInt_AddChecked(const uint64_t left, const uint64_t right, uint64_t &result)
+// UInt
+inline int UInt_AddChecked(uint64_t left, uint64_t right, uint64_t &result)
 {
 	if (UINT64_MAX - left < right)
 		RETURN_OVERFLOW;
@@ -31,7 +118,7 @@ inline int UInt_AddChecked(const uint64_t left, const uint64_t right, uint64_t &
 	result = left + right;
 	RETURN_SUCCESS;
 }
-inline int UInt_SubtractChecked(const uint64_t left, const uint64_t right, uint64_t &result)
+inline int UInt_SubtractChecked(uint64_t left, uint64_t right, uint64_t &result)
 {
 	if (right > left)
 		RETURN_OVERFLOW;
@@ -39,7 +126,7 @@ inline int UInt_SubtractChecked(const uint64_t left, const uint64_t right, uint6
 	result = left - right;
 	RETURN_SUCCESS;
 }
-inline int UInt_MultiplyChecked(const uint64_t left, const uint64_t right, uint64_t &result)
+inline int UInt_MultiplyChecked(uint64_t left, uint64_t right, uint64_t &result)
 {
 #if OVUM_USE_INTRINSICS
 	uint64_t high;
@@ -91,7 +178,7 @@ inline int UInt_MultiplyChecked(const uint64_t left, const uint64_t right, uint6
 	RETURN_SUCCESS;
 #endif
 }
-inline int UInt_DivideChecked(const uint64_t left, const uint64_t right, uint64_t &result)
+inline int UInt_DivideChecked(uint64_t left, uint64_t right, uint64_t &result)
 {
 	if (right == 0)
 		RETURN_DIV_ZERO;
@@ -99,7 +186,7 @@ inline int UInt_DivideChecked(const uint64_t left, const uint64_t right, uint64_
 	result = left / right;
 	RETURN_SUCCESS;
 }
-inline int UInt_ModuloChecked(const uint64_t left, const uint64_t right, uint64_t &result)
+inline int UInt_ModuloChecked(uint64_t left, uint64_t right, uint64_t &result)
 {
 	if (right == 0)
 		RETURN_DIV_ZERO;
@@ -110,8 +197,8 @@ inline int UInt_ModuloChecked(const uint64_t left, const uint64_t right, uint64_
 	RETURN_SUCCESS;
 }
 
-// INT
-inline int Int_AddChecked(const int64_t left, const int64_t right, int64_t &result)
+// Int
+inline int Int_AddChecked(int64_t left, int64_t right, int64_t &result)
 {
 	if ((left ^ right) >= 0)
 	{
@@ -128,7 +215,7 @@ inline int Int_AddChecked(const int64_t left, const int64_t right, int64_t &resu
 	result = left + right;
 	RETURN_SUCCESS;
 }
-inline int Int_SubtractChecked(const int64_t left, const int64_t right, int64_t &result)
+inline int Int_SubtractChecked(int64_t left, int64_t right, int64_t &result)
 {
 	if ((left ^ right) < 0)
 	{
@@ -143,7 +230,7 @@ inline int Int_SubtractChecked(const int64_t left, const int64_t right, int64_t 
 	result = left - right;
 	RETURN_SUCCESS;
 }
-inline int Int_MultiplyChecked(const int64_t left, const int64_t right, int64_t &result)
+inline int Int_MultiplyChecked(int64_t left, int64_t right, int64_t &result)
 {
 #if OVUM_USE_INTRINSICS
 	int64_t high;
@@ -204,7 +291,7 @@ inline int Int_MultiplyChecked(const int64_t left, const int64_t right, int64_t 
 	RETURN_OVERFLOW;
 #endif
 }
-inline int Int_DivideChecked(const int64_t left, const int64_t right, int64_t &result)
+inline int Int_DivideChecked(int64_t left, int64_t right, int64_t &result)
 {
 	if (right == 0)
 		RETURN_DIV_ZERO;
@@ -214,7 +301,7 @@ inline int Int_DivideChecked(const int64_t left, const int64_t right, int64_t &r
 	result = left / right;
 	RETURN_SUCCESS;
 }
-inline int Int_ModuloChecked(const int64_t left, const int64_t right, int64_t &result)
+inline int Int_ModuloChecked(int64_t left, int64_t right, int64_t &result)
 {
 	if (right == 0)
 		RETURN_DIV_ZERO;
@@ -228,11 +315,10 @@ inline int Int_ModuloChecked(const int64_t left, const int64_t right, int64_t &r
 #undef RETURN_OVERFLOW
 #undef RETURN_DIV_ZERO
 
-// HASH HELPERS
+// Hash helpers
 
 // Gets the next prime number greater than or equal to the given value.
 // The prime number is suitable for use as the size of a hash table.
-OVUM_API int32_t HashHelper_GetPrime(const int32_t min);
-
+OVUM_API int32_t HashHelper_GetPrime(int32_t min);
 
 #endif // VM__HELPERS_H
