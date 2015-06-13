@@ -5,7 +5,7 @@
 
 using namespace aves;
 
-AVES_API void CDECL aves_reflection_Overload_init(TypeHandle type)
+AVES_API void OVUM_CDECL aves_reflection_Overload_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(OverloadInst));
 
@@ -161,7 +161,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Overload_getCurrentOverload)
 END_NATIVE_FUNCTION
 
 
-AVES_API void CDECL aves_reflection_Parameter_init(TypeHandle type)
+AVES_API void OVUM_CDECL aves_reflection_Parameter_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(ParamInst));
 

@@ -7,7 +7,7 @@
 using namespace aves;
 
 // Note: This is not declared in any header file. Only in this source file.
-AVES_API void CDECL OvumModuleMain(ModuleHandle module)
+AVES_API void OVUM_CDECL OvumModuleMain(ModuleHandle module)
 {
 	Aves::Init(module);
 }

@@ -4,7 +4,7 @@
 
 using namespace aves;
 
-AVES_API void CDECL aves_reflection_Type_init(TypeHandle type)
+AVES_API void OVUM_CDECL aves_reflection_Type_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(TypeInst));
 
@@ -458,7 +458,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Type_getMembers)
 }
 END_NATIVE_FUNCTION
 
-AVES_API int CDECL InitTypeToken(ThreadHandle thread, void *basePtr, TypeHandle type)
+AVES_API int OVUM_CDECL InitTypeToken(ThreadHandle thread, void *basePtr, TypeHandle type)
 {
 	TypeInst *inst = reinterpret_cast<TypeInst*>(basePtr);
 	inst->type = type;

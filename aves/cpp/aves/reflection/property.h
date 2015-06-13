@@ -10,7 +10,7 @@ public:
 	String *fullName;
 };
 
-AVES_API void CDECL aves_reflection_Property_init(TypeHandle type);
+AVES_API void OVUM_CDECL aves_reflection_Property_init(TypeHandle type);
 
 AVES_API NATIVE_FUNCTION(aves_reflection_Property_get_accessLevel);
 
