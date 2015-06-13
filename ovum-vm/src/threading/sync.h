@@ -22,7 +22,7 @@ class CriticalSection
 private:
 	os::CriticalSection cs;
 
-	DISABLE_COPY_AND_ASSIGN(CriticalSection);
+	OVUM_DISABLE_COPY_AND_ASSIGN(CriticalSection);
 
 public:
 	inline CriticalSection(int spinCount)
@@ -72,7 +72,7 @@ class Semaphore
 private:
 	os::Semaphore semaphore;
 
-	DISABLE_COPY_AND_ASSIGN(Semaphore);
+	OVUM_DISABLE_COPY_AND_ASSIGN(Semaphore);
 
 public:
 	inline Semaphore(int value)
@@ -139,7 +139,7 @@ private:
 
 	std::atomic_flag flag;
 
-	DISABLE_COPY_AND_ASSIGN(SpinLock);
+	OVUM_DISABLE_COPY_AND_ASSIGN(SpinLock);
 
 public:
 	inline SpinLock()

@@ -130,18 +130,23 @@ inline T NextPowerOfTwo(T n)
 # endif
 #endif // OVUM_DELETE
 
+#ifndef OVUM_DISBALE_COPY_AND_ASSIGN
 // When put in the 'private' section of a type definition, disables copying and
-// assignment, by declaring operator= and the T(const T&) constructor as private
-// members. This should be used on any type that must not be copied by value.
-#define DISABLE_COPY_AND_ASSIGN(TypeName)  \
+// assignment, by declaring operator= and the copy constructor as private members,
+// and deleting them if the compiler supports it. This should be used on any type
+// that must not be copied by value.
+# define OVUM_DISABLE_COPY_AND_ASSIGN(TypeName)  \
 	TypeName(const TypeName&) OVUM_DELETE; \
 	void operator=(const TypeName&) OVUM_DELETE
+#endif // OVUM_DISBALE_COPY_AND_ASSIGN
 
+#ifndef OVUM_DISABLE_IMPLICIT_CONSTRUCTION
 // Disallows parameterless construction, in addition to disabling the copy constructor
 // and operator=. This must be put in the 'private' section of a type definition.
-#define DISABLE_IMPLICIT_CONSTRUCTION(TypeName) \
+# define OVUM_DISABLE_IMPLICIT_CONSTRUCTION(TypeName) \
 	TypeName() OVUM_DELETE;                     \
-	DISABLE_COPY_AND_ASSIGN(TypeName)
+	OVUM_DISABLE_COPY_AND_ASSIGN(TypeName)
+#endif // OVUM_DISABLE_IMPLICIT_CONSTRUCTION
 
 #ifndef CDECL
 # if defined(_MSC_VER)
