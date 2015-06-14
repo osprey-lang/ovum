@@ -6,6 +6,7 @@
 #include "../object/value.h"
 #include "../gc/gc.h"
 #include "../gc/staticref.h"
+#include "../res/staticstrings.h"
 #include <memory>
 
 namespace ovum
@@ -408,7 +409,7 @@ int Thread::Evaluate()
 		TARGET(OPI_LDITER_L)
 			{
 				OPC_ARGS(oa::TwoLocals);
-				CHK(InvokeMemberLL(static_strings::_iter, 0, args->Source(f), args->Dest(f), 0));
+				CHK(InvokeMemberLL(strings->members.iter_, 0, args->Source(f), args->Dest(f), 0));
 				// InvokeMemberLL pops the instance and all 0 of the arguments
 				ip += oa::TWO_LOCALS_SIZE;
 			}
@@ -416,7 +417,7 @@ int Thread::Evaluate()
 		TARGET(OPI_LDITER_S)
 			{
 				OPC_ARGS(oa::TwoLocals);
-				CHK(InvokeMemberLL(static_strings::_iter, 0, args->Source(f), args->Dest(f), 0));
+				CHK(InvokeMemberLL(strings->members.iter_, 0, args->Source(f), args->Dest(f), 0));
 				// InvokeMemberLL pops the instance and all 0 of the arguments
 				ip += oa::TWO_LOCALS_SIZE;
 				f->stackCount++;

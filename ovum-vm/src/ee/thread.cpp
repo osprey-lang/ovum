@@ -10,46 +10,11 @@
 #include "../gc/staticref.h"
 #include "../debug/debugsymbols.h"
 #include "../util/stringbuffer.h"
+#include "../res/staticstrings.h"
 #include <memory>
 
 namespace ovum
 {
-
-namespace thread_errors
-{
-	namespace
-	{
-		LitString<92> _ConcatTypes                 = LitString<92>::FromCString("The concatenation operator requires two Lists, two Hashes, or two values of any other types.");
-		LitString<43> _CompareType                 = LitString<43>::FromCString("The comparison operator must return an Int.");
-		LitString<27> _NotInvokable                = LitString<27>::FromCString("The value is not invokable.");
-		LitString<28> _NotComparable               = LitString<28>::FromCString("The value is not comparable.");
-		LitString<30> _MemberNotFound              = LitString<30>::FromCString("The member could not be found.");
-		LitString<28> _MemberNotInvokable          = LitString<28>::FromCString("The member is not invokable.");
-		LitString<26> _AssigningToMethod           = LitString<26>::FromCString("Cannot assign to a method.");
-		LitString<50> _StaticMemberThroughInstance = LitString<50>::FromCString("Cannot access a static member through an instance.");
-		LitString<31> _GettingWriteonlyProperty    = LitString<31>::FromCString("Cannot get write-only property.");
-		LitString<38> _SettingReadonlyProperty     = LitString<38>::FromCString("Cannot assign to a read-only property.");
-		LitString<71> _WrongApplyArgsType          = LitString<71>::FromCString("The arguments list in a function application must be of type aves.List.");
-		LitString<62> _NoIndexerFound              = LitString<62>::FromCString("The type does not contain an indexer, or it is not accessible.");
-		LitString<93> _IncorrectReferenceness      = LitString<93>::FromCString("One or more arguments has the wrong referenceness (should be a ref but isn't, or vice versa).");
-		LitString<36> _MemberIsNotAField           = LitString<36>::FromCString("The specified member is not a field.");
-	}
-
-	String *ConcatTypes                 = _ConcatTypes.AsString();
-	String *CompareType                 = _CompareType.AsString();
-	String *NotInvokable                = _NotInvokable.AsString();
-	String *NotComparable               = _NotComparable.AsString();
-	String *MemberNotFound              = _MemberNotFound.AsString();
-	String *MemberNotInvokable          = _MemberNotInvokable.AsString();
-	String *AssigningToMethod           = _AssigningToMethod.AsString();
-	String *StaticMemberThroughInstance = _StaticMemberThroughInstance.AsString();
-	String *GettingWriteonlyProperty    = _GettingWriteonlyProperty.AsString();
-	String *SettingReadonlyProperty     = _SettingReadonlyProperty.AsString();
-	String *WrongApplyArgsType          = _WrongApplyArgsType.AsString();
-	String *NoIndexerFound              = _NoIndexerFound.AsString();
-	String *IncorrectReferenceness      = _IncorrectReferenceness.AsString();
-	String *MemberIsNotAField           = _MemberIsNotAField.AsString();
-}
 
 TlsEntry<Thread> Thread::threadKey;
 
@@ -75,6 +40,7 @@ Thread::Thread(VM *owner, int &status) :
 	flags(ThreadFlags::NONE),
 	callStack(nullptr),
 	vm(owner),
+	strings(owner->GetStrings()),
 	currentError(NULL_VALUE),
 	gcCycleSection(4000),
 	hashSetItem(nullptr)
@@ -208,11 +174,11 @@ int Thread::InvokeLL(unsigned int argCount, Value *value, Value *result, uint32_
 	else
 	{
 		Member *member;
-		if ((member = value->type->FindMember(static_strings::_call, currentFrame->method->declType)) &&
+		if ((member = value->type->FindMember(strings->members.call_, currentFrame->method->declType)) &&
 			(member->flags & MemberFlags::METHOD) != MemberFlags::NONE)
 			mo = ((Method*)member)->ResolveOverload(argCount);
 		else
-			return ThrowTypeError(thread_errors::NotInvokable);
+			return ThrowTypeError(strings->error.MemberNotInvokable);
 	}
 
 	if (!mo)
@@ -220,7 +186,7 @@ int Thread::InvokeLL(unsigned int argCount, Value *value, Value *result, uint32_
 	
 	if (refSignature != mo->refSignature &&
 		mo->VerifyRefSignature(refSignature, argCount) != -1)
-		return ThrowNoOverloadError(argCount, thread_errors::IncorrectReferenceness);
+		return ThrowNoOverloadError(argCount, strings->error.IncorrectRefness);
 	// We've now found a method overload to invoke, omg!
 	// So let's just pass it into InvokeMethodOverload.
 	return InvokeMethodOverload(mo, argCount, value, result);
@@ -269,7 +235,7 @@ int Thread::InvokeMemberLL(String *name, uint32_t argCount, Value *value, Value 
 	if (member = value->type->FindMember(name, currentFrame->method->declType))
 	{
 		if ((member->flags & MemberFlags::INSTANCE) == MemberFlags::NONE)
-			return ThrowTypeError(thread_errors::StaticMemberThroughInstance);
+			return ThrowTypeError(strings->error.CannotAccessStaticMemberThroughInstance);
 
 		switch (member->flags & MemberFlags::KIND)
 		{
@@ -280,7 +246,7 @@ int Thread::InvokeMemberLL(String *name, uint32_t argCount, Value *value, Value 
 		case MemberFlags::PROPERTY:
 			{
 				if (((Property*)member)->getter == nullptr)
-					return ThrowTypeError(thread_errors::GettingWriteonlyProperty);
+					return ThrowTypeError(strings->error.CannotGetWriteOnlyProperty);
 
 				MethodOverload *mo = ((Property*)member)->getter->ResolveOverload(0);
 				if (!mo) return ThrowNoOverloadError(0);
@@ -304,7 +270,7 @@ int Thread::InvokeMemberLL(String *name, uint32_t argCount, Value *value, Value 
 					return ThrowNoOverloadError(argCount);
 				if (refSignature != mo->refSignature &&
 					mo->VerifyRefSignature(refSignature, argCount) != -1)
-					return ThrowNoOverloadError(argCount, thread_errors::IncorrectReferenceness);
+					return ThrowNoOverloadError(argCount, strings->error.IncorrectRefness);
 				return InvokeMethodOverload(mo, argCount, value, result);
 			}
 		}
@@ -443,7 +409,7 @@ int Thread::InvokeApplyLL(Value *args, Value *result)
 {
 	// First, ensure that args[1] is a List.
 	if (!Type::ValueIsType(args + 1, vm->types.List))
-		return ThrowTypeError(thread_errors::WrongApplyArgsType);
+		return ThrowTypeError(strings->error.WrongApplyArgumentsType);
 	// Second, ensure that args[0] is not null.
 	if (IS_NULL(args[0]))
 		return ThrowNullReferenceError();
@@ -476,7 +442,7 @@ int Thread::InvokeApplyMethodLL(Method *method, Value *args, Value *result)
 {
 	// First, ensure that args[0] is a List
 	if (!Type::ValueIsType(args, vm->types.List))
-		return ThrowTypeError(thread_errors::WrongApplyArgsType);
+		return ThrowTypeError(strings->error.WrongApplyArgumentsType);
 
 	OVUM_ASSERT((method->flags & MemberFlags::INSTANCE) == MemberFlags::NONE);
 
@@ -565,7 +531,7 @@ int Thread::ConcatLL(Value *args, Value *result)
 	{
 		// list concatenation
 		if (a->type != b->type)
-			return ThrowTypeError(thread_errors::ConcatTypes);
+			return ThrowTypeError(strings->error.WrongTypesForConcatOperator);
 
 		Value output;
 		CHECKED(GetGC()->Alloc(this, vm->types.List, sizeof(ListInst), &output));
@@ -587,7 +553,7 @@ int Thread::ConcatLL(Value *args, Value *result)
 	{
 		// hash concatenation
 		if (a->type != b->type)
-			return ThrowTypeError(thread_errors::ConcatTypes);
+			return ThrowTypeError(strings->error.WrongTypesForConcatOperator);
 
 		register StackFrame *f = currentFrame;
 		// Put the hash on the stack for extra GC reachability!
@@ -639,7 +605,7 @@ MethodOverload *Thread::GetHashIndexerSetter()
 {
 	if (!hashSetItem)
 	{
-		Member *m = vm->types.Hash->GetMember(static_strings::_item);
+		Member *m = vm->types.Hash->GetMember(strings->members.item_);
 
 		OVUM_ASSERT((m->flags & MemberFlags::KIND) == MemberFlags::PROPERTY);
 		OVUM_ASSERT(((Property*)m)->setter != nullptr);
@@ -661,12 +627,12 @@ MethodOverload *Thread::GetHashIndexerSetter()
 	\
 	MethodOverload *method = args[0].type->operators[(int)Operator::CMP]; \
 	if (method == nullptr) \
-		return ThrowTypeError(thread_errors::NotComparable); \
+		return ThrowTypeError(strings->error.ValueNotComparable); \
 	\
 	int r = InvokeMethodOverload(method, 2, args, (pResult)); \
 	if (r != OVUM_SUCCESS) return r; \
 	if ((pResult)->type != vm->types.Int) \
-		return ThrowTypeError(thread_errors::CompareType)
+		return ThrowTypeError(strings->error.CompareOperatorWrongReturnType)
 
 int Thread::CompareLL(Value *args, Value *result)
 {
@@ -729,7 +695,7 @@ int Thread::LoadMemberLL(Value *instance, String *member, Value *result)
 	if (m == nullptr)
 		return ThrowMemberNotFoundError(member);
 	if ((m->flags & MemberFlags::INSTANCE) == MemberFlags::NONE)
-		return ThrowTypeError(thread_errors::StaticMemberThroughInstance);
+		return ThrowTypeError(strings->error.CannotAccessStaticMemberThroughInstance);
 
 	int r = OVUM_SUCCESS;
 	switch (m->flags & MemberFlags::KIND)
@@ -756,7 +722,7 @@ int Thread::LoadMemberLL(Value *instance, String *member, Value *result)
 			const Property *p = (Property*)m;
 			if (!p->getter)
 			{
-				r = ThrowTypeError(thread_errors::GettingWriteonlyProperty);
+				r = ThrowTypeError(strings->error.CannotGetWriteOnlyProperty);
 				break;
 			}
 
@@ -790,7 +756,7 @@ int Thread::StoreMemberLL(Value *instance, String *member)
 	if (m == nullptr)
 		return ThrowMemberNotFoundError(member);
 	if ((m->flags & MemberFlags::INSTANCE) == MemberFlags::NONE)
-		return ThrowTypeError(thread_errors::StaticMemberThroughInstance);
+		return ThrowTypeError(strings->error.CannotAccessStaticMemberThroughInstance);
 
 	int r = OVUM_SUCCESS;
 	switch (m->flags & MemberFlags::KIND)
@@ -800,14 +766,14 @@ int Thread::StoreMemberLL(Value *instance, String *member)
 		currentFrame->Pop(2); // Done with the instance and the value!
 		break;
 	case MemberFlags::METHOD:
-		r = ThrowTypeError(thread_errors::AssigningToMethod);
+		r = ThrowTypeError(strings->error.CannotAssignToMethod);
 		break;
 	case MemberFlags::PROPERTY:
 		{
 			Property *p = (Property*)m;
 			if (!p->setter)
 			{
-				r = ThrowTypeError(thread_errors::SettingReadonlyProperty);
+				r = ThrowTypeError(strings->error.CannotSetReadOnlyProperty);
 				break;
 			}
 
@@ -842,22 +808,23 @@ int Thread::LoadIndexer(uint32_t argCount, Value *result)
 	}
 	return r;
 }
+
 // Note: argc DOES NOT include the instance, but args DOES.
 int Thread::LoadIndexerLL(uint32_t argCount, Value *args, Value *result)
 {
 	if (IS_NULL(args[0]))
 		return ThrowNullReferenceError();
 
-	Member *member = args[0].type->FindMember(static_strings::_item, currentFrame->method->declType);
+	Member *member = args[0].type->FindMember(strings->members.item_, currentFrame->method->declType);
 	if (!member)
-		return ThrowTypeError(thread_errors::NoIndexerFound);
+		return ThrowTypeError(strings->error.IndexerNotFound);
 
 	// The indexer, if present, MUST be an instance property.
 	OVUM_ASSERT((member->flags & MemberFlags::INSTANCE) == MemberFlags::INSTANCE);
 	OVUM_ASSERT((member->flags & MemberFlags::PROPERTY) == MemberFlags::PROPERTY);
 
 	if (((Property*)member)->getter == nullptr)
-		return ThrowTypeError(thread_errors::GettingWriteonlyProperty);
+		return ThrowTypeError(strings->error.CannotGetWriteOnlyProperty);
 
 	MethodOverload *method = ((Property*)member)->getter->ResolveOverload(argCount);
 	if (!method)
@@ -878,16 +845,16 @@ int Thread::StoreIndexerLL(uint32_t argCount, Value *args)
 	if (IS_NULL(args[0]))
 		return ThrowNullReferenceError();
 
-	Member *member = args[0].type->FindMember(static_strings::_item, currentFrame->method->declType);
+	Member *member = args[0].type->FindMember(strings->members.item_, currentFrame->method->declType);
 	if (!member)
-		return ThrowTypeError(thread_errors::NoIndexerFound);
+		return ThrowTypeError(strings->error.IndexerNotFound);
 
 	// The indexer, if present, MUST be an instance property.
 	OVUM_ASSERT((member->flags & MemberFlags::INSTANCE) == MemberFlags::INSTANCE);
 	OVUM_ASSERT((member->flags & MemberFlags::PROPERTY) == MemberFlags::PROPERTY);
 
 	if (((Property*)member)->setter == nullptr)
-		return ThrowTypeError(thread_errors::SettingReadonlyProperty);
+		return ThrowTypeError(strings->error.CannotSetReadOnlyProperty);
 
 	MethodOverload *method = ((Property*)member)->setter->ResolveOverload(argCount + 1);
 	if (!method)
@@ -920,9 +887,9 @@ int Thread::LoadMemberRefLL(Value *inst, String *member)
 	if (m == nullptr)
 		return ThrowMemberNotFoundError(member);
 	if ((m->flags & MemberFlags::INSTANCE) == MemberFlags::NONE)
-		return ThrowTypeError(thread_errors::StaticMemberThroughInstance);
+		return ThrowTypeError(strings->error.CannotAccessStaticMemberThroughInstance);
 	if ((m->flags & MemberFlags::FIELD) == MemberFlags::NONE)
-		return ThrowTypeError(thread_errors::MemberIsNotAField);
+		return ThrowTypeError(strings->error.MemberIsNotAField);
 
 	Field *field = static_cast<Field*>(m);
 	Value fieldRef;
@@ -1007,12 +974,12 @@ int Thread::ToString(String **result)
 {
 	if (currentFrame->PeekType(0) != vm->types.String)
 	{
-		int r = InvokeMember(static_strings::toString, 0, nullptr);
+		int r = InvokeMember(strings->members.toString, 0, nullptr);
 		if (r != OVUM_SUCCESS)
 			return r;
 
 		if (currentFrame->PeekType(0) != vm->types.String)
-			return ThrowTypeError(static_strings::errors::ToStringWrongType);
+			return ThrowTypeError(strings->error.ToStringWrongReturnType);
 	}
 
 	if (result != nullptr)
@@ -1134,25 +1101,26 @@ int Thread::ThrowMemberNotFoundError(String *member)
 
 int Thread::ThrowMissingOperatorError(Operator op)
 {
-	static LitString<3> operatorNames[] = {
-		{ 1, 0, StringFlags::STATIC, '+',0         }, // Operator::ADD
-		{ 1, 0, StringFlags::STATIC, '-',0         }, // Operator::SUB
-		{ 1, 0, StringFlags::STATIC, '|',0         }, // Operator::OR
-		{ 1, 0, StringFlags::STATIC, '^',0         }, // Operator::XOR
-		{ 1, 0, StringFlags::STATIC, '*',0         }, // Operator::MUL
-		{ 1, 0, StringFlags::STATIC, '/',0         }, // Operator::DIV
-		{ 1, 0, StringFlags::STATIC, '%',0         }, // Operator::MOD
-		{ 1, 0, StringFlags::STATIC, '&',0         }, // Operator::AND
-		{ 2, 0, StringFlags::STATIC, '*','*',0     }, // Operator::POW
-		{ 2, 0, StringFlags::STATIC, '<','<',0     }, // Operator::SHL
-		{ 2, 0, StringFlags::STATIC, '>','>',0     }, // Operator::SHR
-		{ 1, 0, StringFlags::STATIC, '#',0         }, // Operator::HASHOP
-		{ 1, 0, StringFlags::STATIC, '$',0         }, // Operator::DOLLAR
-		{ 1, 0, StringFlags::STATIC, '+',0         }, // Operator::PLUS
-		{ 1, 0, StringFlags::STATIC, '-',0         }, // Operator::NEG
-		{ 1, 0, StringFlags::STATIC, '~',0         }, // Operator::NOT
-		{ 2, 0, StringFlags::STATIC, '=','=',0     }, // Operator::EQ
-		{ 3, 0, StringFlags::STATIC, '<','=','>',0 }, // Operator::CMP
+	StaticStrings::operatorsStrings &operators = this->strings->operators;
+	String *operatorNames[] = {
+		operators.add,        // Operator::ADD
+		operators.subtract,   // Operator::SUB
+		operators.or,         // Operator::OR
+		operators.xor,        // Operator::XOR
+		operators.multiply,   // Operator::MUL
+		operators.divide,     // Operator::DIV
+		operators.modulo,     // Operator::MOD
+		operators.and,        // Operator::AND
+		operators.power,      // Operator::POW
+		operators.shiftLeft,  // Operator::SHL
+		operators.shiftRight, // Operator::SHR
+		operators.hash,       // Operator::HASHOP
+		operators.dollar,     // Operator::DOLLAR
+		operators.plus,       // Operator::PLUS
+		operators.negate,     // Operator::NEG
+		operators.not,        // Operator::NOT
+		operators.or,         // Operator::EQ
+		operators.compare,    // Operator::CMP
 	};
 	static const char *const baseMessage = "The type does not support the specified operator. (Operator: ";
 
@@ -1160,7 +1128,7 @@ int Thread::ThrowMissingOperatorError(Operator op)
 	{
 		StringBuffer message;
 		message.Append(strlen(baseMessage), baseMessage);
-		message.Append(operatorNames[(int)op].AsString());
+		message.Append(operatorNames[(int)op]);
 		message.Append(')');
 		String *messageStr = message.ToString(this);
 		if (messageStr == nullptr)

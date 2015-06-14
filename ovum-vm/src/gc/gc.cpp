@@ -8,18 +8,10 @@
 #include "../object/method.h"
 #include "../object/value.h"
 #include "../debug/debugsymbols.h"
+#include "../res/staticstrings.h"
 
 namespace ovum
 {
-
-namespace gc_strings
-{
-	LitString<47> _ObjectTooBig  = LitString<47>::FromCString("The size of the requested object was too large.");
-	LitString<33> _CStringTooBig = LitString<33>::FromCString("GC_ConvertString: input too long.");
-
-	String *ObjectTooBig  = _ObjectTooBig.AsString();
-	String *CStringTooBig = _CStringTooBig.AsString();
-}
 
 int GC::Create(VM *owner, GC *&result)
 {
@@ -204,7 +196,7 @@ void GC::ReleaseRaw(GCObject *gco)
 int GC::Alloc(Thread *const thread, Type *type, size_t size, GCObject **output)
 {
 	if (SIZE_MAX - size < GCO_SIZE)
-		return thread->ThrowMemoryError(gc_strings::ObjectTooBig);
+		return thread->ThrowMemoryError(vm->GetStrings()->error.ObjectTooLarge);
 
 	BeginAlloc(thread);
 

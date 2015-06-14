@@ -41,6 +41,8 @@ private:
 	GC *gc;
 	ModulePool *modules;
 	RefSignaturePool *refSignatures;
+	StandardTypeCollection *standardTypeCollection;
+	StaticStrings *strings;
 
 	int LoadModules(VMStartParams &params);
 	int InitArgs(int argCount, const wchar_t *args[]);
@@ -63,13 +65,25 @@ public:
 	{
 		return gc;
 	}
+
 	inline ModulePool *GetModulePool() const
 	{
 		return modules;
 	}
+
 	inline RefSignaturePool *GetRefSignaturePool() const
 	{
 		return refSignatures;
+	}
+
+	inline StaticStrings *GetStrings() const
+	{
+		return strings;
+	}
+
+	inline StandardTypeCollection *GetStandardTypeCollection() const
+	{
+		return standardTypeCollection;
 	}
 
 	static void Print(String *str);

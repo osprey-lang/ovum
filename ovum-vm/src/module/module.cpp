@@ -6,11 +6,13 @@
 #include "../object/field.h"
 #include "../object/property.h"
 #include "../object/method.h"
+#include "../object/standardtypeinfo.h"
 #include "../gc/gc.h"
 #include "../util/stringbuffer.h"
 #include "../debug/debugsymbols.h"
 #include "../ee/thread.h"
 #include "../ee/refsignature.h"
+#include "../res/staticstrings.h"
 #include <memory>
 
 namespace ovum
@@ -858,7 +860,7 @@ Type *Module::ReadSingleType(ModuleReader &reader, const TokenId typeId,
 	ReadProperties(reader, type.get());
 	ReadOperators(reader, type.get());
 
-	Member *instanceCtor = type->GetMember(static_strings::_new);
+	Member *instanceCtor = type->GetMember(vm->strings->members.new_);
 	if (instanceCtor && !instanceCtor->IsStatic() &&
 		(instanceCtor->flags & MemberFlags::METHOD) == MemberFlags::METHOD)
 		type->instanceCtor = static_cast<Method*>(instanceCtor);
@@ -978,9 +980,9 @@ void Module::ReadMethods(ModuleReader &reader, Type *type)
 		// insufficiently special to be excluded.
 		if (type->baseType != nullptr &&
 			(method->flags & MemberFlags::ACCESS_LEVEL) != MemberFlags::PRIVATE &&
-			!String_Equals(method->name, static_strings::_new) &&
-			!String_Equals(method->name, static_strings::_iter) &&
-			!String_Equals(method->name, static_strings::_init))
+			!String_Equals(method->name, vm->strings->members.new_) &&
+			!String_Equals(method->name, vm->strings->members.iter_) &&
+			!String_Equals(method->name, vm->strings->members.init_))
 		{
 			Type *t = type->baseType;
 			do
@@ -1344,32 +1346,31 @@ TryBlock *Module::ReadTryBlocks(ModuleReader &reader, int32_t &tryCount)
 void Module::TryRegisterStandardType(Type *type, ModuleReader &reader)
 {
 	VM *vm = this->vm;
-	for (unsigned int i = 0; i < std_type_names::StandardTypeCount; i++)
-	{
-		std_type_names::StdType stdType = std_type_names::Types[i];
-		if (String_Equals(type->fullName, stdType.name))
-		{
-			if (vm->types.*(stdType.member) == nullptr)
-			{
-				vm->types.*(stdType.member) = type;
-				if (stdType.initerFunction)
-				{
-					void *func = FindNativeEntryPoint(stdType.initerFunction);
-					if (!func)
-						throw ModuleLoadException(reader.GetFileName(), "Missing instance initializer for standard type in native library.");
+	StandardTypeCollection *stdTypes = vm->GetStandardTypeCollection();
 
-					// Can't really switch here :(
-					// Also because all initializer functions are of different types,
-					// we can't really store a VM::IniterFunctions member in stdType.
-					if (type == vm->types.List)
-						vm->functions.initListInstance = (ListInitializer)func;
-					else if (type == vm->types.Hash)
-						vm->functions.initHashInstance = (HashInitializer)func;
-					else if (type == vm->types.Type)
-						vm->functions.initTypeToken = (TypeTokenInitializer)func;
-				}
-			}
-			break;
+	StandardTypeInfo stdType;
+	if (!stdTypes->Get(type->fullName, stdType))
+		// This doesn't appear to be a standard type!
+		return;
+
+	if (vm->types.*(stdType.member) == nullptr)
+	{
+		vm->types.*(stdType.member) = type;
+		if (stdType.initerFunction)
+		{
+			void *func = FindNativeEntryPoint(stdType.initerFunction);
+			if (!func)
+				throw ModuleLoadException(reader.GetFileName(), "Missing instance initializer for standard type in native library.");
+
+			// Can't really switch here :(
+			// Also because all initializer functions are of different types,
+			// we can't really store a VM::IniterFunctions member in stdType.
+			if (type == vm->types.List)
+				vm->functions.initListInstance = (ListInitializer)func;
+			else if (type == vm->types.Hash)
+				vm->functions.initHashInstance = (HashInitializer)func;
+			else if (type == vm->types.Type)
+				vm->functions.initTypeToken = (TypeTokenInitializer)func;
 		}
 	}
 }
