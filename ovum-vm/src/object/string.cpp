@@ -3,6 +3,7 @@
 #include "../../inc/ov_string.h"
 #include "../gc/gc.h"
 #include "../ee/thread.h"
+#include "../res/staticstrings.h"
 #include <memory>
 
 inline const bool IsHashed(const String *const str)
@@ -456,7 +457,7 @@ OVUM_API String *String_Concat3(ThreadHandle thread, const String *a, const Stri
 OVUM_API String *String_ConcatRange(ThreadHandle thread, const unsigned int count, String *values[])
 {
 	if (count == 0)
-		return ovum::static_strings::empty;
+		return thread->GetStrings()->empty;
 	if (count == 1)
 		return values[0];
 
@@ -594,7 +595,7 @@ OVUM_API String *String_FromWString(ThreadHandle thread, const wchar_t *source)
 		outp++;
 	}
 
-	String *output = ovum::GC::gc->ConstructString(thread, outLength, buffer.get());
+	String *output = thread->GetGC()->ConstructString(thread, outLength, buffer.get());
 
 	return output;
 #else

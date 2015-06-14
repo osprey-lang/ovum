@@ -145,19 +145,6 @@ private:
 	int LoadTypeToken(Thread *const thread);
 };
 
-namespace std_type_names
-{
-	struct StdType
-	{
-		String *name;
-		TypeHandle StandardTypes::*member;
-		const char *const initerFunction;
-	};
-
-	extern const unsigned int StandardTypeCount;
-	extern const StdType Types[];
-}
-
 } // namespace ovum
 
 #endif

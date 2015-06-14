@@ -254,6 +254,9 @@
     <ClInclude Include="src\ee\vm.h">
       <Filter>Header Files\src\ee</Filter>
     </ClInclude>
+    <ClInclude Include="src\object\standardtypeinfo.h">
+      <Filter>Header Files\src\object</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\os\windows\dllmain.cpp">
@@ -342,6 +345,9 @@
     </ClCompile>
     <ClCompile Include="src\module\modulepool.cpp">
       <Filter>Source Files\module</Filter>
+    </ClCompile>
+    <ClCompile Include="src\object\standardtypeinfo.cpp">
+      <Filter>Source Files\object</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

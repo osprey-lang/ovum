@@ -1,0 +1,79 @@
+{
+	"empty": "",
+	"members": {
+		"call_": ".call",
+		"init_": ".init",
+		"item_": ".item",
+		"iter_": ".iter",
+		"message": "message",
+		"new_": ".new",
+		"toString": "toString"
+	},
+	"types": {
+		"aves": {
+			"Boolean": "aves.Boolean",
+			"DivideByZeroError": "aves.DivideByZeroError",
+			"Enum": "aves.Enum",
+			"Error": "aves.Error",
+			"Hash": "aves.Hash",
+			"Int": "aves.Int",
+			"Iterator": "aves.Iterator",
+			"List": "aves.List",
+			"MemberNotFoundError": "aves.MemberNotFoundError",
+			"MemoryError": "aves.MemoryError",
+			"Method": "aves.Method",
+			"NoOverloadError": "aves.NoOverloadError",
+			"NullReferenceError": "aves.NullReferenceError",
+			"Object": "aves.Object",
+			"OverflowError": "aves.OverflowError",
+			"Real": "aves.Real",
+			"String": "aves.String",
+			"TypeError": "aves.TypeError",
+			"UInt": "aves.UInt",
+			"reflection": {
+				"Type": "aves.reflection.Type"
+			}
+		}
+	},
+	"operators": {
+		"add": "+",
+		"subtract": "-",
+		"or": "|",
+		"xor": "^",
+		"multiply": "*",
+		"divide": "/",
+		"modulo": "%",
+		"and": "&",
+		"power": "**",
+		"shiftLeft": "<<",
+		"shiftRight": ">>",
+		"hash": "#",
+		"dollar": "$",
+		"plus": "+",
+		"negate": "-",
+		"not": "~",
+		"equal": "==",
+		"compare": "<=>"
+	},
+	"error": {
+		"CannotAccessStaticMemberThroughInstance": "Cannot access a static member through an instance.",
+		"CannotAssignToMethod": "Cannot assign to a method.",
+		"CannotGetWriteOnlyProperty": "Cannot get a write-only property.",
+		"CannotSetReadOnlyProperty": "Cannot assign to a read-only property.",
+		"CompareOperatorWrongReturnType": "The comparison operator must return an Int.",
+		"IncorrectRefness": "One or more arguments has the wrong referenceness (should be a ref but isn't, or vice versa).",
+		"IndexerNotFound": "The type does not contain an indexer, or the indexer is not accessible.",
+		"MemberIsNotAField": "The specified member is not a field.",
+		"MemberNotFound": "The member could not be found.",
+		"MemberNotInvokable": "The member is not invokable.",
+		"ObjectTooLarge": "The object is too large to be constructed.",
+		"ToIntFailed": "The value could not be converted to an Int.",
+		"ToRealFailed": "The value could not be converted to a Real.",
+		"ToStringWrongReturnType": "The return value of 'toString()' must be a string.",
+		"ToUIntFailed": "The value could not be converted to a UInt.",
+		"ValueNotComparable": "The value is not comparable.",
+		"ValueNotInvokable": "The value is not invokable.",
+		"WrongApplyArgumentsType": "The arguments list in a function application must be of type aves.List.",
+		"WrongTypesForConcatOperator": "The concatenation operator requires two Lists, two Hashes, or two values of any other types."
+	}
+}

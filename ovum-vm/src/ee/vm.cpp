@@ -7,9 +7,11 @@
 #include "../object/type.h"
 #include "../object/property.h"
 #include "../object/method.h"
+#include "../object/standardtypeinfo.h"
 #include "../module/module.h"
 #include "../module/modulepool.h"
 #include "../util/pathname.h"
+#include "../res/staticstrings.h"
 #include <fcntl.h>
 #include <io.h>
 #include <cstdio>
@@ -50,6 +52,8 @@ VM::~VM()
 	delete gc;
 	delete modules;
 	delete refSignatures;
+	delete standardTypeCollection;
+	delete strings;
 
 	delete mainThread;
 
@@ -111,8 +115,12 @@ int VM::Create(VMStartParams &params, VM *&result)
 		std::unique_ptr<VM> vm(new(std::nothrow) VM(params));
 		CHECKED_MEM(vm.get());
 
+		// Most things rely on static strings, so initialize them first.
+		CHECKED(StaticStrings::Create(vm->strings));
+
 		CHECKED(Thread::Create(vm.get(), vm->mainThread));
 		CHECKED(GC::Create(vm.get(), vm->gc));
+		CHECKED(StandardTypeCollection::Create(vm.get(), vm->standardTypeCollection));
 		CHECKED_MEM(vm->modules = new(std::nothrow) ModulePool(10));
 		CHECKED_MEM(vm->refSignatures = new(std::nothrow) RefSignaturePool());
 		
@@ -161,9 +169,11 @@ int VM::LoadModules(VMStartParams &params)
 		return OVUM_ERROR_NO_MEMORY;
 	}
 
-	for (unsigned int i = 0; i < std_type_names::StandardTypeCount; i++)
+	int32_t stdTypeCount = standardTypeCollection->GetCount();
+	for (int32_t i = 0; i < stdTypeCount; i++)
 	{
-		std_type_names::StdType type = std_type_names::Types[i];
+		StandardTypeInfo type;
+		standardTypeCollection->GetByIndex(i, type);
 		if (this->types.*(type.member) == nullptr)	
 		{
 			PrintInternal(stderr, L"Startup error: standard type not loaded: %ls\n", type.name);
@@ -304,7 +314,7 @@ void VM::PrintUnhandledError(Thread *const thread)
 	String *message = nullptr;
 	// If the member exists and is a readable instance property,
 	// we can actually try to invoke the 'message' getter!
-	Member *msgMember = error.type->FindMember(static_strings::message, nullptr);
+	Member *msgMember = error.type->FindMember(strings->members.message, nullptr);
 	if (msgMember && !msgMember->IsStatic() &&
 		(msgMember->flags & MemberFlags::KIND) == MemberFlags::PROPERTY)
 	{

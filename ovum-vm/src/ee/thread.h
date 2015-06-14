@@ -9,8 +9,6 @@
 namespace ovum
 {
 
-class StringBuffer;
-
 class StackFrame
 {
 public:
@@ -166,6 +164,9 @@ private:
 	// The VM instance that owns this thread.
 	VM *vm;
 
+	// Shared string data, accessed in a lot of places.
+	StaticStrings *strings;
+
 	// The current error.
 	// If successfully caught, this is set to NULL_VALUE *after* the catch clause
 	// has been exited. We need to do this after because the catch clause may be
@@ -302,6 +303,10 @@ public:
 	inline GC *GetGC() const
 	{
 		return vm->GetGC();
+	}
+	inline StaticStrings *GetStrings() const
+	{
+		return strings;
 	}
 
 private:

@@ -8,64 +8,10 @@
 #include "../ee/refsignature.h"
 #include "../gc/gc.h"
 #include "../gc/staticref.h"
+#include "../res/staticstrings.h"
 
 namespace ovum
 {
-
-namespace std_type_names
-{
-	// Fully qualified names of core types. If you change the fully
-	// qualified names of these types and neglect to update this list,
-	// do not be surprised if the VM crashes in your face!
-
-	// This macro is a horrible, evil thing. But it works.
-	#define AVES	'a','v','e','s','.'
-	#define SFS     ::StringFlags::STATIC
-
-	LitString<11> _Object              = { 11, 0, SFS, AVES,'O','b','j','e','c','t',0 };
-	LitString<12> _Boolean             = { 12, 0, SFS, AVES,'B','o','o','l','e','a','n',0 };
-	LitString<8>  _Int                 = {  8, 0, SFS, AVES,'I','n','t',0 };
-	LitString<9>  _UInt                = {  9, 0, SFS, AVES,'U','I','n','t',0 };
-	LitString<9>  _Real                = {  9, 0, SFS, AVES,'R','e','a','l',0 };
-	LitString<11> _String              = { 11, 0, SFS, AVES,'S','t','r','i','n','g',0 };
-	LitString<9>  _Enum                = {  9, 0, SFS, AVES,'E','n','u','m',0 };
-	LitString<9>  _List                = {  9, 0, SFS, AVES,'L','i','s','t',0 };
-	LitString<9>  _Hash                = {  9, 0, SFS, AVES,'H','a','s','h',0 };
-	LitString<11> _Method              = { 11, 0, SFS, AVES,'M','e','t','h','o','d',0 };
-	LitString<13> _Iterator            = { 13, 0, SFS, AVES,'I','t','e','r','a','t','o','r',0 };
-	LitString<20> _Type                = { 20, 0, SFS, AVES,'r','e','f','l','e','c','t','i','o','n','.','T','y','p','e',0 };
-	LitString<10> _Error               = { 10, 0, SFS, AVES,'E','r','r','o','r',0 };
-	LitString<14> _TypeError           = { 14, 0, SFS, AVES,'T','y','p','e','E','r','r','o','r',0 };
-	LitString<16> _MemoryError         = { 16, 0, SFS, AVES,'M','e','m','o','r','y','E','r','r','o','r',0 };
-	LitString<18> _OverflowError       = { 18, 0, SFS, AVES,'O','v','e','r','f','l','o','w','E','r','r','o','r',0 };
-	LitString<20> _NoOverloadError     = { 20, 0, SFS, AVES,'N','o','O','v','e','r','l','o','a','d','E','r','r','o','r',0 };
-	LitString<22> _DivideByZeroError   = { 22, 0, SFS, AVES,'D','i','v','i','d','e','B','y','Z','e','r','o','E','r','r','o','r',0 };
-	LitString<23> _NullReferenceError  = { 23, 0, SFS, AVES,'N','u','l','l','R','e','f','e','r','e','n','c','e','E','r','r','o','r',0 };
-	LitString<24> _MemberNotFoundError = { 24, 0, SFS, AVES,'M','e','m','b','e','r','N','o','t','F','o','u','n','d','E','r','r','o','r',0 };
-
-	const unsigned int StandardTypeCount = 19;
-	const StdType Types[] = {
-		{_Object.AsString(),              &StandardTypes::Object,              nullptr},
-		{_Boolean.AsString(),             &StandardTypes::Boolean,             nullptr},
-		{_Int.AsString(),                 &StandardTypes::Int,                 nullptr},
-		{_UInt.AsString(),                &StandardTypes::UInt,                nullptr},
-		{_Real.AsString(),                &StandardTypes::Real,                nullptr},
-		{_String.AsString(),              &StandardTypes::String,              nullptr},
-		{_List.AsString(),                &StandardTypes::List,                "InitListInstance"},
-		{_Hash.AsString(),                &StandardTypes::Hash,                "InitHashInstance"},
-		{_Method.AsString(),              &StandardTypes::Method,              nullptr},
-		{_Iterator.AsString(),            &StandardTypes::Iterator,            nullptr},
-		{_Type.AsString(),                &StandardTypes::Type,                "InitTypeToken"},
-		{_Error.AsString(),               &StandardTypes::Error,               nullptr},
-		{_TypeError.AsString(),           &StandardTypes::TypeError,           nullptr},
-		{_MemoryError.AsString(),         &StandardTypes::MemoryError,         nullptr},
-		{_OverflowError.AsString(),       &StandardTypes::OverflowError,       nullptr},
-		{_NoOverloadError.AsString(),     &StandardTypes::NoOverloadError,     nullptr},
-		{_DivideByZeroError.AsString(),   &StandardTypes::DivideByZeroError,   nullptr},
-		{_NullReferenceError.AsString(),  &StandardTypes::NullReferenceError,  nullptr},
-		{_MemberNotFoundError.AsString(), &StandardTypes::MemberNotFoundError, nullptr},
-	};
-}
 
 Type::Type(Module *module, int32_t memberCount) :
 	members(memberCount), typeToken(nullptr),
@@ -80,14 +26,6 @@ Type::Type(Module *module, int32_t memberCount) :
 
 Type::~Type()
 {
-	// If this is a standard type, unregister it
-	for (unsigned int i = 0; i < std_type_names::StandardTypeCount; i++)
-	{
-		std_type_names::StdType type = std_type_names::Types[i];
-		if (vm->types.*(type.member) == this)
-			vm->types.*(type.member) = nullptr;
-	}
-
 	// If there are any native fields, destroy them
 	// (Allocated with realloc)
 	free(nativeFields);
@@ -205,7 +143,7 @@ int Type::RunStaticCtor(Thread *const thread)
 			flags &= ~TypeFlags::STATIC_CTOR_RUNNING;
 			goto leave;
 		}
-		Member *member = GetMember(static_strings::_init);
+		Member *member = GetMember(thread->GetStrings()->members.init_);
 		if (member)
 		{
 			// If there is a member '.init', it must be a method!

@@ -32,8 +32,11 @@ class PathName;
 class Property;
 class RefSignaturePool;
 class StackManager;
+class StandardTypeCollection;
 class StaticRef;
 class StaticRefBlock;
+class StaticStrings;
+class StringBuffer;
 class Thread;
 class TryBlock;
 class Type;
@@ -41,6 +44,7 @@ class VM;
 struct CatchBlock;
 struct CatchBlocks;
 struct FinallyBlock;
+struct StandardTypeInfo;
 
 namespace debug
 {
@@ -93,9 +97,5 @@ namespace ovum
 typedef uint32_t TokenId;
 
 } // namespace ovum
-
-// Static strings are used basically everywhere.
-
-#include "res/staticstrings.h"
 
 #endif // VM__VM_INTERNAL

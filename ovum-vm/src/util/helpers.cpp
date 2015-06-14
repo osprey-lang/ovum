@@ -2,21 +2,8 @@
 #include "../../inc/ov_helpers.h"
 #include "../ee/thread.h"
 #include "../object/value.h"
+#include "../res/staticstrings.h"
 #include <math.h>
-
-namespace errors
-{
-	namespace
-	{
-		LitString<43> _toIntFailed  = LitString<43>::FromCString("The value could not be converted to an Int.");
-		LitString<43> _toUIntFailed = LitString<43>::FromCString("The value could not be converted to a UInt.");
-		LitString<43> _toRealFailed = LitString<43>::FromCString("The value could not be converted to a Real.");
-	}
-
-	String *toIntFailed  = _toIntFailed.AsString();
-	String *toUIntFailed = _toUIntFailed.AsString();
-	String *toRealFailed = _toRealFailed.AsString();
-}
 
 namespace hash_helper
 {
@@ -32,7 +19,6 @@ namespace hash_helper
 		4999559, 5999471, 7199369
 	};
 }
-
 
 OVUM_API int IntFromValue(ThreadHandle thread, Value *v)
 {
@@ -56,7 +42,7 @@ OVUM_API int IntFromValue(ThreadHandle thread, Value *v)
 		}
 		else
 		{
-			return thread->ThrowTypeError(errors::toIntFailed);
+			return thread->ThrowTypeError(thread->GetStrings()->error.ToIntFailed);
 		}
 	}
 	RETURN_SUCCESS;
@@ -84,7 +70,7 @@ OVUM_API int UIntFromValue(ThreadHandle thread, Value *v)
 		}
 		else
 		{
-			return thread->ThrowTypeError(errors::toUIntFailed);
+			return thread->ThrowTypeError(thread->GetStrings()->error.ToUIntFailed);
 		}
 	}
 	RETURN_SUCCESS;
@@ -104,7 +90,7 @@ OVUM_API int RealFromValue(ThreadHandle thread, Value *v)
 		else if (v->type == vm->types.UInt)
 			result = (double)v->v.uinteger;
 		else
-			return thread->ThrowTypeError(errors::toRealFailed);
+			return thread->ThrowTypeError(thread->GetStrings()->error.ToRealFailed);
 		v->type = vm->types.Real;
 		v->v.real = result;
 	}
@@ -118,16 +104,16 @@ OVUM_API int StringFromValue(ThreadHandle thread, Value *v)
 	{
 		if (v->type == nullptr)
 		{
-			ovum::SetString_(vm, v, ovum::static_strings::empty);
+			ovum::SetString_(vm, v, thread->GetStrings()->empty);
 			RETURN_SUCCESS;
 		}
 
 		thread->Push(v);
-		int r = thread->InvokeMember(ovum::static_strings::toString, 0, v);
+		int r = thread->InvokeMember(thread->GetStrings()->members.toString, 0, v);
 		if (r != OVUM_SUCCESS) return r;
 
 		if (v->type != vm->types.String)
-			return thread->ThrowTypeError(ovum::static_strings::errors::ToStringWrongType);
+			return thread->ThrowTypeError(thread->GetStrings()->error.ToStringWrongReturnType);
 	}
 	RETURN_SUCCESS;
 }
