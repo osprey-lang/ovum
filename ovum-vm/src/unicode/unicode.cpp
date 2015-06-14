@@ -28,22 +28,22 @@ namespace unicode
 
 } // namespace ovum
 
-OVUM_API UnicodeCategory UC_GetCategory(uchar ch)
+OVUM_API UnicodeCategory UC_GetCategory(ovchar_t ch)
 {
 	return ovum::unicode::GetCategory(ch);
 }
 
-OVUM_API CaseMap UC_GetCaseMap(uchar ch)
+OVUM_API CaseMap UC_GetCaseMap(ovchar_t ch)
 {
 	return ovum::unicode::GetCaseMap(ch);
 }
 
-OVUM_API UnicodeCategory UC_GetCategoryW(wuchar ch)
+OVUM_API UnicodeCategory UC_GetCategoryW(ovwchar_t ch)
 {
 	return ovum::unicode::GetCategory((int32_t)ch);
 }
 
-OVUM_API CaseMap UC_GetCaseMapW(wuchar ch)
+OVUM_API CaseMap UC_GetCaseMapW(ovwchar_t ch)
 {
 	return ovum::unicode::GetCaseMap((int32_t)ch);
 }

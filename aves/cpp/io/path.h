@@ -8,24 +8,24 @@ class Path
 public:
 
 #if OVUM_WINDOWS
-	static const uchar DirSeparator = '\\';
-	static const uchar AltDirSeparator = '/';
-	static const uchar VolumeSeparator = ':';
+	static const ovchar_t DirSeparator = '\\';
+	static const ovchar_t AltDirSeparator = '/';
+	static const ovchar_t VolumeSeparator = ':';
 #else
-	static const uchar DirSeparator = '/';
-	static const uchar AltDirSeparator = '\\';
-	static const uchar VolumeSeparator = '/';
+	static const ovchar_t DirSeparator = '/';
+	static const ovchar_t AltDirSeparator = '\\';
+	static const ovchar_t VolumeSeparator = '/';
 #endif
 
 	static LitString<1> DirSeparatorString;
 
 	static const int InvalidPathCharsCount;
-	static const uchar InvalidPathChars[];
+	static const ovchar_t InvalidPathChars[];
 
 	static const int InvalidFileNameCharsCount;
-	static const uchar InvalidFileNameChars[];
+	static const ovchar_t InvalidFileNameChars[];
 
-	inline static bool IsPathSep(uchar ch)
+	inline static bool IsPathSep(ovchar_t ch)
 	{
 		return ch == DirSeparator || ch == AltDirSeparator;
 	}

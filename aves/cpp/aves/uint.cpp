@@ -345,7 +345,7 @@ String *uinteger::ToString(ThreadHandle thread, const uint64_t value,
 	String *str;
 	if (minWidth < smallBufferSize)
 	{
-		uchar buf[smallBufferSize];
+		ovchar_t buf[smallBufferSize];
 		int32_t length;
 		if (radix == 10)
 			length = ToStringDecimal(thread, value, minWidth, smallBufferSize, buf);
@@ -358,7 +358,7 @@ String *uinteger::ToString(ThreadHandle thread, const uint64_t value,
 	else
 	{
 		int bufSize = minWidth + 1;
-		unique_ptr<uchar[]> buf(new uchar[bufSize]);
+		unique_ptr<ovchar_t[]> buf(new ovchar_t[bufSize]);
 		int32_t length;
 		if (radix == 10)
 			length = ToStringDecimal(thread, value, minWidth, bufSize, buf.get());
@@ -373,21 +373,21 @@ String *uinteger::ToString(ThreadHandle thread, const uint64_t value,
 }
 
 int32_t uinteger::ToStringDecimal(ThreadHandle thread, const uint64_t value,
-	const int minWidth, const int bufferSize, uchar *buf)
+	const int minWidth, const int bufferSize, ovchar_t *buf)
 {
-	uchar *chp = buf + bufferSize;
+	ovchar_t *chp = buf + bufferSize;
 
 	uint64_t temp = value;
 	int length = 0;
 	do
 	{
-		*--chp = (uchar)'0' + (int)(temp % 10);
+		*--chp = (ovchar_t)'0' + (int)(temp % 10);
 		length++;
 	} while (temp /= 10);
 
 	while (length < minWidth)
 	{
-		*--chp = (uchar)'0';
+		*--chp = (ovchar_t)'0';
 		length++;
 	}
 
@@ -396,24 +396,24 @@ int32_t uinteger::ToStringDecimal(ThreadHandle thread, const uint64_t value,
 
 int32_t uinteger::ToStringHex(ThreadHandle thread, const uint64_t value,
 	const bool upper, const int minWidth,
-	const int bufferSize, uchar *buf)
+	const int bufferSize, ovchar_t *buf)
 {
-	uchar *chp = buf + bufferSize;
+	ovchar_t *chp = buf + bufferSize;
 
-	const uchar letterBase = upper ? 'A' : 'a';
+	const ovchar_t letterBase = upper ? 'A' : 'a';
 
 	uint64_t temp = value;
 	int length = 0;
 	do
 	{
 		int rem = temp % 16;
-		*--chp = rem >= 10 ? letterBase + rem - 10 : (uchar)'0' + rem;
+		*--chp = rem >= 10 ? letterBase + rem - 10 : (ovchar_t)'0' + rem;
 		length++;
 	} while (temp /= 16);
 
 	while (length < minWidth)
 	{
-		*--chp = (uchar)'0';
+		*--chp = (ovchar_t)'0';
 		length++;
 	}
 
@@ -422,27 +422,27 @@ int32_t uinteger::ToStringHex(ThreadHandle thread, const uint64_t value,
 
 int32_t uinteger::ToStringRadix(ThreadHandle thread, const uint64_t value,
 	const int radix, const bool upper, const int minWidth,
-	const int bufferSize, uchar *buf)
+	const int bufferSize, ovchar_t *buf)
 {
 	// The radix is supposed to be range checked outside of this method.
 	// Also, use ToStringDecimal and ToStringHex for base 10 and 16, respectively.
 	OVUM_ASSERT(radix >= 2 && radix <= 36 && radix != 10 && radix != 16);
 
-	uchar *chp = buf + bufferSize;
+	ovchar_t *chp = buf + bufferSize;
 
-	const uchar letterBase = upper ? 'A' : 'a';
+	const ovchar_t letterBase = upper ? 'A' : 'a';
 	
 	uint64_t temp = value;
 	int length = 0;
 	do {
 		int rem = temp % radix; // radix is clamped to [2, 36], so this is fine
-		*--chp = rem >= 10 ? letterBase + rem - 10 : (uchar)'0' + rem;
+		*--chp = rem >= 10 ? letterBase + rem - 10 : (ovchar_t)'0' + rem;
 		length++;
 	} while (temp /= radix);
 
 	while (length < minWidth)
 	{
-		*--chp = (uchar)'0';
+		*--chp = (ovchar_t)'0';
 		length++;
 	}
 

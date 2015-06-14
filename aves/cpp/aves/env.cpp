@@ -49,7 +49,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Env_get_currentDirectory)
 			pathLength = GetCurrentDirectoryW(MAX_PATH, buf);
 			if (pathLength < MAX_PATH)
 			{
-				result = GC_ConstructString(thread, (int32_t)pathLength, (const uchar*)buf);
+				result = GC_ConstructString(thread, (int32_t)pathLength, (const ovchar_t*)buf);
 				break;
 			}
 		}
@@ -62,7 +62,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Env_get_currentDirectory)
 			DWORD charsWritten = GetCurrentDirectoryW(pathLength, buf.get());
 			if (pathLength < charsWritten)
 			{
-				result = GC_ConstructString(thread, (int32_t)charsWritten, (const uchar*)buf.get());
+				result = GC_ConstructString(thread, (int32_t)charsWritten, (const ovchar_t*)buf.get());
 				break;
 			}
 		}

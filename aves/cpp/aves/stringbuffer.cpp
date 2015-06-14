@@ -80,7 +80,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_StringBuffer_set_item)
 	}
 
 	int32_t index = (int32_t)args[1].v.integer;
-	buf->GetDataPointer()[index] = (uchar)args[2].v.uinteger;
+	buf->GetDataPointer()[index] = (ovchar_t)args[2].v.uinteger;
 }
 END_NATIVE_FUNCTION
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_get_length)
@@ -137,17 +137,17 @@ AVES_API NATIVE_FUNCTION(aves_StringBuffer_appendCodepoint)
 	// and also range-checks the value
 
 	StringBuffer *buf = THISV.Get<StringBuffer>();
-	wuchar codepoint = (wuchar)args[1].v.integer;
+	ovwchar_t codepoint = (ovwchar_t)args[1].v.integer;
 
 	if (codepoint > 0xFFFF)
 	{
 		// Surrogate pair, whoo!
 		SurrogatePair pair = UC_ToSurrogatePair(codepoint);
-		if (!buf->Append(2, (uchar*)&pair))
+		if (!buf->Append(2, (ovchar_t*)&pair))
 			return VM_ThrowMemoryError(thread);
 	}
 	else
-		if (!buf->Append(1, (uchar)codepoint))
+		if (!buf->Append(1, (ovchar_t)codepoint))
 			return VM_ThrowMemoryError(thread);
 
 	VM_Push(thread, THISP);

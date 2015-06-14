@@ -161,7 +161,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(io_TextReader_readLine)
 		int32_t i = tr->charOffset;
 		do
 		{
-			uchar ch = cb->GetDataPointer()[i];
+			ovchar_t ch = cb->GetDataPointer()[i];
 			if (ch == '\n' || ch == '\r')
 			{
 				// We found a line ending! Make sure a string is

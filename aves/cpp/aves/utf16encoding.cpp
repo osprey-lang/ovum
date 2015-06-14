@@ -106,7 +106,7 @@ int32_t Utf16Encoder::GetBytes(ThreadHandle thread, String *str, Buffer *buf, in
 	if ((uint32_t)(offset + 2 * str->length) > buf->size)
 		return ~Utf8Encoder::BufferOverrunError(thread);
 
-	const uchar *chp = &str->firstChar;
+	const ovchar_t *chp = &str->firstChar;
 	uint8_t *bp = buf->bytes + offset;
 
 	bool bigEndian = this->bigEndian;
@@ -209,7 +209,7 @@ int32_t Utf16Decoder::GetChars(ThreadHandle thread, Buffer *buf, int32_t offset,
 	{
 		if (hasPrevByte)
 		{
-			uchar ch;
+			ovchar_t ch;
 			if (bigEndian)
 				ch = (prevByte << 8) | *bp;
 			else

@@ -13,7 +13,7 @@ public:
 	const int32_t length;
 	int32_t hashCode;
 	StringFlags flags;
-	uchar chars[Len + 1];
+	ovchar_t chars[Len + 1];
 
 	typedef const char CString[Len + 1];
 
@@ -30,7 +30,7 @@ public:
 	{
 		LitString<Len> output = { Len, 0, StringFlags::STATIC };
 
-		// Note: we can't use memcpy or CopyMemoryT because sizeof(char) != sizeof(uchar).
+		// Note: we can't use memcpy or CopyMemoryT because sizeof(char) != sizeof(ovchar_t).
 		for (int i = 0; i < Len; i++)
 			output.chars[i] = data[i];
 

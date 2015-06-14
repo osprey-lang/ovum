@@ -11,7 +11,7 @@ class StringBuffer
 private:
 	int32_t capacity;
 	int32_t length;
-	uchar *data;
+	ovchar_t *data;
 
 public:
 	StringBuffer(const int32_t capacity = StringBuffer::DefaultCapacity);
@@ -21,9 +21,9 @@ public:
 	inline int32_t GetCapacity() { return this->capacity; }
 	int32_t SetCapacity(const int32_t newCapacity);
 
-	void Append(const uchar ch);
-	void Append(const int32_t count, const uchar ch);
-	void Append(const int32_t length, const uchar data[]);
+	void Append(const ovchar_t ch);
+	void Append(const int32_t count, const ovchar_t ch);
+	void Append(const int32_t length, const ovchar_t data[]);
 	void Append(String *str);
 
 	void Append(const int32_t length, const char data[]);
@@ -34,11 +34,11 @@ public:
 	// Clears the buffer's contents without changing the capacity.
 	void Clear();
 
-	inline bool StartsWith(const uchar ch)
+	inline bool StartsWith(const ovchar_t ch)
 	{
 		return this->length > 0 && this->data[0] == ch;
 	}
-	inline bool EndsWith(const uchar ch)
+	inline bool EndsWith(const ovchar_t ch)
 	{
 		return this->length > 0 && this->data[this->length - 1] == ch;
 	}

@@ -71,7 +71,7 @@ public:
 
 	void Reset();
 
-	static const uchar ReplacementChar = 0xFFFD;
+	static const ovchar_t ReplacementChar = 0xFFFD;
 };
 
 AVES_API void aves_Utf16Decoder_init(TypeHandle type);

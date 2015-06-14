@@ -359,7 +359,7 @@ String *integer::ToString(ThreadHandle thread, const int64_t value,
 	String *str;
 	if (minWidth < smallBufferSize)
 	{
-		uchar buf[smallBufferSize];
+		ovchar_t buf[smallBufferSize];
 		int32_t length;
 		if (radix == 10)
 			length = ToStringDecimal(thread, value, minWidth, smallBufferSize, buf);
@@ -372,7 +372,7 @@ String *integer::ToString(ThreadHandle thread, const int64_t value,
 	else
 	{
 		int bufSize = minWidth + 1;
-		unique_ptr<uchar[]> buf(new uchar[bufSize]);
+		unique_ptr<ovchar_t[]> buf(new ovchar_t[bufSize]);
 		int32_t length;
 		if (radix == 10)
 			length = ToStringDecimal(thread, value, minWidth, bufSize, buf.get());
@@ -387,7 +387,7 @@ String *integer::ToString(ThreadHandle thread, const int64_t value,
 }
 
 int32_t integer::ToStringDecimal(ThreadHandle thread, const int64_t value,
-	const int minWidth, const int bufferSize, uchar *buf)
+	const int minWidth, const int bufferSize, ovchar_t *buf)
 {
 	// INT64_MIN is the only weird value: it's the only one that cannot
 	// be represented as a positive integer. This value will probably
@@ -396,7 +396,7 @@ int32_t integer::ToStringDecimal(ThreadHandle thread, const int64_t value,
 	if (value == INT64_MIN)
 		return ToStringRadix(thread, value, 10, false, minWidth, bufferSize, buf);
 
-	uchar *chp = buf + bufferSize;
+	ovchar_t *chp = buf + bufferSize;
 
 	int64_t temp = value;
 	bool neg = temp < 0;
@@ -406,19 +406,19 @@ int32_t integer::ToStringDecimal(ThreadHandle thread, const int64_t value,
 	int32_t length = 0;
 	do
 	{
-		*--chp = (uchar)'0' + temp % 10;
+		*--chp = (ovchar_t)'0' + temp % 10;
 		length++;
 	} while (temp /= 10);
 
 	while (length < minWidth)
 	{
-		*--chp = (uchar)'0';
+		*--chp = (ovchar_t)'0';
 		length++;
 	}
 
 	if (neg)
 	{
-		*--chp = (uchar)'-';
+		*--chp = (ovchar_t)'-';
 		length++;
 	}
 
@@ -427,38 +427,38 @@ int32_t integer::ToStringDecimal(ThreadHandle thread, const int64_t value,
 
 int32_t integer::ToStringHex(ThreadHandle thread, const int64_t value,
 	const bool upper, const int minWidth,
-	const int bufferSize, uchar *buf)
+	const int bufferSize, ovchar_t *buf)
 {
 	// As with ToStringDecimal, we treat INT64_MIN specially here too.
 	if (value == INT64_MIN)
 		return ToStringRadix(thread, value, 16, upper, minWidth, bufferSize, buf);
 
-	uchar *chp = buf + bufferSize;
+	ovchar_t *chp = buf + bufferSize;
 
 	int64_t temp = value;
 	bool neg = temp < 0;
 	if (neg)
 		temp = -temp;
 
-	const uchar letterBase = upper ? 'A' : 'a';
+	const ovchar_t letterBase = upper ? 'A' : 'a';
 	
 	int32_t length = 0;
 	do
 	{
 		int rem = temp % 16;
-		*--chp = rem >= 10 ? letterBase + rem - 10 : (uchar)'0' + rem;
+		*--chp = rem >= 10 ? letterBase + rem - 10 : (ovchar_t)'0' + rem;
 		length++;
 	} while (temp /= 16);
 
 	while (length < minWidth)
 	{
-		*--chp = (uchar)'0';
+		*--chp = (ovchar_t)'0';
 		length++;
 	}
 
 	if (neg)
 	{
-		*--chp = (uchar)'-';
+		*--chp = (ovchar_t)'-';
 		length++;
 	}
 
@@ -467,36 +467,36 @@ int32_t integer::ToStringHex(ThreadHandle thread, const int64_t value,
 
 int32_t integer::ToStringRadix(ThreadHandle thread, const int64_t value,
 	const int radix, const bool upper, const int minWidth,
-	const int bufferSize, uchar *buf)
+	const int bufferSize, ovchar_t *buf)
 {
 	// The radix is supposed to be range checked outside of this method.
 	// Also, use ToStringDecimal and ToStringHex for base 10 and 16, respectively.
 	OVUM_ASSERT(radix >= 2 && radix <= 36 && (radix != 10 && radix != 16 || value == INT64_MIN));
 
-	uchar *chp = buf + bufferSize;
+	ovchar_t *chp = buf + bufferSize;
 
 	int64_t temp = value;
 	int sign = temp < 0 ? -1 : 1;
 
-	const uchar letterBase = upper ? 'A' : 'a';
+	const ovchar_t letterBase = upper ? 'A' : 'a';
 
 	int32_t length = 0;
 
 	do {
 		int rem = sign * (temp % radix);
-		*--chp = rem >= 10 ? letterBase + rem - 10 : (uchar)'0' + rem;
+		*--chp = rem >= 10 ? letterBase + rem - 10 : (ovchar_t)'0' + rem;
 		length++;
 	} while (temp /= radix);
 
 	while (length < minWidth)
 	{
-		*--chp = (uchar)'0';
+		*--chp = (ovchar_t)'0';
 		length++;
 	}
 
 	if (sign < 0)
 	{
-		*--chp = (uchar)'-';
+		*--chp = (ovchar_t)'-';
 		length++;
 	}
 
@@ -511,7 +511,7 @@ int integer::ParseFormatString(ThreadHandle thread, String *str, int *radix, int
 
 	static const unsigned int MaxWidth = 2048;
 
-	const uchar *ch = &str->firstChar;
+	const ovchar_t *ch = &str->firstChar;
 	int32_t i = 0;
 	switch (*ch)
 	{

@@ -1418,16 +1418,16 @@ void Thread::AppendSourceLocation(StringBuffer &buf, MethodOverload *method, uin
 		buf.Append(9, " at line ");
 		// Build a decimal string for the line number
 		{
-			const uchar NumberLength = 16; // 16 digits ought to be enough for anybody
+			const ovchar_t NumberLength = 16; // 16 digits ought to be enough for anybody
 
-			uchar lineNumberStr[NumberLength];
-			uchar *chp = lineNumberStr + NumberLength;
+			ovchar_t lineNumberStr[NumberLength];
+			ovchar_t *chp = lineNumberStr + NumberLength;
 			int32_t length = 0;
 
 			int32_t lineNumber = loc->lineNumber;
 			do
 			{
-				*--chp = (uchar)'0' + lineNumber % 10;
+				*--chp = (ovchar_t)'0' + lineNumber % 10;
 				length++;
 			} while (lineNumber /= 10);
 			buf.Append(length, chp);

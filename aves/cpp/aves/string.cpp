@@ -74,7 +74,7 @@ AVES_API NATIVE_FUNCTION(aves_String_equalsIgnoreCase)
 		eq = String_EqualsIgnoreCase(THISV.v.string, args[1].v.string);
 	else if (args[1].type == aves->aves.Char)
 	{
-		LitString<2> other = Char::ToLitString((wuchar)args[1].v.integer);
+		LitString<2> other = Char::ToLitString((ovwchar_t)args[1].v.integer);
 		eq = String_EqualsIgnoreCase(THISV.v.string, other.AsString());
 	}
 	else
@@ -93,7 +93,7 @@ AVES_API NATIVE_FUNCTION(aves_String_contains)
 		result = String_Contains(THISV.v.string, args[1].v.string);
 	else if (args[1].type == aves->aves.Char)
 	{
-		LitString<2> value = Char::ToLitString((wuchar)args[1].v.integer);
+		LitString<2> value = Char::ToLitString((ovwchar_t)args[1].v.integer);
 		result = String_Contains(THISV.v.string, value.AsString());
 	}
 	else
@@ -114,7 +114,7 @@ AVES_API NATIVE_FUNCTION(aves_String_startsWith)
 		result = String_SubstringEquals(str, 0, args[1].v.string);
 	else if (args[1].type == aves->aves.Char)
 	{
-		LitString<2> part = Char::ToLitString((wuchar)args[1].v.integer);
+		LitString<2> part = Char::ToLitString((ovwchar_t)args[1].v.integer);
 		result = String_SubstringEquals(str, 0, part.AsString());
 	}
 	else
@@ -138,7 +138,7 @@ AVES_API NATIVE_FUNCTION(aves_String_endsWith)
 	}
 	else if (args[1].type == aves->aves.Char)
 	{
-		LitString<2> part = Char::ToLitString((wuchar)args[1].v.integer);
+		LitString<2> part = Char::ToLitString((ovwchar_t)args[1].v.integer);
 		result = String_SubstringEquals(str, str->length - part.length, part.AsString());
 	}
 	else
@@ -159,7 +159,7 @@ AVES_API NATIVE_FUNCTION(aves_String_indexOf)
 		index = string::IndexOf(str, args[1].v.string);
 	else if (args[1].type == aves->aves.Char)
 	{
-		LitString<2> part = Char::ToLitString((wuchar)args[1].v.integer);
+		LitString<2> part = Char::ToLitString((ovwchar_t)args[1].v.integer);
 		index = string::IndexOf(str, part.AsString());
 	}
 	else
@@ -183,7 +183,7 @@ AVES_API NATIVE_FUNCTION(aves_String_lastIndexOf)
 		index = string::LastIndexOf(str, args[1].v.string);
 	else if (args[1].type == aves->aves.Char)
 	{
-		LitString<2> part = Char::ToLitString((wuchar)args[1].v.integer);
+		LitString<2> part = Char::ToLitString((ovwchar_t)args[1].v.integer);
 		index = string::LastIndexOf(str, part.AsString());
 	}
 	else
@@ -204,8 +204,8 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_reverse)
 	Value *output = VM_Local(thread, 0);
 	SetString(thread, output, outputString);
 
-	const uchar *srcp = &THISV.v.string->firstChar;
-	uchar *dstp = const_cast<uchar*>(&outputString->firstChar + outputString->length - 1);
+	const ovchar_t *srcp = &THISV.v.string->firstChar;
+	ovchar_t *dstp = const_cast<ovchar_t*>(&outputString->firstChar + outputString->length - 1);
 
 	int32_t remaining = outputString->length;
 	while (remaining-- > 0)
@@ -354,7 +354,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_split)
 		CHECKED(GC_Construct(thread, GetType_List(thread), 1, output));
 
 		// And then copy each individual character to the output
-		const uchar *chp = &str->firstChar;
+		const ovchar_t *chp = &str->firstChar;
 		int32_t remaining = str->length;
 		while (remaining-- > 0)
 		{
@@ -369,8 +369,8 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_split)
 		VM_PushInt(thread, str->length / 2);
 		CHECKED(GC_Construct(thread, GetType_List(thread), 1, output));
 
-		const uchar *chp = &str->firstChar;
-		const uchar *chStart = chp;
+		const ovchar_t *chp = &str->firstChar;
+		const ovchar_t *chStart = chp;
 		int32_t index = 0;
 		while (index < str->length)
 		{
@@ -423,7 +423,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_padInner)
 {
 	// padInner(minLength is Int, char is Char, side is StringPad)
 	// The public-facing methods make sure char is of length 1, so
-	// we can safely cast it to uchar here.
+	// we can safely cast it to ovchar_t here.
 	Aves *aves = Aves::Get(thread);
 
 	int64_t minLength64 = args[1].v.integer;
@@ -451,9 +451,9 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_padInner)
 	String *result;
 	{ Pinned s(THISP);
 		CHECKED_MEM(result = GC_ConstructString(thread, str->length + padLength, nullptr));
-		uchar *resultp = const_cast<uchar*>(&result->firstChar);
+		ovchar_t *resultp = const_cast<ovchar_t*>(&result->firstChar);
 
-		uchar ch = (uchar)args[2].v.integer;
+		ovchar_t ch = (ovchar_t)args[2].v.integer;
 		switch (side)
 		{
 		case PAD_START:
@@ -514,9 +514,9 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_getCharacter)
 	int32_t index;
 	CHECKED(GetIndex(thread, str, args + 1, index));
 
-	const uchar *chp = &str->firstChar + index;
+	const ovchar_t *chp = &str->firstChar + index;
 
-	wuchar result;
+	ovwchar_t result;
 	if (UC_IsSurrogateLead(chp[0]) && UC_IsSurrogateTrail(chp[1]))
 		result = UC_ToWide(chp[0], chp[1]);
 	else
@@ -535,9 +535,9 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_getCodepoint)
 	int32_t index;
 	CHECKED(GetIndex(thread, str, args + 1, index));
 
-	const uchar *chp = &str->firstChar + index;
+	const ovchar_t *chp = &str->firstChar + index;
 
-	wuchar result;
+	ovwchar_t result;
 	if (UC_IsSurrogateLead(chp[0]) && UC_IsSurrogateTrail(chp[1]))
 		result = UC_ToWide(chp[0], chp[1]);
 	else
@@ -631,15 +631,15 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_fromCodepoint)
 	}
 
 	String *output;
-	if (UC_NeedsSurrogatePair((wuchar)cp64))
+	if (UC_NeedsSurrogatePair((ovwchar_t)cp64))
 	{
-		SurrogatePair pair = UC_ToSurrogatePair((wuchar)cp64);
-		output = GC_ConstructString(thread, 2, reinterpret_cast<uchar*>(&pair));
+		SurrogatePair pair = UC_ToSurrogatePair((ovwchar_t)cp64);
+		output = GC_ConstructString(thread, 2, reinterpret_cast<ovchar_t*>(&pair));
 	}
 	else
 	{
-		uchar cp = (uchar)cp64;
-		output = GC_ConstructString(thread, 1, reinterpret_cast<uchar*>(&cp));
+		ovchar_t cp = (ovchar_t)cp64;
+		output = GC_ConstructString(thread, 1, reinterpret_cast<ovchar_t*>(&cp));
 	}
 	CHECKED_MEM(output);
 
@@ -657,7 +657,7 @@ AVES_API NATIVE_FUNCTION(aves_String_opEquals)
 		eq = String_Equals(args[0].v.string, args[1].v.string);
 	else if (args[1].type == aves->aves.Char)
 	{
-		LitString<2> right = Char::ToLitString((wuchar)args[1].v.integer);
+		LitString<2> right = Char::ToLitString((ovwchar_t)args[1].v.integer);
 		eq = String_Equals(args[0].v.string, right.AsString());
 	}
 	else
@@ -676,7 +676,7 @@ AVES_API NATIVE_FUNCTION(aves_String_opCompare)
 		result = String_Compare(args[0].v.string, args[1].v.string);
 	else if (args[1].type == aves->aves.Char)
 	{
-		LitString<2> right = Char::ToLitString((wuchar)args[1].v.integer);
+		LitString<2> right = Char::ToLitString((ovwchar_t)args[1].v.integer);
 		result = String_Compare(args[0].v.string, right.AsString());
 	}
 	else
@@ -723,7 +723,7 @@ END_NATIVE_FUNCTION
 
 int32_t string::IndexOf(const String *str, const String *part)
 {
-	const uchar *strp = &str->firstChar;
+	const ovchar_t *strp = &str->firstChar;
 
 	int32_t imax = str->length - part->length + 1;
 	for (int32_t i = 0; i < imax; i++)
@@ -738,7 +738,7 @@ int32_t string::IndexOf(const String *str, const String *part)
 
 int32_t string::LastIndexOf(const String *str, const String *part)
 {
-	const uchar *strp = &str->firstChar;
+	const ovchar_t *strp = &str->firstChar;
 
 	for (int32_t i = str->length - part->length; i >= 0; i--)
 	{
@@ -794,7 +794,7 @@ failure:
 	return OVUM_ERROR_NO_MEMORY;
 }
 
-int ScanDecimalNumber(ThreadHandle thread, const uchar * &chp, unsigned int &index, uint32_t &number)
+int ScanDecimalNumber(ThreadHandle thread, const ovchar_t * &chp, unsigned int &index, uint32_t &number)
 {
 	uint32_t result = 0;
 
@@ -825,12 +825,12 @@ int string::Format(ThreadHandle thread, const String *format, ListInst *list, St
 	unsigned int start = 0;
 	unsigned int index = 0;
 
-	const uchar *chBase = &format->firstChar;
-	const uchar *chp = chBase;
+	const ovchar_t *chBase = &format->firstChar;
+	const ovchar_t *chp = chBase;
 
 	while (index < length)
 	{
-		const uchar ch = *chp;
+		const ovchar_t ch = *chp;
 
 		// In all cases, we need to do this anyway, and this makes it slightly
 		// faster to look up the next character after 'ch'.
@@ -923,9 +923,9 @@ formatError:
 
 template<int BufLen>
 int ScanFormatIdentifier(ThreadHandle thread, LitString<BufLen> &buffer,
-	unsigned int &index, const uchar * &chp, Value &result)
+	unsigned int &index, const ovchar_t * &chp, Value &result)
 {
-	const uchar *chStart = chp;
+	const ovchar_t *chStart = chp;
 	// Identifiers follow the following format:
 	//     [\p{L}\p{Nl}_][\p{L}\p{Nl}\p{Nd}\p{Mn}\p{Mc}\p{Pc}\p{Cf}]*
 	// Note that '_' is part of Pc, which is why it's not explicitly mentioned
@@ -991,12 +991,12 @@ int string::Format(ThreadHandle thread, const String *format, Value *hash, Strin
 	unsigned int start = 0;
 	unsigned int index = 0;
 
-	const uchar *chBase = &format->firstChar;
-	const uchar *chp = chBase;
+	const ovchar_t *chBase = &format->firstChar;
+	const ovchar_t *chp = chBase;
 
 	while (index < length)
 	{
-		const uchar ch = *chp;
+		const ovchar_t ch = *chp;
 
 		// In all cases, we need to do this anyway, and this makes it slightly
 		// faster to look up the next character after 'ch'.
@@ -1099,12 +1099,12 @@ formatError:
 	return VM_ThrowErrorOfType(thread, aves->aves.ArgumentError, 2);
 }
 
-String *string::Replace(ThreadHandle thread, String *input, const uchar oldChar, const uchar newChar, const int64_t maxTimes)
+String *string::Replace(ThreadHandle thread, String *input, const ovchar_t oldChar, const ovchar_t newChar, const int64_t maxTimes)
 {
 	String *output = GC_ConstructString(thread, input->length, &input->firstChar);
 	if (output)
 	{
-		uchar *outp = const_cast<uchar*>(&output->firstChar);
+		ovchar_t *outp = const_cast<ovchar_t*>(&output->firstChar);
 		int64_t remaining = maxTimes;
 		int32_t length = input->length;
 		while (length-- && (maxTimes < 0 || remaining))
@@ -1126,7 +1126,7 @@ String *string::Replace(ThreadHandle thread, String *input, String *oldValue, St
 	StringBuffer buf;
 	if (!buf.Init(input->length)) goto failure;
 
-	const uchar *inp = &input->firstChar;
+	const ovchar_t *inp = &input->firstChar;
 	int32_t imax = input->length - oldValue->length + 1;
 
 	int32_t start = 0;

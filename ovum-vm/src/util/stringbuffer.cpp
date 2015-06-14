@@ -34,10 +34,10 @@ int32_t StringBuffer::SetCapacity(const int32_t newCapacity)
 	if (newCap < this->length)
 		newCap = this->length;
 
-	if (newCap > SIZE_MAX / sizeof(uchar))
+	if (newCap > SIZE_MAX / sizeof(ovchar_t))
 		throw std::bad_alloc();
 
-	uchar *newData = reinterpret_cast<uchar*>(realloc(data, sizeof(uchar) * newCap));
+	ovchar_t *newData = reinterpret_cast<ovchar_t*>(realloc(data, sizeof(ovchar_t) * newCap));
 	if (newData == nullptr)
 		throw std::bad_alloc();
 
@@ -61,7 +61,7 @@ void StringBuffer::EnsureMinCapacity(int32_t newAmount)
 	}
 }
 
-void StringBuffer::Append(const int32_t length, const uchar data[])
+void StringBuffer::Append(const int32_t length, const ovchar_t data[])
 {
 	EnsureMinCapacity(length);
 
@@ -69,11 +69,11 @@ void StringBuffer::Append(const int32_t length, const uchar data[])
 	this->length += length;
 }
 
-void StringBuffer::Append(const int32_t count, const uchar ch)
+void StringBuffer::Append(const int32_t count, const ovchar_t ch)
 {
 	EnsureMinCapacity(count);
 
-	uchar *chp = this->data + this->length;
+	ovchar_t *chp = this->data + this->length;
 	for (int32_t i = 0; i < count; i++)
 	{
 		*chp = ch;
@@ -88,7 +88,7 @@ void StringBuffer::Append(String *str)
 	Append(str->length, &str->firstChar);
 }
 
-void StringBuffer::Append(const uchar ch)
+void StringBuffer::Append(const ovchar_t ch)
 {
 	// And this too! Whee!
 	Append(1, &ch);
@@ -98,7 +98,7 @@ void StringBuffer::Append(const int32_t length, const char data[])
 {
 	EnsureMinCapacity(length);
 
-	uchar *chp = this->data + this->length;
+	ovchar_t *chp = this->data + this->length;
 	for (int32_t i = 0; i < length; i++)
 	{
 		*chp = data[i];
@@ -117,14 +117,14 @@ void StringBuffer::Append(const int32_t length, const wchar_t data[])
 
 	for (int32_t i = 0; i < length; i++)
 	{
-		const wuchar ch = (wuchar)data[i];
+		const ovwchar_t ch = (ovwchar_t)data[i];
 		if (UC_NeedsSurrogatePair(ch))
 		{
 			const SurrogatePair surr = UC_ToSurrogatePair(ch);
-			Append(2, (uchar*)&surr);
+			Append(2, (ovchar_t*)&surr);
 		}
 		else
-			Append(1, (uchar*)&ch);
+			Append(1, (ovchar_t*)&ch);
 	}
 #else
 #error Not supported
@@ -152,7 +152,7 @@ int StringBuffer::ToWString(wchar_t *buf)
 
 	if (buf)
 	{
-		memcpy(buf, this->data, outputLength * sizeof(uchar));
+		memcpy(buf, this->data, outputLength * sizeof(ovchar_t));
 		*(buf + outputLength) = L'\0'; // Add the \0
 	}
 
@@ -166,7 +166,7 @@ int StringBuffer::ToWString(wchar_t *buf)
 	int outputLength = 0;
 
 	int32_t strLen = this->length; // let's NOT include the \0
-	const uchar *strp = this->data;
+	const ovchar_t *strp = this->data;
 	for (int32_t i = 0; i < strLen; i++)
 	{
 		if (UC_IsSurrogateLead(*strp) && UC_IsSurrogateTrail(*(strp + 1)))

@@ -6,7 +6,7 @@
 
 using namespace aves;
 
-LitString<2> Char::ToLitString(const wuchar ch)
+LitString<2> Char::ToLitString(const ovwchar_t ch)
 {
 	LitString<2> output = {
 		ch > 0xFFFF ? 2 : 1,
@@ -20,19 +20,19 @@ LitString<2> Char::ToLitString(const wuchar ch)
 		output.chars[1] = pair.trail;
 	}
 	else
-		output.chars[0] = (uchar)ch;
+		output.chars[0] = (ovchar_t)ch;
 
 	return output;
 }
 
-wuchar Char::FromValue(Value *value)
+ovwchar_t Char::FromValue(Value *value)
 {
-	return (wuchar)value->v.integer;
+	return (ovwchar_t)value->v.integer;
 }
 
 AVES_API NATIVE_FUNCTION(aves_Char_get_length)
 {
-	wuchar ch = Char::FromValue(THISP);
+	ovwchar_t ch = Char::FromValue(THISP);
 
 	VM_PushInt(thread, ch > 0xFFFF ? 2 : 1);
 	RETURN_SUCCESS;
@@ -42,7 +42,7 @@ AVES_API NATIVE_FUNCTION(aves_Char_get_category)
 {
 	Aves *aves = Aves::Get(thread);
 
-	wuchar ch = Char::FromValue(THISP);
+	ovwchar_t ch = Char::FromValue(THISP);
 
 	UnicodeCategory cat = UC_GetCategoryW(ch);
 
@@ -61,7 +61,7 @@ AVES_API NATIVE_FUNCTION(aves_Char_toUpper)
 {
 	Aves *aves = Aves::Get(thread);
 
-	wuchar ch = Char::FromValue(THISP);
+	ovwchar_t ch = Char::FromValue(THISP);
 
 	Value upper;
 	upper.type = aves->aves.Char;
@@ -74,7 +74,7 @@ AVES_API NATIVE_FUNCTION(aves_Char_toLower)
 {
 	Aves *aves = Aves::Get(thread);
 
-	wuchar ch = Char::FromValue(THISP);
+	ovwchar_t ch = Char::FromValue(THISP);
 
 	Value lower;
 	lower.type = aves->aves.Char;
@@ -86,7 +86,7 @@ AVES_API NATIVE_FUNCTION(aves_Char_toLower)
 
 AVES_API NATIVE_FUNCTION(aves_Char_getHashCode)
 {
-	wuchar ch = Char::FromValue(THISP);
+	ovwchar_t ch = Char::FromValue(THISP);
 	LitString<2> str = Char::ToLitString(ch);
 
 	VM_PushInt(thread, String_GetHashCode(str.AsString()));
@@ -94,7 +94,7 @@ AVES_API NATIVE_FUNCTION(aves_Char_getHashCode)
 }
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Char_toString)
 {
-	wuchar ch = Char::FromValue(THISP);
+	ovwchar_t ch = Char::FromValue(THISP);
 	LitString<2> litStr = Char::ToLitString(ch);
 
 	String *str;
@@ -134,7 +134,7 @@ AVES_API NATIVE_FUNCTION(aves_Char_opEquals)
 		eq = args[0].v.integer == args[1].v.integer;
 	else if (args[1].type == aves->aves.String)
 	{
-		LitString<2> left = Char::ToLitString((wuchar)args[0].v.integer);
+		LitString<2> left = Char::ToLitString((ovwchar_t)args[0].v.integer);
 		eq = String_Equals(left.AsString(), args[1].v.string);
 	}
 	else
@@ -153,7 +153,7 @@ AVES_API NATIVE_FUNCTION(aves_Char_opCompare)
 		result = (int32_t)args[0].v.integer - (int32_t)args[1].v.integer;
 	else if (args[1].type == aves->aves.String)
 	{
-		LitString<2> left = Char::ToLitString((wuchar)args[0].v.integer);
+		LitString<2> left = Char::ToLitString((ovwchar_t)args[0].v.integer);
 		result = String_Compare(left.AsString(), args[1].v.string);
 	}
 	else
@@ -175,7 +175,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Char_opMultiply)
 		RETURN_SUCCESS;
 	}
 
-	LitString<2> str = Char::ToLitString((wuchar)args[0].v.integer);
+	LitString<2> str = Char::ToLitString((ovwchar_t)args[0].v.integer);
 	int64_t length;
 	if (Int_MultiplyChecked(times, str.length, length))
 		return VM_ThrowOverflowError(thread);
