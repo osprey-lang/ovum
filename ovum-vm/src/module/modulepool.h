@@ -2,6 +2,7 @@
 #define VM__MODULEPOOL_H
 
 #include "../vm.h"
+#include "../../inc/ov_module.h"
 
 namespace ovum
 {

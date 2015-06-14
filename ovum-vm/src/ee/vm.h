@@ -2,6 +2,7 @@
 #define VM__EE_VM_H
 
 #include "../vm.h"
+#include "../../inc/ov_main.h"
 #include "../threading/tls.h"
 #include <cstdio>
 

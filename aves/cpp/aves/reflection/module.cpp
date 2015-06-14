@@ -1,6 +1,7 @@
 #include "module.h"
 #include "type.h"
 #include "../../aves_state.h"
+#include <ov_module.h>
 #include <stddef.h>
 
 using namespace aves;

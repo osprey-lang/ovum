@@ -5,6 +5,70 @@
 
 #include "ov_vm.h"
 
+inline void SetNull(Value &target)
+{
+	target.type = nullptr;
+}
+inline void SetNull(Value *target)
+{
+	target->type = nullptr;
+}
+
+inline void SetBool(ThreadHandle thread, Value &target, bool value)
+{
+	target.type = GetType_Boolean(thread);
+	target.v.integer = value;
+}
+inline void SetBool(ThreadHandle thread, Value *target, bool value)
+{
+	target->type = GetType_Boolean(thread);
+	target->v.integer = value;
+}
+
+inline void SetInt(ThreadHandle thread, Value &target, int64_t value)
+{
+	target.type = GetType_Int(thread);
+	target.v.integer = value;
+}
+inline void SetInt(ThreadHandle thread, Value *target, int64_t value)
+{
+	target->type = GetType_Int(thread);
+	target->v.integer = value;
+}
+
+inline void SetUInt(ThreadHandle thread, Value &target, uint64_t value)
+{
+	target.type = GetType_UInt(thread);
+	target.v.uinteger = value;
+}
+inline void SetUInt(ThreadHandle thread, Value *target, uint64_t value)
+{
+	target->type = GetType_UInt(thread);
+	target->v.uinteger = value;
+}
+
+inline void SetReal(ThreadHandle thread, Value &target, double value)
+{
+	target.type = GetType_Real(thread);
+	target.v.real = value;
+}
+inline void SetReal(ThreadHandle thread, Value *target, double value)
+{
+	target->type = GetType_Real(thread);
+	target->v.real = value;
+}
+
+inline void SetString(ThreadHandle thread, Value &target, String *value)
+{
+	target.type = GetType_String(thread);
+	target.v.string = value;
+}
+inline void SetString(ThreadHandle thread, Value *target, String *value)
+{
+	target->type = GetType_String(thread);
+	target->v.string = value;
+}
+
 OVUM_API int IntFromValue(ThreadHandle thread, Value *v);
 
 OVUM_API int UIntFromValue(ThreadHandle thread, Value *v);

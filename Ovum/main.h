@@ -9,7 +9,8 @@
 #include <stdio.h>
 #include <Shlwapi.h>
 
-#include "ov_vm.h"
+#include <ov_vm.h>
+#include <ov_main.h>
 
 // Arguments parsed by the command line parser. Whee!
 typedef struct OvumArgs_S
