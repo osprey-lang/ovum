@@ -106,7 +106,7 @@ namespace string
 	int Format(ThreadHandle thread, const String *format, ListInst *list, String *&result);
 	int Format(ThreadHandle thread, const String *format, Value *hash, String *&result);
 
-	String *Replace(ThreadHandle thread, String *input, const uchar oldChar, const uchar newChar, const int64_t maxTimes);
+	String *Replace(ThreadHandle thread, String *input, const ovchar_t oldChar, const ovchar_t newChar, const int64_t maxTimes);
 	String *Replace(ThreadHandle thread, String *input, String *oldValue, String *newValue, const int64_t maxTimes);
 }
 

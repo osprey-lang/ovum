@@ -21,7 +21,7 @@ struct MutableString
 	uint32_t length;
 	uint32_t hashCode;
 	StringFlags flags;
-	uchar firstChar;
+	ovchar_t firstChar;
 };
 
 class GC
@@ -130,11 +130,11 @@ public:
 
 	int AllocValueArray(Thread *const thread, uint32_t length, Value **output);
 
-	String *ConstructString(Thread *const thread, const int32_t length, const uchar value[]);
+	String *ConstructString(Thread *const thread, const int32_t length, const ovchar_t value[]);
 
 	String *ConvertString(Thread *const thread, const char *string);
 
-	String *ConstructModuleString(Thread *const thread, const int32_t length, const uchar value[]);
+	String *ConstructModuleString(Thread *const thread, const int32_t length, const ovchar_t value[]);
 
 	String *GetInternedString(Thread *const thread, String *value);
 

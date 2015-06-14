@@ -338,12 +338,12 @@ int GC::ConstructLL(Thread *const thread, Type *type, const uint16_t argc, Value
 	return r;
 }
 
-String *GC::ConstructString(Thread *const thread, const int32_t length, const uchar value[])
+String *GC::ConstructString(Thread *const thread, const int32_t length, const ovchar_t value[])
 {
 	GCObject *gco;
 	// Note: sizeof(String) includes firstChar, but we need an extra character
 	// for the terminating \0 anyway. So this is fine.
-	int r = Alloc(thread, vm->types.String, sizeof(String) + length*sizeof(uchar), &gco);
+	int r = Alloc(thread, vm->types.String, sizeof(String) + length*sizeof(ovchar_t), &gco);
 	if (r != OVUM_SUCCESS) return nullptr;
 
 	MutableString *str = reinterpret_cast<MutableString*>(gco->InstanceBase());
@@ -370,7 +370,7 @@ String *GC::ConvertString(Thread *const thread, const char *string)
 
 	if (output && length > 0)
 	{
-		uchar *mutch = const_cast<uchar*>(&output->firstChar);
+		ovchar_t *mutch = const_cast<ovchar_t*>(&output->firstChar);
 		while (*string)
 			*mutch++ = *string++;
 	}
@@ -378,10 +378,10 @@ String *GC::ConvertString(Thread *const thread, const char *string)
 	return output;
 }
 
-String *GC::ConstructModuleString(Thread *const thread, const int32_t length, const uchar value[])
+String *GC::ConstructModuleString(Thread *const thread, const int32_t length, const ovchar_t value[])
 {
 	// Replicate some functionality of Alloc here
-	size_t size = sizeof(String) + length*sizeof(uchar) + GCO_SIZE;
+	size_t size = sizeof(String) + length*sizeof(ovchar_t) + GCO_SIZE;
 
 	GCObject *gco = AllocRawGen1(size);
 	if (!gco)
@@ -1195,7 +1195,7 @@ OVUM_API int GC_Construct(ThreadHandle thread, TypeHandle type, const uint16_t a
 	return thread->GetGC()->Construct(thread, type, argc, output);
 }
 
-OVUM_API String *GC_ConstructString(ThreadHandle thread, const int32_t length, const uchar *values)
+OVUM_API String *GC_ConstructString(ThreadHandle thread, const int32_t length, const ovchar_t *values)
 {
 	return thread->GetGC()->ConstructString(thread, length, values);
 }

@@ -14,7 +14,7 @@ class StringBuffer
 private:
 	int32_t capacity;
 	int32_t length;
-	uchar *data;
+	ovchar_t *data;
 
 	static const size_t DefaultCapacity = 128;
 
@@ -42,10 +42,10 @@ public:
 		if (newCap < this->length)
 			newCap = this->length;
 
-		if (newCap > SIZE_MAX / sizeof(uchar))
+		if (newCap > SIZE_MAX / sizeof(ovchar_t))
 			return false;
 
-		uchar *newData = reinterpret_cast<uchar*>(realloc(data, sizeof(uchar) * newCap));
+		ovchar_t *newData = reinterpret_cast<ovchar_t*>(realloc(data, sizeof(ovchar_t) * newCap));
 		if (newData == nullptr)
 			return false;
 
@@ -54,17 +54,17 @@ public:
 		return true;
 	}
 
-	inline uchar *GetDataPointer() const { return this->data; }
+	inline ovchar_t *GetDataPointer() const { return this->data; }
 
-	inline bool Append(const uchar ch)
+	inline bool Append(const ovchar_t ch)
 	{
 		return Append(1, &ch);
 	}
-	inline bool Append(const int32_t count, const uchar ch)
+	inline bool Append(const int32_t count, const ovchar_t ch)
 	{
 		if (!EnsureMinCapacity(count)) return false;
 
-		uchar *chp = this->data + this->length;
+		ovchar_t *chp = this->data + this->length;
 		for (int32_t i = 0; i < count; i++)
 		{
 			*chp = ch;
@@ -73,7 +73,7 @@ public:
 		this->length += count;
 		return true;
 	}
-	inline bool Append(const int32_t length, const uchar data[])
+	inline bool Append(const int32_t length, const ovchar_t data[])
 	{
 		if (!EnsureMinCapacity(length)) return false;
 
@@ -90,7 +90,7 @@ public:
 	{
 		if (!EnsureMinCapacity(length)) return false;
 
-		uchar *chp = this->data + this->length;
+		ovchar_t *chp = this->data + this->length;
 		for (int32_t i = 0; i < length; i++)
 		{
 			*chp = data[i];
@@ -100,14 +100,14 @@ public:
 		return true;
 	}
 
-	inline bool Insert(const int32_t index, const int32_t length, const uchar data[])
+	inline bool Insert(const int32_t index, const int32_t length, const ovchar_t data[])
 	{
 		if (length > 0)
 		{
 			if (!EnsureMinCapacity(length)) return false;
 
-			uchar *destp = this->data + this->length + length - 1;
-			const uchar *srcp = this->data + this->length - 1;
+			ovchar_t *destp = this->data + this->length + length - 1;
+			const ovchar_t *srcp = this->data + this->length - 1;
 
 			int32_t remaining = this->length - index;
 			while (remaining--)
@@ -117,7 +117,7 @@ public:
 		}
 		return true;
 	}
-	inline bool Insert(const int32_t index, const uchar data)
+	inline bool Insert(const int32_t index, const ovchar_t data)
 	{
 		return Insert(index, 1, &data);
 	}
@@ -132,11 +132,11 @@ public:
 		this->length = 0;
 	}
 
-	inline bool StartsWith(const uchar ch) const
+	inline bool StartsWith(const ovchar_t ch) const
 	{
 		return this->length > 0 && this->data[0] == ch;
 	}
-	inline bool EndsWith(const uchar ch) const
+	inline bool EndsWith(const ovchar_t ch) const
 	{
 		return this->length > 0 && this->data[this->length - 1] == ch;
 	}
@@ -158,7 +158,7 @@ public:
 
 		if (buf)
 		{
-			memcpy(buf, this->data, outputLength * sizeof(uchar));
+			memcpy(buf, this->data, outputLength * sizeof(ovchar_t));
 			*(buf + outputLength) = L'\0'; // Add the \0
 		}
 
@@ -172,7 +172,7 @@ public:
 		int outputLength = 0;
 
 		int32_t strLen = this->length; // let's NOT include the \0
-		const uchar *strp = this->data;
+		const ovchar_t *strp = this->data;
 		for (int32_t i = 0; i < strLen; i++)
 		{
 			if (UC_IsSurrogateLead(*strp) && UC_IsSurrogateTrail(*(strp + 1)))

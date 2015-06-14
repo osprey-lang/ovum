@@ -7,9 +7,9 @@
 class Char
 {
 public:
-	static LitString<2> ToLitString(const wuchar ch);
+	static LitString<2> ToLitString(const ovwchar_t ch);
 
-	static wuchar FromValue(Value *value);
+	static ovwchar_t FromValue(Value *value);
 };
 
 AVES_API NATIVE_FUNCTION(aves_Char_get_length);

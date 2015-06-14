@@ -59,8 +59,8 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Real_toString)
 	char *result = resultBuf.get(); // for simplicity
 	int32_t length = (int32_t)strlen(result);
 
-	uchar buf[32]; // The return value will NEVER be bigger than this
-	uchar *bufp = buf;
+	ovchar_t buf[32]; // The return value will NEVER be bigger than this
+	ovchar_t *bufp = buf;
 
 	if (sign && result[0] != 'N') // NaN may be sign == 1, so we do need the special check
 		*bufp++ = '-';

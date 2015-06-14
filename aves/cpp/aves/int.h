@@ -38,13 +38,13 @@ namespace integer
 
 	int32_t ToStringDecimal(ThreadHandle thread, const int64_t value,
 		const int minWidth,
-		const int bufferSize, uchar *buf);
+		const int bufferSize, ovchar_t *buf);
 	int32_t ToStringHex(ThreadHandle thread, const int64_t value,
 		const bool upper, const int minWidth,
-		const int bufferSize, uchar *buf);
+		const int bufferSize, ovchar_t *buf);
 	int32_t ToStringRadix(ThreadHandle thread, const int64_t value,
 		const int radix, const bool upper, const int minWidth,
-		const int bufferSize, uchar *buf);
+		const int bufferSize, ovchar_t *buf);
 
 	int ParseFormatString(ThreadHandle thread, String *str, int *radix, int *minWidth, bool *upper);
 

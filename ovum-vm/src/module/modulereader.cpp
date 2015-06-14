@@ -206,7 +206,7 @@ String *ModuleReader::ReadShortString(const int32_t length)
 {
 	LitString<MaxShortStringLength> buf = { length, 0, StringFlags::STATIC };
 	// Fill the buffer with contents from the file
-	Read(const_cast<uchar*>(buf.chars), sizeof(uchar) * length);
+	Read(const_cast<ovchar_t*>(buf.chars), sizeof(ovchar_t) * length);
 
 	String *intern = GetGC()->GetInternedString(nullptr, buf.AsString());
 	if (intern == nullptr)
@@ -220,10 +220,10 @@ String *ModuleReader::ReadShortString(const int32_t length)
 }
 String *ModuleReader::ReadLongString(const int32_t length)
 {
-	std::unique_ptr<uchar[]> data(new uchar[length + 1]);
+	std::unique_ptr<ovchar_t[]> data(new ovchar_t[length + 1]);
 
 	// Note: the module file does NOT include a terminating \0!
-	Read(data.get(), sizeof(uchar) * length);
+	Read(data.get(), sizeof(ovchar_t) * length);
 
 	// If a string with this value is already interned, we get that string instead.
 	// If we have that string, GC::InternString does nothing; if we don't, we have

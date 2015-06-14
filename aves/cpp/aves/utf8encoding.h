@@ -45,7 +45,7 @@ public:
 	// in which case we combine the two to get our codepoint.
 	// If there is a surrogate lead and no trail following it, we throw
 	// something.
-	uchar surrogateChar;
+	ovchar_t surrogateChar;
 
 	int32_t GetByteCount(ThreadHandle thread, String *str, bool flush);
 	int32_t GetBytes(ThreadHandle thread, String *str, Buffer *buf, int32_t offset, bool flush);
@@ -108,7 +108,7 @@ public:
 
 	void Reset();
 
-	static const uchar ReplacementChar = 0xFFFD;
+	static const ovchar_t ReplacementChar = 0xFFFD;
 };
 
 AVES_API void aves_Utf8Decoder_init(TypeHandle type);

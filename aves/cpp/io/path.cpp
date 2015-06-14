@@ -10,7 +10,7 @@ LitString<1> Path::DirSeparatorString = { 1, 0, StringFlags::STATIC, Path::DirSe
 
 const int Path::InvalidPathCharsCount = 36;
 // This list is also duplicated in ValidatePath.
-const uchar Path::InvalidPathChars[] = {
+const ovchar_t Path::InvalidPathChars[] = {
 	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
 	0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
 	0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
@@ -21,7 +21,7 @@ const uchar Path::InvalidPathChars[] = {
 };
 
 const int Path::InvalidFileNameCharsCount = 41;
-const uchar Path::InvalidFileNameChars[] = {
+const ovchar_t Path::InvalidFileNameChars[] = {
 	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
 	0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
 	0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
@@ -34,7 +34,7 @@ int32_t Path::GetExtensionIndex(String *path)
 {
 	for (int32_t i = path->length; --i >= 0; )
 	{
-		uchar ch = (&path->firstChar)[i];
+		ovchar_t ch = (&path->firstChar)[i];
 
 		if (ch == '.')
 			return i;
@@ -50,7 +50,7 @@ int32_t Path::GetExtensionIndex(String *path)
 
 bool Path::IsAbsolute(String *path)
 {
-	const uchar *chp = &path->firstChar;
+	const ovchar_t *chp = &path->firstChar;
 
 	const int32_t length = path->length;
 	// If the path begins with a directory separator, or (on Windows) volume name + ':',
@@ -89,7 +89,7 @@ int Path::GetFullPath(ThreadHandle thread, String *path, String **result)
 		{
 			// If the buffer is big enough, r contains the actual length of the
 			// full path, NOT including the final \0
-			*result = GC_ConstructString(thread, (int32_t)r, (const uchar*)buffer.get());
+			*result = GC_ConstructString(thread, (int32_t)r, (const ovchar_t*)buffer.get());
 		}
 	} while (retry);
 
@@ -100,7 +100,7 @@ int32_t Path::GetRootLength(String *path)
 {
 	int32_t index = 0;
 	int32_t length = path->length;
-	const uchar *chp = &path->firstChar;
+	const ovchar_t *chp = &path->firstChar;
 
 	if (length >= 1 && IsPathSep(chp[0]))
 	{
@@ -125,10 +125,10 @@ int Path::ValidatePath(ThreadHandle thread, String *path, bool checkWildcards)
 
 	bool error = false;
 
-	const uchar *chp = &path->firstChar;
+	const ovchar_t *chp = &path->firstChar;
 	for (int32_t i = 0; i < path->length; i++)
 	{
-		const uchar ch = *chp++;
+		const ovchar_t ch = *chp++;
 
 		if (ch < 32 || ch == '\"' || ch == '<' || ch == '>' || ch == '|')
 		{
@@ -211,7 +211,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(io_Path_join)
 		else
 		{
 			String *outputStr;
-			uchar lastChar = (&output->v.string->firstChar)[output->v.string->length - 1];
+			ovchar_t lastChar = (&output->v.string->firstChar)[output->v.string->length - 1];
 			if (Path::IsPathSep(lastChar)
 #if OVUM_WINDOWS
 				|| lastChar == Path::VolumeSeparator
@@ -245,10 +245,10 @@ AVES_API BEGIN_NATIVE_FUNCTION(io_Path_getFileName)
 	String *path = args[0].v.string;
 	CHECKED(Path::ValidatePath(thread, path, false));
 
-	const uchar *chp = &path->firstChar;
+	const ovchar_t *chp = &path->firstChar;
 	for (int32_t i = path->length; --i >= 0; )
 	{
-		uchar ch = chp[i];
+		ovchar_t ch = chp[i];
 		if (Path::IsPathSep(ch) || ch == Path::VolumeSeparator)
 		{
 			CHECKED_MEM(path = GC_ConstructString(thread, path->length - i - 1, chp + i + 1));
@@ -267,7 +267,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(io_Path_getDirectory)
 	CHECKED(Path::ValidatePath(thread, path, false));
 
 	int32_t root = Path::GetRootLength(path);
-	const uchar *chp = &path->firstChar;
+	const ovchar_t *chp = &path->firstChar;
 
 	int32_t i = path->length;
 	if (i > root)

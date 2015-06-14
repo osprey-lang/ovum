@@ -21,7 +21,7 @@ OVUM_API int GC_Construct(ThreadHandle thread, TypeHandle type, const uint16_t a
 // Returns null if the string could not be constructed.
 //
 // NOTE: 'length' does NOT include the terminating '\0'.
-OVUM_API String *GC_ConstructString(ThreadHandle thread, const int32_t length, const uchar *values);
+OVUM_API String *GC_ConstructString(ThreadHandle thread, const int32_t length, const ovchar_t *values);
 
 // Allocates a non-resizable GC-managed array of arbitrary values. This value should be put
 // in a native field of type NativeFieldType::GC_ARRAY, to ensure that the value is reachable

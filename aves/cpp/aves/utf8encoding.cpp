@@ -73,14 +73,14 @@ AVES_API NATIVE_FUNCTION(aves_Utf8Encoding_getCharsInternal)
 int32_t Utf8Encoder::GetByteCount(ThreadHandle thread, String *str, bool flush)
 {
 	// Gotta take a copy, as we can't modify the state!
-	uchar surrogateChar = this->surrogateChar;
+	ovchar_t surrogateChar = this->surrogateChar;
 
 	int32_t count = 0;
-	const uchar *chp = &str->firstChar;
+	const ovchar_t *chp = &str->firstChar;
 
 	for (int32_t i = 0; i < str->length; i++)
 	{
-		uchar ch = chp[i];
+		ovchar_t ch = chp[i];
 		if (surrogateChar)
 		{
 			if (!UC_IsSurrogateTrail(ch))
@@ -125,15 +125,15 @@ int32_t Utf8Encoder::GetByteCount(ThreadHandle thread, String *str, bool flush)
 
 int32_t Utf8Encoder::GetBytes(ThreadHandle thread, String *str, Buffer *buf, int32_t offset, bool flush)
 {
-	uchar surrogateChar = this->surrogateChar;
+	ovchar_t surrogateChar = this->surrogateChar;
 
 	int32_t count = 0;
-	const uchar *chp = &str->firstChar;
+	const ovchar_t *chp = &str->firstChar;
 	uint8_t *bp = buf->bytes + offset;
 
 	for (int32_t i = 0; i < str->length; i++)
 	{
-		uchar ch = chp[i];
+		ovchar_t ch = chp[i];
 		if (surrogateChar)
 		{
 			if (!UC_IsSurrogateTrail(ch))
@@ -154,7 +154,7 @@ int32_t Utf8Encoder::GetBytes(ThreadHandle thread, String *str, Buffer *buf, int
 			if ((uint32_t)offset + 4 > buf->size)
 				return ~BufferOverrunError(thread);
 
-			wuchar wch = UC_ToWide(surrogateChar, ch);
+			ovwchar_t wch = UC_ToWide(surrogateChar, ch);
 			*bp++ = 0xf0 | (wch >> 18);
 			*bp++ = 0x80 | (wch >> 12) & 0x3F;
 			*bp++ = 0x80 | (wch >> 6) & 0x3F;
@@ -406,7 +406,7 @@ int32_t Utf8Decoder::GetCharCount(ThreadHandle thread, Buffer *buf, int32_t offs
 			// In all other cases, we need a surrogate pair.
 			// Therefore, we have to decode the sequence now:
 			{
-				wuchar wch = ((left.bytes[0] & 0x0F) << 18) |
+				ovwchar_t wch = ((left.bytes[0] & 0x0F) << 18) |
 					((left.bytes[1] & 0x3F) << 12) |
 					((left.bytes[2] & 0x3F) << 6) |
 					(b & 0x3F);
@@ -499,7 +499,7 @@ int32_t Utf8Decoder::GetChars(ThreadHandle thread, Buffer *buf, int32_t offset, 
 				// If we find a non-ASCII character, exit here and enter the slow path.
 				break;
 
-			if (!sb->Append((uchar)b))
+			if (!sb->Append((ovchar_t)b))
 				return ~OVUM_ERROR_NO_MEMORY;
 
 			charCount++;
@@ -512,7 +512,7 @@ int32_t Utf8Decoder::GetChars(ThreadHandle thread, Buffer *buf, int32_t offset, 
 	while (i < count)
 	{
 		uint32_t b = bp[i++];
-		uchar ch;
+		ovchar_t ch;
 
 		switch (state)
 		{
@@ -605,7 +605,7 @@ int32_t Utf8Decoder::GetChars(ThreadHandle thread, Buffer *buf, int32_t offset, 
 			// (codepoints ending in FFFF and FFFE are not allowed)
 			// In all other cases, we need a surrogate pair.
 			{
-				wuchar wch = ((left.bytes[0] & 0x0F) << 18) |
+				ovwchar_t wch = ((left.bytes[0] & 0x0F) << 18) |
 					((left.bytes[1] & 0x3F) << 12) |
 					((left.bytes[2] & 0x3F) << 6) |
 					(b & 0x3F);
@@ -675,7 +675,7 @@ int32_t Utf8Decoder::GetChars(ThreadHandle thread, Buffer *buf, int32_t offset, 
 				b = (uint32_t)ReplacementChar;
 			}
 			// Single byte or replacement char
-			if (!sb->Append((uchar)b))
+			if (!sb->Append((ovchar_t)b))
 				return ~OVUM_ERROR_NO_MEMORY;
 			charCount++;
 			break;

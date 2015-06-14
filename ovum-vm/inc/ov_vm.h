@@ -104,11 +104,11 @@ typedef void *PropertyHandle;
 // All Ovum strings are UTF-16, guaranteed.
 #if OVUM_WCHAR_SIZE == 2
 // If sizeof(wchar_t) is 2, we assume it's UTF-16, and
-// define uchar to be of that type.
-typedef wchar_t uchar;
+// define ovchar_t to be of that type.
+typedef wchar_t ovchar_t;
 #else
 // Otherwise, we have to fall back to uint16_t.
-typedef uint16_t uchar;
+typedef uint16_t ovchar_t;
 #endif
 
 typedef struct Value_S Value;
@@ -224,7 +224,7 @@ struct String_S
 	// hash code. Otherwise, don't rely on it.
 	StringFlags flags;
 	// The first character. The rest of the string is laid out directly afert this field.
-	const uchar firstChar;
+	const ovchar_t firstChar;
 };
 
 struct ListInst_S

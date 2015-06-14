@@ -13,16 +13,16 @@ OVUM_API bool String_SubstringEquals(const String *str, const int32_t startIndex
 
 OVUM_API int String_Compare(const String *a, const String *b);
 
-inline bool String_StartsWith(const String *a, const uchar ch)
+inline bool String_StartsWith(const String *a, const ovchar_t ch)
 {
 	return a->firstChar == ch;
 }
-inline bool String_EndsWith(const String *a, const uchar ch)
+inline bool String_EndsWith(const String *a, const ovchar_t ch)
 {
 	return (&a->firstChar)[a->length - 1] == ch;
 }
 
-inline bool String_ContainsChar(const String *str, const uchar ch)
+inline bool String_ContainsChar(const String *str, const ovchar_t ch)
 {
 	for (int32_t i = 0; i < str->length; i++)
 		if ((&str->firstChar)[i] == ch)

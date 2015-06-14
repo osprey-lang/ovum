@@ -96,7 +96,7 @@ PathName::~PathName()
 String *PathName::ToManagedString(ThreadHandle thread) const
 {
 #if OVUM_WIDE_PATHCHAR
-	return thread->GetGC()->ConstructString(thread, length, reinterpret_cast<const uchar*>(data));
+	return thread->GetGC()->ConstructString(thread, length, reinterpret_cast<const ovchar_t*>(data));
 #else
 #error Not implemented
 #endif

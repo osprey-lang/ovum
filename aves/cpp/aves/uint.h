@@ -34,13 +34,13 @@ namespace uinteger
 
 	int32_t ToStringDecimal(ThreadHandle thread, const uint64_t value,
 		const int minWidth,
-		const int bufferSize, uchar *buf);
+		const int bufferSize, ovchar_t *buf);
 	int32_t ToStringHex(ThreadHandle thread, const uint64_t value,
 		const bool upper, const int minWidth,
-		const int bufferSize, uchar *buf);
+		const int bufferSize, ovchar_t *buf);
 	int32_t ToStringRadix(ThreadHandle thread, const uint64_t value,
 		const int radix, const bool upper, const int minWidth,
-		const int bufferSize, uchar *buf);
+		const int bufferSize, ovchar_t *buf);
 
 	inline int Power(const uint64_t base, const uint64_t exponent, uint64_t &output)
 	{
