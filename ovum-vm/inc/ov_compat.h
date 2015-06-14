@@ -5,14 +5,51 @@
  * This file contains various compatibility and utility macros.
  */
 
+// All parts of Ovum require standard integer types
+#include <stdint.h>
+
+// The OVUM_WCHAR_SIZE macro is used in various text functions
+
+#ifndef OVUM_WCHAR_SIZE
+# if OVUM_WINDOWS
+// wchar_t is UTF-16 on Windows
+#  define OVUM_WCHAR_SIZE 2
+
+# elif defined(__SIZEOF_WCHAR_T__)
+#  define OVUM_WCHAR_SIZE __SIZEOF_WCHAR_T__
+
+# elif defined(__WCHAR_MAX__)
+#  if __WCHAR_MAX__ > 0xFFFF
+#   define OVUM_WCHAR_SIZE 4
+#  else
+#   define OVUM_WCHAR_SIZE 2
+#  endif
+
+# else
+#  include <wchar.h>
+#  ifndef WCHAR_MAX
+#   error Problem with wchar.h: doesn't define WCHAR_MAX!
+#  endif
+#  if WCHAR_MAX > 0xFFFF
+#   define OVUM_WCHAR_SIZE 4
+#  else
+#   define OVUM_WCHAR_SIZE 2
+#  endif
+# endif
+#endif // OVUM_WCHAR_SIZE
+
+// Defines "proper" bitwise operators for the enum type TEnum, with the underlying
+// integer type TInt. The operators only work with TEnum values, and always return
+// TEnum values.
+
 #define OVUM_ENUM_OPS(TEnum,TInt) \
-	inline TEnum operator&(const TEnum a, const TEnum b) { return static_cast<TEnum>((TInt)a & (TInt)b); } \
-	inline TEnum operator|(const TEnum a, const TEnum b) { return static_cast<TEnum>((TInt)a | (TInt)b); } \
-	inline TEnum operator^(const TEnum a, const TEnum b) { return static_cast<TEnum>((TInt)a ^ (TInt)b); } \
-	inline TEnum &operator&=(TEnum &a, const TEnum b) { a = a & b; return a; } \
-	inline TEnum &operator|=(TEnum &a, const TEnum b) { a = a | b; return a; } \
-	inline TEnum &operator^=(TEnum &a, const TEnum b) { a = a ^ b; return a; } \
-	inline TEnum operator~(const TEnum a) { return static_cast<TEnum>(~(TInt)a); }
+	inline TEnum operator&(TEnum a, TEnum b) { return static_cast<TEnum>((TInt)a & (TInt)b); } \
+	inline TEnum operator|(TEnum a, TEnum b) { return static_cast<TEnum>((TInt)a | (TInt)b); } \
+	inline TEnum operator^(TEnum a, TEnum b) { return static_cast<TEnum>((TInt)a ^ (TInt)b); } \
+	inline TEnum &operator&=(TEnum &a, TEnum b) { a = a & b; return a; } \
+	inline TEnum &operator|=(TEnum &a, TEnum b) { a = a | b; return a; } \
+	inline TEnum &operator^=(TEnum &a, TEnum b) { a = a ^ b; return a; } \
+	inline TEnum operator~(TEnum a) { return static_cast<TEnum>(~(TInt)a); }
 
 // For checked multiplication only
 // (uses the _mul128 function if available)

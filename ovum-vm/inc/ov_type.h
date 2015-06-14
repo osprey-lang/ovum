@@ -10,7 +10,6 @@ typedef int (OVUM_CDECL *NativeMethod)(ThreadHandle thread, const int argc, Valu
 #define THISV	(args[0])
 #define THISP   (args + 0)
 
-
 OVUM_API String *Member_GetName(MemberHandle member);
 
 enum class MemberKind
@@ -52,7 +51,6 @@ OVUM_API MethodHandle Method_GetBaseMethod(MethodHandle method);
 // For instance methods, this does NOT include the instance.
 OVUM_API bool Method_Accepts(MethodHandle method, int argc);
 OVUM_API OverloadHandle Method_FindOverload(MethodHandle method, int argc);
-
 
 enum class MethodFlags : int32_t
 {
@@ -127,13 +125,10 @@ OVUM_API int32_t Overload_GetAllParameters(OverloadHandle overload, int32_t dest
 // Gets a handle to an overload's containing method.
 OVUM_API MethodHandle Overload_GetMethod(OverloadHandle overload);
 
-
 OVUM_API uint32_t Field_GetOffset(FieldHandle field);
-
 
 OVUM_API MethodHandle Property_GetGetter(PropertyHandle prop);
 OVUM_API MethodHandle Property_GetSetter(PropertyHandle prop);
-
 
 // It is VITAL that these are in the same order as the opcodes.
 // See ov_thread.opcodes.h/Opcode
@@ -171,7 +166,6 @@ inline unsigned int Arity(Operator op)
 			return 2;
 	}
 }
-
 
 // NOTE: This TypeFlags enum has exactly the same member values as
 //       those in the module format specification. Please make sure
@@ -391,11 +385,10 @@ enum class NativeFieldType : int
 // entirely up to you to lay them out sensibly.
 OVUM_API void Type_AddNativeField(TypeHandle type, size_t offset, NativeFieldType fieldType);
 
-
 // Standard types are required by the VM (because they implement special
 // behaviour or are needed by opcode instructions), but are implemented
 // by the standard library, which is by default represented by the module
-// aves.ovm (and its associated aves.dll).
+// aves.ovm (and its associated native library).
 typedef struct StandardTypes_S
 {
 	TypeHandle Object;

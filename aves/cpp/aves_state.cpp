@@ -1,4 +1,5 @@
 #include "aves_state.h"
+#include <ov_module.h>
 #include <new>
 
 namespace aves

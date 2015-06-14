@@ -87,6 +87,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="inc\ov_main.h" />
     <ClInclude Include="inc\ov_pathchar.h" />
     <ClInclude Include="src\ee\instructions.h" />
     <ClInclude Include="src\ee\methodbuilder.h" />

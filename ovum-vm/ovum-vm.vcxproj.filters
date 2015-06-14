@@ -257,6 +257,9 @@
     <ClInclude Include="src\object\standardtypeinfo.h">
       <Filter>Header Files\src\object</Filter>
     </ClInclude>
+    <ClInclude Include="inc\ov_main.h">
+      <Filter>Header Files\inc</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\os\windows\dllmain.cpp">

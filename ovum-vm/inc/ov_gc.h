@@ -95,9 +95,7 @@ private:
 	Value *const value;
 
 	inline Pinned(Pinned &other) : value(nullptr) { }
-	inline Pinned(Pinned &&other) : value(nullptr) { }
 	inline Pinned &operator=(Pinned &other) { return *this; }
-	inline Pinned &operator=(Pinned &&other) { return *this; }
 
 public:
 	inline Pinned(Value *value)
@@ -127,9 +125,7 @@ private:
 	void *const instance;
 
 	inline PinnedAlias(PinnedAlias &other) : value(nullptr) { }
-	inline PinnedAlias(PinnedAlias &&other) : value(nullptr) { }
 	inline PinnedAlias &operator=(PinnedAlias &other) { return *this; }
-	inline PinnedAlias &operator=(PinnedAlias &&other) { return *this; }
 
 public:
 	inline PinnedAlias(Value *value)
@@ -164,9 +160,7 @@ private:
 	T *const value;
 
 	inline PinnedArray(PinnedArray<T> &other) : value(nullptr) { }
-	inline PinnedArray(PinnedArray<T> &&other) : value(nullptr) { }
 	inline PinnedArray<T> &operator=(PinnedArray<T> &other) { return *this; }
-	inline PinnedArray<T> &operator=(PinnedArray<T> &&other) { return *this; }
 
 public:
 	inline PinnedArray(T *value)
