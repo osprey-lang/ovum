@@ -13,20 +13,26 @@ namespace instr
 
 	class MethodBuilder
 	{
+	public:
+		// When used as a stack height, indicates that the instruction has not
+		// yet been visited by any branch of evaluation.
+		static const ovlocals_t UNVISITED = (ovlocals_t)-1;
+
 	private:
+
 		class InstrDesc
 		{
 		public:
 			uint32_t originalOffset;
 			uint32_t originalSize;
-			int32_t stackHeight;
+			ovlocals_t stackHeight;
 			uint32_t refSignature;
 			bool removed;
 			Instruction *instr;
 
 			inline InstrDesc(uint32_t originalOffset, uint32_t originalSize, Instruction *instr) :
 				originalOffset(originalOffset), originalSize(originalSize),
-				stackHeight(-1), refSignature(0), removed(false), instr(instr)
+				stackHeight(UNVISITED), refSignature(0), removed(false), instr(instr)
 			{ }
 		};
 
@@ -78,15 +84,15 @@ namespace instr
 		int32_t GetNewOffset(int32_t index) const;
 		int32_t GetNewOffset(int32_t index, const Instruction *relativeTo) const;
 
-		inline int32_t GetStackHeight(int32_t index) const
+		inline ovlocals_t GetStackHeight(int32_t index) const
 		{
 			return instructions[index].stackHeight;
 		}
-		inline void SetStackHeight(int32_t index, const uint16_t stackHeight)
+		inline void SetStackHeight(int32_t index, ovlocals_t stackHeight)
 		{
 			InstrDesc &instrDesc = instructions[index];
 			OVUM_ASSERT(!instrDesc.removed);
-			OVUM_ASSERT(instrDesc.stackHeight < 0);
+			OVUM_ASSERT(instrDesc.stackHeight == UNVISITED);
 			instrDesc.stackHeight = stackHeight;
 		}
 

@@ -73,14 +73,14 @@ class MethodOverload
 public:
 	// The number of parameters the method has, EXCLUDING the instance
 	// if it is an instance method.
-	uint16_t paramCount;
+	ovlocals_t paramCount;
 	// The number of optional parameters the method has.
-	uint16_t optionalParamCount;
+	ovlocals_t optionalParamCount;
 	// The number of local variables the method uses.
-	uint16_t locals;
+	ovlocals_t locals;
 	// The maximum stack size to reserve for the method. If this requirement
 	// cannot be met, a stack overflow condition occurs.
-	uint16_t maxStack;
+	ovlocals_t maxStack;
 	// Flags associated with the method.
 	MethodFlags flags;
 
@@ -133,7 +133,7 @@ public:
 		delete[] tryBlocks;
 	}
 
-	inline bool Accepts(uint16_t argc) const
+	inline bool Accepts(ovlocals_t argc) const
 	{
 		if (IsVariadic())
 			return argc >= paramCount - 1;
@@ -148,7 +148,7 @@ public:
 	}
 
 	// Gets the effective parameter count, which is paramCount + instance (if any).
-	inline unsigned int GetEffectiveParamCount() const
+	inline ovlocals_t GetEffectiveParamCount() const
 	{
 		return paramCount + InstanceOffset();
 	}
@@ -168,17 +168,17 @@ public:
 		return (flags & MethodFlags::INITED) == MethodFlags::INITED;
 	}
 
-	inline int32_t GetArgumentOffset(uint16_t arg) const
+	inline int32_t GetArgumentOffset(ovlocals_t arg) const
 	{
 		return (int32_t)(arg - GetEffectiveParamCount()) * sizeof(Value);
 	}
-	int32_t GetLocalOffset(uint16_t local) const;
-	int32_t GetStackOffset(uint16_t stackSlot) const;
+	int32_t GetLocalOffset(ovlocals_t local) const;
+	int32_t GetStackOffset(ovlocals_t stackSlot) const;
 
 	RefSignaturePool *GetRefSignaturePool() const;
 
 	// argCount does NOT include the instance.
-	int VerifyRefSignature(uint32_t signature, uint16_t argCount) const;
+	int VerifyRefSignature(uint32_t signature, ovlocals_t argCount) const;
 };
 
 class Method : public Member
@@ -203,9 +203,9 @@ public:
 		delete[] overloads;
 	}
 
-	bool Accepts(uint16_t argCount) const;
+	bool Accepts(ovlocals_t argCount) const;
 
-	MethodOverload *ResolveOverload(uint16_t argCount) const;
+	MethodOverload *ResolveOverload(ovlocals_t argCount) const;
 
 	void SetDeclType(Type *type);
 };

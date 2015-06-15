@@ -23,13 +23,13 @@ namespace ovum
 class SmallStackManager : public StackManager
 {
 public:
-	static const int MaxStack = 8;
+	static const ovlocals_t MaxStack = 8;
 
 private:
 	struct Branch
 	{
 		int32_t firstInstr;
-		uint32_t stackHeight;
+		ovlocals_t stackHeight;
 		StackEntry stack[MaxStack];
 	};
 
@@ -44,7 +44,7 @@ public:
 		branches.push(Branch());
 	}
 
-	virtual uint32_t GetStackHeight() const
+	virtual ovlocals_t GetStackHeight() const
 	{
 		return branches.front().stackHeight;
 	}
@@ -54,15 +54,15 @@ public:
 		Branch &cur = branches.front();
 
 		Branch br = { firstInstr, cur.stackHeight };
-		for (uint32_t i = 0; i < cur.stackHeight; i++)
+		for (ovlocals_t i = 0; i < cur.stackHeight; i++)
 			br.stack[i] = cur.stack[i];
 
 		branches.push(br);
 	}
-	virtual void EnqueueBranch(uint32_t stackHeight, int32_t firstInstr)
+	virtual void EnqueueBranch(ovlocals_t stackHeight, int32_t firstInstr)
 	{
 		Branch br = { firstInstr, stackHeight };
-		for (uint32_t i = 0; i < stackHeight; i++)
+		for (ovlocals_t i = 0; i < stackHeight; i++)
 			br.stack[i].flags = StackEntry::IN_USE;
 		branches.push(br);
 	}
@@ -94,19 +94,19 @@ public:
 		return true; // Yay!
 	}
 
-	virtual bool HasRefs(uint32_t argCount) const
+	virtual bool HasRefs(ovlocals_t argCount) const
 	{
 		const Branch &cur = branches.front();
 		OVUM_ASSERT(cur.stackHeight >= argCount && argCount <= MaxStack);
 
-		for (uint32_t i = 1; i <= argCount; i++)
+		for (ovlocals_t i = 1; i <= argCount; i++)
 			if (cur.stack[cur.stackHeight - i].flags & StackEntry::IS_REF)
 				return true;
 
 		return false;
 	}
 
-	virtual bool IsRef(uint32_t stackSlot) const
+	virtual bool IsRef(ovlocals_t stackSlot) const
 	{
 		const Branch &cur = branches.front();
 		OVUM_ASSERT(stackSlot < MaxStack);
@@ -114,15 +114,15 @@ public:
 		return (flags & StackEntry::IS_REF) == StackEntry::IS_REF;
 	}
 
-	virtual uint32_t GetRefSignature(uint32_t argCount) const
+	virtual uint32_t GetRefSignature(ovlocals_t argCount) const
 	{
 		const Branch &cur = branches.front();
 		OVUM_ASSERT(cur.stackHeight >= argCount && argCount <= MaxStack);
 
 		RefSignatureBuilder refBuilder(argCount);
 
-		uint32_t origin = cur.stackHeight - argCount;
-		for (uint32_t i = 0; i < argCount; i++)
+		ovlocals_t origin = cur.stackHeight - argCount;
+		for (ovlocals_t i = 0; i < argCount; i++)
 			if (cur.stack[origin + i].flags & StackEntry::IS_REF)
 				refBuilder.SetParam(i, true);
 
@@ -137,17 +137,17 @@ private:
 	{
 	public:
 		int32_t firstInstr;
-		uint32_t maxStack;
-		uint32_t stackHeight;
+		ovlocals_t maxStack;
+		ovlocals_t stackHeight;
 		StackEntry *stack;
 
 		inline Branch() : firstInstr(-1), maxStack(0), stackHeight(0), stack(nullptr)
 		{ }
-		inline Branch(const int32_t firstInstr, uint32_t maxStack) :
+		inline Branch(int32_t firstInstr, ovlocals_t maxStack) :
 			firstInstr(firstInstr), maxStack(maxStack),
 			stackHeight(0), stack(new StackEntry[maxStack])
 		{ }
-		inline Branch(const int32_t firstInstr, const Branch &other) :
+		inline Branch(int32_t firstInstr, const Branch &other) :
 			firstInstr(firstInstr), maxStack(other.maxStack),
 			stackHeight(other.stackHeight), stack(new StackEntry[maxStack])
 		{
@@ -182,7 +182,7 @@ private:
 		}
 	};
 
-	uint32_t maxStack;
+	ovlocals_t maxStack;
 	std::queue<Branch> branches;
 
 public:
@@ -192,7 +192,7 @@ public:
 		branches.push(Branch());
 	}
 
-	virtual uint32_t GetStackHeight() const
+	virtual ovlocals_t GetStackHeight() const
 	{
 		return branches.front().stackHeight;
 	}
@@ -203,7 +203,7 @@ public:
 		br.firstInstr = firstInstr;
 		branches.push(br);
 	}
-	virtual void EnqueueBranch(uint32_t stackHeight, int32_t firstInstr)
+	virtual void EnqueueBranch(ovlocals_t stackHeight, int32_t firstInstr)
 	{
 		Branch br = Branch(firstInstr, maxStack);
 		br.stackHeight = stackHeight;
@@ -239,7 +239,7 @@ public:
 		return true; // Yay!
 	}
 
-	virtual bool HasRefs(uint32_t argCount) const
+	virtual bool HasRefs(ovlocals_t argCount) const
 	{
 		const Branch &cur = branches.front();
 
@@ -250,14 +250,14 @@ public:
 		return false;
 	}
 
-	virtual bool IsRef(uint32_t stackSlot) const
+	virtual bool IsRef(ovlocals_t stackSlot) const
 	{
 		const Branch &cur = branches.front();
 		StackEntry::StackEntryFlags flags = cur.stack[cur.stackHeight - 1 - stackSlot].flags;
 		return (flags & StackEntry::IS_REF) == StackEntry::IS_REF;
 	}
 
-	virtual uint32_t GetRefSignature(uint32_t argCount) const
+	virtual uint32_t GetRefSignature(ovlocals_t argCount) const
 	{
 		const Branch &cur = branches.front();
 
@@ -350,7 +350,7 @@ void MethodInitializer::InitBranchOffsets(instr::MethodBuilder &builder)
 		else if (instruction->IsSwitch())
 		{
 			Switch *sw = static_cast<Switch*>(instruction);
-			for (int32_t t = 0; t < sw->targetCount; t++)
+			for (uint32_t t = 0; t < sw->targetCount; t++)
 			{
 				int32_t *target = sw->targets + t;
 				*target = builder.FindIndex(builder.GetOriginalOffset(i) + builder.GetOriginalSize(i) + *target);
@@ -442,9 +442,9 @@ void MethodInitializer::CalculateStackHeights(instr::MethodBuilder &builder, Sta
 		while (true)
 		{
 			Instruction *instr = builder[index];
-			if (builder.GetStackHeight(index) >= 0)
+			if (builder.GetStackHeight(index) != MethodBuilder::UNVISITED)
 			{
-				uint32_t stackHeight = stack.GetStackHeight();
+				ovlocals_t stackHeight = stack.GetStackHeight();
 				if (builder.GetStackHeight(index) != stackHeight)
 					throw MethodInitException("Instruction reached with different stack heights.",
 						method, index, MethodInitException::INCONSISTENT_STACK);
@@ -458,7 +458,7 @@ void MethodInitializer::CalculateStackHeights(instr::MethodBuilder &builder, Sta
 			}
 			else
 			{
-				uint32_t stackHeight = stack.GetStackHeight();
+				ovlocals_t stackHeight = stack.GetStackHeight();
 				builder.SetStackHeight(index, stackHeight);
 				if (instr->HasBranches())
 					// Only calculmacate this if necessary
@@ -781,7 +781,7 @@ Method *MethodInitializer::MethodFromToken(uint32_t token)
 	return result;
 }
 
-MethodOverload *MethodInitializer::MethodOverloadFromToken(uint32_t token, uint32_t argCount)
+MethodOverload *MethodInitializer::MethodOverloadFromToken(uint32_t token, ovlocals_t argCount)
 {
 	Method *method = MethodFromToken(token);
 
@@ -813,7 +813,7 @@ Field *MethodInitializer::FieldFromToken(uint32_t token, bool shouldBeStatic)
 	return field;
 }
 
-void MethodInitializer::EnsureConstructible(Type *type, uint32_t argCount)
+void MethodInitializer::EnsureConstructible(Type *type, ovlocals_t argCount)
 {
 	if (type->IsPrimitive() ||
 		(type->flags & TypeFlags::ABSTRACT) == TypeFlags::ABSTRACT ||
@@ -844,7 +844,7 @@ void MethodInitializer::ReadInstructions(instr::MethodBuilder &builder)
 	// An offset that is added to param/arg indexes when calling refs.IsParamRef.
 	// The ref signature always reserves space for the instance at the very beginning,
 	// so for static methods, we have to skip it.
-	unsigned int argRefOffset = +method->group->IsStatic();
+	ovlocals_t argRefOffset = +method->group->IsStatic();
 
 	register uint8_t *ip = method->entry;
 	uint8_t *end = method->entry + method->length;
@@ -873,32 +873,32 @@ void MethodInitializer::ReadInstructions(instr::MethodBuilder &builder)
 		case OPC_LDARG_2:
 		case OPC_LDARG_3:
 			{
-				uint16_t arg = *opc - OPC_LDARG_0;
+				ovlocals_t arg = *opc - OPC_LDARG_0;
 				instr = new LoadLocal(method->GetArgumentOffset(arg), refs.IsParamRef(arg + argRefOffset));
 			}
 			break;
 		case OPC_LDARG_S: // ub:n
 			{
-				uint16_t arg = *ip++;
+				ovlocals_t arg = *ip++;
 				instr = new LoadLocal(method->GetArgumentOffset(arg), refs.IsParamRef(arg + argRefOffset));
 			}
 			break;
 		case OPC_LDARG: // u2:n
 			{
-				uint16_t arg = U16_ARG(ip);
+				ovlocals_t arg = U16_ARG(ip);
 				ip += sizeof(uint16_t);
 				instr = new LoadLocal(method->GetArgumentOffset(arg), refs.IsParamRef(arg + argRefOffset));
 			}
 			break;
 		case OPC_STARG_S: // ub:n
 			{
-				uint16_t arg = *ip++;
+				ovlocals_t arg = *ip++;
 				instr = new StoreLocal(method->GetArgumentOffset(arg), refs.IsParamRef(arg + argRefOffset));
 			}
 			break;
 		case OPC_STARG: // u2:n
 			{
-				uint16_t arg = U16_ARG(ip);
+				ovlocals_t arg = U16_ARG(ip);
 				ip += sizeof(uint16_t);
 				instr = new StoreLocal(method->GetArgumentOffset(arg), refs.IsParamRef(arg + argRefOffset));
 			}
@@ -921,7 +921,7 @@ void MethodInitializer::ReadInstructions(instr::MethodBuilder &builder)
 			break;
 		case OPC_LDLOC: // u2:n
 			{
-				uint16_t loc = U16_ARG(ip);
+				ovlocals_t loc = U16_ARG(ip);
 				ip += sizeof(uint16_t);
 				instr = new LoadLocal(method->GetLocalOffset(loc), false);
 			}
@@ -931,7 +931,7 @@ void MethodInitializer::ReadInstructions(instr::MethodBuilder &builder)
 			break;
 		case OPC_STLOC: // u2:n
 			{
-				uint16_t loc = U16_ARG(ip);
+				ovlocals_t loc = U16_ARG(ip);
 				ip += sizeof(uint16_t);
 				instr = new StoreLocal(method->GetLocalOffset(loc), false);
 			}
@@ -1013,7 +1013,7 @@ void MethodInitializer::ReadInstructions(instr::MethodBuilder &builder)
 			{
 				Type *type = TypeFromToken(U32_ARG(ip));
 				ip += sizeof(uint32_t);
-				uint16_t argCount = *ip;
+				ovlocals_t argCount = *ip;
 				ip++;
 				EnsureConstructible(type, argCount);
 				instr = new NewObject(type, argCount);
@@ -1023,7 +1023,7 @@ void MethodInitializer::ReadInstructions(instr::MethodBuilder &builder)
 			{
 				Type *type = TypeFromToken(U32_ARG(ip));
 				ip += sizeof(uint32_t);
-				uint16_t argCount = U16_ARG(ip);
+				ovlocals_t argCount = U16_ARG(ip);
 				ip += sizeof(uint16_t);
 				EnsureConstructible(type, argCount);
 				instr = new NewObject(type, argCount);
@@ -1041,7 +1041,7 @@ void MethodInitializer::ReadInstructions(instr::MethodBuilder &builder)
 			break;
 		case OPC_CALL: // u2:argc
 			{
-				uint16_t argCount = U16_ARG(ip);
+				ovlocals_t argCount = U16_ARG(ip);
 				ip += sizeof(uint16_t);
 				instr = new Call(argCount);
 			}
@@ -1051,7 +1051,7 @@ void MethodInitializer::ReadInstructions(instr::MethodBuilder &builder)
 				TokenId funcId = U32_ARG(ip);
 				ip += sizeof(uint32_t);
 				
-				uint16_t argCount = *ip++;
+				ovlocals_t argCount = *ip++;
 
 				MethodOverload *mo = MethodOverloadFromToken(funcId, argCount);
 				instr = new StaticCall(argCount - mo->InstanceOffset(), mo);
@@ -1062,7 +1062,7 @@ void MethodInitializer::ReadInstructions(instr::MethodBuilder &builder)
 				TokenId funcId = U32_ARG(ip);
 				ip += sizeof(uint32_t);
 
-				uint16_t argCount = U16_ARG(ip);
+				ovlocals_t argCount = U16_ARG(ip);
 				ip += sizeof(uint16_t);
 
 				MethodOverload *mo = MethodOverloadFromToken(funcId, argCount);
@@ -1166,17 +1166,17 @@ void MethodInitializer::ReadInstructions(instr::MethodBuilder &builder)
 			break;
 		case OPC_SWITCH_S: // u2:n  sb:targets...
 			{
-				uint16_t count = U16_ARG(ip);
+				uint32_t count = U16_ARG(ip);
 				ip += sizeof(uint16_t);
 				std::unique_ptr<int32_t[]> targets(new int32_t[count]);
-				for (int i = 0; i < count; i++)
+				for (uint32_t i = 0; i < count; i++)
 					targets[i] = *(int8_t*)ip++;
 				instr = new Switch(count, targets.release());
 			}
 			break;
 		case OPC_SWITCH: // u2:n  i4:targets...
 			{
-				uint16_t count = U16_ARG(ip);
+				uint32_t count = U16_ARG(ip);
 				ip += sizeof(uint16_t);
 				std::unique_ptr<int32_t[]> targets(new int32_t[count]);
 				CopyMemoryT(targets.get(), (int32_t*)ip, count);
@@ -1382,7 +1382,7 @@ void MethodInitializer::ReadInstructions(instr::MethodBuilder &builder)
 			break;
 		case OPC_LDARGREF_S: // ub:n
 			{
-				uint16_t arg = *ip++;
+				ovlocals_t arg = *ip++;
 				if (refs.IsParamRef(arg + argRefOffset))
 				{
 					instr = new LoadLocal(method->GetArgumentOffset(arg), false);
@@ -1394,7 +1394,7 @@ void MethodInitializer::ReadInstructions(instr::MethodBuilder &builder)
 			break;
 		case OPC_LDARGREF: // u2:n
 			{
-				uint16_t arg = U16_ARG(ip);
+				ovlocals_t arg = U16_ARG(ip);
 				ip += sizeof(uint16_t);
 				if (refs.IsParamRef(arg + argRefOffset))
 				{
@@ -1407,13 +1407,13 @@ void MethodInitializer::ReadInstructions(instr::MethodBuilder &builder)
 			break;
 		case OPC_LDLOCREF_S: // ub:n
 			{
-				uint16_t loc = *ip++;
+				ovlocals_t loc = *ip++;
 				instr = new LoadLocalRef(method->GetLocalOffset(loc));
 			}
 			break;
 		case OPC_LDLOCREF: // u2:n
 			{
-				uint16_t loc = U16_ARG(ip);
+				ovlocals_t loc = U16_ARG(ip);
 				ip += sizeof(uint16_t);
 				instr = new LoadLocalRef(method->GetLocalOffset(loc));
 			}

@@ -47,7 +47,7 @@ private:
 
 	int LoadModules(VMStartParams &params);
 	int InitArgs(int argCount, const wchar_t *args[]);
-	int GetMainMethodOverload(Method *method, unsigned int &argc, MethodOverload *&overload);
+	int GetMainMethodOverload(Method *method, ovlocals_t &argc, MethodOverload *&overload);
 
 	static void PrintInternal(FILE *file, const wchar_t *format, String *str);
 

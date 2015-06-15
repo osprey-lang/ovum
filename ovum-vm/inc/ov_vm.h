@@ -111,6 +111,12 @@ typedef wchar_t ovchar_t;
 typedef uint16_t ovchar_t;
 #endif
 
+// The ovlocals_t type is used for all kinds of "local" counts. That is,
+// counts of "local" values - parameters, arguments, local variables,
+// stack slots, etc. Its use is fairly broad, but it should particularly
+// be used for argument counts.
+typedef uint32_t ovlocals_t;
+
 typedef struct Value_S Value;
 typedef struct String_S String;
 typedef struct ListInst_S ListInst;
@@ -285,7 +291,7 @@ OVUM_API void VM_PrintErr(String *str);
 OVUM_API void VM_PrintErrLn(String *str);
 
 OVUM_API int VM_GetArgCount(ThreadHandle thread);
-OVUM_API int VM_GetArgs(ThreadHandle thread, const int destLength, String *dest[]);
-OVUM_API int VM_GetArgValues(ThreadHandle thread, const int destLength, Value dest[]);
+OVUM_API int VM_GetArgs(ThreadHandle thread, int destLength, String *dest[]);
+OVUM_API int VM_GetArgValues(ThreadHandle thread, int destLength, Value dest[]);
 
 #endif // VM__VM_H

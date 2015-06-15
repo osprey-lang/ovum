@@ -3,9 +3,9 @@
 
 #include "ov_vm.h"
 
-typedef int (OVUM_CDECL *NativeMethod)(ThreadHandle thread, const int argc, Value args[]);
+typedef int (OVUM_CDECL *NativeMethod)(ThreadHandle thread, ovlocals_t argc, Value args[]);
 // Adds the magic parameters 'ThreadHandle thread', 'int argc' and 'Value args[]' to a function definition.
-#define NATIVE_FUNCTION(name)	int OVUM_CDECL name(::ThreadHandle thread, const int argc, ::Value args[])
+#define NATIVE_FUNCTION(name)	int OVUM_CDECL name(::ThreadHandle thread, ovlocals_t argc, ::Value args[])
 // The 'this' in a NATIVE_FUNCTION, which is always argument 0.
 #define THISV	(args[0])
 #define THISP   (args + 0)
@@ -49,8 +49,8 @@ OVUM_API MethodHandle Method_GetBaseMethod(MethodHandle method);
 
 // Determines whether any overload in the method accepts the given number of arguments.
 // For instance methods, this does NOT include the instance.
-OVUM_API bool Method_Accepts(MethodHandle method, int argc);
-OVUM_API OverloadHandle Method_FindOverload(MethodHandle method, int argc);
+OVUM_API bool Method_Accepts(MethodHandle method, ovlocals_t argc);
+OVUM_API OverloadHandle Method_FindOverload(MethodHandle method, ovlocals_t argc);
 
 enum class MethodFlags : int32_t
 {
@@ -109,7 +109,7 @@ OVUM_API int32_t Overload_GetParamCount(OverloadHandle overload);
 //     The index of the parameter to get metadata for.
 //   dest:
 //     The destination buffer.
-OVUM_API bool Overload_GetParameter(OverloadHandle overload, int32_t index, ParamInfo *dest);
+OVUM_API bool Overload_GetParameter(OverloadHandle overload, ovlocals_t index, ParamInfo *dest);
 // Gets metadata about all the parameters in the specified overload.
 //
 // Returns the number of ParamInfo items that were written into 'dest'.
@@ -121,7 +121,7 @@ OVUM_API bool Overload_GetParameter(OverloadHandle overload, int32_t index, Para
 //     The size of the destination buffer, in number of ParamInfo items.
 //   dest:
 //     The destination buffer.
-OVUM_API int32_t Overload_GetAllParameters(OverloadHandle overload, int32_t destSize, ParamInfo *dest);
+OVUM_API int32_t Overload_GetAllParameters(OverloadHandle overload, ovlocals_t destSize, ParamInfo *dest);
 // Gets a handle to an overload's containing method.
 OVUM_API MethodHandle Overload_GetMethod(OverloadHandle overload);
 
@@ -327,7 +327,7 @@ OVUM_API MemberHandle Type_GetMember(TypeHandle type, String *name);
 OVUM_API MemberHandle Type_FindMember(TypeHandle type, String *name, TypeHandle fromType);
 
 OVUM_API int32_t Type_GetMemberCount(TypeHandle type);
-OVUM_API MemberHandle Type_GetMemberByIndex(TypeHandle type, const int32_t index);
+OVUM_API MemberHandle Type_GetMemberByIndex(TypeHandle type, int32_t index);
 
 OVUM_API MethodHandle Type_GetOperator(TypeHandle type, Operator op);
 OVUM_API int Type_GetTypeToken(ThreadHandle thread, TypeHandle type, Value *result);

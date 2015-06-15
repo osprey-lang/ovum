@@ -61,7 +61,7 @@ Thread::~Thread()
 	DisposeCallStack();
 }
 
-int Thread::Start(unsigned int argCount, MethodOverload *mo, Value &result)
+int Thread::Start(ovlocals_t argCount, MethodOverload *mo, Value &result)
 {
 	OVUM_ASSERT(mo != nullptr);
 	OVUM_ASSERT(this->state == ThreadState::CREATED);
@@ -132,7 +132,7 @@ bool Thread::IsSuspendedForGC() const
 }
 
 
-int Thread::Invoke(unsigned int argCount, Value *result)
+int Thread::Invoke(ovlocals_t argCount, Value *result)
 {
 	int r;
 	Value *value = currentFrame->evalStack + currentFrame->stackCount - argCount - 1;
@@ -148,7 +148,7 @@ int Thread::Invoke(unsigned int argCount, Value *result)
 }
 
 // Note: argCount does NOT include the instance, but value does
-int Thread::InvokeLL(unsigned int argCount, Value *value, Value *result, uint32_t refSignature)
+int Thread::InvokeLL(ovlocals_t argCount, Value *value, Value *result, uint32_t refSignature)
 {
 	if (IS_NULL(*value))
 		return ThrowNullReferenceError();
@@ -192,7 +192,7 @@ int Thread::InvokeLL(unsigned int argCount, Value *value, Value *result, uint32_
 	return InvokeMethodOverload(mo, argCount, value, result);
 }
 
-int Thread::InvokeMethod(Method *method, unsigned int argCount, Value *result)
+int Thread::InvokeMethod(Method *method, ovlocals_t argCount, Value *result)
 {
 	MethodOverload *mo = method->ResolveOverload(argCount);
 	if (mo == nullptr)
@@ -211,7 +211,7 @@ int Thread::InvokeMethod(Method *method, unsigned int argCount, Value *result)
 	return r;
 }
 
-int Thread::InvokeMember(String *name, unsigned int argCount, Value *result)
+int Thread::InvokeMember(String *name, ovlocals_t argCount, Value *result)
 {
 	int r;
 	Value *value = currentFrame->evalStack + currentFrame->stackCount - argCount - 1;
@@ -226,7 +226,7 @@ int Thread::InvokeMember(String *name, unsigned int argCount, Value *result)
 	return r;
 }
 
-int Thread::InvokeMemberLL(String *name, uint32_t argCount, Value *value, Value *result, uint32_t refSignature)
+int Thread::InvokeMemberLL(String *name, ovlocals_t argCount, Value *value, Value *result, uint32_t refSignature)
 {
 	if (IS_NULL(*value))
 		return ThrowNullReferenceError();
@@ -279,7 +279,7 @@ int Thread::InvokeMemberLL(String *name, uint32_t argCount, Value *value, Value 
 	return ThrowMemberNotFoundError(name);
 }
 
-int Thread::InvokeMethodOverload(MethodOverload *mo, unsigned int argCount,
+int Thread::InvokeMethodOverload(MethodOverload *mo, ovlocals_t argCount,
                                  Value *args, Value *result)
 {
 	register MethodFlags flags = mo->flags; // used several times below!
@@ -794,7 +794,7 @@ int Thread::StoreMemberLL(Value *instance, String *member)
 }
 
 // Note: argCount does NOT include the instance.
-int Thread::LoadIndexer(uint32_t argCount, Value *result)
+int Thread::LoadIndexer(ovlocals_t argCount, Value *result)
 {
 	int r;
 	Value *args = currentFrame->evalStack + currentFrame->stackCount - argCount - 1;
@@ -810,7 +810,7 @@ int Thread::LoadIndexer(uint32_t argCount, Value *result)
 }
 
 // Note: argc DOES NOT include the instance, but args DOES.
-int Thread::LoadIndexerLL(uint32_t argCount, Value *args, Value *result)
+int Thread::LoadIndexerLL(ovlocals_t argCount, Value *args, Value *result)
 {
 	if (IS_NULL(args[0]))
 		return ThrowNullReferenceError();
@@ -833,14 +833,14 @@ int Thread::LoadIndexerLL(uint32_t argCount, Value *args, Value *result)
 }
 
 // Note: argCount DOES NOT include the instance or the value that's being stored.
-int Thread::StoreIndexer(uint32_t argCount)
+int Thread::StoreIndexer(ovlocals_t argCount)
 {
 	Value *args = currentFrame->evalStack + currentFrame->stackCount - argCount - 2;
 	return StoreIndexerLL(argCount, args);
 }
 
 // Note: argCount DOES NOT include the instance or the value that's being stored, but args DOES.
-int Thread::StoreIndexerLL(uint32_t argCount, Value *args)
+int Thread::StoreIndexerLL(ovlocals_t argCount, Value *args)
 {
 	if (IS_NULL(args[0]))
 		return ThrowNullReferenceError();
@@ -1077,7 +1077,7 @@ int Thread::ThrowNullReferenceError(String *message)
 	return r;
 }
 
-int Thread::ThrowNoOverloadError(uint32_t argCount, String *message)
+int Thread::ThrowNoOverloadError(ovlocals_t argCount, String *message)
 {
 	PushInt(argCount);
 	if (message == nullptr)
@@ -1193,7 +1193,7 @@ void Thread::PushFirstStackFrame()
 }
 
 // Note: argCount and args DO include the instance here!
-void Thread::PushStackFrame(uint32_t argCount, Value *args, MethodOverload *method)
+void Thread::PushStackFrame(ovlocals_t argCount, Value *args, MethodOverload *method)
 {
 	OVUM_ASSERT(currentFrame->stackCount >= argCount);
 	currentFrame->stackCount -= argCount; // pop the arguments (including the instance) off the current frame
@@ -1228,7 +1228,7 @@ void Thread::PushStackFrame(uint32_t argCount, Value *args, MethodOverload *meth
 	currentFrame = newFrame;
 }
 
-int Thread::PrepareVariadicArgs(MethodFlags flags, uint32_t argCount, uint32_t paramCount, StackFrame *frame)
+int Thread::PrepareVariadicArgs(MethodFlags flags, ovlocals_t argCount, ovlocals_t paramCount, StackFrame *frame)
 {
 	int32_t count = argCount >= paramCount - 1 ? argCount - paramCount + 1 : 0;
 
@@ -1492,15 +1492,15 @@ OVUM_API Value *VM_Local(ThreadHandle thread, uint32_t n)
 	return thread->Local(n);
 }
 
-OVUM_API int VM_Invoke(ThreadHandle thread, uint32_t argCount, Value *result)
+OVUM_API int VM_Invoke(ThreadHandle thread, ovlocals_t argCount, Value *result)
 {
 	return thread->Invoke(argCount, result);
 }
-OVUM_API int VM_InvokeMember(ThreadHandle thread, String *name, uint32_t argCount, Value *result)
+OVUM_API int VM_InvokeMember(ThreadHandle thread, String *name, ovlocals_t argCount, Value *result)
 {
 	return thread->InvokeMember(name, argCount, result);
 }
-OVUM_API int VM_InvokeMethod(ThreadHandle thread, MethodHandle method, uint32_t argCount, Value *result)
+OVUM_API int VM_InvokeMethod(ThreadHandle thread, MethodHandle method, ovlocals_t argCount, Value *result)
 {
 	return thread->InvokeMethod(method, argCount, result);
 }
@@ -1544,11 +1544,11 @@ OVUM_API int VM_StoreStaticField(ThreadHandle thread, FieldHandle field)
 	return thread->StoreStaticField(field);
 }
 
-OVUM_API int VM_LoadIndexer(ThreadHandle thread, uint32_t argCount, Value *result)
+OVUM_API int VM_LoadIndexer(ThreadHandle thread, ovlocals_t argCount, Value *result)
 {
 	return thread->LoadIndexer(argCount, result);
 }
-OVUM_API int VM_StoreIndexer(ThreadHandle thread, uint32_t argCount)
+OVUM_API int VM_StoreIndexer(ThreadHandle thread, ovlocals_t argCount)
 {
 	return thread->StoreIndexer(argCount);
 }
@@ -1586,7 +1586,7 @@ OVUM_API int VM_ThrowNullReferenceError(ThreadHandle thread, String *message)
 {
 	return thread->ThrowNullReferenceError(message);
 }
-OVUM_API int VM_ThrowErrorOfType(ThreadHandle thread, TypeHandle type, int argc)
+OVUM_API int VM_ThrowErrorOfType(ThreadHandle thread, TypeHandle type, ovlocals_t argc)
 {
 	int r = thread->GetGC()->Construct(thread, type, argc, nullptr);
 	if (r == OVUM_SUCCESS)

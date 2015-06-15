@@ -38,9 +38,9 @@ private:
 	Type *TypeFromToken(uint32_t token);
 	String *StringFromToken(uint32_t token);
 	Method *MethodFromToken(uint32_t token);
-	MethodOverload *MethodOverloadFromToken(uint32_t token, uint32_t argCount);
+	MethodOverload *MethodOverloadFromToken(uint32_t token, ovlocals_t argCount);
 	Field *FieldFromToken(uint32_t token, bool shouldBeStatic);
-	void EnsureConstructible(Type *type, uint32_t argCount);
+	void EnsureConstructible(Type *type, ovlocals_t argCount);
 };
 
 class StackManager
@@ -62,14 +62,14 @@ public:
 
 	inline virtual ~StackManager() { }
 
-	virtual uint32_t GetStackHeight() const = 0;
+	virtual ovlocals_t GetStackHeight() const = 0;
 
 	// Adds a branch to the end of the queue, with stack slots copied from the current branch.
 	// All stack slots retain their flags.
 	virtual void EnqueueBranch(int32_t firstInstr) = 0;
 	// Adds a branch to the end of the queue, with the specified initial stack height.
 	// The stack slots in the new branch have no special flags.
-	virtual void EnqueueBranch(uint32_t stackHeight, int32_t firstInstr) = 0;
+	virtual void EnqueueBranch(ovlocals_t stackHeight, int32_t firstInstr) = 0;
 
 	// Moves to the next branch in the queue, and returns
 	// the index of the first instruction in the branch.
@@ -77,11 +77,11 @@ public:
 
 	virtual bool ApplyStackChange(instr::StackChange change, bool pushRef) = 0;
 
-	virtual bool HasRefs(uint32_t argCount) const = 0;
+	virtual bool HasRefs(ovlocals_t argCount) const = 0;
 
-	virtual bool IsRef(uint32_t stackSlot) const = 0;
+	virtual bool IsRef(ovlocals_t stackSlot) const = 0;
 
-	virtual uint32_t GetRefSignature(uint32_t argCount) const = 0;
+	virtual uint32_t GetRefSignature(ovlocals_t argCount) const = 0;
 
 	inline RefSignaturePool *GetRefSignaturePool() const
 	{

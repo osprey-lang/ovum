@@ -6,12 +6,12 @@
 namespace ovum
 {
 
-int32_t MethodOverload::GetLocalOffset(uint16_t local) const
+int32_t MethodOverload::GetLocalOffset(ovlocals_t local) const
 {
 	return (int32_t)(STACK_FRAME_SIZE + local * sizeof(Value));
 }
 
-int32_t MethodOverload::GetStackOffset(uint16_t stackSlot) const
+int32_t MethodOverload::GetStackOffset(ovlocals_t stackSlot) const
 {
 	return (int32_t)(STACK_FRAME_SIZE + (locals + stackSlot) * sizeof(Value));
 }
@@ -21,7 +21,7 @@ RefSignaturePool *MethodOverload::GetRefSignaturePool() const
 	return group->declModule->GetVM()->GetRefSignaturePool();
 }
 
-int MethodOverload::VerifyRefSignature(uint32_t signature, uint16_t argCount) const
+int MethodOverload::VerifyRefSignature(uint32_t signature, ovlocals_t argCount) const
 {
 	RefSignaturePool *refSigPool = GetRefSignaturePool();
 	RefSignature methodSignature(refSignature, refSigPool);
@@ -32,10 +32,10 @@ int MethodOverload::VerifyRefSignature(uint32_t signature, uint16_t argCount) co
 	if (argSignature.IsParamRef(0))
 		return 0;
 
-	int im = 1, // index into methodSignature
-		ia = 1; // and into argSignature
+	ovlocals_t im = 1; // index into methodSignature
+	ovlocals_t ia = 1; // and into argSignature
 
-	int paramCount = (int)this->GetEffectiveParamCount();
+	ovlocals_t paramCount = this->GetEffectiveParamCount();
 	if (this->IsVariadic())
 	{
 		if ((this->flags & MethodFlags::VAR_START) != MethodFlags::NONE)
@@ -92,7 +92,7 @@ int MethodOverload::VerifyRefSignature(uint32_t signature, uint16_t argCount) co
 	return -1;
 }
 
-inline bool Method::Accepts(uint16_t argCount) const
+inline bool Method::Accepts(ovlocals_t argCount) const
 {
 	const Method *m = this;
 	do
@@ -104,7 +104,7 @@ inline bool Method::Accepts(uint16_t argCount) const
 	return false;
 }
 
-MethodOverload *Method::ResolveOverload(uint16_t argCount) const
+MethodOverload *Method::ResolveOverload(ovlocals_t argCount) const
 {
 	const Method *method = this;
 	do
@@ -160,15 +160,15 @@ OVUM_API MethodHandle Method_GetBaseMethod(MethodHandle method)
 	return method->baseMethod;
 }
 
-OVUM_API bool Method_Accepts(MethodHandle method, int argc)
+OVUM_API bool Method_Accepts(MethodHandle method, ovlocals_t argc)
 {
 	return method->Accepts(argc);
 }
-OVUM_API OverloadHandle Method_FindOverload(MethodHandle method, int argc)
+OVUM_API OverloadHandle Method_FindOverload(MethodHandle method, ovlocals_t argc)
 {
 	if (argc < 0 || argc > UINT16_MAX)
 		return nullptr;
-	return method->ResolveOverload((uint16_t)argc);
+	return method->ResolveOverload(argc);
 }
 
 
@@ -180,7 +180,7 @@ OVUM_API int32_t Overload_GetParamCount(OverloadHandle overload)
 {
 	return overload->paramCount;
 }
-OVUM_API bool Overload_GetParameter(OverloadHandle overload, int32_t index, ParamInfo *dest)
+OVUM_API bool Overload_GetParameter(OverloadHandle overload, ovlocals_t index, ParamInfo *dest)
 {
 	if (index < 0 || index >= overload->paramCount)
 		return false;
@@ -201,16 +201,16 @@ OVUM_API bool Overload_GetParameter(OverloadHandle overload, int32_t index, Para
 
 	return true;
 }
-OVUM_API int32_t Overload_GetAllParameters(OverloadHandle overload, int32_t destSize, ParamInfo *dest)
+OVUM_API int32_t Overload_GetAllParameters(OverloadHandle overload, ovlocals_t destSize, ParamInfo *dest)
 {
-	int32_t count = overload->paramCount;
+	ovlocals_t count = overload->paramCount;
 	if (count > destSize)
 		count = destSize;
 
 	bool isVariadic = overload->IsVariadic();
 
 	ovum::RefSignature refs(overload->refSignature, overload->GetRefSignaturePool());
-	for (int32_t i = 0; i < count; i++)
+	for (ovlocals_t i = 0; i < count; i++)
 	{
 		ParamInfo *pi = dest + i;
 		pi->name = overload->paramNames[i];

@@ -9,20 +9,20 @@ OVUM_API int32_t String_GetHashCodeSubstr(const String *str, int32_t index, int3
 OVUM_API bool String_Equals(const String *a, const String *b);
 OVUM_API bool String_EqualsIgnoreCase(const String *a, const String *b);
 
-OVUM_API bool String_SubstringEquals(const String *str, const int32_t startIndex, const String *part);
+OVUM_API bool String_SubstringEquals(const String *str, int32_t startIndex, const String *part);
 
 OVUM_API int String_Compare(const String *a, const String *b);
 
-inline bool String_StartsWith(const String *a, const ovchar_t ch)
+inline bool String_StartsWith(const String *a, ovchar_t ch)
 {
 	return a->firstChar == ch;
 }
-inline bool String_EndsWith(const String *a, const ovchar_t ch)
+inline bool String_EndsWith(const String *a, ovchar_t ch)
 {
 	return (&a->firstChar)[a->length - 1] == ch;
 }
 
-inline bool String_ContainsChar(const String *str, const ovchar_t ch)
+inline bool String_ContainsChar(const String *str, ovchar_t ch)
 {
 	for (int32_t i = 0; i < str->length; i++)
 		if ((&str->firstChar)[i] == ch)
@@ -37,7 +37,7 @@ OVUM_API String *String_ToLower(ThreadHandle thread, String *str);
 
 OVUM_API String *String_Concat(ThreadHandle thread, const String *a, const String *b);
 OVUM_API String *String_Concat3(ThreadHandle thread, const String *a, const String *b, const String *c);
-OVUM_API String *String_ConcatRange(ThreadHandle thread, const unsigned int count, String *values[]);
+OVUM_API String *String_ConcatRange(ThreadHandle thread, int count, String *values[]);
 
 // Converts a String* to a zero-terminated wchar_t* string.
 //   dest:
