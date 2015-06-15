@@ -215,7 +215,7 @@ int VM::InitArgs(int argCount, const wchar_t *args[])
 	RETURN_SUCCESS;
 }
 
-int VM::GetMainMethodOverload(Method *method, unsigned int &argc, MethodOverload *&overload)
+int VM::GetMainMethodOverload(Method *method, ovlocals_t &argc, MethodOverload *&overload)
 {
 	overload = method->ResolveOverload(argc = 1);
 	if (overload)
@@ -469,11 +469,11 @@ OVUM_API int VM_GetArgCount(ThreadHandle thread)
 {
 	return thread->GetVM()->GetArgCount();
 }
-OVUM_API int VM_GetArgs(ThreadHandle thread, const int destLength, String *dest[])
+OVUM_API int VM_GetArgs(ThreadHandle thread, int destLength, String *dest[])
 {
 	return thread->GetVM()->GetArgs(destLength, dest);
 }
-OVUM_API int VM_GetArgValues(ThreadHandle thread, const int destLength, Value dest[])
+OVUM_API int VM_GetArgValues(ThreadHandle thread, int destLength, Value dest[])
 {
 	return thread->GetVM()->GetArgValues(destLength, dest);
 }

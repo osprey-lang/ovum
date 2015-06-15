@@ -15,7 +15,7 @@ class RefSignaturePool;
 class RefSignature
 {
 private:
-	unsigned int paramCount;
+	ovlocals_t paramCount;
 	union
 	{
 		uint32_t shortMask;
@@ -25,7 +25,7 @@ private:
 public:
 	RefSignature(uint32_t mask, RefSignaturePool *pool);
 
-	inline bool IsParamRef(unsigned int index) const
+	inline bool IsParamRef(ovlocals_t index) const
 	{
 		if (paramCount > MaxShortParamCount)
 		{
@@ -40,7 +40,7 @@ public:
 		}
 	}
 
-	static const unsigned int MaxShortParamCount = 31;
+	static const ovlocals_t MaxShortParamCount = 31;
 	static const uint32_t SignatureKindMask = 0x80000000u;
 	static const uint32_t SignatureDataMask = 0x7fffffffu;
 
@@ -51,10 +51,10 @@ private:
 class LongRefSignature
 {
 public:
-	unsigned int paramCount;
+	ovlocals_t paramCount;
 	uint32_t *maskValues;
 
-	inline LongRefSignature(unsigned int paramCount)
+	inline LongRefSignature(ovlocals_t paramCount)
 	{
 		uint32_t maskCount = (paramCount + 31) / 32;
 		this->paramCount = maskCount * 32;
@@ -69,13 +69,13 @@ public:
 		maskValues = nullptr;
 	}
 
-	inline bool IsParamRef(unsigned int index) const
+	inline bool IsParamRef(ovlocals_t index) const
 	{
 		uint32_t mask = maskValues[index / 32];
 		return ((mask >> index % 32) & 1) == 1;
 	}
 
-	inline void SetParam(unsigned int index, bool isRef)
+	inline void SetParam(ovlocals_t index, bool isRef)
 	{
 		uint32_t *mask = maskValues + index / 32;
 		index %= 32;
@@ -87,7 +87,7 @@ public:
 
 	inline bool HasRefs() const
 	{
-		for (unsigned int i = 0; i < paramCount / 32; i++)
+		for (ovlocals_t i = 0; i < paramCount / 32; i++)
 			if (maskValues[i] != 0)
 				return true;
 		return false;
@@ -98,7 +98,7 @@ public:
 		if (this->paramCount != other.paramCount)
 			return false;
 
-		for (unsigned int i = 0; i < this->paramCount; i++)
+		for (ovlocals_t i = 0; i < this->paramCount; i++)
 			if (this->maskValues[i] != other.maskValues[i])
 				return false;
 
@@ -125,7 +125,7 @@ public:
 	inline RefSignaturePool() { } // Do nothing; initialize signatures to empty vector
 	~RefSignaturePool();
 
-	const LongRefSignature *Get(uint32_t index) const;
+	const LongRefSignature *Get(ovlocals_t index) const;
 	uint32_t Add(LongRefSignature *signature, bool &isNew);
 };
 
@@ -141,7 +141,7 @@ private:
 	};
 
 public:
-	inline RefSignatureBuilder(unsigned int paramCount)
+	inline RefSignatureBuilder(ovlocals_t paramCount)
 		: isLong(paramCount > RefSignature::MaxShortParamCount),
 		isCommitted(false)
 	{
@@ -160,7 +160,7 @@ public:
 		}
 	}
 
-	inline bool IsParamRef(uint32_t index) const
+	inline bool IsParamRef(ovlocals_t index) const
 	{
 		if (isLong)
 			return longSignature->IsParamRef(index);
@@ -168,7 +168,7 @@ public:
 			return ((shortMask >> index) & 1) == 1;
 	}
 
-	inline void SetParam(uint32_t index, bool isRef)
+	inline void SetParam(ovlocals_t index, bool isRef)
 	{
 		if (isLong)
 			longSignature->SetParam(index, isRef);
@@ -200,7 +200,7 @@ inline RefSignature::RefSignature(uint32_t mask, RefSignaturePool *pool)
 	}
 	else
 	{
-		paramCount = 31;
+		paramCount = MaxShortParamCount;
 		shortMask = mask & SignatureDataMask;
 	}
 }
@@ -216,7 +216,7 @@ inline RefSignaturePool::~RefSignaturePool()
 	}
 }
 
-inline const LongRefSignature *RefSignaturePool::Get(uint32_t index) const
+inline const LongRefSignature *RefSignaturePool::Get(ovlocals_t index) const
 {
 	return signatures[index];
 }

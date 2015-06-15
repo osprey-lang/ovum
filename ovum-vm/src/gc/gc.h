@@ -130,11 +130,11 @@ public:
 
 	int AllocValueArray(Thread *const thread, uint32_t length, Value **output);
 
-	String *ConstructString(Thread *const thread, const int32_t length, const ovchar_t value[]);
+	String *ConstructString(Thread *const thread, int32_t length, const ovchar_t value[]);
 
 	String *ConvertString(Thread *const thread, const char *string);
 
-	String *ConstructModuleString(Thread *const thread, const int32_t length, const ovchar_t value[]);
+	String *ConstructModuleString(Thread *const thread, int32_t length, const ovchar_t value[]);
 
 	String *GetInternedString(Thread *const thread, String *value);
 
@@ -142,13 +142,13 @@ public:
 
 	String *InternString(Thread *const thread, String *value);
 
-	int Construct(Thread *const thread, Type *type, const uint16_t argc, Value *output);
+	int Construct(Thread *const thread, Type *type, ovlocals_t argc, Value *output);
 
-	int ConstructLL(Thread *const thread, Type *type, const uint16_t argc, Value *args, Value *output);
+	int ConstructLL(Thread *const thread, Type *type, ovlocals_t argc, Value *args, Value *output);
 
-	void AddMemoryPressure(Thread *const thread, const size_t size);
+	void AddMemoryPressure(Thread *const thread, size_t size);
 
-	void RemoveMemoryPressure(Thread *const thread, const size_t size);
+	void RemoveMemoryPressure(Thread *const thread, size_t size);
 
 	StaticRef *AddStaticReference(Thread *const thread, Value value);
 

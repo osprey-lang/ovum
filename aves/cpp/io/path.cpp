@@ -200,7 +200,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(io_Path_join)
 {
 	Value *output = VM_Local(thread, 0);
 
-	for (int i = 0; i < argc; i++)
+	for (ovlocals_t i = 0; i < argc; i++)
 	{
 		CHECKED(StringFromValue(thread, args + i));
 

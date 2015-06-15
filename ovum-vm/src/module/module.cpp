@@ -814,7 +814,7 @@ void Module::ReadConstantDefs(ModuleReader &reader, int32_t headerConstantCount)
 	CHECKPOS_AFTER(ConstantDef);
 }
 
-Type *Module::ReadSingleType(ModuleReader &reader, const TokenId typeId,
+Type *Module::ReadSingleType(ModuleReader &reader, TokenId typeId,
                              std::vector<FieldConstData> &unresolvedConstants)
 {
 	TypeFlags flags = reader.Read<TypeFlags>();
@@ -1109,7 +1109,7 @@ void Module::ReadOperators(ModuleReader &reader, Type *type)
 	type->InitOperators();
 }
 
-void Module::SetConstantFieldValue(ModuleReader &reader, Field *field, Type *constantType, const int64_t value)
+void Module::SetConstantFieldValue(ModuleReader &reader, Field *field, Type *constantType, int64_t value)
 {
 	if (constantType != vm->types.String && !constantType->IsPrimitive())
 		throw ModuleLoadException(reader.GetFileName(), "Constant type in FieldDef must be primitive or aves.String.");

@@ -21,7 +21,7 @@ inline const bool IsHashed(const String *const str)
  */
 #define STRING_HASH_ALGORITHM  3
 
-inline int32_t String_GetHashCode(const int32_t length, const ovchar_t *s)
+inline int32_t String_GetHashCode(int32_t length, const ovchar_t *s)
 {
 #if STRING_HASH_ALGORITHM == 1
 	// Rip of one of the algorithms in the .NET Framework
@@ -207,7 +207,7 @@ OVUM_API bool String_EqualsIgnoreCase(const String *a, const String *b)
 	return length <= 0;
 }
 
-OVUM_API bool String_SubstringEquals(const String *str, const int32_t startIndex, const String *part)
+OVUM_API bool String_SubstringEquals(const String *str, int32_t startIndex, const String *part)
 {
 	OVUM_ASSERT(str != nullptr);
 	if (startIndex >= str->length)
@@ -454,15 +454,15 @@ OVUM_API String *String_Concat3(ThreadHandle thread, const String *a, const Stri
 	return output;
 }
 
-OVUM_API String *String_ConcatRange(ThreadHandle thread, const unsigned int count, String *values[])
+OVUM_API String *String_ConcatRange(ThreadHandle thread, int count, String *values[])
 {
-	if (count == 0)
+	if (count <= 0)
 		return thread->GetStrings()->empty;
 	if (count == 1)
 		return values[0];
 
 	int32_t outLength = 0;
-	for (unsigned int i = 0; i < count; i++)
+	for (int i = 0; i < count; i++)
 	{
 		int32_t strlen = values[i]->length;
 		if (INT32_MAX - outLength < strlen)
@@ -476,7 +476,7 @@ OVUM_API String *String_ConcatRange(ThreadHandle thread, const unsigned int coun
 	{
 		ovchar_t *outputChar = const_cast<ovchar_t*>(&output->firstChar);
 
-		for (unsigned int i = 0; i < count; i++)
+		for (int i = 0; i < count; i++)
 		{
 			String *str = values[i];
 			CopyMemoryT(outputChar, &str->firstChar, str->length);

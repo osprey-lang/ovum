@@ -93,11 +93,11 @@ OVUM_API void VM_PushString(ThreadHandle thread, String *str);
 
 // Pops a single value off the top of the evaluation stack.
 OVUM_API Value VM_Pop(ThreadHandle thread);
-OVUM_API void VM_PopN(ThreadHandle thread, uint32_t n);
+OVUM_API void VM_PopN(ThreadHandle thread, ovlocals_t n);
 
 OVUM_API void VM_Dup(ThreadHandle thread);
 
-OVUM_API Value *VM_Local(ThreadHandle thread, uint32_t n);
+OVUM_API Value *VM_Local(ThreadHandle thread, ovlocals_t n);
 
 // Invokes a value on the evaluation stack.
 // If S[0] is the top value on the stack, then S[argCount] is the value that is invoked.
@@ -107,7 +107,7 @@ OVUM_API Value *VM_Local(ThreadHandle thread, uint32_t n);
 //     The number of arguments passed in the invocation, NOT including the instance.
 //   result:
 //     The return value of the invocation. If null, the return value is pushed onto the stack.
-OVUM_API int VM_Invoke(ThreadHandle thread, uint32_t argCount, Value *result);
+OVUM_API int VM_Invoke(ThreadHandle thread, ovlocals_t argCount, Value *result);
 
 // Invokes a member of a value on the evaluation stack.
 // If S[0] is the top value on the stack, then S[argCount] is the value whose member is invoked.
@@ -120,7 +120,7 @@ OVUM_API int VM_Invoke(ThreadHandle thread, uint32_t argCount, Value *result);
 //     The number of arguments to pass to the method, NOT including the instance.
 //   result:
 //     The return value of the invocation. If null, the return value is pushed onto the stack.
-OVUM_API int VM_InvokeMember(ThreadHandle thread, String *name, uint32_t argCount, Value *result);
+OVUM_API int VM_InvokeMember(ThreadHandle thread, String *name, ovlocals_t argCount, Value *result);
 
 // Invokes a specific method with arguments from the evaluation stack.
 //   thread:
@@ -131,7 +131,7 @@ OVUM_API int VM_InvokeMember(ThreadHandle thread, String *name, uint32_t argCoun
 //     The number of arguments to pass to the method, NOT including the instance.
 //   result:
 //     The return value of the invocation. If null, the return value is pushed onto the stack.
-OVUM_API int VM_InvokeMethod(ThreadHandle thread, MethodHandle method, uint32_t argCount, Value *result);
+OVUM_API int VM_InvokeMethod(ThreadHandle thread, MethodHandle method, ovlocals_t argCount, Value *result);
 // Invokes an operator on one or two values on the evaluation stack.
 //   thread:
 //     The thread on which to invoke the operator.
@@ -202,13 +202,13 @@ OVUM_API int VM_StoreField(ThreadHandle thread, FieldHandle field);
 //     The number of arguments to invoke the indexer with, not including the instance.
 //   result:
 //     The result of loading the member. If null, this value is pushed onto the stack.
-OVUM_API int VM_LoadIndexer(ThreadHandle thread, uint32_t argCount, Value *result);
+OVUM_API int VM_LoadIndexer(ThreadHandle thread, ovlocals_t argCount, Value *result);
 // Stores the top value on the stack into the indexer of the second stack value.
 //   thread:
 //     The thread on which to execute the indexer setter.
 //   argCount:
 //     The number of arguments to invoke the indexer with, not including the instance or value.
-OVUM_API int VM_StoreIndexer(ThreadHandle thread, uint32_t argCount);
+OVUM_API int VM_StoreIndexer(ThreadHandle thread, ovlocals_t argCount);
 
 // Loads the value of the specified static field.
 //   thread:
@@ -264,7 +264,7 @@ OVUM_API int VM_ThrowNullReferenceError(ThreadHandle thread, String *message = n
 // also be returned.
 // This function should be used by native code that need to throw
 // an error of a type not covered by the helper functions above.
-OVUM_API int VM_ThrowErrorOfType(ThreadHandle thread, TypeHandle type, int argc);
+OVUM_API int VM_ThrowErrorOfType(ThreadHandle thread, TypeHandle type, ovlocals_t argc);
 
 // Informs the thread that it is entering a section of native code
 // which will not interact with the managed runtime in any way.

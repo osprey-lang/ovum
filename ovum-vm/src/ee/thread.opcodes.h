@@ -489,7 +489,7 @@ namespace opcode_args
 	{
 		LocalOffset args;
 		LocalOffset dest;
-		uint32_t argc;
+		ovlocals_t argc;
 		Type *type;
 		
 		inline Value *const Args(const StackFrame *const frame) const
@@ -507,7 +507,7 @@ namespace opcode_args
 	{
 		LocalOffset args;
 		LocalOffset dest;
-		uint32_t argc;
+		ovlocals_t argc;
 
 		inline Value *const Args(const StackFrame *const frame) const
 		{
@@ -524,7 +524,7 @@ namespace opcode_args
 	{
 		LocalOffset args;
 		LocalOffset dest;
-		uint32_t argc;
+		ovlocals_t argc;
 		MethodOverload *method;
 		
 		inline Value *const Args(const StackFrame *const frame) const
@@ -542,7 +542,7 @@ namespace opcode_args
 	{
 		LocalOffset args;
 		LocalOffset dest;
-		uint32_t argc;
+		ovlocals_t argc;
 		String *member;
 
 		inline Value *const Args(const StackFrame *const frame) const
@@ -560,7 +560,7 @@ namespace opcode_args
 	{
 		LocalOffset args;
 		LocalOffset dest;
-		uint32_t argc;
+		ovlocals_t argc;
 		uint32_t refSignature;
 		
 		inline Value *const Args(const StackFrame *const frame) const
@@ -578,7 +578,7 @@ namespace opcode_args
 	{
 		LocalOffset args;
 		LocalOffset dest;
-		uint32_t argc;
+		ovlocals_t argc;
 		uint32_t refSignature;
 		String *member;
 		

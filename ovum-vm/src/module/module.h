@@ -239,13 +239,13 @@ private:
 	void ReadFunctionDefs(ModuleReader &reader);
 	void ReadConstantDefs(ModuleReader &reader, int32_t headerConstantCount);
 
-	Type *ReadSingleType(ModuleReader &reader, const TokenId typeId, std::vector<FieldConstData> &unresolvedConstants);
+	Type *ReadSingleType(ModuleReader &reader, TokenId typeId, std::vector<FieldConstData> &unresolvedConstants);
 	void ReadFields(ModuleReader &reader, Type *targetType, std::vector<FieldConstData> &unresolvedConstants);
 	void ReadMethods(ModuleReader &reader, Type *targetType);
 	void ReadProperties(ModuleReader &reader, Type *targetType);
 	void ReadOperators(ModuleReader &reader, Type *targetType);
 
-	void SetConstantFieldValue(ModuleReader &reader, Field *field, Type *constantType, const int64_t value);
+	void SetConstantFieldValue(ModuleReader &reader, Field *field, Type *constantType, int64_t value);
 
 	Method *ReadSingleMethod(ModuleReader &reader);
 	TryBlock *ReadTryBlocks(ModuleReader &reader, int32_t &tryCount);

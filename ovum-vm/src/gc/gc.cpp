@@ -286,7 +286,7 @@ void GC::EndAlloc()
 	allocSection.Leave();
 }
 
-int GC::Construct(Thread *const thread, Type *type, const uint16_t argc, Value *output)
+int GC::Construct(Thread *const thread, Type *type, ovlocals_t argc, Value *output)
 {
 	if (type == vm->types.String ||
 		type->IsPrimitive() ||
@@ -307,7 +307,7 @@ int GC::Construct(Thread *const thread, Type *type, const uint16_t argc, Value *
 	return r;
 }
 
-int GC::ConstructLL(Thread *const thread, Type *type, const uint16_t argc, Value *args, Value *output)
+int GC::ConstructLL(Thread *const thread, Type *type, ovlocals_t argc, Value *args, Value *output)
 {
 	GCObject *gco;
 	int r = Alloc(thread, type, type->GetTotalSize(), &gco);
@@ -316,7 +316,7 @@ int GC::ConstructLL(Thread *const thread, Type *type, const uint16_t argc, Value
 	Value *framePointer = args + argc;
 
 	// Unshift value onto beginning of eval stack! Hurrah.
-	for (int i = 0; i < argc; i++)
+	for (ovlocals_t i = 0; i < argc; i++)
 	{
 		*framePointer = *(framePointer - 1);
 		framePointer--;
@@ -338,7 +338,7 @@ int GC::ConstructLL(Thread *const thread, Type *type, const uint16_t argc, Value
 	return r;
 }
 
-String *GC::ConstructString(Thread *const thread, const int32_t length, const ovchar_t value[])
+String *GC::ConstructString(Thread *const thread, int32_t length, const ovchar_t value[])
 {
 	GCObject *gco;
 	// Note: sizeof(String) includes firstChar, but we need an extra character
@@ -378,7 +378,7 @@ String *GC::ConvertString(Thread *const thread, const char *string)
 	return output;
 }
 
-String *GC::ConstructModuleString(Thread *const thread, const int32_t length, const ovchar_t value[])
+String *GC::ConstructModuleString(Thread *const thread, int32_t length, const ovchar_t value[])
 {
 	// Replicate some functionality of Alloc here
 	size_t size = sizeof(String) + length*sizeof(ovchar_t) + GCO_SIZE;
@@ -454,12 +454,12 @@ void GC::Release(GCObject *gco)
 	ReleaseRaw(gco); // goodbye, dear pointer.
 }
 
-void GC::AddMemoryPressure(Thread *const thread, const size_t size)
+void GC::AddMemoryPressure(Thread *const thread, size_t size)
 {
 	// Not implemented yet
 }
 
-void GC::RemoveMemoryPressure(Thread *const thread, const size_t size)
+void GC::RemoveMemoryPressure(Thread *const thread, size_t size)
 {
 	// Not implemented yet
 }
@@ -1190,12 +1190,12 @@ void GC::UpdateLocals(unsigned int count, Value values[])
 
 } // namespace ovum
 
-OVUM_API int GC_Construct(ThreadHandle thread, TypeHandle type, const uint16_t argc, Value *output)
+OVUM_API int GC_Construct(ThreadHandle thread, TypeHandle type, ovlocals_t argc, Value *output)
 {
 	return thread->GetGC()->Construct(thread, type, argc, output);
 }
 
-OVUM_API String *GC_ConstructString(ThreadHandle thread, const int32_t length, const ovchar_t *values)
+OVUM_API String *GC_ConstructString(ThreadHandle thread, int32_t length, const ovchar_t *values)
 {
 	return thread->GetGC()->ConstructString(thread, length, values);
 }
@@ -1210,12 +1210,12 @@ OVUM_API int GC_AllocValueArray(ThreadHandle thread, uint32_t length, Value **ou
 	return thread->GetGC()->AllocValueArray(thread, length, output);
 }
 
-OVUM_API void GC_AddMemoryPressure(ThreadHandle thread, const size_t size)
+OVUM_API void GC_AddMemoryPressure(ThreadHandle thread, size_t size)
 {
 	thread->GetGC()->AddMemoryPressure(thread, size);
 }
 
-OVUM_API void GC_RemoveMemoryPressure(ThreadHandle thread, const size_t size)
+OVUM_API void GC_RemoveMemoryPressure(ThreadHandle thread, size_t size)
 {
 	thread->GetGC()->RemoveMemoryPressure(thread, size);
 }

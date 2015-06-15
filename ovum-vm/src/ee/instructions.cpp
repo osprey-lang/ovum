@@ -23,7 +23,7 @@ namespace instr
 		// go when the constructor is invoked.
 		RefSignatureBuilder refBuilder(argCount + 1);
 
-		for (int i = 1; i <= argCount; i++)
+		for (ovlocals_t i = 1; i <= argCount; i++)
 			if (stack.IsRef(argCount - i))
 				refBuilder.SetParam(i, true);
 
@@ -58,7 +58,7 @@ namespace instr
 		{
 			RefSignatureBuilder refBuilder(argCount + 1);
 
-			for (int i = 1; i <= argCount; i++)
+			for (ovlocals_t i = 1; i <= argCount; i++)
 				if (stack.IsRef(argCount - i))
 					refBuilder.SetParam(i, true);
 
@@ -209,14 +209,14 @@ namespace instr
 
 	void LoadIndexer::WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const
 	{
-		oa::TwoLocalsAndValue<uint32_t> args = { this->args, output, argCount };
-		buffer.Write(args, oa::TWO_LOCALS_AND_VALUE<uint32_t>::SIZE);
+		oa::TwoLocalsAndValue<ovlocals_t> args = { this->args, output, argCount };
+		buffer.Write(args, oa::TWO_LOCALS_AND_VALUE<ovlocals_t>::SIZE);
 	}
 
 	void StoreIndexer::WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const
 	{
-		oa::LocalAndValue<uint32_t> args = { this->args, argCount };
-		buffer.Write(args, oa::LOCAL_AND_VALUE<uint32_t>::SIZE);
+		oa::LocalAndValue<ovlocals_t> args = { this->args, argCount };
+		buffer.Write(args, oa::LOCAL_AND_VALUE<ovlocals_t>::SIZE);
 	}
 
 	void Call::WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const

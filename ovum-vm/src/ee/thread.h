@@ -43,32 +43,32 @@ public:
 		OVUM_ASSERT(stackCount > 0);
 		return evalStack[--stackCount];
 	}
-	inline void Pop(unsigned int n)
+	inline void Pop(ovlocals_t n)
 	{
 		OVUM_ASSERT(n <= stackCount);
 		stackCount -= n;
 	}
 
-	inline Value Peek(unsigned int n = 0) const
+	inline Value Peek(ovlocals_t n = 0) const
 	{
 		OVUM_ASSERT(n <= stackCount);
 		return evalStack[stackCount - n - 1];
 	}
-	inline Type *PeekType(unsigned int n = 0) const
+	inline Type *PeekType(ovlocals_t n = 0) const
 	{
 		OVUM_ASSERT(n <= stackCount);
 		return evalStack[stackCount - n - 1].type;
 	}
-	inline String *PeekString(unsigned int n = 0) const
+	inline String *PeekString(ovlocals_t n = 0) const
 	{
 		OVUM_ASSERT(n <= stackCount);
 		return evalStack[stackCount - n - 1].v.string;
 	}
 
-	inline void Shift(uint16_t offset)
+	inline void Shift(ovlocals_t offset)
 	{
 		Value *stackPointer = evalStack + stackCount - offset - 1;
-		for (int i = 0; i < offset; i++)
+		for (ovlocals_t i = 0; i < offset; i++)
 		{
 			*stackPointer = *(stackPointer + 1);
 			stackPointer++;
@@ -124,7 +124,7 @@ public:
 	Thread(VM *owner, int &status);
 	~Thread();
 
-	int Start(unsigned int argCount, MethodOverload *mo, Value &result);
+	int Start(ovlocals_t argCount, MethodOverload *mo, Value &result);
 
 private:
 	// The size of the managed call stack
@@ -225,7 +225,7 @@ public:
 	}
 
 	inline Value Pop() { return currentFrame->Pop(); }
-	inline void Pop(unsigned int n) { currentFrame->Pop(n); }
+	inline void Pop(ovlocals_t n) { currentFrame->Pop(n); }
 
 	inline void Dup()
 	{
@@ -233,14 +233,14 @@ public:
 		*(top + 1) = *top;
 	}
 
-	inline Value *Local(unsigned int n) { return currentFrame->Locals() + n; }
+	inline Value *Local(ovlocals_t n) { return currentFrame->Locals() + n; }
 
 	// argCount does NOT include the instance.
-	int Invoke(uint32_t argCount, Value *result);
+	int Invoke(ovlocals_t argCount, Value *result);
 	// argCount DOES NOT include the instance.
-	int InvokeMethod(Method *method, uint32_t argCount, Value *result);
+	int InvokeMethod(Method *method, ovlocals_t argCount, Value *result);
 	// argCount does NOT include the instance.
-	int InvokeMember(String *name, uint32_t argCount, Value *result);
+	int InvokeMember(String *name, ovlocals_t argCount, Value *result);
 	int InvokeOperator(Operator op, Value *result);
 	int InvokeApply(Value *result);
 	int InvokeApplyMethod(Method *method, Value *result);
@@ -256,9 +256,9 @@ public:
 	int StoreField(Field *field);
 
 	// Note: argCount does NOT include the instance.
-	int LoadIndexer(uint32_t argCount, Value *result);
+	int LoadIndexer(ovlocals_t argCount, Value *result);
 	// Note: argCount does NOT include the instance or the value that's being stored.
-	int StoreIndexer(uint32_t argCount);
+	int StoreIndexer(ovlocals_t argCount);
 
 	int LoadStaticField(Field *field, Value *result);
 	int StoreStaticField(Field *field);
@@ -276,7 +276,7 @@ public:
 	OVUM_NOINLINE int ThrowDivideByZeroError(String *message = nullptr);
 	OVUM_NOINLINE int ThrowNullReferenceError(String *message = nullptr);
 	OVUM_NOINLINE int ThrowMemberNotFoundError(String *member);
-	OVUM_NOINLINE int ThrowNoOverloadError(uint32_t argCount, String *message = nullptr);
+	OVUM_NOINLINE int ThrowNoOverloadError(ovlocals_t argCount, String *message = nullptr);
 
 	bool IsSuspendedForGC() const;
 
@@ -322,9 +322,9 @@ private:
 	//     Pointer to the first argument, which must be on the stack.
 	//   method:
 	//     The overload that is being invoked in the stack frame.
-	void PushStackFrame(uint32_t argCount, Value *args, MethodOverload *method);
+	void PushStackFrame(ovlocals_t argCount, Value *args, MethodOverload *method);
 
-	int PrepareVariadicArgs(MethodFlags flags, uint32_t argCount, uint32_t paramCount, StackFrame *frame);
+	int PrepareVariadicArgs(MethodFlags flags, ovlocals_t argCount, ovlocals_t paramCount, StackFrame *frame);
 
 	OVUM_NOINLINE void HandleRequest();
 
@@ -339,29 +339,29 @@ private:
 
 	int Evaluate();
 	int FindErrorHandler(int32_t maxIndex);
-	int EvaluateLeave(register StackFrame *frame, int32_t target);
+	int EvaluateLeave(StackFrame *frame, int32_t target);
 
 	String *GetStackTrace();
 	void AppendArgumentType(StringBuffer &buf, Value *arg);
 	void AppendSourceLocation(StringBuffer &buf, MethodOverload *method, uint8_t *ip);
 
 	// argCount DOES NOT include the value to be invoked, but value does.
-	int InvokeLL(unsigned int argCount, Value *value, Value *result, uint32_t refSignature);
+	int InvokeLL(ovlocals_t argCount, Value *value, Value *result, uint32_t refSignature);
 	// args DOES include the instance, argCount DOES NOT
-	int InvokeMethodOverload(MethodOverload *mo, unsigned int argCount, Value *args, Value *result);
+	int InvokeMethodOverload(MethodOverload *mo, ovlocals_t argCount, Value *args, Value *result);
 
 	int InvokeApplyLL(Value *args, Value *result);
 	int InvokeApplyMethodLL(Method *method, Value *args, Value *result);
 
-	int InvokeMemberLL(String *name, uint32_t argCount, Value *value, Value *result, uint32_t refSignature);
+	int InvokeMemberLL(String *name, ovlocals_t argCount, Value *value, Value *result, uint32_t refSignature);
 
 	int LoadMemberLL(Value *instance, String *member, Value *result);
 	int StoreMemberLL(Value *instance, String *member);
 
 	// argCount DOES NOT include the instance, but args DOES
-	int LoadIndexerLL(uint32_t argCount, Value *args, Value *dest);
+	int LoadIndexerLL(ovlocals_t argCount, Value *args, Value *dest);
 	// argCount DOES NOT include the instance or the value being assigned, but args DOES
-	int StoreIndexerLL(uint32_t argCount, Value *args);
+	int StoreIndexerLL(ovlocals_t argCount, Value *args);
 
 	int LoadFieldRefLL(Value *inst, Field *field);
 	int LoadMemberRefLL(Value *inst, String *member);

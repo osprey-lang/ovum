@@ -87,7 +87,7 @@ namespace instr
 		int32_t oldIndex = 0, newIndex = 0;
 		for (instr_iter i = instructions.begin(); i != instructions.end(); oldIndex++)
 		{
-			if (i->stackHeight < 0 || i->removed)
+			if (i->stackHeight == UNVISITED || i->removed)
 			{
 				// This instruction may have been the first instruction in a protected region,
 				// or the target of a branch, in which case the next following instruction
@@ -120,7 +120,7 @@ namespace instr
 				else if (i->instr->IsSwitch())
 				{
 					Switch *sw = static_cast<Switch*>(i->instr);
-					for (int t = 0; t < sw->targetCount; t++)
+					for (uint32_t t = 0; t < sw->targetCount; t++)
 						sw->targets[t] = newIndices[sw->targets[t]];
 				}
 

@@ -51,7 +51,7 @@ namespace instr
 		uint16_t removed;
 		uint16_t added;
 
-		inline StackChange(const uint16_t removed, const uint16_t added) :
+		inline StackChange(uint16_t removed, uint16_t added) :
 			removed(removed), added(added)
 		{ }
 
@@ -97,8 +97,8 @@ namespace instr
 			flags = flags | InstrFlags::HAS_BRANCHES;
 		}
 
-		inline virtual void UpdateInput(const LocalOffset offset, bool isOnStack) { }
-		inline virtual void UpdateOutput(const LocalOffset offset, bool isOnStack) { }
+		inline virtual void UpdateInput(LocalOffset offset, bool isOnStack) { }
+		inline virtual void UpdateOutput(LocalOffset offset, bool isOnStack) { }
 
 		inline virtual uint32_t GetReferenceSignature() const { return 0; }
 		inline virtual int SetReferenceSignature(const StackManager &stack) { return -1; }
@@ -167,13 +167,13 @@ namespace instr
 			return StackChange(opcode & 1, (opcode & 2) >> 1);
 		}
 
-		inline virtual void UpdateInput(const LocalOffset offset, bool isOnStack)
+		inline virtual void UpdateInput(LocalOffset offset, bool isOnStack)
 		{
 			source = offset;
 			// Set or clear lowest bit to indicate removal from stack (or lack thereof)
 			opcode = (IntermediateOpcode)(isOnStack ? opcode | 1 : opcode & ~1);
 		}
-		inline virtual void UpdateOutput(const LocalOffset offset, bool isOnStack)
+		inline virtual void UpdateOutput(LocalOffset offset, bool isOnStack)
 		{
 			target = offset;
 			// Set or clear second lowest bit to indicate addition to stack (or lack thereof)
@@ -199,7 +199,7 @@ namespace instr
 
 		inline virtual StackChange GetStackChange() const { return StackChange(0, 1); }
 
-		inline virtual void UpdateOutput(const LocalOffset offset, bool isOnStack)
+		inline virtual void UpdateOutput(LocalOffset offset, bool isOnStack)
 		{
 			if (sourceIsRef)
 			{
@@ -226,7 +226,7 @@ namespace instr
 
 		inline virtual StackChange GetStackChange() const { return StackChange(1, 0); }
 
-		inline virtual void UpdateInput(const LocalOffset offset, bool isOnStack)
+		inline virtual void UpdateInput(LocalOffset offset, bool isOnStack)
 		{
 			if (targetIsRef)
 			{
@@ -259,12 +259,12 @@ namespace instr
 			return StackChange(1, 1 + ((opcode & 2) >> 1));
 		}
 
-		inline virtual void UpdateInput(const LocalOffset offset, bool isOnStack)
+		inline virtual void UpdateInput(LocalOffset offset, bool isOnStack)
 		{
 			OVUM_ASSERT(isOnStack);
 			source = offset;
 		}
-		inline virtual void UpdateOutput(const LocalOffset offset, bool isOnStack)
+		inline virtual void UpdateOutput(LocalOffset offset, bool isOnStack)
 		{
 			if (isOnStack)
 			{
@@ -303,7 +303,7 @@ namespace instr
 
 		inline virtual StackChange GetStackChange() const { return StackChange(0, opcode & 1); }
 
-		inline virtual void UpdateOutput(const LocalOffset offset, bool isOnStack)
+		inline virtual void UpdateOutput(LocalOffset offset, bool isOnStack)
 		{
 			target = offset;
 			opcode = (IntermediateOpcode)(isOnStack ? opcode | 1 : opcode & ~1);
@@ -335,7 +335,7 @@ namespace instr
 	public:
 		int64_t value;
 
-		inline LoadInt(const int64_t value) :
+		inline LoadInt(int64_t value) :
 			LoadValue(OPI_LDC_I_S),
 			value(value)
 		{ }
@@ -354,7 +354,7 @@ namespace instr
 	public:
 		uint64_t value;
 
-		inline LoadUInt(const uint64_t value) :
+		inline LoadUInt(uint64_t value) :
 			LoadValue(OPI_LDC_U_S),
 			value(value)
 		{ }
@@ -373,7 +373,7 @@ namespace instr
 	public:
 		double value;
 
-		inline LoadReal(const double value) :
+		inline LoadReal(double value) :
 			LoadValue(OPI_LDC_R_S),
 			value(value)
 		{ }
@@ -418,7 +418,7 @@ namespace instr
 		Type *type;
 		int64_t value;
 
-		inline LoadEnumValue(Type *type, const int64_t value) :
+		inline LoadEnumValue(Type *type, int64_t value) :
 			LoadValue(OPI_LDENUM_S),
 			type(type), value(value)
 		{ }
@@ -438,10 +438,10 @@ namespace instr
 		LocalOffset args;
 		LocalOffset target;
 		Type *type;
-		uint16_t argCount;
+		ovlocals_t argCount;
 		uint32_t refSignature; // Not output
 
-		inline NewObject(Type *type, uint16_t argCount) :
+		inline NewObject(Type *type, ovlocals_t argCount) :
 			Instruction(InstrFlags::HAS_INOUT | InstrFlags::INPUT_ON_STACK | InstrFlags::ACCEPTS_REFS, OPI_NEWOBJ_S),
 			type(type), argCount(argCount), args(0), target(0), refSignature(0)
 		{ }
@@ -453,12 +453,12 @@ namespace instr
 
 		inline virtual StackChange GetStackChange() const { return StackChange(argCount, opcode & 1); }
 
-		inline virtual void UpdateInput(const LocalOffset offset, bool isOnStack)
+		inline virtual void UpdateInput(LocalOffset offset, bool isOnStack)
 		{
 			OVUM_ASSERT(isOnStack);
 			this->args = offset;
 		}
-		inline virtual void UpdateOutput(const LocalOffset offset, bool isOnStack)
+		inline virtual void UpdateOutput(LocalOffset offset, bool isOnStack)
 		{
 			this->target = offset;
 			opcode = (IntermediateOpcode)(isOnStack ? opcode | 1 : opcode & ~1);
@@ -476,7 +476,7 @@ namespace instr
 	public:
 		int32_t capacity;
 
-		inline CreateList(const int32_t capacity) :
+		inline CreateList(int32_t capacity) :
 			LoadValue(OPI_LIST_S),
 			capacity(capacity)
 		{ }
@@ -495,7 +495,7 @@ namespace instr
 	public:
 		int32_t capacity;
 
-		inline CreateHash(const int32_t capacity) :
+		inline CreateHash(int32_t capacity) :
 			LoadValue(OPI_HASH_S),
 			capacity(capacity)
 		{ }
@@ -566,12 +566,12 @@ namespace instr
 
 		inline virtual StackChange GetStackChange() const { return StackChange(1, opcode & 1); }
 
-		inline virtual void UpdateInput(const LocalOffset offset, bool isOnStack)
+		inline virtual void UpdateInput(LocalOffset offset, bool isOnStack)
 		{
 			OVUM_ASSERT(isOnStack);
 			instance = offset;
 		}
-		inline virtual void UpdateOutput(const LocalOffset offset, bool isOnStack)
+		inline virtual void UpdateOutput(LocalOffset offset, bool isOnStack)
 		{
 			output = offset;
 			opcode = (IntermediateOpcode)(isOnStack ? opcode | 1 : opcode & ~1);
@@ -599,7 +599,7 @@ namespace instr
 
 		inline virtual StackChange GetStackChange() const { return StackChange(2, 0); }
 
-		inline virtual void UpdateInput(const LocalOffset offset, bool isOnStack)
+		inline virtual void UpdateInput(LocalOffset offset, bool isOnStack)
 		{
 			OVUM_ASSERT(isOnStack);
 			args = offset;
@@ -628,12 +628,12 @@ namespace instr
 
 		inline virtual StackChange GetStackChange() const { return StackChange(1, opcode & 1); }
 
-		inline virtual void UpdateInput(const LocalOffset offset, bool isOnStack)
+		inline virtual void UpdateInput(LocalOffset offset, bool isOnStack)
 		{
 			OVUM_ASSERT(isOnStack);
 			this->instance = offset;
 		}
-		inline virtual void UpdateOutput(const LocalOffset offset, bool isOnStack)
+		inline virtual void UpdateOutput(LocalOffset offset, bool isOnStack)
 		{
 			output = offset;
 			opcode = (IntermediateOpcode)(isOnStack ? opcode | 1 : opcode & ~1);
@@ -661,7 +661,7 @@ namespace instr
 
 		inline virtual StackChange GetStackChange() const { return StackChange(2, 0); }
 
-		inline virtual void UpdateInput(const LocalOffset offset, bool isOnStack)
+		inline virtual void UpdateInput(LocalOffset offset, bool isOnStack)
 		{
 			OVUM_ASSERT(isOnStack);
 			args = offset;
@@ -708,7 +708,7 @@ namespace instr
 
 		inline virtual StackChange GetStackChange() const { return StackChange(opcode & 1, 0); }
 
-		inline virtual void UpdateInput(const LocalOffset offset, bool isOnStack)
+		inline virtual void UpdateInput(LocalOffset offset, bool isOnStack)
 		{
 			value = offset;
 			opcode = (IntermediateOpcode)(isOnStack ? opcode | 1 : opcode & ~1);
@@ -736,12 +736,12 @@ namespace instr
 
 		inline virtual StackChange GetStackChange() const { return StackChange(1, opcode & 1); }
 
-		inline virtual void UpdateInput(const LocalOffset offset, bool isOnStack)
+		inline virtual void UpdateInput(LocalOffset offset, bool isOnStack)
 		{
 			OVUM_ASSERT(isOnStack);
 			value = offset;
 		}
-		inline virtual void UpdateOutput(const LocalOffset offset, bool isOnStack)
+		inline virtual void UpdateOutput(LocalOffset offset, bool isOnStack)
 		{
 			output = offset;
 			opcode = (IntermediateOpcode)(isOnStack ? opcode | 1 : opcode & ~1);
@@ -769,12 +769,12 @@ namespace instr
 
 		inline virtual StackChange GetStackChange() const { return StackChange(1, opcode & 1); }
 
-		inline virtual void UpdateInput(const LocalOffset offset, bool isOnStack)
+		inline virtual void UpdateInput(LocalOffset offset, bool isOnStack)
 		{
 			OVUM_ASSERT(isOnStack);
 			source = offset;
 		}
-		inline virtual void UpdateOutput(const LocalOffset offset, bool isOnStack)
+		inline virtual void UpdateOutput(LocalOffset offset, bool isOnStack)
 		{
 			target = offset;
 			opcode = (IntermediateOpcode)(isOnStack ? opcode | 1 : opcode & ~1);
@@ -789,9 +789,9 @@ namespace instr
 	public:
 		LocalOffset args; // must be on stack (does include instance)
 		LocalOffset output;
-		uint16_t argCount;
+		ovlocals_t argCount;
 
-		inline LoadIndexer(const uint16_t argCount) :
+		inline LoadIndexer(ovlocals_t argCount) :
 			Instruction(InstrFlags::HAS_INOUT | InstrFlags::INPUT_ON_STACK, OPI_LDIDX_S),
 			args(0), output(0), argCount(argCount)
 		{ }
@@ -803,12 +803,12 @@ namespace instr
 
 		inline virtual StackChange GetStackChange() const { return StackChange(argCount + 1, opcode & 1); }
 
-		inline virtual void UpdateInput(const LocalOffset offset, bool isOnStack)
+		inline virtual void UpdateInput(LocalOffset offset, bool isOnStack)
 		{
 			OVUM_ASSERT(isOnStack);
 			args = offset;
 		}
-		inline virtual void UpdateOutput(const LocalOffset offset, bool isOnStack)
+		inline virtual void UpdateOutput(LocalOffset offset, bool isOnStack)
 		{
 			output = offset;
 			opcode = (IntermediateOpcode)(isOnStack ? opcode | 1 : opcode & ~1);
@@ -822,9 +822,9 @@ namespace instr
 	{
 	public:
 		LocalOffset args; // must be on stack (does include instance)
-		uint16_t argCount;
+		ovlocals_t argCount;
 
-		inline StoreIndexer(const uint16_t argCount) :
+		inline StoreIndexer(ovlocals_t argCount) :
 			Instruction(InstrFlags::HAS_INPUT | InstrFlags::INPUT_ON_STACK, OPI_STIDX),
 			args(0), argCount(argCount)
 		{ }
@@ -836,7 +836,7 @@ namespace instr
 
 		inline virtual StackChange GetStackChange() const { return StackChange(argCount + 2, 0); }
 
-		inline virtual void UpdateInput(const LocalOffset offset, bool isOnStack)
+		inline virtual void UpdateInput(LocalOffset offset, bool isOnStack)
 		{
 			OVUM_ASSERT(isOnStack);
 			args = offset;
@@ -851,10 +851,10 @@ namespace instr
 	public:
 		LocalOffset args; // must be on stack (includes value to be invoked)
 		LocalOffset output;
-		uint16_t argCount;
+		ovlocals_t argCount;
 		uint32_t refSignature;
 
-		inline Call(uint16_t argCount) :
+		inline Call(ovlocals_t argCount) :
 			Instruction(InstrFlags::HAS_INOUT | InstrFlags::INPUT_ON_STACK | InstrFlags::ACCEPTS_REFS, OPI_CALL_S),
 			args(0), output(0), argCount(argCount), refSignature(0)
 		{ }
@@ -866,12 +866,12 @@ namespace instr
 
 		inline virtual StackChange GetStackChange() const { return StackChange(argCount + 1, opcode & 1); }
 
-		inline virtual void UpdateInput(const LocalOffset offset, bool isOnStack)
+		inline virtual void UpdateInput(LocalOffset offset, bool isOnStack)
 		{
 			OVUM_ASSERT(isOnStack);
 			args = offset;
 		}
-		inline virtual void UpdateOutput(const LocalOffset offset, bool isOnStack)
+		inline virtual void UpdateOutput(LocalOffset offset, bool isOnStack)
 		{
 			output = offset;
 			opcode = (IntermediateOpcode)(isOnStack ? opcode | 1 : opcode & ~1);
@@ -890,10 +890,10 @@ namespace instr
 		LocalOffset args; // on stack, always!
 		LocalOffset output;
 		String *member;
-		uint16_t argCount;
+		ovlocals_t argCount;
 		uint32_t refSignature;
 
-		inline CallMember(String *member, uint16_t argCount) :
+		inline CallMember(String *member, ovlocals_t argCount) :
 			Instruction(InstrFlags::HAS_INOUT | InstrFlags::INPUT_ON_STACK | InstrFlags::ACCEPTS_REFS, OPI_CALLMEM_S),
 			args(0), output(0), member(member), argCount(argCount), refSignature(0)
 		{ }
@@ -905,12 +905,12 @@ namespace instr
 
 		inline virtual StackChange GetStackChange() const { return StackChange(argCount + 1, opcode & 1); }
 
-		inline virtual void UpdateInput(const LocalOffset offset, bool isOnStack)
+		inline virtual void UpdateInput(LocalOffset offset, bool isOnStack)
 		{
 			OVUM_ASSERT(isOnStack);
 			args = offset;
 		}
-		inline virtual void UpdateOutput(const LocalOffset offset, bool isOnStack)
+		inline virtual void UpdateOutput(LocalOffset offset, bool isOnStack)
 		{
 			output = offset;
 			opcode = (IntermediateOpcode)(isOnStack ? opcode | 1 : opcode & ~1);
@@ -928,11 +928,11 @@ namespace instr
 	public:
 		LocalOffset args; // must be on stack
 		LocalOffset output;
-		uint16_t argCount;
+		ovlocals_t argCount;
 		MethodOverload *method;
 		uint32_t refSignature; // Not output
 
-		inline StaticCall(uint16_t argCount, MethodOverload *method) :
+		inline StaticCall(ovlocals_t argCount, MethodOverload *method) :
 			Instruction(InstrFlags::HAS_INOUT | InstrFlags::INPUT_ON_STACK | InstrFlags::ACCEPTS_REFS, OPI_SCALL_S),
 			args(0), output(0), argCount(argCount), method(method), refSignature(0)
 		{ }
@@ -944,12 +944,12 @@ namespace instr
 
 		inline virtual StackChange GetStackChange() const { return StackChange(argCount + method->InstanceOffset(), opcode & 1); }
 
-		inline virtual void UpdateInput(const LocalOffset offset, bool isOnStack)
+		inline virtual void UpdateInput(LocalOffset offset, bool isOnStack)
 		{
 			OVUM_ASSERT(isOnStack);
 			args = offset;
 		}
-		inline virtual void UpdateOutput(const LocalOffset offset, bool isOnStack)
+		inline virtual void UpdateOutput(LocalOffset offset, bool isOnStack)
 		{
 			output = offset;
 			opcode = (IntermediateOpcode)(isOnStack ? opcode | 1 : opcode & ~1);
@@ -980,12 +980,12 @@ namespace instr
 
 		inline virtual StackChange GetStackChange() const { return StackChange(2, opcode & 1); }
 
-		inline virtual void UpdateInput(const LocalOffset offset, bool isOnStack)
+		inline virtual void UpdateInput(LocalOffset offset, bool isOnStack)
 		{
 			OVUM_ASSERT(isOnStack);
 			args = offset;
 		}
-		inline virtual void UpdateOutput(const LocalOffset offset, bool isOnStack)
+		inline virtual void UpdateOutput(LocalOffset offset, bool isOnStack)
 		{
 			output = offset;
 			opcode = (IntermediateOpcode)(isOnStack ? opcode | 1 : opcode & ~1);
@@ -1014,12 +1014,12 @@ namespace instr
 
 		inline virtual StackChange GetStackChange() const { return StackChange(1, opcode & 1); }
 
-		inline virtual void UpdateInput(const LocalOffset offset, bool isOnStack)
+		inline virtual void UpdateInput(LocalOffset offset, bool isOnStack)
 		{
 			OVUM_ASSERT(isOnStack);
 			args = offset;
 		}
-		inline virtual void UpdateOutput(const LocalOffset offset, bool isOnStack)
+		inline virtual void UpdateOutput(LocalOffset offset, bool isOnStack)
 		{
 			output = offset;
 			opcode = (IntermediateOpcode)(isOnStack ? opcode | 1 : opcode & ~1);
@@ -1034,7 +1034,7 @@ namespace instr
 	public:
 		int32_t target;
 
-		inline Branch(const int32_t target, bool isLeave) :
+		inline Branch(int32_t target, bool isLeave) :
 			Instruction(InstrFlags::BRANCH, isLeave ? OPI_LEAVE : OPI_BR),
 			target(target)
 		{ }
@@ -1051,7 +1051,7 @@ namespace instr
 	protected:
 		virtual void WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const;
 
-		inline Branch(const int32_t target, const InstrFlags flags, const IntermediateOpcode opcode) :
+		inline Branch(int32_t target, InstrFlags flags, IntermediateOpcode opcode) :
 			Instruction(InstrFlags::BRANCH | flags, opcode),
 			target(target)
 		{ }
@@ -1068,7 +1068,7 @@ namespace instr
 		static const int IF_TRUE  = 6;
 		static const int IF_TYPE  = 8;
 
-		inline ConditionalBranch(const int32_t target, const int condition) :
+		inline ConditionalBranch(int32_t target, int condition) :
 			Branch(target, InstrFlags::HAS_INPUT, (IntermediateOpcode)(OPI_BRNULL_S + condition)),
 			value(0)
 		{ }
@@ -1082,7 +1082,7 @@ namespace instr
 
 		inline virtual bool IsConditional() const { return true; }
 
-		inline virtual void UpdateInput(const LocalOffset offset, bool isOnStack)
+		inline virtual void UpdateInput(LocalOffset offset, bool isOnStack)
 		{
 			value = offset;
 			opcode = (IntermediateOpcode)(isOnStack ? opcode | 1 : opcode & ~1);
@@ -1097,7 +1097,7 @@ namespace instr
 	public:
 		Type *type;
 
-		inline BranchIfType(const int32_t target, Type *type) :
+		inline BranchIfType(int32_t target, Type *type) :
 			ConditionalBranch(target, IF_TYPE),
 			type(type)
 		{ }
@@ -1117,10 +1117,10 @@ namespace instr
 	{
 	public:
 		LocalOffset value;
-		uint16_t targetCount;
+		uint32_t targetCount;
 		int32_t *targets;
 
-		inline Switch(const uint16_t targetCount, int32_t *targets) :
+		inline Switch(uint32_t targetCount, int32_t *targets) :
 			Instruction(InstrFlags::HAS_INPUT | InstrFlags::SWITCH, OPI_SWITCH_S),
 			value(0), targetCount(targetCount), targets(targets)
 		{ }
@@ -1137,7 +1137,7 @@ namespace instr
 
 		inline virtual StackChange GetStackChange() const { return StackChange(opcode & 1, 0); }
 
-		inline virtual void UpdateInput(const LocalOffset offset, bool isOnStack)
+		inline virtual void UpdateInput(LocalOffset offset, bool isOnStack)
 		{
 			value = offset;
 			opcode = (IntermediateOpcode)(isOnStack ? opcode | 1 : opcode & ~1);
@@ -1152,7 +1152,7 @@ namespace instr
 	public:
 		LocalOffset args; // on stack
 
-		inline BranchIfReference(const int32_t target, bool branchIfSame) :
+		inline BranchIfReference(int32_t target, bool branchIfSame) :
 			Branch(target, InstrFlags::HAS_INPUT | InstrFlags::INPUT_ON_STACK, branchIfSame ? OPI_BRREF : OPI_BRNREF),
 			args(0)
 		{ }
@@ -1166,7 +1166,7 @@ namespace instr
 
 		inline virtual bool IsConditional() const { return true; }
 
-		inline virtual void UpdateInput(const LocalOffset offset, bool isOnStack)
+		inline virtual void UpdateInput(LocalOffset offset, bool isOnStack)
 		{
 			OVUM_ASSERT(isOnStack);
 			args = offset;
@@ -1195,7 +1195,7 @@ namespace instr
 
 		inline virtual bool IsConditional() const { return true; }
 
-		inline virtual void UpdateInput(const LocalOffset offset, bool isOnStack)
+		inline virtual void UpdateInput(LocalOffset offset, bool isOnStack)
 		{
 			OVUM_ASSERT(isOnStack);
 			args = offset;
@@ -1218,7 +1218,9 @@ namespace instr
 		static const IntermediateOpcode CMP_GTE = OPI_GTE_S;
 		static const IntermediateOpcode CONCAT  = OPI_CONCAT_S;
 
-		inline ExecOperator(const Operator op) :
+		static const Operator SINGLE_INSTR_OP = (Operator)-1;
+
+		inline ExecOperator(Operator op) :
 			Instruction(InstrFlags::HAS_INOUT | InstrFlags::INPUT_ON_STACK,
 				op == Operator::EQ ? OPI_EQ_S :
 				op == Operator::CMP ? OPI_CMP_S :
@@ -1226,9 +1228,9 @@ namespace instr
 			args(0), output(0), op(op)
 		{ }
 
-		inline ExecOperator(const IntermediateOpcode specialOp) :
+		inline ExecOperator(IntermediateOpcode specialOp) :
 			Instruction(InstrFlags::HAS_INOUT | InstrFlags::INPUT_ON_STACK, specialOp),
-			args(0), output(0), op((Operator)-1)
+			args(0), output(0), op(SINGLE_INSTR_OP)
 		{ }
 
 		inline bool IsUnary() const
@@ -1238,7 +1240,7 @@ namespace instr
 
 		inline virtual uint32_t GetArgsSize() const
 		{
-			if ((uint8_t)op == 0xff || op == Operator::EQ || op == Operator::CMP)
+			if (op == SINGLE_INSTR_OP || op == Operator::EQ || op == Operator::CMP)
 				return oa::TWO_LOCALS_SIZE;
 			else
 				return oa::TWO_LOCALS_AND_VALUE<Operator>::SIZE;
@@ -1246,12 +1248,12 @@ namespace instr
 
 		inline virtual StackChange GetStackChange() const { return StackChange(IsUnary() ? 1 : 2, opcode & 1); }
 
-		inline virtual void UpdateInput(const LocalOffset offset, bool isOnStack)
+		inline virtual void UpdateInput(LocalOffset offset, bool isOnStack)
 		{
 			OVUM_ASSERT(isOnStack);
 			args = offset;
 		}
-		inline virtual void UpdateOutput(const LocalOffset offset, bool isOnStack)
+		inline virtual void UpdateOutput(LocalOffset offset, bool isOnStack)
 		{
 			output = offset;
 			opcode = (IntermediateOpcode)(isOnStack ? opcode | 1 : opcode & ~1);
@@ -1300,7 +1302,7 @@ namespace instr
 
 		inline virtual StackChange GetStackChange() const { return StackChange(1, 1); }
 
-		inline virtual void UpdateInput(const LocalOffset offset, bool isOnStack)
+		inline virtual void UpdateInput(LocalOffset offset, bool isOnStack)
 		{
 			instance = offset;
 			opcode = (IntermediateOpcode)(isOnStack ? opcode | 1 : opcode & ~1);
@@ -1328,7 +1330,7 @@ namespace instr
 
 		inline virtual StackChange GetStackChange() const { return StackChange(1, 1); }
 
-		inline virtual void UpdateInput(const LocalOffset offset, bool isOnStack)
+		inline virtual void UpdateInput(LocalOffset offset, bool isOnStack)
 		{
 			instance = offset;
 			opcode = (IntermediateOpcode)(isOnStack ? opcode | 1 : opcode & ~1);

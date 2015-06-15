@@ -129,7 +129,7 @@ public:
 
 	void AddNativeField(size_t offset, NativeFieldType fieldType);
 
-	static inline const bool ValueIsType(Value *value, Type *const type)
+	static inline bool ValueIsType(Value *value, Type *const type)
 	{
 		Type *valtype = value->type;
 		while (valtype)

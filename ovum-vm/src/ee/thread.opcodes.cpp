@@ -279,7 +279,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// newobj: LocalOffset args, LocalOffset dest, uint32_t argc, Type *type
+		// newobj: LocalOffset args, LocalOffset dest, ovlocals_t argc, Type *type
 		TARGET(OPI_NEWOBJ_L)
 			{
 				OPC_ARGS(oa::NewObject);
@@ -453,26 +453,26 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// ldidx: LocalOffset args, LocalOffset dest, uint32_t argc
+		// ldidx: LocalOffset args, LocalOffset dest, ovlocals_t argc
 		// Note: argc does not include the instance
 		TARGET(OPI_LDIDX_L)
 			{
-				OPC_ARGS(oa::TwoLocalsAndValue<uint32_t>);
+				OPC_ARGS(oa::TwoLocalsAndValue<ovlocals_t>);
 
 				CHK(LoadIndexerLL(args->value, args->Source(f), args->Dest(f)));
 
 				// LoadIndexerLL decrements the stack height by the argument count + instance
-				ip += oa::TWO_LOCALS_AND_VALUE<uint32_t>::SIZE;
+				ip += oa::TWO_LOCALS_AND_VALUE<ovlocals_t>::SIZE;
 			}
 			NEXT_INSTR();
 		TARGET(OPI_LDIDX_S)
 			{
-				OPC_ARGS(oa::TwoLocalsAndValue<uint32_t>);
+				OPC_ARGS(oa::TwoLocalsAndValue<ovlocals_t>);
 
 				CHK(LoadIndexerLL(args->value, args->Source(f), args->Dest(f)));
 
 				// LoadIndexerLL decrements the stack height by the argument count + instance
-				ip += oa::TWO_LOCALS_AND_VALUE<uint32_t>::SIZE;
+				ip += oa::TWO_LOCALS_AND_VALUE<ovlocals_t>::SIZE;
 				f->stackCount++;
 			}
 			NEXT_INSTR();
@@ -517,7 +517,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// call: LocalOffset args, LocalOffset dest, uint32_t argc
+		// call: LocalOffset args, LocalOffset dest, ovlocals_t argc
 		TARGET(OPI_CALL_L)
 			{
 				OPC_ARGS(oa::Call);
@@ -536,7 +536,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// scall: LocalOffset args, LocalOffset dest, uint32_t argc, MethodOverload *method
+		// scall: LocalOffset args, LocalOffset dest, ovlocals_t argc, MethodOverload *method
 		TARGET(OPI_SCALL_L)
 			{
 				OPC_ARGS(oa::StaticCall);
@@ -704,7 +704,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// switch: LocalOffset value, uint16_t count, int32_t offsets[count]
+		// switch: LocalOffset value, uint32_t count, int32_t offsets[count]
 		TARGET(OPI_SWITCH_L)
 			{
 				OPC_ARGS(oa::Switch);
@@ -933,7 +933,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// callmem: LocalOffset args, LocalOffset dest, uint32_t argc, String *member
+		// callmem: LocalOffset args, LocalOffset dest, ovlocals_t argc, String *member
 		TARGET(OPI_CALLMEM_L)
 			{
 				OPC_ARGS(oa::CallMember);
@@ -988,15 +988,15 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// stidx: LocalOffset args, uint32_t argc
+		// stidx: LocalOffset args, ovlocals_t argc
 		// Note: argCount does not include the instance, or the value being assigned
 		TARGET(OPI_STIDX)
 			{
-				OPC_ARGS(oa::LocalAndValue<uint32_t>);
+				OPC_ARGS(oa::LocalAndValue<ovlocals_t>);
 				// StoreIndexerLL performs a null check
 				CHK(StoreIndexerLL(args->value, args->Local(f)));
 				// It also pops things off the stack
-				ip += oa::LOCAL_AND_VALUE<uint32_t>::SIZE;
+				ip += oa::LOCAL_AND_VALUE<ovlocals_t>::SIZE;
 			}
 			NEXT_INSTR();
 
@@ -1266,7 +1266,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// callr: LocalOffset args, LocalOffset output, uint32_t argc, uint32_t refSignature
+		// callr: LocalOffset args, LocalOffset output, ovlocals_t argc, uint32_t refSignature
 		TARGET(OPI_CALLR_L)
 			{
 				OPC_ARGS(oa::CallRef);
@@ -1285,7 +1285,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// callmemr: LocalOffset args, LocalOffset dest, uint32_t argc, uint32_t refSignature, String *member
+		// callmemr: LocalOffset args, LocalOffset dest, ovlocals_t argc, uint32_t refSignature, String *member
 		TARGET(OPI_CALLMEMR_L)
 			{
 				OPC_ARGS(oa::CallMemberRef);
@@ -1386,7 +1386,7 @@ int Thread::FindErrorHandler(int32_t maxIndex)
 	return OVUM_ERROR_THROWN;
 }
 
-int Thread::EvaluateLeave(register StackFrame *frame, int32_t target)
+int Thread::EvaluateLeave(StackFrame *frame, int32_t target)
 {
 	typedef TryBlock::TryKind TryKind;
 

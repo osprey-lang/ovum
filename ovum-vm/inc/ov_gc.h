@@ -14,14 +14,14 @@
 //   output:
 //     A pointer that receives the constructed value. If null, the value is
 //     pushed onto the stack instead.
-OVUM_API int GC_Construct(ThreadHandle thread, TypeHandle type, const uint16_t argc, Value *output);
+OVUM_API int GC_Construct(ThreadHandle thread, TypeHandle type, ovlocals_t argc, Value *output);
 
 // Constructs a string. If 'values' is null, the string is initialized to contain only '\0's.
 //
 // Returns null if the string could not be constructed.
 //
 // NOTE: 'length' does NOT include the terminating '\0'.
-OVUM_API String *GC_ConstructString(ThreadHandle thread, const int32_t length, const ovchar_t *values);
+OVUM_API String *GC_ConstructString(ThreadHandle thread, int32_t length, const ovchar_t *values);
 
 // Allocates a non-resizable GC-managed array of arbitrary values. This value should be put
 // in a native field of type NativeFieldType::GC_ARRAY, to ensure that the value is reachable
@@ -63,13 +63,13 @@ OVUM_API int GC_AllocValueArray(ThreadHandle thread, uint32_t length, Value **ou
 // which helps the GC better schedule garbage collection.
 // NOTE: Consumers of this method MUST take care to remove EXACTLY as much memory
 // pressure as they add, or the GC will experience performance problems.
-OVUM_API void GC_AddMemoryPressure(ThreadHandle thread, const size_t size);
+OVUM_API void GC_AddMemoryPressure(ThreadHandle thread, size_t size);
 
 // Informs the GC that a certain amount of unmanaged memory has been released,
 // which helps the GC better schedule garbage collection.
 // NOTE: Consumers of this method MUST take care to remove EXACTLY as much memory
 // pressure as they add, or the GC will experience performance problems.
-OVUM_API void GC_RemoveMemoryPressure(ThreadHandle thread, const size_t size);
+OVUM_API void GC_RemoveMemoryPressure(ThreadHandle thread, size_t size);
 
 OVUM_API Value *GC_AddStaticReference(ThreadHandle thread, Value initialValue);
 
