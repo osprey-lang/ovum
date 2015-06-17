@@ -43,16 +43,16 @@
 
 #ifndef OVUM_API
 # ifdef VM_EXPORTS
-#  define _OVUM_API __declspec(dllexport)
+#  define OVUM_API_ __declspec(dllexport)
 # else
 #  pragma comment(lib, "ovum-vm.lib")
-#  define _OVUM_API __declspec(dllimport)
+#  define OVUM_API_ __declspec(dllimport)
 # endif
 
 # ifdef __cplusplus
-#  define OVUM_API  extern "C" _OVUM_API
+#  define OVUM_API  extern "C" OVUM_API_
 # else
-#  define OVUM_API  _OVUM_API
+#  define OVUM_API  OVUM_API_
 # endif
 #endif // OVUM_API
 
