@@ -47,8 +47,8 @@ When running the tests, the module can be invoked with any number of command-lin
 Usually, all tests should be run.
 
 
-  [osp]: http://bitbucket.org/OspreyLang/osprey
-  [testing.unit]: http://bitbucket.org/OspreyLang/testing.unit
-  [aves.build]: http://bitbucket.org/OspreyLang/ovum/src/tip/aves/osp/build.bat
-  [aves.tests.build]: http://bitbucket.org/OspreyLang/ovum/src/tip/aves.tests/build.bat
-  [aves.tests.run]: http://bitbucket.org/OspreyLang/ovum/src/tip/aves.tests/run.bat
+  [osp]: https://github.com/osprey-lang/osprey
+  [testing.unit]: https://github.com/osprey-lang/testing.unit
+  [aves.build]: aves/osp/build.bat
+  [aves.tests.build]: aves.tests/build.bat
+  [aves.tests.run]: aves.tests/run.bat
