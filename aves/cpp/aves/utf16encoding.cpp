@@ -227,6 +227,7 @@ int32_t Utf16Decoder::GetChars(ThreadHandle thread, Buffer *buf, int32_t offset,
 	{
 		if (!sb->Append(ReplacementChar))
 			return ~OVUM_ERROR_NO_MEMORY;
+		charCount++;
 		hasPrevByte = false;
 	}
 
