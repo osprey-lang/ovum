@@ -31,6 +31,7 @@ class ModuleReader;
 class PathName;
 class Property;
 class RefSignaturePool;
+class StackFrame;
 class StackManager;
 class StandardTypeCollection;
 class StaticRef;
