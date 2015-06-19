@@ -260,6 +260,12 @@
     <ClInclude Include="inc\ov_main.h">
       <Filter>Header Files\inc</Filter>
     </ClInclude>
+    <ClInclude Include="src\ee\stackframe.h">
+      <Filter>Header Files\src\ee</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ee\stacktraceformatter.h">
+      <Filter>Header Files\src\ee</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\os\windows\dllmain.cpp">
@@ -351,6 +357,9 @@
     </ClCompile>
     <ClCompile Include="src\object\standardtypeinfo.cpp">
       <Filter>Source Files\object</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ee\stacktraceformatter.cpp">
+      <Filter>Source Files\ee</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -1,5 +1,6 @@
 #include "thread.h"
 #include "vm.h"
+#include "stacktraceformatter.h"
 #include "../object/type.h"
 #include "../object/member.h"
 #include "../object/field.h"
@@ -1301,141 +1302,7 @@ int Thread::PrepareVariadicArgs(MethodFlags flags, ovlocals_t argCount, ovlocals
 
 String *Thread::GetStackTrace()
 {
-	try
-	{
-		StringBuffer buf(1024);
-
-		// General formats:
-		//   Instance method call:
-		//     methodName(this: thisType, arguments...)
-		//   Static method call:
-		//     methodName(arguments...)
-		//   Arguments:
-		//     arg0Type, arg1Type, arg2Type, ...
-		//   aves.Method formatting:
-		//     aves.Method(this: thisType, methodName)
-
-		StackFrame *frame = currentFrame;
-		uint8_t *ip = this->ip;
-		while (frame && frame->method)
-		{
-			MethodOverload *method = frame->method;
-			Method *group = method->group;
-
-			buf.Append(2, ' ');
-
-			// method name, which consists of:
-			// fully.qualified.type
-			// .
-			// methodName
-			// For global methods, group->name is already the fully qualified name.
-			if (group->declType)
-			{
-				buf.Append(group->declType->fullName);
-				buf.Append('.');
-			}
-			buf.Append(group->name);
-			buf.Append('(');
-
-			unsigned int paramCount = method->GetEffectiveParamCount();
-
-			for (unsigned int i = 0; i < paramCount; i++)
-			{
-				if (i > 0)
-					buf.Append(2, ", ");
-
-				if (i == 0 && method->IsInstanceMethod())
-					buf.Append(4, "this");
-				else
-					buf.Append(method->paramNames[i - method->InstanceOffset()]);
-				buf.Append('=');
-
-				AppendArgumentType(buf, ((Value*)frame - paramCount) + i);
-			}
-
-			buf.Append(')');
-			if (method->debugSymbols)
-				AppendSourceLocation(buf, method, ip);
-			buf.Append('\n');
-
-			ip = frame->prevInstr;
-			frame = frame->prevFrame;
-		}
-
-		return buf.ToString(this);
-	}
-	catch (std::exception&)
-	{
-		return nullptr;
-	}
-}
-
-void Thread::AppendArgumentType(StringBuffer &buf, Value *arg)
-{
-	Type *type = arg->type;
-	if ((uintptr_t)type & 1)
-	{
-		buf.Append(4, "ref ");
-		Value refValue;
-		ReadReference(arg, &refValue);
-		type = refValue.type;
-	}
-
-	if (type == nullptr)
-		buf.Append(4, "null");
-	else
-	{
-		buf.Append(type->fullName);
-
-		if (type == vm->types.Method)
-		{
-			// Append some information about the instance and method group, too.
-			MethodInst *method = arg->v.method;
-			buf.Append(6, "(this=");
-			AppendArgumentType(buf, &method->instance);
-			buf.Append(2, ", ");
-
-			Method *mgroup = method->method;
-			if (mgroup->declType)
-			{
-				buf.Append(mgroup->declType->fullName);
-				buf.Append('.');
-			}
-			buf.Append(mgroup->name);
-
-			buf.Append(')');
-		}
-	}
-}
-
-void Thread::AppendSourceLocation(StringBuffer &buf, MethodOverload *method, uint8_t *ip)
-{
-	uint32_t offset = (uint32_t)(ip - method->entry);
-
-	debug::SourceLocation *loc = method->debugSymbols->FindSymbol(offset);
-	if (loc)
-	{
-		buf.Append(9, " at line ");
-		// Build a decimal string for the line number
-		{
-			const ovchar_t NumberLength = 16; // 16 digits ought to be enough for anybody
-
-			ovchar_t lineNumberStr[NumberLength];
-			ovchar_t *chp = lineNumberStr + NumberLength;
-			int32_t length = 0;
-
-			int32_t lineNumber = loc->lineNumber;
-			do
-			{
-				*--chp = (ovchar_t)'0' + lineNumber % 10;
-				length++;
-			} while (lineNumber /= 10);
-			buf.Append(length, chp);
-		}
-		buf.Append(5, " in \"");
-		buf.Append(loc->file->fileName);
-		buf.Append('"');
-	}
+	return StackTraceFormatter::GetStackTrace(this);
 }
 
 } // namespace ovum

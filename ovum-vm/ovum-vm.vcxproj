@@ -93,6 +93,8 @@
     <ClInclude Include="src\ee\methodbuilder.h" />
     <ClInclude Include="src\ee\methodinitexception.h" />
     <ClInclude Include="src\ee\methodinitializer.h" />
+    <ClInclude Include="src\ee\stackframe.h" />
+    <ClInclude Include="src\ee\stacktraceformatter.h" />
     <ClInclude Include="src\gc\gcobject.h" />
     <ClInclude Include="src\gc\staticref.h" />
     <ClInclude Include="src\module\modulepool.h" />
@@ -169,6 +171,7 @@
     <ClCompile Include="src\ee\instructions.cpp" />
     <ClCompile Include="src\ee\methodbuilder.cpp" />
     <ClCompile Include="src\ee\methodinitializer.cpp" />
+    <ClCompile Include="src\ee\stacktraceformatter.cpp" />
     <ClCompile Include="src\gc\gcobject.cpp" />
     <ClCompile Include="src\module\modulepool.cpp" />
     <ClCompile Include="src\object\field.cpp" />

@@ -33,6 +33,7 @@ class Property;
 class RefSignaturePool;
 class StackFrame;
 class StackManager;
+class StackTraceFormatter;
 class StandardTypeCollection;
 class StaticRef;
 class StaticRefBlock;

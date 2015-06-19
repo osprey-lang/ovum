@@ -274,8 +274,6 @@ private:
 	int EvaluateLeave(StackFrame *frame, int32_t target);
 
 	String *GetStackTrace();
-	void AppendArgumentType(StringBuffer &buf, Value *arg);
-	void AppendSourceLocation(StringBuffer &buf, MethodOverload *method, uint8_t *ip);
 
 	// argCount DOES NOT include the value to be invoked, but value does.
 	int InvokeLL(ovlocals_t argCount, Value *value, Value *result, uint32_t refSignature);
