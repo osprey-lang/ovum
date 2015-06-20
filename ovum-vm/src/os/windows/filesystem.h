@@ -2,7 +2,7 @@
 #define VM__OS_FILESYSTEM_H
 
 #include "def.h"
-#include "../../../inc/ov_vm.h"
+#include "../../vm.h"
 
 // Note: The functions exported by this header file depend on pathchar_t,
 // which is defined in Ovum's public headers. If you require a special
