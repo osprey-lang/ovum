@@ -16,4 +16,7 @@
 // Dynamic/shared libraries
 #include "dl.h"
 
+// Console output
+#include "console.h"
+
 #endif // VM__OS_DEF_H

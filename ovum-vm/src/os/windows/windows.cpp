@@ -1,4 +1,5 @@
 #include "def.h"
+#include "../../unicode/utf8encoder.h"
 
 // Implementations of various functions from the Windows-specific header files.
 // The sort of functions we want to discourage the compiler from inlining.
@@ -84,6 +85,55 @@ namespace os
 		default:
 			return LIBRARY_ERROR;
 		}
+	}
+
+	bool ConsoleWriteFile(HANDLE handle, const ovchar_t *str, int32_t length)
+	{
+		// Assume the console can handle UTF-8
+		const int32_t BUFFER_SIZE = 2048;
+		char buffer[BUFFER_SIZE];
+		Utf8Encoder encoder(buffer, BUFFER_SIZE, str, length);
+
+		DWORD remaining;
+		while ((remaining = (DWORD)encoder.GetNextBytes()) > 0)
+		{
+			char *bytes = buffer;
+			do
+			{
+				DWORD written = 0;
+				BOOL r = ::WriteFile(handle, bytes, remaining, &written, nullptr);
+				if (!r)
+					// Something went wrong. :( Can't really do anything about it.
+					return false;
+
+				remaining -= written;
+				bytes += written;
+			} while (remaining > 0);
+		}
+
+		return true;
+	}
+
+	bool ConsoleWrite_(HANDLE handle, const ovchar_t *str, int32_t length)
+	{
+		DWORD remaining = (DWORD)length;
+		do
+		{
+			DWORD written = 0;
+			BOOL r = ::WriteConsoleW(handle, str, remaining, &written, nullptr);
+			if (!r)
+			{
+				// WriteConsole will fail with a standard handle if it
+				// has been redirected to a file. We can use WriteFile
+				// in that case, so let's try that.
+				return ConsoleWriteFile(handle, str, length);
+			}
+
+			remaining -= written;
+			str += written;
+		} while (remaining > 0);
+
+		return true;
 	}
 
 } // namespace os
