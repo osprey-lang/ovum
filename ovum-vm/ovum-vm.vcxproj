@@ -147,6 +147,7 @@
     <ClInclude Include="src\res\staticstrings.h" />
     <ClInclude Include="inc\ov_string.h" />
     <ClInclude Include="inc\ov_stringbuffer.h" />
+    <ClInclude Include="src\unicode\utf8encoder.h" />
     <ClInclude Include="src\util\stringbuffer.h" />
     <ClInclude Include="src\util\pathname.h" />
     <ClInclude Include="src\ee\refsignature.h" />
@@ -180,6 +181,7 @@
     <ClCompile Include="src\object\property.cpp" />
     <ClCompile Include="src\object\standardtypeinfo.cpp" />
     <ClCompile Include="src\os\windows\windows.cpp" />
+    <ClCompile Include="src\unicode\utf8encoder.cpp" />
     <ClCompile Include="src\util\pathname.cpp" />
     <ClCompile Include="src\os\windows\dllmain.cpp">
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</CompileAsManaged>

@@ -266,6 +266,9 @@
     <ClInclude Include="src\ee\stacktraceformatter.h">
       <Filter>Header Files\src\ee</Filter>
     </ClInclude>
+    <ClInclude Include="src\unicode\utf8encoder.h">
+      <Filter>Header Files\src\unicode</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\os\windows\dllmain.cpp">
@@ -360,6 +363,9 @@
     </ClCompile>
     <ClCompile Include="src\ee\stacktraceformatter.cpp">
       <Filter>Source Files\ee</Filter>
+    </ClCompile>
+    <ClCompile Include="src\unicode\utf8encoder.cpp">
+      <Filter>Source Files\unicode</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
