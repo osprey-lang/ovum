@@ -275,6 +275,9 @@
     <ClInclude Include="src\os\windows\console.h">
       <Filter>Header Files\src\os\windows</Filter>
     </ClInclude>
+    <ClInclude Include="src\util\stringformatters.h">
+      <Filter>Header Files\src\util</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\os\windows\dllmain.cpp">
@@ -372,6 +375,9 @@
     </ClCompile>
     <ClCompile Include="src\unicode\utf8encoder.cpp">
       <Filter>Source Files\unicode</Filter>
+    </ClCompile>
+    <ClCompile Include="src\util\stringformatters.cpp">
+      <Filter>Source Files\util</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -161,6 +161,7 @@
     <ClInclude Include="src\ee\thread.h" />
     <ClInclude Include="src\object\type.h" />
     <ClInclude Include="src\ee\thread.opcodes.h" />
+    <ClInclude Include="src\util\stringformatters.h" />
     <ClInclude Include="src\util\stringhash.h" />
     <ClInclude Include="src\os\windows.h" />
     <ClInclude Include="inc\ov_type.h" />
@@ -212,6 +213,7 @@
     <ClCompile Include="src\unicode\unicode.data.cpp" />
     <ClCompile Include="src\object\value.cpp" />
     <ClCompile Include="src\ee\vm.cpp" />
+    <ClCompile Include="src\util\stringformatters.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
