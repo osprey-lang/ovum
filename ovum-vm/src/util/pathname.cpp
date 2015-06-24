@@ -1,4 +1,7 @@
 #include "pathname.h"
+#if !OVUM_WIDE_PATHCHAR
+#include "../unicode/utf8encoder.h"
+#endif
 #include "../ee/thread.h"
 #include "../gc/gc.h"
 #include <memory>
@@ -171,43 +174,84 @@ uint32_t PathName::ClipTo(uint32_t index, uint32_t length)
 	return this->length;
 }
 
-uint32_t PathName::AppendInner(uint32_t count, const pathchar_t *path)
+uint32_t PathName::AppendInner(uint32_t length, const pathchar_t *path)
 {
-	if (count > 0)
+	if (length > 0)
 	{
-		if (!EnsureMinCapacity(this->length + count))
+		if (!EnsureMinCapacity(this->length + length))
 			throw std::bad_alloc();
 
-		CopyMemoryT(this->data + this->length, path, count);
-		this->length += count;
+		CopyMemoryT(this->data + this->length, path, length);
+		this->length += length;
 		this->data[this->length] = ZERO;
 	}
 
 	return this->length;
 }
 
-uint32_t PathName::JoinInner(uint32_t count, const pathchar_t *path)
+uint32_t PathName::AppendOvchar(uint32_t length, const ovchar_t *path)
 {
-	if (IsRooted(count, path))
-	{
-		this->ReplaceWithInner(count, path);
-	}
-	else
-	{
-		pathchar_t last = this->data[length - 1];
-		bool needSep = !IsPathSep(last);
+#if OVUM_WIDE_PATHCHAR
+	return AppendInner(length, reinterpret_cast<const pathchar_t*>(path));
+#else
+	char buffer[UTF8_BUFFER_SIZE];
+	Utf8Encoder enc(buffer, UTF8_BUFFER_SIZE, path, (int32_t)length);
 
-		if (!EnsureMinCapacity(length + count + (needSep ? 1 : 0)))
-			throw std::bad_alloc();
-
-		if (needSep)
-			this->data[length++] = OVUM_PATH_SEPC;
-		CopyMemoryT(this->data + length, path, count); // +1 for \0
-		length += count;
-		this->data[length] = ZERO;
+	int32_t byteCount;
+	while ((byteCount = enc.GetNextBytes()) != 0)
+	{
+		AppendInner((uint32_t)byteCount, reinterpret_cast<pathchar_t*>(buffer));
 	}
 
 	return this->length;
+#endif
+}
+
+uint32_t PathName::JoinInner(uint32_t length, const pathchar_t *path)
+{
+	if (IsRooted(length, path))
+	{
+		this->ReplaceWithInner(length, path);
+	}
+	else
+	{
+		pathchar_t last = this->data[this->length - 1];
+		bool needSep = !IsPathSep(last);
+
+		if (!EnsureMinCapacity(this->length + length + (needSep ? 1 : 0)))
+			throw std::bad_alloc();
+
+		if (needSep)
+			this->data[this->length++] = OVUM_PATH_SEPC;
+		CopyMemoryT(this->data + this->length, path, length); // +1 for \0
+		this->length += length;
+		this->data[this->length] = ZERO;
+	}
+
+	return this->length;
+}
+
+uint32_t PathName::JoinOvchar(uint32_t length, const ovchar_t *path)
+{
+#if OVUM_WIDE_PATHCHAR
+	return JoinInner(length, reinterpret_cast<const pathchar_t*>(path));
+#else
+	char buffer[UTF8_BUFFER_SIZE];
+	Utf8Encoder enc(buffer, UTF8_BUFFER_SIZE, path, (int32_t)length);
+
+	int32_t byteCount;
+	if ((byteCount = enc.GetNextBytes()) != 0)
+	{
+		// The first time we have to call JoinInner()
+		JoinInner((uint32_t)byteCount, reinterpret_cast<pathchar_t*>(buffer));
+
+		// And each following call must be to AppendInner()
+		while ((byteCount = enc.GetNextBytes()) != 0)
+		{
+			AppendInner((uint32_t)byteCount, reinterpret_cast<pathchar_t*>(buffer));
+		}
+	}
+#endif
 }
 
 void PathName::ReplaceWithInner(uint32_t length, const pathchar_t *path)
@@ -218,6 +262,30 @@ void PathName::ReplaceWithInner(uint32_t length, const pathchar_t *path)
 	CopyMemoryT(this->data, path, length);
 	this->length = length;
 	this->data[length] = ZERO;
+}
+
+void PathName::ReplaceWithOvchar(uint32_t length, const ovchar_t *path)
+{
+#if OVUM_WIDE_PATHCHAR
+	ReplaceWithInner(length, reinterpret_cast<const pathchar_t*>(path));
+#else
+	// Re-encode the path to UTF-8
+	char buffer[UTF8_BUFFER_SIZE];
+	Utf8Encoder enc(buffer, UTF8_BUFFER_SIZE, path, (int32_t)length);
+
+	int32_t byteCount;
+	if ((byteCount = enc.GetNextBytes()) != 0)
+	{
+		// The first time we have to call ReplaceWithInner()
+		ReplaceWithInner((uint32_t)byteCount, reinterpret_cast<pathchar_t*>(buffer));
+
+		// And each following call must be to AppendInner()
+		while ((byteCount = enc.GetNextBytes()) != 0)
+		{
+			AppendInner((uint32_t)byteCount, reinterpret_cast<pathchar_t*>(buffer));
+		}
+	}
+#endif
 }
 
 bool PathName::IsRooted(uint32_t length, const pathchar_t *path)

@@ -19,6 +19,11 @@ private:
 
 	static const pathchar_t ZERO = OVUM_PATH('\0');
 
+	// Size of the buffer used when re-encoding a path as UTF-8.
+	// Paths are extremely unlikely to be longer than this; there
+	// is simply no need for a larger buffer.
+	static const int32_t UTF8_BUFFER_SIZE = 128;
+
 	// Pointer to the first character in the string
 	pathchar_t *data;
 	// Number of characters actually used
@@ -86,12 +91,18 @@ public:
 	}
 	inline uint32_t Append(String *path)
 	{
-#if OVUM_WIDE_PATHCHAR
-		return AppendInner(path->length, reinterpret_cast<const pathchar_t*>(&path->firstChar));
-#else
-#error Not implemented
-#endif
+		return AppendOvchar((uint32_t)path->length, &path->firstChar);
 	}
+	inline uint32_t Append(uint32_t length, const pathchar_t *path)
+	{
+		return AppendInner(length, path);
+	}
+#if !OVUM_WIDE_PATHCHAR
+	inline uint32_t Append(uint32_t length, const ovchar_t *path)
+	{
+		return AppendOvchar(length, path);
+	}
+#endif
 
 	// Joins this path with another, which is done as follows:
 	//   * If the other path is rooted, this path is replaced by
@@ -110,12 +121,18 @@ public:
 	}
 	inline uint32_t Join(String *path)
 	{
-#if OVUM_WIDE_PATHCHAR
-		return JoinInner(path->length, reinterpret_cast<const pathchar_t*>(&path->firstChar));
-#else
-#error Not implemented
-#endif
+		return JoinOvchar((uint32_t)path->length, &path->firstChar);
 	}
+	inline uint32_t Join(uint32_t length, const pathchar_t *path)
+	{
+		return JoinInner(length, path);
+	}
+#if !OVUM_WIDE_PATHCHAR
+	inline uint32_t Join(uint32_t length, const ovchar_t *path)
+	{
+		return JoinOvchar(length, path);
+	}
+#endif
 
 	uint32_t RemoveFileName();
 
@@ -138,12 +155,20 @@ public:
 	inline void ReplaceWith(String *path)
 	{
 		Clear();
-#if OVUM_WIDE_PATHCHAR
-		ReplaceWithInner(path->length, reinterpret_cast<const pathchar_t*>(&path->firstChar));
-#else
-#error Not implemented
-#endif
+		ReplaceWithOvchar((uint32_t)path->length, &path->firstChar);
 	}
+	inline void ReplaceWith(uint32_t length, const pathchar_t *path)
+	{
+		Clear();
+		ReplaceWithInner(length, path);
+	}
+#if !OVUM_WIDE_PATHCHAR
+	inline void ReplaceWith(uint32_t length, const ovchar_t *path)
+	{
+		Clear();
+		ReplaceWithOvchar(length, path);
+	}
+#endif
 
 	// Clips the path name to the specified substring, removing
 	// characters that are outside that range.
@@ -160,9 +185,15 @@ private:
 
 	void ReplaceWithInner(uint32_t length, const pathchar_t *path);
 
-	uint32_t AppendInner(uint32_t count, const pathchar_t *path);
+	void ReplaceWithOvchar(uint32_t length, const ovchar_t *path);
 
-	uint32_t JoinInner(uint32_t count, const pathchar_t *path);
+	uint32_t AppendInner(uint32_t length, const pathchar_t *path);
+
+	uint32_t AppendOvchar(uint32_t length, const ovchar_t *path);
+
+	uint32_t JoinInner(uint32_t length, const pathchar_t *path);
+
+	uint32_t JoinOvchar(uint32_t length, const ovchar_t *path);
 
 	static inline bool IsPathSep(pathchar_t ch)
 	{
