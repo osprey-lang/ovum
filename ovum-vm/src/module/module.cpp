@@ -9,6 +9,7 @@
 #include "../object/standardtypeinfo.h"
 #include "../gc/gc.h"
 #include "../util/stringbuffer.h"
+#include "../util/stringformatters.h"
 #include "../debug/debugsymbols.h"
 #include "../ee/thread.h"
 #include "../ee/refsignature.h"
@@ -1377,36 +1378,27 @@ void Module::TryRegisterStandardType(Type *type, ModuleReader &reader)
 
 void Module::AppendVersionString(PathName &path, ModuleVersion &version)
 {
-	typedef int32_t (ModuleVersion::*VersionField);
-	static const int fieldCount = 4;
-	static VersionField fields[] = {
-		&ModuleVersion::major,
-		&ModuleVersion::minor,
-		&ModuleVersion::build,
-		&ModuleVersion::revision,
-	};
+	static const int32_t BUFFER_SIZE = 16;
+	ovchar_t buffer[BUFFER_SIZE];
+	int32_t length;
 
-	for (int f = 0; f < fieldCount; f++)
-	{
-		if (f > 0)
-			path.Append(OVUM_PATH("."));
+	length = IntFormatter::ToDec(version.major, buffer, BUFFER_SIZE);
+	path.Append(length, buffer);
 
-		int32_t value = version.*(fields[f]);
+	path.Append(OVUM_PATH("."));
 
-		// The max value of int32_t is 2,147,483,647, which is 10 characters.
-		static const int charCount = 15;
-		pathchar_t chars[charCount + 1];
-		pathchar_t *pch = chars + charCount;
-		// pch points to where we want \0
-		*pch = OVUM_PATH('\0');
-		do
-		{
-			*--pch = (pathchar_t)(OVUM_PATH('0') + value % 10);
-			value /= 10;
-		} while (value != 0);
+	length = IntFormatter::ToDec(version.minor, buffer, BUFFER_SIZE);
+	path.Append(length, buffer);
 
-		path.Append(pch);
-	}
+	path.Append(OVUM_PATH("."));
+
+	length = IntFormatter::ToDec(version.build, buffer, BUFFER_SIZE);
+	path.Append(length, buffer);
+
+	path.Append(OVUM_PATH("."));
+
+	length = IntFormatter::ToDec(version.revision, buffer, BUFFER_SIZE);
+	path.Append(length, buffer);
 }
 
 } // namespace ovum
