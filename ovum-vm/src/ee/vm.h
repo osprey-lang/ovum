@@ -87,6 +87,21 @@ public:
 		return standardTypeCollection;
 	}
 
+	inline const PathName *GetStartupPathLib() const
+	{
+		return startupPathLib;
+	}
+
+	inline const PathName *GetStartupPath() const
+	{
+		return startupPath;
+	}
+
+	inline const PathName *GetModulePath() const
+	{
+		return modulePath;
+	}
+
 	static void Print(String *str);
 	static void Printf(const wchar_t *format, String *str);
 	static void PrintLn(String *str);

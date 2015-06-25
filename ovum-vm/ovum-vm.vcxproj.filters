@@ -278,6 +278,9 @@
     <ClInclude Include="src\util\stringformatters.h">
       <Filter>Header Files\src\util</Filter>
     </ClInclude>
+    <ClInclude Include="src\module\modulefinder.h">
+      <Filter>Header Files\src\module</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\os\windows\dllmain.cpp">
@@ -378,6 +381,9 @@
     </ClCompile>
     <ClCompile Include="src\util\stringformatters.cpp">
       <Filter>Source Files\util</Filter>
+    </ClCompile>
+    <ClCompile Include="src\module\modulefinder.cpp">
+      <Filter>Source Files\module</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

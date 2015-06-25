@@ -268,7 +268,6 @@ private:
 
 		return 0; // equal
 	}
-	static void AppendVersionString(PathName &path, ModuleVersion &version);
 
 	typedef void (OVUM_CDECL *NativeModuleMain)(ModuleHandle module);
 

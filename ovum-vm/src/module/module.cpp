@@ -1,6 +1,7 @@
 #include "module.h"
 #include "modulepool.h"
 #include "modulereader.h"
+#include "modulefinder.h"
 #include "../object/type.h"
 #include "../object/member.h"
 #include "../object/field.h"
@@ -9,7 +10,6 @@
 #include "../object/standardtypeinfo.h"
 #include "../gc/gc.h"
 #include "../util/stringbuffer.h"
-#include "../util/stringformatters.h"
 #include "../debug/debugsymbols.h"
 #include "../ee/thread.h"
 #include "../ee/refsignature.h"
@@ -34,9 +34,6 @@ namespace module_file
 
 	// The maximum supported file format version
 	static const uint32_t MaxFileFormatVersion = 0x00000100u;
-
-	// The file extension
-	static const pathchar_t *const Extension = OVUM_PATH(".ovm");
 }
 
 ModuleMember::ModuleMember(Type *type, bool isInternal) :
@@ -353,64 +350,11 @@ Module *Module::OpenByName(VM *vm, String *name, ModuleVersion *requiredVersion)
 	Module *output;
 	if (output = vm->GetModulePool()->Get(name, requiredVersion))
 		return output;
-	
-	PathName versionNumber(32);
-	if (requiredVersion)
-		AppendVersionString(versionNumber, *requiredVersion);
 
 	PathName moduleFileName(256);
+	ModuleFinder finder(vm);
 
-	static const int pathCount = 3;
-	const PathName *paths[pathCount] = {
-		vm->startupPathLib,
-		vm->startupPath,
-		vm->modulePath,
-	};
-
-	bool found = false;
-	for (int i = 0; i < pathCount; i++)
-	{
-		moduleFileName.ReplaceWith(*paths[i]);
-		uint32_t simpleName = moduleFileName.Join(name);
-		// Versioned names first:
-		//    path/$name-$version/$name.ovm
-		//    path/$name-$version.ovm
-		if (requiredVersion) {
-			moduleFileName.Append(OVUM_PATH("-"));
-			// The length for path/$name-$version
-			uint32_t versionedName = moduleFileName.Append(versionNumber);
-
-			// path/$name-version/$name.ovm
-			moduleFileName.Join(name);
-			moduleFileName.Append(module_file::Extension);
-			if (found = os::FileExists(moduleFileName.GetDataPointer()))
-				break;
-
-			// path/$name-$version.ovm
-			moduleFileName.ClipTo(0, versionedName);
-			moduleFileName.Append(module_file::Extension);
-			if (found = os::FileExists(moduleFileName.GetDataPointer()))
-				break;
-		}
-
-		// Then, unversioned names:
-		//    path/$name/$name.ovm
-		//    path/$name.ovm
-		// simpleName contains the length for path/$name
-
-		// path/$name/$name.ovm
-		moduleFileName.ClipTo(0, simpleName);
-		moduleFileName.Join(name);
-		moduleFileName.Append(module_file::Extension);
-		if (found = os::FileExists(moduleFileName.GetDataPointer()))
-			break;
-
-		// path/$name.ovm
-		moduleFileName.ClipTo(0, simpleName);
-		moduleFileName.Append(module_file::Extension);
-		if (found = os::FileExists(moduleFileName.GetDataPointer()))
-			break;
-	}
+	bool found = finder.FindModulePath(name, requiredVersion, moduleFileName);
 
 	if (!found)
 	{
@@ -1374,31 +1318,6 @@ void Module::TryRegisterStandardType(Type *type, ModuleReader &reader)
 				vm->functions.initTypeToken = (TypeTokenInitializer)func;
 		}
 	}
-}
-
-void Module::AppendVersionString(PathName &path, ModuleVersion &version)
-{
-	static const int32_t BUFFER_SIZE = 16;
-	ovchar_t buffer[BUFFER_SIZE];
-	int32_t length;
-
-	length = IntFormatter::ToDec(version.major, buffer, BUFFER_SIZE);
-	path.Append(length, buffer);
-
-	path.Append(OVUM_PATH("."));
-
-	length = IntFormatter::ToDec(version.minor, buffer, BUFFER_SIZE);
-	path.Append(length, buffer);
-
-	path.Append(OVUM_PATH("."));
-
-	length = IntFormatter::ToDec(version.build, buffer, BUFFER_SIZE);
-	path.Append(length, buffer);
-
-	path.Append(OVUM_PATH("."));
-
-	length = IntFormatter::ToDec(version.revision, buffer, BUFFER_SIZE);
-	path.Append(length, buffer);
 }
 
 } // namespace ovum

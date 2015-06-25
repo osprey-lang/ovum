@@ -97,6 +97,7 @@
     <ClInclude Include="src\ee\stacktraceformatter.h" />
     <ClInclude Include="src\gc\gcobject.h" />
     <ClInclude Include="src\gc\staticref.h" />
+    <ClInclude Include="src\module\modulefinder.h" />
     <ClInclude Include="src\module\modulepool.h" />
     <ClInclude Include="src\object\field.h" />
     <ClInclude Include="src\object\member.h" />
@@ -180,6 +181,7 @@
     <ClCompile Include="src\ee\methodinitializer.cpp" />
     <ClCompile Include="src\ee\stacktraceformatter.cpp" />
     <ClCompile Include="src\gc\gcobject.cpp" />
+    <ClCompile Include="src\module\modulefinder.cpp" />
     <ClCompile Include="src\module\modulepool.cpp" />
     <ClCompile Include="src\object\field.cpp" />
     <ClCompile Include="src\object\member.cpp" />
