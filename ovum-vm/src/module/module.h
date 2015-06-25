@@ -91,32 +91,7 @@ public:
 
 	void   *FindNativeFunction(const char *name);
 
-	/* Module name resolution for a module named $name is performed by
-	 * looking for the following files, in the order written:
-	 *    $startupPath/lib/$name-$version/$name.ovm
-	 *    $startupPath/lib/$name-$version.ovm
-	 *    $startupPath/lib/$name/$name.ovm
-	 *    $startupPath/lib/$name.ovm
-	 *
-	 *    $startupPath/$name-$version/$name.ovm
-	 *    $startupPath/$name-$version.ovm
-	 *    $startupPath/$name/$name.ovm
-	 *    $startupPath/$name.ovm
-	 *
-	 *    $modulePath/$name-$version/$name.ovm
-	 *    $modulePath/$name-$version.ovm
-	 *    $modulePath/$name/$name.ovm
-	 *    $modulePath/$name.ovm
-	 * where
-	 *    $version = requiredVersion, in the format "major.minor.build.revision",
-	 *               e.g. "4.2.7.3"
-	 *    $startupPath = VM::vm->startupPath
-	 *    $modulePath = VM::vm->modulePath
-	 * This is 12 files that we may need to check for, yes, but FileExists is
-	 * relatively cheap. Some simple tests on a mid-range desktop computer from
-	 * 2011 can do about 40,000 calls a second (with a different file name each
-	 * time, to counteract caching).
-	 */
+	// See ModuleFinder for details on how modules are located.
 	static Module *OpenByName(VM *vm, String *name, ModuleVersion *requiredVersion);
 	static Module *Open(VM *vm, const PathName &fileName, ModuleVersion *requiredVersion);
 
