@@ -501,7 +501,7 @@ public abstract class Iterator
 		}
 	}
 
-	/// Summary: Returns the last element in the sequence. 
+	/// Summary: Returns the last element in the sequence.
 	/// Returns: The last element in the sequence.
 	/// Throws InvalidStateError:
 	///          The collection is empty.
@@ -550,7 +550,7 @@ public abstract class Iterator
 		var hasMatch = false;
 		var output = null;
 
-		while moveNext()
+		do
 		{
 			var value = current;
 			if predicate(value)
@@ -558,7 +558,7 @@ public abstract class Iterator
 				hasMatch = true;
 				output = value;
 			}
-		}
+		} while moveNext();
 
 		if not hasMatch:
 			throw new InvalidStateError(noMatchFound);
