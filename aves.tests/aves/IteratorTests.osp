@@ -103,6 +103,12 @@ public class IteratorTests is TestFixture
 
 	// fold
 
+	public test_FoldEmptyWithoutInitial()
+	{
+		var iterator = Iterator.empty;
+		Assert.throws(typeof(InvalidStateError), @= iterator.fold(failCallback2));
+	}
+
 	public test_FoldEmptyWithInitial()
 	{
 		var iterator = Iterator.empty;
@@ -110,10 +116,45 @@ public class IteratorTests is TestFixture
 		Assert.areSameRef(initial, iterator.fold(initial, failCallback2));
 	}
 
-	public test_FoldEmptyWithoutInitial()
+	public test_FoldOneWithoutInitial()
 	{
-		var iterator = Iterator.empty;
-		Assert.throws(typeof(InvalidStateError), @= iterator.fold(failCallback2));
+		var value = new Object();
+		var iterator = wrap([value]);
+		// The callback should not be called when folding
+		// a one-element sequence without initial value.
+		Assert.areSameRef(value, iterator.fold(failCallback2));
+	}
+
+	public test_FoldOneWithInitial()
+	{
+		var iterator = wrap([1]);
+		// The callback *should* be called when folding a
+		// one-element sequence with an initial value.
+		Assert.areEqual(1 + 2, iterator.fold(2, @+));
+	}
+
+	public test_FoldTwoWithoutInitial()
+	{
+		var iterator = wrap([1, 2]);
+		Assert.areEqual(1 + 2, iterator.fold(@+));
+	}
+
+	public test_FoldTwoWithInitial()
+	{
+		var iterator = wrap([1, 2]);
+		Assert.areEqual(1 + 2 + 3, iterator.fold(3, @+));
+	}
+
+	public test_FoldWithInvalidCallbackWithoutInitial()
+	{
+		var iterator = wrap([1, 2, 3]);
+		Assert.throws(typeof(ArgumentNullError), @= iterator.fold(null));
+	}
+
+	public test_FoldWithInvalidCallbackWithInitial()
+	{
+		var iterator = wrap([1, 2, 3]);
+		Assert.throws(typeof(ArgumentNullError), @= iterator.fold(null, null));
 	}
 
 	// first
