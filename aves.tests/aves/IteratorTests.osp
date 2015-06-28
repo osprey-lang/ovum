@@ -32,7 +32,7 @@ public class IteratorTests is TestFixture
 
 	public test_MapEmpty()
 	{
-		var iterator = Iterator.empty;
+		var iterator = wrap(Iterator.empty);
 		var mapped = iterator.map(failCallback1);
 		Assert.collectionsMatch(mapped, [], failCallback2);
 	}
@@ -70,7 +70,7 @@ public class IteratorTests is TestFixture
 
 	public test_FilterEmpty()
 	{
-		var iterator = Iterator.empty;
+		var iterator = wrap(Iterator.empty);
 		var filtered = iterator.filter(failCallback1);
 		Assert.collectionsMatch(filtered, [], failCallback2);
 	}
@@ -105,13 +105,13 @@ public class IteratorTests is TestFixture
 
 	public test_FoldEmptyWithoutInitial()
 	{
-		var iterator = Iterator.empty;
+		var iterator = wrap(Iterator.empty);
 		Assert.throws(typeof(InvalidStateError), @= iterator.fold(failCallback2));
 	}
 
 	public test_FoldEmptyWithInitial()
 	{
-		var iterator = Iterator.empty;
+		var iterator = wrap(Iterator.empty);
 		var initial = new Object();
 		Assert.areSameRef(initial, iterator.fold(initial, failCallback2));
 	}
@@ -161,7 +161,7 @@ public class IteratorTests is TestFixture
 
 	public test_FirstOfEmpty()
 	{
-		var iterator = Iterator.empty;
+		var iterator = wrap(Iterator.empty);
 		Assert.throws(typeof(InvalidStateError), @= iterator.first());
 	}
 
@@ -179,7 +179,7 @@ public class IteratorTests is TestFixture
 
 	public test_FirstPredicateOfEmpty()
 	{
-		var iterator = Iterator.empty;
+		var iterator = wrap(Iterator.empty);
 		// Since the sequence is empty, the callback should not be called
 		Assert.throws(typeof(InvalidStateError), @= iterator.first(failCallback1));
 	}
@@ -220,7 +220,7 @@ public class IteratorTests is TestFixture
 
 	public test_FirstOrNullOfEmpty()
 	{
-		var iterator = Iterator.empty;
+		var iterator = wrap(Iterator.empty);
 		Assert.isNull(iterator.firstOrNull());
 	}
 
@@ -238,7 +238,7 @@ public class IteratorTests is TestFixture
 
 	public test_FirstOrNullPredicateOfEmpty()
 	{
-		var iterator = Iterator.empty;
+		var iterator = wrap(Iterator.empty);
 		// Since the sequence is empty, the callback should not be called
 		Assert.isNull(iterator.firstOrNull(failCallback1));
 	}
@@ -279,7 +279,7 @@ public class IteratorTests is TestFixture
 
 	public test_LastOfEmpty()
 	{
-		var iterator = Iterator.empty;
+		var iterator = wrap(Iterator.empty);
 		Assert.throws(typeof(InvalidStateError), @= iterator.last());
 	}
 
@@ -297,7 +297,7 @@ public class IteratorTests is TestFixture
 
 	public test_LastPredicateOfEmpty()
 	{
-		var iterator = Iterator.empty;
+		var iterator = wrap(Iterator.empty);
 		// Since the sequence is empty, the callback should not be called
 		Assert.throws(typeof(InvalidStateError), @= iterator.last(failCallback1));
 	}
@@ -338,7 +338,7 @@ public class IteratorTests is TestFixture
 
 	public test_LastOrNullOfEmpty()
 	{
-		var iterator = Iterator.empty;
+		var iterator = wrap(Iterator.empty);
 		Assert.isNull(iterator.lastOrNull());
 	}
 
@@ -356,7 +356,7 @@ public class IteratorTests is TestFixture
 
 	public test_LastOrNullPredicateOfEmpty()
 	{
-		var iterator = Iterator.empty;
+		var iterator = wrap(Iterator.empty);
 		// Since the sequence is empty, the callback should not be called
 		Assert.isNull(iterator.lastOrNull(failCallback1));
 	}
@@ -397,14 +397,14 @@ public class IteratorTests is TestFixture
 
 	public test_Skip0OfEmpty()
 	{
-		var iterator = Iterator.empty;
+		var iterator = wrap(Iterator.empty);
 		var skipped = iterator.skip(0);
 		Assert.collectionsMatch(skipped, [], failCallback2);
 	}
 
 	public test_SkipPastEndOfEmpty()
 	{
-		var iterator = Iterator.empty;
+		var iterator = wrap(Iterator.empty);
 		var skipped = iterator.skip(5);
 		Assert.collectionsMatch(skipped, [], failCallback2);
 	}
@@ -425,13 +425,13 @@ public class IteratorTests is TestFixture
 
 	public test_SkipNonNumericAmount()
 	{
-		var iterator = Iterator.empty;
+		var iterator = wrap(Iterator.empty);
 		Assert.throws(typeof(TypeError), @= iterator.skip("3"));
 	}
 
 	public test_SkipNegativeAmount()
 	{
-		var iterator = Iterator.empty;
+		var iterator = wrap(Iterator.empty);
 		Assert.throws(typeof(ArgumentRangeError), @= iterator.skip(-1));
 	}
 
@@ -439,7 +439,7 @@ public class IteratorTests is TestFixture
 
 	public test_JoinEmpty()
 	{
-		var iterator = Iterator.empty;
+		var iterator = wrap(Iterator.empty);
 		Assert.areEqual(iterator.join(","), "");
 	}
 
@@ -465,7 +465,7 @@ public class IteratorTests is TestFixture
 
 	public test_JoinNaturalEmpty()
 	{
-		var iterator = Iterator.empty;
+		var iterator = wrap(Iterator.empty);
 		Assert.areEqual(iterator.joinNatural(",", "&"), "");
 	}
 
