@@ -345,7 +345,7 @@ public abstract class Iterable
 		return new IntersperseIterable(this, value, frequency);
 	}
 
-	/// Summary: Returns the last element in the sequence. 
+	/// Summary: Returns the last element in the sequence.
 	/// Returns: The last element in the sequence.
 	/// Throws InvalidStateError:
 	///          The collection is empty.
@@ -472,7 +472,7 @@ public abstract class Iterable
 	/// Throws ArgumentNullError:
 	///          {other} is null.
 	/// Remarks: The resulting iterable will yield no more than the number
-	///          of items produced by the largest sequence involved. In
+	///          of items produced by the smallest sequence involved. In
 	///          other words, if this sequence produces five values and
 	///          {other} produces three, the returned iterable will produce
 	///          three values.
@@ -497,7 +497,7 @@ public abstract class Iterable
 	/// Throws ArgumentNullError:
 	///          {other} or {func} is null.
 	/// Remarks: The resulting iterable will yield no more than the number
-	///          of items produced by the largest sequence involved. In
+	///          of items produced by the smallest sequence involved. In
 	///          other words, if this sequence produces five values and
 	///          {other} produces three, the returned iterator will produce
 	///          three values.
