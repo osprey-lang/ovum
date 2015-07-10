@@ -184,18 +184,72 @@ namespace math
 	/// Summary: Returns the largest of two values.
 	/// Param a: The first value to compare.
 	/// Param b: The second value to compare.
-	/// Returns: If {b} > {a}, then {b}; otherwise, {a}.
+	/// Returns: If {b} > {a}, then {b}; otherwise, {a}. If either argument is null,
+	///          the other is returned.
+	/// Remarks: This function works with any types that implement the `<=>` operator,
+	///          not just numeric types.
+	///
+	///          The special treatment of null allows it to be used as a sentinel value,
+	///          which is always treated as the smallest possible value. Hence, anything
+	///          is considered larger than it. This is useful particularly when trying
+	///          to find the largest value in a sequence that may be empty. Consider:
+	///
+	///          `var largest = numbers.fold(math.max);`
+	///
+	///          If `numbers` is an iterable or iterator, the `fold` method will throw
+	///          when the sequence is empty. The solution to this would be to give `fold`
+	///          an initial value, which is returned if `numbers` is empty; but there
+	///          may not be a good value to use for that purpose, if the range of values
+	///          in `numbers` is unknown. That is where null comes in:
+	///
+	///          `var largest = numbers.fold(null, math.max);`
+	///
+	///          Now, if `numbers` is empty, `largest` will contain null. In all other
+	///          cases, it will contain the actual largest value. Note, however, the one
+	///          caveat: if the sequence contains nulls, they will effectively be ignored.
+	///          This may or may not be desirable.
 	public function max(a, b)
 	{
+		if a is null:
+			return b;
+		if b is null:
+			return a;
 		return b > a ? b : a;
 	}
 
 	/// Summary: Returns the smallest of two values.
 	/// Param a: The first value to compare.
 	/// Param b: The second value to compare.
-	/// Returns: If {b} < {a}, then {b}; otherwise, {a}.
+	/// Returns: If {b} < {a}, then {b}; otherwise, {a}. If either argument is null,
+	///          the other is returned.
+	/// Remarks: This function works with any types that implement the `<=>` operator,
+	///          not just numeric types.
+	///
+	///          The special treatment of null allows it to be used as a sentinel value,
+	///          which is always treated as the largest possible value. Hence, anything
+	///          is considered smaller than it. This is useful particularly when trying
+	///          to find the smallest value in a sequence that may be empty. Consider:
+	///
+	///          `var smallest = numbers.fold(math.max);`
+	///
+	///          If `numbers` is an iterable or iterator, the `fold` method will throw
+	///          when the sequence is empty. The solution to this would be to give `fold`
+	///          an initial value, which is returned if `numbers` is empty; but there
+	///          may not be a good value to use for that purpose, if the range of values
+	///          in `numbers` is unknown. That is where null comes in:
+	///
+	///          `var smallest = numbers.fold(null, math.max);`
+	///
+	///          Now, if `numbers` is empty, `smallest` will contain null. In all other
+	///          cases, it will contain the actual smallest value. Note, however, the one
+	///          caveat: if the sequence contains nulls, they will effectively be ignored.
+	///          This may or may not be desirable.
 	public function min(a, b)
 	{
+		if a is null:
+			return b;
+		if b is null:
+			return a;
 		return b < a ? b : a;
 	}
 

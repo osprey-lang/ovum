@@ -1,0 +1,47 @@
+use namespace aves;
+use namespace testing.unit;
+
+namespace math.tests;
+
+// Tests for the global functions in the namespace math
+
+public class MathTests is TestFixture
+{
+	public new() { new base("math namespace tests"); }
+
+	public test_Min()
+	{
+		var smallest = 1;
+		var largest = 2;
+
+		Assert.areEqual(math.min(smallest, largest), smallest);
+		Assert.areEqual(math.min(largest, smallest), smallest);
+	}
+
+	public test_MinNull()
+	{
+		var number = 42; // An ordinary, smallish number.
+
+		Assert.areEqual(math.min(null, number), number);
+		Assert.areEqual(math.min(number, null), number);
+		Assert.isNull(math.min(null, null));
+	}
+
+	public test_Max()
+	{
+		var smallest = 1;
+		var largest = 2;
+
+		Assert.areEqual(math.max(smallest, largest), largest);
+		Assert.areEqual(math.max(largest, smallest), largest);
+	}
+
+	public test_MaxNull()
+	{
+		var number = 47; // The effects of inflation.
+
+		Assert.areEqual(math.max(null, number), number);
+		Assert.areEqual(math.max(number, null), number);
+		Assert.isNull(math.max(null, null));
+	}
+}
