@@ -1,0 +1,40 @@
+use namespace aves;
+use namespace testing.unit;
+
+namespace aves.tests;
+
+// Tests for the class aves.List
+
+public class ListTests is TestFixture
+{
+	public new() { new base("aves.List tests"); }
+
+	// Iterator tests
+
+	public test_IterEmpty()
+	{
+		var list = [];
+		var iterator = list.iter;
+		Assert.isFalse(iterator.moveNext());
+	}
+
+	public test_Iter1()
+	{
+		var list = [1];
+		var iterator = list.iter;
+		Assert.isTrue(iterator.moveNext());
+		Assert.areEqual(iterator.current, 1);
+		Assert.isFalse(iterator.moveNext());
+	}
+
+	public test_Iter2()
+	{
+		var list = [1, 2];
+		var iterator = list.iter;
+		Assert.isTrue(iterator.moveNext());
+		Assert.areEqual(iterator.current, 1);
+		Assert.isTrue(iterator.moveNext());
+		Assert.areEqual(iterator.current, 2);
+		Assert.isFalse(iterator.moveNext());
+	}
+}

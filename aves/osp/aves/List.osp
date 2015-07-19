@@ -649,7 +649,7 @@ private class ListIterator is Iterator
 
 	private list;
 	private version;
-	private i = -1;
+	private i = 0;
 	private cur = null;
 
 	override get current = cur;
@@ -659,10 +659,10 @@ private class ListIterator is Iterator
 		if getVersion(list) != version:
 			throw new Error("The list has changed since the iteration started.");
 
-		if i < list.length - 1
+		if i < list.length
 		{
-			i += 1;
 			cur = list[i];
+			i += 1;
 			return true;
 		}
 
