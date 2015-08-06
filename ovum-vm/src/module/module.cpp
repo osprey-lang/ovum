@@ -1301,22 +1301,9 @@ void Module::TryRegisterStandardType(Type *type, ModuleReader &reader)
 	if (vm->types.*(stdType.member) == nullptr)
 	{
 		vm->types.*(stdType.member) = type;
-		if (stdType.initerFunction)
-		{
-			void *func = FindNativeEntryPoint(stdType.initerFunction);
-			if (!func)
-				throw ModuleLoadException(reader.GetFileName(), "Missing instance initializer for standard type in native library.");
 
-			// Can't really switch here :(
-			// Also because all initializer functions are of different types,
-			// we can't really store a VM::IniterFunctions member in stdType.
-			if (type == vm->types.List)
-				vm->functions.initListInstance = (ListInitializer)func;
-			else if (type == vm->types.Hash)
-				vm->functions.initHashInstance = (HashInitializer)func;
-			else if (type == vm->types.Type)
-				vm->functions.initTypeToken = (TypeTokenInitializer)func;
-		}
+		if (stdType.extendedIniter != nullptr)
+			stdType.extendedIniter(vm, this, type);
 	}
 }
 

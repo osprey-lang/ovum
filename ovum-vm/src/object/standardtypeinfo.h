@@ -7,16 +7,29 @@
 namespace ovum
 {
 
+// Performs additional initialization or verification of a standard type.
+//
+// Parameters:
+//   vm:
+//     The VM instance to which the type belongs.
+//   declModule:
+//     The module in which the type is declared.
+//   type:
+//     The type that requires additional initialization.
+// Returns:
+//   An Ovum status code. If no error occurs, OVUM_SUCCESS is returned.
+//   A StandardTypeIniter can also indicate errors by throwing a ModuleLoadException.
+typedef int (*StandardTypeIniter)(VM *vm, Module *declModule, Type *type);
+
 struct StandardTypeInfo
 {
 	// The name of the type.
 	String *name;
 	// The StandardTypes member that holds the instance of this type.
 	TypeHandle StandardTypes::*member;
-	// If not null, holds the name of an initializer function, which is used by
-	// the VM to construct and instance of the type. Only some types have such
-	// a function.
-	const char *initerFunction;
+	// If not null, holds the address of an extended initializer function, which
+	// is used to perform additional initialization or verification of the type.
+	StandardTypeIniter extendedIniter;
 
 	inline StandardTypeInfo()
 	{
@@ -25,12 +38,12 @@ struct StandardTypeInfo
 	inline StandardTypeInfo(const StandardTypeInfo &other) :
 		name(other.name),
 		member(other.member),
-		initerFunction(other.initerFunction)
+		extendedIniter(other.extendedIniter)
 	{ }
-	inline StandardTypeInfo(String *name, TypeHandle StandardTypes::*member, const char *const initerFunction) :
+	inline StandardTypeInfo(String *name, TypeHandle StandardTypes::*member, StandardTypeIniter extendedIniter) :
 		name(name),
 		member(member),
-		initerFunction(initerFunction)
+		extendedIniter(extendedIniter)
 	{ }
 };
 
@@ -70,7 +83,7 @@ private:
 
 	void InitTypeInfo(VM *vm);
 
-	void Add(String *name, TypeHandle StandardTypes::*member, const char *initerFunction);
+	void Add(String *name, TypeHandle StandardTypes::*member, StandardTypeIniter extendedIniter);
 
 	static const int STANDARD_TYPE_COUNT;
 };

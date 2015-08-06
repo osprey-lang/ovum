@@ -104,6 +104,7 @@
     <ClInclude Include="src\object\method.h" />
     <ClInclude Include="src\object\property.h" />
     <ClInclude Include="src\object\standardtypeinfo.h" />
+    <ClInclude Include="src\object\standardtypeiniters.h" />
     <ClInclude Include="src\os\windows\console.h" />
     <ClInclude Include="src\os\windows\def.h" />
     <ClInclude Include="src\os\windows\dl.h" />
@@ -188,6 +189,7 @@
     <ClCompile Include="src\object\method.cpp" />
     <ClCompile Include="src\object\property.cpp" />
     <ClCompile Include="src\object\standardtypeinfo.cpp" />
+    <ClCompile Include="src\object\standardtypeiniters.cpp" />
     <ClCompile Include="src\os\windows\windows.cpp" />
     <ClCompile Include="src\unicode\utf8encoder.cpp" />
     <ClCompile Include="src\util\pathname.cpp" />

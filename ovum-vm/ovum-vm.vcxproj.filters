@@ -281,6 +281,9 @@
     <ClInclude Include="src\module\modulefinder.h">
       <Filter>Header Files\src\module</Filter>
     </ClInclude>
+    <ClInclude Include="src\object\standardtypeiniters.h">
+      <Filter>Header Files\src\object</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\os\windows\dllmain.cpp">
@@ -384,6 +387,9 @@
     </ClCompile>
     <ClCompile Include="src\module\modulefinder.cpp">
       <Filter>Source Files\module</Filter>
+    </ClCompile>
+    <ClCompile Include="src\object\standardtypeiniters.cpp">
+      <Filter>Source Files\object</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
