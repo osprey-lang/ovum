@@ -1,0 +1,64 @@
+namespace aves;
+
+/// Summary: When implemented by a derived class, compares values for equality,
+///          and calculates hash codes for values.
+/// Remarks: This class is used by collections that store values in a hash table
+///          or similar container, for calculating hash codes as well as comparing
+///          values for equality.
+///
+///          Implementations of {EqualityComparer} must ensure that the following
+///          invariant holds: for any pair of values X and Y where equals(X, Y)
+///          returns true, getHashCode(X) must equal getHashCode(Y). In other
+///          words, all values that compare equal according to the implementation
+///          must have the same hash code.
+///
+///          The default {EqualityComparer} used by {Hash} and {Set} uses the
+///          {Object.getHashCode} method to calculate the hash code, and the `==`
+///          operator to compare values for equality. The null value returns a
+///          hash code of 0.
+public abstract class EqualityComparer
+{
+	/// Summary: Calculates a hash code for a single value.
+	/// Param value: The value to calculate a hash code for.
+	/// Returns: The hash code of {value}, as an Int or UInt.
+	/// Remarks: This method must return the same hash code for all values that are
+	///          considered equal according to {equals}.
+	public abstract getHashCode(value);
+
+	/// Summary: Compares two values for equality.
+	/// Param a: The first value to compare.
+	/// Param b: The second value to compare.
+	/// Returns: True if the values are considered equal; otherwise, false.
+	/// Remarks: If {a} and {b} are considered equal, {getHashCode} must return the
+	///          same hash code for both of them.
+	public abstract equals(a, b);
+
+	private static _default;
+	/// Summary: Gets the default equality comparer.
+	/// Remarks: The default equality comparer uses the {Object.getHashCode} method
+	///          to calculate the hash code, and the `==` operator to compare values
+	///          for equality. The null value returns a hash code of 0.
+	public static get default
+	{
+		// Race conditions don't really matter here: we only go from null
+		// to non-null, and DefaultEqualityComparer is perfectly stateless.
+		if _default is null:
+			_default = new DefaultEqualityComparer();
+		return _default;
+	}
+}
+
+private class DefaultEqualityComparer is EqualityComparer
+{
+	override getHashCode(value)
+	{
+		if value is null:
+			return 0;
+		return value.getHashCode();
+	}
+
+	override equals(a, b)
+	{
+		return a == b;
+	}
+}
