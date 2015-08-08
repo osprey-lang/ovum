@@ -9,6 +9,60 @@ public class StringTests is TestFixture
 {
 	public new() { new base("aves.String tests: general"); }
 
+	// prepend tests
+
+	public test_PrependBasic()
+	{
+		var a = "one";
+		var b = "two";
+		Assert.areEqual("twoone", a.prepend(b));
+	}
+
+	public test_PrependNull()
+	{
+		var a = "one";
+		var b = null;
+		Assert.areEqual("one", a.prepend(b));
+	}
+
+	// End prepend tests
+
+	// append tests
+
+	public test_AppendBasic()
+	{
+		var a = "one";
+		var b = "two";
+		Assert.areEqual("onetwo", a.append(b));
+	}
+
+	public test_AppendNull()
+	{
+		var a = "one";
+		var b = null;
+		Assert.areEqual("one", a.append(b));
+	}
+
+	// End append tests
+
+	// surroundWith tests
+
+	public test_SurroundWithBasic()
+	{
+		var a = "one";
+		var b = "two";
+		Assert.areEqual("twoonetwo", a.surroundWith(b));
+	}
+
+	public test_SurroundWithNull()
+	{
+		var a = "one";
+		var b = null;
+		Assert.areEqual("one", a.surroundWith(b));
+	}
+
+	// End surroundWith tests
+
 	// Booleanness tests
 
 	public test_Truth()
