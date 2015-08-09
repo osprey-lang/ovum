@@ -1,0 +1,46 @@
+use namespace aves;
+use namespace testing.unit;
+
+namespace aves.tests;
+
+private class FailEqualityComparer is EqualityComparer
+{
+	override getHashCode(value)
+	{
+		throw new AssertionError("getHashCode should not be called");
+	}
+
+	override equals(a, b)
+	{
+		throw new AssertionError("equals should not be called");
+	}
+}
+
+private class Mod10Comparer is EqualityComparer
+{
+	override getHashCode(value)
+	{
+		return value % 10;
+	}
+
+	override equals(a, b)
+	{
+		return (a % 10) == (b % 10);
+	}
+}
+
+private class TestEqualityComparer is EqualityComparer
+{
+	public hashCodeFunc;
+	public equalsFunc;
+
+	override getHashCode(value)
+	{
+		return hashCodeFunc(value);
+	}
+
+	override equals(a, b)
+	{
+		return equalsFunc(a, b);
+	}
+}

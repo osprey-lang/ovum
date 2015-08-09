@@ -9,38 +9,6 @@ public class HashTests is TestFixture
 {
 	public new() { new base("aves.Hash tests"); }
 
-	private static failCallback1(a)
-	{
-		throw new AssertionError("Callback should not be called");
-	}
-
-	private static failCallback2(a, b)
-	{
-		throw new AssertionError("Callback should not be called");
-	}
-
-	// Returns an EqualityComparer that throws AssertionError
-	// if getHashCode(value) or equals(a, b) is called.
-	private failComparer()
-	{
-		return new TestEqualityComparer with
-			{
-				hashCodeFunc: failCallback1,
-				equalsFunc: failCallback2,
-			};
-	}
-
-	// Returns an EqualityComparer that considers key equal
-	// if they are the same modulo 10.
-	private mod10Comparer()
-	{
-		return new TestEqualityComparer with
-			{
-				hashCodeFunc: @value = value % 10,
-				equalsFunc: @(a, b) = (a % 10) == (b % 10),
-			};
-	}
-
 	// Constructor tests
 
 	public test_Constructor0()
@@ -137,7 +105,7 @@ public class HashTests is TestFixture
 	{
 		var h;
 		var capacity = 0;
-		var comparer = failComparer();
+		var comparer = new FailEqualityComparer();
 
 		Assert.doesNotThrow(@{ h = new Hash(capacity, comparer); });
 		Assert.areSameRef(h.keyComparer, comparer);
@@ -174,7 +142,7 @@ public class HashTests is TestFixture
 
 	public test_IndexerSingleAssignmentWithCustomComparer()
 	{
-		var h = new Hash(0, mod10Comparer());
+		var h = new Hash(0, new Mod10Comparer());
 		var key = 25;
 		var value = new Object();
 
@@ -186,7 +154,7 @@ public class HashTests is TestFixture
 
 	public test_IndexerSingleAssignmentWithEquivalentKeysAndCustomComparer()
 	{
-		var h = new Hash(0, mod10Comparer());
+		var h = new Hash(0, new Mod10Comparer());
 		var writeKey = 5;
 		var readKey = 15;
 		var value = new Object();
@@ -199,7 +167,7 @@ public class HashTests is TestFixture
 
 	public test_IndexerOverwriteWithCustomComparer()
 	{
-		var h = new Hash(0, mod10Comparer());
+		var h = new Hash(0, new Mod10Comparer());
 		var key = 25;
 		var value1 = new Object();
 		var value2 = new Object();
@@ -213,7 +181,7 @@ public class HashTests is TestFixture
 
 	public test_IndexerOverwriteWithEquivalentKeysAndCustomComparer()
 	{
-		var h = new Hash(0, mod10Comparer());
+		var h = new Hash(0, new Mod10Comparer());
 		var writeKey1 = 5;
 		var writeKey2 = 15;
 		var readKey = 25;
@@ -231,20 +199,4 @@ public class HashTests is TestFixture
 	}
 
 	// End indexer tests
-}
-
-private class TestEqualityComparer is EqualityComparer
-{
-	public hashCodeFunc;
-	public equalsFunc;
-
-	override getHashCode(value)
-	{
-		return hashCodeFunc(value);
-	}
-
-	override equals(a, b)
-	{
-		return equalsFunc(a, b);
-	}
 }

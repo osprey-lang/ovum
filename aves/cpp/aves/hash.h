@@ -13,7 +13,7 @@ public:
 
 	int InitializeBuckets(ThreadHandle thread, int32_t capacity);
 
-	int ResizeHash(ThreadHandle thread);
+	int Resize(ThreadHandle thread);
 
 	int FindEntry(ThreadHandle thread, Value *key, int32_t hashCode, int32_t &index);
 
@@ -21,7 +21,7 @@ public:
 
 	static inline int32_t GetHash(uint64_t value)
 	{
-		return (int32_t)(value) ^ (int32_t)((value) >> 32);
+		return ((int32_t)value ^ (int32_t)(value >> 32)) & INT32_MAX;
 	}
 };
 

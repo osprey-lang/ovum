@@ -23,7 +23,7 @@ int Hash::InitializeBuckets(ThreadHandle thread, int32_t capacity)
 	RETURN_SUCCESS;
 }
 
-int Hash::ResizeHash(ThreadHandle thread)
+int Hash::Resize(ThreadHandle thread)
 {
 	int32_t newSize = HashHelper_GetPrime(this->count * 2);
 
@@ -223,7 +223,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Hash_insert)
 	if (inst->buckets == nullptr)
 		CHECKED(inst->InitializeBuckets(thread, 0));
 
-	int32_t hashCode = aves::Hash::GetHash(args[2].v.uinteger) & INT32_MAX;
+	int32_t hashCode = aves::Hash::GetHash(args[2].v.uinteger);
 	int32_t bucket = hashCode % inst->capacity;
 
 	for (int32_t i = inst->buckets[bucket]; i >= 0; )
@@ -258,7 +258,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Hash_insert)
 	{
 		if (inst->count == inst->capacity)
 		{
-			CHECKED(inst->ResizeHash(thread));
+			CHECKED(inst->Resize(thread));
 			bucket = hashCode % inst->capacity;
 		}
 		index = inst->count;

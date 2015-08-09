@@ -59,7 +59,7 @@ public inheritable Hash
 		if keyComparer is null:
 			keyComparer = EqualityComparer.default;
 		else if keyComparer is not EqualityComparer:
-			throw new ArgumentError("keyComparer must be an instance of aves.EqualityComparer or null.");
+			throw new ArgumentError("keyComparer must be an instance of aves.EqualityComparer or null.", "keyComparer");
 
 		initialize(capacity, keyComparer);
 	}
@@ -390,7 +390,7 @@ public inheritable Hash
 		var h = keyComparer.getHashCode(key);
 
 		if h is not Int and h is not UInt:
-			throw new TypeError("The return value of EqualityComparer.getHashCode(value) must be of type Int or UInt.");
+			throw new TypeError("The hash code must be of type Int or UInt.");
 
 		return h;
 	}
