@@ -12,6 +12,11 @@ namespace aves;
 ///          A hash table cannot contain an entry with a null key, irrespective
 ///          of the {keyComparer}.
 ///
+///          All hash tables are inherently unordered. That is, when enumerating
+///          the keys, values or key-value pairs in the hash table, they are not
+///          guaranteed to come in any particular order. Adding or removing entries
+///          may unpredictably change the iteration order.
+///
 ///          The hash table is one of the fundamental collection types, alongside
 ///          {List} and {Set}.
 public inheritable Hash
