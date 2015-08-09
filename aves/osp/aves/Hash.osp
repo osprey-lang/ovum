@@ -297,7 +297,7 @@ public inheritable Hash
 
 	public filter(predicate)
 	{
-		var output = new Hash(length);
+		var output = new Hash(length, keyComparer);
 		var startVersion = version;
 
 		try
@@ -322,7 +322,7 @@ public inheritable Hash
 
 	public mapKeys(func)
 	{
-		var output = new Hash(length);
+		var output = new Hash(length, keyComparer);
 		var startVersion = version;
 
 		try
@@ -347,7 +347,7 @@ public inheritable Hash
 
 	public mapValues(func)
 	{
-		var output = new Hash(length);
+		var output = new Hash(length, keyComparer);
 		var startVersion = version;
 
 		try
