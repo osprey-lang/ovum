@@ -1,0 +1,250 @@
+use namespace aves;
+use namespace testing.unit;
+
+namespace aves.tests;
+
+// Tests for the class aves.Hash
+
+public class HashTests is TestFixture
+{
+	public new() { new base("aves.Hash tests"); }
+
+	private static failCallback1(a)
+	{
+		throw new AssertionError("Callback should not be called");
+	}
+
+	private static failCallback2(a, b)
+	{
+		throw new AssertionError("Callback should not be called");
+	}
+
+	// Returns an EqualityComparer that throws AssertionError
+	// if getHashCode(value) or equals(a, b) is called.
+	private failComparer()
+	{
+		return new TestEqualityComparer with
+			{
+				hashCodeFunc: failCallback1,
+				equalsFunc: failCallback2,
+			};
+	}
+
+	// Returns an EqualityComparer that considers key equal
+	// if they are the same modulo 10.
+	private mod10Comparer()
+	{
+		return new TestEqualityComparer with
+			{
+				hashCodeFunc: @value = value % 10,
+				equalsFunc: @(a, b) = (a % 10) == (b % 10),
+			};
+	}
+
+	// Constructor tests
+
+	public test_Constructor0()
+	{
+		var h;
+		Assert.doesNotThrow(@{ h = new Hash(); });
+		Assert.areEqual(h.length, 0);
+	}
+
+	public test_Constructor1WithZeroCapacity()
+	{
+		var h;
+		var capacity = 0;
+		Assert.doesNotThrow(@{ h = new Hash(capacity); });
+		Assert.areEqual(h.length, 0);
+		Assert.isGreaterOrEqual(h.capacity, capacity);
+	}
+
+	public test_Constructor1WithPositiveCapacity()
+	{
+		var h;
+		var capacity = 42;
+		Assert.doesNotThrow(@{ h = new Hash(capacity); });
+		Assert.areEqual(h.length, 0);
+		Assert.isGreaterOrEqual(h.capacity, capacity);
+	}
+
+	public test_Constructor1WithTooMuchCapacity()
+	{
+		// If Hash.maxCapacity == Int.max, then we can't do anything
+		if Hash.maxCapacity == Int.max:
+			return;
+
+		var capacity = Hash.maxCapacity + 1;
+		Assert.throws(typeof(ArgumentRangeError), @= new Hash(capacity));
+	}
+
+	public test_Constructor1WithInvalidCapacity()
+	{
+		Assert.throws(typeof(ArgumentRangeError), @= new Hash(-1));
+		Assert.throws(typeof(TypeError), @= new Hash("123"));
+		Assert.throws(typeof(TypeError), @= new Hash("feather"));
+	}
+
+	public test_Constructor2WithZeroCapacity()
+	{
+		var h;
+		var capacity = 0;
+		Assert.doesNotThrow(@{ h = new Hash(capacity, EqualityComparer.default); });
+		Assert.areEqual(h.length, 0);
+		Assert.isGreaterOrEqual(h.capacity, capacity);
+		Assert.areSameRef(h.keyComparer, EqualityComparer.default);
+	}
+
+	public test_Constructor2WithPositiveCapacity()
+	{
+		var h;
+		var capacity = 42;
+		Assert.doesNotThrow(@{ h = new Hash(capacity, EqualityComparer.default); });
+		Assert.areEqual(h.length, 0);
+		Assert.isGreaterOrEqual(h.capacity, capacity);
+		Assert.areSameRef(h.keyComparer, EqualityComparer.default);
+	}
+
+	public test_Constructor2WithTooMuchCapacity()
+	{
+		// If Hash.maxCapacity == Int.max, then we can't do anything
+		if Hash.maxCapacity == Int.max:
+			return;
+
+		var capacity = Hash.maxCapacity + 1;
+		Assert.throws(typeof(ArgumentRangeError), @= new Hash(capacity, EqualityComparer.default));
+	}
+
+	public test_Constructor2WithInvalidCapacity()
+	{
+		Assert.throws(typeof(ArgumentRangeError), @= new Hash(-1, EqualityComparer.default));
+		Assert.throws(typeof(TypeError), @= new Hash("123", EqualityComparer.default));
+		Assert.throws(typeof(TypeError), @= new Hash("feather", EqualityComparer.default));
+	}
+
+	public test_Constructor2WithNullComparer()
+	{
+		// When a Hash is constructed with a null keyComparer, it uses
+		// the default EqualityComparer.
+
+		var h;
+		var capacity = 0;
+		Assert.doesNotThrow(@{ h = new Hash(capacity, null); });
+		Assert.areSameRef(h.keyComparer, EqualityComparer.default);
+	}
+
+	public test_Constructor2WithCustomComparer()
+	{
+		var h;
+		var capacity = 0;
+		var comparer = failComparer();
+
+		Assert.doesNotThrow(@{ h = new Hash(capacity, comparer); });
+		Assert.areSameRef(h.keyComparer, comparer);
+	}
+
+	// End constructor tests
+
+	// Indexer tests
+
+	public test_IndexerSingleAssignmentWithDefaultComparer()
+	{
+		var h = new Hash(0, EqualityComparer.default);
+		var key = new Object();
+		var value = new Object();
+
+		h[key] = value;
+
+		Assert.areSameRef(value, h[key]);
+	}
+
+	public test_IndexerOverwriteWithDefaultComparer()
+	{
+		var h = new Hash(0, EqualityComparer.default);
+		var key = new Object();
+		var value1 = new Object();
+		var value2 = new Object();
+
+		h[key] = value1;
+		h[key] = value2;
+
+		Assert.areEqual(h.length, 1);
+		Assert.areSameRef(value2, h[key]);
+	}
+
+	public test_IndexerSingleAssignmentWithCustomComparer()
+	{
+		var h = new Hash(0, mod10Comparer());
+		var key = 25;
+		var value = new Object();
+
+		h[key] = value;
+
+		Assert.areEqual(h.length, 1);
+		Assert.areSameRef(value, h[key]);
+	}
+
+	public test_IndexerSingleAssignmentWithEquivalentKeysAndCustomComparer()
+	{
+		var h = new Hash(0, mod10Comparer());
+		var writeKey = 5;
+		var readKey = 15;
+		var value = new Object();
+
+		h[writeKey] = value;
+
+		Assert.areEqual(h.length, 1);
+		Assert.areSameRef(value, h[readKey]);
+	}
+
+	public test_IndexerOverwriteWithCustomComparer()
+	{
+		var h = new Hash(0, mod10Comparer());
+		var key = 25;
+		var value1 = new Object();
+		var value2 = new Object();
+
+		h[key] = value1;
+		h[key] = value2;
+
+		Assert.areEqual(h.length, 1);
+		Assert.areSameRef(value2, h[key]);
+	}
+
+	public test_IndexerOverwriteWithEquivalentKeysAndCustomComparer()
+	{
+		var h = new Hash(0, mod10Comparer());
+		var writeKey1 = 5;
+		var writeKey2 = 15;
+		var readKey = 25;
+		var value1 = new Object();
+		var value2 = new Object();
+
+		h[writeKey1] = value1;
+		h[writeKey2] = value2;
+
+		Assert.areEqual(h.length, 1);
+		Assert.areSameRef(value2, h[readKey]);
+		// The original key remains in the hash table, even if its value
+		// is overwritten by a different but equivalent key.
+		Assert.collectionsMatch(h.keys, [writeKey1], Assert.areEqual);
+	}
+
+	// End indexer tests
+}
+
+private class TestEqualityComparer is EqualityComparer
+{
+	public hashCodeFunc;
+	public equalsFunc;
+
+	override getHashCode(value)
+	{
+		return hashCodeFunc(value);
+	}
+
+	override equals(a, b)
+	{
+		return equalsFunc(a, b);
+	}
+}
