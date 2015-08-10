@@ -1,65 +1,175 @@
 namespace aves;
 
+/// Summary: Represents a set – that is, an unordered collection that either
+///          contains or does not contain a value. A set can contain a value
+///          at most once.
+/// Remarks: In order to test whether two values are equivalent, this class
+///          uses an {EqualityComparer}. It uses the {EqualityComparer} both
+///          to compute a hash code and to compare for equality. The set's
+///          {itemComparer} can be specified when the set is created; as such
+///          it is possible to implement custom value comparison logic. The
+///          default implementation uses {Object.getHashCode} to calculate
+///          hash codes, and the `==` operator to compare values for equality.
+///
+///          A set can contain the null value only if the {EqualityComparer}
+///          supports it. The default implementation does.
+///
+///          All sets are inherently unordered. That is, when enumerating its
+///          entries, they are not guaranteed to come in any particular order.
+///          Adding or removing entries may unpredictably change the iteration
+///          order.
+///
+///          The set is one of the fundamental collection types, alongside
+///          {List} and {Hash}.
 public inheritable Set is Iterable
 {
 	__init_type("aves_Set_init");
 
+	/// Summary: Creates a new, empty set with the default capacity.
 	public new()
 	{
-		new this(0);
+		new this(0, null);
 	}
+	/// Summary: Creates a new, empty set with the specified initial capacity.
+	/// Param capacity: The initial capacity of the set. (Int, UInt or Real)
+	/// Throws TypeError:
+	///          {capacity} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {capacity} is less than zero, or greater than {maxCapacity}.
 	public new(capacity)
-		__extern("aves_Set_new");
+	{
+		new this(capacity, null);
+	}
+	/// Summary: Creates a new, empty set with the specified initial capacity
+	///          and item comparer.
+	/// Param capacity: The initial capacity of the set. (Int, UInt or Real)
+	/// Param itemComparer: An {EqualityComparer} that hashes set values and
+	///                     compares them for equality. Null can be passed to
+	///                     use the default comparer.
+	/// Throws TypeError:
+	///          {capacity} could not be converted to an Int.
+	/// Throws ArgumentError:
+	///          {itemComparer} is not null and not an {EqualityComparer}.
+	/// Throws ArgumentRangeError:
+	///          {capacity} is less than zero, or greater than {maxCapacity}.
+	public new(capacity, itemComparer)
+	{
+		capacity = int(capacity);
+		if capacity < 0 or capacity > maxCapacity:
+			throw new ArgumentRangeError("capacity");
 
+		if itemComparer is null:
+			itemComparer = EqualityComparer.default;
+		else if itemComparer is not EqualityComparer:
+			throw new ArgumentError("itemComparer must be an instance of aves.EqualityComparer or null.", "itemComparer");
+
+		initialize(capacity, itemComparer);
+	}
+
+	/// Summary: Gets the total number of entries contained in the set.
+	/// Returns: The total number of entries in the set, as an Int.
 	public get length
 		__extern("aves_Set_get_length");
 
+	/// Summary: Gets the capacity of the set; that is, the number of entries
+	///          it can contain before its internal storage needs to be resized.
+	/// Returns: The capacity of the set, as an Int.
+	public get capacity
+		__extern("aves_Set_get_capacity");
+
+	/// Summary: Gets the {EqualityComparer} that the set uses to hash and
+	///          compare entries.
+	/// Returns: The {EqualityComparer} used by the set.
+	public get itemComparer
+		__extern("aves_Set_get_itemComparer");
+
+	/// Summary: Determines whether the set is empty.
+	/// Returns: True if {length} is zero; otherwise, false.
 	public get isEmpty = length == 0;
 
+	private initialize(capacity, itemComparer)
+		__extern("aves_Set_initialize");
+
+	/// Summary: Determines whether the set contains the specified value.
+	/// Param item: The value to check for.
+	/// Returns: True if the set contains {item}; otherwise, false.
 	public contains(item)
 	{
 		return containsInternal(item, getHash(item));
 	}
+	private containsInternal(item, hash)
+		__extern("aves_Set_containsInternal");
+
+	/// Summary: Tries to add the specified value to the set. If the value
+	///          is already in the set, nothing is done.
+	/// Param item: The value to add.
+	/// Returns: True if the value was added to the set; false if it was
+	///          already in the set.
 	public add(item)
 	{
 		return addInternal(item, getHash(item));
 	}
+	private addInternal(item, hash)
+		__extern("aves_Set_addInternal");
+
+	/// Summary: Tries to remove the specified value from the set. If the
+	///          value is not in the set, nothing is done.
+	/// Param item: The value to remove.
+	/// Returns: True if the value was removed from the set; false if it
+	///          was not in the set to begin with.
 	public remove(item)
 	{
 		return removeInternal(item, getHash(item));
 	}
+	private removeInternal(item, hash)
+		__extern("aves_Set_removeInternal");
+
+	/// Summary: Toggles the specified value, adding it if it is not in the
+	///          set, or removing it otherwise.
+	/// Param item: The value to toggle.
+	/// Returns: True if the value was added; otherwise, false. In other words,
+	///          true if the set contains the value after the call.
 	public toggle(item)
 	{
 		return add(item) or not remove(item);
 	}
+
+	/// Summary: Removes all entries from the set.
 	public clear()
 		__extern("aves_Set_clear");
+
+	/// Summary: Creates a clone of the set, with the same values and item
+	///          comparer.
+	/// Returns: A new {Set} with the same values and item comparer as
+	///          the current set.
 	public clone()
 	{
-		var output = new Set(this.length);
+		var output = new Set(this.length, this.itemComparer);
+
 		for value in this:
 			output.add(value);
+
 		return output;
 	}
 
-	private containsInternal(item, hash)
-		__extern("aves_Set_containsInternal");
-	private addInternal(item, hash)
-		__extern("aves_Set_addInternal");
-	private removeInternal(item, hash)
-		__extern("aves_Set_removeInternal");
-
+	/// Summary: Computes the intersection of this set and another.
+	/// Param other: The set to intersect with.
+	/// Returns: A new {Set} with all the values that are present in both the
+	///          current set and {other}.
+	/// Throws ArgumentError:
+	///          {other} is not a Set.
+	/// Remarks: The resulting set uses the {itemComparer} of the current set.
 	public intersect(other)
 	{
 		if other is not Set:
-			throw new TypeError();
+			throw new ArgumentError("other must be an instance of aves.Set.", "other");
 
 		var smallest = this;
 		if other.length < this.length:
 			// swap the two
 			smallest, other = other, this;
 
-		var output = new Set(smallest.length);
+		var output = new Set(smallest.length, this.itemComparer);
 
 		for item in smallest:
 			if other.contains(item):
@@ -68,10 +178,17 @@ public inheritable Set is Iterable
 		return output;
 	}
 
+	/// Summary: Computes the union of this set and another.
+	/// Param other: The set to union with.
+	/// Returns: A new {Set} with all the values that are present in either the
+	///          current set or {other}.
+	/// Throws ArgumentError:
+	///          {other} is not a Set.
+	/// Remarks: The resulting set uses the {itemComparer} of the current set.
 	public union(other)
 	{
 		if other is not Set:
-			throw new TypeError();
+			throw new ArgumentError("other must be an instance of aves.Set.", "other");
 
 		var output = this.clone();
 
@@ -81,12 +198,24 @@ public inheritable Set is Iterable
 		return output;
 	}
 
+	/// Summary: Computes the difference between this set and another.
+	/// Param other: The set to subtract.
+	/// Returns: A new {Set} with all the values that are present in the current
+	///          set and not in {other}.
+	/// Throws ArgumentError:
+	///          {other} is not a Set.
+	/// Remarks: This is equivalent to subtracting the values of {other} from the
+	///          current set. The operation is not commutative; that is, `A.difference(B)`
+	///          is not the same as `B.difference(A)`. The resulting value can
+	///          also be called the relative complement of the two sets.
+	///
+	///          The resulting set uses the {itemComparer} of the current set.
 	public difference(other)
 	{
 		if other is not Set:
-			throw new TypeError();
+			throw new ArgumentError("other must be an instance of aves.Set.", "other");
 
-		var output = new Set(this.length);
+		var output = new Set(this.length, this.itemComparer);
 
 		for item in this:
 			if not other.contains(item):
@@ -95,10 +224,21 @@ public inheritable Set is Iterable
 		return output;
 	}
 
+	/// Summary: Computes the symmetric difference between this set and another.
+	/// Param other: The set to compute symmetric difference against.
+	/// Returns: A new {Set} with all the values that are present in either the
+	///          current set or {other}, but not both.
+	/// Throws ArgumentError:
+	///          {other} is not a Set.
+	/// Remarks: This is effectively equivalent to computing the XOR of the two
+	///          sets. Unlike {difference}, this method is commutative; that is,
+	///          `A.symmetricDifference(B)` is the same as `A.symmetricDifference(B)`.
+	///
+	///          The resulting set uses the {itemComparer} of the current set.
 	public symmetricDifference(other)
 	{
 		if other is not Set:
-			throw new TypeError();
+			throw new ArgumentError("other must be an instance of aves.Set.", "other");
 
 		var output = this.clone();
 
@@ -108,23 +248,46 @@ public inheritable Set is Iterable
 		return output;
 	}
 
-	private static getHash(object)
+	private getHash(item)
 	{
-		if object is null:
-			return 0;
+		var h = itemComparer.getHashCode(item);
 
-		var h = object.getHashCode();
 		if h is not Int and h is not UInt:
-			throw new TypeError("The return value of getHashCode() must be of type Int or UInt.");
+			throw new TypeError("The hash code must be of type Int or UInt.");
 
 		return h;
 	}
 
+	/// Summary: Creates a new set containing the values from another collection.
+	/// Param collection: The collection to copy values from. This can be any
+	///                   object that supports an iterator.
+	/// Returns: A new {Set} containing values from {collection}.
+	/// Throws ArgumentNullError:
+	///          {collection} is null.
+	/// Remarks: The resulting set uses the default {EqualityComparer}.
 	public static fromCollection(collection)
 	{
-		var output = new Set();
+		return fromCollection(collection, null);
+	}
+	/// Summary: Creates a new set containing the values from another collection.
+	/// Param collection: The collection to copy values from. This can be any
+	///                   object that supports an iterator.
+	/// Param itemComparer: An {EqualityComparer} that hashes set values and
+	///                     compares them for equality. Null can be passed to
+	///                     use the default comparer.
+	/// Returns: A new {Set} containing values from {collection}.
+	/// Throws ArgumentError:
+	///          {itemComparer} is not null and is not an {EqualityComparer}.
+	/// Throws ArgumentNullError:
+	///          {collection} is null.
+	/// Remarks: The resulting set uses the default {EqualityComparer}.
+	public static fromCollection(collection, itemComparer)
+	{
+		var output = new Set(collection, itemComparer);
+
 		for item in collection:
 			output.add(item);
+
 		return output;
 	}
 
@@ -133,35 +296,15 @@ public inheritable Set is Iterable
 		return "Set[length = {0}]".format([length]);
 	}
 
-	operator &(a, b)
-	{
-		return a.intersect(b);
-	}
-
-	operator ^(a, b)
-	{
-		return a.symmetricDifference(b);
-	}
-
-	operator +(a, b)
-	{
-		return a.union(b);
-	}
-
-	operator -(a, b)
-	{
-		return a.difference(b);
-	}
-
-	operator |(a, b)
-	{
-		return a.union(b);
-	}
-
 	iter
 	{
 		return new SetIterator(this);
 	}
+
+	/// Summary: Gets the maximum number of entries a set can contain.
+	/// Returns: The maximum {capacity} of a set, as an Int.
+	public static get maxCapacity
+		__extern("aves_Set_get_maxCapacity");
 }
 
 private class SetIterator is Iterator

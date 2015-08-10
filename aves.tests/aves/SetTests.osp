@@ -1,0 +1,259 @@
+use namespace aves;
+use namespace testing.unit;
+
+namespace aves.tests;
+
+// Tests for the class aves.Set
+
+public class SetTests is TestFixture
+{
+	public new() { new base("aves.Set tests"); }
+
+	// Constructor tests
+
+	public test_Constructor0()
+	{
+		var s;
+		Assert.doesNotThrow(@{ s = new Set(); });
+		Assert.areEqual(s.length, 0);
+	}
+
+	public test_Constructor1WithZeroCapacity()
+	{
+		var s;
+		var capacity = 0;
+		Assert.doesNotThrow(@{ s = new Set(capacity); });
+		Assert.areEqual(s.length, 0);
+		Assert.isGreaterOrEqual(s.capacity, capacity);
+	}
+
+	public test_Constructor1WithPositiveCapacity()
+	{
+		var s;
+		var capacity = 42;
+		Assert.doesNotThrow(@{ s = new Set(capacity); });
+		Assert.areEqual(s.length, 0);
+		Assert.isGreaterOrEqual(s.capacity, capacity);
+	}
+
+	public test_Constructor1WithTooMuchCapacity()
+	{
+		// If Set.maxCapacity == Int.max, then we can't do anything
+		if Set.maxCapacity == Int.max:
+			return;
+
+		var capacity = Set.maxCapacity + 1;
+		Assert.throws(typeof(ArgumentRangeError), @= new Set(capacity));
+	}
+
+	public test_Constructor1WithInvalidCapacity()
+	{
+		Assert.throws(typeof(ArgumentRangeError), @= new Set(-1));
+		Assert.throws(typeof(TypeError), @= new Set("123"));
+		Assert.throws(typeof(TypeError), @= new Set("feather"));
+	}
+
+	public test_Constructor2WithZeroCapacity()
+	{
+		var s;
+		var capacity = 0;
+		Assert.doesNotThrow(@{ s = new Set(capacity, EqualityComparer.default); });
+		Assert.areEqual(s.length, 0);
+		Assert.isGreaterOrEqual(s.capacity, capacity);
+		Assert.areSameRef(s.itemComparer, EqualityComparer.default);
+	}
+
+	public test_Constructor2WithPositiveCapacity()
+	{
+		var s;
+		var capacity = 42;
+		Assert.doesNotThrow(@{ s = new Set(capacity, EqualityComparer.default); });
+		Assert.areEqual(s.length, 0);
+		Assert.isGreaterOrEqual(s.capacity, capacity);
+		Assert.areSameRef(s.itemComparer, EqualityComparer.default);
+	}
+
+	public test_Constructor2WithTooMuchCapacity()
+	{
+		// If Set.maxCapacity == Int.max, then we can't do anything
+		if Set.maxCapacity == Int.max:
+			return;
+
+		var capacity = Set.maxCapacity + 1;
+		Assert.throws(typeof(ArgumentRangeError), @= new Set(capacity, EqualityComparer.default));
+	}
+
+	public test_Constructor2WithInvalidCapacity()
+	{
+		Assert.throws(typeof(ArgumentRangeError), @= new Set(-1, EqualityComparer.default));
+		Assert.throws(typeof(TypeError), @= new Set("123", EqualityComparer.default));
+		Assert.throws(typeof(TypeError), @= new Set("feather", EqualityComparer.default));
+	}
+
+	public test_Constructor2WithNullComparer()
+	{
+		// When a Set is constructed with a null itemComparer, it uses
+		// the default EqualityComparer.
+
+		var s;
+		var capacity = 0;
+		Assert.doesNotThrow(@{ s = new Set(capacity, null); });
+		Assert.areSameRef(s.itemComparer, EqualityComparer.default);
+	}
+
+	public test_Constructor2WithCustomComparer()
+	{
+		var s;
+		var capacity = 0;
+		var comparer = new FailEqualityComparer();
+
+		Assert.doesNotThrow(@{ s = new Set(capacity, comparer); });
+		Assert.areSameRef(s.itemComparer, comparer);
+	}
+
+	// End constructor tests
+
+	// add tests
+
+	public test_AddSingleWithDefaultComparer()
+	{
+		var s = new Set();
+		var value = 1;
+
+		Assert.isTrue(s.add(value));
+		Assert.isFalse(s.add(value));
+		Assert.areEqual(s.length, 1);
+	}
+
+	public test_AddMultipleWithDefaultComparer()
+	{
+		var s = new Set();
+		var value1 = 1;
+		var value2 = 2;
+
+		Assert.isTrue(s.add(value1));
+		Assert.isTrue(s.add(value2));
+		Assert.isFalse(s.add(value1));
+		Assert.isFalse(s.add(value2));
+		Assert.areEqual(s.length, 2);
+	}
+
+	public test_AddSingleWithCustomComparer()
+	{
+		var comparer = new Mod10Comparer();
+		var s = new Set(0, comparer);
+		var value = 1;
+
+		Assert.isTrue(s.add(value));
+		Assert.isFalse(s.add(value + 10));
+		Assert.areEqual(s.length, 1);
+	}
+
+	public test_AddMultipleWithCustomComparer()
+	{
+		var comparer = new Mod10Comparer();
+		var s = new Set(0, comparer);
+		var value1 = 1;
+		var value2 = 2;
+
+		Assert.isTrue(s.add(value1));
+		Assert.isTrue(s.add(value2));
+		Assert.isFalse(s.add(value1 + 10));
+		Assert.isFalse(s.add(value2 + 10));
+		Assert.areEqual(s.length, 2);
+	}
+
+	// End add tests
+
+	// remove tests
+
+	public test_RemoveSingleWithDefaultComparer()
+	{
+		var s = new Set();
+		var value = 1;
+
+		s.add(value);
+		Assert.areEqual(s.length, 1);
+		Assert.isTrue(s.remove(value));
+		Assert.isFalse(s.remove(value));
+		Assert.areEqual(s.length, 0);
+	}
+
+	public test_RemoveMultipleWithDefaultComparer()
+	{
+		var s = new Set();
+		var value1 = 1;
+		var value2 = 2;
+
+		s.add(value1);
+		s.add(value2);
+		Assert.areEqual(s.length, 2);
+		Assert.isTrue(s.remove(value1));
+		Assert.isTrue(s.remove(value2));
+		Assert.isFalse(s.remove(value1));
+		Assert.isFalse(s.remove(value2));
+		Assert.areEqual(s.length, 0);
+	}
+
+	public test_RemoveSingleWithCustomComparer()
+	{
+		var comparer = new Mod10Comparer();
+		var s = new Set(0, comparer);
+		var value = 1;
+
+		s.add(value);
+		Assert.areEqual(s.length, 1);
+		Assert.isTrue(s.remove(value));
+		Assert.isFalse(s.remove(value));
+		Assert.areEqual(s.length, 0);
+	}
+
+	public test_RemoveMultipleWithCustomComparer()
+	{
+		var comparer = new Mod10Comparer();
+		var s = new Set(0, comparer);
+		var value1 = 1;
+		var value2 = 2;
+
+		s.add(value1);
+		s.add(value2);
+		Assert.areEqual(s.length, 2);
+		Assert.isTrue(s.remove(value1 + 10));
+		Assert.isTrue(s.remove(value2 + 10));
+		Assert.isFalse(s.remove(value1 + 10));
+		Assert.isFalse(s.remove(value2 + 10));
+		Assert.areEqual(s.length, 0);
+	}
+
+	// End remove tests
+
+	// contains tests
+
+	public test_ContainsWithDefaultComparer()
+	{
+		var s = new Set();
+		var value = 1;
+
+		Assert.isFalse(s.contains(value));
+		s.add(value);
+		Assert.isTrue(s.contains(value));
+		s.remove(value);
+		Assert.isFalse(s.contains(value));
+	}
+
+	public test_ContainsWithCustomComparer()
+	{
+		var comparer = new Mod10Comparer();
+		var s = new Set(0, comparer);
+		var value = 1;
+
+		Assert.isFalse(s.contains(value));
+		s.add(value);
+		Assert.isTrue(s.contains(value));
+		Assert.isTrue(s.contains(value + 10));
+		s.remove(value);
+		Assert.isFalse(s.contains(value + 20));
+	}
+
+	// End contains tests
+}
