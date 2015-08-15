@@ -7,4 +7,9 @@ set LIB=%OSP%\lib
 rem Path to the folder containing aves.dll
 set DLLDIR=%OSP%\Ovum\Release
 
-%OSPC% /nativelib "%DLLDIR%\aves.dll" /meta meta.txt /type module /nostdlib /out "%LIB%\aves.ovm" /doc "%LIB%\aves.ovm.json" /formatjson /verbose %* aves.osp
+if not exist "%LIB%\aves\" (
+	echo Creating directory %LIB%\aves
+	mkdir "%LIB%\aves"
+)
+
+%OSPC% /nativelib "%DLLDIR%\aves.dll" /meta meta.txt /type module /nostdlib /out "%LIB%\aves\aves.ovm" /doc "%LIB%\aves\aves.ovm.json" /formatjson /verbose %* aves.osp
