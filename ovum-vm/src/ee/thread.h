@@ -103,10 +103,6 @@ private:
 	// the cycle.
 	CriticalSection gcCycleSection;
 
-	// The one-argument indexer setter for aves.Hash, used by ConcatLL.
-	// Starts out null; is initialized on demand. Access through GetHashIndexerSetter().
-	MethodOverload *hashSetItem;
-
 public:
 	inline void Push(Value *value)
 	{
@@ -311,8 +307,6 @@ private:
 
 	int InitializeMethod(MethodOverload *method);
 	int CallStaticConstructors(instr::MethodBuilder &builder);
-
-	MethodOverload *GetHashIndexerSetter();
 
 	friend class GC;
 	friend class VM;

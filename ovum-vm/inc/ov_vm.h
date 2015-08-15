@@ -120,7 +120,6 @@ typedef uint32_t ovlocals_t;
 typedef struct Value_S Value;
 typedef struct String_S String;
 typedef struct ListInst_S ListInst;
-typedef struct HashInst_S HashInst;
 typedef struct HashEntry_S HashEntry;
 typedef struct ErrorInst_S ErrorInst;
 typedef struct MethodInst_S MethodInst;
@@ -164,7 +163,6 @@ struct Value_S
 		// Let's make some common, fixed-layout types easily available.
 		String *string;
 		ListInst *list;
-		HashInst *hash;
 		ErrorInst *error;
 		MethodInst *method;
 
@@ -247,18 +245,6 @@ struct HashEntry_S
 	int32_t next;     // Index of next entry in bucket; -1 = last
 	Value key;
 	Value value;
-};
-
-struct HashInst_S
-{
-	int32_t capacity;   // the number of "slots" in buckets and entries
-	int32_t count;      // the number of entries (not buckets) that have been used
-	int32_t freeCount;  // the number of entries that were previously used, and have now been freed (and can thus be reused)
-	int32_t freeList;   // the index of the first freed entry
-	int32_t version;    // the "version" of the hash, incremented whenever changes are made
-
-	int32_t *buckets;
-	HashEntry *entries;
 };
 
 struct ErrorInst_S

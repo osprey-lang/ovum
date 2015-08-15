@@ -327,10 +327,7 @@ int Thread::Evaluate()
 		TARGET(OPI_HASH_L)
 			{
 				OPC_ARGS(oa::LocalAndValue<int32_t>);
-				Value result; // Can't put it in dest until it's fully initialized
-				CHK(GetGC()->Alloc(this, vm->types.Hash, sizeof(HashInst), &result));
-				CHK(vm->functions.initHashInstance(this, result.v.hash, args->value));
-				*args->Local(f) = result;
+				CHK(vm->functions.initHashInstance(this, args->value, args->Local(f)));
 
 				ip += oa::LOCAL_AND_VALUE<int32_t>::SIZE;
 			}
@@ -338,10 +335,7 @@ int Thread::Evaluate()
 		TARGET(OPI_HASH_S)
 			{
 				OPC_ARGS(oa::LocalAndValue<int32_t>);
-				Value result; // Can't put it in dest until it's fully initialized
-				CHK(GetGC()->Alloc(this, vm->types.Hash, sizeof(HashInst), &result));
-				CHK(vm->functions.initHashInstance(this, result.v.hash, args->value));
-				*args->Local(f) = result;
+				CHK(vm->functions.initHashInstance(this, args->value, args->Local(f)));
 
 				ip += oa::LOCAL_AND_VALUE<int32_t>::SIZE;
 				f->stackCount++;

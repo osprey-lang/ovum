@@ -305,12 +305,38 @@ typedef void (OVUM_CDECL *TypeInitializer)(TypeHandle type);
 // When called, 'list' is guaranteed to refer to a valid ListInst*.
 typedef int (OVUM_CDECL *ListInitializer)(ThreadHandle thread, ListInst *list, int32_t capacity);
 
-// Initializes a HashInst* to a specific capacity.
-// This method is provided to avoid making any assumptions about the
-// underlying implementation of the aves.Hash class, and is taken from
-// the main module's exported method "InitHashInstance".
-// When called, 'hash' is guaranteed to refer to a valid HashInst*.
-typedef int (OVUM_CDECL *HashInitializer)(ThreadHandle thread, HashInst *hash, int32_t capacity);
+// Initializes a Value* with an aves.Hash instance of the specified capacity.
+// This method is provided to avoid making any assumptions about the underlying
+// implementation of the aves.Hash class. The native library of the module that
+// declares aves.Hash must export a function called "InitHashInstance", which
+// is called when the runtime needs to construct a hash table.
+//
+// Parameters:
+//   thread:
+//     The current managed thread.
+//   capacity:
+//     The required minimal capacity of the hash table. This value is guaranteed
+//     to be greater than or equal to zero.
+//   result:
+//     A storage location that receives the initialized hash table.
+typedef int (OVUM_CDECL *HashInitializer)(ThreadHandle thread, int32_t capacity, Value *result);
+
+// Concatenates two values together. Native functions with this signature are
+// used to concatenate lists and hash tables. The native library of the module
+// that declare aves.List and aves.Hash must export two functions named "ConcatenateLists"
+// and "ConcatenateHashes", respectively, which are called by the runtime.
+//
+// Note: String concatenation is managed entirely inside the runtime.
+//
+// Parameters:
+//   thread:
+//     The current managed thread.
+//   a, b:
+//     The two values to concatenate. The runtime guarantees that these are of
+//     the same type.
+//   result:
+//     A storage location that receives the concatenated value.
+typedef int (OVUM_CDECL *ValueConcatenator)(ThreadHandle thread, Value *a, Value *b, Value *result);
 
 // Initializes a value of the aves.reflection.Type class for a specific
 // underlying TypeHandle. The standard module must expose a method with

@@ -228,6 +228,32 @@ AVES_API int OVUM_CDECL InitListInstance(ThreadHandle thread, ListInst *list, co
 	RETURN_SUCCESS;
 }
 
+AVES_API int OVUM_CDECL ConcatenateLists(ThreadHandle thread, Value *a, Value *b, Value *result)
+{
+	int status__;
+
+	PinnedAlias<ListInst> la(a), lb(b);
+
+	int32_t totalLength = la->length + lb->length;
+
+	// Construct the output list first. We can safely assign it directly to result.
+	VM_PushInt(thread, totalLength);
+	CHECKED(GC_Construct(thread, GetType_List(thread), 1, result));
+	ListInst *lres = result->Get<ListInst>();
+
+	// Copy entries to the output
+	if (totalLength > 0)
+	{
+		CopyMemoryT(lres->values, la->values, la->length);
+		CopyMemoryT(lres->values + la->length, lb->values, lb->length);
+	}
+	lres->length = totalLength;
+	lres->version++;
+
+retStatus__:
+	return status__;
+}
+
 int EnsureMinCapacity(ThreadHandle thread, ListInst *list, const int32_t capacity)
 {
 	if (list->capacity < capacity)

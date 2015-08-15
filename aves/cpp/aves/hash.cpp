@@ -92,6 +92,27 @@ int Hash::KeyEquals(ThreadHandle thread, Value *a, Value *b, bool &equals)
 	return r;
 }
 
+int Hash::MergeIntoTopOfStack(ThreadHandle thread)
+{
+	int status__;
+
+	for (int32_t i = 0; i < this->count; i++)
+	{
+		HashEntry *e = this->entries + i;
+		if (e->hashCode < 0)
+			// This entry has been removed; skip it.
+			continue;
+
+		VM_Dup(thread); // the other hash table
+		VM_Push(thread, &e->key);
+		VM_Push(thread, &e->value);
+		CHECKED(VM_StoreIndexer(thread, 1));
+	}
+
+retStatus__:
+	return status__;
+}
+
 } // namespace aves
 
 AVES_API void OVUM_CDECL aves_Hash_init(TypeHandle type)
@@ -108,7 +129,7 @@ AVES_API NATIVE_FUNCTION(aves_Hash_get_length)
 {
 	aves::Hash *inst = THISV.Get<aves::Hash>();
 
-	VM_PushInt(thread, inst->count - inst->freeCount);
+	VM_PushInt(thread, inst->GetLength());
 	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_Hash_get_capacity)
@@ -394,18 +415,32 @@ AVES_API NATIVE_FUNCTION(aves_Hash_unpinEntries)
 	RETURN_SUCCESS;
 }
 
-AVES_API int OVUM_CDECL InitHashInstance(ThreadHandle thread, HashInst *hash, const int32_t capacity)
+AVES_API int OVUM_CDECL InitHashInstance(ThreadHandle thread, int32_t capacity, Value *result)
 {
-	if (capacity > 0)
-	{
-		PinnedAlias<HashInst> p(hash);
+	VM_PushInt(thread, capacity);
+	return GC_Construct(thread, GetType_Hash(thread), 1, result);
+}
 
-		aves::Hash *inst = static_cast<aves::Hash*>(hash);
+AVES_API int OVUM_CDECL ConcatenateHashes(ThreadHandle thread, Value *a, Value *b, Value *result)
+{
+	int status__;
 
-		int r = inst->InitializeBuckets(thread, capacity);
-		if (r != OVUM_SUCCESS) return r;
-	}
-	RETURN_SUCCESS;
+	PinnedAlias<aves::Hash> ha(a), hb(b);
+
+	// Construct the output hash, and leave it on the stack.
+	// Always use the key comparer from the first hash table.
+	VM_PushInt(thread, ha->GetLength() + hb->GetLength()); // capacity
+	VM_Push(thread, &ha->keyComparer); // keyComparer
+	CHECKED(GC_Construct(thread, GetType_Hash(thread), 2, nullptr));
+
+	ha->MergeIntoTopOfStack(thread);
+	hb->MergeIntoTopOfStack(thread);
+
+	*result = VM_Pop(thread);
+	status__ = OVUM_SUCCESS;
+
+retStatus__:
+	return status__;
 }
 
 int OVUM_CDECL aves_Hash_getReferences(void *basePtr, ReferenceVisitor callback, void *cbState)

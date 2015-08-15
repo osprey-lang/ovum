@@ -43,8 +43,7 @@ Thread::Thread(VM *owner, int &status) :
 	vm(owner),
 	strings(owner->GetStrings()),
 	currentError(NULL_VALUE),
-	gcCycleSection(4000),
-	hashSetItem(nullptr)
+	gcCycleSection(4000)
 {
 	status = InitCallStack();
 	if (status == OVUM_SUCCESS)
@@ -534,21 +533,7 @@ int Thread::ConcatLL(Value *args, Value *result)
 		if (a->type != b->type)
 			return ThrowTypeError(strings->error.WrongTypesForConcatOperator);
 
-		Value output;
-		CHECKED(GetGC()->Alloc(this, vm->types.List, sizeof(ListInst), &output));
-
-		int32_t length = a->v.list->length + b->v.list->length;
-		CHECKED(vm->functions.initListInstance(this,
-			output.v.list, length));
-
-		if (length > 0)
-		{
-			CopyMemoryT(output.v.list->values, a->v.list->values, a->v.list->length);
-			CopyMemoryT(output.v.list->values + a->v.list->length, b->v.list->values, b->v.list->length);
-		}
-		output.v.list->length = length;
-
-		*result = output;
+		CHECKED(vm->functions.concatLists(this, a, b, result));
 	}
 	else if (a->type == vm->types.Hash || b->type == vm->types.Hash)
 	{
@@ -556,34 +541,7 @@ int Thread::ConcatLL(Value *args, Value *result)
 		if (a->type != b->type)
 			return ThrowTypeError(strings->error.WrongTypesForConcatOperator);
 
-		register StackFrame *f = currentFrame;
-		// Put the hash on the stack for extra GC reachability!
-		register Value *hash = args + 2;
-		f->stackCount++;
-
-		CHECKED(GetGC()->Alloc(this, vm->types.Hash, sizeof(HashInst), hash));
-		CHECKED(vm->functions.initHashInstance(this,
-			hash->v.hash,
-			max(a->v.hash->count, b->v.hash->count)));
-
-		MethodOverload *hashSetItem = GetHashIndexerSetter();
-		do
-		{
-			for (int32_t i = 0; i < a->v.hash->count; i++)
-			{
-				HashEntry *e = &a->v.hash->entries[i];
-				hash[1] = hash[0]; // dup the hash
-				hash[2] = e->key;
-				hash[3] = e->value;
-				f->stackCount += 3;
-				// InvokeMethodOverload pops the three effective arguments
-				CHECKED(InvokeMethodOverload(hashSetItem, 2, hash + 1, hash + 1));
-			}
-			a++;
-		} while (a == b);
-
-		*result = *hash;
-		f->stackCount--; // Pop the hash off the stack again
+		CHECKED(vm->functions.concatHashes(this, a, b, result));
 	}
 	else
 	{
@@ -601,23 +559,6 @@ int Thread::ConcatLL(Value *args, Value *result)
 retStatus__:
 	return status__;
 }
-
-MethodOverload *Thread::GetHashIndexerSetter()
-{
-	if (!hashSetItem)
-	{
-		Member *m = vm->types.Hash->GetMember(strings->members.item_);
-
-		OVUM_ASSERT((m->flags & MemberFlags::KIND) == MemberFlags::PROPERTY);
-		OVUM_ASSERT(((Property*)m)->setter != nullptr);
-
-		MethodOverload *result = ((Property*)m)->setter->ResolveOverload(2);
-		OVUM_ASSERT(result != nullptr);
-		hashSetItem = result;
-	}
-	return hashSetItem;
-}
-
 
 // Base implementation of the various comparison methods
 // This duplicates a lot of code from InvokeOperatorLL

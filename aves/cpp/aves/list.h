@@ -28,6 +28,8 @@ AVES_API NATIVE_FUNCTION(aves_List_reverse);
 
 AVES_API int OVUM_CDECL InitListInstance(ThreadHandle thread, ListInst *list, const int32_t capacity);
 
+AVES_API int OVUM_CDECL ConcatenateLists(ThreadHandle thread, Value *a, Value *b, Value *result);
+
 int EnsureMinCapacity(ThreadHandle thread, ListInst *list, const int32_t capacity);
 
 int SetListCapacity(ThreadHandle thread, ListInst *list, const int32_t capacity);

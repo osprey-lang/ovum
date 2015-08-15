@@ -12,10 +12,12 @@ namespace ovum
 class VM
 {
 public:
-	struct IniterFunctions
+	struct StandardNativeFunctions
 	{
 		ListInitializer initListInstance;
+		ValueConcatenator concatLists;
 		HashInitializer initHashInstance;
+		ValueConcatenator concatHashes;
 		TypeTokenInitializer initTypeToken;
 	};
 
@@ -53,7 +55,7 @@ private:
 
 public:
 	StandardTypes types;
-	IniterFunctions functions;
+	StandardNativeFunctions functions;
 
 	VM(VMStartParams &params);
 	~VM();
