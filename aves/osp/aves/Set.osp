@@ -283,7 +283,7 @@ public inheritable Set is Iterable
 	/// Remarks: The resulting set uses the default {EqualityComparer}.
 	public static fromCollection(collection, itemComparer)
 	{
-		var output = new Set(collection, itemComparer);
+		var output = new Set(0, itemComparer);
 
 		for item in collection:
 			output.add(item);
