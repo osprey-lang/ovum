@@ -306,4 +306,29 @@ namespace math
 	///          If {α} is NaN, this function returns NaN.
 	public function tanh(α)
 		__extern("aves_math_tanh");
+
+	/// Summary: Converts the specified angle from degrees to radians.
+	/// Param degrees: The angle, in degrees. (Int, UInt or Real)
+	/// Returns: {degrees} converted to radians, as a Real. If {degrees} is NaN, the
+	///          return value is NaN.
+	/// Throws TypeError:
+	///          {degrees} could not be converted to a Real.
+	/// Remarks: 1 degree is equal to π / 180 radians. Hence, 360° = 2π radians.
+	public function toRadians(degrees)
+	{
+		return real(degrees) * pi / 180.0;
+	}
+
+	/// Summary: Converts the specified angle from radians to degrees.
+	/// Param radians: The angle, in radians. (Int, UInt or Real)
+	/// Returns: {radians} converted to degrees, as a Real. If {radians} is NaN, the
+	///          return value is NaN.
+	/// Throws TypeError:
+	///          {radians} could not be converted to a Real.
+	/// Remarks: 1 radian is equal to 180 / π degrees. Hence, π radians = 180°,
+	///          and 2π radians = 360°.
+	public function toDegrees(radians)
+	{
+		return real(radians) * 180.0 / pi;
+	}
 }
