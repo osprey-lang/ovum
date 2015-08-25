@@ -282,7 +282,7 @@ int Thread::InvokeMemberLL(String *name, ovlocals_t argCount, Value *value, Valu
 int Thread::InvokeMethodOverload(MethodOverload *mo, ovlocals_t argCount,
                                  Value *args, Value *result)
 {
-	register MethodFlags flags = mo->flags; // used several times below!
+	MethodFlags flags = mo->flags; // used several times below!
 
 	int r;
 	if ((flags & MethodFlags::VARIADIC) != MethodFlags::NONE)
@@ -348,7 +348,7 @@ int Thread::InvokeMethodOverload(MethodOverload *mo, ovlocals_t argCount,
 
 	// restore previous stack frame
 	restore:
-	register StackFrame *frame = currentFrame;
+	StackFrame *frame = currentFrame;
 	currentFrame = frame->prevFrame;
 	this->ip = frame->prevInstr;
 	if (r == OVUM_SUCCESS)
@@ -525,8 +525,8 @@ int Thread::ConcatLL(Value *args, Value *result)
 	//       until we are absolutely 100% done.
 
 	int status__;
-	register Value *a = args;
-	register Value *b = args + 1;
+	Value *a = args;
+	Value *b = args + 1;
 	if (a->type == vm->types.List || b->type == vm->types.List)
 	{
 		// list concatenation
@@ -1123,7 +1123,7 @@ void Thread::DisposeCallStack()
 
 void Thread::PushFirstStackFrame()
 {
-	register StackFrame *frame = reinterpret_cast<StackFrame*>(callStack);
+	StackFrame *frame = reinterpret_cast<StackFrame*>(callStack);
 	frame->stackCount = 0;
 	frame->argc       = 0;
 	frame->evalStack  = reinterpret_cast<Value*>((char*)frame + STACK_FRAME_SIZE);
@@ -1140,9 +1140,9 @@ void Thread::PushStackFrame(ovlocals_t argCount, Value *args, MethodOverload *me
 	OVUM_ASSERT(currentFrame->stackCount >= argCount);
 	currentFrame->stackCount -= argCount; // pop the arguments (including the instance) off the current frame
 
-	register uint32_t paramCount = method->GetEffectiveParamCount();
-	register uint32_t localCount = method->locals;
-	register StackFrame *newFrame = reinterpret_cast<StackFrame*>(args + paramCount);
+	uint32_t paramCount = method->GetEffectiveParamCount();
+	uint32_t localCount = method->locals;
+	StackFrame *newFrame = reinterpret_cast<StackFrame*>(args + paramCount);
 
 	newFrame->stackCount = 0;
 	newFrame->argc       = argCount;
@@ -1154,7 +1154,7 @@ void Thread::PushStackFrame(ovlocals_t argCount, Value *args, MethodOverload *me
 	// initialize missing arguments to null
 	if (argCount != paramCount)
 	{
-		register Value *missing = args + argCount;
+		Value *missing = args + argCount;
 		while ((void*)missing != (void*)newFrame)
 			(missing++)->type = nullptr;
 	}
@@ -1162,7 +1162,7 @@ void Thread::PushStackFrame(ovlocals_t argCount, Value *args, MethodOverload *me
 	// Also initialize all locals to null
 	if (localCount)
 	{
-		register Value *locals = newFrame->Locals();
+		Value *locals = newFrame->Locals();
 		while (localCount--)
 			(locals++)->type = nullptr;
 	}

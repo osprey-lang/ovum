@@ -12,7 +12,7 @@
 namespace ovum
 {
 
-#define OPC_ARGS(T) register const T *const args = reinterpret_cast<const T*>(ip)
+#define OPC_ARGS(T) const T *const args = reinterpret_cast<const T*>(ip)
 
 // Used in Thread::Evaluate. Semicolon intentionally missing.
 #define CHK(expr) do { if ((retCode = (expr)) != OVUM_SUCCESS) goto exitMethod; } while (0)
@@ -55,9 +55,9 @@ int Thread::Evaluate()
 
 	int retCode;
 
-	register StackFrame *const f = currentFrame;
+	StackFrame *const f = currentFrame;
 	// this->ip has been set to the entry address
-	register uint8_t *ip = this->ip;
+	uint8_t *ip = this->ip;
 
 	while (true)
 	{
@@ -262,7 +262,7 @@ int Thread::Evaluate()
 		TARGET(OPI_LDENUM_L)
 			{
 				OPC_ARGS(oa::LoadEnum);
-				register Value *const dest = args->Dest(f);
+				Value *const dest = args->Dest(f);
 				dest->type = args->type;
 				dest->v.integer = args->value;
 				ip += oa::LOAD_ENUM_SIZE;
@@ -271,7 +271,7 @@ int Thread::Evaluate()
 		TARGET(OPI_LDENUM_S)
 			{
 				OPC_ARGS(oa::LoadEnum);
-				register Value *const dest = args->Dest(f);
+				Value *const dest = args->Dest(f);
 				dest->type = args->type;
 				dest->v.integer = args->value;
 				ip += oa::LOAD_ENUM_SIZE;
@@ -422,7 +422,7 @@ int Thread::Evaluate()
 		TARGET(OPI_LDTYPE_L)
 			{
 				OPC_ARGS(oa::TwoLocals);
-				register Value *const inst = args->Source(f);
+				Value *const inst = args->Source(f);
 
 				if (inst->type)
 					CHK(inst->type->GetTypeToken(this, args->Dest(f)));
@@ -436,7 +436,7 @@ int Thread::Evaluate()
 		TARGET(OPI_LDTYPE_S)
 			{
 				OPC_ARGS(oa::TwoLocals);
-				register Value *const inst = args->Source(f);
+				Value *const inst = args->Source(f);
 
 				if (inst->type)
 					CHK(inst->type->GetTypeToken(this, args->Dest(f)));
@@ -475,7 +475,7 @@ int Thread::Evaluate()
 		TARGET(OPI_LDSFN_L)
 			{
 				OPC_ARGS(oa::LocalAndValue<Method*>);
-				register Value *const dest = args->Local(f);
+				Value *const dest = args->Local(f);
 				CHK(GetGC()->Alloc(this, vm->types.Method, sizeof(MethodInst), dest));
 				dest->v.method->method = args->value;
 
@@ -485,7 +485,7 @@ int Thread::Evaluate()
 		TARGET(OPI_LDSFN_S)
 			{
 				OPC_ARGS(oa::LocalAndValue<Method*>);
-				register Value *const dest = args->Local(f);
+				Value *const dest = args->Local(f);
 				CHK(GetGC()->Alloc(this, vm->types.Method, sizeof(MethodInst), dest));
 				dest->v.method->method = args->value;
 
@@ -702,7 +702,7 @@ int Thread::Evaluate()
 		TARGET(OPI_SWITCH_L)
 			{
 				OPC_ARGS(oa::Switch);
-				register Value *const value = args->Value(f);
+				Value *const value = args->Value(f);
 				if (value->type != vm->types.Int)
 					return ThrowTypeError();
 
@@ -715,7 +715,7 @@ int Thread::Evaluate()
 		TARGET(OPI_SWITCH_S)
 			{
 				OPC_ARGS(oa::Switch);
-				register Value *const value = args->Value(f);
+				Value *const value = args->Value(f);
 				if (value->type != vm->types.Int)
 					return ThrowTypeError();
 
@@ -731,7 +731,7 @@ int Thread::Evaluate()
 		TARGET(OPI_BRREF)
 			{
 				OPC_ARGS(oa::ConditionalBranch);
-				register Value *const ops = args->Value(f);
+				Value *const ops = args->Value(f);
 
 				if (IsSameReference_(ops + 0, ops + 1))
 					ip += args->offset;
@@ -745,7 +745,7 @@ int Thread::Evaluate()
 		TARGET(OPI_BRNREF)
 			{
 				OPC_ARGS(oa::ConditionalBranch);
-				register Value *const ops = args->Value(f);
+				Value *const ops = args->Value(f);
 
 				if (!IsSameReference_(ops + 0, ops + 1))
 					ip += args->offset;
@@ -1118,7 +1118,7 @@ int Thread::Evaluate()
 		TARGET(OPI_LDLOCREF)
 			{
 				OPC_ARGS(oa::OneLocal);
-				register Value *const dest = f->evalStack + f->stackCount++;
+				Value *const dest = f->evalStack + f->stackCount++;
 				dest->type = (Type*)LOCAL_REFERENCE;
 				dest->v.reference = args->Local(f);
 				ip += oa::ONE_LOCAL_SIZE;
@@ -1163,7 +1163,7 @@ int Thread::Evaluate()
 		TARGET(OPI_LDSFLDREF)
 			{
 				OPC_ARGS(oa::SingleValue<Field*>);
-				register Value *const dest = f->evalStack + f->stackCount++;
+				Value *const dest = f->evalStack + f->stackCount++;
 				dest->type = (Type*)STATIC_REFERENCE;
 				dest->v.reference = args->value->staticValue;
 				ip += oa::SINGLE_VALUE<Field*>::SIZE;
@@ -1176,7 +1176,7 @@ int Thread::Evaluate()
 		TARGET(OPI_MVLOC_RL) // Reference -> local
 			{
 				OPC_ARGS(oa::TwoLocals);
-				register Value *const source = args->Source(f);
+				Value *const source = args->Source(f);
 
 				if ((uintptr_t)source->type == LOCAL_REFERENCE)
 					*args->Dest(f) = *reinterpret_cast<Value*>(source->v.reference);
@@ -1197,7 +1197,7 @@ int Thread::Evaluate()
 		TARGET(OPI_MVLOC_RS) // Reference -> stack
 			{
 				OPC_ARGS(oa::TwoLocals);
-				register Value *const source = args->Source(f);
+				Value *const source = args->Source(f);
 
 				if ((uintptr_t)source->type == LOCAL_REFERENCE)
 					*args->Dest(f) = *reinterpret_cast<Value*>(source->v.reference);
@@ -1219,7 +1219,7 @@ int Thread::Evaluate()
 		TARGET(OPI_MVLOC_LR) // Local -> reference
 			{
 				OPC_ARGS(oa::TwoLocals);
-				register Value *const dest = args->Dest(f);
+				Value *const dest = args->Dest(f);
 
 				if ((uintptr_t)dest->type == LOCAL_REFERENCE)
 					*reinterpret_cast<Value*>(dest->v.reference) = *args->Source(f);
@@ -1240,7 +1240,7 @@ int Thread::Evaluate()
 		TARGET(OPI_MVLOC_SR) // Stack -> reference
 			{
 				OPC_ARGS(oa::TwoLocals);
-				register Value *const dest = args->Dest(f);
+				Value *const dest = args->Dest(f);
 
 				if ((uintptr_t)dest->type == LOCAL_REFERENCE)
 					*reinterpret_cast<Value*>(dest->v.reference) = *args->Source(f);
@@ -1309,7 +1309,7 @@ int Thread::FindErrorHandler(int32_t maxIndex)
 {
 	typedef TryBlock::TryKind TryKind;
 
-	register StackFrame *frame = currentFrame;
+	StackFrame *frame = currentFrame;
 	MethodOverload *method = frame->method;
 	uint32_t offset = (uint32_t)(this->ip - method->entry);
 

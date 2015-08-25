@@ -846,7 +846,7 @@ void MethodInitializer::ReadInstructions(instr::MethodBuilder &builder)
 	// so for static methods, we have to skip it.
 	ovlocals_t argRefOffset = +method->group->IsStatic();
 
-	register uint8_t *ip = method->entry;
+	uint8_t *ip = method->entry;
 	uint8_t *end = method->entry + method->length;
 
 	Module *module = method->group->declModule;
