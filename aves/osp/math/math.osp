@@ -5,13 +5,14 @@ use namespace aves;
 namespace math
 {
 	/// Summary: The base of the natural logarithm.
-	public const e		= __named_const(real: e);
-	/// Summary: The ratio if a circle's circumference to its diameter.
-	public const pi		= __named_const(real: pi);
+	public const e = __named_const(real: e);
+	/// Summary: The mathematical constant π, which is the ratio of a circle's circumference
+	///          to its diameter.
+	public const pi = __named_const(real: pi);
 	/// Summary: The golden ratio, equal to `(1 + √(5)) / 2`.
-	public const phi	= __named_const(real: phi);
+	public const phi = __named_const(real: phi);
 	/// Summary: The square root of 2.
-	public const sqrt2	= __named_const(real: sqrt2);
+	public const sqrt2 = __named_const(real: sqrt2);
 
 	/// Summary: Returns the absolute value of {n}.
 	/// Param n: The number to get the absolute value of. (Int, UInt or Real)
@@ -20,49 +21,63 @@ namespace math
 	///          If it is a Real, the function returns a Real with the absolute value of {n}.
 	///          If {n} is NaN, the function returns NaN.
 	///          If {n} is negative infinity, the function returns positive infinity.
-	/// Throws TypeError: {n} is not an Int, UInt or Real.
+	/// Throws TypeError:
+	///          {n} is not an Int, UInt or Real.
 	public function abs(n)
 		__extern("aves_math_abs");
 
 	/// Summary: Returns the arccosine of {n}; that is, the angle whose cosine is {n}.
-	/// Param n: A number representing a cosine, where -1 ≤ {n} ≤ 1. (UInt, Int or Real)
+	/// Param n: A number representing a cosine, where −1 ≤ {n} ≤ 1. (UInt, Int or Real)
 	/// Returns: A Real representing an angle in radians, θ, such that 0 ≤ θ ≤ π.
 	///
-	///          If {n} is NaN, or {n} < -1, or {n} > 1, the function returns NaN.
-	/// Throws TypeError: {n} could not be converted to a Real.
+	///          If {n} is NaN, or {n} < −1, or {n} > 1, the function returns NaN.
+	/// Throws TypeError:
+	///          {n} could not be converted to a Real.
 	public function acos(n)
 		__extern("aves_math_acos");
 
 	/// Summary: Returns the arcsine of {n}; that is, the angle whose sine is {n}.
-	/// Param n: A number representing a sine, where -1 ≤ {n} ≤ 1. (UInt, Int or Real)
-	/// Returns: A Real representing an angle in radians, θ, such that -π/2 ≤ θ ≤ π/2.
+	/// Param n: A number representing a sine, where −1 ≤ {n} ≤ 1. (UInt, Int or Real)
+	/// Returns: A Real representing an angle in radians, θ, such that −π/2 ≤ θ ≤ π/2.
 	///
-	///          If {n} is NaN, or {n} < -1, or {n} > 1, the function returns NaN.
-	/// Throws TypeError: {n} could not be converted to a Real.
+	///          If {n} is NaN, or {n} < −1, or {n} > 1, the function returns NaN.
+	/// Throws TypeError:
+	///          {n} could not be converted to a Real.
 	public function asin(n)
 		__extern("aves_math_asin");
 
 	/// Summary: Returns the arctangent of {n}; that is, the angle whose tangent is {n}.
 	/// Param n: A number representing a tangent. (Int, UInt or Real)
-	/// Returns: A Real representing an angle in radians, θ, such that -π/2 ≤ θ ≤ π/2.
+	/// Returns: A Real representing an angle in radians, θ, such that −π/2 ≤ θ ≤ π/2.
 	///
 	///          If {n} is NaN, the function returns NaN;
-	///          if {n} is negative infinity, -π/2; and
+	///          if {n} is negative infinity, −π/2; and
 	///          if {n} is positive infinity, π/2.
-	/// Throws TypeError: {n} could not be converted to a Real.
+	/// Throws TypeError:
+	///          {n} could not be converted to a Real.
 	public function atan(n)
 		__extern("aves_math_atan");
 
-	/// Summary: Returns the angle whose tangent is the quotient of {y} and {x}.
-	/// Returns: TODO: describe return value
-	/// Throws TypeError: {n} could not be converted to a Real.
+	/// Summary: Returns the arctangent of the quotient of two values.
+	/// Param y: The y coordinate of a point. (Int, UInt or Real)
+	/// Param x: The x coordinate of a point. (Int, UInt or Real)
+	/// Returns: A Real representing an angle in radians, θ, such that −π <= θ < π and
+	///          tan(θ) = {y}/{x}, where ({y}, {x}) is a point in the Cartesian plane.
+	///          This is conceptually similar to calculating the arctangent (see {atan})
+	///          of {y}/{x}, except that the signs of {y} and {x} are used to determine
+	///          the quadrant.
+	///
+	///          If {x} or {y} is NaN, or either is infinite, this function returns NaN.
+	/// Throws TypeError:
+	///          {x} or {y} could not be converted to a Real.
 	public function atan2(y, x)
 		__extern("aves_math_atan2");
 
 	/// Summary: Returns the cube root of {n}.
-	/// Param n: The number to calculate a cube root for. (Int, UInt or Real)
+	/// Param n: The number to calculate the cube root of. (Int, UInt or Real)
 	/// Returns: The cube root of {n}, as a Real.
-	/// Throws TypeError: {n} could not be converted to a Real.
+	/// Throws TypeError:
+	///          {n} could not be converted to a Real.
 	public function cbrt(n)
 		__extern("aves_math_cbrt");
 
@@ -70,10 +85,11 @@ namespace math
 	/// Param n: The number to round. (Int, UInt or Real)
 	/// Returns: If {n} is an Int or UInt, it is returned as-is.
 	///
-	///          If it is a Real, the function returns a Real with the value of {n}
-	///          rounded up to the nearest integer.
-	///          If {n} is NaN, the function returns NaN.
-	/// Throws TypeError: {n} is not an Int, UInt or Real.
+	///          If {n} is a Real, the function returns a Real with the value of {n}
+	///          rounded up to the nearest integer. If {n} is NaN, the function returns
+	///          NaN.
+	/// Throws TypeError:
+	///          {n} is not an Int, UInt or Real.
 	public function ceil(n)
 		__extern("aves_math_ceil");
 
@@ -96,7 +112,8 @@ namespace math
 	/// Returns: The cosine of {θ}, as a Real.
 	///
 	///          If {θ} is NaN or positive or negative infinity, this function returns NaN.
-	/// Throws TypeError: {θ} could not be converted to a Real.
+	/// Throws TypeError:
+	///          {θ} could not be converted to a Real.
 	public function cos(θ)
 		__extern("aves_math_cos");
 
@@ -106,6 +123,8 @@ namespace math
 	///
 	///          If {α} is positive or negative infinity, this function returns positive infinity.
 	///          If {α} is NaN, this function returns NaN.
+	/// Throws TypeError:
+	///          {α} could not be converted to a Real.
 	public function cosh(α)
 		__extern("aves_math_cosh");
 
@@ -134,7 +153,8 @@ namespace math
 	///
 	///          If {n} is NaN or positive infinity, that value is returned.
 	///          If {n} is negative infinity, this function returns 0.0.
-	/// Throws TypeError: {n} could not be convereted to a Real.
+	/// Throws TypeError:
+	///          {n} could not be convereted to a Real.
 	public function exp(n)
 		__extern("aves_math_exp");
 
@@ -145,7 +165,8 @@ namespace math
 	///          If {n} is a Real, the function returns a Real with the value of {n}
 	///          rounded down to the nearest integer.
 	///          If {n} is NaN, this function returns NaN.
-	/// Throws TypeError: {n} is not an Int, UInt or Real.
+	/// Throws TypeError:
+	///          {n} is not an Int, UInt or Real.
 	public function floor(n)
 		__extern("aves_math_floor");
 
@@ -156,7 +177,8 @@ namespace math
 	///          If {n} is negative or is NaN, this function returns NaN.
 	///          If {n} is zero, the return value is negative infinity.
 	///          If {n} is positive infinity, that value is returned.
-	/// Throws TypeError: {n} could not be converted to a Real.
+	/// Throws TypeError:
+	///          {n} could not be converted to a Real.
 	public function log(n)
 		__extern("aves_math_logE");
 
@@ -165,13 +187,12 @@ namespace math
 	/// Param logBase: The base of the logarithm. (Int, UInt or Real)
 	/// Returns: The logarithm of {n} in base {logBase}, as a Real.
 	///          If either value is NaN, this function returns NaN.
-	/// Throws TypeError: {n} could not be converted to a Real.
-	///
-	///                   {logBase} could not be converted to a Real.
+	/// Throws TypeError:
+	///          {n} or {logBase} could not be converted to a Real.
 	public function log(n, logBase)
 		__extern("aves_math_logBase");
 
-	/// Summary: Returns the logarithm of the specified number in base 10.
+	/// Summary: Returns the base-10 logarithm of the specified number.
 	/// Param n: The number to calculate the base-10 logarithm for. (Int, UInt or Real)
 	/// Returns: The logarithm of {n} in base 10, as a Real.
 	///
@@ -255,12 +276,13 @@ namespace math
 
 	/// Summary: Returns the sign of the specified number.
 	/// Param n: The number to get the sign of. (Int, UInt or Real)
-	/// Returns: If {n} is less than zero, -1.
+	/// Returns: If {n} is less than zero, −1.
 	///          If {n} is greater than zero, 1.
 	///          Otherwise (including if {n} is NaN), 0.
 	///
 	///          The return value is always an Int.
-	/// Throws TypeError: {n} is not an Int, UInt or Real.
+	/// Throws TypeError:
+	///          {n} is not an Int, UInt or Real.
 	public function sign(n)
 		__extern("aves_math_sign");
 
@@ -269,7 +291,8 @@ namespace math
 	/// Returns: The sine of {θ}, as a Real.
 	///
 	///          If {θ} is NaN or positive or negative infinity, this function returns NaN.
-	/// Throws TypeError: {θ} could not be converted to a Real.
+	/// Throws TypeError:
+	///          {θ} could not be converted to a Real.
 	public function sin(θ)
 		__extern("aves_math_sin");
 
@@ -278,13 +301,16 @@ namespace math
 	/// Returns: The hyperbolic sine of {α}, as a Real.
 	///
 	///          If {α} is NaN or positive or negative infinity, that value is returned.
+	/// Throws TypeError:
+	///          {α} could not be converted to a Real.
 	public function sinh(α)
 		__extern("aves_math_sinh");
 
 	/// Summary: Returns the square root of {n}.
 	/// Param n: The number to calculate the square root of. (Int, UInt or Real)
-	/// Returns: The cube root of {n}, as a Real.
-	/// Throws TypeError: {n} could not be converted to a Real.
+	/// Returns: The square root of {n}, as a Real.
+	/// Throws TypeError:
+	///          {n} could not be converted to a Real.
 	public function sqrt(n)
 		__extern("aves_math_sqrt");
 
@@ -293,7 +319,8 @@ namespace math
 	/// Returns: The sine of {θ}, as a Real.
 	///
 	///          If {θ} is NaN or positive or negative infinity, this function returns NaN.
-	/// Throws TypeError: {θ} could not be converted to a Real.
+	/// Throws TypeError:
+	///          {θ} could not be converted to a Real.
 	public function tan(θ)
 		__extern("aves_math_tan");
 
@@ -302,8 +329,10 @@ namespace math
 	/// Returns: The hyperbolic tangent of {α}, as a Real.
 	///
 	///          If {α} is positive infinity, then 1 is returned.
-	///          If {α} is negative infinity, then -1 is returned.
+	///          If {α} is negative infinity, then −1 is returned.
 	///          If {α} is NaN, this function returns NaN.
+	/// Throws TypeError:
+	///          {α} could not be converted to a Real.
 	public function tanh(α)
 		__extern("aves_math_tanh");
 
@@ -313,7 +342,8 @@ namespace math
 	///          return value is NaN.
 	/// Throws TypeError:
 	///          {degrees} could not be converted to a Real.
-	/// Remarks: 1 degree is equal to π / 180 radians. Hence, 360° = 2π radians.
+	/// Remarks: 1 degree is equal to π / 180 radians. Hence, 360° = 2π radians,
+	///          and 180° = π radians.
 	public function toRadians(degrees)
 	{
 		return real(degrees) * pi / 180.0;
