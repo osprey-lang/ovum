@@ -1,7 +1,7 @@
 namespace aves;
 
 /// Summary: This class represents a hash table, which maps keys to values with
-///          linear lookup time. A key can be any arbitrary value except null.
+///          constant lookup time. A key can be any arbitrary value except null.
 /// Remarks: In order to look up keys, a hash table uses an {EqualityComparer} to
 ///          calculate a hash code for each key, as well as to compare them for
 ///          equality. The {keyComparer} can be specified when the hash table is
