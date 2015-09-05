@@ -21,7 +21,7 @@ namespace aves;
 ///
 ///          The set is one of the fundamental collection types, alongside
 ///          {List} and {Hash}.
-public inheritable Set is Iterable
+public inheritable Set is Collection
 {
 	__init_type("aves_Set_init");
 
@@ -68,7 +68,7 @@ public inheritable Set is Iterable
 
 	/// Summary: Gets the total number of entries contained in the set.
 	/// Returns: The total number of entries in the set, as an Int.
-	public get length
+	override get length
 		__extern("aves_Set_get_length");
 
 	/// Summary: Gets the capacity of the set; that is, the number of entries
