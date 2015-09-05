@@ -5,6 +5,7 @@ use "ArgumentRangeError.osp";
 use "Boolean.osp";
 use "Buffer.osp";
 use "Char.osp";
+use "Collection.osp";
 use "CollectionIterable.osp";
 use "Console.osp";
 use "ConsoleColor.osp";

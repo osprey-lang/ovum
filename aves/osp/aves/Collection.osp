@@ -1,0 +1,40 @@
+namespace aves;
+
+/// Summary: The base class of all collection types. {Collection} specifically
+///          represents a sequence of a known length. Depending on the precise
+///          implementation, a collection may expose an indexer, but this is not
+///          guaranteed.
+///
+///          This class cannot be used to represent a sequence of infinite or
+///          indeterminate length.
+///
+///          This class is abstract. Classes that inherit from this must provide
+///          an iterator as well as implement the {length} property.
+public abstract class Collection is Iterable
+{
+	/// Summary: Creates a new Collection.
+	public new();
+
+	/// Summary: Gets the total number of items contained in the collection.
+	/// Returns: The total number of items in the collection, as an Int.
+	public abstract get length;
+
+	overridable override count()
+	{
+		// count() without arguments just counts the number of items, which
+		// we already know.
+		return length;
+	}
+
+	override overridable toList()
+	{
+		// Since we know the length of the collection, we can optimize this
+		// method by creating a list with the right initial capacity.
+		var list = new List(length);
+
+		for item in this:
+			list.add(item);
+
+		return list;
+	}
+}
