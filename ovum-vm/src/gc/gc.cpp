@@ -309,32 +309,53 @@ int GC::Construct(Thread *const thread, Type *type, ovlocals_t argc, Value *outp
 
 int GC::ConstructLL(Thread *const thread, Type *type, ovlocals_t argc, Value *args, Value *output)
 {
-	GCObject *gco;
-	int r = Alloc(thread, type, type->GetTotalSize(), &gco);
-	if (r != OVUM_SUCCESS) return r;
+	int r;
+	// Reserve space for the instance on the evaluation stack.
+	// After this, realArgs will point to the instance.
+	Value *realArgs = args + argc;
 
-	Value *framePointer = args + argc;
-
-	// Unshift value onto beginning of eval stack! Hurrah.
 	for (ovlocals_t i = 0; i < argc; i++)
 	{
-		*framePointer = *(framePointer - 1);
-		framePointer--;
+		*realArgs = *(realArgs - 1);
+		realArgs--;
 	}
 
-	framePointer->type = type;
-	framePointer->v.instance = gco->InstanceBase();
+	realArgs->type = nullptr; // Start out with null
 	thread->currentFrame->stackCount++;
 
-	Value ignore; // all Ovum methods return values, even the constructor
-	r = thread->InvokeMethodOverload(type->instanceCtor->ResolveOverload(argc), argc, framePointer, &ignore);
-
-	if (r == OVUM_SUCCESS)
+	MethodOverload *ctor = type->instanceCtor->ResolveOverload(argc);
+	// If the constructor has been marked as an allocator, then it
+	// performs all the allocation of the instance itself.
+	if (type->ConstructorIsAllocator())
 	{
+		// Just call straight through to the constructor.
+		// The return value of the constructor call becomes the result
+		// of the call to the GC. Note that only native methods can
+		// return values from constructors.
+		r = thread->InvokeMethodOverload(ctor, argc, realArgs, output);
+	}
+	else
+	{
+		// Allocate the instance
+		GCObject *gco;
+		r = Alloc(thread, type, type->GetTotalSize(), &gco);
+		if (r != OVUM_SUCCESS)
+			goto done;
+		// And put it in the reserved stack slot
+		realArgs->type = type;
+		realArgs->v.instance = gco->InstanceBase();
+
+		Value ignore; // Even the constructor returns a value
+		r = thread->InvokeMethodOverload(ctor, argc, realArgs, &ignore);
+		if (r != OVUM_SUCCESS)
+			goto done;
+
+		// If everything went okay, copy the result to the right place.
 		output->type = type;
 		output->v.instance = gco->InstanceBase();
 	}
 
+done:
 	return r;
 }
 
@@ -1198,6 +1219,11 @@ OVUM_API int GC_Construct(ThreadHandle thread, TypeHandle type, ovlocals_t argc,
 OVUM_API String *GC_ConstructString(ThreadHandle thread, int32_t length, const ovchar_t *values)
 {
 	return thread->GetGC()->ConstructString(thread, length, values);
+}
+
+OVUM_API int GC_Alloc(ThreadHandle thread, TypeHandle type, size_t size, Value *output)
+{
+	return thread->GetGC()->Alloc(thread, type, size, output);
 }
 
 OVUM_API int GC_AllocArray(ThreadHandle thread, uint32_t length, size_t itemSize, void **output)

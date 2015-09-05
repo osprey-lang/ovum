@@ -200,18 +200,21 @@ enum class TypeFlags : uint32_t
 	// The type does not use a standard Value array for its fields.
 	// This is used only by the GC during collection.
 	CUSTOMPTR       = 0x0020,
+	// The type's constructor also takes care of allocation. Only available
+	// for types with native implementations.
+	ALLOCATOR_CTOR  = 0x0040,
 
 	// Internal use only. If set, the type's operators have been initialized.
-	OPS_INITED          = 0x0040,
+	OPS_INITED          = 0x0100,
 	// Internal use only. If set, the type has been initialised.
-	INITED              = 0x0080,
+	INITED              = 0x0200,
 	// Internal use only. If set, the static constructor for the type has been run.
-	STATIC_CTOR_RUN     = 0x0100,
+	STATIC_CTOR_RUN     = 0x0400,
 	// Internal use only. If set, the static constructor is currently running.
-	STATIC_CTOR_RUNNING = 0x0200,
+	STATIC_CTOR_RUNNING = 0x0800,
 	// Internal use only. If set, the type or any of its base types has a finalizer,
 	// which must be run before the value is collected.
-	HAS_FINALIZER       = 0x0400,
+	HAS_FINALIZER       = 0x1000,
 };
 OVUM_ENUM_OPS(TypeFlags, uint32_t);
 
@@ -364,6 +367,7 @@ OVUM_API size_t Type_GetTotalSize(TypeHandle type);
 OVUM_API void Type_SetFinalizer(TypeHandle type, Finalizer finalizer);
 OVUM_API void Type_SetInstanceSize(TypeHandle type, size_t size);
 OVUM_API void Type_SetReferenceGetter(TypeHandle type, ReferenceGetter getter);
+OVUM_API void Type_SetConstructorIsAllocator(TypeHandle type, bool isAllocator);
 
 enum class NativeFieldType : int
 {

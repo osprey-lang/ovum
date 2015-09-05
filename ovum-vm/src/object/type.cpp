@@ -281,7 +281,7 @@ OVUM_API size_t Type_GetTotalSize(TypeHandle type)
 
 OVUM_API void Type_SetFinalizer(TypeHandle type, Finalizer finalizer)
 {
-	if ((type->flags & TypeFlags::INITED) == TypeFlags::NONE)
+	if (!type->IsInited())
 	{
 		type->finalizer = finalizer;
 		if (finalizer)
@@ -292,23 +292,40 @@ OVUM_API void Type_SetFinalizer(TypeHandle type, Finalizer finalizer)
 			type->flags &= ~TypeFlags::HAS_FINALIZER;
 	}
 }
+
 OVUM_API void Type_SetInstanceSize(TypeHandle type, size_t size)
 {
-	if ((type->flags & TypeFlags::INITED) == TypeFlags::NONE)
+	if (!type->IsInited())
 	{
 		// Ensure the effective size is a multiple of 8
 		type->size = OVUM_ALIGN_TO(size, 8);
 		type->flags |= TypeFlags::CUSTOMPTR;
 	}
 }
+
 OVUM_API void Type_SetReferenceGetter(TypeHandle type, ReferenceGetter getter)
 {
-	if ((type->flags & TypeFlags::INITED) == TypeFlags::NONE)
+	if (!type->IsInited())
+	{
 		type->getReferences = getter;
+	}
+}
+
+OVUM_API void Type_SetConstructorIsAllocator(TypeHandle type, bool isAllocator)
+{
+	if (!type->IsInited())
+	{
+		if (isAllocator)
+			type->flags |= TypeFlags::ALLOCATOR_CTOR;
+		else
+			type->flags &= ~TypeFlags::ALLOCATOR_CTOR;
+	}
 }
 
 OVUM_API void Type_AddNativeField(TypeHandle type, size_t offset, NativeFieldType fieldType)
 {
-	if ((type->flags & TypeFlags::INITED) == TypeFlags::NONE)
+	if (!type->IsInited())
+	{
 		type->AddNativeField(offset, fieldType);
+	}
 }

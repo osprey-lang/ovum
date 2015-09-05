@@ -3,7 +3,9 @@
 
 #include "ov_vm.h"
 
-// Constructs an instance of the specified type.
+// Constructs an instance of the specified type. The type's constructor is called with the
+// specified number of arguments from the stack.
+//
 // Parameters:
 //   type:
 //     The type to construct an instance of. This type cannot be abstract,
@@ -22,6 +24,31 @@ OVUM_API int GC_Construct(ThreadHandle thread, TypeHandle type, ovlocals_t argc,
 //
 // NOTE: 'length' does NOT include the terminating '\0'.
 OVUM_API String *GC_ConstructString(ThreadHandle thread, int32_t length, const ovchar_t *values);
+
+// Allocates a managed value of the specified type and size. Unlike GC_Construct, this
+// function does NOT call the constructor on the allocated value. Moreover, the size of
+// the instance must be specified. This function should only be called by custom native
+// allocators of variable-size types.
+//
+// The resulting value is not initialized in any way, other than having all its bytes
+// zeroed. It is entirely the caller's responsibility to initialize the value correctly.
+//
+// The actual number of bytes allocated may differ from the 'size' parameter, partly
+// because the GC adds a small header to all objects, partly because of alignment. The
+// GC only guarantees that at least the requested number of bytes are allocated.
+//
+// Parameters:
+//   type:
+//     The type to allocate an instance of. When collecting garbage, the GC will examine
+//     the data in the returned instance according to the fields in this type.
+//   size:
+//     The number of bytes to allocate. If the allocation succeeds, at least this number
+//     of bytes are guaranteed to be available at the value's instance pointer. Note
+//     that if the base type of 'type' has a non-zero size, it must be included in this
+//     argument as well; this parameter contains the total size to be allocated.
+//   output:
+//     Receives the allocated value. This pointer cannot be null.
+OVUM_API int GC_Alloc(ThreadHandle thread, TypeHandle type, size_t size, Value *output);
 
 // Allocates a non-resizable GC-managed array of arbitrary values. This value should be put
 // in a native field of type NativeFieldType::GC_ARRAY, to ensure that the value is reachable

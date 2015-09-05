@@ -106,9 +106,17 @@ public:
 		return vm->GetGC();
 	}
 
+	inline bool IsInited() const
+	{
+		return (flags & TypeFlags::INITED) == TypeFlags::INITED;
+	}
 	inline bool IsPrimitive() const
 	{
 		return (flags & TypeFlags::PRIMITIVE) == TypeFlags::PRIMITIVE;
+	}
+	inline bool ConstructorIsAllocator() const
+	{
+		return (flags & TypeFlags::ALLOCATOR_CTOR) == TypeFlags::ALLOCATOR_CTOR;
 	}
 	inline bool HasFinalizer() const
 	{

@@ -465,7 +465,7 @@ namespace instr
 		}
 
 		inline virtual uint32_t GetReferenceSignature() const { return refSignature; }
-		virtual int SetReferenceSignature(const StackManager &stack); // Defined in thread.method_initializer.cpp
+		virtual int SetReferenceSignature(const StackManager &stack);
 
 	protected:
 		virtual void WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const;
@@ -878,7 +878,7 @@ namespace instr
 		}
 
 		inline virtual uint32_t GetReferenceSignature() const { return refSignature; }
-		virtual int SetReferenceSignature(const StackManager &stack); // Defined in thread.method_initializer.cpp
+		virtual int SetReferenceSignature(const StackManager &stack);
 
 	protected:
 		virtual void WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const;
@@ -917,7 +917,7 @@ namespace instr
 		}
 
 		inline virtual uint32_t GetReferenceSignature() const { return refSignature; }
-		virtual int SetReferenceSignature(const StackManager &stack); // Defined in thread.method_initializer.cpp
+		virtual int SetReferenceSignature(const StackManager &stack);
 
 	protected:
 		virtual void WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const;
@@ -956,7 +956,7 @@ namespace instr
 		}
 
 		inline virtual uint32_t GetReferenceSignature() const { return refSignature; }
-		virtual int SetReferenceSignature(const StackManager &stack); // Defined in thread.method_initializer.cpp
+		virtual int SetReferenceSignature(const StackManager &stack);
 
 	protected:
 		virtual void WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const;
