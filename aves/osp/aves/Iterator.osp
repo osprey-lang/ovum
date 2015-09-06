@@ -750,6 +750,23 @@ public abstract class Iterator
 		return output;
 	}
 
+	/// Summary: Collects all the items in the iterator into an {Array}.
+	/// Returns: An {Array} containing all the items of the iterator.
+	/// Remarks: This method will attempt to enumerate the iterator all the
+	///          way to the end. If the iterator represents an infinite
+	///          sequence, the program will attempt to allocate a lot of
+	///          memory before throwing a {MemoryError}.
+	public overridable toArray()
+	{
+		// List is good enough as an intermediate
+		var output = [];
+
+		while moveNext():
+			output.add(current);
+
+		return output.toArray();
+	}
+
 	public static get empty = new EmptyIterator();
 
 	private const emptySequence = "The sequence is empty.";

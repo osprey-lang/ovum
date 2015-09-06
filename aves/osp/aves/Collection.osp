@@ -37,4 +37,20 @@ public abstract class Collection is Iterable
 
 		return list;
 	}
+
+	override overridable toArray()
+	{
+		// Since we know the length of the collection, we only ever have to
+		// create a single array.
+		var array = new Array(length);
+
+		var i = 0;
+		for item in this
+		{
+			array[i] = item;
+			i += 1;
+		}
+
+		return array;
+	}
 }

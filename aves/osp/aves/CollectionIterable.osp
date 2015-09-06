@@ -4,7 +4,7 @@ namespace aves;
 ///          collection object. The primary difference between this and {Iterable}
 ///          is that this class completely hides methods methods that the wrapped
 ///          collection exposes. In other words, it turns the wrapped collection
-///          into a read-only sequence. By contrast, {Iterator} is a base class
+///          into a read-only sequence. By contrast, {Iterable} is a base class
 ///          used by many collection types, and is usually augmented with members
 ///          that add and remove items as well as indexers.
 /// Remarks: Unlike {Iterator} objects, {Iterable} can be iterated over any number
@@ -39,6 +39,8 @@ public inheritable CollectionIterable is Iterable
 
 	iter
 	{
+		if _collection is null:
+			return Iterator.empty;
 		return _collection.iter;
 	}
 }

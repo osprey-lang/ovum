@@ -106,7 +106,8 @@ public abstract class Iterable
 		return length;
 	}
 
-	/// Summary: Calls a function once with each item in the sequence.
+	/// Summary: Calls the specified callback once for each item in the
+	///          sequence.
 	/// Param func: An invokable value that takes one argument (the
 	///             current element). The return value is discarded.
 	/// Throws ArgumentNullError:
@@ -520,6 +521,17 @@ public abstract class Iterable
 	public overridable toList()
 	{
 		return this.iter.toList();
+	}
+
+	/// Summary: Collects all the items in the iterable into an {Array}.
+	/// Returns: An {Array} containing all the items of the iterable.
+	/// Remarks: This method will attempt to enumerate the iterable all the
+	///          way to the end. If the iterable represents an infinite
+	///          sequence, the program will attempt to allocate a lot of
+	///          memory before throwing a {MemoryError}.
+	public overridable toArray()
+	{
+		return this.iter.toArray();
 	}
 
 	iter
