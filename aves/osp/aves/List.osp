@@ -6,7 +6,7 @@ namespace aves;
 ///
 ///          The list is one of the fundamental collection types, alongside
 ///          {Hash}, {Set} and {Array}.
-public inheritable List
+public inheritable List is Collection
 {
 	__init_type("aves_List_init");
 
@@ -44,7 +44,7 @@ public inheritable List
 	/// Summary: Gets the total number of items contained in the list.
 	/// Returns: The total number of items actually contained in the list,
 	///          as an Int.
-	public get length
+	override get length
 		__extern("aves_List_get_length");
 
 	/// Summary: Gets the capacity of the list; that is, the number of items
@@ -200,35 +200,6 @@ public inheritable List
 	public slice(start, end)
 		__extern("aves_List_slice2", locals=1);
 
-	/// Summary: Joins the values of this list into a string, separated by the
-	///          specified separator.
-	/// Param separator: The separator to put between items in the list.
-	/// Returns: A String value containing the items of this list converted to
-	///          strings and separated by the {separator} value.
-	/// Throws TypeError: {separator} could not be converted to a string.
-	/// Remarks: This method uses {aves.string} to convert each item in the list
-	///          to its string representation, and does not catch any error thrown
-	///          by that function. As a result, null values get turned into the
-	///          empty string.
-	public join(separator)
-	{
-		separator = string(separator);
-		var output = new StringBuffer();
-
-		var startVersion = version;
-
-		for i in [0 to this.length - 1]
-		{
-			if startVersion != version:
-				throw new InvalidStateError(listHasChanged);
-			if i > 0:
-				output.append(separator);
-			output.append(this[i]);
-		}
-
-		return output.toString();
-	}
-
 	/// Summary: Reverses the order of the items in this list in-place.
 	/// Returns: The current list.
 	public reverse()
@@ -246,6 +217,8 @@ public inheritable List
 	/// Param comparer: An invokable value that accepts two arguments and returns
 	///                 an Int according to the behaviour of the `<=>` operator.
 	/// Returns: The current list.
+	/// Throws ArgumentNullError:
+	///          {comparer} is null.
 	/// Remarks: This function expects the return value of {comparer} to be an Int.
 	///          If `x` and `y` are the items to compare, then the return value is
 	///          zero if `x` and `y` compare as equal; greater than zero if `x` > `y`;
@@ -264,6 +237,9 @@ public inheritable List
 	///          As this method is in-place, there is no allocation of extra memory.
 	public sort(comparer)
 	{
+		if comparer is null:
+			throw new ArgumentNullError("comparer");
+
 		function quicksort(left, right, cmp)
 		{
 			var pivot = this[(left + right) / 2];
@@ -296,12 +272,7 @@ public inheritable List
 		return this;
 	}
 
-	// Higher-order functions
-
-	/// Summary: Determines whether any items in the list is a truthy value.
-	/// Returns: True if any item in the list is a truthy value; otherwise, false.
-	/// Remarks: This method returns false if the list is empty.
-	public any()
+	overridable override any()
 	{
 		for i in [0 to length - 1]
 		{
@@ -311,17 +282,11 @@ public inheritable List
 
 		return false;
 	}
-	/// Summary: Determines whether any items in the list match the given predicate.
-	/// Param predicate: An invokable value that accepts one argument and returns
-	///                  a truthy value if the item matches some condition, or a falsy
-	///                  value otherwise.
-	/// Returns: True if {predicate} returns true for any item in the list, unless the
-	///          list is empty. Otherwise (including if the list is empty), false.
-	/// Remarks: The iteration stops as soon as {predicate} returns true for an item.
-	///          This method is in other words not guaranteed to run through all the
-	///          items in the list. For that, use {each}.
-	public any(predicate)
+	overridable override any(predicate)
 	{
+		if predicate is null:
+			throw new ArgumentNullError("predicate");
+
 		var startVersion = version;
 
 		for i in [0 to length - 1]
@@ -335,10 +300,7 @@ public inheritable List
 		return false;
 	}
 
-	/// Summary: Determines whether all items in the list are truthy values.
-	/// Returns: True if all items in the list are truthy values; otherwise, false.
-	/// Remarks: This method returns true if the list is empty.
-	public all()
+	overridable override all()
 	{
 		for i in [0 to length - 1]
 		{
@@ -348,17 +310,11 @@ public inheritable List
 
 		return true;
 	}
-	/// Summary: Determines whether all items in the list match the given predicate.
-	/// Param predicate: An invokable value that accepts one argument and returns
-	///                  a truthy value if the item matches some condition, or a falsy
-	///                  value otherwise.
-	/// Returns: True if {predicate} returns true for all items in the list, or the list
-	///          is empty. Otherwise, false.
-	/// Remarks: The iteration stops as soon as {predicate} returns false for an item.
-	///          This method is in other words not guaranteed to run through all the
-	///          items in the list. For that, use {each}.
-	public all(predicate)
+	overridable override all(predicate)
 	{
+		if predicate is null:
+			throw new ArgumentNullError("predicate");
+
 		var startVersion = version;
 
 		for i in [0 to length - 1]
@@ -372,12 +328,11 @@ public inheritable List
 		return true;
 	}
 
-	/// Summary: Invokes the specified value once for each value in the list.
-	/// Param func: An invokable value that takes one argument.
-	///             The return value is ignored.
-	/// Returns: The current list.
-	public each(func)
+	overridable override each(func)
 	{
+		if func is null:
+			throw new ArgumentNullError("func");
+
 		var startVersion = version;
 
 		for i in [0 to length - 1]
@@ -390,78 +345,11 @@ public inheritable List
 		return this;
 	}
 
-	/// Summary: Returns a new list containing items from this list that match the
-	///          specified predicate.
-	/// Param predicate: An invokable value that accepts one argument and returns
-	///                  a truthy value if the item matches some condition, or a falsy
-	///                  value otherwise.
-	/// Returns: A new List instance containing those items from this list for which
-	///          {predicate} returns true.
-	public filter(predicate)
+	overridable override first(predicate)
 	{
-		var output = new List(this.length);
-		var startVersion = version;
+		if predicate is null:
+			throw new ArgumentNullError("predicate");
 
-		for i in [0 to length - 1]
-		{
-			if startVersion != version:
-				throw new InvalidStateError(listHasChanged);
-			var item = this[i];
-			if predicate(item):
-				output.add(item);
-		}
-
-		return output;
-	}
-
-	/// Summary: Returns a new list containing items from this list transformed by
-	///          the specified map function, if the original item matches the given
-	///          predicate.
-	///
-	///          In other words, this method is equivalent to first filtering the
-	///          list, then mapping that result.
-	/// Param predicate: An invokable value that accepts one argument and returns
-	///                  a truthy value if the item matches some condition, or a falsy
-	///                  value otherwise.
-	/// Param mapper:    An invokable value that accepts one argument and returns
-	///                  a transformed version of it. This return value is added to
-	///                  the resulting list.
-	/// Returns: A new List instance containing items from this list, transformed by
-	///          {mapper}, if {predicate} returned true for the original item.
-	/// Remarks: This method is equivalent to calling {filter} followed by {map}, as
-	///          in the following example:
-	///
-	///          `var list = [1 to 10]; // our list` \
-	///          `list.filter(@x = x % 2 == 0).map(@x = x ** 2) // get the square of each even number` \
-	///          `list.filterMap(@x = x % 2 == 0, @x = x ** 2)  // equivalent`
-	///
-	///          This method may perform better than `filter` followed by `map`, because
-	///          it avoids allocating memory for the intermediate filtered list.
-	public filterMap(predicate, mapper)
-	{
-		var output = new List(this.length);
-		var startVersion = version;
-
-		for i in [0 to length - 1]
-		{
-			if startVersion != version:
-				throw new InvalidStateError(listHasChanged);
-			var item = this[i];
-			if predicate(item):
-				output.add(mapper(item));
-		}
-
-		return output;
-	}
-
-	/// Summary: Returns the first item that matches the specified predicate.
-	/// Param predicate: An invokable value that accepts one argument and returns
-	///                  a truthy value if the item matches some condition, or a falsy
-	///                  value otherwise.
-	/// Returns: The first item that matches the predicate, or null if there
-	///          was no match.
-	public first(predicate)
-	{
 		var startVersion = version;
 
 		for i in [0 to length - 1]
@@ -476,18 +364,7 @@ public inheritable List
 		return null;
 	}
 
-	/// Summary: Applies an accumulator function over the list.
-	/// Param func: In invokable value that accepts two arguments (the current accumulator
-	///             value and the current list item) and returns the new accumulator value.
-	///             The initial value of the accumulator is the first item in the list.
-	/// Returns: The final accumulator value. If the list contains only one item, then
-	///          that item is returned.
-	/// Throws ArgumentNullError:
-	///          {func} is null.
-	/// Throws InvalidStateError:
-	///          The list is empty. To fold an empty list, use the overload that takes
-	///          an initial accumulator value.
-	public fold(func)
+	overridable override fold(func)
 	{
 		if func is null:
 			throw new ArgumentNullError("func");
@@ -496,16 +373,7 @@ public inheritable List
 
 		return foldInternal(this[0], func, 1);
 	}
-	/// Summary: Applies an accumulator function over the list using the specified initial
-	///          accumulator value.
-	/// Param init: The initial accumulator value.
-	/// Param func: In invokable value that accepts two arguments (the current accumulator
-	///             value and the current list item) and returns the new accumulator value.
-	///             The initial value of the accumulator is {init}.
-	/// Returns: The final accumulator value. If the list is empty, {init} is returned.
-	/// Throws ArgumentNullError:
-	///          {func} is null.
-	public fold(init, func)
+	overridable override fold(init, func)
 	{
 		if func is null:
 			throw new ArgumentNullError("func");
@@ -552,8 +420,21 @@ public inheritable List
 		return init;
 	}
 
+	/// Summary: Returns the index of the first item that matches the
+	///          specified predicate.
+	/// Param predicate: An invokable value that takes one argument
+	///          (the current element) and returns a truthy value if
+	///          the element matches the predicate, or a falsy value
+	///          otherwise.
+	/// Returns: The index of the first item that matches {predicate},
+	///          or null if there was no match.
+	/// Throws ArgumentNullError:
+	///          {predicate} is null.
 	public indexOfFirst(predicate)
 	{
+		if predicate is null:
+			throw new ArgumentNullError("predicate");
+
 		var startVersion = version;
 
 		for i in [0 to length - 1]
@@ -567,8 +448,21 @@ public inheritable List
 		return null;
 	}
 
+	/// Summary: Returns the index of the last item that matches the
+	///          specified predicate.
+	/// Param predicate: An invokable value that takes one argument
+	///          (the current element) and returns a truthy value if
+	///          the element matches the predicate, or a falsy value
+	///          otherwise.
+	/// Returns: The index of the last item that matches {predicate},
+	///          or null if there was no match.
+	/// Throws ArgumentNullError:
+	///          {predicate} is null.
 	public indexOfLast(predicate)
 	{
+		if predicate is null:
+			throw new ArgumentNullError("predicate");
+
 		var startVersion = version;
 
 		for i in [1 to length]
@@ -582,7 +476,7 @@ public inheritable List
 		return null;
 	}
 
-	public last(predicate)
+	overridable override last(predicate)
 	{
 		var startVersion = version;
 
@@ -596,21 +490,6 @@ public inheritable List
 		}
 
 		return null;
-	}
-
-	public map(func)
-	{
-		var output = new List(length);
-		var startVersion = version;
-
-		for i in [0 to length - 1]
-		{
-			if startVersion != version:
-				throw new InvalidStateError(listHasChanged);
-			output.add(func(this[i]));
-		}
-
-		return output;
 	}
 
 	/// Summary: Gets a read-only {Iterable} that encapsulates the list.

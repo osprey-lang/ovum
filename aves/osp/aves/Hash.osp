@@ -13,13 +13,13 @@ namespace aves;
 ///          of the {keyComparer}.
 ///
 ///          All hash tables are inherently unordered. That is, when enumerating
-///          the keys, values or key-value pairs in the hash table, they are not
+///          the keys, values or key–value pairs in the hash table, they are not
 ///          guaranteed to come in any particular order. Adding or removing entries
 ///          may unpredictably change the iteration order.
 ///
 ///          The hash table is one of the fundamental collection types, alongside
 ///          {List}, {Set} and {Array}.
-public inheritable Hash
+public inheritable Hash is Collection
 {
 	__init_type("aves_Hash_init");
 
@@ -88,7 +88,7 @@ public inheritable Hash
 
 	/// Summary: Gets the total number of key–value pairs contained in the hash table.
 	/// Returns: The total number of key–value pairs in the hash table, as an Int.
-	public get length
+	override get length
 		__extern("aves_Hash_get_length");
 
 	/// Summary: Gets the capacity of the hash table; that is, the number of entries
@@ -107,16 +107,16 @@ public inheritable Hash
 	/// Returns: True if {length} is zero; otherwise, false.
 	public get isEmpty = length == 0;
 
-	/// Summary: Gets an {Iterable} that can be used to iterate over the keys in
+	/// Summary: Gets a {Collection} that can be used to iterate over the keys in
 	///          the hash table.
-	/// Returns: A new {Iterable} instance that iterates over the keys in the hash
+	/// Returns: A new {Collection} instance that iterates over the keys in the hash
 	///          table.
-	public get keys = new KeyOrValueIterable(this, true);
-	/// Summary: Gets an {Iterable} that can be used to iterate over the values
+	public get keys = new KeyOrValueCollection(this, true);
+	/// Summary: Gets a {Collection} that can be used to iterate over the values
 	///          in the hash table.
-	/// Returns: A new {Iterable} instance that iterates over the values in the hash
+	/// Returns: A new {Collection} instance that iterates over the values in the hash
 	///          table.
-	public get values = new KeyOrValueIterable(this, false);
+	public get values = new KeyOrValueCollection(this, false);
 
 	private get version
 		__extern("aves_Hash_get_version");
@@ -204,8 +204,6 @@ public inheritable Hash
 	private unpinEntries()
 		__extern("aves_Hash_unpinEntries");
 
-	// Higher-order functions!
-
 	/// Summary: Determines whether all the entries in the hash table match the specified
 	///          predicate.
 	/// Param predicate: An invokable value that accepts two arguments (the key and the
@@ -213,11 +211,20 @@ public inheritable Hash
 	///                  matches some condition, and a falsy value otherwise.
 	/// Returns: True if {predicate} returns true for all entries in the table, or the
 	///          hash is empty. Otherwise, false.
+	/// Throws ArgumentNullError:
+	///          {predicate} is null.
 	/// Remarks: The iteration stops as soon as {predicate} returns false for an entry.
 	///          This method is in other words not guaranteed to iterate over the entire
 	///          hash table. For that, use {each}.
-	public all(predicate)
+	///
+	///          This method differs from {all} in that it passes two arguments to the
+	///          predicate – the key and the value – while {all} passes a single argument
+	///          containing a key–value pair in a List.
+	public allEntries(predicate)
 	{
+		if predicate is null:
+			throw new ArgumentNullError("predicate");
+
 		var startVersion = version;
 
 		try
@@ -248,11 +255,20 @@ public inheritable Hash
 	///                  matches some condition, and a falsy value otherwise.
 	/// Returns: True if {predicate} returns true for any entry in the table. Otherwise
 	///          (including if the hash is entry), false.
+	/// Throws ArgumentNullError:
+	///          {predicate} is null.
 	/// Remarks: The iteration stops as soon as {predicate} returns true for an entry.
 	///          This method is in other words not guaranteed to iterate over the entire
 	///          hash table. For that, use {each}.
-	public any(predicate)
+	///
+	///          This method differs from {any} in that it passes two arguments to the
+	///          predicate – the key and the value – while {any} passes a single argument
+	///          containing a key–value pair in a List.
+	public anyEntry(predicate)
 	{
+		if predicate is null:
+			throw new ArgumentNullError("predicate");
+
 		var startVersion = version;
 
 		try
@@ -276,8 +292,21 @@ public inheritable Hash
 		return false;
 	}
 
-	public each(func)
+	/// Summary: Calls the specified callback once for each entry in the hash table.
+	/// Param func: An invokable value that accepts two arguments (the key and the
+	///             value), and processes the entry in some way. The return value is
+	///             discarded.
+	/// Returns: The current hash table.
+	/// Throws ArgumentNullError:
+	///          {func} is null.
+	/// Remarks: This method differs from {each} in that it passes two arguments to
+	///          {func} – the key and the value – while {each} passes a single argument
+	///          containing a key–value pair in a List.
+	public eachEntry(func)
 	{
+		if func is null:
+			throw new ArgumentNullError("func");
+
 		var startVersion = version;
 
 		try
@@ -300,8 +329,26 @@ public inheritable Hash
 		return this;
 	}
 
-	public filter(predicate)
+	/// Summary: Returns a new hash table with all the entries from the current hash
+	///          table that match the specified predicate.
+	/// Param predicate: An invokable value that accepts two arguments (the key and the
+	///                  value) for each entry, and returns a truthy value if the entry
+	///                  matches some condition, and a falsy value otherwise.
+	/// Returns: A new {Hash} containing all the entries from the current hash that
+	///          match {predicate}.
+	/// Throws ArgumentNullError:
+	///          {predicate} is null.
+	/// Remarks: The returned hash table uses the same {keyComparer} as the current
+	///          hash table.
+	///
+	///          This method differs from {filter} in that it passes two arguments to
+	///          the predicate – the key and the value – while {filter} passes a single
+	///          argument containing a key–value pair in a List.
+	public filterEntries(predicate)
 	{
+		if predicate is null:
+			throw new ArgumentNullError("predicate");
+
 		var output = new Hash(length, keyComparer);
 		var startVersion = version;
 
@@ -325,6 +372,20 @@ public inheritable Hash
 		return output;
 	}
 
+	/// Summary: Returns a new hash table based on the current hash table, with
+	///          keys transformed according to the specified callback.
+	/// Param func: An invokable value that accepts two arguments (the key and the
+	///             value), and processes the entry in some way. The return value
+	///             becomes the new key associated with the value.
+	/// Returns: A new hash table based on the current hash table, with keys
+	///          transformed according to {func}.
+	/// Remarks: The returned hash table uses the same {keyComparer} as the current
+	///          hash table.
+	///
+	///          This method differs from {map} in two ways. Firstly, the callback
+	///          receives two arguments – the key and the value – while {map} passes
+	///          a key–value pair in a list. Secondly, the return type is always
+	///          {Hash}, whereas {map} returns an {Iterable}.
 	public mapKeys(func)
 	{
 		var output = new Hash(length, keyComparer);
@@ -350,6 +411,20 @@ public inheritable Hash
 		return output;
 	}
 
+	/// Summary: Returns a new hash table based on the current hash table, with
+	///          values transformed according to the specified callback.
+	/// Param func: An invokable value that accepts two arguments (the key and the
+	///             value), and processes the entry in some way. The return value
+	///             becomes the new value associated with the key.
+	/// Returns: A new hash table based on the current hash table, with values
+	///          transformed according to {func}.
+	/// Remarks: The returned hash table uses the same {keyComparer} as the current
+	///          hash table.
+	///
+	///          This method differs from {map} in two ways. Firstly, the callback
+	///          receives two arguments – the key and the value – while {map} passes
+	///          a key–value pair in a list. Secondly, the return type is always
+	///          {Hash}, whereas {map} returns an {Iterable}.
 	public mapValues(func)
 	{
 		var output = new Hash(length, keyComparer);
@@ -448,7 +523,7 @@ public inheritable Hash
 		return new HashIterator(this);
 	}
 
-	/// Summary: Gets the maximum number of key-value pairs a hash table can contain.
+	/// Summary: Gets the maximum number of key–value pairs a hash table can contain.
 	/// Returns: The maximum {capacity} of a hash table, as an Int.
 	public static get maxCapacity
 		__extern("aves_Hash_get_maxCapacity");
@@ -519,11 +594,13 @@ private class HashIterator is Iterator
 	}
 }
 
-private class KeyOrValueIterable is Iterable
+private class KeyOrValueCollection is Collection
 {
 	public new(this.hash, this.useKey);
 
 	private hash, useKey;
+
+	override get length = hash.length;
 
 	iter
 	{
