@@ -50,6 +50,7 @@ namespace strings
 	LitString<5> __iter     = { 5, 0, SFS, '.','i','t','e','r',0 };
 	LitString<4> __new      = { 4, 0, SFS, '.','n','e','w',0 };
 	LitString<6> _equals    = { 6, 0, SFS, 'e','q','u','a','l','s',0 };
+	LitString<6> _length    = { 6, 0, SFS, 'l','e','n','g','t','h',0 };
 
 	String *str       = _str.AsString();
 	String *i         = _i.AsString();
@@ -88,6 +89,7 @@ namespace strings
 	String *_iter     = __iter.AsString();
 	String *_new      = __new.AsString();
 	String *equals    = _equals.AsString();
+	String *length    = _length.AsString();
 
 #if OVUM_WINDOWS
 	LitString<2> _newline = { 2, 0, SFS, '\r','\n',0 };

@@ -23,6 +23,7 @@ public:
 		TypeHandle ArgumentError;
 		TypeHandle ArgumentNullError;
 		TypeHandle ArgumentRangeError;
+		TypeHandle Array;
 		TypeHandle Buffer;
 		TypeHandle BufferViewKind;
 		TypeHandle Char;

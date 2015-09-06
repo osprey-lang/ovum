@@ -167,6 +167,9 @@
     <ClInclude Include="cpp\ext\dtoa.config.h">
       <Filter>Header Files\ext</Filter>
     </ClInclude>
+    <ClInclude Include="cpp\aves\array.h">
+      <Filter>Header Files\aves</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cpp\aves.cpp">
@@ -288,6 +291,9 @@
     </ClCompile>
     <ClCompile Include="cpp\ext\dtoa.c">
       <Filter>Source Files\ext</Filter>
+    </ClCompile>
+    <ClCompile Include="cpp\aves\array.cpp">
+      <Filter>Source Files\aves</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

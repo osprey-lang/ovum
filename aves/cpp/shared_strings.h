@@ -47,6 +47,7 @@ namespace strings
 	extern String *_iter; // .iter
 	extern String *_new;  // .new
 	extern String *equals;
+	extern String *length;
 	
 	extern String *newline;
 }

@@ -1,0 +1,191 @@
+use namespace aves;
+use namespace testing.unit;
+
+namespace aves.tests;
+
+// Tests for the class aves.Array
+
+public class ArrayTests is TestFixture
+{
+	public new() { new base("aves.Array tests"); }
+
+	// Constructor tests
+
+	public test_ConstructorEmpty()
+	{
+		var array;
+		Assert.doesNotThrow(@{ array = new Array(0); });
+		Assert.areEqual(array.length, 0);
+	}
+
+	public test_ConstructorNonEmpty()
+	{
+		var array;
+		Assert.doesNotThrow(@{ array = new Array(1); });
+		Assert.areEqual(array.length, 1);
+		Assert.doesNotThrow(@{ array = new Array(256); });
+		Assert.areEqual(array.length, 256);
+	}
+
+	public test_ConstructorWithInvalidLength()
+	{
+		Assert.throws(typeof(ArgumentRangeError), @= new Array(-1));
+		Assert.throws(typeof(TypeError), @= new Array("42"));
+		Assert.throws(typeof(TypeError), @= new Array("things"));
+	}
+
+	// End constructor tests
+
+	// Indexer tests
+
+	public test_Indexer()
+	{
+		var array = new Array(3);
+		array[0] = "first";
+		array[1] = "second";
+		array[2] = "third";
+
+		Assert.areEqual(array[0], "first");
+		Assert.areEqual(array[1], "second");
+		Assert.areEqual(array[2], "third");
+	}
+
+	public test_IndexerDefault()
+	{
+		var array = new Array(1);
+		// Unassigned array elements should be null
+		Assert.isNull(array[0]);
+	}
+
+	public test_IndexerOverwrite()
+	{
+		var array = new Array(1);
+		array[0] = "first";
+		array[0] = "second";
+		Assert.areEqual(array[0], "second");
+	}
+
+	public test_IndexerOutOfRange()
+	{
+		var array = new Array(1);
+		Assert.throws(typeof(ArgumentRangeError), @= array[-1]);
+		Assert.throws(typeof(ArgumentRangeError), @= array[1]);
+	}
+
+	public test_IndexerWithInvalidIndex()
+	{
+		var array = new Array(1);
+		Assert.throws(typeof(TypeError), @= array["1"]);
+		Assert.throws(typeof(TypeError), @= array["index"]);
+	}
+
+	// End indexer tests
+
+	// Iterator tests
+
+	public test_IterEmpty()
+	{
+		var array = new Array(0);
+		var iterator = array.iter;
+		Assert.isFalse(iterator.moveNext());
+	}
+
+	public test_Iter1()
+	{
+		var array = new Array(1);
+		array[0] = 1;
+		var iterator = array.iter;
+		Assert.isTrue(iterator.moveNext());
+		Assert.areEqual(iterator.current, 1);
+		Assert.isFalse(iterator.moveNext());
+	}
+
+	public test_Iter2()
+	{
+		var array = new Array(2);
+		array[0] = 1;
+		array[1] = 2;
+		var iterator = array.iter;
+		Assert.isTrue(iterator.moveNext());
+		Assert.areEqual(iterator.current, 1);
+		Assert.isTrue(iterator.moveNext());
+		Assert.areEqual(iterator.current, 2);
+		Assert.isFalse(iterator.moveNext());
+	}
+
+	// End iterator tests
+
+	// resize tests
+
+	public test_ResizeFromNull()
+	{
+		var array = null;
+		Assert.doesNotThrow(@{ Array.resize(ref array, 1); });
+		Assert.isNotNull(array);
+		Assert.areEqual(array.length, 1);
+	}
+
+	public test_ResizeToSameLengthFromNull()
+	{
+		var array = null;
+		Assert.doesNotThrow(@{ Array.resize(ref array, 0); });
+		Assert.isNotNull(array);
+		Assert.areEqual(array.length, 0);
+	}
+
+	public test_ResizeFromEmpty()
+	{
+		var array = new Array(0);
+		Assert.doesNotThrow(@{ Array.resize(ref array, 1); });
+		Assert.isNotNull(array);
+		Assert.areEqual(array.length, 1);
+	}
+
+	public test_ResizeToSameLengthFromEmpty()
+	{
+		var array = new Array(0);
+		var original = array;
+		Assert.doesNotThrow(@{ Array.resize(ref array, 0); });
+		Assert.isNotNull(array);
+		Assert.areSameRef(array, original);
+	}
+
+	public test_ResizeFromNonEmpty()
+	{
+		var array = new Array(1);
+		Assert.doesNotThrow(@{ Array.resize(ref array, 2); });
+		Assert.isNotNull(array);
+		Assert.areEqual(array.length, 2);
+	}
+
+	public test_ResizeToSameLengthFromNonEmpty()
+	{
+		var array = new Array(1);
+		var original = array;
+		Assert.doesNotThrow(@{ Array.resize(ref array, 1); });
+		Assert.isNotNull(array);
+		Assert.areSameRef(array, original);
+	}
+
+	public test_ResizeGrowWithContent()
+	{
+		var array = new Array(1);
+		array[0] = 1;
+		Assert.doesNotThrow(@{ Array.resize(ref array, 2); });
+		Assert.areEqual(array.length, 2);
+		Assert.areEqual(array[0], 1);
+		Assert.isNull(array[1]);
+	}
+
+	public test_ResizeShrinkWithContent()
+	{
+		var array = new Array(2);
+		array[0] = 1;
+		array[1] = 2;
+		Assert.doesNotThrow(@{ Array.resize(ref array, 1); });
+		Assert.areEqual(array.length, 1);
+		Assert.areEqual(array[0], 1);
+	}
+
+	// End resize tests
+}

@@ -2,6 +2,7 @@
 use "ArgumentError.osp";
 use "ArgumentNullError.osp";
 use "ArgumentRangeError.osp";
+use "Array.osp";
 use "Boolean.osp";
 use "Buffer.osp";
 use "Char.osp";

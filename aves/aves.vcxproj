@@ -86,6 +86,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="cpp\aves.h" />
+    <ClInclude Include="cpp\aves\array.h" />
     <ClInclude Include="cpp\aves_state.h" />
     <ClInclude Include="cpp\shared_strings.h" />
     <ClInclude Include="cpp\ext\dtoa.config.h" />
@@ -128,10 +129,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cpp\aves.cpp" />
+    <ClCompile Include="cpp\aves\array.cpp" />
     <ClCompile Include="cpp\aves_state.cpp" />
     <ClCompile Include="cpp\shared_strings.cpp" />
     <ClCompile Include="cpp\ext\dtoa.c" />
-    <ClCompile Include="cpp\os\windows\dllmain.cpp"/>
+    <ClCompile Include="cpp\os\windows\dllmain.cpp" />
     <ClCompile Include="cpp\os\windows\windows.cpp" />
     <ClCompile Include="cpp\aves\boolean.cpp" />
     <ClCompile Include="cpp\aves\buffer.cpp" />
