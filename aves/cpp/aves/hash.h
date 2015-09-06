@@ -6,6 +6,14 @@
 namespace aves
 {
 
+struct HashEntry
+{
+	int32_t hashCode; // Lower 31 bits of hash code; -1 = unused
+	int32_t next;     // Index of next entry in bucket; -1 = last
+	Value key;
+	Value value;
+};
+
 class Hash
 {
 public:

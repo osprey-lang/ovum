@@ -120,7 +120,6 @@ typedef uint32_t ovlocals_t;
 typedef struct Value_S Value;
 typedef struct String_S String;
 typedef struct ListInst_S ListInst;
-typedef struct HashEntry_S HashEntry;
 typedef struct ErrorInst_S ErrorInst;
 typedef struct MethodInst_S MethodInst;
 
@@ -237,14 +236,6 @@ struct ListInst_S
 	int32_t length;   // the actual number of items contained in the list
 	int32_t version;  // the "version" of the list, which is incremented each time the list changes
 	Value *values;    // the values contained in the list
-};
-
-struct HashEntry_S
-{
-	int32_t hashCode; // Lower 31 bits of hash code; -1 = unused
-	int32_t next;     // Index of next entry in bucket; -1 = last
-	Value key;
-	Value value;
 };
 
 struct ErrorInst_S
