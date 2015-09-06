@@ -12,7 +12,7 @@ namespace aves;
 ///          The items on a stack cannot be indexed into. They can only be
 ///          manipulated by pushing, popping and peeking. The items of a stack
 ///          are iterated from top to bottom.
-public inheritable Stack is Iterable
+public inheritable Stack is Collection
 {
 	/// Summary: Creates a new, empty {Stack} with the default capacity.
 	public new()
@@ -40,7 +40,7 @@ public inheritable Stack is Iterable
 
 	/// Summary: Gets the total number of items on the stack.
 	/// Returns: The total number of items on the stack, as an Int.
-	public get length = _length;
+	override get length = _length;
 
 	/// Summary: Determines whether the stack is empty.
 	/// Returns: True if the stack is empty; otherwise, false.
