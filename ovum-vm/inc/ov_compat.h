@@ -8,6 +8,30 @@
 // All parts of Ovum require standard integer types
 #include <stdint.h>
 
+// OVUM_64BIT is true if Ovum is compiled as a 64-bit application
+
+#ifndef OVUM_64BIT
+
+# if defined(_MSC_VER) || defined(_WIN32)
+#  ifdef _WIN64
+#   define OVUM_64BIT 1
+#  else
+#   define OVUM_64BIT 0
+#  endif
+
+# elif defined(__GNUC__)
+#  if __x86_64__ || __ppc64__
+#   define OVUM_64BIT 1
+#  else
+#   define OVUM_64BIT
+#  endif
+
+# else
+#  error Unable to determine whether Ovum is 32- or 64-bit
+# endif
+
+#endif // OVUM_64BIT
+
 // The OVUM_WCHAR_SIZE macro is used in various text functions
 
 #ifndef OVUM_WCHAR_SIZE

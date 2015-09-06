@@ -29,7 +29,7 @@
 # define OVUM_HAS_TARGET_OS
 #endif // OVUM_HAS_TARGET_OS
 
-// Assign 0 to macros that haven't been defined yet.
+// Assign 0 to OS macros that haven't been defined yet.
 
 #ifndef OVUM_WINDOWS
 # define OVUM_WINDOWS 0
