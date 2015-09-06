@@ -101,6 +101,12 @@ public class QueueTests is TestFixture
 		Assert.areEqual(queue.length, 0);
 	}
 
+	public test_DequeueEmpty()
+	{
+		var queue = new Queue();
+		Assert.throws(typeof(InvalidStateError), @= queue.dequeue());
+	}
+
 	// End manipulation tests
 
 	// Iterator tests
