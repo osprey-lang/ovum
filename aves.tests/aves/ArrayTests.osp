@@ -115,6 +115,63 @@ public class ArrayTests is TestFixture
 
 	// End iterator tests
 
+	// fill tests
+
+	public test_FillEntire()
+	{
+		var array = new Array(3);
+		var value = new Object();
+		array.fill(value);
+		Assert.areEqual(array[0], value);
+		Assert.areEqual(array[1], value);
+		Assert.areEqual(array[2], value);
+	}
+
+	public test_FillRegion()
+	{
+		var array = new Array(3);
+		var value = new Object();
+		array.fill(value, 0, 2);
+		Assert.areEqual(array[0], value);
+		Assert.areEqual(array[1], value);
+		Assert.isNull(array[2]);
+	}
+
+	public test_FillEmptyRegion()
+	{
+		var array = new Array(3);
+		// This shouldn't affect anything
+		array.fill("value", 1, 0);
+		Assert.isNull(array[0]);
+		Assert.isNull(array[1]);
+		Assert.isNull(array[2]);
+	}
+
+	public test_FillEmptyRegionAtEnd()
+	{
+		var array = new Array(3);
+		// This should not throw anything: assigning zero values
+		// at the end of the array is a no-op.
+		Assert.doesNotThrow(@{ array.fill("value", 3, 0); });
+		Assert.isNull(array[0]);
+		Assert.isNull(array[1]);
+		Assert.isNull(array[2]);
+	}
+
+	public test_FillInvalidRegion()
+	{
+		var array = new Array(3);
+		Assert.throws(typeof(ArgumentRangeError), @= array.fill("value", -1, 1));
+		Assert.throws(typeof(ArgumentError), @= array.fill("value", 3, 1));
+		// zero elements past end is not okay
+		Assert.throws(typeof(ArgumentError), @= array.fill("value", 4, 0));
+		Assert.throws(typeof(ArgumentError), @= array.fill("value", 1, 3));
+		Assert.throws(typeof(TypeError), @= array.fill("value", "nest", 0));
+		Assert.throws(typeof(TypeError), @= array.fill("value", 0, "egg"));
+	}
+
+	// End fill tests
+
 	// resize tests
 
 	public test_ResizeFromNull()

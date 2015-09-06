@@ -26,6 +26,8 @@ AVES_API NATIVE_FUNCTION(aves_Array_get_item);
 AVES_API NATIVE_FUNCTION(aves_Array_set_item);
 AVES_API NATIVE_FUNCTION(aves_Array_get_length);
 
+AVES_API NATIVE_FUNCTION(aves_Array_fillInternal);
+
 AVES_API NATIVE_FUNCTION(aves_Array_copyInternal);
 
 int OVUM_CDECL aves_Array_getReferences(void *basePtr, ReferenceVisitor callback, void *cbState);

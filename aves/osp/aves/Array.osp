@@ -55,6 +55,68 @@ public class Array is Collection
 	override get length
 		__extern("aves_Array_get_length");
 
+	/// Summary: Determines whether the array contains the specified item.
+	/// Param item: The item to look for.
+	/// Returns: True if {item} is in the array; otherwise, false.
+	/// Remarks: Items are compared for equality using the `==` operator.
+	public contains(item)
+	{
+		return indexOf(item) is not null;
+	}
+
+	/// Summary: Returns the index of the first occurrence of the specified
+	///          item within the array.
+	/// Param item: The item to look for.
+	/// Returns: The index of the first occurrence of {item} within the array,
+	///          as an Int, or null if it could not be found.
+	/// Remarks: Items are compared for equality using the `==` operator.
+	public indexOf(item)
+	{
+		for i in [0 to length - 1]:
+			if item == this[i]:
+				return i;
+
+		return null;
+	}
+
+	/// Summary: Fills the array with the specified value. The existing values in
+	///          the array are overwritten.
+	/// Param value: The value to fill the array with.
+	/// Remarks: The same object is reused for all entries in the array. Hence, if
+	///          {value} is mutable, all elements in the array will be affected by
+	///          changes to one of the objects.
+	public fill(value)
+	{
+		fillInternal(value, 0, length);
+	}
+	/// Summary: Fills a region of the array with the specified value. The existing
+	///          values in the region are overwritten.
+	/// Param value:      The value to fill the array region with.
+	/// Param startIndex: The index at which to start writing. (Int, UInt or Real)
+	/// Param count:      The number of entries to write. (Int, UInt or Real)
+	/// Throws TypeError:
+	///          {startIndex} or {count} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {startIndex} is less than zero.
+	/// Throws ArgumentError:
+	///          {startIndex} + {count} greater than {length}.
+	/// Remarks: The same object is reused for all entries in the array region. Hence,
+	///          if {value} is mutable, all elements in the region will be affected by
+	///          changes to one of the objects.
+	public fill(value, startIndex, count)
+	{
+		startIndex = int(startIndex);
+		if startIndex < 0:
+			throw new ArgumentRangeError("startIndex");
+		count = int(count);
+		if startIndex + count > length:
+			throw new ArgumentError("startIndex + count is outside the array.");
+
+		fillInternal(value, startIndex, count);
+	}
+	private fillInternal(value, startIndex, count)
+		__extern("aves_Array_fillInternal");
+
 	/// Summary: Resizes the specified array to a new size. The old contents are
 	///          preserved, and will be clipped if the new size is smaller than
 	///          the old size.

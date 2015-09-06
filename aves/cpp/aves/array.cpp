@@ -118,6 +118,27 @@ AVES_API NATIVE_FUNCTION(aves_Array_get_length)
 	RETURN_SUCCESS;
 }
 
+AVES_API NATIVE_FUNCTION(aves_Array_fillInternal)
+{
+	// fillInternal(value, startIndex is Int, count is Int)
+	// The external methods range-check the arguments.
+
+	Array *array = THISV.Get<Array>();
+	Value *value = args + 1;
+	int64_t startIndex = args[2].v.integer;
+	int64_t count = args[3].v.integer;
+
+	Value *items = &array->firstValue;
+	while (count > 0)
+	{
+		items[startIndex] = *value;
+		startIndex++;
+		count--;
+	}
+
+	RETURN_SUCCESS;
+}
+
 AVES_API NATIVE_FUNCTION(aves_Array_copyInternal)
 {
 	// copyInternal(source is Array, sourceIndex is Int, dest is Array, destIndex is Int, count is Int)
