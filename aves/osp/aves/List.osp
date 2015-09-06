@@ -4,8 +4,8 @@ namespace aves;
 ///          The values in a List can be accessed by numeric index, starting
 ///          at zero.
 ///
-///          The List is one of the fundamental collection types
-///          in Osprey, alongside {Hash} and {Set}.
+///          The list is one of the fundamental collection types, alongside
+///          {Hash}, {Set} and {Array}.
 public inheritable List
 {
 	__init_type("aves_List_init");

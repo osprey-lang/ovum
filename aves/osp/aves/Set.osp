@@ -20,7 +20,7 @@ namespace aves;
 ///          order.
 ///
 ///          The set is one of the fundamental collection types, alongside
-///          {List} and {Hash}.
+///          {List}, {Hash} and {Array}.
 public inheritable Set is Collection
 {
 	__init_type("aves_Set_init");

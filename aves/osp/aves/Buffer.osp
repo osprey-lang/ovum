@@ -376,7 +376,9 @@ public class Buffer
 	/// Summary: Resizes the specified buffer to a new size. The old contents are
 	///          preserved, and will be clipped if the new size is smaller than
 	///          the old size.
-	/// Param buf: A {Buffer} that is updated with to a buffer of the new size.
+	/// Param buf: (ref) A {Buffer} that is updated with to a buffer of the new size.
+	///            This parameter can also be null, in which case a new buffer full
+	///            of zero bytes is assigned to it.
 	/// Param newSize: The new size of {buf}. (Int, UInt or Real)
 	/// Throws TypeError:
 	///          {buf} is not null and is not an instance of {Buffer}.
@@ -389,7 +391,7 @@ public class Buffer
 	///          The {buf} argument is passed by reference, and will be overwritten
 	///          by a new {Buffer} instance. The bytes from the old buffer are copied
 	///          to the new buffer. However, if the new size is smaller than the old
-	///          buffer, the data will be cut off.
+	///          buffer, the excess data will be cut off.
 	///
 	///          Unlike many other methods that work with buffers, this method does
 	///          not accept a {BufferView} for the {buf} argument.
@@ -436,7 +438,8 @@ public class Buffer
 
 		copyInternal(source, 0, destination, 0, source.size);
 	}
-	/// Summary: Copies {count} bytes from one buffer to another.
+	/// Summary: Copies the specified number of bytes from one buffer to another.
+	///          Data is read and written starting at offset 0.
 	/// Param source:      The source buffer. (Buffer or BufferView)
 	/// Param destination: The destination buffer. (Buffer or BufferView)
 	/// Param count:       The number of bytes to copy. (Int, UInt or Real)
@@ -462,8 +465,8 @@ public class Buffer
 
 		copyInternal(source, 0, destination, 0, count);
 	}
-	/// Summary: Copies {count} bytes from one buffer to another, starting at
-	///          the specified offsets within each buffer.
+	/// Summary: Copies the specified number of bytes from one buffer to another,
+	///          starting at the specified offsets within each buffer.
 	/// Param source:      The source buffer. (Buffer or BufferView)
 	/// Param sourceIndex: The byte offset at which to start reading bytes
 	///                    from {source}. (Int, UInt or Real)
