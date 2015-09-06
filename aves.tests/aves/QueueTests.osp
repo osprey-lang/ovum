@@ -1,0 +1,139 @@
+use namespace aves;
+use namespace testing.unit;
+
+namespace aves.tests;
+
+// Tests for the class aves.Queue
+
+public class QueueTests is TestFixture
+{
+	public new() { new base("aves.Queue tests"); }
+
+	// Constructor tests
+
+	public test_Constructor0()
+	{
+		var queue;
+		Assert.doesNotThrow(@{ queue = new Queue(); });
+		Assert.areEqual(queue.length, 0);
+	}
+
+	public test_Constructor1WithZeroCapacity()
+	{
+		var queue;
+		Assert.doesNotThrow(@{ queue = new Queue(0); });
+		Assert.areEqual(queue.length, 0);
+		Assert.areEqual(queue.capacity, 0);
+	}
+
+	public test_Constructor1WithPositiveCapacity()
+	{
+		var queue;
+		var capacity = 5;
+		Assert.doesNotThrow(@{ queue = new Queue(capacity); });
+		Assert.areEqual(queue.length, 0);
+		Assert.areEqual(queue.capacity, capacity);
+	}
+
+	public test_Constructor1WithInvalidCapacity()
+	{
+		Assert.throws(typeof(ArgumentRangeError), @= new Queue(-1));
+		Assert.throws(typeof(TypeError), @= new Queue("123"));
+		Assert.throws(typeof(TypeError), @= new Queue("rachis"));
+	}
+
+	// End constructor tests
+
+	// Manipulation tests
+
+	public test_Enqueue()
+	{
+		var queue = new Queue(4);
+		queue.enqueue(1);
+		queue.enqueue(2);
+		queue.enqueue(3);
+		Assert.areEqual(queue.length, 3);
+	}
+
+	public test_EnqueueDequeue()
+	{
+		var queue = new Queue(4);
+		queue.enqueue(1);
+		queue.enqueue(2);
+		queue.enqueue(3);
+		queue.enqueue(4);
+
+		Assert.areEqual(queue.length, 4);
+
+		Assert.areEqual(queue.dequeue(), 1);
+		Assert.areEqual(queue.dequeue(), 2);
+		queue.enqueue(5);
+		queue.enqueue(6);
+
+		Assert.areEqual(queue.length, 4);
+
+		Assert.areEqual(queue.dequeue(), 3);
+		Assert.areEqual(queue.dequeue(), 4);
+		Assert.areEqual(queue.dequeue(), 5);
+		Assert.areEqual(queue.dequeue(), 6);
+
+		Assert.areEqual(queue.length, 0);
+	}
+
+	public test_EnqueueDequeueResize()
+	{
+		// Enqueue enough values to change the capacity
+		var queue = new Queue(2);
+		Assert.areEqual(queue.capacity, 2);
+
+		queue.enqueue(1);
+		queue.enqueue(2);
+		queue.enqueue(3);
+		queue.enqueue(4);
+
+		Assert.areEqual(queue.length, 4);
+		Assert.isGreater(queue.capacity, 2);
+
+		Assert.areEqual(queue.dequeue(), 1);
+		Assert.areEqual(queue.dequeue(), 2);
+		Assert.areEqual(queue.dequeue(), 3);
+		Assert.areEqual(queue.dequeue(), 4);
+		Assert.areEqual(queue.length, 0);
+	}
+
+	// End manipulation tests
+
+	// Iterator tests
+
+	public test_IterEmpty()
+	{
+		var queue = new Queue();
+		var iterator = queue.iter;
+		Assert.isFalse(iterator.moveNext());
+	}
+
+	public test_Iter1()
+	{
+		var queue = new Queue();
+		queue.enqueue(1);
+		var iterator = queue.iter;
+		Assert.isTrue(iterator.moveNext());
+		Assert.areEqual(iterator.current, 1);
+		Assert.isFalse(iterator.moveNext());
+	}
+
+	public test_Iter2()
+	{
+		var queue = new Queue();
+		queue.enqueue(1);
+		queue.enqueue(2);
+		var iterator = queue.iter;
+		Assert.isTrue(iterator.moveNext());
+		Assert.areEqual(iterator.current, 1);
+		Assert.isTrue(iterator.moveNext());
+		Assert.areEqual(iterator.current, 2);
+		Assert.isFalse(iterator.moveNext());
+	}
+
+	// End iterator tests
+}

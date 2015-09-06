@@ -1,76 +1,140 @@
 namespace aves;
 
-public inheritable Queue is Iterable
+/// Summary: Implements a collection with first-in-first-out (FIFO) behaviour.
+///
+///          An item is added to a queue by enqueueing it, which adds it to
+///          the back of the queue. To retrieve items from the queue, it must
+///          be dequeued, which removes it from the front of the queue. Hence,
+///          items are retrieved in the same order they were added.
+///
+///          The items in a queue cannot be indexed into. They can only be
+///          manipulated by enqueueing and dequeueing.
+public inheritable Queue is Collection
 {
-	public new();
+	/// Summary: Creates a new, empty {Queue} with the default capacity.
+	public new()
+	{
+		new this(defaultCapacity);
+	}
+	/// Summary: Creates a new, empty {Queue} with the specified initial capacity.
+	/// Param capacity: The capacity of the new queue. (Int, UInt or Real)
+	/// Throws TypeError:
+	///          {capacity} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {capacity} is less than zero.
 	public new(capacity)
 	{
 		capacity = int(capacity);
-		if capacity > 0
-		{
-			list = new List(capacity);
-			fill(list);
-		}
+		if capacity < 0:
+			throw new ArgumentRangeError("capacity");
+
+		initialize(capacity);
 	}
 
-	private list = null; // Don't allocate until necessary
-	private qlength = 0;  // Number of actual entries in the queue
+	private items; // Array
+	private _length = 0;  // Number of actual entries in the queue
 	private startIndex = 0;
 	private version = 0;
 
-	public get length = qlength;
-	public get isEmpty = qlength == 0;
+	/// Summary: Gets the total number of items in the queue.
+	/// Returns: The total number of items in the queue, as an Int.
+	override get length = _length;
 
-	/// Summary: Adds a value to the end of the queue.
-	/// Param value: The value to add.
+	/// Summary: Determines whether the queue is empty.
+	/// Returns: True if the queue is empty; otherwise, false.
+	public get isEmpty = _length == 0;
+
+	/// Summary: Gets the capacity of the queue; that is, the number of items
+	///          that can be enqueued before resizing the internal container.
+	/// Returns: The capacity of the queue, as an Int.
+	public get capacity = items.length;
+	/// Summary: Sets the capacity of the queue; that is, the number of items
+	///          that can be enqueued before resizing the internal container.
+	/// Throws TypeError:
+	///          The value could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          The value is less than {length}.
+	public set capacity
+	{
+		value = int(value);
+		if value < length:
+			throw new ArgumentRangeError("value");
+
+		if value != _length:
+			setCapacity(value);
+	}
+
+	private initialize(capacity)
+	{
+		items = new Array(capacity);
+	}
+
+	/// Summary: Enqueues a value at the end of the queue.
+	/// Param value: The value to enqueue.
 	public enqueue(value)
 	{
-		if list is null or qlength == list.length:
+		if _length == capacity:
 			resize();
 
-		list[(startIndex + qlength) % list.length] = value;
-		qlength += 1;
+		items[(startIndex + _length) % capacity] = value;
+		_length += 1;
 		version += 1;
 	}
 
-	/// Summary: Retrieves the value at the start of the queue.
-	/// Returns: The value at the start of the queue.
-	/// Throws InvalidStateError: The queue is empty.
+	/// Summary: Returns the value at the front of the queue. The value is
+	///          removed from the queue.
+	/// Returns: The value at the front of the queue.
+	/// Throws InvalidStateError:
+	///          The queue is empty.
 	public dequeue()
 	{
-		if qlength == 0:
+		if _length == 0:
 			throw new InvalidStateError("There are no items in the queue.");
 
-		var value = list[startIndex];
-		list[startIndex] = null;
+		var value = items[startIndex];
+		items[startIndex] = null;
 
-		startIndex = (startIndex + 1) % list.length;
-		qlength -= 1;
+		startIndex = (startIndex + 1) % capacity;
+		_length -= 1;
 		version += 1;
 
 		return value;
 	}
 
-	private resize()
+	/// Summary: Removes all the values from the queue, without affecting
+	///          the capacity of the queue.
+	public clear()
 	{
-		// qlength == list.length here
-		var len = qlength;
-		var newList = new List(len * 2);
-
-		for i in [0 to len - 1]:
-			newList.add(list[(startIndex + i) % len]);
-
-		fill(newList, len);
-
+		items.fill(null);
 		startIndex = 0;
-		list = newList;
+		_length = 0;
 		version += 1;
 	}
 
-	private static fill(list, startAt = 0)
+	private resize()
 	{
-		for i in [startAt to list.capacity - 1]:
-			list.add(null);
+		var newCapacity = math.max(defaultCapacity, _length * 2);
+		setCapacity(newCapacity);
+	}
+
+	private setCapacity(newCapacity)
+	{
+		if startIndex == 0
+		{
+			Array.resize(ref items, newCapacity);
+		}
+		else
+		{
+			var newItems = new Array(newCapacity);
+
+			for i in [0 to _length - 1]:
+				newItems[i] = items[(startIndex + i) % capacity];
+
+			startIndex = 0;
+			items = newItems;
+		}
+
+		version += 1;
 	}
 
 	override toString()
@@ -82,11 +146,14 @@ public inheritable Queue is Iterable
 	{
 		var startVersion = version;
 
-		for i in [0 to qlength]
+		for i in [0 to _length - 1]
 		{
 			if startVersion != version:
 				throw new InvalidStateError("The queue has changed since the enumeration started.");
-			yield list[(i + startIndex) % list.length];
+
+			yield items[(startIndex + i) % capacity];
 		}
 	}
+
+	private const defaultCapacity = 4;
 }
