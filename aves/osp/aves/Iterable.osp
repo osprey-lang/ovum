@@ -539,7 +539,7 @@ public abstract class Iterable
 		throw new InvalidStateError("Iterable does not provide a default iterator.");
 	}
 
-	public static get empty = new CollectionIterable();
+	public static get empty = new ReadOnlyIterable();
 
 	public static range(start, count)
 	{

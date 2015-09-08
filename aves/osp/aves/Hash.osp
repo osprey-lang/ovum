@@ -450,11 +450,11 @@ public inheritable Hash is Collection
 		return output;
 	}
 
-	/// Summary: Gets a read-only {Iterable} that encapsulates the hash table.
+	/// Summary: Returns a new {ReadOnlyIterable} wrapper for the hash table.
+	/// Returns: A new {ReadOnlyIterable} that wraps around the current hash table.
 	public toIterable()
 	{
-		// TODO: Create a dedicated HashIterable, with specialised code
-		return new CollectionIterable(this);
+		return new ReadOnlyIterable(this);
 	}
 
 	private getHash(key)

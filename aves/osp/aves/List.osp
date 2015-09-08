@@ -492,11 +492,11 @@ public inheritable List is Collection
 		return null;
 	}
 
-	/// Summary: Gets a read-only {Iterable} that encapsulates the list.
-	public toIterable()
+	/// Summary: Returns a new {ReadOnlyIterable} wrapper for the list.
+	/// Returns: A new {ReadOnlyIterable} that wraps around the current list.
+	public toReadOnly()
 	{
-		// TODO: Create a dedicated ListIterable, with specialised code
-		return new CollectionIterable(this);
+		return new ReadOnlyIterable(this);
 	}
 
 	protected const listHasChanged = "The list has changed since the iteration started.";
