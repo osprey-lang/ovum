@@ -452,7 +452,7 @@ public inheritable Hash is Collection
 
 	/// Summary: Returns a new {ReadOnlyIterable} wrapper for the hash table.
 	/// Returns: A new {ReadOnlyIterable} that wraps around the current hash table.
-	public toIterable()
+	public toReadOnly()
 	{
 		return new ReadOnlyIterable(this);
 	}
