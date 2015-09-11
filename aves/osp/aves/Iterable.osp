@@ -539,13 +539,27 @@ public abstract class Iterable
 		throw new InvalidStateError("Iterable does not provide a default iterator.");
 	}
 
+	/// Summary: Gets an {Iterable} that represents an empty sequence.
+	/// Returns: A new {Iterable} that represents an empty sequence.
 	public static get empty = new ReadOnlyIterable();
 
+	/// Summary: Gets an {Iterable} that produces the specified number of
+	///          consecutive integers, starting at the specified value.
+	/// Param start: The first value to produce. (Int, UInt or Real)
+	/// Param count: The number of values to produce. (Int, UInt or Real)
+	/// Returns: A new {Iterable} that produces Ints from {start} up to,
+	///          but not including, {start} + {count}.
+	/// Throws TypeError:
+	///          {start} or {count} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {count} is less than zero.
+	///
+	///          {start} + {count} is greater than {Int.max}.
 	public static range(start, count)
 	{
 		start = int(start);
 		count = int(count);
-		if count < 0:
+		if count < 0 or Int.max - start < count:
 			throw new ArgumentRangeError("count");
 
 		return new RangeIterable(start, count);
