@@ -1,0 +1,133 @@
+use namespace aves;
+use namespace testing.unit;
+
+namespace aves;
+
+// Tests for the class aves.Iterable
+
+public class IterableTests is TestFixture
+{
+	public new() { new base("aves.Iterable tests"); }
+
+	// range tests
+
+	public test_RangeEmpty()
+	{
+		var range;
+		Assert.doesNotThrow(@{ range = Iterable.range(0, 0); });
+		Assert.collectionsMatch(range, [], Assert.areEqual);
+	}
+
+	public test_RangeValid()
+	{
+		var range;
+		Assert.doesNotThrow(@{ range = Iterable.range(0, 5); });
+		Assert.collectionsMatch(range, [0, 1, 2, 3, 4], Assert.areEqual);
+
+		Assert.doesNotThrow(@{ range = Iterable.range(-20, 5); });
+		Assert.collectionsMatch(range, [-20, -19, -18, -17, -16], Assert.areEqual);
+	}
+
+	public test_RangeInvalid()
+	{
+		Assert.throws(typeof(ArgumentRangeError), @= Iterable.range(0, -1));
+		Assert.throws(typeof(ArgumentError), @= Iterable.range(Int.max, 1));
+		Assert.throws(typeof(TypeError), @= Iterable.range("0", 0));
+		Assert.throws(typeof(TypeError), @= Iterable.range(0, "0"));
+	}
+
+	public test_RangeWithStepEmpty()
+	{
+		var range;
+		Assert.doesNotThrow(@{ range = Iterable.range(0, 0, 2); });
+		Assert.collectionsMatch(range, [], Assert.areEqual);
+	}
+
+	public test_RangeWithStepValid()
+	{
+		var range;
+		Assert.doesNotThrow(@{ range = Iterable.range(0, 5, 2); });
+		Assert.collectionsMatch(range, [0, 2, 4, 6, 8], Assert.areEqual);
+
+		Assert.doesNotThrow(@{ range = Iterable.range(-20, 5, 2); });
+		Assert.collectionsMatch(range, [-20, -18, -16, -14, -12], Assert.areEqual);
+	}
+
+	public test_RangeWithStepInvalid()
+	{
+		Assert.throws(typeof(ArgumentRangeError), @= Iterable.range(0, -1, 1));
+		Assert.throws(typeof(ArgumentRangeError), @= Iterable.range(0, 1, 0));
+		Assert.throws(typeof(ArgumentRangeError), @= Iterable.range(0, 1, -1));
+		Assert.throws(typeof(ArgumentError), @= Iterable.range(Int.max, 1, 1));
+		Assert.throws(typeof(ArgumentError), @= Iterable.range(Int.max - 4, 1, 5));
+		Assert.throws(typeof(TypeError), @= Iterable.range("0", 0, 1));
+		Assert.throws(typeof(TypeError), @= Iterable.range(0, "0", 1));
+		Assert.throws(typeof(TypeError), @= Iterable.range(0, 0, "1"));
+	}
+
+	// End range tests
+
+	// rangeTo tests
+
+	public test_RangeToEmpty()
+	{
+		var range;
+		Assert.doesNotThrow(@{ range = Iterable.rangeTo(0, 0); });
+		Assert.collectionsMatch(range, [], Assert.areEqual);
+	}
+
+	public test_RangeToValid()
+	{
+		var range;
+		Assert.doesNotThrow(@{ range = Iterable.rangeTo(0, 5); });
+		Assert.collectionsMatch(range, [0, 1, 2, 3, 4], Assert.areEqual);
+
+		Assert.doesNotThrow(@{ range = Iterable.rangeTo(5, 0); });
+		Assert.collectionsMatch(range, [5, 4, 3, 2, 1], Assert.areEqual);
+
+		Assert.doesNotThrow(@{ range = Iterable.rangeTo(-5, 0); });
+		Assert.collectionsMatch(range, [-5, -4, -3, -2, -1], Assert.areEqual);
+
+		Assert.doesNotThrow(@{ range = Iterable.rangeTo(0, -5); });
+		Assert.collectionsMatch(range, [0, -1, -2, -3, -4], Assert.areEqual);
+	}
+
+	public test_RangeToInvalid()
+	{
+		Assert.throws(typeof(TypeError), @= Iterable.rangeTo("0", 0));
+		Assert.throws(typeof(TypeError), @= Iterable.rangeTo(0, "0"));
+	}
+
+	public test_RangeToWithStepEmpty()
+	{
+		var range;
+		Assert.doesNotThrow(@{ range = Iterable.range(0, 0, 2); });
+		Assert.collectionsMatch(range, [], Assert.areEqual);
+	}
+
+	public test_RangeToWithStepValid()
+	{
+		var range;
+		Assert.doesNotThrow(@{ range = Iterable.rangeTo(0, 10, 2); });
+		Assert.collectionsMatch(range, [0, 2, 4, 6, 8], Assert.areEqual);
+
+		Assert.doesNotThrow(@{ range = Iterable.rangeTo(10, 0, -2); });
+		Assert.collectionsMatch(range, [10, 8, 6, 4, 2], Assert.areEqual);
+
+		Assert.doesNotThrow(@{ range = Iterable.rangeTo(-10, 0, 2); });
+		Assert.collectionsMatch(range, [-10, -8, -6, -4, -2], Assert.areEqual);
+
+		Assert.doesNotThrow(@{ range = Iterable.rangeTo(0, -10, -2); });
+		Assert.collectionsMatch(range, [0, -2, -4, -6, -8], Assert.areEqual);
+	}
+
+	public test_RangeToWithStepInvalid()
+	{
+		Assert.throws(typeof(ArgumentRangeError), @= Iterable.rangeTo(0, 0, 0));
+		Assert.throws(typeof(TypeError), @= Iterable.rangeTo("0", 0, 1));
+		Assert.throws(typeof(TypeError), @= Iterable.rangeTo(0, "0", 1));
+		Assert.throws(typeof(TypeError), @= Iterable.rangeTo(0, 0, "1"));
+	}
+
+	// End rangeTo tests
+}

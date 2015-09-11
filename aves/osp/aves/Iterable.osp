@@ -543,26 +543,107 @@ public abstract class Iterable
 	/// Returns: A new {Iterable} that represents an empty sequence.
 	public static get empty = new ReadOnlyIterable();
 
-	/// Summary: Gets an {Iterable} that produces the specified number of
-	///          consecutive integers, starting at the specified value.
+	/// Summary: Gets an {Iterable} that produces the specified number of consecutive
+	///          integers, starting at the specified value.
 	/// Param start: The first value to produce. (Int, UInt or Real)
 	/// Param count: The number of values to produce. (Int, UInt or Real)
-	/// Returns: A new {Iterable} that produces Ints from {start} up to,
-	///          but not including, {start} + {count}.
+	/// Returns: A new {Iterable} that produces Ints from {start} up to, but not
+	///          including, {start} + {count}.
 	/// Throws TypeError:
 	///          {start} or {count} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {count} is less than zero.
 	///
 	///          {start} + {count} is greater than {Int.max}.
+	/// Remarks: To create an iterable that counts up or down towards a specific
+	///          value, use {rangeTo}.
 	public static range(start, count)
+	{
+		return range(start, count, 1);
+	}
+	/// Summary: Gets an {Iterable} that produces the specified number of integers,
+	///          starting at the specified value and using the specified increment.
+	/// Param start: The first value to produce. (Int, UInt or Real)
+	/// Param count: The total number of values to produce. (Int, UInt or Real)
+	/// Param step:  The step size; that is, the distance between the values.
+	///              (Int, UInt or Real)
+	/// Returns: A new {Iterable} that produces every {step}th Int from {start} up
+	///          to, but not including, {start} + {step} * {count}.
+	/// Throws TypeError:
+	///          {start}, {count} or {step} could not be converted to an Int.
+	/// Throw ArgumentRangeError:
+	///          {count} is less than zero.
+	///
+	///          {step} is less than or equal to zero.
+	/// Throws ArgumentError:
+	///          {start} + {step} * {count} is greater than {Int.max}.
+	/// Remarks: To create an iterable that counts up or down towards a specific
+	///          value, use {rangeTo}.
+	public static range(start, count, step)
 	{
 		start = int(start);
 		count = int(count);
-		if count < 0 or Int.max - start < count:
+		if count < 0:
 			throw new ArgumentRangeError("count");
+		step = int(step);
+		if step <= 0:
+			throw new ArgumentRangeError("step");
 
-		return new RangeIterable(start, count);
+		// Dirty way to avoid problems with calcuating the end
+		if count == 0:
+			return empty;
+
+		var end;
+		try
+		{
+			end = start + step * count;
+		}
+		catch OverflowError
+		{
+			throw new ArgumentError("start + step * count is greater than Int.max.");
+		}
+
+		return new RangeIterable(start, end, step);
+	}
+
+	/// Summary: Gets an {Iterable} that produces consecutive integers between the
+	///          specified values.
+	/// Param start: The start value, inclusive. (Int, UInt or Real)
+	/// Param end:   The end value, exclusive. (Int, UInt or Real)
+	/// Returns: A new {Iterable} that produces Ints from {start} up to, but not
+	///          including, {end}. If {end} is less than {start}, the iterable will
+	///          count down from {start} to {end}.
+	/// Throws TypeError:
+	///          {start} or {end} could not be converted to an Int.
+	public static rangeTo(start, end)
+	{
+		start = int(start);
+		end = int(end);
+		var step = end < start ? -1 : 1;
+
+		return new RangeIterable(start, end, step);
+	}
+	/// Summary: Gets an {Iterable} that produces integers between the specified values,
+	///          using the specified step size.
+	/// Param start: The start value, inclusive. (Int, UInt or Real)
+	/// Param end:   The end value, exclusive. (Int, UInt or Real)
+	/// Param step:  The step size. The returned {Iterator} produces every {step}th
+	///              value from {start} to {end}.
+	/// Returns: A new {Iterable} that produces every {step}th Int from {start} up to,
+	///          but not including, {end}.
+	/// Throws TypeError:
+	///          {start}, {end} or {step} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {step} is zero.
+	public static rangeTo(start, end, step)
+	{
+		start = int(start);
+		end = int(end);
+		step = int(step);
+		if step == 0:
+			throw new ArgumentRangeError("step");
+
+		return new RangeIterable(start, end, step);
 	}
 }
 
@@ -692,18 +773,39 @@ private class ZipIterable is Iterable
 
 private class RangeIterable is Iterable
 {
-	public new(this.start, this.rangeCount);
+	public new(this.start, this.end, this.step);
 
-	private start, rangeCount;
+	private start;
+	private end;
+	private step;
 
-	iter
+	private iterUp()
 	{
 		var i = start;
-		var end = start + rangeCount;
+
 		while i < end
 		{
 			yield i;
-			i += 1;
+			i += step;
 		}
+	}
+
+	private iterDown()
+	{
+		var i = start;
+
+		while i > end
+		{
+			yield i;
+			i += step;
+		}
+	}
+
+	iter
+	{
+		if step < 0:
+			return iterDown();
+		else:
+			return iterUp();
 	}
 }
