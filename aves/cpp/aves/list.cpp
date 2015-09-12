@@ -167,12 +167,12 @@ AVES_API NATIVE_FUNCTION(aves_List_clear)
 
 AVES_API BEGIN_NATIVE_FUNCTION(aves_List_slice1)
 {
-	// slice(start)
+	// slice(startIndex)
 	PinnedAlias<ListInst> list(THISP);
 
 	// Get the start index
 	int32_t startIndex;
-	CHECKED(GetIndex(thread, *list, args[1], false, startIndex));
+	CHECKED(GetIndex(thread, *list, args[1], true, startIndex));
 
 	// Create the output list
 	Value *output = VM_Local(thread, 0);
@@ -185,7 +185,39 @@ END_NATIVE_FUNCTION
 
 AVES_API BEGIN_NATIVE_FUNCTION(aves_List_slice2)
 {
-	// slice(start inclusive, end exclusive)
+	// slice(startIndex, count)
+	Aves *aves = Aves::Get(thread);
+	PinnedAlias<ListInst> list(THISP);
+
+	// Get the indexes
+	int32_t startIndex;
+	CHECKED(GetIndex(thread, *list, args[1], true, startIndex));
+	CHECKED(IntFromValue(thread, args + 2));
+	if (args[2].v.integer < 0)
+	{
+		VM_PushString(thread, strings::count);
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentRangeError, 1);
+	}
+	if (args[2].v.integer > INT32_MAX || startIndex + args[2].v.integer > list->length)
+	{
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentError, 0);
+	}
+	int32_t count = (int32_t)args[2].v.integer;
+	int32_t endIndex = startIndex + count;
+
+	Value *output = VM_Local(thread, 0);
+
+	CHECKED(SliceList(thread, *list, startIndex, endIndex, output));
+
+	// Return the new list
+	VM_Push(thread, output);
+}
+END_NATIVE_FUNCTION
+
+AVES_API BEGIN_NATIVE_FUNCTION(aves_List_sliceTo)
+{
+	// sliceTo(startIndex, endIndex)
+	// startIndex is inclusive, endIndex is exclusive
 	PinnedAlias<ListInst> list(THISP);
 
 	// Get the indexes

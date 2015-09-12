@@ -155,50 +155,62 @@ public inheritable List is Collection
 	public clear()
 		__extern("aves_List_clear");
 
-	/// Summary: Copies items from this list into a new list, starting at the
-	///          specified index, up to the end of this list.
-	/// Param start: The index at which the slice starts (inclusive). If negative,
-	///              the index is relative to the end of the list, e.g. -2 is the
-	///              second to last item. (Int, UInt or Real)
-	/// Returns: A new List instance containing items from this list, copied from
-	///          index {start} up to the end of this list.
-	/// Throws TypeError: {index} could not be converted to an Int.
-	/// Throws ArgumentRangeError:
-	///          {start} is less than -{length}, or greater than {length}.
-	/// Remarks: If {start} is equal to {length}, the returned list will be empty.
-	public slice(start)
-		__extern("aves_List_slice1", locals=1);
-
-	/// Summary: Copies items form this list into a new list, starting at the
-	///          specified start index, up to the specified exclusive end index.
-	/// Param start: The index at which the slice starts (inclusive). If negative,
-	///              the index is relative to the end of the list, e.g. -2 is the
-	///              second to last item. (Int, UInt or Real)
-	/// Param end:   The index at which the slice ends (exclusive). If negative,
-	///              the index is relative to the end of the list, e.g. -2 is the
-	///              second to last item. (Int, UInt or Real)
-	/// Returns: A new List instance containing items from this list, copied from
-	///          index {start} up to (but not including) index {end}.
+	/// Summary: Creates a new list with items from this list, starting at the specified
+	///          index, up to the end of this list.
+	/// Param startIndex: The index at which to start reading items, inclusive. If negative,
+	///          the index is relative to the end of the list, e.g. -2 is the second to
+	///          last item. (Int, UInt or Real)
+	/// Returns: A new List containing items from this list, starting at index {startIndex}
+	///          to the end of this list.
 	/// Throws TypeError:
-	///          {start} could not be converted to an Int.
-	///
-	///          {end} could not be converted to an Int.
+	///          {startIndex} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
-	///          {start} is less than -{length}, or greater than {length}.
+	///          {startIndex} is less than -{length}, or greater than {length}.
+	/// Remarks: If {startIndex} is equal to {length}, the returned list will be empty.
+	public slice(startIndex)
+		__extern("aves_List_slice1", locals=1);
+	/// Summary: Creates a new list with the specified number of items from this list,
+	///          starting at the specified index.
+	/// Param startIndex: The index at which to start reading items, inclusive. If negative,
+	///          the index is relative to the end of the list, e.g. -2 is the second to
+	///          last item. (Int, UInt or Real)
+	/// Param count: The total number of items to copy from the list. (Int, UInt or Real)
+	/// Returns: A new List containing {count} items from this list, starting at index
+	///          {startIndex}.
+	/// Throws TypeError:
+	///          {startIndex} or {count} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {startIndex} is less than -{length}, or greater than {length}.
 	///
-	///          {end} is less than -{length}, or greater than {length}.
-	///
-	///          {end} refers to an item before that at index {start}.
-	/// Remarks: Because the {end} index is exclusive, if {start} = {end}, the resulting
-	///          list will be empty. Additionally, passing `-1` as the end index will
-	///          cause the return value to contain items up to but not including the last.
-	///          To get all values up to the end, pass the {length} of the list into {end},
-	///          or call `slice` with one argument.
-	///
-	///          If {start} is equal to {length}, the returned list will be empty
-	///          (as long as {end} is also valid).
-	public slice(start, end)
+	///          {count} is less than zero.
+	/// Throws ArgumentError:
+	///          {startIndex} + {count} is greater than {length}.
+	public slice(startIndex, count)
 		__extern("aves_List_slice2", locals=1);
+
+	/// Summary: Creates a new list with items from this list, starting at the specified
+	///          start index up to the specified end index.
+	/// Param startIndex: The index at which to start reading items, inclusive. If negative,
+	///          the index is relative to the end of the list, e.g. -2 is the second to
+	///          last item. (Int, UInt or Real)
+	/// Param endIndex: The end index of the slice, exclusive. If negative, the index is
+	///          relative to the end of the list, e.g. -2 is the second to last item.
+	///          (Int, UInt or Real)
+	/// Returns: A new List containing the items from this list between {startIndex} and
+	///          {endIndex}.
+	/// Throws TypeError:
+	///          {startIndex} or {endIndex} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {startIndex} is less than -{length} or greater than {length}.
+	///
+	///          {endIndex} is less than -{length} or greater than {length}.
+	/// Remarks: Because {endIndex} is exclusive, if {startIndex} = {endIndex}, the returned
+	///          list will be empty. Additionally, passing `-1` as the end index will cause
+	///          the return value to contain items up to but not including the last. To get
+	///          all values up to the end, pass the {length} of the list into {end}, or call
+	///          {slice} with one argument.
+	public sliceTo(startIndex, endIndex)
+		__extern("aves_List_sliceTo", locals=1);
 
 	/// Summary: Reverses the order of the items in this list in-place.
 	/// Returns: The current list.

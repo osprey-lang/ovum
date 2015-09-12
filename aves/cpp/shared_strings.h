@@ -48,6 +48,7 @@ namespace strings
 	extern String *_new;  // .new
 	extern String *equals;
 	extern String *length;
+	extern String *count;
 	
 	extern String *newline;
 }
