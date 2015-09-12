@@ -58,9 +58,11 @@ public class Method
 	///          were loaded from two different primitive values with the
 	///          same contents. For example:
 	///
-	///          `1.toString == 1.toString // true` \
-	///          `new T().toString == new T().toString // false` \
-	///          `"x".toString == "x".toString // true, because of interning`
+	///          ```
+	///          1.toString == 1.toString // true
+	///          new T().toString == new T().toString // false
+	///          "x".toString == "x".toString // true, because of string interning
+	///          ```
 	operator ==(a, b)
 		__extern("aves_Method_opEquals");
 

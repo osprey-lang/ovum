@@ -227,12 +227,16 @@ public inheritable List is Collection
 	///          To sort a list in reverse order, simply swap the order of the
 	///          operands of the `<=>` operator:
 	///
-	///          `list.sort(@(x, y) = x <=> y); // normal order` \
-	///          `list.sort(@(x, y) = y <=> x); // reverse`
+	///          ```
+	///          list.sort(@(x, y) = x <=> y); // normal order
+	///          list.sort(@(x, y) = y <=> x); // reverse
+	///          ```
 	///
 	///          Alternatively, first sort it, then reverse it:
 	///
-	///          `list.sort().reverse()`
+	///          ```
+	///          list.sort().reverse()
+	///          ```
 	///
 	///          As this method is in-place, there is no allocation of extra memory.
 	public sort(comparer)

@@ -486,11 +486,12 @@ public inheritable Hash is Collection
 	/// Param keys: (variadic) The names of the members to load values of.
 	/// Returns: A new Hash instance with the specified keys.
 	/// Remarks: The keys in {keys} will be converted to strings, as all member names
-	///          must be strings.
+	///          must be strings. Examples:
 	///
-	///          Examples: \
-	///             `Hash.fromObject(o, "a", "b", "c") // => {"a": o.a, "b": o.b, "c": o.c}` \
-	///             `Hash.fromObject(pt, "x", "y")     // => {"x": pt.x, "y": pt.y}`
+	///          ```
+	///          Hash.fromObject(o, "a", "b", "c") // => {"a": o.a, "b": o.b, "c": o.c}
+	///          Hash.fromObject(pt, "x", "y")     // => {"x": pt.x, "y": pt.y}
+	///          ```
 	/// Throws ArgumentNullError:
 	///          {object} is null.
 	/// Throws ArgumentError:

@@ -245,10 +245,12 @@ public class String
 	///
 	///     Examples:
 	///
-	///         `"x{0>5}z".format(["y"])   // => "x    yz"` \
-	///         `"x{0<5}z".format(["abc"]) // => "xabc  z"` \
-	///         `"[{0=6}]".format(["hi"])  // => "[  hi  ]"` \
-	///         `"Name: {name}, age: {age}".format({name: null, age: Real.NaN}) // => "Name: , age: NaN"`
+	///     ```
+	///     "[{0>6}]".format(["y"])   // => "[     y]"
+	///     "[{0<6}]".format(["abc"]) // => "[abc   ]"
+	///     "[{0=6}]".format(["hi"])  // => "[  hi  ]"
+	///     "Name: {name}, age: {age}".format({name: null, age: Real.NaN}) // => "Name: , age: NaN"
+	///     ```
 	public format(values)
 		__extern("aves_String_format", locals=1);
 
@@ -357,8 +359,10 @@ public class String
 	///          this set will be stripped. The trimming stops as soon as a
 	///          character outside this set is encountered. For example:
 	///
-	///              `"aaahelloaaa".trim("a")   // => "hello"` \
-	///              `"abacusbacba".trim("abc") // => "us"`
+	///          ```
+	///          "aaahelloaaa".trim("a")   // => "hello"
+	///          "abacusbacba".trim("abc") // => "us"
+	///          ```
 	///
 	///          Since String is iterable, it is also possible to pass in a string
 	///          containing the characters to trim, as in the example above.

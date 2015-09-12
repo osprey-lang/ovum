@@ -107,10 +107,13 @@ public inheritable TextReader
 	///          The {lines} property is useful primary in `for` loops, such
 	///          as in this example:
 	///
-	///          `with reader = TextReader.open("myfile.txt"):` \
-	///          `    for line in reader.lines {` \
-	///          `       // Do something with 'line'` \
-	///          `    }`
+	///          ```
+	///          with reader = TextReader.open("myfile.txt") {
+	///              for line in reader.lines {
+	///                 // Do something with 'line'
+	///              }
+	///          }
+	///          ```
 	///
 	///          The iterator begins reading at the current position in the
 	///          stream, just like a call to {readLine} would.
@@ -290,7 +293,7 @@ public inheritable TextReader
 				}
 				i += 1;
 			} while i < charCount;
-			
+
 			// length of current data
 			i = charCount - charOffset;
 			if sb is null:

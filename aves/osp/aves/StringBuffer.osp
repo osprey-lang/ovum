@@ -6,15 +6,19 @@ namespace aves;
 /// Remarks: Most manipulation methods return the string buffer, to make it
 ///          easier to chain calls. For example, instead of
 ///
-///          `var sb = new StringBuffer();` \
-///          `sb.append(one);` \
-///          `sb.append(two);` \
-///          `sb.append(three);`
+///          ```
+///          var sb = new StringBuffer();
+///          sb.append(one);
+///          sb.append(two);
+///          sb.append(three);
+///          ```
 ///
 ///          you can do this:
 ///
-///          `var sb = new StringBuffer();` \
-///          `sb.append(one).append(two).append(three);`
+///          ```
+///          var sb = new StringBuffer();
+///          sb.append(one).append(two).append(three);
+///          ```
 ///
 ///          which may be preferable under some circumstances.
 public class StringBuffer
