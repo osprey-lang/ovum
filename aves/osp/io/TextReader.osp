@@ -257,51 +257,6 @@ public inheritable TextReader
 			errorHelpers.readerClosed();
 
 		return readLineInternal();
-
-		// This method used to be implemented in Osprey, which turned out to be too slow.
-		// The original implementation is below, for later restoration when Ovum is better
-		// at executing Osprey programs with good performance.
-		/*if charOffset == charCount
-		{
-			if fillBuffer() == 0: return null;
-		}
-
-		var sb; // initialize on demand only
-		do
-		{
-			var i = charOffset;
-			do
-			{
-				var ch = charBuffer[i];
-				if ch == '\n' or ch == '\r'
-				{
-					// Make sure a string is stored in sb
-					if sb is not null:
-						sb = sb.appendSubstr(charBuffer, charOffset, i - charOffset).toString();
-					else:
-						sb = charBuffer.toString(charOffset, i - charOffset);
-
-					charOffset = i + 1;
-					// See if we have \r\n, and if so, skip the \n as well
-					if ch == '\r' and (charOffset < charCount or fillBuffer() > 0)
-					{
-						if charBuffer[charOffset] == '\n':
-							charOffset += 1;
-					}
-
-					return sb;
-				}
-				i += 1;
-			} while i < charCount;
-
-			// length of current data
-			i = charCount - charOffset;
-			if sb is null:
-				sb = new StringBuffer(i + 128);
-			sb.appendSubstr(charBuffer, charOffset, i);
-		} while fillBuffer() > 0;
-
-		return sb.toString();*/
 	}
 	private readLineInternal()
 		__extern("io_TextReader_readLine");
