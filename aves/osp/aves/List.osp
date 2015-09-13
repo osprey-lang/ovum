@@ -104,7 +104,61 @@ public inheritable List is Collection
 	///          the list, as an Int, or null if it could not be found.
 	public indexOf(item)
 	{
-		for i in [0 to length - 1]:
+		return indexOfInternal(item, 0, length);
+	}
+	/// Summary: Returns the index of the first occurrence of the specified
+	///          item within this list, or null if it could not be found.
+	///          The search starts at the specified index.
+	/// Param item: The item to look for.
+	/// Param startIndex: The index to start the search at. (Int, UInt or Real)
+	/// Returns: The index of the first occurrence of {item} within the list,
+	///          as an Int, or null if it could not be found. If found, the
+	///          return value is greater than or equal to {startIndex}.
+	public indexOf(item, startIndex)
+	{
+		startIndex = int(startIndex);
+		if startIndex < 0 or startIndex > length:
+			throw new ArgumentRangeError("startIndex");
+
+		return indexOfInternal(item, startIndex, length - startIndex);
+	}
+	/// Summary: Returns the index of the first occurrence of the specified
+	///          item within this list, or null if it could not be found.
+	///          The search spans over the specified section of the list.
+	/// Param item: The item to look for.
+	/// Param startIndex: The index to start the search at. (Int, UInt or Real)
+	/// Param count: The total number of items to test against. The search
+	///              is aborted when this many items have been tested without
+	///              a match. (Int, UInt or Real)
+	/// Returns: The index of the first occurrence of {item} within the
+	///          specified section of the list, as an Int, or null if it could
+	///          not be found. If found, the return value is greater than or
+	///          equal to {startIndex}.
+	/// Throws TypeError:
+	///          {startIndex} or {count} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {startIndex} is less than zero or greater than {length}.
+	///
+	///          {count} is less than zero.
+	/// Throws ArgumentError:
+	///          {startIndex} + {count} is greater than {length}.
+	public indexOf(item, startIndex, count)
+	{
+		startIndex = int(startIndex);
+		if startIndex < 0 or startIndex > length:
+			throw new ArgumentRangeError("startIndex");
+		count = int(count);
+		if count < 0:
+			throw new ArgumentRangeError("count");
+		if startIndex + count > length:
+			throw new ArgumentError("startIndex + count is outside the list.");
+
+		return indexOfInternal(item, startIndex, count);
+	}
+
+	private indexOfInternal(item, startIndex, count)
+	{
+		for i in [startIndex to startIndex + count - 1]:
 			if item == this[i]:
 				return i;
 
