@@ -768,18 +768,16 @@ public class String
 		return this;
 	}
 
-	/// Summary: Constructs a new String containing the Unicode character
-	///          represented by {cp}. If {cp} is a numeric value, the code point
-	///          must be in the range 0 <= {cp} <= 0x10FFFF.
-	/// Param cp: The Unicode character or code point to convert to a string.
-	///           (Char, Int, UInt or Real)
+	/// Summary: Constructs a new String containing the specified Unicode character.
+	/// Param codepoint: The Unicode character or code point to convert to a string,
+	///           in the range 0 to 1,114,111 (U+10FFFF). (Char, Int, UInt or Real)
 	/// Returns: A string of length 1 or 2 that represents the UTF-16 string
-	///          with the single code point {cp}.
+	///          with the single code point {codepoint}.
 	/// Throws TypeError:
-	///          {cp} could not be converted to an Int.
+	///          {codepoint} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
-	///          {cp} is less than zero, or greater than 1,114,111 (0x10FFFF).
-	/// Remarks: If {cp} refers to a surrogate code point, then the resulting
+	///          {codepoint} is less than zero, or greater than 1,114,111 (0x10FFFF).
+	/// Remarks: If {codepoint} refers to a surrogate code point, then the resulting
 	///          string will contain a single surrogate character with that
 	///          code point.
 	public static fromCodepoint(cp)

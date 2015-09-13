@@ -9,6 +9,22 @@ public class CharTests is TestFixture
 {
 	public new() { new base("aves.Char tests"); }
 
+	public test_ConstructValid()
+	{
+		var char;
+		Assert.doesNotThrow(@{ char = new Char(0); });
+		Assert.areEqual(char, '\0');
+		Assert.doesNotThrow(@{ char = new Char(0x1D11E); });
+		Assert.areEqual(char, '\U0001D11E');
+	}
+
+	public test_ConstructInvalid()
+	{
+		Assert.throws(typeof(ArgumentRangeError), @= new Char(-1));
+		Assert.throws(typeof(ArgumentRangeError), @= new Char(0x110000));
+		Assert.throws(typeof(TypeError), @= new Char("65"));
+	}
+
 	// TODO: Figure out a good way of testing Unicode character categories.
 
 	public test_Length()

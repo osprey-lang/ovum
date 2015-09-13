@@ -24,7 +24,7 @@ namespace strings
 	LitString<8> _oldValue  = { 8, 0, SFS, 'o','l','d','V','a','l','u','e',0 };
 	LitString<4> _kind      = { 4, 0, SFS, 'k','i','n','d',0 };
 	LitString<3> _key       = { 3, 0, SFS, 'k','e','y',0 };
-	LitString<2> _cp        = { 2, 0, SFS, 'c','p',0 };
+	LitString<9> _codepoint = { 9, 0, SFS, 'c','o','d','e','p','o','i','n','t',0 };
 	LitString<5> __args     = { 5, 0, SFS, '_','a','r','g','s',0 };
 	LitString<1> _x         = { 1, 0, SFS, 'x',0 };
 	LitString<1> _y         = { 1, 0, SFS, 'y',0 };
@@ -64,7 +64,7 @@ namespace strings
 	String *oldValue  = _oldValue.AsString();
 	String *kind      = _kind.AsString();
 	String *key       = _key.AsString();
-	String *cp        = _cp.AsString();
+	String *codepoint = _codepoint.AsString();
 	String *_args     = __args.AsString();
 	String *x         = _x.AsString();
 	String *y         = _y.AsString();

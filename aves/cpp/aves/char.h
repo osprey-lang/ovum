@@ -10,18 +10,21 @@ public:
 	static LitString<2> ToLitString(const ovwchar_t ch);
 
 	static ovwchar_t FromValue(Value *value);
+
+	static int FromCodepoint(ThreadHandle thread, Value *codepoint, Value *result);
 };
 
-AVES_API NATIVE_FUNCTION(aves_Char_get_length);
+AVES_API void OVUM_CDECL aves_Char_init(TypeHandle type);
 
+AVES_API NATIVE_FUNCTION(aves_Char_new);
+
+AVES_API NATIVE_FUNCTION(aves_Char_get_length);
 AVES_API NATIVE_FUNCTION(aves_Char_get_category);
 
 AVES_API NATIVE_FUNCTION(aves_Char_toUpper);
 AVES_API NATIVE_FUNCTION(aves_Char_toLower);
-
 AVES_API NATIVE_FUNCTION(aves_Char_getHashCode);
 AVES_API NATIVE_FUNCTION(aves_Char_toString);
-
 AVES_API NATIVE_FUNCTION(aves_Char_fromCodepoint);
 
 AVES_API NATIVE_FUNCTION(aves_Char_opEquals);

@@ -2,7 +2,17 @@ namespace aves;
 
 public class Char __primitive
 {
-	private new();
+	__init_type("aves_Char_init");
+
+	/// Summary: Creates a new Char with the specified codepoint.
+	/// Param codepoint: The Unicode code point, in the range 0 to 1,114,111 (U+10FFFF).
+	///          (Int, UInt or Real)
+	/// Throws TypeError:
+	///          {codepoint} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {codepoint} is less than zero or greater than 1,114,111 (U+10FFFF).
+	public new(codepoint)
+		__extern("aves_Char_new");
 
 	/// Summary: Gets the length (in number of UTF-16 code units) required
 	///          by this Unicode character when encoded as UTF-16.
@@ -120,14 +130,14 @@ public class Char __primitive
 
 	/// Summary: Returns a new Char that represents the Unicode character
 	///          at the specified codepoint.
-	/// Param cp: The Unicode codepoint, in the range 0 to 1,114,111 (0x10FFFF).
+	/// Param codepoint: The Unicode codepoint, in the range 0 to 1,114,111 (0x10FFFF).
 	///           (Int, UInt or Real)
 	/// Returns: A new Char value with the specified codepoint.
 	/// Throws TypeError:
-	///          {cp} could not be converted to an Int.
+	///          {codepoint} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
-	///          {cp} is less than zero or greater than 1,114,111 (0x10FFFF).
-	public static fromCodepoint(cp)
+	///          {codepoint} is less than zero or greater than 1,114,111 (0x10FFFF).
+	public static fromCodepoint(codepoint)
 		__extern("aves_Char_fromCodepoint");
 
 	operator ==(a, b)

@@ -30,6 +30,38 @@ ovwchar_t Char::FromValue(Value *value)
 	return (ovwchar_t)value->v.integer;
 }
 
+int Char::FromCodepoint(ThreadHandle thread, Value *codepoint, Value *result)
+{
+	Aves *aves = Aves::Get(thread);
+
+	int r = IntFromValue(thread, codepoint);
+	if (r != OVUM_SUCCESS)
+		return r;
+
+	int64_t cp = codepoint->v.integer;
+	if (cp < 0 || cp > 0x10FFFF)
+	{
+		VM_PushString(thread, strings::codepoint);
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentRangeError, 1);
+	}
+
+	result->type = aves->aves.Char;
+	result->v.integer = cp;
+	RETURN_SUCCESS;
+}
+
+AVES_API void OVUM_CDECL aves_Char_init(TypeHandle type)
+{
+	Type_SetConstructorIsAllocator(type, true);
+}
+
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Char_new)
+{
+	CHECKED(Char::FromCodepoint(thread, args + 1, THISP));
+	VM_Push(thread, THISP);
+}
+END_NATIVE_FUNCTION
+
 AVES_API NATIVE_FUNCTION(aves_Char_get_length)
 {
 	ovwchar_t ch = Char::FromValue(THISP);
@@ -107,20 +139,8 @@ END_NATIVE_FUNCTION
 
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Char_fromCodepoint)
 {
-	Aves *aves = Aves::Get(thread);
-
-	CHECKED(IntFromValue(thread, args + 0));
-
-	int64_t cp = args[0].v.integer;
-	if (cp < 0 || cp > 0x10FFFF)
-	{
-		VM_PushString(thread, strings::cp);
-		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentRangeError, 1);
-	}
-
 	Value character;
-	character.type = aves->aves.Char;
-	character.v.integer = cp;
+	CHECKED(Char::FromCodepoint(thread, args + 0, &character));
 	VM_Push(thread, &character);
 }
 END_NATIVE_FUNCTION
