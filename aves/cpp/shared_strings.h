@@ -21,7 +21,7 @@ namespace strings
 	extern String *oldValue;
 	extern String *kind;
 	extern String *key;
-	extern String *codepoint;
+	extern String *codePoint;
 	extern String *_args; // _args
 	extern String *x;
 	extern String *y;

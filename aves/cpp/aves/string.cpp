@@ -626,7 +626,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_fromCodepoint)
 
 	if (cp64 < 0 || cp64 > 0x10FFFF)
 	{
-		VM_PushString(thread, strings::codepoint); // paramName
+		VM_PushString(thread, strings::codePoint); // paramName
 		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentRangeError, 1);
 	}
 

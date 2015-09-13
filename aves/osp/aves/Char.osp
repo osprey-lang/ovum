@@ -4,14 +4,14 @@ public class Char __primitive
 {
 	__init_type("aves_Char_init");
 
-	/// Summary: Creates a new Char with the specified codepoint.
-	/// Param codepoint: The Unicode code point, in the range 0 to 1,114,111 (U+10FFFF).
+	/// Summary: Creates a new Char with the specified code point.
+	/// Param codePoint: The Unicode code point, in the range 0 to 1,114,111 (U+10FFFF).
 	///          (Int, UInt or Real)
 	/// Throws TypeError:
-	///          {codepoint} could not be converted to an Int.
+	///          {codePoint} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
-	///          {codepoint} is less than zero or greater than 1,114,111 (U+10FFFF).
-	public new(codepoint)
+	///          {codePoint} is less than zero or greater than 1,114,111 (U+10FFFF).
+	public new(codePoint)
 		__extern("aves_Char_new");
 
 	/// Summary: Gets the length (in number of UTF-16 code units) required
@@ -29,7 +29,7 @@ public class Char __primitive
 	/// Summary: Gets a value that indicates whether the Unicode character is
 	///          a surrogate character.
 	/// Returns: True if the character is a surrogate character; otherwise, false.
-	/// Remarks: Surrogate characters comprise the codepoints U+D800 to U+DFFF.
+	/// Remarks: Surrogate characters comprise the code points U+D800 to U+DFFF.
 	///          This property does not distinguish between lead and trail
 	///          surrogates.
 	public get isSurrogateChar
@@ -107,10 +107,10 @@ public class Char __primitive
 			category & UnicodeCategory.separator != UnicodeCategory.none;
 	}
 
-	/// Summary: Gets the Unicode codepoint of this character.
-	/// Returns: An Int with the Unicode codepoint of this character.
-	///          The value is in the range 0 to 1,114,111 (0x10FFFF).
-	public get codepoint = +this;
+	/// Summary: Gets the Unicode code point of this character.
+	/// Returns: The Unicode code point of this character, as an Int.
+	///          The value is in the range 0 to 1,114,111 (U+10FFFF).
+	public get codePoint = +this;
 
 	/// Summary: Converts this character to uppercase.
 	/// Returns: A new Char that contains the value of this character
@@ -129,16 +129,16 @@ public class Char __primitive
 		__extern("aves_Char_toString");
 
 	/// Summary: Returns a new Char that represents the Unicode character
-	///          at the specified codepoint.
-	/// Param codepoint: The Unicode codepoint, in the range 0 to 1,114,111 (0x10FFFF).
+	///          at the specified code point.
+	/// Param codePoint: The Unicode code point, in the range 0 to 1,114,111 (U+10FFFF).
 	///           (Int, UInt or Real)
-	/// Returns: A new Char value with the specified codepoint.
+	/// Returns: A new Char value with the specified code point.
 	/// Throws TypeError:
-	///          {codepoint} could not be converted to an Int.
+	///          {codePoint} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
-	///          {codepoint} is less than zero or greater than 1,114,111 (0x10FFFF).
-	public static fromCodepoint(codepoint)
-		__extern("aves_Char_fromCodepoint");
+	///          {codePoint} is less than zero or greater than 1,114,111 (U+10FFFF).
+	public static fromCodePoint(codePoint)
+		__extern("aves_Char_fromCodePoint");
 
 	operator ==(a, b)
 		__extern("aves_Char_opEquals");

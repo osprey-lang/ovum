@@ -671,8 +671,8 @@ public class String
 
 	public getCharacter(i)
 		__extern("aves_String_getCharacter");
-	public getCodepoint(i)
-		__extern("aves_String_getCodepoint");
+	public getCodePoint(i)
+		__extern("aves_String_getCodePoint");
 
 	public getCategory(i)
 		__extern("aves_String_getCategory");
@@ -769,19 +769,19 @@ public class String
 	}
 
 	/// Summary: Constructs a new String containing the specified Unicode character.
-	/// Param codepoint: The Unicode character or code point to convert to a string,
+	/// Param codePoint: The Unicode character or code point to convert to a string,
 	///           in the range 0 to 1,114,111 (U+10FFFF). (Char, Int, UInt or Real)
 	/// Returns: A string of length 1 or 2 that represents the UTF-16 string
-	///          with the single code point {codepoint}.
+	///          with the single code point {codePoint}.
 	/// Throws TypeError:
-	///          {codepoint} could not be converted to an Int.
+	///          {codePoint} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
-	///          {codepoint} is less than zero, or greater than 1,114,111 (0x10FFFF).
-	/// Remarks: If {codepoint} refers to a surrogate code point, then the resulting
+	///          {codePoint} is less than zero, or greater than 1,114,111 (0x10FFFF).
+	/// Remarks: If {codePoint} refers to a surrogate code point, then the resulting
 	///          string will contain a single surrogate character with that
 	///          code point.
-	public static fromCodepoint(cp)
-		__extern("aves_String_fromCodepoint");
+	public static fromCodePoint(codePoint)
+		__extern("aves_String_fromCodePoint");
 
 	public const empty = "";
 

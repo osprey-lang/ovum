@@ -126,24 +126,24 @@ public class StringBuffer
 	}
 
 	/// Summary: Appends the Unicode character represented by the specified
-	///          codepoint to the end of the string buffer.
-	/// Param codepoint: The codepoint of the character to append. This value
+	///          code point to the end of the string buffer.
+	/// Param codePoint: The code point of the character to append. This value
 	///          must be between 0 and 1,114,111 (0x10FFFF), inclusive.
 	///          (Int, UInt or Real)
 	/// Returns: The string buffer.
 	/// Throws TypeError:
-	///          {codepoint} could not be converted to an Int.
+	///          {codePoint} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
-	///          {codepoint} is less than zero or greater than 1,114,111 (0x10FFFF).
-	public appendCodepoint(codepoint)
+	///          {codePoint} is less than zero or greater than 1,114,111 (0x10FFFF).
+	public appendCodePoint(codePoint)
 	{
-		codepoint = int(codepoint);
-		if codepoint < 0 or codepoint > 0x10FFFF:
-			throw new ArgumentRangeError("codepoint");
-		return appendCodepointInternal(codepoint);
+		codePoint = int(codePoint);
+		if codePoint < 0 or codePoint > 0x10FFFF:
+			throw new ArgumentRangeError("codePoint");
+		return appendCodePointInternal(codePoint);
 	}
-	private appendCodepointInternal(cp)
-		__extern("aves_StringBuffer_appendCodepoint");
+	private appendCodePointInternal(codePoint)
+		__extern("aves_StringBuffer_appendCodePoint");
 
 	/// Summary: Appends part of a string or string buffer to the end of this
 	///          string buffer.

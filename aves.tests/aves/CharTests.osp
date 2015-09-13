@@ -36,10 +36,10 @@ public class CharTests is TestFixture
 		Assert.areEqual(char2.length, 2);
 	}
 
-	public test_Codepoint()
+	public test_CodePoint()
 	{
 		var char = '\u014A';
 
-		Assert.areEqual(char.codepoint, 0x014A);
+		Assert.areEqual(char.codePoint, 0x014A);
 	}
 }

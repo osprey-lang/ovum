@@ -41,7 +41,7 @@ int Char::FromCodepoint(ThreadHandle thread, Value *codepoint, Value *result)
 	int64_t cp = codepoint->v.integer;
 	if (cp < 0 || cp > 0x10FFFF)
 	{
-		VM_PushString(thread, strings::codepoint);
+		VM_PushString(thread, strings::codePoint);
 		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentRangeError, 1);
 	}
 

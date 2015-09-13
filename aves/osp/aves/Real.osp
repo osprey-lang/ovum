@@ -49,7 +49,7 @@ public class Real __primitive
 			var i = start;
 			while i < strLength
 			{
-				if str.getCodepoint(i) > 255:
+				if str.getCodePoint(i) > 255:
 					break verify;
 				i += 1;
 			}

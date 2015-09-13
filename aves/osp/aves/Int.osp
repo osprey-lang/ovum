@@ -2,7 +2,7 @@ namespace aves;
 
 public function int(value)
 	__extern("aves_int");
-	
+
 public class Int __primitive
 {
 	private new();
@@ -35,7 +35,7 @@ public class Int __primitive
 		var cp;
 		if i < strLength
 		{
-			cp = str.getCodepoint(i);
+			cp = str.getCodePoint(i);
 			if cp == 0x2D /*-*/ or cp == 0x2212 /*− (minus)*/
 			{
 				neg = true;
@@ -50,7 +50,7 @@ public class Int __primitive
 			const digit0 = 0x30;
 			const digit9 = 0x39;
 
-			if i == strLength or (cp = str.getCodepoint(i)) < digit0 or cp > digit9:
+			if i == strLength or (cp = str.getCodePoint(i)) < digit0 or cp > digit9:
 				break parse; // next character must be a digit!
 
 			var result = 0;
@@ -62,7 +62,7 @@ public class Int __primitive
 					{
 						result = 10*result - (cp - digit0);
 						i += 1;
-					} while i < strLength and (cp = str.getCodepoint(i)) >= digit0 and cp <= digit9;
+					} while i < strLength and (cp = str.getCodePoint(i)) >= digit0 and cp <= digit9;
 				}
 				else
 				{
@@ -70,7 +70,7 @@ public class Int __primitive
 					{
 						result = 10*result + (cp - digit0);
 						i += 1;
-					} while i < strLength and (cp = str.getCodepoint(i)) >= digit0 and cp <= digit9;
+					} while i < strLength and (cp = str.getCodePoint(i)) >= digit0 and cp <= digit9;
 				}
 			}
 			catch OverflowError
