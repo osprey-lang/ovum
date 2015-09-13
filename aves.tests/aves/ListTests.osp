@@ -9,6 +9,124 @@ public class ListTests is TestFixture
 {
 	public new() { new base("aves.List tests"); }
 
+	// first tests
+
+	private isZeroMod10 = @x = x % 10 == 0;
+
+	public test_First1Empty()
+	{
+		var list = [];
+		Assert.throws(typeof(InvalidStateError), @= list.first());
+	}
+
+	public test_First1NonEmpty()
+	{
+		var list = [1, 2, 3, 4];
+		var first = list.first();
+		Assert.areEqual(first, 1);
+	}
+
+	public test_First2NoMatch()
+	{
+		var list = [1, 2, 3, 4];
+		Assert.throws(typeof(InvalidStateError), @= list.first(isZeroMod10));
+	}
+
+	public test_First2Match()
+	{
+		var list = [1, 0, 3, 10];
+		var first = list.first(isZeroMod10);
+		Assert.areEqual(first, 0);
+	}
+
+	// firstOrNull tests
+
+	public test_FirstOrNull1Empty()
+	{
+		var list = [];
+		var first = list.firstOrNull();
+		Assert.isNull(first);
+	}
+
+	public test_FirstOrNull1NonEmpty()
+	{
+		var list = [1, 2, 3, 4];
+		var first = list.firstOrNull();
+		Assert.areEqual(first, 1);
+	}
+
+	public test_FirstOrNull2NoMatch()
+	{
+		var list = [1, 2, 3, 4];
+		var first = list.firstOrNull(isZeroMod10);
+		Assert.isNull(first);
+	}
+
+	public test_FirstOrNull2Match()
+	{
+		var list = [1, 0, 3, 10];
+		var first = list.firstOrNull(isZeroMod10);
+		Assert.areEqual(first, 0);
+	}
+
+	// last tests
+
+	public test_Last1Empty()
+	{
+		var list = [];
+		Assert.throws(typeof(InvalidStateError), @= list.last());
+	}
+
+	public test_Last1NonEmpty()
+	{
+		var list = [1, 2, 3, 4];
+		var last = list.last();
+		Assert.areEqual(last, 4);
+	}
+
+	public test_Last2NoMatch()
+	{
+		var list = [1, 2, 3, 4];
+		Assert.throws(typeof(InvalidStateError), @= list.last(isZeroMod10));
+	}
+
+	public test_Last2Match()
+	{
+		var list = [1, 0, 3, 10];
+		var last = list.last(isZeroMod10);
+		Assert.areEqual(last, 10);
+	}
+
+	// lastOrNull tests
+
+	public test_LastOrNull1Empty()
+	{
+		var list = [];
+		var last = list.lastOrNull();
+		Assert.isNull(last);
+	}
+
+	public test_LastOrNull1NonEmpty()
+	{
+		var list = [1, 2, 3, 4];
+		var last = list.lastOrNull();
+		Assert.areEqual(last, 4);
+	}
+
+	public test_LastOrNull2NoMatch()
+	{
+		var list = [1, 2, 3, 4];
+		var last = list.lastOrNull(isZeroMod10);
+		Assert.isNull(last);
+	}
+
+	public test_LastOrNull2Match()
+	{
+		var list = [1, 0, 2, 10];
+		var last = list.lastOrNull(isZeroMod10);
+		Assert.areEqual(last, 10);
+	}
+
 	// indexOf tests
 
 	public test_IndexOf1Found()

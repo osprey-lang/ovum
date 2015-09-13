@@ -415,6 +415,14 @@ public inheritable List is Collection
 		return this;
 	}
 
+	overridable override first()
+	{
+		if isEmpty:
+			throw new InvalidStateError("The list is empty.");
+
+		return this[0];
+	}
+
 	overridable override first(predicate)
 	{
 		if predicate is null:
@@ -431,7 +439,15 @@ public inheritable List is Collection
 				return item;
 		}
 
-		return null;
+		throw new InvalidStateError("No matching item found.");
+	}
+
+	overridable override firstOrNull()
+	{
+		if isEmpty:
+			return null;
+
+		return this[0];
 	}
 
 	overridable override fold(func)
@@ -546,6 +562,14 @@ public inheritable List is Collection
 		return null;
 	}
 
+	overridable override last()
+	{
+		if isEmpty:
+			throw new InvalidStateError("The list is empty.");
+
+		return this[length - 1];
+	}
+
 	overridable override last(predicate)
 	{
 		var startVersion = version;
@@ -559,7 +583,15 @@ public inheritable List is Collection
 				return item;
 		}
 
-		return null;
+		throw new InvalidStateError("No matching item found.");
+	}
+
+	overridable override lastOrNull()
+	{
+		if isEmpty:
+			return null;
+
+		return this[length - 1];
 	}
 
 	/// Summary: Returns a new {ReadOnlyIterable} wrapper for the list.
