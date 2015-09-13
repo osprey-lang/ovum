@@ -815,10 +815,9 @@ Field *MethodInitializer::FieldFromToken(uint32_t token, bool shouldBeStatic)
 
 void MethodInitializer::EnsureConstructible(Type *type, ovlocals_t argCount)
 {
-	if (type->IsPrimitive() ||
-		(type->flags & TypeFlags::ABSTRACT) == TypeFlags::ABSTRACT ||
+	if ((type->flags & TypeFlags::ABSTRACT) == TypeFlags::ABSTRACT ||
 		(type->flags & TypeFlags::STATIC) == TypeFlags::STATIC)
-		throw MethodInitException("Primitive, abstract and static types cannot be used with the newobj instruction.",
+		throw MethodInitException("Abstract and static types cannot be used with the newobj instruction.",
 			method, type, MethodInitException::TYPE_NOT_CONSTRUCTIBLE);
 
 	if (type->instanceCtor == nullptr)

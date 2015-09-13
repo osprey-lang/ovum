@@ -289,7 +289,6 @@ void GC::EndAlloc()
 int GC::Construct(Thread *const thread, Type *type, ovlocals_t argc, Value *output)
 {
 	if (type == vm->types.String ||
-		type->IsPrimitive() ||
 		(type->flags & TypeFlags::ABSTRACT) == TypeFlags::ABSTRACT)
 		return thread->ThrowTypeError();
 
