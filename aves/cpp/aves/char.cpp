@@ -137,7 +137,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Char_toString)
 }
 END_NATIVE_FUNCTION
 
-AVES_API BEGIN_NATIVE_FUNCTION(aves_Char_fromCodepoint)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Char_fromCodePoint)
 {
 	Value character;
 	CHECKED(Char::FromCodepoint(thread, args + 0, &character));

@@ -529,7 +529,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_getCharacter)
 }
 END_NATIVE_FUNCTION
 
-AVES_API BEGIN_NATIVE_FUNCTION(aves_String_getCodepoint)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_String_getCodePoint)
 {
 	String *str = THISV.v.string;
 	int32_t index;
@@ -616,7 +616,7 @@ AVES_API NATIVE_FUNCTION(aves_String_getHashCodeSubstr)
 	RETURN_SUCCESS;
 }
 
-AVES_API BEGIN_NATIVE_FUNCTION(aves_String_fromCodepoint)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_String_fromCodePoint)
 {
 	Aves *aves = Aves::Get(thread);
 

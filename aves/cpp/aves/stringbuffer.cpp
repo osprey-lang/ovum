@@ -130,7 +130,7 @@ AVES_API NATIVE_FUNCTION(aves_StringBuffer_appendLine)
 	RETURN_SUCCESS;
 }
 
-AVES_API NATIVE_FUNCTION(aves_StringBuffer_appendCodepoint)
+AVES_API NATIVE_FUNCTION(aves_StringBuffer_appendCodePoint)
 {
 	// appendCodepoint(cp is Int)
 	// The public-facing method makes sure the type is right,

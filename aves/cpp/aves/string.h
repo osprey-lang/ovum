@@ -5,9 +5,7 @@
 #include <ov_unicode.h>
 
 AVES_API NATIVE_FUNCTION(aves_String_get_item);
-
 AVES_API NATIVE_FUNCTION(aves_String_get_length);
-
 AVES_API NATIVE_FUNCTION(aves_String_get_isInterned);
 
 AVES_API NATIVE_FUNCTION(aves_String_equalsIgnoreCase);
@@ -30,7 +28,7 @@ AVES_API NATIVE_FUNCTION(aves_String_toUpper);
 AVES_API NATIVE_FUNCTION(aves_String_toLower);
 
 AVES_API NATIVE_FUNCTION(aves_String_getCharacter);
-AVES_API NATIVE_FUNCTION(aves_String_getCodepoint);
+AVES_API NATIVE_FUNCTION(aves_String_getCodePoint);
 
 AVES_API NATIVE_FUNCTION(aves_String_getCategory);
 AVES_API NATIVE_FUNCTION(aves_String_isSurrogatePair);
@@ -41,7 +39,7 @@ AVES_API NATIVE_FUNCTION(aves_String_intern);
 AVES_API NATIVE_FUNCTION(aves_String_getHashCode);
 AVES_API NATIVE_FUNCTION(aves_String_getHashCodeSubstr);
 
-AVES_API NATIVE_FUNCTION(aves_String_fromCodepoint);
+AVES_API NATIVE_FUNCTION(aves_String_fromCodePoint);
 
 AVES_API NATIVE_FUNCTION(aves_String_opEquals);
 AVES_API NATIVE_FUNCTION(aves_String_opCompare);

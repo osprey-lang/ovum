@@ -25,7 +25,7 @@ AVES_API NATIVE_FUNCTION(aves_Char_toUpper);
 AVES_API NATIVE_FUNCTION(aves_Char_toLower);
 AVES_API NATIVE_FUNCTION(aves_Char_getHashCode);
 AVES_API NATIVE_FUNCTION(aves_Char_toString);
-AVES_API NATIVE_FUNCTION(aves_Char_fromCodepoint);
+AVES_API NATIVE_FUNCTION(aves_Char_fromCodePoint);
 
 AVES_API NATIVE_FUNCTION(aves_Char_opEquals);
 AVES_API NATIVE_FUNCTION(aves_Char_opCompare);
