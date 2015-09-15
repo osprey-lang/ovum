@@ -155,7 +155,7 @@ public:
 
 	inline bool IsVariadic() const
 	{
-		return (flags & MethodFlags::VARIADIC) != MethodFlags::NONE;
+		return (flags & MethodFlags::VARIADIC) == MethodFlags::VARIADIC;
 	}
 
 	inline bool IsInstanceMethod() const

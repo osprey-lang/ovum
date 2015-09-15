@@ -1149,10 +1149,8 @@ Method *Module::ReadSingleMethod(ModuleReader &reader)
 		}
 		if (methodFlags & FM_INSTANCE)
 			ov->flags |= MethodFlags::INSTANCE;
-		if (flags & OV_VAREND)
-			ov->flags |= MethodFlags::VAR_END;
-		if (flags & OV_VARSTART)
-			ov->flags |= MethodFlags::VAR_START;
+		if (flags & OV_VARIADIC)
+			ov->flags |= MethodFlags::VARIADIC;
 		if (flags & OV_VIRTUAL)
 			ov->flags |= MethodFlags::VIRTUAL;
 		if (flags & OV_ABSTRACT)

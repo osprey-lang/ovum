@@ -55,10 +55,9 @@ OVUM_API OverloadHandle Method_FindOverload(MethodHandle method, ovlocals_t argc
 enum class MethodFlags : int32_t
 {
 	NONE      = 0x0000,
-	// The method has a variadic parameter at the end.
-	VAR_END   = 0x0001,
-	// The method has a variadic parameter at the start.
-	VAR_START = 0x0002,
+	// The method signature is variadic. Only the last parameter is
+	// allowed to be variadic.
+	VARIADIC  = 0x0001,
 
 	// The method has a native-code implementation.
 	NATIVE    = 0x0004,
@@ -78,9 +77,6 @@ enum class MethodFlags : int32_t
 	// The method has been initialized. Used for bytecode methods only,
 	// to indicate that the bytecode initializer has processed the method.
 	INITED    = 0x0080,
-
-	// A mask for extracting the variadic flags of a method.
-	VARIADIC = VAR_END | VAR_START,
 };
 OVUM_ENUM_OPS(MethodFlags, int32_t);
 

@@ -257,8 +257,7 @@ private:
 	};
 	enum OverloadFlags : uint32_t
 	{
-		OV_VAREND      = 0x01,
-		OV_VARSTART    = 0x02,
+		OV_VARIADIC    = 0x01,
 		OV_NATIVE      = 0x04,
 		OV_SHORTHEADER = 0x08,
 		OV_VIRTUAL     = 0x10,

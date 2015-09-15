@@ -38,44 +38,21 @@ int MethodOverload::VerifyRefSignature(uint32_t signature, ovlocals_t argCount) 
 	ovlocals_t paramCount = this->GetEffectiveParamCount();
 	if (this->IsVariadic())
 	{
-		if ((this->flags & MethodFlags::VAR_START) != MethodFlags::NONE)
+		// Test each required parameter against its argument
+		while (im < paramCount - 1)
 		{
-			// Test each argument to be packed, making sure none of them are by ref
-			int packed = argCount - this->paramCount + 1;
-			while (packed-- > 0)
-			{
-				if (argSignature.IsParamRef(ia))
-					return ia;
-				ia++;
-			}
-			im++; // Skip the first parameter (it's variadic)
-			// And then test each required parameter against its argument
-			while (im < paramCount)
-			{
-				if (methodSignature.IsParamRef(im) != argSignature.IsParamRef(ia))
-					return ia;
-				im++;
-				ia++;
-			}
+			if (methodSignature.IsParamRef(im) != argSignature.IsParamRef(ia))
+				return ia;
+			im++;
+			ia++;
 		}
-		else
+		// And then make sure every remaining argument is not by ref;
+		// these will be packed into a list
+		while (ia < argCount)
 		{
-			// Test each required parameter against its argument
-			while (im < paramCount - 1)
-			{
-				if (methodSignature.IsParamRef(im) != argSignature.IsParamRef(ia))
-					return ia;
-				im++;
-				ia++;
-			}
-			// And then make sure every remaining argument is not by ref;
-			// these will be packed into a list
-			while (ia < argCount)
-			{
-				if (argSignature.IsParamRef(ia))
-					return ia;
-				ia++;
-			}
+			if (argSignature.IsParamRef(ia))
+				return ia;
+			ia++;
 		}
 	}
 	else
@@ -188,10 +165,9 @@ OVUM_API bool Overload_GetParameter(OverloadHandle overload, ovlocals_t index, P
 	dest->name = overload->paramNames[index];
 
 	dest->isOptional = index >= overload->paramCount - overload->optionalParamCount;
+	// Only the last parameter of a variadic overload is variadic.
 	if (overload->IsVariadic())
-		dest->isVariadic = (overload->flags & MethodFlags::VAR_START) != MethodFlags::NONE ?
-		index == 0 :
-		index == overload->paramCount - 1;
+		dest->isVariadic = index == overload->paramCount - 1;
 	else
 		dest->isVariadic = false;
 	ovum::RefSignature refs(overload->refSignature, overload->GetRefSignaturePool());
@@ -216,10 +192,9 @@ OVUM_API int32_t Overload_GetAllParameters(OverloadHandle overload, ovlocals_t d
 		pi->name = overload->paramNames[i];
 
 		pi->isOptional = i >= count - overload->optionalParamCount;
+		// Only the last parameter of a variadic overload is variadic.
 		if (isVariadic)
-			pi->isVariadic = (overload->flags & MethodFlags::VAR_START) != MethodFlags::NONE ?
-			i == 0 :
-			i == count - 1;
+			pi->isVariadic = i == count - 1;
 		else
 			pi->isVariadic = false;
 		// +1 because the reference signature always reserves the first

@@ -1189,52 +1189,20 @@ int Thread::PrepareVariadicArgs(MethodFlags flags, ovlocals_t argCount, ovlocals
 
 	if (count) // There are items to pack into a list
 	{
-		Value *valueBase;
-		if ((flags & MethodFlags::VAR_END) != MethodFlags::NONE) // Copy from end
-		{
-			valueBase = frame->evalStack + frame->stackCount - count; // the first list item
-			CopyMemoryT(list->values, valueBase, count); // copy values to list
-			count--; // we want to remove all but the last item later
-		}
-		else // Copy from beginning!
-		{
-			Value *firstArg = frame->evalStack + frame->stackCount - argCount;
-			CopyMemoryT(list->values, firstArg, count); // copy values to list
-			valueBase = firstArg + 1; // the second argument
-
-			// Shift all the other arguments down by count - 1.
-			//   a, b, c, d, e, f	arguments
-			//  [a, b, c] = L		pack into list
-			//   L, d, e, f			result
-			//   0  1  2  3			argument index
-			count--; // same here!
-			for (uint32_t i = 0; i < argCount; i++)
-			{
-				*valueBase = *(valueBase + count);
-				valueBase++;
-			}
-			valueBase = firstArg; // the first argument receives the list
-		}
+		// Pointer to the first list item
+		Value *valueBase = frame->evalStack + frame->stackCount - count;
+		// Copy the values to the list
+		CopyMemoryT(list->values, valueBase, count);
+		// And update the stack slot!
 		*valueBase = listValue;
+		// Pop all but the last item
 		frame->stackCount -= count;
+		frame->stackCount++;
 	}
 	else // Let's push an empty list!
 	{
-		// Note: if argCount == 0, then push is equivalent to unshift.
-		if ((flags & MethodFlags::VAR_END) != MethodFlags::NONE || argCount == 0)
-			// Push list value onto the end
-			frame->evalStack[frame->stackCount] = listValue;
-		else
-		{
-			// Unshift list value onto the beginning!
-			Value *valueBase = frame->evalStack + frame->stackCount;
-			for (uint32_t i = 0; i < argCount; i++)
-			{
-				*valueBase = *(valueBase - 1);
-				valueBase--;
-			}
-			*valueBase = listValue;
-		}
+		// Push list value onto the end
+		frame->evalStack[frame->stackCount] = listValue;
 		frame->stackCount++;
 	}
 	RETURN_SUCCESS;
