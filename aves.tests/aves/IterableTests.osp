@@ -1,7 +1,7 @@
 use namespace aves;
 use namespace testing.unit;
 
-namespace aves;
+namespace aves.tests;
 
 // Tests for the class aves.Iterable
 

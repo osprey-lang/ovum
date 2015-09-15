@@ -1,7 +1,7 @@
 use namespace aves;
 use namespace testing.unit;
 
-namespace aves.test;
+namespace aves.tests;
 
 // Test for the class aves.Object
 
