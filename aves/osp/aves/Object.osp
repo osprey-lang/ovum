@@ -7,13 +7,29 @@ public inheritable Object
 	public new()
 		__extern("aves_Object_new");
 
-	/// Summary: Applies the function {func} to the current instance,
-	///          with an optional list of additional arguments.
-	/// Param func: The function to call with the current instance.
-	/// Param args: Additional arguments to pass to {func}.
+	/// Summary: Applies the specified callback to the current instance, with an
+	///          optional list of additional arguments.
+	/// Param func: An invokable value that receives the current instance, followed
+	///             by the values in {args}.
+	/// Param args: (variadic) Additional arguments to pass to {func}.
+	/// Returns: The result of invoking {func} with the current instance, followed
+	///          by the values in {args}.
+	/// Throws ArgumentNullError:
+	///          {func} is null.
 	public apply(func, args...)
 	{
-		return func -> [this] :: args;
+		if func is null:
+			throw new ArgumentNullError("func");
+
+		if args.length == 0:
+			return func(this);
+		else if args.length == 1:
+			return func(this, args[0]);
+		else
+		{
+			args.insert(0, this);
+			return func -> args;
+		}
 	}
 
 	/// Summary: Computes a hash code for the current instance.
@@ -22,16 +38,27 @@ public inheritable Object
 		__extern("aves_Object_getHashCode");
 
 	/// Summary: Returns a string representation of the value.
+	/// Returns: A String containing a representation of the value.
+	/// Remarks: The return value of {toString} is not required to contain all of
+	///          the information about the object. Rather, it is meant to offer a
+	///          sensible overview of the value, suitable for debugging or display.
+	///          This may involve formatting a numeric value as a decimal number,
+	///          showing the type and size of a collection, or returning the text
+	///          contents of a string buffer.
+	///
+	///          When a type requires additional string formatting options, this
+	///          method is overloaded. See the documentation for the specific type
+	///          in question.
 	public overridable toString()
 		__extern("aves_Object_toString", locals=1);
 
 	/// Summary: Compares two values for equality.
 	/// Param a: The first value to compare.
 	/// Param b: The second value to compare.
-	/// Remarks: The default implementation of `==` compares the two values
-	///          for reference equality. In other words, if `==` is not
-	///          implemented in the left operand, `a == b` is equivalent to
-	///          `a refeq b`.
+	/// Returns: True if {a} and {b} refer to the same instance; otherwise, false.
+	/// Remarks: The default implementation of `==` compares the two values for
+	///          reference equality. In other words, if the left operand does not
+	///          implement the `==` operator, `a == b` is equivalent to `a refeq b`.
 	operator ==(a, b)
 	{
 		return a refeq b;
