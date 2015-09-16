@@ -1,6 +1,16 @@
 namespace aves;
 
-/// Summary: Represents the base of the type hierarchy.
+/// Summary: Represents the base of the type hierarchy. Every type inherits from
+///          {Object}, either directly or indirectly.
+/// Remarks: This class exposes only a small number of members that are shared by
+///          all values. These include {apply}, {getHashCode} and {toString}. Also,
+///          the only operator implemented by {Object} is `==`, which compares its
+///          operands for reference equality. Everything else is up to more derived
+///          types to provide.
+///
+///          Note to native module developers: {Object} is guaranteed to have an
+///          instance size of zero. That is, an {Object} occupies no bytes beyond
+///          the object header, which is invisible to developers anyway.
 public inheritable Object
 {
 	/// Summary: Constructs a new {aves.Object}.
@@ -21,10 +31,14 @@ public inheritable Object
 		if func is null:
 			throw new ArgumentNullError("func");
 
-		if args.length == 0:
+		if args.length == 0
+		{
 			return func(this);
-		else if args.length == 1:
+		}
+		else if args.length == 1
+		{
 			return func(this, args[0]);
+		}
 		else
 		{
 			args.insert(0, this);
