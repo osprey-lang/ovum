@@ -415,25 +415,8 @@ void MethodInitializer::InitDebugSymbolOffsets(instr::MethodBuilder &builder)
 void MethodInitializer::CalculateStackHeights(instr::MethodBuilder &builder, StackManager &stack)
 {
 	using namespace instr;
-	typedef TryBlock::TryKind TryKind;
 
-	// The first instruction is always reachable
-	stack.EnqueueBranch(0, 0);
-
-	// If the method has any try blocks, we must add the first instruction
-	// of each catch and finally as a branch, because they will never be
-	// reached by fallthrough or branching.
-	for (int32_t i = 0; i < method->tryBlockCount; i++)
-	{
-		TryBlock &tryBlock = method->tryBlocks[i];
-		if (tryBlock.kind == TryKind::CATCH)
-		{
-			for (int32_t c = 0; c < tryBlock.catches.count; c++)
-				stack.EnqueueBranch(1, tryBlock.catches.blocks[c].catchStart);
-		}
-		else if (tryBlock.kind == TryKind::FINALLY)
-			stack.EnqueueBranch(0, tryBlock.finallyBlock.finallyStart);
-	}
+	EnqueueInitialBranches(builder, stack);
 
 	int32_t index;
 	while ((index = stack.DequeueBranch()) != -1)
@@ -444,13 +427,7 @@ void MethodInitializer::CalculateStackHeights(instr::MethodBuilder &builder, Sta
 			Instruction *instr = builder[index];
 			if (builder.GetStackHeight(index) != MethodBuilder::UNVISITED)
 			{
-				ovlocals_t stackHeight = stack.GetStackHeight();
-				if (builder.GetStackHeight(index) != stackHeight)
-					throw MethodInitException("Instruction reached with different stack heights.",
-						method, index, MethodInitException::INCONSISTENT_STACK);
-				if (builder.GetRefSignature(index) != stack.GetRefSignature(stackHeight))
-					throw MethodInitException("Instruction reached with different referencenesses of stack slots.",
-						method, index, MethodInitException::INCONSISTENT_STACK);
+				VerifyStackHeight(builder, stack, index);
 				break; // This branch has already been visited!
 				// Note: the instruction may have been marked for removal. The branch is
 				// still perfectly safe to skip, because the only way to get an instruction
@@ -465,170 +442,15 @@ void MethodInitializer::CalculateStackHeights(instr::MethodBuilder &builder, Sta
 					builder.SetRefSignature(index, stack.GetRefSignature(stackHeight));
 			}
 
-			{ // Update input/output
-				StackChange sc = instr->GetStackChange();
-				if (sc.removed > 0 || instr->HasInput())
-				{
-					// We can perform a bunch of fun optimizations here if:
-					//   1. there is a previous instruction, and
-					//   2. the current instruction has no incoming branches.
-					// If either is not true, we cannot optimize any local offsets here,
-					// so we skip to the default input offset.
-					if (prev == nullptr) goto updateInputDefault;
-					if (instr->HasBranches()) goto updateInputDefault;
-
-					// First, let's see if we can update the output of the previous instruction.
-					// If:
-					//   1. prev has an output, and
-					//   2. prev added exactly one value to the stack, or is dup
-					// then, if instr is a StoreLocal, we can update prev to point directly
-					// to the local variable, thus avoiding the stack altogether; otherwise,
-					// if instr is a pop, we can similarly update prev's output to discard
-					// the result.
-					// If either condition is not true, we must try to update the input of the
-					// current instruction.
-					if (!prev->HasOutput()) goto updateInput;
-					if (prev->GetStackChange().added != 1 && !prev->IsDup()) goto updateInput;
-
-					if (instr->IsStoreLocal())
-					{
-						prev->UpdateOutput(static_cast<StoreLocal*>(instr)->target, false);
-						builder.MarkForRemoval(index);
-						goto updateDone;
-					}
-					if (instr->opcode == OPI_POP)
-					{
-						// Write the result to the stack, but pretend it's not on the stack.
-						// (This won't increment the stack height)
-						prev->UpdateOutput(method->GetStackOffset(stack.GetStackHeight() - 1), false);
-						builder.MarkForRemoval(index);
-						goto updateDone;
-					}
-
-					updateInput:
-					{
-						// If instr requires its input to be on the stack, or it has
-						// incoming branches, then we can't optimize its input.
-						// instr->HasBranches() is tested for above.
-						if (instr->RequiresStackInput()) goto updateInputDefault;
-
-						if (prev->IsLoadLocal() && instr->HasInput())
-						{
-							// If prev is a LoadLocal, then we can update instr to take the input
-							// directly from prev's local and remove prev.
-							instr->UpdateInput(static_cast<LoadLocal*>(prev)->source, false);
-							builder.MarkForRemoval(index - 1);
-							goto updateDone;
-						}
-						if (prev->IsDup() && instr->IsBranch() && ((Branch*)instr)->IsConditional())
-						{
-							// dup followed by conditional branch: use the dup's input for the branch,
-							// and pretend it's not on the stack.
-							// For example, something like this:
-							//     ldloc 0
-							//     ldmem "value"
-							//     dup
-							//     brnull LABEL
-							// gets turned into:
-							//     ldloc 0
-							//     ldmem "value" onto stack
-							//     brnull LABEL with local condition
-							instr->UpdateInput(static_cast<DupInstr*>(prev)->source, false);
-							builder.MarkForRemoval(index - 1);
-							goto updateDone;
-						}
-					}
-
-					updateInputDefault:
-					{
-						instr->UpdateInput(method->GetStackOffset(stack.GetStackHeight() - sc.removed), true);
-					}
-
-					updateDone: ;
-				}
-
-				if (instr->HasOutput())
-				{
-					instr->UpdateOutput(method->GetStackOffset(stack.GetStackHeight() - sc.removed), true);
-				}
-
-				if (sc.removed > 0 && stack.GetStackHeight() >= sc.removed)
-				{
-					if (instr->AcceptsRefs())
-					{
-						if (instr->SetReferenceSignature(stack) != -1)
-							throw MethodInitException("Incorrect referenceness of stack arguments.",
-								method, index, MethodInitException::INCONSISTENT_STACK);
-					}
-					else if (stack.HasRefs(sc.removed))
-						throw MethodInitException("The instruction does not take references on the stack.",
-							method, index, MethodInitException::STACK_HAS_REFS);
-				}
-
-				if (!stack.ApplyStackChange(sc, instr->PushesRef()))
-					throw MethodInitException("There are not enough values on the stack.",
-						method, index, MethodInitException::INSUFFICIENT_STACK_HEIGHT);
-			} // End update input/output
+			TryUpdateInputOutput(builder, stack, prev, instr, index);
 
 			if (instr->IsBranch())
 			{
-				Branch *const br = static_cast<Branch*>(instr);
+				Branch *br = static_cast<Branch*>(instr);
 				if (br->IsConditional())
 				{
 					stack.EnqueueBranch(br->target); // Use the same stack
-					if (prev && !br->HasBranches() &&
-						// Is the previous instruction ==, <, >, <= or >=?
-						((prev->opcode & ~1) == OPI_EQ_L ||
-						prev->opcode >= OPI_LT_L && prev->opcode <= OPI_GTE_S) &&
-						// And is this a brfalse or brtrue?
-						br->opcode >= OPI_BRFALSE_L && br->opcode <= OPI_BRTRUE_S)
-					{
-						// Great! Then we can turn the previous instruction into a
-						// brlt/brgt/brlte/brgte as required.
-						IntermediateOpcode newOpcode = OPI_NOP;
-						if (br->opcode == OPI_BRTRUE_L || br->opcode == OPI_BRTRUE_S)
-						{
-							// eq, brtrue  => breq
-							// lt, brtrue  => brlt
-							// gt, brtrue  => brgt
-							// lte, brtrue => brlte
-							// gte, brtrue => brgte
-							switch (prev->opcode)
-							{
-							case OPI_EQ_L:  case OPI_EQ_S:  newOpcode = OPI_BREQ;  break;
-							case OPI_LT_L:  case OPI_LT_S:  newOpcode = OPI_BRLT;  break;
-							case OPI_GT_L:  case OPI_GT_S:  newOpcode = OPI_BRGT;  break;
-							case OPI_LTE_L: case OPI_LTE_S: newOpcode = OPI_BRLTE; break;
-							case OPI_GTE_L: case OPI_GTE_S: newOpcode = OPI_BRGTE; break;
-							}
-						}
-						else
-						{
-							// lt, brfalse  => brgte
-							// gt, brfalse  => brlte
-							// lte, brfalse => brgt
-							// gte, brfalse => brlt
-							// For simplicity, we've defined some aliases for these:
-							switch (prev->opcode)
-							{
-							case OPI_EQ_L:  case OPI_EQ_S:  newOpcode = OPI_BRNEQ;  break;
-							case OPI_LT_L:  case OPI_LT_S:  newOpcode = OPI_BRNLT;  break;
-							case OPI_GT_L:  case OPI_GT_S:  newOpcode = OPI_BRNGT;  break;
-							case OPI_LTE_L: case OPI_LTE_S: newOpcode = OPI_BRNLTE; break;
-							case OPI_GTE_L: case OPI_GTE_S: newOpcode = OPI_BRNGTE; break;
-							}
-						}
-						OVUM_ASSERT(newOpcode != OPI_NOP);
-
-						// Set the previous instruction to the new comparison thing
-						// (This also deletes the old Instruction*)
-						builder.SetInstruction(index - 1,
-							new BranchComparison(static_cast<ExecOperator*>(prev)->args,
-								br->target, newOpcode),
-							/*deletePrev:*/ true);
-						// Mark this instruction for removal
-						builder.MarkForRemoval(index);
-					}
+					TryUpdateConditionalBranch(builder, prev, br, index);
 				}
 				else
 				{
@@ -646,7 +468,9 @@ void MethodInitializer::CalculateStackHeights(instr::MethodBuilder &builder, Sta
 			else if (instr->opcode == OPI_RET || instr->opcode == OPI_RETNULL ||
 				instr->opcode == OPI_THROW || instr->opcode == OPI_RETHROW ||
 				instr->opcode == OPI_ENDFINALLY)
+			{
 				break; // This branch has terminated.
+			}
 
 			prev = instr;
 			index++;
@@ -655,6 +479,256 @@ void MethodInitializer::CalculateStackHeights(instr::MethodBuilder &builder, Sta
 
 	// Remove instructions that are now unnecessary! :D
 	builder.PerformRemovals(method);
+}
+
+void MethodInitializer::EnqueueInitialBranches(instr::MethodBuilder &builder, StackManager &stack)
+{
+	typedef TryBlock::TryKind TryKind;
+
+	// The first instruction is always reachable, and always with a stack
+	// height of 0.
+	stack.EnqueueBranch(0, 0);
+
+	// If the method has any try blocks, we must add the first instruction
+	// of each catch and finally as a branch, because they will never be
+	// reached by fallthrough or branching.
+	for (int32_t i = 0; i < method->tryBlockCount; i++)
+	{
+		TryBlock &tryBlock = method->tryBlocks[i];
+		if (tryBlock.kind == TryKind::CATCH)
+		{
+			// The initial stack height of a catch block is 1, because the
+			// thrown error is on the stack.
+			CatchBlocks &catches = tryBlock.catches;
+			for (int32_t c = 0; c < catches.count; c++)
+				stack.EnqueueBranch(1, catches.blocks[c].catchStart);
+		}
+		else if (tryBlock.kind == TryKind::FINALLY)
+		{
+			stack.EnqueueBranch(0, tryBlock.finallyBlock.finallyStart);
+		}
+	}
+}
+
+void MethodInitializer::VerifyStackHeight(instr::MethodBuilder &builder, StackManager &stack, int32_t index)
+{
+	ovlocals_t stackHeight = stack.GetStackHeight();
+
+	if (builder.GetStackHeight(index) != stackHeight)
+		throw MethodInitException("Instruction reached with different stack heights.",
+			method, index, MethodInitException::INCONSISTENT_STACK);
+
+	if (builder.GetRefSignature(index) != stack.GetRefSignature(stackHeight))
+		throw MethodInitException("Instruction reached with different referencenesses of stack slots.",
+			method, index, MethodInitException::INCONSISTENT_STACK);
+}
+
+void MethodInitializer::TryUpdateInputOutput(instr::MethodBuilder &builder, StackManager &stack, instr::Instruction *prev, instr::Instruction *instr, int32_t index)
+{
+	using namespace instr;
+
+	StackChange sc = instr->GetStackChange();
+	if (sc.removed > 0 || instr->HasInput())
+	{
+		// We can perform a bunch of fun optimizations here if:
+		//   1. there is a previous instruction, and
+		//   2. the current instruction has no incoming branches.
+		// If either is not true, we cannot optimize any local offsets here,
+		// so we skip to the default input offset.
+		if (prev == nullptr || instr->HasBranches())
+			goto updateInputDefault;
+
+		// First, let's see if we can update the output of the previous instruction.
+		// If:
+		//   1. prev has an output, and
+		//   2. prev added exactly one value to the stack, or is dup
+		// then, if instr is a StoreLocal, we can update prev to point directly
+		// to the local variable, thus avoiding the stack altogether; otherwise,
+		// if instr is a pop, we can similarly update prev's output to discard
+		// the result.
+		// If either condition is not true, we must try to update the input of the
+		// current instruction.
+		if (!prev->HasOutput())
+			goto updateInput;
+		if (prev->GetStackChange().added != 1 && !prev->IsDup())
+			goto updateInput;
+
+		if (instr->IsStoreLocal())
+		{
+			prev->UpdateOutput(static_cast<StoreLocal*>(instr)->target, false);
+			builder.MarkForRemoval(index);
+			goto updateDone;
+		}
+		if (instr->opcode == OPI_POP)
+		{
+			// Write the result to the stack, but pretend it's not on the stack.
+			// (This won't increment the stack height)
+			prev->UpdateOutput(method->GetStackOffset(stack.GetStackHeight() - 1), false);
+			builder.MarkForRemoval(index);
+			goto updateDone;
+		}
+
+		updateInput:
+		{
+			// If instr requires its input to be on the stack, or it has
+			// incoming branches, then we can't optimize its input.
+			// instr->HasBranches() is tested for above.
+			if (instr->RequiresStackInput())
+				goto updateInputDefault;
+
+			if (prev->IsLoadLocal() && instr->HasInput())
+			{
+				// If prev is a LoadLocal, then we can update instr to take the input
+				// directly from prev's local and remove prev.
+				instr->UpdateInput(static_cast<LoadLocal*>(prev)->source, false);
+				builder.MarkForRemoval(index - 1);
+				goto updateDone;
+			}
+			if (prev->IsDup() && instr->IsBranch() && ((Branch*)instr)->IsConditional())
+			{
+				// dup followed by conditional branch: use the dup's input for the branch,
+				// and pretend it's not on the stack.
+				// For example, something like this:
+				//     ldloc 0
+				//     ldmem "value"
+				//     dup
+				//     brnull LABEL
+				// gets turned into:
+				//     ldloc 0
+				//     ldmem "value" onto stack
+				//     brnull LABEL with local condition
+				instr->UpdateInput(static_cast<DupInstr*>(prev)->source, false);
+				builder.MarkForRemoval(index - 1);
+				goto updateDone;
+			}
+		}
+
+		updateInputDefault:
+		{
+			instr->UpdateInput(method->GetStackOffset(stack.GetStackHeight() - sc.removed), true);
+		}
+
+		updateDone: ;
+	}
+
+	if (instr->HasOutput())
+	{
+		instr->UpdateOutput(method->GetStackOffset(stack.GetStackHeight() - sc.removed), true);
+	}
+
+	if (sc.removed > 0 && stack.GetStackHeight() >= sc.removed)
+	{
+		if (instr->AcceptsRefs())
+		{
+			if (instr->SetReferenceSignature(stack) != -1)
+				throw MethodInitException("Incorrect referenceness of stack arguments.",
+					method, index, MethodInitException::INCONSISTENT_STACK);
+		}
+		else if (stack.HasRefs(sc.removed))
+		{
+			throw MethodInitException("The instruction does not take references on the stack.",
+				method, index, MethodInitException::STACK_HAS_REFS);
+		}
+	}
+
+	if (!stack.ApplyStackChange(sc, instr->PushesRef()))
+		throw MethodInitException("There are not enough values on the stack.",
+			method, index, MethodInitException::INSUFFICIENT_STACK_HEIGHT);
+}
+
+void MethodInitializer::TryUpdateConditionalBranch(instr::MethodBuilder &builder, instr::Instruction *prev, instr::Branch *branch, int32_t index)
+{
+	// If the previous instruction is one of the operators ==, <, >, <= or >=,
+	// and the current instruction is a brtrue or brfalse, then we can transform
+	// the sequence to a single, special operator:
+	//   eq  + brtrue => breq
+	//   lt  + brtrue => brlt
+	//   gt  + brtrue => brgt
+	//   lte + brtrue => brlte
+	//   gte + brtrue => brgte
+	// and
+	//   eq  + brfalse => brneq
+	//   lt  + brfalse => brgte
+	//   gt  + brfalse => brlte
+	//   lte + brfalse => brgt
+	//   gte + brfalse => brlt
+	// The previous instruction is replaced with the special branch instruction,
+	// and the current instruction is deleted.
+
+	// If there is no previous instruction, the current cannot possibly be preceded
+	// by an operator. If the current instruction has incoming branches, we cannot
+	// delete it.
+	if (!prev || branch->HasBranches())
+		return;
+
+	if (!IsBranchComparisonOperator(prev->opcode))
+		return;
+
+	if (branch->opcode < OPI_BRFALSE_L || branch->opcode > OPI_BRTRUE_S)
+		return;
+
+	// If we get this far, we can update the branch instruction.
+
+	// Let's figure out the new ocpode.
+	IntermediateOpcode newOpcode = OPI_NOP;
+	if (branch->opcode == OPI_BRTRUE_L || branch->opcode == OPI_BRTRUE_S)
+	{
+		switch (prev->opcode)
+		{
+		case OPI_EQ_L:  case OPI_EQ_S:  newOpcode = OPI_BREQ;  break;
+		case OPI_LT_L:  case OPI_LT_S:  newOpcode = OPI_BRLT;  break;
+		case OPI_GT_L:  case OPI_GT_S:  newOpcode = OPI_BRGT;  break;
+		case OPI_LTE_L: case OPI_LTE_S: newOpcode = OPI_BRLTE; break;
+		case OPI_GTE_L: case OPI_GTE_S: newOpcode = OPI_BRGTE; break;
+		}
+	}
+	else
+	{
+		// For simplicity, we've defined some aliases for the negated cases
+		switch (prev->opcode)
+		{
+		case OPI_EQ_L:  case OPI_EQ_S:  newOpcode = OPI_BRNEQ;  break;
+		case OPI_LT_L:  case OPI_LT_S:  newOpcode = OPI_BRNLT;  break;
+		case OPI_GT_L:  case OPI_GT_S:  newOpcode = OPI_BRNGT;  break;
+		case OPI_LTE_L: case OPI_LTE_S: newOpcode = OPI_BRNLTE; break;
+		case OPI_GTE_L: case OPI_GTE_S: newOpcode = OPI_BRNGTE; break;
+		}
+	}
+	OVUM_ASSERT(newOpcode != OPI_NOP);
+
+	// Set the previous instruction to the new comparison thing.
+	// This also deletes the old Instruction.
+	builder.SetInstruction(
+		index - 1,
+		new instr::BranchComparison(
+			static_cast<instr::ExecOperator*>(prev)->args,
+			branch->target,
+			newOpcode
+		),
+		/*deletePrev:*/ true
+	);
+	// Mark the current instruction for removal
+	builder.MarkForRemoval(index);
+}
+
+bool MethodInitializer::IsBranchComparisonOperator(IntermediateOpcode opc)
+{
+	switch (opc)
+	{
+	case OPI_EQ_L:
+	case OPI_EQ_S:
+	case OPI_LT_L:
+	case OPI_LT_S:
+	case OPI_GT_L:
+	case OPI_GT_S:
+	case OPI_LTE_L:
+	case OPI_LTE_S:
+	case OPI_GTE_L:
+	case OPI_GTE_S:
+		return true;
+	default:
+		return false;
+	}
 }
 
 /*** Step 4: Result writing & finalization ***/

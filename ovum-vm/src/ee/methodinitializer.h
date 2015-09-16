@@ -30,6 +30,11 @@ private:
 	void InitDebugSymbolOffsets(instr::MethodBuilder &builder);
 
 	void CalculateStackHeights(instr::MethodBuilder &builder, StackManager &stack);
+	void EnqueueInitialBranches(instr::MethodBuilder &builder, StackManager &stack);
+	void VerifyStackHeight(instr::MethodBuilder &builder, StackManager &stack, int32_t index);
+	void TryUpdateInputOutput(instr::MethodBuilder &builder, StackManager &stack, instr::Instruction *prev, instr::Instruction *instr, int32_t index);
+	void TryUpdateConditionalBranch(instr::MethodBuilder &builder, instr::Instruction *prev, instr::Branch *branch, int32_t index);
+	static bool IsBranchComparisonOperator(IntermediateOpcode opc);
 
 	void WriteInitializedBody(instr::MethodBuilder &builder);
 	void FinalizeTryBlockOffsets(instr::MethodBuilder &builder);
