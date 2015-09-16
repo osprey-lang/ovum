@@ -366,19 +366,20 @@ int Thread::InvokeMethodOverload(MethodOverload *mo, ovlocals_t argCount,
 int Thread::InvokeOperator(Operator op, Value *result)
 {
 	int r;
-	Value *args = currentFrame->evalStack + currentFrame->stackCount - Arity(op);
+	ovlocals_t arity = (ovlocals_t) Arity(op);
+	Value *args = currentFrame->evalStack + currentFrame->stackCount - arity;
 	if (result != nullptr)
-		r = InvokeOperatorLL(args, op, result);
+		r = InvokeOperatorLL(args, op, arity, result);
 	else
 	{
-		r = InvokeOperatorLL(args, op, args);
+		r = InvokeOperatorLL(args, op, arity, args);
 		if (r == OVUM_SUCCESS)
 			currentFrame->stackCount++;
 	}
 	return r;
 }
 
-int Thread::InvokeOperatorLL(Value *args, Operator op, Value *result)
+int Thread::InvokeOperatorLL(Value *args, Operator op, ovlocals_t arity, Value *result)
 {
 	if (IS_NULL(args[0]))
 		return ThrowNullReferenceError();
@@ -387,7 +388,7 @@ int Thread::InvokeOperatorLL(Value *args, Operator op, Value *result)
 	if (method == nullptr)
 		return ThrowMissingOperatorError(op);
 
-	return InvokeMethodOverload(method, Arity(op), args, result);
+	return InvokeMethodOverload(method, arity, args, result);
 }
 
 int Thread::InvokeApply(Value *result)

@@ -1222,9 +1222,7 @@ namespace instr
 
 		inline ExecOperator(Operator op) :
 			Instruction(InstrFlags::HAS_INOUT | InstrFlags::INPUT_ON_STACK,
-				op == Operator::EQ ? OPI_EQ_S :
-				op == Operator::CMP ? OPI_CMP_S :
-				OPI_OPERATOR_S),
+				GetOpcode(op)),
 			args(0), output(0), op(op)
 		{ }
 
@@ -1261,6 +1259,18 @@ namespace instr
 
 	protected:
 		virtual void WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const;
+
+	private:
+		inline static IntermediateOpcode GetOpcode(Operator op)
+		{
+			if (op == Operator::EQ)
+				return OPI_EQ_S;
+			if (op == Operator::CMP)
+				return OPI_CMP_S;
+			if (op == Operator::PLUS || op == Operator::NEG || op == Operator::NOT)
+				return OPI_UNARYOP_S;
+			return OPI_OPERATOR_S;
+		}
 	};
 
 	class LoadLocalRef : public Instruction

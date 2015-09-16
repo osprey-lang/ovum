@@ -328,6 +328,8 @@ namespace instr
 		if ((uint8_t)op != 0xff && op != Operator::EQ && op != Operator::CMP)
 		{
 			// Gotta output the operator if it doesn't have its own opcode.
+			// Note that binary and unary operators have the same arguments,
+			// but different opcodes.
 			oa::TwoLocalsAndValue<Operator> args = { this->args, output, op };
 			buffer.Write(args, oa::TWO_LOCALS_AND_VALUE<Operator>::SIZE);
 		}

@@ -292,7 +292,7 @@ private:
 	int LoadFieldRefLL(Value *inst, Field *field);
 	int LoadMemberRefLL(Value *inst, String *member);
 
-	int InvokeOperatorLL(Value *args, Operator op, Value *result);
+	int InvokeOperatorLL(Value *args, Operator op, ovlocals_t arity, Value *result);
 	int EqualsLL(Value *args, bool &result);
 	int CompareLL(Value *args, Value *result);
 	int ConcatLL(Value *args, Value *result);

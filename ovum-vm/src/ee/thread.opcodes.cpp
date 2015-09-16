@@ -759,7 +759,7 @@ int Thread::Evaluate()
 		TARGET(OPI_OPERATOR_L)
 			{
 				OPC_ARGS(oa::TwoLocalsAndValue<Operator>);
-				CHK(InvokeOperatorLL(args->Source(f), args->value, args->Dest(f)));
+				CHK(InvokeOperatorLL(args->Source(f), args->value, 2, args->Dest(f)));
 				ip += oa::TWO_LOCALS_AND_VALUE<Operator>::SIZE;
 				// InvokeOperatorLL pops arguments off the stack
 			}
@@ -767,7 +767,7 @@ int Thread::Evaluate()
 		TARGET(OPI_OPERATOR_S)
 			{
 				OPC_ARGS(oa::TwoLocalsAndValue<Operator>);
-				CHK(InvokeOperatorLL(args->Source(f), args->value, args->Dest(f)));
+				CHK(InvokeOperatorLL(args->Source(f), args->value, 2, args->Dest(f)));
 				ip += oa::TWO_LOCALS_AND_VALUE<Operator>::SIZE;
 				// InvokeOperatorLL pops arguments off the stack
 				f->stackCount++;
@@ -1292,6 +1292,25 @@ int Thread::Evaluate()
 				OPC_ARGS(oa::CallMemberRef);
 				CHK(InvokeMemberLL(args->member, args->argc, args->Args(f), args->Dest(f), args->refSignature));
 				ip += oa::CALL_MEMBER_REF_SIZE;
+				f->stackCount++;
+			}
+			NEXT_INSTR();
+
+		// unaryop: LocalOffset args, LocalOffset dest, Operator op
+		TARGET(OPI_UNARYOP_L)
+			{
+				OPC_ARGS(oa::TwoLocalsAndValue<Operator>);
+				CHK(InvokeOperatorLL(args->Source(f), args->value, 1, args->Dest(f)));
+				ip += oa::TWO_LOCALS_AND_VALUE<Operator>::SIZE;
+				// InvokeOperatorLL pops arguments off the stack
+			}
+			NEXT_INSTR();
+		TARGET(OPI_UNARYOP_S)
+			{
+				OPC_ARGS(oa::TwoLocalsAndValue<Operator>);
+				CHK(InvokeOperatorLL(args->Source(f), args->value, 1, args->Dest(f)));
+				ip += oa::TWO_LOCALS_AND_VALUE<Operator>::SIZE;
+				// InvokeOperatorLL pops arguments off the stack
 				f->stackCount++;
 			}
 			NEXT_INSTR();

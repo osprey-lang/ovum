@@ -298,7 +298,9 @@ enum IntermediateOpcode : uint8_t
 	OPI_BRREF       = 0x46,
 	OPI_BRNREF      = 0x47,
 
-	// Operators! Hurrah! (Note that the comparison operators – ==, <=>, <, >, <=, >= – and concat are still handled specially)
+	// Binary operators. Note that the comparison operators (==, <=>, <, >, <=, >=)
+	// and concat are handled specially, and that unary operators have their own
+	// instructions (OPI_UNARYOP_[LS])
 	OPI_OPERATOR_L  = 0x48, // Store result in local
 	OPI_OPERATOR_S  = 0x49, // Store result on stack
 
@@ -371,6 +373,10 @@ enum IntermediateOpcode : uint8_t
 	OPI_CALLR_S     = 0x77,
 	OPI_CALLMEMR_L  = 0x78,
 	OPI_CALLMEMR_S  = 0x79,
+
+	// Unary operators (+, - and ~)
+	OPI_UNARYOP_L   = 0x80, // Store result in local
+	OPI_UNARYOP_S   = 0x81, // Store result on stack
 };
 
 // Represents a local offset, that is, an offset that is relative
