@@ -81,6 +81,95 @@ public class ArrayTests is TestFixture
 
 	// End indexer tests
 
+	public test_Slice1()
+	{
+		var array = new Array(3);
+		array[0] = 0;
+		array[1] = 1;
+		array[2] = 2;
+		var slice = array.slice(1);
+		Assert.areEqual(slice.length, 2);
+		Assert.areEqual(slice[0], 1);
+		Assert.areEqual(slice[1], 2);
+	}
+
+	public test_Slice1AtEnd()
+	{
+		var array = new Array(3);
+		var slice = array.slice(3);
+		Assert.areEqual(slice.length, 0);
+	}
+
+	public test_Slice1Invalid()
+	{
+		var array = new Array(3);
+		Assert.throws(typeof(ArgumentRangeError), @= array.slice(-1));
+		Assert.throws(typeof(ArgumentRangeError), @= array.slice(4));
+		Assert.throws(typeof(TypeError), @= array.slice("0"));
+	}
+
+	public test_Slice2()
+	{
+		var array = new Array(4);
+		array[0] = 0;
+		array[1] = 1;
+		array[2] = 2;
+		array[3] = 3;
+		var slice = array.slice(2, 2);
+		Assert.areEqual(slice.length, 2);
+		Assert.areEqual(slice[0], 2);
+		Assert.areEqual(slice[1], 3);
+	}
+
+	public test_Slice2EmptyRegionAtEnd()
+	{
+		var array = new Array(3);
+		var slice = array.slice(3, 0);
+		Assert.areEqual(slice.length, 0);
+	}
+
+	public test_Slice2Invalid()
+	{
+		var array = new Array(3);
+		Assert.throws(typeof(ArgumentRangeError), @= array.slice(-1, 0));
+		Assert.throws(typeof(ArgumentRangeError), @= array.slice(0, -1));
+		Assert.throws(typeof(ArgumentError), @= array.slice(4, 0));
+		Assert.throws(typeof(TypeError), @= array.slice("0", 0));
+		Assert.throws(typeof(TypeError), @= array.slice(0, "0"));
+	}
+
+	public test_SliceTo()
+	{
+		var array = new Array(4);
+		array[0] = 0;
+		array[1] = 1;
+		array[2] = 2;
+		array[3] = 3;
+		var slice = array.sliceTo(2, 4);
+		Assert.areEqual(slice.length, 2);
+		Assert.areEqual(slice[0], 2);
+		Assert.areEqual(slice[1], 3);
+	}
+
+	public test_SliceToEmpty()
+	{
+		var array = new Array(3);
+		var slice = array.sliceTo(1, 1);
+		Assert.areEqual(slice.length, 0);
+	}
+
+	public test_SliceToInvalid()
+	{
+		var array = new Array(3);
+		Assert.throws(typeof(ArgumentRangeError), @= array.sliceTo(-1, 0));
+		Assert.throws(typeof(ArgumentRangeError), @= array.sliceTo(4, 0));
+		Assert.throws(typeof(ArgumentRangeError), @= array.sliceTo(0, -1));
+		Assert.throws(typeof(ArgumentRangeError), @= array.sliceTo(0, 4));
+		Assert.throws(typeof(ArgumentRangeError), @= array.sliceTo(2, 0));
+		Assert.throws(typeof(TypeError), @= array.sliceTo("0", 0));
+		Assert.throws(typeof(TypeError), @= array.sliceTo(0, "0"));
+	}
+
 	// Iterator tests
 
 	public test_IterEmpty()

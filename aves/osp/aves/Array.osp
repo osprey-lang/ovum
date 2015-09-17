@@ -117,6 +117,83 @@ public class Array is Collection
 	private fillInternal(value, startIndex, count)
 		__extern("aves_Array_fillInternal");
 
+	/// Summary: Copies values from this array into a new array, from the specified
+	///          index to the end of the array.
+	/// Param startIndex: The index to start reading values from. (Int, UInt or Real)
+	/// Returns: A new array with values copied from index {startIndex} in the current
+	///          array to the end.
+	/// Throws TypeError:
+	///          {startIndex} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {startIndex} is less than zero or greater than {length}.
+	/// Remarks: When {startIndex} equals {length}, the resulting array is empty.
+	public slice(startIndex)
+	{
+		startIndex = int(startIndex);
+		if startIndex < 0 or startIndex > length:
+			throw new ArgumentRangeError("startIndex");
+
+		return sliceInternal(startIndex, length - startIndex);
+	}
+	/// Summary: Copies the specified number of values from this array into a new
+	///          array, starting at the specified index.
+	/// Param startIndex: The index to start reading values from. (Int, UInt or Real)
+	/// Param count:      The number of values to copy. (Int, UInt or Real)
+	/// Returns: A new array with {count} values copied from this array, starting
+	///          at index {startIndex}.
+	/// Throws TypeError:
+	///          {startIndex} or {count} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {startIndex} is less than zero, or greater than {length}.
+	/// Throws ArgumentError:
+	///          {startIndex} + {count} is greater than {length}.
+	public slice(startIndex, count)
+	{
+		startIndex = int(startIndex);
+		if startIndex < 0:
+			throw new ArgumentRangeError("startIndex");
+		count = int(count);
+		if startIndex + count > length:
+			throw new ArgumentError("startIndex + count is outside the array");
+
+		return sliceInternal(startIndex, count);
+	}
+
+	/// Summary: Copies values from this array into a new array, from the specified
+	///          start index to the specified end index.
+	/// Param startIndex: The index to start reading values from. (Int, UInt or Real)
+	/// Param endIndex:   The exclusive end index. (Int, UInt or Real)
+	/// Returns: A new array with values copied from this array at index {startIndex}
+	///          up to, but not including, {endIndex}.
+	/// Throws TypeError:
+	///          {startIndex} or {endIndex} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {startIndex} is less than zero or greater than {length}.
+	///
+	///          {endIndex} is less than zero or greater than {length}.
+	///
+	///          {endIndex} is less than {startIndex}.
+	public sliceTo(startIndex, endIndex)
+	{
+		startIndex = int(startIndex);
+		if startIndex < 0 or startIndex > length:
+			throw new ArgumentRangeError("startIndex");
+		endIndex = int(endIndex);
+		if endIndex < 0 or endIndex > length:
+			throw new ArgumentRangeError("endIndex");
+		if endIndex < startIndex:
+			throw new ArgumentRangeError("endIndex is less than startIndex", "endIndex");
+
+		return sliceInternal(startIndex, endIndex - startIndex);
+	}
+
+	private sliceInternal(startIndex, count)
+	{
+		var slice = new Array(count);
+		copyInternal(this, startIndex, slice, 0, count);
+		return slice;
+	}
+
 	/// Summary: Resizes the specified array to a new size. The old contents are
 	///          preserved, and will be clipped if the new size is smaller than
 	///          the old size.
@@ -225,7 +302,7 @@ public class Array is Collection
 	///
 	///          {destIndex} + {count} is greater than the length of {dest}.
 	/// Throws ArgumentRangeError:
-	///          {count} is less than zero.
+	///          {startIndex}, {destIndex} or {count} is less than zero.
 	/// Remarks: It is safe to copy part of one array to another part of the same array,
 	///          even if the source and destination regions overlap. The values are
 	///          copied as if an intermediate buffer had been used.
