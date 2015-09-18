@@ -670,30 +670,7 @@ void MethodInitializer::TryUpdateConditionalBranch(instr::MethodBuilder &builder
 	// If we get this far, we can update the branch instruction.
 
 	// Let's figure out the new ocpode.
-	IntermediateOpcode newOpcode = OPI_NOP;
-	if (branch->opcode == OPI_BRTRUE_L || branch->opcode == OPI_BRTRUE_S)
-	{
-		switch (prev->opcode)
-		{
-		case OPI_EQ_L:  case OPI_EQ_S:  newOpcode = OPI_BREQ;  break;
-		case OPI_LT_L:  case OPI_LT_S:  newOpcode = OPI_BRLT;  break;
-		case OPI_GT_L:  case OPI_GT_S:  newOpcode = OPI_BRGT;  break;
-		case OPI_LTE_L: case OPI_LTE_S: newOpcode = OPI_BRLTE; break;
-		case OPI_GTE_L: case OPI_GTE_S: newOpcode = OPI_BRGTE; break;
-		}
-	}
-	else
-	{
-		// For simplicity, we've defined some aliases for the negated cases
-		switch (prev->opcode)
-		{
-		case OPI_EQ_L:  case OPI_EQ_S:  newOpcode = OPI_BRNEQ;  break;
-		case OPI_LT_L:  case OPI_LT_S:  newOpcode = OPI_BRNLT;  break;
-		case OPI_GT_L:  case OPI_GT_S:  newOpcode = OPI_BRNGT;  break;
-		case OPI_LTE_L: case OPI_LTE_S: newOpcode = OPI_BRNLTE; break;
-		case OPI_GTE_L: case OPI_GTE_S: newOpcode = OPI_BRNGTE; break;
-		}
-	}
+	IntermediateOpcode newOpcode = GetBranchComparisonOpcode(branch->opcode, prev->opcode);
 	OVUM_ASSERT(newOpcode != OPI_NOP);
 
 	// Set the previous instruction to the new comparison thing.
@@ -729,6 +706,35 @@ bool MethodInitializer::IsBranchComparisonOperator(IntermediateOpcode opc)
 	default:
 		return false;
 	}
+}
+
+IntermediateOpcode MethodInitializer::GetBranchComparisonOpcode(IntermediateOpcode branchOpc, IntermediateOpcode comparisonOpc)
+{
+	IntermediateOpcode result = OPI_NOP;
+	if (branchOpc == OPI_BRTRUE_L || branchOpc == OPI_BRTRUE_S)
+	{
+		switch (comparisonOpc)
+		{
+		case OPI_EQ_L:  case OPI_EQ_S:  result = OPI_BREQ;  break;
+		case OPI_LT_L:  case OPI_LT_S:  result = OPI_BRLT;  break;
+		case OPI_GT_L:  case OPI_GT_S:  result = OPI_BRGT;  break;
+		case OPI_LTE_L: case OPI_LTE_S: result = OPI_BRLTE; break;
+		case OPI_GTE_L: case OPI_GTE_S: result = OPI_BRGTE; break;
+		}
+	}
+	else
+	{
+		// For simplicity, we've defined some aliases for the negated cases
+		switch (comparisonOpc)
+		{
+		case OPI_EQ_L:  case OPI_EQ_S:  result = OPI_BRNEQ;  break;
+		case OPI_LT_L:  case OPI_LT_S:  result = OPI_BRNLT;  break;
+		case OPI_GT_L:  case OPI_GT_S:  result = OPI_BRNGT;  break;
+		case OPI_LTE_L: case OPI_LTE_S: result = OPI_BRNLTE; break;
+		case OPI_GTE_L: case OPI_GTE_S: result = OPI_BRNGTE; break;
+		}
+	}
+	return result;
 }
 
 /*** Step 4: Result writing & finalization ***/

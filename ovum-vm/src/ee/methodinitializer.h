@@ -35,6 +35,7 @@ private:
 	void TryUpdateInputOutput(instr::MethodBuilder &builder, StackManager &stack, instr::Instruction *prev, instr::Instruction *instr, int32_t index);
 	void TryUpdateConditionalBranch(instr::MethodBuilder &builder, instr::Instruction *prev, instr::Branch *branch, int32_t index);
 	static bool IsBranchComparisonOperator(IntermediateOpcode opc);
+	static IntermediateOpcode GetBranchComparisonOpcode(IntermediateOpcode branchOpc, IntermediateOpcode comparisonOpc);
 
 	void WriteInitializedBody(instr::MethodBuilder &builder);
 	void FinalizeTryBlockOffsets(instr::MethodBuilder &builder);
