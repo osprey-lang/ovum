@@ -254,6 +254,76 @@ public class String
 	public format(values)
 		__extern("aves_String_format", locals=1);
 
+	/// Summary: Inserts a value at the specified index in the string.
+	/// Param index: The index at which to insert the value. (Int, UInt or Real)
+	/// Returns: A new String instance containing characters from the current string,
+	///          with {value} inserted at the specified index.
+	/// Throws TypeError:
+	///          {index} could not be converted to an Int.
+	///
+	///          {value} could not be converted to a string.
+	/// Throws ArgumentRangeError:
+	///          {index} is less than zero or greater than {length}.
+	/// Remarks: This method returns a new string instance. The original string is
+	///          not modified in any way.
+	public insert(index, value)
+	{
+		index = int(index);
+		if index < 0 or index > length:
+			throw new ArgumentRangeError("index");
+		value = string(value);
+
+		return splice(index, 0, value);
+	}
+
+	/// Summary: Removes part of this string, from the specified index to the end.
+	/// Param startIndex: The index of the first character to remove. (Int, UInt or Real)
+	/// Returns: A new String instance with characters from the current string
+	///          up to {startIndex}.
+	/// Throws TypeError:
+	///          {startIndex} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {startIndex} is less than zero or greater than {length}.
+	/// Remarks: This method returns a new string instance. The original string is
+	///          not modified in any way.
+	public remove(startIndex)
+	{
+		startIndex = int(startIndex);
+		if startIndex < 0 or startIndex > length:
+			throw new ArgumentRangeError("startIndex");
+
+		return splice(startIndex, length - startIndex, "");
+	}
+	/// Summary: Removes the specified number of characters from this string, starting
+	///          at the specified index.
+	/// Param startIndex: The index of the first character to remove. (Int, UInt or Real)
+	/// Param count: The total number of characters to remove. (Int, UInt or Real)
+	/// Returns: A new String instance with characters from the current string excluding
+	///          the substring defined by {startIndex} and {count}.
+	/// Throws TypeError:
+	///          {startIndex} or {count} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {startIndex} is less than zero or greater than {length}.
+	///
+	///          {count} is less than zero.
+	/// Throws ArgumentError:
+	///          {startIndex} + {count} is greater than {length}.
+	/// Remarks: This method returns a new string instance. The original string is
+	///          not modified in any way.
+	public remove(startIndex, count)
+	{
+		startIndex = int(startIndex);
+		if startIndex < 0 or startIndex > length:
+			throw new ArgumentRangeError("startIndex");
+		count = int(count);
+		if count < 0:
+			throw new ArgumentRangeError("count");
+		if startIndex + count > length:
+			throw new ArgumentError("startIndex + count is outside the string.");
+
+		return splice(startIndex, count, "");
+	}
+
 	/// Summary: Returns a new string with all occurrences of {oldValue} replaced
 	///          with {newValue}
 	/// Param oldValue: The string to be replaced.
@@ -266,8 +336,6 @@ public class String
 	///          {oldValue} or {newValue} could not be converted to a string.
 	/// Throws ArgumentError:
 	///          {oldValue} is of length 0.
-	/// Remarks: If {oldValue} or {newValue} is not a String, the corresponding value
-	///          will be converted to one.
 	public replace(oldValue, newValue)
 	{
 		if oldValue is null:
@@ -290,6 +358,8 @@ public class String
 	///          {oldValue} is null.
 	///
 	///          {oldValue} or {newValue} could not be converted to a string.
+	///
+	///          {maxTimes} could not be converted to an Int.
 	/// Throws ArgumentError:
 	///          {oldValue} is of length 0.
 	public replace(oldValue, newValue, maxTimes)
@@ -304,6 +374,42 @@ public class String
 	private replaceInner(oldValue, newValue, maxTimes)
 		__extern("aves_String_replaceInner");
 
+	/// Summary: Replaces part of this string with another value.
+	/// Param startIndex: The index of the first character to replace. (Int, UInt or Real)
+	/// Param count: The total number of characters to replace. (Int, UInt or Real)
+	/// Returns: A new string instance with the specified substring replaced with
+	///          {value}.
+	/// Throws TypeError:
+	///          {startIndex} or {count} could not be converted to an Int.
+	///
+	///          {newValue} could not be converted to a string.
+	/// Throws ArgumentRangeError:
+	///          {startIndex} is less than zero or greater than {length}.
+	///
+	///          {count} is less than zero.
+	/// Throws ArgumentError:
+	///          {startIndex} + {count} is greater than {length}.
+	/// Remarks: This method returns a new string instance. The original string is
+	///          not modified in any way.
+	public replaceSubstring(startIndex, count, newValue)
+	{
+		startIndex = int(startIndex);
+		if startIndex < 0 or startIndex > length:
+			throw new ArgumentRangeError("startIndex");
+		count = int(count);
+		if count < 0:
+			throw new ArgumentRangeError("count");
+		if startIndex + count > length:
+			throw new ArgumentError("startIndex + count is outside the string.");
+
+		return splice(startIndex, count, newValue);
+	}
+
+	// Helper method for remove, insert and replaceSubstring. It does the same
+	// as replaceSubstring, but without type or range checks.
+	private splice(startIndex, removeCount, newValue)
+		__extern("aves_String_splice");
+
 	/// Summary: Splits the string into a List of substrings on the given
 	///          separator.
 	/// Param separator: The substring to look for within this string, and
@@ -314,14 +420,18 @@ public class String
 	/// Remarks: This method does not remove empty strings from the returned
 	///          list. For example:
 	///
-	///              `"a,,b,c,d,,".split(",") // => ["a", "", "b", "c", "d", "", ""]`
+	///          ```
+	///          "a,,b,c,d,,".split(",") // => ["a", "", "b", "c", "d", "", ""]
+	///          ```
 	///
 	///          Strings are processed from low character index to high, which
 	///          generally means left-to-right, and the string is split as soon
 	///          as the separator is encountered as a substring. The search then
 	///          continues immediately after the substring. To illustrate:
 	///
-	///              `"a;;;b;;;;c".split(";;") // => ["a", ";b", "", "c"]
+	///          ```
+	///          "a;;;b;;;;c".split(";;") // => ["a", ";b", "", "c"]
+	///          ```
 	public split(separator)
 		__extern("aves_String_split", locals=1);
 
@@ -737,30 +847,34 @@ public class String
 		__extern("aves_String_getHashCode");
 
 	/// Summary: Computes a hash code for a part of this string.
-	/// Param index: The first index of the substring to hash.
-	/// Param count: The number of code units to hash from this string.
+	/// Param startIndex: The first index of the substring to hash. (Int, UInt or Real)
+	/// Param count: The number of characters to hash from this string. (Int, UInt or Real)
 	/// Returns: An Int with a hash code for the specified substring.
 	/// Throws TypeError:
-	///          {index} or {count} could not be converted to an Int.
+	///          {startIndex} or {count} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
-	///          {index} is less than zero or greater than the length of the string.
+	///          {startIndex} is less than zero or greater than {length}.
 	///
-	///          {index} + {count} is beyond the end of this string.
-	public getHashCode(index, count)
+	///          {count} is less than zero.
+	/// Throws ArgumentError:
+	///          {startIndex} + {count} is beyond the end of this string.
+	public getHashCode(startIndex, count)
 	{
-		index = int(index);
-		count = int(index);
-		if index < 0 or index > length:
-			throw new ArgumentRangeError("index");
-		if index + count > length:
+		startIndex = int(startIndex);
+		if startIndex < 0 or startIndex > length:
+			throw new ArgumentRangeError("startIndex");
+		count = int(startIndex);
+		if count < 0:
 			throw new ArgumentRangeError("count");
+		if startIndex + count > length:
+			throw new ArgumentError("startIndex + count is outside the string.");
 
 		if count == this.length:
 			return getHashCode();
 
-		return getHashCodeSubstr(index, count);
+		return getHashCodeSubstr(startIndex, count);
 	}
-	private getHashCodeSubstr(index, count)
+	private getHashCodeSubstr(startIndex, count)
 		__extern("aves_String_getHashCodeSubstr");
 
 	override toString()

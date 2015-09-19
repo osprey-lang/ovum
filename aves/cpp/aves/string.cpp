@@ -336,6 +336,50 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_replaceInner)
 }
 END_NATIVE_FUNCTION
 
+AVES_API BEGIN_NATIVE_FUNCTION(aves_String_splice)
+{
+	// splice(startIndex is Int, removeCount is Int, newValue is String)
+	// Public-facing methods check the types and range-check the values.
+	PinnedAlias<String> str(THISP), newValue(args + 3);
+	int32_t startIndex = (int32_t)args[1].v.integer;
+	int32_t removeCount = (int32_t)args[2].v.integer;
+
+	int32_t resultLength = str->length - removeCount + newValue->length;
+	String *result;
+	CHECKED_MEM(result = GC_ConstructString(thread, resultLength, nullptr));
+
+	const ovchar_t *srcp = &str->firstChar;
+	ovchar_t *destp = const_cast<ovchar_t*>(&result->firstChar);
+
+	// Copy the first part of the source string into the result.
+	if (startIndex > 0)
+	{
+		CopyMemoryT(destp, srcp, (int32_t)startIndex);
+		srcp += startIndex;
+		destp += startIndex;
+	}
+
+	// Insert the new value.
+	if (newValue->length > 0)
+	{
+		CopyMemoryT(destp, &newValue->firstChar, (size_t)newValue->length);
+		destp += newValue->length;
+	}
+
+	// Skip the part of the source string that is to be removed.
+	srcp += removeCount;
+
+	// And finally insert the remainder of the source string.
+	int32_t remaining = str->length - startIndex - removeCount;
+	if (remaining > 0)
+	{
+		CopyMemoryT(destp, srcp, (size_t)remaining);
+	}
+
+	VM_PushString(thread, result);
+}
+END_NATIVE_FUNCTION
+
 AVES_API BEGIN_NATIVE_FUNCTION(aves_String_split)
 {
 	// arguments: (separator)

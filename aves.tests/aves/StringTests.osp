@@ -77,6 +77,138 @@ public class StringTests is TestFixture
 	// End booleanness tests
 }
 
+public class StringSpliceTests is TestFixture
+{
+	public new() { new base("aves.String tests: insert, remove and replaceSubstring"); }
+
+	// For brevity.
+	private str = "abc";
+
+	// insert tests
+
+	public test_InsertStart()
+	{
+		var result = str.insert(0, "x");
+		Assert.areEqual(result, "xabc");
+	}
+
+	public test_InsertMiddle()
+	{
+		var result = str.insert(2, "x");
+		Assert.areEqual(result, "abxc");
+	}
+
+	public test_InsertEnd()
+	{
+		var result = str.insert(3, "x");
+		Assert.areEqual(result, "abcx");
+	}
+
+	public test_InsertInvalid()
+	{
+		Assert.throws(typeof(ArgumentRangeError), @= str.insert(-1, ""));
+		Assert.throws(typeof(ArgumentRangeError), @= str.insert(4, ""));
+		Assert.throws(typeof(TypeError), @= str.insert("0", ""));
+	}
+
+	// End insert tests
+
+	// remove tests
+
+	public test_Remove1Start()
+	{
+		var result = str.remove(0);
+		Assert.areEqual(result, "");
+	}
+
+	public test_Remove1Middle()
+	{
+		var result = str.remove(2);
+		Assert.areEqual(result, "ab");
+	}
+
+	public test_Remove1End()
+	{
+		var result = str.remove(3);
+		Assert.areEqual(result, "abc");
+	}
+
+	public test_Remove1Invalid()
+	{
+		Assert.throws(typeof(ArgumentRangeError), @= str.remove(-1));
+		Assert.throws(typeof(ArgumentRangeError), @= str.remove(4));
+		Assert.throws(typeof(TypeError), @= str.remove("0"));
+	}
+
+	public test_Remove2Start()
+	{
+		var result = str.remove(0, 1);
+		Assert.areEqual(result, "bc");
+	}
+
+	public test_Remove2Middle()
+	{
+		var result = str.remove(1, 1);
+		Assert.areEqual(result, "ac");
+	}
+
+	public test_Remove2ToEnd()
+	{
+		var result = str.remove(2, 1);
+		Assert.areEqual(result, "ab");
+	}
+
+	public test_Remove2AtEnd()
+	{
+		var result = str.remove(3, 0);
+		Assert.areEqual(result, "abc");
+	}
+
+	public test_Remove2Invalid()
+	{
+		Assert.throws(typeof(ArgumentRangeError), @= str.remove(-1, 0));
+		Assert.throws(typeof(ArgumentRangeError), @= str.remove(4, 0));
+		Assert.throws(typeof(ArgumentRangeError), @= str.remove(0, -1));
+		Assert.throws(typeof(ArgumentError), @= str.remove(1, 3));
+		Assert.throws(typeof(TypeError), @= str.remove("0", 0));
+		Assert.throws(typeof(TypeError), @= str.remove(0, "0"));
+	}
+
+	// End remove tests
+
+	// replaceSubstring tests
+
+	public test_ReplaceSubstringStart()
+	{
+		var result = str.replaceSubstring(0, 1, "x");
+		Assert.areEqual(result, "xbc");
+	}
+
+	public test_ReplaceSubstringMiddle()
+	{
+		var result = str.replaceSubstring(1, 1, "x");
+		Assert.areEqual(result, "axc");
+	}
+
+	public test_ReplaceSubstringEnd()
+	{
+		var result = str.replaceSubstring(2, 1, "x");
+		Assert.areEqual(result, "abx");
+	}
+
+	public test_ReplaceSubstringInvalid()
+	{
+		Assert.throws(typeof(ArgumentRangeError), @= str.replaceSubstring(-1, 0, ""));
+		Assert.throws(typeof(ArgumentRangeError), @= str.replaceSubstring(4, 0, ""));
+		Assert.throws(typeof(ArgumentRangeError), @= str.replaceSubstring(0, -1, ""));
+		Assert.throws(typeof(ArgumentError), @= str.replaceSubstring(1, 3, ""));
+		Assert.throws(typeof(TypeError), @= str.replaceSubstring("0", 0, ""));
+		Assert.throws(typeof(TypeError), @= str.replaceSubstring(0, "0", ""));
+	}
+
+	// End replaceSubstring tests
+}
+
 public class StringEqualityTests is TestFixture
 {
 	public new() { new base("aves.String tests: equality"); }

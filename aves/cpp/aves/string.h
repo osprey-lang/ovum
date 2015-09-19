@@ -20,6 +20,7 @@ AVES_API NATIVE_FUNCTION(aves_String_substr1);
 AVES_API NATIVE_FUNCTION(aves_String_substr2);
 AVES_API NATIVE_FUNCTION(aves_String_format);
 AVES_API NATIVE_FUNCTION(aves_String_replaceInner);
+AVES_API NATIVE_FUNCTION(aves_String_splice);
 AVES_API NATIVE_FUNCTION(aves_String_split);
 
 AVES_API NATIVE_FUNCTION(aves_String_padInner);
