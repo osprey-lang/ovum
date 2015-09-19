@@ -322,10 +322,9 @@ namespace instr
 
 	void ExecOperator::WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const
 	{
-		// When op is negative (or 0xff, rather), it means the operator has
-		// a special opcode. This applies to: <  <=  >  >=  ::
-		// The operators == and <=> also have their own opcodes.
-		if ((uint8_t)op != 0xff && op != Operator::EQ && op != Operator::CMP)
+		// When op is SINGLE_INSTR_OP, it means the operator has a special opcode.
+		// This applies to:  ==  <=>  <  <=  >  >=  ::
+		if (op != SINGLE_INSTR_OP)
 		{
 			// Gotta output the operator if it doesn't have its own opcode.
 			// Note that binary and unary operators have the same arguments,

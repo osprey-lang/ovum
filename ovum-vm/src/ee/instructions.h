@@ -1212,10 +1212,12 @@ namespace instr
 		LocalOffset output;
 		Operator op;
 
-		static const IntermediateOpcode CMP_LT  = OPI_LT_S;
-		static const IntermediateOpcode CMP_LTE = OPI_LTE_S;
-		static const IntermediateOpcode CMP_GT  = OPI_GT_S;
-		static const IntermediateOpcode CMP_GTE = OPI_GTE_S;
+		static const IntermediateOpcode EQ  = OPI_EQ_S;
+		static const IntermediateOpcode CMP = OPI_CMP_S;
+		static const IntermediateOpcode LT  = OPI_LT_S;
+		static const IntermediateOpcode LTE = OPI_LTE_S;
+		static const IntermediateOpcode GT  = OPI_GT_S;
+		static const IntermediateOpcode GTE = OPI_GTE_S;
 		static const IntermediateOpcode CONCAT  = OPI_CONCAT_S;
 
 		static const Operator SINGLE_INSTR_OP = (Operator)-1;
@@ -1238,7 +1240,7 @@ namespace instr
 
 		inline virtual uint32_t GetArgsSize() const
 		{
-			if (op == SINGLE_INSTR_OP || op == Operator::EQ || op == Operator::CMP)
+			if (op == SINGLE_INSTR_OP)
 				return oa::TWO_LOCALS_SIZE;
 			else
 				return oa::TWO_LOCALS_AND_VALUE<Operator>::SIZE;
@@ -1263,10 +1265,6 @@ namespace instr
 	private:
 		inline static IntermediateOpcode GetOpcode(Operator op)
 		{
-			if (op == Operator::EQ)
-				return OPI_EQ_S;
-			if (op == Operator::CMP)
-				return OPI_CMP_S;
 			if (op == Operator::PLUS || op == Operator::NEG || op == Operator::NOT)
 				return OPI_UNARYOP_S;
 			return OPI_OPERATOR_S;

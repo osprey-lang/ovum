@@ -1280,21 +1280,25 @@ void MethodInitializer::ReadInstructions(instr::MethodBuilder &builder)
 		case OPC_PLUS:
 		case OPC_NEG:
 		case OPC_NOT:
-		case OPC_EQ:
-		case OPC_CMP:
 			instr = new ExecOperator((Operator)(*opc - OPC_ADD));
 			break;
+		case OPC_EQ:
+			instr = new ExecOperator(ExecOperator::EQ);
+			break;
+		case OPC_CMP:
+			instr = new ExecOperator(ExecOperator::CMP);
+			break;
 		case OPC_LT:
-			instr = new ExecOperator(ExecOperator::CMP_LT);
+			instr = new ExecOperator(ExecOperator::LT);
 			break;
 		case OPC_GT:
-			instr = new ExecOperator(ExecOperator::CMP_GT);
+			instr = new ExecOperator(ExecOperator::GT);
 			break;
 		case OPC_LTE:
-			instr = new ExecOperator(ExecOperator::CMP_LTE);
+			instr = new ExecOperator(ExecOperator::LTE);
 			break;
 		case OPC_GTE:
-			instr = new ExecOperator(ExecOperator::CMP_GTE);
+			instr = new ExecOperator(ExecOperator::GTE);
 			break;
 		case OPC_CONCAT:
 			instr = new ExecOperator(ExecOperator::CONCAT);
