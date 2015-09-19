@@ -11,16 +11,14 @@ AVES_API void OVUM_CDECL aves_List_init(TypeHandle type)
 	Type_AddNativeField(type, offsetof(ListInst, values), NativeFieldType::GC_ARRAY);
 }
 
-int GetIndex(ThreadHandle thread, ListInst *list, Value indexValue, bool canEqualLength, int32_t &result)
+int GetIndex(ThreadHandle thread, ListInst *list, Value *indexValue, bool canEqualLength, int32_t &result)
 {
 	Aves *aves = Aves::Get(thread);
 
-	int r = IntFromValue(thread, &indexValue);
+	int r = IntFromValue(thread, indexValue);
 	if (r != OVUM_SUCCESS) return r;
-	int64_t index = indexValue.v.integer;
+	int64_t index = indexValue->v.integer;
 
-	if (index < 0)
-		index += list->length;
 	if (index < 0 || (canEqualLength ? index > list->length : index >= list->length))
 	{
 		VM_PushString(thread, strings::index);
@@ -92,7 +90,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_List_get_item)
 {
 	ListInst *list = THISV.v.list;
 	int32_t index;
-	CHECKED(GetIndex(thread, list, args[1], false, index));
+	CHECKED(GetIndex(thread, list, args + 1, false, index));
 
 	VM_Push(thread, &list->values[index]);
 	RETURN_SUCCESS;
@@ -103,7 +101,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_List_set_item)
 {
 	ListInst *list = THISV.v.list;
 	int32_t index;
-	CHECKED(GetIndex(thread, list, args[1], false, index));
+	CHECKED(GetIndex(thread, list, args + 1, false, index));
 
 	list->values[index] = args[2];
 	list->version++;
@@ -126,7 +124,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_List_insert)
 	PinnedAlias<ListInst> list(THISP);
 	// when index == list->length, it means we insert at the end
 	int32_t index;
-	CHECKED(GetIndex(thread, *list, args[1], true, index));
+	CHECKED(GetIndex(thread, *list, args + 1, true, index));
 
 	CHECKED(EnsureMinCapacity(thread, *list, list->length + 1));
 
@@ -144,7 +142,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_List_removeAt)
 	ListInst *list = THISV.v.list;
 
 	int32_t index;
-	CHECKED(GetIndex(thread, list, args[1], false, index));
+	CHECKED(GetIndex(thread, list, args + 1, false, index));
 
 	int32_t i;
 	for (i = (int32_t)index; i < list->length - 1; i++)
@@ -172,7 +170,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_List_slice1)
 
 	// Get the start index
 	int32_t startIndex;
-	CHECKED(GetIndex(thread, *list, args[1], true, startIndex));
+	CHECKED(GetIndex(thread, *list, args + 1, true, startIndex));
 
 	// Create the output list
 	Value *output = VM_Local(thread, 0);
@@ -191,7 +189,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_List_slice2)
 
 	// Get the indexes
 	int32_t startIndex;
-	CHECKED(GetIndex(thread, *list, args[1], true, startIndex));
+	CHECKED(GetIndex(thread, *list, args + 1, true, startIndex));
 	CHECKED(IntFromValue(thread, args + 2));
 	if (args[2].v.integer < 0)
 	{
@@ -222,8 +220,8 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_List_sliceTo)
 
 	// Get the indexes
 	int32_t startIndex, endIndex;
-	CHECKED(GetIndex(thread, *list, args[1], true, startIndex));
-	CHECKED(GetIndex(thread, *list, args[2], true, endIndex));
+	CHECKED(GetIndex(thread, *list, args + 1, true, startIndex));
+	CHECKED(GetIndex(thread, *list, args + 2, true, endIndex));
 
 	Value *output = VM_Local(thread, 0);
 

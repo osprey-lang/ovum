@@ -218,7 +218,7 @@ public class ListTests is TestFixture
 	{
 		var list = [0, 1, 2, 3, 4];
 		Assert.throws(typeof(ArgumentRangeError), @= list.slice(6));
-		Assert.throws(typeof(ArgumentRangeError), @= list.slice(-6));
+		Assert.throws(typeof(ArgumentRangeError), @= list.slice(-1));
 	}
 
 	public test_Slice2Empty()

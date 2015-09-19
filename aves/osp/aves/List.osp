@@ -15,29 +15,28 @@ public inheritable List is Collection
 		__extern("aves_List_new");
 	/// Summary: Creates a new, empty list with the specified capacity.
 	/// Param capacity: The capacity of the new list. (Int, UInt or Real)
-	/// Throws TypeError: {capacity} could not be converted to an Int.
-	/// Throws ArgumentRangeError: {capacity} is less than zero, or greater
-	///          than 2,147,483,647 (0x7fffffff).
+	/// Throws TypeError:
+	///          {capacity} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {capacity} is less than zero, or greater than 2,147,483,647 (0x7fffffff).
 	public new(capacity)
 		__extern("aves_List_newCap");
 
 	/// Summary: Gets the item at the specified index.
-	/// Param index: The index of the item to set. If negative, the index is
-	///              relative to the end of the list, e.g. -2 is the second to
-	///              last item. (Int, UInt or Real)
+	/// Param index: The index of the item to set. (Int, UInt or Real)
 	/// Returns: The item at the specified index.
-	/// Throws TypeError: {index} could not be converted to an Int.
+	/// Throws TypeError:
+	///          {index} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
-	///          {index} is less than -{length}, or greater than or equal to {length}.
+	///          {index} is less than zero or greater than or equal to {length}.
 	public get this[index]
 		__extern("aves_List_get_item");
 	/// Summary: Sets the item at the specified index.
-	/// Param index: The index of the item to set. If negative, the index is
-	///              relative to the end of the list, e.g. -2 is the second to
-	///              last item. (Int, UInt or Real)
-	/// Throws TypeError: {index} could not be converted to an Int.
+	/// Param index: The index of the item to set. (Int, UInt or Real)
+	/// Throws TypeError:
+	///          {index} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
-	///          {index} is less than -{length}, or greater than or requal to {length}.
+	///          {index} is less than zero or greater than or equal to {length}.
 	public set this[index]
 		__extern("aves_List_set_item");
 
@@ -54,8 +53,10 @@ public inheritable List is Collection
 		__extern("aves_List_get_capacity");
 	/// Summary: Sets the capacity of the list; that is, the number of items
 	///          it can contain before needing to be resized.
-	/// Throws TypeError: The value could not be converted to an Int.
-	/// Throws ArgumentRangeError: The value is less than {length}.
+	/// Throws TypeError:
+	///          The value could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          The value is less than {length}.
 	public set capacity
 		__extern("aves_List_set_capacity");
 
@@ -66,7 +67,6 @@ public inheritable List is Collection
 	/// Returns: True if the list has no items in it; otherwise, false.
 	public get isEmpty = length == 0;
 
-	// General list manipulation
 	/// Summary: Adds an item to the end of the list.
 	/// Param item: The item to add.
 	/// Returns: The index at which the item was inserted.
@@ -74,13 +74,12 @@ public inheritable List is Collection
 		__extern("aves_List_add");
 
 	/// Summary: Inserts an item at the specified index.
-	/// Param index: The index at which to insert the item. If negative,
-	///              the index is relative to the end of the list, e.g. -2
-	///              is the second to last item. (Int, UInt or Real)
+	/// Param index: The index at which to insert the item. (Int, UInt or Real)
 	/// Param item:  The item to insert into the list.
-	/// Throws TypeError: {index} could not be converted to an Int.
+	/// Throws TypeError:
+	///          {index} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
-	///          {index} is less than -{length}, or greater than {length}.
+	///          {index} is less than zero or greater than {length}.
 	/// Remarks: If {index} is equal to {length}, then the item is inserted
 	///          at the end of the list.
 	public insert(index, item)
@@ -174,7 +173,7 @@ public inheritable List is Collection
 	public lastIndexOf(item)
 	{
 		for i in [1 to length]:
-			if item == this[-i]:
+			if item == this[length - i]:
 				return length - i;
 
 		return null;
@@ -196,12 +195,11 @@ public inheritable List is Collection
 	}
 
 	/// Summary: Removes the item at the specified index.
-	/// Param index: The index to remove an item from. If negative, the index is
-	///              relative to the end of the list, e.g. -2 is the second to
-	///              last item. (Int, UInt or Real)
-	/// Throws TypeError: {index} could not be converted to an Int.
+	/// Param index: The index to remove an item from. (Int, UInt or Real)
+	/// Throws TypeError:
+	///          {index} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
-	///          {index} is less than -{length}, or greater than or equal to {length}.
+	///          {index} is less than zero or greater than or equal to {length}.
 	public removeAt(index)
 		__extern("aves_List_removeAt");
 
@@ -211,30 +209,26 @@ public inheritable List is Collection
 
 	/// Summary: Creates a new list with items from this list, starting at the specified
 	///          index, up to the end of this list.
-	/// Param startIndex: The index at which to start reading items, inclusive. If negative,
-	///          the index is relative to the end of the list, e.g. -2 is the second to
-	///          last item. (Int, UInt or Real)
+	/// Param startIndex: The index at which to start reading items. (Int, UInt or Real)
 	/// Returns: A new List containing items from this list, starting at index {startIndex}
 	///          to the end of this list.
 	/// Throws TypeError:
 	///          {startIndex} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
-	///          {startIndex} is less than -{length}, or greater than {length}.
+	///          {startIndex} is less than zero or greater than {length}.
 	/// Remarks: If {startIndex} is equal to {length}, the returned list will be empty.
 	public slice(startIndex)
 		__extern("aves_List_slice1", locals=1);
 	/// Summary: Creates a new list with the specified number of items from this list,
 	///          starting at the specified index.
-	/// Param startIndex: The index at which to start reading items, inclusive. If negative,
-	///          the index is relative to the end of the list, e.g. -2 is the second to
-	///          last item. (Int, UInt or Real)
+	/// Param startIndex: The index at which to start reading items. (Int, UInt or Real)
 	/// Param count: The total number of items to copy from the list. (Int, UInt or Real)
 	/// Returns: A new List containing {count} items from this list, starting at index
 	///          {startIndex}.
 	/// Throws TypeError:
 	///          {startIndex} or {count} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
-	///          {startIndex} is less than -{length}, or greater than {length}.
+	///          {startIndex} is less than zero or greater than {length}.
 	///
 	///          {count} is less than zero.
 	/// Throws ArgumentError:
@@ -244,20 +238,16 @@ public inheritable List is Collection
 
 	/// Summary: Creates a new list with items from this list, starting at the specified
 	///          start index up to the specified end index.
-	/// Param startIndex: The index at which to start reading items, inclusive. If negative,
-	///          the index is relative to the end of the list, e.g. -2 is the second to
-	///          last item. (Int, UInt or Real)
-	/// Param endIndex: The end index of the slice, exclusive. If negative, the index is
-	///          relative to the end of the list, e.g. -2 is the second to last item.
-	///          (Int, UInt or Real)
+	/// Param startIndex: The index at which to start reading items, inclusive. (Int, UInt or Real)
+	/// Param endIndex: The end index of the slice, exclusive. (Int, UInt or Real)
 	/// Returns: A new List containing the items from this list between {startIndex} and
 	///          {endIndex}.
 	/// Throws TypeError:
 	///          {startIndex} or {endIndex} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
-	///          {startIndex} is less than -{length} or greater than {length}.
+	///          {startIndex} is less than zero or greater than {length}.
 	///
-	///          {endIndex} is less than -{length} or greater than {length}.
+	///          {endIndex} is less than zero or greater than {length}.
 	/// Remarks: Because {endIndex} is exclusive, if {startIndex} = {endIndex}, the returned
 	///          list will be empty. Additionally, passing `-1` as the end index will cause
 	///          the return value to contain items up to but not including the last. To get
@@ -485,7 +475,7 @@ public inheritable List is Collection
 		if length == 0:
 			throw new InvalidStateError("Cannot fold an empty list without initial value.");
 
-		return foldrInternal(this[-1], func, length - 2);
+		return foldrInternal(this[length - 1], func, length - 2);
 	}
 	public foldr(init, func)
 	{
