@@ -5,7 +5,8 @@ namespace aves;
 /// Returns: If {value} is null, this function returns the empty string;
 ///          otherwise, the return value is the result of calling `.toString()`
 ///          on {value} with no arguments.
-/// Throws TypeError: {value}.toString() did not return a String.
+/// Throws TypeError:
+///          The `toString` method of {value} did not return a String.
 public function string(value)
 {
 	if value is null:
@@ -42,9 +43,7 @@ public class String
 	/// Summary: Gets the UTF-16 code unit at the specified index, as a Char.
 	/// Param index: The index of a character within the string.
 	/// Throws ArgumentRangeError:
-	///          {index} is less than zero.
-	///
-	///          {index} is greater than or equal to the length of the string.
+	///          {index} is less than zero or greater than or equal to {length}.
 	/// Remarks: If the index refers to the first code unit of a surrogate pair, then the
 	///          resulting char will only contain that one code unit, not the surrogate pair.
 	///          Use {getCharacter} to obtain the value represented by the surrogate pair.
@@ -97,7 +96,8 @@ public class String
 	/// Param value: The substring to look for in this string. (String, Char)
 	/// Returns: True if this string contains {value} as a substring; otherwise,
 	///          false.
-	/// Throws TypeError: {value} is not a String or Char.
+	/// Throws TypeError:
+	///          {value} is not a String or Char.
 	public contains(value)
 		__extern("aves_String_contains");
 
@@ -105,7 +105,8 @@ public class String
 	///          string. The comparison is case-sensitive.
 	/// Param value: The value to test against.
 	/// Returns: True if this string starts with {value}; otherwise, false.
-	/// Throws TypeError: {value} is not a String or Char.
+	/// Throws TypeError:
+	///          {value} is not a String or Char.
 	public startsWith(value)
 		__extern("aves_String_startsWith");
 
@@ -113,7 +114,8 @@ public class String
 	///          string. The comparison is case-sensitive.
 	/// Param value: The value to test against.
 	/// Returns: True if this string starts with {value}; otherwise, false.
-	/// Throws TypeError: {value} is not a String or Char.
+	/// Throws TypeError:
+	///          {value} is not a String or Char.
 	public endsWith(value)
 		__extern("aves_String_endsWith");
 
@@ -123,7 +125,8 @@ public class String
 	/// Returns: The index of the first occurrence of the given substring within
 	///          this string, as an Int, or null if this string doesn’t contain
 	///          the substring.
-	/// Throws TypeError: {value} is not a String or Char.
+	/// Throws TypeError:
+	///          {value} is not a String or Char.
 	public indexOf(value)
 		__extern("aves_String_indexOf");
 
@@ -133,7 +136,8 @@ public class String
 	/// Returns: The index of the last occurrence of the given substring within
 	///          this string, as an Int, or null if this string doesn’t contain
 	///          the substring.
-	/// Throws TypeError: {value} is not a String or Char.
+	/// Throws TypeError:
+	///          {value} is not a String or Char.
 	public lastIndexOf(value)
 		__extern("aves_String_lastIndexOf");
 
@@ -260,47 +264,47 @@ public class String
 	/// Returns: A new String with the format placeholders replaced by values from {values}.
 	///          See the remarks section for more details about the format placeholders.
 	/// Throws TypeError:
-	///     {values} is not a List or a Hash.
+	///          {values} is not a List or a Hash.
 	///
-	///     A placeholder value could not be converted to a String.
+	///          A placeholder value could not be converted to a String.
 	/// Throws ArgumentRangeError:
-	///     {values} is a List and a placeholder value is not a valid index in that list.
+	///          {values} is a List and a placeholder value is not a valid index in that list.
 	/// Throws ArgumentError:
-	///     {values} is a Hash and a placeholder value does not refer to a key in that hash.
+	///          {values} is a Hash and a placeholder value does not refer to a key in that hash.
 	/// Throws InvalidFormatError:
-	///     The string contains a malformed placeholder.
+	///          The string contains a malformed placeholder.
 	/// Throws OverflowError:
-	///     Converting a placeholder or alignment value to an Int resulted in an overflow.
-	/// Remarks:
-	///     The format placeholders must be in the general format `{ph}`, where `ph` is the
-	///     “name” of the placeholder. If you pass a List into {values}, `ph` must correspond
-	///     to an index in that list, consisting of the digits 0 to 9 (negative numbers are
-	///     not allowed). If {values} is a Hash, then `ph` must be a key in that Hash;
-	///     additionally, `ph` must be a valid Osprey identifier or keyword (e.g. `{feathers?}`
-	///     is not a valid placeholder).
+	///          Converting a placeholder or alignment value to an Int resulted in an overflow.
+	/// Remarks: The format placeholders must be in the general format `{ph}`, where `ph` is
+	///          the “name” of the placeholder. If you pass a List into {values}, `ph` must
+	///          correspond to an index in that list, consisting of the digits 0 to 9 (negative
+	///          numbers are not allowed). If {values} is a Hash, then `ph` must be a key in
+	///          that Hash; additionally, `ph` must be a valid Osprey identifier or keyword
+	///          (e.g. `{feathers?}` is not a valid placeholder).
 	///
-	///     The placeholder value is converted to a string following the same rules as the
-	///     function `aves.string`: if the placeholder value is null, an empty string is inserted;
-	///     otherwise, if the value is not a String, `.toString()` is called on it with no
-	///     arguments. If that call does not return a String, this method throws a TypeError.
+	///          The placeholder value is converted to a string following the same rules as
+	///          the function `aves.string`: if the placeholder value is null, an empty string
+	///          is inserted; otherwise, if the value is not a String, `.toString()` is called
+	///          on it with no arguments. If that call does not return a String, this method
+	///          throws a TypeError.
 	///
-	///     Additionally, you can align placeholder values to specific widths:
-	///         `{ph>n}` aligns the value `n` characters to the right;
-	///         `{ph<n}` aligns the value `n` characters to the left; and
-	///         `{ph=n}` centers the value in a space `n` characters wide.
-	///     `n` must be a decimal integer, and the value is always padded with spaces.
+	///          Additionally, you can align placeholder values to specific widths:
+	///              `{ph>n}` aligns the value `n` characters to the right;
+	///              `{ph<n}` aligns the value `n` characters to the left; and
+	///              `{ph=n}` centers the value in a space `n` characters wide.
+	///          `n` must be a decimal integer, and the value is always padded with spaces.
 	///
-	///     Examples:
+	///          Examples:
 	///
-	///     ```
-	///     "[{0>6}]".format(["y"])   // => "[     y]"
-	///     "[{0<6}]".format(["abc"]) // => "[abc   ]"
-	///     "[{0=6}]".format(["hi"])  // => "[  hi  ]"
-	///     "Name: {name}, age: {age}".format({
-	///       "name": null,
-	///       "age": Real.NaN
-	///     }) // => "Name: , age: NaN"
-	///     ```
+	///          ```
+	///          "[{0>6}]".format(["y"])   // => "[     y]"
+	///          "[{0<6}]".format(["abc"]) // => "[abc   ]"
+	///          "[{0=6}]".format(["hi"])  // => "[  hi  ]"
+	///          "Name: {name}, age: {age}".format({
+	///            "name": null,
+	///            "age": Real.NaN
+	///          }) // => "Name: , age: NaN"
+	///          ```
 	public format(values)
 		__extern("aves_String_format", locals=1);
 
@@ -466,7 +470,8 @@ public class String
 	///          split the string on. (String)
 	/// Returns: A List instance containing the substrings of this string
 	///          that were delineated by {separator}.
-	/// Throws TypeError: {separator} could not be converted to a string.
+	/// Throws TypeError:
+	///          {separator} could not be converted to a string.
 	/// Remarks: This method does not remove empty strings from the returned
 	///          list. For example:
 	///
