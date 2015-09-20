@@ -296,7 +296,10 @@ public class String
 	///     "[{0>6}]".format(["y"])   // => "[     y]"
 	///     "[{0<6}]".format(["abc"]) // => "[abc   ]"
 	///     "[{0=6}]".format(["hi"])  // => "[  hi  ]"
-	///     "Name: {name}, age: {age}".format({name: null, age: Real.NaN}) // => "Name: , age: NaN"
+	///     "Name: {name}, age: {age}".format({
+	///       "name": null,
+	///       "age": Real.NaN
+	///     }) // => "Name: , age: NaN"
 	///     ```
 	public format(values)
 		__extern("aves_String_format", locals=1);
