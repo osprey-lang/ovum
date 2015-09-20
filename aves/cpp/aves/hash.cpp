@@ -298,9 +298,9 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Hash_insert)
 }
 END_NATIVE_FUNCTION
 
-AVES_API BEGIN_NATIVE_FUNCTION(aves_Hash_hasKeyInternal)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Hash_containsKeyInternal)
 {
-	// Args: (key: non-null, hash: Int|UInt)
+	// containsKeyInternal(key: non-null, hash: Int|UInt)
 	int32_t hashCode = aves::Hash::GetHash(args[2].v.uinteger);
 	int32_t index;
 	{ Pinned h(THISP);
@@ -312,9 +312,9 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Hash_hasKeyInternal)
 }
 END_NATIVE_FUNCTION
 
-AVES_API BEGIN_NATIVE_FUNCTION(aves_Hash_hasValue)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Hash_containsValue)
 {
-	// Args: (value)
+	// containsValue(value)
 	Alias<aves::Hash> inst(THISP);
 
 	for (int32_t i = 0; i < inst->count; i++)

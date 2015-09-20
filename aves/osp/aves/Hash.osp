@@ -154,18 +154,18 @@ public inheritable Hash is Collection
 	///          otherwise, false.
 	/// Throws ArgumentNullError:
 	///          {key} is null.
-	public hasKey(key)
+	public containsKey(key)
 	{
-		return hasKeyInternal(key, getHash(key));
+		return containsKeyInternal(key, getHash(key));
 	}
-	private hasKeyInternal(key, hash)
-		__extern("aves_Hash_hasKeyInternal");
+	private containsKeyInternal(key, hash)
+		__extern("aves_Hash_containsKeyInternal");
 
 	/// Summary: Determines whether the hash table contains the specified value.
 	/// Param value: The value to look for.
 	/// Returns: True if the hash table contains the specified value; otherwise, false.
-	public hasValue(value)
-		__extern("aves_Hash_hasValue");
+	public containsValue(value)
+		__extern("aves_Hash_containsValue");
 
 	/// Summary: Tries to read the specified key from the hash table. If successful,
 	///          {value} is updated to contain the value, and the method returns true.
@@ -175,7 +175,7 @@ public inheritable Hash is Collection
 	///              exists in the hash table.
 	/// Returns: True if the hash table contains the specified key; otherwise, false.
 	/// Remarks: Calling this method usually performs better than first calling
-	///          {hasKey} and then indexing into the hash table.
+	///          {containsKey} and then indexing into the hash table.
 	///
 	///          If the hash table does not contain the specified key, {value} is not
 	///          modified.
