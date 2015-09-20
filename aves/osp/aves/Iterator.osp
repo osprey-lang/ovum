@@ -902,7 +902,7 @@ private class TakeWhileIterator is Iterator
 
 	override moveNext()
 	{
-		if not continue
+		if continue
 		{
 			continue = inner.moveNext() and predicate(inner.current);
 			if continue:
