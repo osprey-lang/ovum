@@ -9,5 +9,5 @@ private function getLastComponent(fullName)
 	if i is null:
 		return fullName;
 	else
-		return fullName.substr(i + 1);
+		return fullName.substring(i + 1);
 }

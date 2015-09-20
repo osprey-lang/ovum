@@ -16,12 +16,12 @@ AVES_API NATIVE_FUNCTION(aves_StringBuffer_get_capacity);
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_appendLine);
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_append);
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_appendCodePoint);
-AVES_API NATIVE_FUNCTION(aves_StringBuffer_appendSubstrFromString);
-AVES_API NATIVE_FUNCTION(aves_StringBuffer_appendSubstrFromBuffer);
+AVES_API NATIVE_FUNCTION(aves_StringBuffer_appendSubstringFromString);
+AVES_API NATIVE_FUNCTION(aves_StringBuffer_appendSubstringFromBuffer);
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_insert);
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_clear);
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_toString);
-AVES_API NATIVE_FUNCTION(aves_StringBuffer_toStringSubstr);
+AVES_API NATIVE_FUNCTION(aves_StringBuffer_toStringSubstring);
 
 void aves_StringBuffer_finalize(void *basePtr);
 

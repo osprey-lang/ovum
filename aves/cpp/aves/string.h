@@ -16,8 +16,7 @@ AVES_API NATIVE_FUNCTION(aves_String_indexOf);
 AVES_API NATIVE_FUNCTION(aves_String_lastIndexOf);
 
 AVES_API NATIVE_FUNCTION(aves_String_reverse);
-AVES_API NATIVE_FUNCTION(aves_String_substr1);
-AVES_API NATIVE_FUNCTION(aves_String_substr2);
+AVES_API NATIVE_FUNCTION(aves_String_substringInternal);
 AVES_API NATIVE_FUNCTION(aves_String_format);
 AVES_API NATIVE_FUNCTION(aves_String_replaceInner);
 AVES_API NATIVE_FUNCTION(aves_String_splice);
@@ -38,7 +37,7 @@ AVES_API NATIVE_FUNCTION(aves_String_getInterned);
 AVES_API NATIVE_FUNCTION(aves_String_intern);
 
 AVES_API NATIVE_FUNCTION(aves_String_getHashCode);
-AVES_API NATIVE_FUNCTION(aves_String_getHashCodeSubstr);
+AVES_API NATIVE_FUNCTION(aves_String_getHashCodeSubstring);
 
 AVES_API NATIVE_FUNCTION(aves_String_fromCodePoint);
 

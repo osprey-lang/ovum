@@ -225,60 +225,30 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_reverse)
 }
 END_NATIVE_FUNCTION
 
-AVES_API BEGIN_NATIVE_FUNCTION(aves_String_substr1)
+AVES_API BEGIN_NATIVE_FUNCTION(aves_String_substringInternal)
 {
-	// substr(start)
-	String *str = THISV.v.string;
-
-	int32_t start;
-	CHECKED(GetIndex(thread, str, args + 1, start));
-	int32_t count = str->length - start;
-
-	if (start == 0)
-	{
-		VM_PushString(thread, str);
-		RETURN_SUCCESS;
-	}
-	if (count == 0)
-	{
-		VM_PushString(thread, strings::Empty);
-		RETURN_SUCCESS;
-	}
-
-	String *output;
-	CHECKED_MEM(output= GC_ConstructString(thread, count, &str->firstChar + start));
-	
-	VM_PushString(thread, output);
-}
-END_NATIVE_FUNCTION
-
-AVES_API BEGIN_NATIVE_FUNCTION(aves_String_substr2)
-{
-	// substr(start, count)
+	// substringInternal(startIndex is Int, count is Int)
+	// Public-facing methods check the types and range-check the values.
 	Aves *aves = Aves::Get(thread);
 
 	String *str = THISV.v.string;
+	int32_t startIndex = (int32_t)args[1].v.integer;
+	int32_t count = (int32_t)args[2].v.integer;
 
-	int32_t start;
-	CHECKED(GetIndex(thread, str, args + 1, start));
-	CHECKED(IntFromValue(thread, args + 2));
-	int64_t count = args[2].v.integer;
-	if (start + count > str->length)
-		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentRangeError, 0);
-
-	if (start == 0 && count == str->length)
-	{
-		VM_PushString(thread, str);
-		RETURN_SUCCESS;
-	}
+	String *output;
 	if (count == 0)
 	{
 		VM_PushString(thread, strings::Empty);
-		RETURN_SUCCESS;
 	}
-
-	String *output;
-	CHECKED_MEM(output = GC_ConstructString(thread, (int32_t)count, &str->firstChar + start));
+	else if (startIndex == 0 && count == str->length)
+	{
+		// The substring spans the entire string. We can just return the original.
+		output = str;
+	}
+	else
+	{
+		CHECKED_MEM(output = GC_ConstructString(thread, count, &str->firstChar + startIndex));
+	}
 
 	VM_PushString(thread, output);
 }
@@ -648,9 +618,9 @@ AVES_API NATIVE_FUNCTION(aves_String_getHashCode)
 	RETURN_SUCCESS;
 }
 
-AVES_API NATIVE_FUNCTION(aves_String_getHashCodeSubstr)
+AVES_API NATIVE_FUNCTION(aves_String_getHashCodeSubstring)
 {
-	// getHashCodeSubstr(index is Int, count is Int)
+	// getHashCodeSubstring(index is Int, count is Int)
 	// index and count are range-checked in the wrapper function.
 	int32_t index = (int32_t)args[1].v.integer;
 	int32_t count = (int32_t)args[2].v.integer;

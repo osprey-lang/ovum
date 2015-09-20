@@ -214,7 +214,7 @@ public inheritable TextReader
 			}
 
 			var n = math.min(count, charCount - charOffset);
-			sb.appendSubstr(charBuffer, charOffset, n);
+			sb.appendSubstring(charBuffer, charOffset, n);
 			charOffset += n;
 			count -= n;
 		}
@@ -235,7 +235,7 @@ public inheritable TextReader
 
 		do
 		{
-			sb.appendSubstr(charBuffer, charOffset, charCount - charOffset);
+			sb.appendSubstring(charBuffer, charOffset, charCount - charOffset);
 			charOffset = charCount;
 			fillBuffer();
 		} while charCount > 0;

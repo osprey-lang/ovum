@@ -81,7 +81,7 @@ public class StringBuffer
 	public append(value)
 	{
 		if value is StringBuffer:
-			return appendSubstrFromBuffer(value, 0, value.length);
+			return appendSubstringFromBuffer(value, 0, value.length);
 
 		value = string(value);
 		return appendInternal(value, 1);
@@ -161,7 +161,7 @@ public class StringBuffer
 	///          {index} or {count} is less than zero.
 	/// Throws ArgumentError:
 	///          {index} + {count} is greater than the length of {str}.
-	public appendSubstr(str, index, count)
+	public appendSubstring(str, index, count)
 	{
 		var isStringBuf = str is StringBuffer;
 		if not isStringBuf:
@@ -175,14 +175,14 @@ public class StringBuffer
 			throw new ArgumentError("The end of the range is outside of the string.");
 
 		if isStringBuf:
-			return appendSubstrFromBuffer(str, index, count);
+			return appendSubstringFromBuffer(str, index, count);
 		else:
-			return appendSubstrFromString(str, index, count);
+			return appendSubstringFromString(str, index, count);
 	}
-	private appendSubstrFromString(str, index, count)
-		__extern("aves_StringBuffer_appendSubstrFromString");
-	private appendSubstrFromBuffer(sb, index, count)
-		__extern("aves_StringBuffer_appendSubstrFromBuffer");
+	private appendSubstringFromString(str, index, count)
+		__extern("aves_StringBuffer_appendSubstringFromString");
+	private appendSubstringFromBuffer(sb, index, count)
+		__extern("aves_StringBuffer_appendSubstringFromBuffer");
 
 	/// Summary: Inserts the specified value into the string buffer at the
 	///          specified index.
@@ -221,7 +221,7 @@ public class StringBuffer
 	///          {start} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {start} is less than zero or greater than {length}.
-	public substr(start)
+	public substring(start)
 	{
 		start = int(start);
 		if start < 0 or start > length:
@@ -229,7 +229,7 @@ public class StringBuffer
 
 		var sb = new StringBuffer(length - start);
 		if start < length:
-			sb.appendSubstrFromBuffer(this, start, length - start);
+			sb.appendSubstringFromBuffer(this, start, length - start);
 		return sb;
 	}
 	/// Summary: Creates a new string buffer with the specified number of characters
@@ -246,7 +246,7 @@ public class StringBuffer
 	///          {count} is less than zero.
 	/// Throws ArgumentError:
 	///          {start} + {count} is greater than {length}.
-	public substr(start, count)
+	public substring(start, count)
 	{
 		start = int(start);
 		count = int(count);
@@ -256,7 +256,7 @@ public class StringBuffer
 			throw new ArgumentError(endIsOutsideBuffer);
 
 		var sb = new StringBuffer(count);
-		sb.appendSubstrFromBuffer(this, start, count);
+		sb.appendSubstringFromBuffer(this, start, count);
 		return sb;
 	}
 
@@ -288,10 +288,10 @@ public class StringBuffer
 		if start + count > length:
 			throw new ArgumentError(endIsOutsideBuffer);
 
-		return toStringSubstr(start, count);
+		return toStringSubstring(start, count);
 	}
-	private toStringSubstr(start, count)
-		__extern("aves_StringBuffer_toStringSubstr");
+	private toStringSubstring(start, count)
+		__extern("aves_StringBuffer_toStringSubstring");
 
 	private const endIsOutsideBuffer = "The end of the range is outside of the string buffer.";
 }

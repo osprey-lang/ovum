@@ -154,7 +154,7 @@ AVES_API NATIVE_FUNCTION(aves_StringBuffer_appendCodePoint)
 	RETURN_SUCCESS;
 }
 
-AVES_API NATIVE_FUNCTION(aves_StringBuffer_appendSubstrFromString)
+AVES_API NATIVE_FUNCTION(aves_StringBuffer_appendSubstringFromString)
 {
 	// appendSubstrFromString(str is String, index is Int, count is Int)
 	// The public-facing method also range-checks the values
@@ -171,7 +171,7 @@ AVES_API NATIVE_FUNCTION(aves_StringBuffer_appendSubstrFromString)
 	RETURN_SUCCESS;
 }
 
-AVES_API NATIVE_FUNCTION(aves_StringBuffer_appendSubstrFromBuffer)
+AVES_API NATIVE_FUNCTION(aves_StringBuffer_appendSubstringFromBuffer)
 {
 	// appendSubstrFromBuffer(sb is StringBuffer, index is Int, count is Int)
 	// The public-facing method also range-checks the values
@@ -219,7 +219,7 @@ AVES_API NATIVE_FUNCTION(aves_StringBuffer_toString)
 	RETURN_SUCCESS;
 }
 
-AVES_API NATIVE_FUNCTION(aves_StringBuffer_toStringSubstr)
+AVES_API NATIVE_FUNCTION(aves_StringBuffer_toStringSubstring)
 {
 	// toStringSubstr(start is Int, count is Int)
 	// The public-facing method range-checks the values.
