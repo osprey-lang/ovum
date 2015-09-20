@@ -394,9 +394,10 @@ public abstract class Iterator
 		while moveNext()
 		{
 			var key = keyFunc(current);
-			if not result.hasKey(key):
-				result[key] = [];
-			result[key].add(valueFunc(current));
+			var groupValues;
+			if not result.tryGet(key, ref groupValues):
+				result.add(key, groupValues = new List(2));
+			groupValues.add(valueFunc(current));
 		}
 
 		return result;
