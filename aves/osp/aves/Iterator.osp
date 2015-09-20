@@ -639,10 +639,13 @@ public abstract class Iterator
 		return new MapIterator(this, func);
 	}
 
-	/// Summary: Takes a maximum number of items from this sequence.
+	/// Summary: Returns an iterator that takes a specified maximum number of items
+	///          from this sequence.
 	/// Param count: The maximum number of items to take. (Int, UInt or Real)
-	/// Returns: A new Iteator which, when iterated over, produces up to
-	///          {count} values from this sequence.
+	/// Returns: A new Iterator which, when iterated over, produces up to {count}
+	///          values from this sequence. If this sequence produces fewer than
+	///          {count} values, no error is thrown; the resulting iterator will
+	///          simply stop when this sequence does.
 	/// Throws TypeError:
 	///          {count} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
@@ -658,11 +661,31 @@ public abstract class Iterator
 		return new TakeIterator(this, count);
 	}
 
-	/// Summary: Skips a certain number of items in this sequence.
+	/// Summary: Returns an iterator that takes items from this sequence as long
+	///          as the specified predicate returns true.
+	/// Param predicate: An invokable value that takes one argument (the current
+	///          element) and returns a truthy value if the element matches the
+	///          predicate, or a falsy value otherwise.
+	/// Returns: A new Iterator which, when iterated over, produces values from
+	///          this sequence until {predicate} returns false.
+	/// Throws ArgumentNullError:
+	///          {predicate} is null.
+	public overridable takeWhile(predicate)
+	{
+		if predicate is null:
+			throw new ArgumentNullError("predicate");
+
+		return new TakeWhileIterator(this, predicate);
+	}
+
+	/// Summary: Returns an iterator that skips a specified number of items in
+	///          this sequence.
 	/// Param count: The number of items to skip. (Int, UInt or Real)
 	/// Returns: A new Iterator which, when iterated over, skips {count} items
 	///          from this sequence, and then continues to produce any items
-	///          that may remain in the original sequence.
+	///          that may remain in the original sequence. If this sequence
+	///          produces fewer than {count} values, no error is thrown; the
+	///          resulting iterable will simply stop when this sequence does.
 	/// Throws TypeError:
 	///          {count} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
@@ -674,6 +697,22 @@ public abstract class Iterator
 			throw new ArgumentRangeError("count");
 
 		return new SkipIterator(this, count);
+	}
+
+	/// Summary: Returns an iterator that skips items from this sequence as long
+	///          as the specified predicate returns true.
+	/// Param predicate: An invokable value that takes one argument (the current
+	///          element) and returns a truthy value if the element matches the
+	///          predicate, or a falsy value otherwise.
+	/// Returns: A new Iterator which, when iterated over, skips values from this
+	///          sequence until {predicate} returns false, and then produces the
+	///          remaining values from this sequence.
+	public overridable skipWhile(predicate)
+	{
+		if predicate is null:
+			throw new ArgumentNullError("predicate");
+
+		return new SkipWhileIterator(this, predicate);
 	}
 
 	/// Summary: Combines the items from this sequence with those from
@@ -850,6 +889,29 @@ private class TakeIterator is Iterator
 	}
 }
 
+private class TakeWhileIterator is Iterator
+{
+	public new(this.inner, this.predicate);
+
+	private inner;
+	private predicate;
+	private continue = true;
+
+	override get current = inner.current;
+
+	override moveNext()
+	{
+		if not continue
+		{
+			continue = inner.moveNext() and predicate(inner.current);
+			if continue:
+				return true;
+		}
+
+		return false;
+	}
+}
+
 private class SkipIterator is Iterator
 {
 	public new(this.inner, this.count);
@@ -875,6 +937,38 @@ private class SkipIterator is Iterator
 			return hasMore = inner.moveNext();
 		}
 		return false;
+	}
+}
+
+private class SkipWhileIterator is Iterator
+{
+	public new(this.inner, this.predicate);
+
+	private inner;
+	private predicate;
+	private skipItems = true;
+
+	override get current = inner.current;
+
+	override moveNext()
+	{
+		if skipItems
+		{
+			while inner.moveNext():
+				if not predicate(inner.current)
+				{
+					// When the predicate returns false, we stop skipping
+					// and yield the current item.
+					skipItems = false;
+					return true;
+				}
+
+			// If we fall through here, it means we got to the end before
+			// the predicate returned false. Don't try to skip again.
+			skipItems = false;
+		}
+
+		return inner.moveNext();
 	}
 }
 

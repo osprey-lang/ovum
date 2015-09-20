@@ -428,10 +428,13 @@ public abstract class Iterable
 		return new MapIterable(this, func);
 	}
 
-	/// Summary: Takes a maximum number of items from this sequence.
+	/// Summary: Returns an iterable that takes a specified maximum number of items
+	///          from this sequence.
 	/// Param count: The maximum number of items to take. (Int, UInt or Real)
-	/// Returns: A new Iteator which, when iterated over, produces up to
-	///          {count} values from this sequence.
+	/// Returns: A new Iterable which, when iterated over, produces up to {count}
+	///          values from this sequence. If this sequence produces fewer than
+	///          {count} values, no error is thrown; the resulting iterable will
+	///          simply stop when this sequence does.
 	/// Throws TypeError:
 	///          {count} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
@@ -445,11 +448,31 @@ public abstract class Iterable
 		return new TakeIterable(this, count);
 	}
 
-	/// Summary: Skips a certain number of items in this sequence.
+	/// Summary: Returns an iterable that takes items from this sequence as long
+	///          as the specified predicate returns true.
+	/// Param predicate: An invokable value that takes one argument (the current
+	///          element) and returns a truthy value if the element matches the
+	///          predicate, or a falsy value otherwise.
+	/// Returns: A new Iterable which, when iterated over, produces values from
+	///          this sequence until {predicate} returns false.
+	/// Throws ArgumentNullError:
+	///          {predicate} is null.
+	public overridable takeWhile(predicate)
+	{
+		if predicate is null:
+			throw new ArgumentNullError("predicate");
+
+		return new TakeWhileIterable(this, predicate);
+	}
+
+	/// Summary: Returns an iterable that skips a specified number of items in
+	///          this sequence.
 	/// Param count: The number of items to skip. (Int, UInt or Real)
 	/// Returns: A new Iterable which, when iterated over, skips {count} items
 	///          from this sequence, and then continues to produce any items
-	///          that may remain in the original sequence.
+	///          that may remain in the original sequence. If this sequence
+	///          produces fewer than {count} values, no error is thrown; the
+	///          resulting iterable will simply stop when this sequence does.
 	/// Throws TypeError:
 	///          {count} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
@@ -461,6 +484,22 @@ public abstract class Iterable
 			throw new ArgumentRangeError("count");
 
 		return new SkipIterable(this, count);
+	}
+
+	/// Summary: Returns an iterable that skips items from this sequence as long
+	///          as the specified predicate returns true.
+	/// Param predicate: An invokable value that takes one argument (the current
+	///          element) and returns a truthy value if the element matches the
+	///          predicate, or a falsy value otherwise.
+	/// Returns: A new Iterable which, when iterated over, skips values from this
+	///          sequence until {predicate} returns false, and then produces the
+	///          remaining values from this sequence.
+	public overridable skipWhile(predicate)
+	{
+		if predicate is null:
+			throw new ArgumentNullError("predicate");
+
+		return new SkipWhileIterable(this, predicate);
 	}
 
 	/// Summary: Combines the items from this sequence with those from
@@ -736,6 +775,19 @@ private class TakeIterable is Iterable
 	}
 }
 
+private class TakeWhileIterable is Iterable
+{
+	public new(this.inner, this.predicate);
+
+	private inner;
+	private predicate;
+
+	iter
+	{
+		return inner.iter.takeWhile(predicate);
+	}
+}
+
 private class SkipIterable is Iterable
 {
 	public new(this.inner, this.skipCount);
@@ -754,6 +806,19 @@ private class SkipIterable is Iterable
 	iter
 	{
 		return inner.iter.skip(skipCount);
+	}
+}
+
+private class SkipWhileIterable is Iterable
+{
+	public new(this.inner, this.predicate);
+
+	private inner;
+	private predicate;
+
+	iter
+	{
+		return inner.iter.skipWhile(predicate);
 	}
 }
 
