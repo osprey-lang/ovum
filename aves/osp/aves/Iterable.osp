@@ -252,37 +252,47 @@ public abstract class Iterable
 		return this.iter.joinNatural(separator, lastSeparator);
 	}
 
-	/// Summary: Groups the contents of the sequence according to a key
-	///          selector function.
-	/// Param func: An invokable value which is called with one argument
-	///             (the current element) and returns the key under which
-	///             the element should be grouped. The key cannot be null.
-	/// Returns: A Hash where each key-value pair contains of a key as
-	///          returned by {func} and a List of values for which {func}
-	///          returned that key.
+	/// Summary: Groups the contents of the sequence according to a key selector
+	///          function.
+	/// Param keyFunc: An invokable value which is called with one argument (the
+	///          the current element) and returns the key for that element. The
+	///          key cannot be null.
+	/// Returns: An iterable which, when iterated, returns a {Hash} containing the
+	///          grouping. The keys correspond to those returned by {keyFunc}, and
+	///          the value of each entry is a {List} of elements with compatible
+	///          keys.
 	/// Throws ArgumentNullError:
-	///          {func} is null.
-	public overridable group(func)
+	///          {keyFunc} is null.
+	/// Throws ArgumentError:
+	///          {keyComparer} is not null and not an {EqualityComparer}.
+	/// Remarks: Keys are compared for equality using the default {EqualityComparer},
+	///          {EqualityComparer.default}.
+	public overridable group(keyFunc)
 	{
-		if func is null:
-			throw new ArgumentNullError("func");
+		if keyFunc is null:
+			throw new ArgumentNullError("keyFunc");
 
-		return new GroupIterable(this, func);
+		return new GroupIterable(this, keyFunc, @x = x, null);
 	}
-	/// Summary: Groups the contents of the sequence according to a key
-	///          selector function, and simultaneously transforms the
-	///          values according to a separate function.
-	/// Param keyFunc: An invokable value which is called with one argument
-	///             (the current element) and returns the key under which
-	///             the element should be grouped. The key cannot be null.
-	/// Param valueFunc: An invokable value whith is called with one argument
-	///             (the current element) and returns the element value that
-	///             is included in the result.
-	/// Returns: A Hash where each key-value pair contains of a key as
-	///          returned by {func} and a List of values (as returned by
-	///          {valueFunc}) for which {func} returned that key.
+	/// Summary: Groups the contents of the sequence according to a key selector
+	///          function, and simultaneously transforms the values according to
+	///          a separate function.
+	/// Param keyFunc: An invokable value which is called with one argument (the
+	///          the current element) and returns the key for that element. The
+	///          key cannot be null.
+	/// Param valueFunc: An invokable value which is called with one argument
+	///          (the current element) and returns a projection of it, which is
+	///          included in the result.
+	/// Returns: An iterable which, when iterated, returns a {Hash} containing the
+	///          grouping. The keys correspond to those returned by {keyFunc}, and
+	///          the value of each entry is a {List} of elements (as transformed by
+	///          {valueFunc}) with compatible keys.
 	/// Throws ArgumentNullError:
-	///          {func} is null.
+	///          {keyFunc} or {valueFunc} is null.
+	/// Throws ArgumentError:
+	///          {keyComparer} is not null and not an {EqualityComparer}.
+	/// Remarks: Keys are compared for equality using the default {EqualityComparer},
+	///          {EqualityComparer.default}.
 	public overridable group(keyFunc, valueFunc)
 	{
 		if keyFunc is null:
@@ -290,7 +300,41 @@ public abstract class Iterable
 		if valueFunc is null:
 			throw new ArgumentNullError("valueFunc");
 
-		return new GroupIterable(this, keyFunc, valueFunc);
+		return new GroupIterable(this, keyFunc, valueFunc, null);
+	}
+	/// Summary: Groups the contents of the sequence according to a key selector
+	///          function, and simultaneously transforms the values according to
+	///          a separate function. Keys are compared for equality using the
+	///          specified {EqualityComparer}.
+	/// Param keyFunc: An invokable value which is called with one argument (the
+	///          the current element) and returns the key for that element. The
+	///          key cannot be null.
+	/// Param valueFunc: An invokable value which is called with one argument
+	///          (the current element) and returns a projection of it, which is
+	///          included in the result.
+	/// Param keyComparer: An {EqualityComparer} that is used to compare keys
+	///          returned by {keyFunc} for equality. This parameter can be null,
+	///          to use the default {EqualityComparer}.
+	/// Returns: An iterable which, when iterated, returns a {Hash} containing the
+	///          grouping. The keys correspond to those returned by {keyFunc}, and
+	///          the value of each entry is a {List} of elements (as transformed by
+	///          {valueFunc}) with compatible keys.
+	/// Throws ArgumentNullError:
+	///          {keyFunc} or {valueFunc} is null.
+	/// Throws ArgumentError:
+	///          {keyComparer} is not null and not an {EqualityComparer}.
+	public overridable group(keyFunc, valueFunc, keyComparer)
+	{
+		if keyFunc is null:
+			throw new ArgumentNullError("keyFunc");
+		if valueFunc is null:
+			throw new ArgumentNullError("valueFunc");
+		if keyComparer is null:
+			keyComparer = EqualityComparer.default;
+		else if keyComparer is not EqualityComparer:
+			throw new ArgumentError("keyComparer must be an aves.EqualityComparer or null.");
+
+		return new GroupIterable(this, keyFunc, valueFunc, keyComparer);
 	}
 
 	/// Summary: Groups the contents of the sequence into fixed-size intervals.
@@ -729,16 +773,16 @@ private class IntersperseIterable is Iterable
 
 private class GroupIterable is Iterable
 {
-	public new(this.inner, this.keyFunc);
-	public new(this.inner, this.keyFunc, this.valueFunc);
+	public new(this.inner, this.keyFunc, this.valueFunc, this.keyComparer);
 
-	private inner, keyFunc, valueFunc;
+	private inner;
+	private keyFunc;
+	private valueFunc;
+	private keyComparer;
 
 	iter
 	{
-		if valueFunc is not null:
-			return inner.iter.group(keyFunc, valueFunc);
-		return inner.iter.group(keyFunc);
+		return inner.iter.group(keyFunc, valueFunc, keyComparer);
 	}
 }
 

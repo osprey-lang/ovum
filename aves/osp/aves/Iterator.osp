@@ -340,64 +340,85 @@ public abstract class Iterator
 		return output.toString();
 	}
 
-	/// Summary: Groups the contents of the sequence according to a key
-	///          selector function.
-	/// Param func: An invokable value which is called with one argument
-	///             (the current element) and returns the key under which
-	///             the element should be grouped. The key cannot be null.
-	/// Returns: A Hash where each key-value pair contains of a key as
-	///          returned by {func} and a List of values for which {func}
-	///          returned that key.
+	/// Summary: Groups the contents of the sequence according to a key selector
+	///          function.
+	/// Param keyFunc: An invokable value which is called with one argument (the
+	///          the current element) and returns the key for that element. The
+	///          key cannot be null.
+	/// Returns: A {Hash} containing the grouping. The keys correspond to those
+	///          returned by {keyFunc}, and the value of each entry is a {List}
+	///          of elements with compatible keys.
 	/// Throws ArgumentNullError:
-	///          {func} is null.
-	public overridable group(func)
+	///          {keyFunc} is null.
+	/// Remarks: Keys are compared for equality using the default {EqualityComparer},
+	///          {EqualityComparer.default}.
+	public overridable group(keyFunc)
 	{
-		if func is null:
-			throw new ArgumentNullError("func");
-
-		var result = {};
-
-		while moveNext()
-		{
-			var key = func(current);
-			var groupValues;
-			if not result.tryGet(key, ref groupValues):
-				result.add(key, groupValues = new List(2));
-			groupValues.add(current);
-		}
-
-		return result;
+		return group(keyFunc, @x = x, null);
 	}
-	/// Summary: Groups the contents of the sequence according to a key
-	///          selector function, and simultaneously transforms the
-	///          values according to a separate function.
-	/// Param keyFunc: An invokable value which is called with one argument
-	///             (the current element) and returns the key under which
-	///             the element should be grouped. The key cannot be null.
-	/// Param valueFunc: An invokable value whith is called with one argument
-	///             (the current element) and returns the element value that
-	///             is included in the result.
-	/// Returns: A Hash where each key-value pair contains of a key as
-	///          returned by {func} and a List of values (as returned by
-	///          {valueFunc}) for which {func} returned that key.
+	/// Summary: Groups the contents of the sequence according to a key selector
+	///          function, and simultaneously transforms the values according to
+	///          a separate function.
+	/// Param keyFunc: An invokable value which is called with one argument (the
+	///          the current element) and returns the key for that element. The
+	///          key cannot be null.
+	/// Param valueFunc: An invokable value which is called with one argument
+	///          (the current element) and returns a projection of it, which is
+	///          included in the result.
+	/// Returns: A {Hash} containing the grouping. The keys correspond to those
+	///          returned by {keyFunc}, and the value of each entry is a {List}
+	///          of elements (as transformed by {valueFunc}) with compatible keys.
 	/// Throws ArgumentNullError:
-	///          {func} is null.
+	///          {keyFunc} or {valueFunc} is null.
+	/// Remarks: Keys are compared for equality using the default {EqualityComparer},
+	///          {EqualityComparer.default}.
 	public overridable group(keyFunc, valueFunc)
+	{
+		return group(keyFunc, valueFunc, null);
+	}
+	/// Summary: Groups the contents of the sequence according to a key selector
+	///          function, and simultaneously transforms the values according to
+	///          a separate function. Keys are compared for equality using the
+	///          specified {EqualityComparer}.
+	/// Param keyFunc: An invokable value which is called with one argument (the
+	///          the current element) and returns the key for that element. The
+	///          key cannot be null.
+	/// Param valueFunc: An invokable value which is called with one argument
+	///          (the current element) and returns a projection of it, which is
+	///          included in the result.
+	/// Param keyComparer: An {EqualityComparer} that is used to compare keys
+	///          returned by {keyFunc} for equality. This parameter can be null,
+	///          to use the default {EqualityComparer}.
+	/// Returns: A {Hash} containing the grouping. The keys correspond to those
+	///          returned by {keyFunc}, and the value of each entry is a {List}
+	///          of elements (as transformed by {valueFunc}) with compatible keys.
+	/// Throws ArgumentNullError:
+	///          {keyFunc} or {valueFunc} is null.
+	/// Throws ArgumentError:
+	///          {keyComparer} is not null and not an {EqualityComparer}.
+	public overridable group(keyFunc, valueFunc, keyComparer)
 	{
 		if keyFunc is null:
 			throw new ArgumentNullError("keyFunc");
 		if valueFunc is null:
 			throw new ArgumentNullError("valueFunc");
+		if keyComparer is null:
+			keyComparer = EqualityComparer.default;
+		else if keyComparer is not EqualityComparer:
+			throw new ArgumentError("keyComparer must be an aves.EqualityComparer or null.");
 
-		var result = {};
+		var result = new Hash(5, keyComparer);
 
 		while moveNext()
 		{
 			var key = keyFunc(current);
+			var value = valueFunc(current);
+
 			var groupValues;
 			if not result.tryGet(key, ref groupValues):
 				result.add(key, groupValues = new List(2));
-			groupValues.add(valueFunc(current));
+
+			groupValues.add(value);
 		}
 
 		return result;
