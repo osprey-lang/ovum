@@ -96,8 +96,7 @@ public inheritable List is Collection
 	}
 
 	/// Summary: Returns the index of the first occurrence of the
-	///          specified item within this list, or null if it could
-	///          not be found.
+	///          specified item within this list.
 	/// Param item: The item to look for.
 	/// Returns: The index of the first occurrence of {item} within
 	///          the list, as an Int, or null if it could not be found.
@@ -106,8 +105,8 @@ public inheritable List is Collection
 		return indexOfInternal(item, 0, length);
 	}
 	/// Summary: Returns the index of the first occurrence of the specified
-	///          item within this list, or null if it could not be found.
-	///          The search starts at the specified index.
+	///          item within this list. The search starts at the specified
+	///          index.
 	/// Param item: The item to look for.
 	/// Param startIndex: The index to start the search at. (Int, UInt or Real)
 	/// Returns: The index of the first occurrence of {item} within the list,
@@ -119,18 +118,18 @@ public inheritable List is Collection
 		if startIndex < 0 or startIndex > length:
 			throw new ArgumentRangeError("startIndex");
 
-		return indexOfInternal(item, startIndex, length - startIndex);
+		return indexOfInternal(item, startIndex, length);
 	}
 	/// Summary: Returns the index of the first occurrence of the specified
-	///          item within this list, or null if it could not be found.
-	///          The search spans over the specified section of the list.
+	///          item within this list. The search spans over the specified
+	///          region of the list.
 	/// Param item: The item to look for.
 	/// Param startIndex: The index to start the search at. (Int, UInt or Real)
 	/// Param count: The total number of items to test against. The search
 	///              is aborted when this many items have been tested without
 	///              a match. (Int, UInt or Real)
 	/// Returns: The index of the first occurrence of {item} within the
-	///          specified section of the list, as an Int, or null if it could
+	///          specified region of the list, as an Int, or null if it could
 	///          not be found. If found, the return value is greater than or
 	///          equal to {startIndex}.
 	/// Throws TypeError:
@@ -152,14 +151,17 @@ public inheritable List is Collection
 		if startIndex + count > length:
 			throw new ArgumentError("startIndex + count is outside the list.");
 
-		return indexOfInternal(item, startIndex, count);
+		return indexOfInternal(item, startIndex, startIndex + count);
 	}
 
-	private indexOfInternal(item, startIndex, count)
+	private indexOfInternal(item, startIndex, endIndex)
 	{
-		for i in [startIndex to startIndex + count - 1]:
-			if item == this[i]:
-				return i;
+		while startIndex < endIndex
+		{
+			if item == this[startIndex]:
+				return startIndex;
+			startIndex += 1;
+		}
 
 		return null;
 	}
