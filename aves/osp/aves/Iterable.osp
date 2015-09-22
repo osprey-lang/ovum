@@ -257,10 +257,9 @@ public abstract class Iterable
 	/// Param keyFunc: An invokable value which is called with one argument (the
 	///          the current element) and returns the key for that element. The
 	///          key cannot be null.
-	/// Returns: An iterable which, when iterated, returns a {Hash} containing the
-	///          grouping. The keys correspond to those returned by {keyFunc}, and
-	///          the value of each entry is a {List} of elements with compatible
-	///          keys.
+	/// Returns: A {Hash} containing the grouping. The keys correspond to those
+	///          returned by {keyFunc}, and the value of each entry is a {List}
+	///          of elements with compatible keys.
 	/// Throws ArgumentNullError:
 	///          {keyFunc} is null.
 	/// Throws ArgumentError:
@@ -272,7 +271,7 @@ public abstract class Iterable
 		if keyFunc is null:
 			throw new ArgumentNullError("keyFunc");
 
-		return new GroupIterable(this, keyFunc, @x = x, null);
+		return this.iter.group(keyFunc);
 	}
 	/// Summary: Groups the contents of the sequence according to a key selector
 	///          function, and simultaneously transforms the values according to
@@ -283,10 +282,9 @@ public abstract class Iterable
 	/// Param valueFunc: An invokable value which is called with one argument
 	///          (the current element) and returns a projection of it, which is
 	///          included in the result.
-	/// Returns: An iterable which, when iterated, returns a {Hash} containing the
-	///          grouping. The keys correspond to those returned by {keyFunc}, and
-	///          the value of each entry is a {List} of elements (as transformed by
-	///          {valueFunc}) with compatible keys.
+	/// Returns: A {Hash} containing the grouping. The keys correspond to those
+	///          returned by {keyFunc}, and the value of each entry is a {List}
+	///          of elements (as transformed by {valueFunc}) with compatible keys.
 	/// Throws ArgumentNullError:
 	///          {keyFunc} or {valueFunc} is null.
 	/// Throws ArgumentError:
@@ -300,7 +298,7 @@ public abstract class Iterable
 		if valueFunc is null:
 			throw new ArgumentNullError("valueFunc");
 
-		return new GroupIterable(this, keyFunc, valueFunc, null);
+		return this.iter.group(keyFunc, valueFunc);
 	}
 	/// Summary: Groups the contents of the sequence according to a key selector
 	///          function, and simultaneously transforms the values according to
@@ -315,10 +313,9 @@ public abstract class Iterable
 	/// Param keyComparer: An {EqualityComparer} that is used to compare keys
 	///          returned by {keyFunc} for equality. This parameter can be null,
 	///          to use the default {EqualityComparer}.
-	/// Returns: An iterable which, when iterated, returns a {Hash} containing the
-	///          grouping. The keys correspond to those returned by {keyFunc}, and
-	///          the value of each entry is a {List} of elements (as transformed by
-	///          {valueFunc}) with compatible keys.
+	/// Returns: A {Hash} containing the grouping. The keys correspond to those
+	///          returned by {keyFunc}, and the value of each entry is a {List}
+	///          of elements (as transformed by {valueFunc}) with compatible keys.
 	/// Throws ArgumentNullError:
 	///          {keyFunc} or {valueFunc} is null.
 	/// Throws ArgumentError:
@@ -334,7 +331,7 @@ public abstract class Iterable
 		else if keyComparer is not EqualityComparer:
 			throw new ArgumentError("keyComparer must be an aves.EqualityComparer or null.");
 
-		return new GroupIterable(this, keyFunc, valueFunc, keyComparer);
+		return this.iter.group(keyFunc, valueFunc, keyComparer);
 	}
 
 	/// Summary: Groups the contents of the sequence into fixed-size intervals.
@@ -768,21 +765,6 @@ private class IntersperseIterable is Iterable
 			return i.intersperse(value, frequency);
 		else
 			return i.intersperse(value);
-	}
-}
-
-private class GroupIterable is Iterable
-{
-	public new(this.inner, this.keyFunc, this.valueFunc, this.keyComparer);
-
-	private inner;
-	private keyFunc;
-	private valueFunc;
-	private keyComparer;
-
-	iter
-	{
-		return inner.iter.group(keyFunc, valueFunc, keyComparer);
 	}
 }
 
