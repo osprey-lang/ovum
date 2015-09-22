@@ -20,6 +20,7 @@ AVES_API NATIVE_FUNCTION(aves_Char_new);
 
 AVES_API NATIVE_FUNCTION(aves_Char_get_length);
 AVES_API NATIVE_FUNCTION(aves_Char_get_category);
+AVES_API NATIVE_FUNCTION(aves_Char_get_codePoint);
 
 AVES_API NATIVE_FUNCTION(aves_Char_toUpper);
 AVES_API NATIVE_FUNCTION(aves_Char_toLower);
@@ -30,6 +31,5 @@ AVES_API NATIVE_FUNCTION(aves_Char_fromCodePoint);
 AVES_API NATIVE_FUNCTION(aves_Char_opEquals);
 AVES_API NATIVE_FUNCTION(aves_Char_opCompare);
 AVES_API NATIVE_FUNCTION(aves_Char_opMultiply);
-AVES_API NATIVE_FUNCTION(aves_Char_opPlus);
 
 #endif // AVES__CHAR_H

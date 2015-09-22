@@ -110,7 +110,8 @@ public class Char __primitive
 	/// Summary: Gets the Unicode code point of this character.
 	/// Returns: The Unicode code point of this character, as an Int.
 	///          The value is in the range 0 to 1,114,111 (U+10FFFF).
-	public get codePoint = +this;
+	public get codePoint
+		__extern("aves_Char_get_codePoint");
 
 	/// Summary: Converts this character to uppercase.
 	/// Returns: A new Char that contains the value of this character
@@ -147,5 +148,7 @@ public class Char __primitive
 	operator *(ch, times)
 		__extern("aves_Char_opMultiply");
 	operator +(ch)
-		__extern("aves_Char_opPlus");
+	{
+		return ch.codePoint;
+	}
 }

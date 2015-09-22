@@ -89,6 +89,12 @@ AVES_API NATIVE_FUNCTION(aves_Char_get_category)
 	RETURN_SUCCESS;
 }
 
+AVES_API NATIVE_FUNCTION(aves_Char_get_codePoint)
+{
+	VM_PushInt(thread, args[0].v.integer);
+	RETURN_SUCCESS;
+}
+
 AVES_API NATIVE_FUNCTION(aves_Char_toUpper)
 {
 	Aves *aves = Aves::Get(thread);
@@ -102,6 +108,7 @@ AVES_API NATIVE_FUNCTION(aves_Char_toUpper)
 	VM_Push(thread, &upper);
 	RETURN_SUCCESS;
 }
+
 AVES_API NATIVE_FUNCTION(aves_Char_toLower)
 {
 	Aves *aves = Aves::Get(thread);
@@ -124,6 +131,7 @@ AVES_API NATIVE_FUNCTION(aves_Char_getHashCode)
 	VM_PushInt(thread, String_GetHashCode(str.AsString()));
 	RETURN_SUCCESS;
 }
+
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Char_toString)
 {
 	ovwchar_t ch = Char::FromValue(THISP);
@@ -163,6 +171,7 @@ AVES_API NATIVE_FUNCTION(aves_Char_opEquals)
 	VM_PushBool(thread, eq);
 	RETURN_SUCCESS;
 }
+
 AVES_API NATIVE_FUNCTION(aves_Char_opCompare)
 {
 	Aves *aves = Aves::Get(thread);
@@ -182,6 +191,7 @@ AVES_API NATIVE_FUNCTION(aves_Char_opCompare)
 	VM_PushInt(thread, result);
 	RETURN_SUCCESS;
 }
+
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Char_opMultiply)
 {
 	Aves *aves = Aves::Get(thread);
@@ -216,8 +226,3 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Char_opMultiply)
 	VM_PushString(thread, result);
 }
 END_NATIVE_FUNCTION
-AVES_API NATIVE_FUNCTION(aves_Char_opPlus)
-{
-	VM_PushInt(thread, args[0].v.integer);
-	RETURN_SUCCESS;
-}
