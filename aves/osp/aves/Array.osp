@@ -72,9 +72,67 @@ public class Array is Collection
 	/// Remarks: Items are compared for equality using the `==` operator.
 	public indexOf(item)
 	{
-		for i in [0 to length - 1]:
-			if item == this[i]:
-				return i;
+		return indexOfInternal(item, 0, length);
+	}
+	/// Summary: Returns the index of the first occurrence of the specified
+	///          item within the array. The search starts at the specified
+	///          index.
+	/// Param item: The item to look for.
+	/// Param startIndex: The index to start the search at. (Int, UInt or Real)
+	/// Returns: The index of the first occurrence of {item} within the array,
+	///          as an Int, or null if it could not be found. If the item is
+	///          found, the return value is greater than or equal to {startIndex}.
+	/// Remarks: Items are compared for equality using the `==` operator.
+	public indexOf(item, startIndex)
+	{
+		startIndex = int(startIndex);
+		if startIndex < 0 or startIndex > length:
+			throw new ArgumentRangeError("startIndex");
+
+		return indexOfInternal(item, startIndex, length);
+	}
+	/// Summary: Returns the index of the first occurrence of the specified
+	///          item within this array. The search spans over the specified
+	///          region of the array.
+	/// Param item: The item to look for.
+	/// Param startIndex: The index to start the search at. (Int, UInt or Real)
+	/// Param count: The total number of items to test against. The search
+	///              is aborted when this many items have been tested without
+	///              a match. (Int, UInt or Real)
+	/// Returns: The index of the first occurrence of {item} within the
+	///          specified region of the array, as an Int, or null if it could
+	///          not be found. If found, the return value is greater than or
+	///          equal to {startIndex}.
+	/// Throws TypeError:
+	///          {startIndex} or {count} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {startIndex} is less than zero or greater than {length}.
+	///
+	///          {count} is less than zero.
+	/// Throws ArgumentError:
+	///          {startIndex} + {count} is greater than {length}.
+	public indexOf(item, startIndex, count)
+	{
+		startIndex = int(startIndex);
+		if startIndex < 0 or startIndex > length:
+			throw new ArgumentRangeError("startIndex");
+		count = int(count);
+		if count < 0:
+			throw new ArgumentRangeError("count");
+		if startIndex + count > length:
+			throw new ArgumentError("startIndex + count is outside the array.");
+
+		return indexOfInternal(item, startIndex, startIndex + count);
+	}
+
+	private indexOfInternal(item, startIndex, endIndex)
+	{
+		while startIndex < endIndex
+		{
+			if item == this[startIndex]:
+				return startIndex;
+			startIndex += 1;
+		}
 
 		return null;
 	}
