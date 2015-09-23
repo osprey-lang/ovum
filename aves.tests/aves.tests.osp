@@ -17,12 +17,16 @@ private function main(args)
 	}
 	else
 	{
+		const classPrefix = "aves.tests.";
+
 		var testFixtureType = typeof(TestFixture);
+
+		var testTypes = new List(args.length);
 		// args contains a list of test fixture class names,
 		// without the "aves.tests." prefix.
 		for arg in args
 		{
-			var className = "aves.tests." :: arg;
+			var className = classPrefix :: arg;
 			var type = module.getType(className);
 			if type is null
 			{
@@ -35,8 +39,12 @@ private function main(args)
 				next;
 			}
 
-			var instance = type.createInstance(null);
-			instance.run();
+			testTypes.add(type);
 		}
+
+		var runner = new TestRunner();
+		var printer = new TestResultPrinter();
+		var results = runner.runAll(testTypes);
+		printer.printResults(results);
 	}
 }
