@@ -10,9 +10,12 @@ AVES_API int OVUM_CDECL aves_reflection_Module_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(ModuleInst));
 
-	Type_AddNativeField(type, offsetof(ModuleInst,fileName), NativeFieldType::STRING);
-	Type_AddNativeField(type, offsetof(ModuleInst,version),  NativeFieldType::VALUE);
-	RETURN_SUCCESS;
+	int status__;
+	CHECKED(Type_AddNativeField(type, offsetof(ModuleInst,fileName), NativeFieldType::STRING));
+	CHECKED(Type_AddNativeField(type, offsetof(ModuleInst,version),  NativeFieldType::VALUE));
+
+retStatus__:
+	return status__;
 }
 
 int GetMemberSearchFlags(ThreadHandle thread, Value *arg, ModuleMemberFlags *result)

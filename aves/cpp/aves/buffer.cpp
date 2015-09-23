@@ -354,7 +354,10 @@ AVES_API int aves_BufferView_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(BufferView));
 
-	Type_AddNativeField(type, offsetof(BufferView, buffer), NativeFieldType::VALUE);
+	int r;
+	r = Type_AddNativeField(type, offsetof(BufferView, buffer), NativeFieldType::VALUE);
+	if (r != OVUM_SUCCESS)
+		return r;
 	RETURN_SUCCESS;
 }
 

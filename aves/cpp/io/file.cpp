@@ -124,7 +124,10 @@ AVES_API int io_FileStream_initType(TypeHandle type)
 	Type_SetInstanceSize(type, (uint32_t)sizeof(FileStream));
 	Type_SetFinalizer(type, io_FileStream_finalize);
 
-	Type_AddNativeField(type, offsetof(FileStream, fileName), NativeFieldType::STRING);
+	int r;
+	r = Type_AddNativeField(type, offsetof(FileStream, fileName), NativeFieldType::STRING);
+	if (r == OVUM_SUCCESS)
+		return r;
 	RETURN_SUCCESS;
 }
 

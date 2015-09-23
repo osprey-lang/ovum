@@ -17,14 +17,18 @@ AVES_API int OVUM_CDECL io_TextReader_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(TextReaderInst));
 
-	Type_AddNativeField(type, offsetof(TextReaderInst,stream), NativeFieldType::VALUE);
-	Type_AddNativeField(type, offsetof(TextReaderInst,encoding), NativeFieldType::VALUE);
-	Type_AddNativeField(type, offsetof(TextReaderInst,decoder), NativeFieldType::VALUE);
-	Type_AddNativeField(type, offsetof(TextReaderInst,byteBuffer), NativeFieldType::VALUE);
-	Type_AddNativeField(type, offsetof(TextReaderInst,charBuffer), NativeFieldType::VALUE);
+	int status__;
+	CHECKED(Type_AddNativeField(type, offsetof(TextReaderInst,stream), NativeFieldType::VALUE));
+	CHECKED(Type_AddNativeField(type, offsetof(TextReaderInst,encoding), NativeFieldType::VALUE));
+	CHECKED(Type_AddNativeField(type, offsetof(TextReaderInst,decoder), NativeFieldType::VALUE));
+	CHECKED(Type_AddNativeField(type, offsetof(TextReaderInst,byteBuffer), NativeFieldType::VALUE));
+	CHECKED(Type_AddNativeField(type, offsetof(TextReaderInst,charBuffer), NativeFieldType::VALUE));
 
 	TextReaderInst::FillBuffer = Member_ToMethod(Type_GetMember(type, TextReaderInst::FillBufferName));
 	RETURN_SUCCESS;
+
+retStatus__:
+	return status__;
 }
 
 AVES_API NATIVE_FUNCTION(io_TextReader_get_stream)

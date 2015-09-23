@@ -10,11 +10,14 @@ AVES_API int OVUM_CDECL aves_Error_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(ErrorInst));
 
-	Type_AddNativeField(type, offsetof(ErrorInst, message),    NativeFieldType::STRING);
-	Type_AddNativeField(type, offsetof(ErrorInst, stackTrace), NativeFieldType::STRING);
-	Type_AddNativeField(type, offsetof(ErrorInst, innerError), NativeFieldType::VALUE);
-	Type_AddNativeField(type, offsetof(ErrorInst, data),       NativeFieldType::VALUE);
-	RETURN_SUCCESS;
+	int status__;
+	CHECKED(Type_AddNativeField(type, offsetof(ErrorInst, message),    NativeFieldType::STRING));
+	CHECKED(Type_AddNativeField(type, offsetof(ErrorInst, stackTrace), NativeFieldType::STRING));
+	CHECKED(Type_AddNativeField(type, offsetof(ErrorInst, innerError), NativeFieldType::VALUE));
+	CHECKED(Type_AddNativeField(type, offsetof(ErrorInst, data),       NativeFieldType::VALUE));
+
+retStatus__:
+	return status__;
 }
 
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Error_new)

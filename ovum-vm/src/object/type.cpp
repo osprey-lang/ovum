@@ -176,18 +176,23 @@ leave:
 	return r;
 }
 
-void Type::AddNativeField(size_t offset, NativeFieldType fieldType)
+int Type::AddNativeField(size_t offset, NativeFieldType fieldType)
 {
 	if (fieldCount == nativeFieldCapacity)
 	{
 		uint32_t newCap = nativeFieldCapacity ? 2 * nativeFieldCapacity : 4;
-		nativeFields = reinterpret_cast<NativeField*>(realloc(nativeFields, sizeof(NativeField) * newCap));
+		NativeField *newFields = reinterpret_cast<NativeField*>(realloc(nativeFields, sizeof(NativeField) * newCap));
+		if (newFields == nullptr)
+			return OVUM_ERROR_NO_MEMORY;
+
+		nativeFields = newFields;
 		nativeFieldCapacity = newCap;
 	}
 
 	NativeField *field = nativeFields + fieldCount++;
 	field->offset = offset;
 	field->type = fieldType;
+	RETURN_SUCCESS;
 }
 
 } // namespace ovum
@@ -322,10 +327,11 @@ OVUM_API void Type_SetConstructorIsAllocator(TypeHandle type, bool isAllocator)
 	}
 }
 
-OVUM_API void Type_AddNativeField(TypeHandle type, size_t offset, NativeFieldType fieldType)
+OVUM_API int Type_AddNativeField(TypeHandle type, size_t offset, NativeFieldType fieldType)
 {
 	if (!type->IsInited())
 	{
-		type->AddNativeField(offset, fieldType);
+		return type->AddNativeField(offset, fieldType);
 	}
+	return OVUM_ERROR_UNSPECIFIED;
 }

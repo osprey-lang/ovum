@@ -9,7 +9,10 @@ AVES_API int OVUM_CDECL aves_Method_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(MethodInst));
 
-	Type_AddNativeField(type, offsetof(MethodInst, instance), NativeFieldType::VALUE);
+	int r;
+	r = Type_AddNativeField(type, offsetof(MethodInst, instance), NativeFieldType::VALUE);
+	if (r != OVUM_SUCCESS)
+		return r;
 	RETURN_SUCCESS;
 }
 

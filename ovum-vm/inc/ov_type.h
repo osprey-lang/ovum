@@ -416,7 +416,7 @@ enum class NativeFieldType : int
 //
 // NOTE: Ovum does not verify that your native fields are non-overlapping. It is
 // entirely up to you to lay them out sensibly.
-OVUM_API void Type_AddNativeField(TypeHandle type, size_t offset, NativeFieldType fieldType);
+OVUM_API int Type_AddNativeField(TypeHandle type, size_t offset, NativeFieldType fieldType);
 
 // Standard types are required by the VM (because they implement special
 // behaviour or are needed by opcode instructions), but are implemented

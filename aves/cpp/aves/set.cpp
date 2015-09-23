@@ -72,10 +72,13 @@ AVES_API int OVUM_CDECL aves_Set_init(TypeHandle type)
 	Type_SetInstanceSize(type, sizeof(aves::Set));
 	Type_SetReferenceGetter(type, aves_Set_getReferences);
 
-	Type_AddNativeField(type, offsetof(aves::Set, buckets), NativeFieldType::GC_ARRAY);
-	Type_AddNativeField(type, offsetof(aves::Set, entries), NativeFieldType::GC_ARRAY);
-	Type_AddNativeField(type, offsetof(aves::Set, itemComparer), NativeFieldType::VALUE);
-	RETURN_SUCCESS;
+	int status__;
+	CHECKED(Type_AddNativeField(type, offsetof(aves::Set, buckets), NativeFieldType::GC_ARRAY));
+	CHECKED(Type_AddNativeField(type, offsetof(aves::Set, entries), NativeFieldType::GC_ARRAY));
+	CHECKED(Type_AddNativeField(type, offsetof(aves::Set, itemComparer), NativeFieldType::VALUE));
+
+retStatus__:
+	return status__;
 }
 
 AVES_API NATIVE_FUNCTION(aves_Set_get_length)

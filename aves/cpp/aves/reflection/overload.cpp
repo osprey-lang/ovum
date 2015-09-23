@@ -8,7 +8,10 @@ AVES_API int OVUM_CDECL aves_reflection_Overload_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(OverloadInst));
 
-	Type_AddNativeField(type, offsetof(OverloadInst,method), NativeFieldType::VALUE);
+	int r;
+	r = Type_AddNativeField(type, offsetof(OverloadInst,method), NativeFieldType::VALUE);
+	if (r != OVUM_SUCCESS)
+		return r;
 	RETURN_SUCCESS;
 }
 
@@ -165,7 +168,10 @@ AVES_API int OVUM_CDECL aves_reflection_Parameter_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(ParamInst));
 
-	Type_AddNativeField(type, offsetof(ParamInst,param) + offsetof(ParamInfo,name), NativeFieldType::STRING);
+	int r;
+	r = Type_AddNativeField(type, offsetof(ParamInst,param) + offsetof(ParamInfo,name), NativeFieldType::STRING);
+	if (r != OVUM_SUCCESS)
+		return r;
 	RETURN_SUCCESS;
 }
 

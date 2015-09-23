@@ -8,7 +8,10 @@ AVES_API int OVUM_CDECL aves_List_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(ListInst));
 
-	Type_AddNativeField(type, offsetof(ListInst, values), NativeFieldType::GC_ARRAY);
+	int r;
+	r = Type_AddNativeField(type, offsetof(ListInst, values), NativeFieldType::GC_ARRAY);
+	if (r != OVUM_SUCCESS)
+		return r;
 	RETURN_SUCCESS;
 }
 

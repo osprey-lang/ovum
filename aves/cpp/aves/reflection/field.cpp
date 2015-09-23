@@ -8,7 +8,10 @@ AVES_API int OVUM_CDECL aves_reflection_Field_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(FieldInst));
 
-	Type_AddNativeField(type, offsetof(FieldInst,fullName), NativeFieldType::STRING);
+	int r;
+	r = Type_AddNativeField(type, offsetof(FieldInst,fullName), NativeFieldType::STRING);
+	if (r != OVUM_SUCCESS)
+		return r;
 	RETURN_SUCCESS;
 }
 

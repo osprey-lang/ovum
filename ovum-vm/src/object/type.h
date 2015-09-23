@@ -135,7 +135,7 @@ public:
 	bool InitStaticFields(Thread *const thread);
 	int RunStaticCtor(Thread *const thread);
 
-	void AddNativeField(size_t offset, NativeFieldType fieldType);
+	int AddNativeField(size_t offset, NativeFieldType fieldType);
 
 	static inline bool ValueIsType(Value *value, Type *const type)
 	{
