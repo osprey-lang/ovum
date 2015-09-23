@@ -818,7 +818,9 @@ Type *Module::ReadSingleType(ModuleReader &reader, TokenId typeId,
 			TypeInitializer func = (TypeInitializer)FindNativeEntryPoint(initer.get());
 			if (func == nullptr)
 				throw ModuleLoadException(reader.GetFileName(), "Could not locate type initializer entry point.");
-			func(type.get());
+			int r = func(type.get());
+			if (r != OVUM_SUCCESS)
+				throw ModuleLoadException(reader.GetFileName(), "An error occurred when executing a type initializer.");
 		}
 	}
 

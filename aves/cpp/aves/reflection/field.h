@@ -10,7 +10,7 @@ public:
 	String *fullName; // cached value
 };
 
-AVES_API void OVUM_CDECL aves_reflection_Field_init(TypeHandle type);
+AVES_API int OVUM_CDECL aves_reflection_Field_init(TypeHandle type);
 
 AVES_API NATIVE_FUNCTION(aves_reflection_Field_new);
 

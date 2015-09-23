@@ -245,9 +245,10 @@ int Utf8Encoder::BufferOverrunError(ThreadHandle thread)
 	return VM_ThrowErrorOfType(thread, aves->aves.ArgumentError, 1);
 }
 
-AVES_API void aves_Utf8Encoder_init(TypeHandle type)
+AVES_API int aves_Utf8Encoder_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(Utf8Encoder));
+	RETURN_SUCCESS;
 }
 
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Utf8Encoder_getByteCount)
@@ -703,9 +704,10 @@ void Utf8Decoder::Reset()
 	this->bytesLeftAll = 0;
 }
 
-AVES_API void aves_Utf8Decoder_init(TypeHandle type)
+AVES_API int aves_Utf8Decoder_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(Utf8Decoder));
+	RETURN_SUCCESS;
 }
 
 AVES_API NATIVE_FUNCTION(aves_Utf8Decoder_getCharCountInternal)

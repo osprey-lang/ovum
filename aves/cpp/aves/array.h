@@ -18,7 +18,7 @@ public:
 
 } // namespace aves
 
-AVES_API void aves_Array_init(TypeHandle type);
+AVES_API int aves_Array_init(TypeHandle type);
 
 AVES_API NATIVE_FUNCTION(aves_Array_new);
 

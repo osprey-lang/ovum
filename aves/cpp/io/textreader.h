@@ -23,7 +23,7 @@ public:
 	static String *FillBufferName;
 };
 
-AVES_API void OVUM_CDECL io_TextReader_init(TypeHandle type);
+AVES_API int OVUM_CDECL io_TextReader_init(TypeHandle type);
 
 AVES_API NATIVE_FUNCTION(io_TextReader_get_stream);
 AVES_API NATIVE_FUNCTION(io_TextReader_set_stream);

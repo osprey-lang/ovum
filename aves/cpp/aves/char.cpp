@@ -50,9 +50,10 @@ int Char::FromCodepoint(ThreadHandle thread, Value *codepoint, Value *result)
 	RETURN_SUCCESS;
 }
 
-AVES_API void OVUM_CDECL aves_Char_init(TypeHandle type)
+AVES_API int OVUM_CDECL aves_Char_init(TypeHandle type)
 {
 	Type_SetConstructorIsAllocator(type, true);
+	RETURN_SUCCESS;
 }
 
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Char_new)

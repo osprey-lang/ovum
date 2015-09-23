@@ -14,7 +14,7 @@ public:
 	static int FromCodepoint(ThreadHandle thread, Value *codepoint, Value *result);
 };
 
-AVES_API void OVUM_CDECL aves_Char_init(TypeHandle type);
+AVES_API int OVUM_CDECL aves_Char_init(TypeHandle type);
 
 AVES_API NATIVE_FUNCTION(aves_Char_new);
 

@@ -13,7 +13,7 @@ String *TextReaderInst::FillBufferName = strings::_FillBufferName.AsString();
 
 #define _TR(val)     reinterpret_cast<TextReaderInst*>((val).instance)
 
-AVES_API void OVUM_CDECL io_TextReader_init(TypeHandle type)
+AVES_API int OVUM_CDECL io_TextReader_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(TextReaderInst));
 
@@ -24,6 +24,7 @@ AVES_API void OVUM_CDECL io_TextReader_init(TypeHandle type)
 	Type_AddNativeField(type, offsetof(TextReaderInst,charBuffer), NativeFieldType::VALUE);
 
 	TextReaderInst::FillBuffer = Member_ToMethod(Type_GetMember(type, TextReaderInst::FillBufferName));
+	RETURN_SUCCESS;
 }
 
 AVES_API NATIVE_FUNCTION(io_TextReader_get_stream)

@@ -54,10 +54,11 @@ size_t Array::GetSize(int64_t length)
 
 } // namespace aves
 
-AVES_API void aves_Array_init(TypeHandle type)
+AVES_API int aves_Array_init(TypeHandle type)
 {
 	Type_SetReferenceGetter(type, aves_Array_getReferences);
 	Type_SetConstructorIsAllocator(type, true);
+	RETURN_SUCCESS;
 }
 
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Array_new)

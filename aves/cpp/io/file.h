@@ -71,7 +71,7 @@ public:
 	static int ErrorHandleClosed(ThreadHandle thread);
 };
 
-AVES_API void io_FileStream_initType(TypeHandle type);
+AVES_API int io_FileStream_initType(TypeHandle type);
 
 AVES_API NATIVE_FUNCTION(io_FileStream_init);
 

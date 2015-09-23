@@ -9,7 +9,7 @@ typedef struct TypeInst_S
 	String *name; // cached value
 } TypeInst;
 
-AVES_API void OVUM_CDECL aves_reflection_Type_init(TypeHandle type);
+AVES_API int OVUM_CDECL aves_reflection_Type_init(TypeHandle type);
 
 AVES_API NATIVE_FUNCTION(aves_reflection_Type_get_handle);
 

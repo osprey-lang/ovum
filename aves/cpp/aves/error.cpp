@@ -6,7 +6,7 @@
 LitString<30> _DefaultErrorMessage = LitString<30>::FromCString("An unspecified error occurred.");
 String *DefaultErrorMessage = _DefaultErrorMessage.AsString();
 
-AVES_API void OVUM_CDECL aves_Error_init(TypeHandle type)
+AVES_API int OVUM_CDECL aves_Error_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(ErrorInst));
 
@@ -14,6 +14,7 @@ AVES_API void OVUM_CDECL aves_Error_init(TypeHandle type)
 	Type_AddNativeField(type, offsetof(ErrorInst, stackTrace), NativeFieldType::STRING);
 	Type_AddNativeField(type, offsetof(ErrorInst, innerError), NativeFieldType::VALUE);
 	Type_AddNativeField(type, offsetof(ErrorInst, data),       NativeFieldType::VALUE);
+	RETURN_SUCCESS;
 }
 
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Error_new)

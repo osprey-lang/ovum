@@ -3,7 +3,7 @@
 
 #include "../aves.h"
 
-AVES_API void aves_StringBuffer_init(TypeHandle type);
+AVES_API int aves_StringBuffer_init(TypeHandle type);
 
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_new);
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_newCap);

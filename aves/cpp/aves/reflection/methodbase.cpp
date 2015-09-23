@@ -4,11 +4,12 @@
 
 using namespace aves;
 
-AVES_API void OVUM_CDECL aves_reflection_MethodBase_init(TypeHandle type)
+AVES_API int OVUM_CDECL aves_reflection_MethodBase_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(MethodBaseInst));
 
 	Type_AddNativeField(type, offsetof(MethodBaseInst,cachedName), NativeFieldType::STRING);
+	RETURN_SUCCESS;
 }
 
 AVES_API NATIVE_FUNCTION(aves_reflection_MethodBase_new)

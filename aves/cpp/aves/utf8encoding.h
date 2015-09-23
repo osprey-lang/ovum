@@ -55,7 +55,7 @@ public:
 	static int BufferOverrunError(ThreadHandle thread);
 };
 
-AVES_API void aves_Utf8Encoder_init(TypeHandle type);
+AVES_API int aves_Utf8Encoder_init(TypeHandle type);
 
 AVES_API NATIVE_FUNCTION(aves_Utf8Encoder_getByteCount);
 AVES_API NATIVE_FUNCTION(aves_Utf8Encoder_getBytesInternal);
@@ -111,7 +111,7 @@ public:
 	static const ovchar_t ReplacementChar = 0xFFFD;
 };
 
-AVES_API void aves_Utf8Decoder_init(TypeHandle type);
+AVES_API int aves_Utf8Decoder_init(TypeHandle type);
 
 AVES_API NATIVE_FUNCTION(aves_Utf8Decoder_getCharCountInternal);
 AVES_API NATIVE_FUNCTION(aves_Utf8Decoder_getCharsInternal);

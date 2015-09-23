@@ -295,7 +295,14 @@ typedef void (OVUM_CDECL *Finalizer)(void *basePtr);
 // Initializes a single type, which may involve setting flags or the size
 // of the instance. Type initializers should only be used for types with
 // native implementations.
-typedef void (OVUM_CDECL *TypeInitializer)(TypeHandle type);
+//
+// Type initializers return a status code, to indicate whether everything
+// went okay. Use OVUM_SUCCESS for success, and an error code otherwise.
+//
+// Parameters:
+//   type:
+//     The type to initialize.
+typedef int (OVUM_CDECL *TypeInitializer)(TypeHandle type);
 
 // Initializes a ListInst* to a specific capacity.
 // This method is provided to avoid making any assumptions about the

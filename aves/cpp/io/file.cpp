@@ -119,12 +119,13 @@ int FileStream::ErrorHandleClosed(ThreadHandle thread)
 	return VM_ThrowErrorOfType(thread, aves->aves.InvalidStateError, 1);
 }
 
-AVES_API void io_FileStream_initType(TypeHandle type)
+AVES_API int io_FileStream_initType(TypeHandle type)
 {
 	Type_SetInstanceSize(type, (uint32_t)sizeof(FileStream));
 	Type_SetFinalizer(type, io_FileStream_finalize);
 
 	Type_AddNativeField(type, offsetof(FileStream, fileName), NativeFieldType::STRING);
+	RETURN_SUCCESS;
 }
 
 AVES_API BEGIN_NATIVE_FUNCTION(io_FileStream_init)

@@ -4,11 +4,12 @@
 
 using namespace aves;
 
-AVES_API void OVUM_CDECL aves_reflection_Property_init(TypeHandle type)
+AVES_API int OVUM_CDECL aves_reflection_Property_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(PropertyInst));
 
 	Type_AddNativeField(type, offsetof(PropertyInst,fullName), NativeFieldType::STRING);
+	RETURN_SUCCESS;
 }
 
 AVES_API NATIVE_FUNCTION(aves_reflection_Property_new)

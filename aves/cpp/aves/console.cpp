@@ -62,12 +62,13 @@ int Console::GetCurrentAttrs(ThreadHandle thread, WORD &attrs)
 	return r;
 }
 
-AVES_API void aves_Console_init(TypeHandle type)
+AVES_API int aves_Console_init(TypeHandle type)
 {
 	Console::InputEOF = false;
 	Console::HaveDefaultColors = false;
 	Console::DefaultColors = 0;
 	Console::StdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	RETURN_SUCCESS;
 }
 
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_write)

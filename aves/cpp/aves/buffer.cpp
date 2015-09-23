@@ -4,10 +4,11 @@
 
 using namespace aves;
 
-AVES_API void aves_Buffer_init(TypeHandle type)
+AVES_API int aves_Buffer_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(Buffer));
 	Type_SetFinalizer(type, aves_Buffer_finalize);
+	RETURN_SUCCESS;
 }
 
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_new)
@@ -349,11 +350,12 @@ AVES_API uint8_t *aves_Buffer_getDataPointer(Value *buffer, uint32_t *bufferSize
 }
 
 
-AVES_API void aves_BufferView_init(TypeHandle type)
+AVES_API int aves_BufferView_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(BufferView));
 
 	Type_AddNativeField(type, offsetof(BufferView, buffer), NativeFieldType::VALUE);
+	RETURN_SUCCESS;
 }
 
 AVES_API NATIVE_FUNCTION(aves_BufferView_new)

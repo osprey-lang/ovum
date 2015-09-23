@@ -2,9 +2,10 @@
 #include "utf8encoding.h" // For Utf8Encoder::BufferOverrunError
 #include <new> // For placement new
 
-AVES_API void aves_Utf16Encoding_init(TypeHandle type)
+AVES_API int aves_Utf16Encoding_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(Utf16Encoding));
+	RETURN_SUCCESS;
 }
 
 AVES_API NATIVE_FUNCTION(aves_Utf16Encoding_new)
@@ -128,9 +129,10 @@ int32_t Utf16Encoder::GetBytes(ThreadHandle thread, String *str, Buffer *buf, in
 	return str->length * 2;
 }
 
-AVES_API void aves_Utf16Encoder_init(TypeHandle type)
+AVES_API int aves_Utf16Encoder_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(Utf16Encoder));
+	RETURN_SUCCESS;
 }
 
 AVES_API NATIVE_FUNCTION(aves_Utf16Encoder_new)
@@ -244,9 +246,10 @@ void Utf16Decoder::Reset()
 	prevByte = 0;
 }
 
-AVES_API void aves_Utf16Decoder_init(TypeHandle type)
+AVES_API int aves_Utf16Decoder_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(Utf16Decoder));
+	RETURN_SUCCESS;
 }
 
 AVES_API NATIVE_FUNCTION(aves_Utf16Decoder_new)

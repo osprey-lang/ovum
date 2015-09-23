@@ -21,7 +21,7 @@ typedef struct Buffer_S
 	};
 } Buffer;
 
-AVES_API void aves_Buffer_init(TypeHandle type);
+AVES_API int aves_Buffer_init(TypeHandle type);
 
 AVES_API NATIVE_FUNCTION(aves_Buffer_new);
 
@@ -78,7 +78,7 @@ typedef struct BufferView_S
 	Value buffer;
 } BufferView;
 
-AVES_API void aves_BufferView_init(TypeHandle type);
+AVES_API int aves_BufferView_init(TypeHandle type);
 
 AVES_API NATIVE_FUNCTION(aves_BufferView_new);
 

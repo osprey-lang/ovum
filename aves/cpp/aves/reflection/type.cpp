@@ -4,11 +4,12 @@
 
 using namespace aves;
 
-AVES_API void OVUM_CDECL aves_reflection_Type_init(TypeHandle type)
+AVES_API int OVUM_CDECL aves_reflection_Type_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(TypeInst));
 
 	Type_AddNativeField(type, offsetof(TypeInst,name), NativeFieldType::STRING);
+	RETURN_SUCCESS;
 }
 
 int GetMemberSearchFlags(ThreadHandle thread, Value *arg, MemberSearchFlags *result)

@@ -5,10 +5,11 @@
 
 using namespace aves;
 
-AVES_API void aves_StringBuffer_init(TypeHandle type)
+AVES_API int aves_StringBuffer_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(StringBuffer));
 	Type_SetFinalizer(type, aves_StringBuffer_finalize);
+	RETURN_SUCCESS;
 }
 
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_new)

@@ -57,7 +57,7 @@ public:
 
 } // namespace aves
 
-AVES_API void OVUM_CDECL aves_Hash_init(TypeHandle type);
+AVES_API int OVUM_CDECL aves_Hash_init(TypeHandle type);
 
 AVES_API NATIVE_FUNCTION(aves_Hash_get_length);
 AVES_API NATIVE_FUNCTION(aves_Hash_get_capacity);

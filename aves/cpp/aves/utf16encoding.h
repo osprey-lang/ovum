@@ -10,7 +10,7 @@ struct Utf16Encoding
 	bool bigEndian;
 };
 
-AVES_API void aves_Utf16Encoding_init(TypeHandle type);
+AVES_API int aves_Utf16Encoding_init(TypeHandle type);
 
 AVES_API NATIVE_FUNCTION(aves_Utf16Encoding_new);
 
@@ -41,7 +41,7 @@ public:
 	inline void Reset() { }
 };
 
-AVES_API void aves_Utf16Encoder_init(TypeHandle type);
+AVES_API int aves_Utf16Encoder_init(TypeHandle type);
 
 AVES_API NATIVE_FUNCTION(aves_Utf16Encoder_new);
 
@@ -74,7 +74,7 @@ public:
 	static const ovchar_t ReplacementChar = 0xFFFD;
 };
 
-AVES_API void aves_Utf16Decoder_init(TypeHandle type);
+AVES_API int aves_Utf16Decoder_init(TypeHandle type);
 
 AVES_API NATIVE_FUNCTION(aves_Utf16Decoder_new);
 

@@ -3,7 +3,7 @@
 
 #include "../aves.h"
 
-AVES_API void aves_Console_init(TypeHandle type);
+AVES_API int aves_Console_init(TypeHandle type);
 
 AVES_API NATIVE_FUNCTION(aves_Console_write);
 AVES_API NATIVE_FUNCTION(aves_Console_writeLine);

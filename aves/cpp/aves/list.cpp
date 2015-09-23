@@ -4,11 +4,12 @@
 
 using namespace aves;
 
-AVES_API void OVUM_CDECL aves_List_init(TypeHandle type)
+AVES_API int OVUM_CDECL aves_List_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(ListInst));
 
 	Type_AddNativeField(type, offsetof(ListInst, values), NativeFieldType::GC_ARRAY);
+	RETURN_SUCCESS;
 }
 
 int GetIndex(ThreadHandle thread, ListInst *list, Value *indexValue, bool canEqualLength, int32_t &result)

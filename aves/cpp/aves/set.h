@@ -41,8 +41,7 @@ public:
 
 } // namespace aves
 
-AVES_API void OVUM_CDECL aves_Set_init(TypeHandle type);
-
+AVES_API int OVUM_CDECL aves_Set_init(TypeHandle type);
 
 AVES_API NATIVE_FUNCTION(aves_Set_get_length);
 AVES_API NATIVE_FUNCTION(aves_Set_get_capacity);
