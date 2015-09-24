@@ -141,11 +141,12 @@ public class String
 	public lastIndexOf(value)
 		__extern("aves_String_lastIndexOf");
 
-	/// Summary: Creates a new string with the specified value prepended to it;
-	///          that is, added to the beginning.
+	/// Summary: Concatenates the specified value onto the beginning of this string.
 	/// Param value: The value to prepend to this string.
 	/// Returns: A new string containing {value} followed by the current string.
 	///          If {value} is null, it is treated as the empty string.
+	/// Remarks: This method returns a new string instance. The original string is
+	///          not modified in any way.
 	public prepend(value)
 	{
 		if value is null:
@@ -153,10 +154,12 @@ public class String
 		return string(value) :: this;
 	}
 
-	/// Summary: Creates a new string with the specified value appended to it.
+	/// Summary: Concatenates the specified value onto the end of this string.
 	/// Param value: The value to append to this string.
 	/// Returns: A new string containing the current string followed by {value}.
 	///          If {value} is null, it is treated as the empty string.
+	/// Remarks: This method returns a new string instance. The original string is
+	///          not modified in any way.
 	public append(value)
 	{
 		if value is null:
@@ -164,17 +167,33 @@ public class String
 		return this :: string(value);
 	}
 
-	/// Summary: Creates a new string surrounded by the specified value.
-	/// Param value: The value to surround this string with.
+	/// Summary: Surrounds the string with the specified value.
+	/// Param value: The value to surround this string with. This single value is
+	///              concatenated onto both the beginning and the end.
 	/// Returns: A new string containing {value} followed by the current string
 	///          followed by {value}. If {value} is null, it is treated as the
 	///          empty string.
+	/// Remarks: This method returns a new string instance. The original string is
+	///          not modified in any way.
 	public surroundWith(value)
 	{
-		if value is null:
+		return surroundWith(value, value);
+	}
+	/// Summary: Surrounds the string with the specified values.
+	/// Param prefix: The value to concatenate onto the beginning of this string.
+	/// Param suffix: The value to concatenate onto the end of this string.
+	/// Returns: A new string containing {prefix} followed by the current string
+	///          followed by {suffix}. If {prefix} or {suffix} is null, it is
+	///          treated as the empty string.
+	/// Remarks: This method returns a new string instance. The original string is
+	///          not modified in any way.
+	public surroundWith(prefix, suffix)
+	{
+		if prefix is null and suffix is null:
 			return this;
-		value = string(value);
-		return value :: this :: value;
+		prefix = string(prefix);
+		suffix = string(suffix);
+		return prefix :: this :: suffix;
 	}
 
 	/// Summary: Returns a new string containing the characters of this string
