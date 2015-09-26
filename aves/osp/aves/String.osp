@@ -33,10 +33,7 @@ public function string(value)
 ///          In the documentation of string members, the terms “code unit” and
 ///          “character” are used interchangeably, except when used in the phrase
 ///          “Unicode character”.
-///
-///          Due to internal implementation details and optimizations, this class
-///          is not inheritable.
-public class String
+public class String is Collection
 {
 	private new();
 
@@ -51,7 +48,7 @@ public class String
 		__extern("aves_String_get_item");
 
 	/// Summary: Gets the length of the string, in number of UTF-16 code units, as an Int.
-	public get length
+	override get length
 		__extern("aves_String_get_length");
 
 	/// Summary: Gets a value indicating whether the string is empty (its length is 0).
@@ -970,8 +967,6 @@ public class String
 	///          code point.
 	public static fromCodePoint(codePoint)
 		__extern("aves_String_fromCodePoint");
-
-	public const empty = "";
 
 	operator ==(a, b)
 		__extern("aves_String_opEquals");
