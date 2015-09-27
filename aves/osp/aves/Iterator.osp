@@ -512,7 +512,7 @@ public abstract class Iterator
 		{
 			yield current;
 
-			var i = 1 % frequency;
+			var i = 1;
 			while moveNext()
 			{
 				if i == 0:
