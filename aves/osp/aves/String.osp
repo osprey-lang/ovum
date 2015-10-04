@@ -116,16 +116,75 @@ public class String is Collection
 	public endsWith(value)
 		__extern("aves_String_endsWith");
 
-	/// Summary: Returns the index of the first occurrence of the specified
-	///          substring within the current string.
-	/// Param value: The substring to search for.
-	/// Returns: The index of the first occurrence of the given substring within
-	///          this string, as an Int, or null if this string doesn’t contain
-	///          the substring.
+	/// Summary: Searches the string for the specified value.
+	/// Param value: The string to search for.
+	/// Returns: The index of the first occurrence of {value} within this string, as an Int, or
+	///          null if this string doesn’t contain {value}.
 	/// Throws TypeError:
-	///          {value} is not a String or Char.
+	///          {value} could not be converted to a String.
 	public indexOf(value)
-		__extern("aves_String_indexOf");
+	{
+		value = string(value);
+		return indexOfInternal(value, 0, length);
+	}
+	/// Summary: Searches the string for the specified value. The search starts at the specified
+	///          index.
+	/// Param value: The string to search for.
+	/// Param startIndex: The index to start the search at. (Int, UInt or Real)
+	/// Returns: The index of the first occurrence of {value} within the string, as an Int, or
+	///          null if it this string doesn’t contain {value}. If found, the return value is
+	///          greater than or equal to {startIndex}.
+	/// Throws TypeError:
+	///          {value} could not be converted to a String.
+	///
+	///          {startIndex} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {startIndex} is less than zero or greater than {length}.
+	public indexOf(value, startIndex)
+	{
+		value = string(value);
+		startIndex = int(startIndex);
+		if startIndex < 0 or startIndex > length:
+			throw new ArgumentRangeError("startIndex");
+
+		return indexOfInternal(value, startIndex, length - startIndex);
+	}
+	/// Summary: Searches the string for the specified value. The search spans over the specified
+	///          region of the string.
+	/// Param value: The string to search for.
+	/// Param startIndex: The index to start the search at. (Int, UInt or Real)
+	/// Param count: The total number of characters from this string to test against.
+	///              (Int, UInt or Real)
+	/// Returns: The index of the first occurrence of {value} within the specified region of the
+	///          string, as an Int, or null if the region doesn’t contain {value}. If found, the
+	///          return value is greater than or equal to {startIndex}.
+	/// Throws TypeError:
+	///          {value} could not be converted to a string.
+	///
+	///          {startIndex} or {count} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {startIndex} is less than zero or greater than {length}.
+	///
+	///          {count} is less than zero.
+	/// Throws ArgumentError:
+	///          {startIndex} + {count} is greater than {length}.
+	public indexOf(value, startIndex, count)
+	{
+		value = string(value);
+		startIndex = int(startIndex);
+		if startIndex < 0 or startIndex > length:
+			throw new ArgumentRangeError("startIndex");
+		count = int(count);
+		if count < 0:
+			throw new ArgumentRangeError("count");
+		if startIndex + count > length:
+			throw new ArgumentRangeError("startIndex + count is outside the string.");
+
+		return indexOfInternal(value, startIndex, count);
+	}
+
+	private indexOfInternal(value, startIndex, count)
+		__extern("aves_String_indexOfInternal");
 
 	/// Summary: Returns the index of the last occurrence of the specified
 	///          substring within the current string.

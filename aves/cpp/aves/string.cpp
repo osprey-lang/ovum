@@ -148,22 +148,18 @@ AVES_API NATIVE_FUNCTION(aves_String_endsWith)
 	RETURN_SUCCESS;
 }
 
-AVES_API NATIVE_FUNCTION(aves_String_indexOf)
+AVES_API NATIVE_FUNCTION(aves_String_indexOfInternal)
 {
+	// indexOfInternal(value is String, startIndex is Int, count is Int)
+	// The public-facing methods range-check all the values.
 	Aves *aves = Aves::Get(thread);
 
 	String *str = THISV.v.string;
+	String *part = args[1].v.string;
+	int32_t startIndex = (int32_t)args[2].v.integer;
+	int32_t count = (int32_t)args[3].v.integer;
 
-	int32_t index;
-	if (args[1].type == aves->aves.String)
-		index = string::IndexOf(str, args[1].v.string);
-	else if (args[1].type == aves->aves.Char)
-	{
-		LitString<2> part = Char::ToLitString((ovwchar_t)args[1].v.integer);
-		index = string::IndexOf(str, part.AsString());
-	}
-	else
-		return VM_ThrowTypeError(thread);
+	int32_t index = string::IndexOf(str, part, startIndex, count);
 
 	if (index == -1)
 		VM_PushNull(thread);
@@ -735,14 +731,18 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_opMultiply)
 }
 END_NATIVE_FUNCTION
 
-int32_t string::IndexOf(const String *str, const String *part)
+int32_t string::IndexOf(const String *str, const String *part, int32_t startIndex, int32_t count)
 {
-	const ovchar_t *strp = &str->firstChar;
+	if (part->length == 0)
+		return startIndex;
 
-	int32_t imax = str->length - part->length + 1;
-	for (int32_t i = 0; i < imax; i++)
+	const ovchar_t *strp = &str->firstChar;
+	ovchar_t firstPartChar = part->firstChar;
+
+	int32_t endIndex = startIndex + count - part->length + 1;
+	for (int32_t i = startIndex; i < endIndex; i++)
 	{
-		if (strp[i] == part->firstChar &&
+		if (strp[i] == firstPartChar &&
 			String_SubstringEquals(str, i, part))
 			return i;
 	}

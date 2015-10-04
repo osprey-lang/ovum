@@ -626,3 +626,110 @@ public class StringPadTests is TestFixture
 
 	// End pad both tests
 }
+
+public class StringIndexOfTests is TestFixture
+{
+	public new() { new base("aves.String tests: indexOf"); }
+
+	// indexOf(value)
+
+	public test_IndexOf1Start()
+	{
+		var str = "aaxxx";
+		var index = str.indexOf("aa");
+		Assert.areEqual(index, 0);
+	}
+
+	public test_IndexOf1Middle()
+	{
+		var str = "axxaaxxx";
+		var index = str.indexOf("aa");
+		Assert.areEqual(index, 3);
+	}
+
+	public test_IndexOf1End()
+	{
+		var str = "axxaa";
+		var index = str.indexOf("aa");
+		Assert.areEqual(index, 3);
+	}
+
+	public test_IndexOf1NotFound()
+	{
+		var str = "xxx";
+		var index = str.indexOf("aa");
+		Assert.isNull(index);
+	}
+
+	// indexOf(value, startIndex)
+
+	public test_IndexOf2Start()
+	{
+		var str = "aaxxaaxxaa";
+		var startIndex = 4;
+		var index = str.indexOf("aa", startIndex);
+		Assert.areEqual(index, 4);
+	}
+
+	public test_IndexOf2Middle()
+	{
+		var str = "aaxxaaxxaa";
+		var startIndex = 5;
+		var index = str.indexOf("aa", startIndex);
+		Assert.areEqual(index, 8);
+	}
+
+	public test_IndexOf2End()
+	{
+		var str = "aaxxaaxxaa";
+		var startIndex = 5;
+		var index = str.indexOf("aa", startIndex);
+		Assert.areEqual(index, 8);
+	}
+
+	public test_IndexOf2NotFound()
+	{
+		var str = "aaxxaaxxx";
+		var startIndex = 5;
+		var index = str.indexOf("aa", startIndex);
+		Assert.isNull(index);
+	}
+
+	// indexOf(value, startIndex, count)
+
+	public test_IndexOf3Start()
+	{
+		var str = "aaxxaaxxaa";
+		var startIndex = 4;
+		var count = 5;
+		var index = str.indexOf("aa", startIndex, count);
+		Assert.areEqual(index, 4);
+	}
+
+	public test_IndexOf3Middle()
+	{
+		var str = "aaxxaaxxaa";
+		var startIndex = 3;
+		var count = 5;
+		var index = str.indexOf("aa", startIndex, count);
+		Assert.areEqual(index, 4);
+	}
+
+	public test_IndexOf3End()
+	{
+		var str = "aaxxaaxxaaxx";
+		var startIndex = 5;
+		var count = 5;
+		var index = str.indexOf("aa", startIndex, count);
+		Assert.areEqual(index, 8);
+	}
+
+	public test_IndexOf3NotFound()
+	{
+		var str = "xxaaxxaaxx";
+		var startIndex = 3;
+		var count = 4;
+		var index = str.indexOf("aa", startIndex, count);
+		Assert.isNull(index);
+	}
+}

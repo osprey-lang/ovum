@@ -12,7 +12,7 @@ AVES_API NATIVE_FUNCTION(aves_String_equalsIgnoreCase);
 AVES_API NATIVE_FUNCTION(aves_String_contains);
 AVES_API NATIVE_FUNCTION(aves_String_startsWith);
 AVES_API NATIVE_FUNCTION(aves_String_endsWith);
-AVES_API NATIVE_FUNCTION(aves_String_indexOf);
+AVES_API NATIVE_FUNCTION(aves_String_indexOfInternal);
 AVES_API NATIVE_FUNCTION(aves_String_lastIndexOf);
 
 AVES_API NATIVE_FUNCTION(aves_String_reverse);
@@ -98,7 +98,7 @@ namespace unicode
 
 namespace string
 {
-	int32_t IndexOf(const String *str, const String *part);
+	int32_t IndexOf(const String *str, const String *part, int32_t startIndex, int32_t count);
 	int32_t LastIndexOf(const String *str, const String *part);
 
 	int Format(ThreadHandle thread, const String *format, ListInst *list, String *&result);
