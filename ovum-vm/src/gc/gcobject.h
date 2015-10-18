@@ -39,7 +39,7 @@ enum class GCOFlags : uint32_t
 	// Mask for extracting the age
 	GENERATION    = 0x0070,
 
-	// The GCObjects has references to gen0 objects. This flag is
+	// The GCObject has references to gen0 objects. This flag is
 	// only set during a GC cycle, and is cleared as soon as all
 	// gen0 references have been updated.
 	HAS_GEN0_REFS = 0x0080,
@@ -101,7 +101,7 @@ public:
 	Value *FieldsBase();
 	Value *FieldsBase(Type *type);
 
-	// Inserts a GCObject into a linked list.
+	// Inserts the GCObject into a linked list.
 	// The parameter 'list' points to the first object in the list.
 	//
 	// For performance reasons, this method does not remove the GCO from
@@ -110,22 +110,22 @@ public:
 	inline void InsertIntoList(GCObject **list)
 	{
 		// Before insertion:
-		// nullptr  <--  *list  <->  (*list)->next
+		//   nullptr  <--  *list  <->  (*list)->next
 		// After insertion:
-		// nullptr  <--  gco  <->  *list  <->  (*list)->next
-		this->prev = nullptr;  // gco is the first value, so it has nothing prior to it.
+		//   nullptr  <--  this  <->  *list  <->  (*list)->next
+		this->prev = nullptr;  // this is the first value, so it has nothing prior to it.
 		this->next = *list; // The next value is the current base of the list.
 		if (*list)
 			(*list)->prev = this;
 		*list = this;       // And then we update the base of the list!
 	}
-	// Removes a GCObject from its associated linked list, which is passed
+	// Removes the GCObject from its associated linked list, which is passed
 	// as a parameter (not stored with the GCObject).
 	//
 	// This should always be called before calling InsertIntoList, which
 	// does not automatically call this method for performance reasons.
 	//
-	// NOTE: also for performance reasons, this code does NOT set gco's
+	// NOTE: also for performance reasons, this code does NOT set the GCO's
 	// next and prev fields to null. RemoveFromList will be called mostly
 	// before calling InsertIntoList, which writes to those fields.
 	// If you need these fields to be null, you must set them yourself.
@@ -135,10 +135,10 @@ public:
 		GCObject *prev = this->prev;
 		GCObject *next = this->next;
 		// This code maintains two important facts:
-		//   1. If gco->prev == nullptr (that is, gco is the first object in the list),
-		//      then gco->next->prev will also be null.
-		//   2. If gco->next == nullptr (that is, it's the last object in the list),
-		//      then gco->prev->next will also be null.
+		//   1. If this->prev == nullptr (that is, this is the first object in the list),
+		//      then this->next->prev will also be null.
+		//   2. If this->next == nullptr (that is, it's the last object in the list),
+		//      then this->prev->next will also be null.
 
 		// If this is the only object in the list, then this == *list
 		// and next == nullptr, so list will correctly be set to null.
@@ -146,9 +146,9 @@ public:
 			*list = next;
 
 		// Before removal:
-		// prev  <->  gco  <->  next
+		//   prev  <->  this  <->  next
 		// After removal:
-		// prev  <->  next
+		//   prev  <->  next
 		if (prev) prev->next = next;
 		if (next) next->prev = prev;
 	}
