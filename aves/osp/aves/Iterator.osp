@@ -297,7 +297,7 @@ public abstract class Iterator
 	/// Returns: A String value containing the items of this sequence converted to
 	///          strings and separated by one of the separator values.
 	/// Throws TypeError:
-	///          {separator} or {lastSeparator} could not converted to a string.
+	///          {separator} or {lastSeparator} could not be converted to a string.
 	/// Remarks: This method uses {aves.string} to convert each item in the sequence
 	///          to its string representation, and does not catch any error thrown
 	///          by that function. As a result, null values get turned into the
