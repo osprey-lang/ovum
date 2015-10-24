@@ -10,9 +10,28 @@ const pathchar_t *const ModuleFinder::VERSION_SEPARATOR = OVUM_PATH("-");
 
 ModuleFinder::ModuleFinder(VM *vm) :
 	vm(vm)
-{ }
+{
+	InitSearchDirectories();
+}
 
-bool ModuleFinder::FindModulePath(String *module, ModuleVersion *version, PathName &result)
+void ModuleFinder::InitSearchDirectories()
+{
+	const PathName **searchDirs = this->searchDirs;
+	*searchDirs++ = vm->GetStartupPathLib();
+	*searchDirs++ = vm->GetStartupPath();
+	*searchDirs++ = vm->GetModulePath();
+}
+
+int ModuleFinder::GetSearchDirectories(int resultSize, const PathName **result) const
+{
+	int count = min(resultSize, SEARCH_DIR_COUNT);
+
+	CopyMemoryT(result, searchDirs, (size_t)resultSize);
+
+	return SEARCH_DIR_COUNT;
+}
+
+bool ModuleFinder::FindModulePath(String *module, ModuleVersion *version, PathName &result) const
 {
 	PathName versionNumber(VERSION_NUMBER_CAPACITY);
 	if (version != nullptr)
@@ -20,17 +39,10 @@ bool ModuleFinder::FindModulePath(String *module, ModuleVersion *version, PathNa
 
 	PathName modulePath(MODULE_PATH_CAPACITY);
 
-	static const int DIR_COUNT = 3;
-	const PathName *dirs[DIR_COUNT] = {
-		vm->GetStartupPathLib(),
-		vm->GetStartupPath(),
-		vm->GetModulePath(),
-	};
-
 	bool found = false;
-	for (int i = 0; i < DIR_COUNT; i++)
+	for (int i = 0; i < SEARCH_DIR_COUNT; i++)
 	{
-		found = SearchDirectory(dirs[i], module, versionNumber, modulePath);
+		found = SearchDirectory(searchDirs[i], module, versionNumber, modulePath);
 		if (found)
 			break;
 	}
@@ -40,7 +52,7 @@ bool ModuleFinder::FindModulePath(String *module, ModuleVersion *version, PathNa
 	return found;
 }
 
-bool ModuleFinder::SearchDirectory(const PathName *dir, String *module, const PathName &version, PathName &result)
+bool ModuleFinder::SearchDirectory(const PathName *dir, String *module, const PathName &version, PathName &result) const
 {
 	result.ReplaceWith(*dir);
 	uint32_t simpleName = result.Join(module);
@@ -87,7 +99,7 @@ bool ModuleFinder::SearchDirectory(const PathName *dir, String *module, const Pa
 	return false;
 }
 
-void ModuleFinder::AppendVersionString(PathName &dest, ModuleVersion *version)
+void ModuleFinder::AppendVersionString(PathName &dest, ModuleVersion *version) const
 {
 	static const int32_t BUFFER_SIZE = 16;
 	ovchar_t buffer[BUFFER_SIZE];

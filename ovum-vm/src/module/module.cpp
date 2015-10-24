@@ -1432,3 +1432,29 @@ OVUM_API ModuleHandle Module_FindDependency(ModuleHandle module, String *name)
 {
 	return module->FindModuleRef(name);
 }
+
+OVUM_API int Module_GetSearchDirectories(ThreadHandle thread, int resultSize, String **result, int *count)
+{
+	const int BUFFER_SIZE = 16;
+
+	ovum::VM *vm = thread->GetVM();
+	ovum::ModuleFinder finder(vm);
+
+	// ModuleFinder returns directories as a PathName array, so we
+	// need to fetch them into an intermediate container in order
+	// to convert them to String*s.
+	const ovum::PathName *paths[BUFFER_SIZE];
+	int dirCount = finder.GetSearchDirectories(BUFFER_SIZE, paths);
+
+	resultSize = min(resultSize, dirCount);
+	for (int i = 0; i < resultSize; i++)
+	{
+		String *name = paths[i]->ToManagedString(thread);
+		if (name == nullptr)
+			return OVUM_ERROR_NO_MEMORY;
+		*result++ = name;
+	}
+
+	*count = dirCount;
+	RETURN_SUCCESS;
+}

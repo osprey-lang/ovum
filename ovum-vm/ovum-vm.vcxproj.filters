@@ -72,9 +72,6 @@
     <Filter Include="Source Files\object">
       <UniqueIdentifier>{cf55220c-717d-4a1a-88c5-ca5cc9b2968f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\threading">
-      <UniqueIdentifier>{9a877308-330d-443d-871c-5edd13346834}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\util">
       <UniqueIdentifier>{3e4d5344-6470-407e-b528-f45613967583}</UniqueIdentifier>
     </Filter>

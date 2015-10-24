@@ -180,6 +180,22 @@ OVUM_API void *Module_FindNativeFunction(ModuleHandle module, const char *name);
 //     The name of the module to find.
 OVUM_API ModuleHandle Module_FindDependency(ModuleHandle module, String *name);
 
+// Gets the directories that are searched when resolving module dependencies.
+// The VM tries several possible paths within each directory.
+//
+// Parameters:
+//   thread:
+//     The current thread.
+//   resultSize:
+//     The total size of the result buffer. No more than this number of values
+//     will be written into the buffer.
+//   count:
+//     Receives the total number of directories. If the value is greater than
+//     the buffer, it must be resized before all directories can be obtained.
+// Returns:
+//   An Ovum status code. This function can fail with an out-of-memory error.
+OVUM_API int Module_GetSearchDirectories(ThreadHandle thread, int resultSize, String **result, int *count);
+
 class ModuleMemberIterator
 {
 private:

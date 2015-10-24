@@ -36,17 +36,48 @@ namespace ovum
 class ModuleFinder
 {
 private:
+	static const int SEARCH_DIR_COUNT = 3;
+
 	VM *vm;
+	const PathName *searchDirs[SEARCH_DIR_COUNT];
 
 public:
 	ModuleFinder(VM *vm);
 
-	bool FindModulePath(String *module, ModuleVersion *version, PathName &result);
+	// Gets the total number of directories that will be searched for modules.
+	// The module finder tries several paths within each directory; see the
+	// class documentation.
+	inline int GetSearchDirectoryCount() const
+	{
+		return SEARCH_DIR_COUNT;
+	}
+
+	// Gets the directories that will be searched for modules. The module finder
+	// tries several paths within each directory; see the class documentation.
+	//
+	// The paths are returned in the order they are searched.
+	//
+	// Parameters:
+	//   resultSize:
+	//     The size of the result buffer. At most this number of values are written
+	//     into the buffer.
+	//   result:
+	//     The result buffer, which receives one PathName for each search directory.
+	//     These are managed by the VM; the caller should not deallocate them. This
+	//     parameter cannot be null.
+	// Returns:
+	//   The total number of search directories. If the buffer is too small, the
+	//   return value will be larger than resultSize.
+	int GetSearchDirectories(int resultSize, const PathName **result) const;
+
+	bool FindModulePath(String *module, ModuleVersion *version, PathName &result) const;
 
 private:
-	bool SearchDirectory(const PathName *dir, String *module, const PathName &version, PathName &result);
+	void InitSearchDirectories();
 
-	void AppendVersionString(PathName &dest, ModuleVersion *version);
+	bool SearchDirectory(const PathName *dir, String *module, const PathName &version, PathName &result) const;
+
+	void AppendVersionString(PathName &dest, ModuleVersion *version) const;
 
 	static const uint32_t MODULE_PATH_CAPACITY = 256;
 	static const uint32_t VERSION_NUMBER_CAPACITY = 32;
