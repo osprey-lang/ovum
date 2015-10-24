@@ -1,6 +1,7 @@
 #include "module.h"
 #include "type.h"
 #include "../../aves_state.h"
+#include "../../tempbuffer.h"
 #include <ov_module.h>
 #include <stddef.h>
 
@@ -379,6 +380,38 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Module_getCurrentModule)
 	VM_Push(thread, &handle);
 
 	CHECKED(GC_Construct(thread, aves->aves.reflection.Module, 1, nullptr));
+}
+END_NATIVE_FUNCTION
+
+AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Module_getSearchDirectories)
+{
+	TempBuffer<String*, 16> searchDirs;
+
+	int dirCount = 0;
+	do
+	{
+		CHECKED_MEM(searchDirs.EnsureCapacity(dirCount));
+		CHECKED(Module_GetSearchDirectories(
+			thread,
+			(int)searchDirs.GetCapacity(),
+			searchDirs.GetPointer(),
+			&dirCount
+		));
+	} while (dirCount > (int)searchDirs.GetCapacity());
+
+	Value *output = VM_Local(thread, 0);
+	VM_PushInt(thread, dirCount); // list capacity
+	CHECKED(GC_Construct(thread, GetType_List(thread), 1, output));
+
+	for (int i = 0; i < dirCount; i++)
+	{
+		Value ignore;
+		VM_Push(thread, output);
+		VM_PushString(thread, searchDirs[i]);
+		CHECKED(VM_InvokeMember(thread, strings::add, 1, &ignore));
+	}
+
+	VM_Push(thread, output);
 }
 END_NATIVE_FUNCTION
 

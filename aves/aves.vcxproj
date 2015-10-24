@@ -126,6 +126,7 @@
     <ClInclude Include="cpp\io\io.h" />
     <ClInclude Include="cpp\io\path.h" />
     <ClInclude Include="cpp\io\textreader.h" />
+    <ClInclude Include="cpp\tempbuffer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cpp\aves.cpp" />

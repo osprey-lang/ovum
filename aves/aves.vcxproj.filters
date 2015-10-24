@@ -170,6 +170,9 @@
     <ClInclude Include="cpp\aves\array.h">
       <Filter>Header Files\aves</Filter>
     </ClInclude>
+    <ClInclude Include="cpp\tempbuffer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cpp\aves.cpp">

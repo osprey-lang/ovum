@@ -90,6 +90,15 @@ public class Module
 	public static getCurrentModule()
 		__extern("aves_reflection_Module_getCurrentModule");
 
+	/// Summary: Gets the directories that are searched when loading modules
+	///          by name.
+	/// Returns: A List containing the directories (as Strings) that are
+	///          searched when loading modules by name.
+	/// Remarks: The VM tries several different paths within each directory.
+	///          The directories are returned in the order they are searched.
+	public static getSearchDirectories()
+		__extern("aves_reflection_Module_getSearchDirectories", locals=1);
+
 	/// Summary: Finds a loaded module with the specified name.
 	/// Param name: The name of the module to find.
 	/// Returns: The module with the specified name, or null if no such
@@ -127,7 +136,7 @@ public class Module
 			throw new TypeError("version must be an aves.Version.");
 		return findInternal(name, version);
 	}
-		
+
 	private static findInternal(name, version)
 		__extern("aves_reflection_Module_find");
 

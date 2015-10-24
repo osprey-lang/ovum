@@ -34,6 +34,8 @@ AVES_API NATIVE_FUNCTION(aves_reflection_Module_getMembers);
 
 AVES_API NATIVE_FUNCTION(aves_reflection_Module_getCurrentModule);
 
+AVES_API NATIVE_FUNCTION(aves_reflection_Module_getSearchDirectories);
+
 AVES_API NATIVE_FUNCTION(aves_reflection_Module_find);
 
 #endif // AVES__MODULE_H
