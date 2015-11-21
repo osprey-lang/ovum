@@ -29,7 +29,7 @@ namespace strings
 	LitString<1> _x         = { 1, 0, SFS, 'x',0 };
 	LitString<1> _y         = { 1, 0, SFS, 'y',0 };
 	LitString<5> _width     = { 5, 0, SFS, 'w','i','d','t','h',0 };
-	LitString<6> _height    = { 5, 0, SFS, 'h','e','i','g','h','t',0 };
+	LitString<6> _height    = { 6, 0, SFS, 'h','e','i','g','h','t',0 };
 	LitString<3> _add       = { 3, 0, SFS, 'a','d','d',0 };
 	LitString<4> _path      = { 4, 0, SFS, 'p','a','t','h',0 };
 	LitString<4> _mode      = { 4, 0, SFS, 'm','o','d','e',0 };
