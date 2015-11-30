@@ -16,11 +16,10 @@ namespace math
 
 	/// Summary: Returns the absolute value of {n}.
 	/// Param n: The number to get the absolute value of. (Int, UInt or Real)
-	/// Returns: If {n} is an Int or UInt, it is returned as-is.
+	/// Returns: The absolute value of {n}, in the same type as {n}.
 	///
-	///          If it is a Real, the function returns a Real with the absolute value of {n}.
-	///          If {n} is NaN, the function returns NaN.
-	///          If {n} is negative infinity, the function returns positive infinity.
+	///          If {n} is NaN, the function returns NaN, and if {n} is negative infinity, the
+	///          function returns positive infinity.
 	/// Throws TypeError:
 	///          {n} is not an Int, UInt or Real.
 	public function abs(n)
