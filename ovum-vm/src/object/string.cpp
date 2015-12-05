@@ -309,10 +309,10 @@ OVUM_API bool String_Contains(const String *str, const String *value)
 		{
 			// The comparison algorithm below is basically lifted from String_SubstringEquals,
 			// and then slightly modified
-			int32_t length = value->length - 1;
+			int32_t length = value->length;
 
-			const ovchar_t *strpCopy = strp + 1;
-			const ovchar_t *valp = &value->firstChar + 1;
+			const ovchar_t *strpCopy = strp;
+			const ovchar_t *valp = &value->firstChar;
 
 			while (length > 10) // Unroll comparison loop by 10!
 			{
