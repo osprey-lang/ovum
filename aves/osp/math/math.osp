@@ -250,7 +250,7 @@ namespace math
 	///          is considered smaller than it. This is useful particularly when trying
 	///          to find the smallest value in a sequence that may be empty. Consider:
 	///
-	///          `var smallest = numbers.fold(math.max);`
+	///          `var smallest = numbers.fold(math.min);`
 	///
 	///          If `numbers` is an iterable or iterator, the `fold` method will throw
 	///          when the sequence is empty. The solution to this would be to give `fold`
@@ -258,7 +258,7 @@ namespace math
 	///          may not be a good value to use for that purpose, if the range of values
 	///          in `numbers` is unknown. That is where null comes in:
 	///
-	///          `var smallest = numbers.fold(null, math.max);`
+	///          `var smallest = numbers.fold(null, math.min);`
 	///
 	///          Now, if `numbers` is empty, `smallest` will contain null. In all other
 	///          cases, it will contain the actual smallest value. Note, however, the one
