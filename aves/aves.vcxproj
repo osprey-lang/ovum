@@ -87,6 +87,7 @@
   <ItemGroup>
     <ClInclude Include="cpp\aves.h" />
     <ClInclude Include="cpp\aves\array.h" />
+    <ClInclude Include="cpp\aves\timespan.h" />
     <ClInclude Include="cpp\aves_state.h" />
     <ClInclude Include="cpp\shared_strings.h" />
     <ClInclude Include="cpp\ext\dtoa.config.h" />
@@ -131,6 +132,7 @@
   <ItemGroup>
     <ClCompile Include="cpp\aves.cpp" />
     <ClCompile Include="cpp\aves\array.cpp" />
+    <ClCompile Include="cpp\aves\timespan.cpp" />
     <ClCompile Include="cpp\aves_state.cpp" />
     <ClCompile Include="cpp\shared_strings.cpp" />
     <ClCompile Include="cpp\ext\dtoa.c" />

@@ -173,6 +173,9 @@
     <ClInclude Include="cpp\tempbuffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="cpp\aves\timespan.h">
+      <Filter>Header Files\aves</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cpp\aves.cpp">
@@ -296,6 +299,9 @@
       <Filter>Source Files\ext</Filter>
     </ClCompile>
     <ClCompile Include="cpp\aves\array.cpp">
+      <Filter>Source Files\aves</Filter>
+    </ClCompile>
+    <ClCompile Include="cpp\aves\timespan.cpp">
       <Filter>Source Files\aves</Filter>
     </ClCompile>
   </ItemGroup>

@@ -28,6 +28,7 @@ namespace type_names
 	LitString<22> NotSupportedError  = { 22, 0, SFS, AVES,'N','o','t','S','u','p','p','o','r','t','e','d','E','r','r','o','r',0 };
 	LitString<9>  Real               = { 9,  0, SFS, AVES,'R','e','a','l',0 };
 	LitString<11> String             = { 11, 0, SFS, AVES,'S','t','r','i','n','g',0 };
+	LitString<13> TimeSpan           = { 13, 0, SFS, AVES,'T','i','m','e','S','p','a','n',0 };
 	LitString<9>  UInt               = { 9,  0, SFS, AVES,'U','I','n','t',0 };
 	LitString<20> UnicodeCategory    = { 20, 0, SFS, AVES,'U','n','i','c','o','d','e','C','a','t','e','g','o','r','y',0 };
 	LitString<12> Version            = { 12, 0, SFS, AVES,'V','e','r','s','i','o','n',0 };
@@ -81,6 +82,7 @@ void Aves::InitTypes(ModuleHandle module)
 	aves.NotSupportedError  = Module_FindType(module, type_names::NotSupportedError.AsString(),  true);
 	aves.Real               = Module_FindType(module, type_names::Real.AsString(),               true);
 	aves.String             = Module_FindType(module, type_names::String.AsString(),             true);
+	aves.TimeSpan           = Module_FindType(module, type_names::TimeSpan.AsString(),           true);
 	aves.UInt               = Module_FindType(module, type_names::UInt.AsString(),               true);
 	aves.UnicodeCategory    = Module_FindType(module, type_names::UnicodeCategory.AsString(),    true);
 	aves.Version            = Module_FindType(module, type_names::Version.AsString(),            true);

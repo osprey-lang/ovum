@@ -37,6 +37,7 @@ public:
 		TypeHandle NotSupportedError;
 		TypeHandle Real;
 		TypeHandle String;
+		TypeHandle TimeSpan;
 		TypeHandle UInt;
 		TypeHandle UnicodeCategory;
 		TypeHandle Version;

@@ -41,6 +41,7 @@ use "Set.osp";
 use "Stack.osp";
 use "String.osp";
 use "StringBuffer.osp";
+use "TimeSpan.osp";
 use "TypeError.osp";
 use "UInt.osp";
 use "UnicodeCategory.osp";

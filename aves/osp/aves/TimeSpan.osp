@@ -1,0 +1,397 @@
+namespace aves;
+
+/// Summary: Represents a time interval.
+/// Remarks: A {TimeSpan} contains a positive or negative time interval. This class offers
+///          a resolution of 1 µs (microsecond), equal to one millionth of a second. The
+///          largest unit that a {TimeSpan} uses to measure duration is the day, because
+///          this class stores time intervals without reference to any specific dates and
+///          the length of a month or year varies.
+///
+///          For the purposes of a {TimeSpan}, a day is considered equal to exactly 86,400
+///          seconds, or 1,440 minutes, or 24 hours.
+///
+///          A {TimeSpan} value is immutable. To combine intervals, use the `+` and `-`
+///          operators.
+public class TimeSpan __primitive
+{
+	__init_type("aves_TimeSpan_init");
+
+	/// Summary: Creates a new {TimeSpan} from the specified number of microseconds.
+	/// Param microseconds: The time interval in microseconds (µs). (Int, UInt or Real)
+	/// Throws TypeError:
+	///          {microseconds} could not be converted to an Int.
+	/// Remarks: If {microseconds} is not an integral value, it will be truncated, as {TimeSpan}
+	///          has a resolution of 1 µs.
+	///
+	///          The time interval can be negative.
+	public new(microseconds)
+		__extern("aves_TimeSpan_newMicros");
+	/// Summary: Creates a new {TimeSpan} from the specified number of hours, minutes and
+	///          seconds.
+	/// Param hours:   The number of hours in the time interval. The value may be fractional.
+	///                (Int, UInt or Real)
+	/// Param minutes: The number of minutes in the time interval. The value may be fractional.
+	///                (Int, UInt or Real)
+	/// Param seconds: The number of seconds in the time interval. The value may be fractional.
+	///                (Int, UInt or Real)
+	/// Throws TypeError:
+	///          {hours}, {minutes} or {seconds} was not a Real and could not be converted to
+	///          an Int.
+	/// Throws ArgumentRangeError:
+	///          The resulting time interval is less than {min} or greater than {max}.
+	/// Remarks: The time interval is constructed by adding together {hours}, {minutes} and
+	///          {seconds}. Notably, neither {minutes} nor {seconds} is required to be in the
+	///          range 0–59; they can be any value, as long as the resulting time interval is
+	///          not less than {min} nor greater than {max}.
+	///
+	///          Note that in order to construct a negative time interval, it is generally
+	///          necessary to make sure all components are negated. In the example
+	///
+	///          ```
+	///          var ts = new TimeSpan(-4, 30, 0);
+	///          ```
+	///
+	///          `ts` will contain a time span representing −3.5 hours (−4 hours + 30 minutes),
+	///          not −4.5 hours. In this case, the latter could be obtained by passing −30 as
+	///          the {minutes}. A simpler means of getting a negative time interval is using
+	///          the unary `-` operator:
+	///
+	///          ```
+	///          var ts2 = -new TimeSpan(4, 30, 0);
+	///          ```
+	///
+	///          Here, `ts2` will contain a time span of −4.5 hours, as intended.
+	///
+	///          See also: {duration}, {fromDays}, {fromHours}, {fromMinutes}, {fromSeconds},
+	///          {fromMilliseconds}.
+	public new(hours, minutes, seconds)
+		__extern("aves_TimeSpan_newHms");
+	/// Summary: Creates a new {TimeSpan} from the specified number of days, hours, minutes and
+	///          seconds.
+	/// Param days:    The number of days in the time interval. The value may be fractional.
+	///                (Int, UInt or Real)
+	/// Param hours:   The number of hours in the time interval. The value may be fractional.
+	///                (Int, UInt or Real)
+	/// Param minutes: The number of minutes in the time interval. The value may be fractional.
+	///                (Int, UInt or Real)
+	/// Param seconds: The number of seconds in the time interval. The value may be fractional.
+	///                (Int, UInt or Real)
+	/// Throws TypeError:
+	///          {days}, {hours}, {minutes} or {seconds} was not a Real and could not be
+	///          converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          The resulting time interval is less than {min} or greater than {max}.
+	/// Remarks: The time interval is constructed by adding together {days}, {hours}, {minutes}
+	///          and {seconds}. Notably, {hours} is not required to be in the range 0–23, nor are
+	///          {minutes} or {seconds} required to be in the range 0–59; they can be any value,
+	///          as long as the resulting time interval is not less than {min} nor greater than
+	///          {max}.
+	///
+	///          Note that in order to construct a negative time interval, it is generally
+	///          necessary to make sure all components are negated. In the example
+	///
+	///          ```
+	///          var ts = new TimeSpan(-4, 12, 0, 0);
+	///          ```
+	///
+	///          `ts` will contain a time span representing −3.5 days (−4 days + 12 hours), not
+	///          −4.5 days. In this case, the latter could be obtained by passing −12 as the
+	///          {hours}. A simpler means of getting a negative time interval is using the unary
+	///          `-` operator:
+	///
+	///          ```
+	///          var ts2 = -new TimeSpan(4, 12, 0, 0);
+	///          ```
+	///
+	///          Here, `ts2` will contain a time span of −4.5 days, as intended.
+	///
+	///          See also: {duration}, {fromDays}, {fromHours}, {fromMinutes}, {fromSeconds},
+	///          {fromMilliseconds}.
+	public new(days, hours, minutes, seconds)
+		__extern("aves_TimeSpan_newDhms");
+	/// Summary: Creates a new {TimeSpan} from the specified number of days, hours, minutes,
+	///          seconds and milliseconds.
+	/// Param days:    The number of days in the time interval. The value may be fractional.
+	///                (Int, UInt or Real)
+	/// Param hours:   The number of hours in the time interval. The value may be fractional.
+	///                (Int, UInt or Real)
+	/// Param minutes: The number of minutes in the time interval. The value may be fractional.
+	///                (Int, UInt or Real)
+	/// Param seconds: The number of seconds in the time interval. The value may be fractional.
+	///                (Int, UInt or Real)
+	/// Param milliseconds: The number of milliseconds in the time interval. The value may be
+	///                fractional. (Int, UInt or Real)
+	/// Throws TypeError:
+	///          {days}, {hours}, {minutes}, {seconds} or {milliseconds} was not a Real and could
+	///          not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          The resulting time interval is less than {min} or greater than {max}.
+	/// Remarks: The time interval is constructed by adding together {days}, {hours}, {minutes},
+	///          {seconds} and {milliseconds}. Notably, {hours} is not required to be in the
+	///          range 0–23, nor are {minutes} or {seconds} required to be in the range 0–59, nor
+	///          is {milliseconds} required to be in the range 0–999; they can be any value, as
+	///          long as the resulting time interval is not less than {min} nor greater than
+	///          {max}.
+	///
+	///          Note that in order to construct a negative time interval, it is generally
+	///          necessary to make sure all components are negated. In the example
+	///
+	///          ```
+	///          var ts = new TimeSpan(-4, 12, 0, 0, 0);
+	///          ```
+	///
+	///          `ts` will contain a time span representing −3.5 days (−4 days + 12 hours), not
+	///          −4.5 days. In this case, the latter could be obtained by passing −12 as the
+	///          {hours}. A simpler means of getting a negative time interval is using the unary
+	///          `-` operator:
+	///
+	///          ```
+	///          var ts2 = -new TimeSpan(4, 12, 0, 0, 0);
+	///          ```
+	///
+	///          Here, `ts2` will contain a time span of −4.5 days, as intended.
+	///
+	///          See also: {duration}, {fromDays}, {fromHours}, {fromMinutes}, {fromSeconds},
+	///          {fromMilliseconds}.
+	public new(days, hours, minutes, seconds, milliseconds)
+		__extern("aves_TimeSpan_newDhmsMillis");
+
+	private get rawValue
+		__extern("aves_TimeSpan_get_rawValue");
+
+	/// Summary: Gets the days component of the time interval.
+	/// Returns: The days component of the time interval, as an Int.
+	public get days = rawValue / microsPerDay;
+
+	/// Summary: Gets the hours component of the time interval.
+	/// Returns: The hours component of the time interval, as an Int. The return value ranges
+	///          from −23 to 23.
+	public get hours = (rawValue / microsPerHour) % 24;
+
+	/// Summary: Gets the minutes component of the time interval.
+	/// Returns: The minutes component of the time interval, as an Int. The return value ranges
+	///          from −59 to 59.
+	public get minutes = (rawValue / microsPerMinute) % 60;
+
+	/// Summary: Gets the seconds component of the time interval.
+	/// Returns: The seconds component of the time interval, as an Int. The return value ranges
+	///          from −59 to 59.
+	public get seconds = (rawValue / microsPerSecond) % 60;
+
+	/// Summary: Gets the milliseconds component of the time interval.
+	/// Returns: The milliseconds component of the time interval, as an Int. The return value
+	///          ranges from −999 to 999.
+	public get milliseconds = (rawValue / microsPerMilli) % 1_000;
+
+	/// Summary: Gets the microseconds component of the time interval.
+	/// Returns: The microseconds component of the time interval, as an Int. The return value
+	///          ranges from −999,999 to 999,999.
+	/// Remarks: Be mindful of the range of values this property can return. Essentially, this
+	///          property does not produce thousands of a millisecond, but rather millionths of
+	///          a second.
+	public get microseconds = rawValue % 1_000_000;
+
+	/// Summary: Gets the time interval expressed as a whole and fractional number of days.
+	/// Returns: The total number of days represented by the time interval, as a Real.
+	public get totalDays = rawValue * daysPerMicro;
+
+	/// Summary: Gets the time interval expressed as a whole and fractional number of hours.
+	/// Returns: The total number of hours represented by the time interval, as a Real.
+	public get totalHours = rawValue * hoursPerMicro;
+
+	/// Summary: Gets the time interval expressed as a whole and fractional number of minutes.
+	/// Returns: The total number of minutes represented by the time interval, as a Real.
+	public get totalMinutes = rawValue * minutesPerMicro;
+
+	/// Summary: Gets the time interval expressed as a whole and fractional number of seconds.
+	/// Returns: The total number of seconds represented by the time interval, as a Real.
+	public get totalSeconds = rawValue * secondsPerMicro;
+
+	/// Summary: Gets the time interval expressed as a whole and fractional number of
+	///          milliseconds.
+	/// Returns: The total number of milliseconds represented by the time interval, as a Real.
+	public get totalMilliseconds = rawValue * millisPerMicro;
+
+	/// Summary: Gets the time interval expressed as a whole number of microseconds.
+	/// Returns: The total number of microseconds represented by the time interval, as an Int.
+	/// Remarks: Unlike the other `total*` properties, this returns an Int. This is because the
+	///          resolution of a {TimeSpan} is 1 µs, and the conversion to Real would lose some
+	///          precision for very large and very small time intervals.
+	public get totalMicroseconds = rawValue;
+
+	/// Summary: Gets the duration of the time interval, as a positive time interval.
+	/// Returns: A {TimeSpan} representing the duration of the current time interval. The return
+	///          value is always a positive time span. In essence, this property produces the
+	///          absolute value of the time span.
+	public get duration
+	{
+		if rawValue < 0:
+			return new TimeSpan(-rawValue);
+
+		return this;
+	}
+
+	override getHashCode()
+	{
+		return rawValue;
+	}
+
+	override toString()
+	{
+		var format = formatBasic;
+		var formatArgs = new List(5);
+
+		var value = rawValue;
+		var sign = value < 0 ? "-" : "";
+		formatArgs.add(sign);
+
+		if days != 0
+		{
+			format = formatWithDays;
+			formatArgs.add(math.abs(value / microsPerDay));
+		}
+		formatArgs.add(math.abs((value / microsPerHour) % 24));
+		formatArgs.add(math.abs((value / microsPerMinute) % 60));
+		// seconds, with milliseconds
+		formatArgs.add(math.abs((value / microsPerMilli) % 60_000 / 1000.0));
+
+		return format.format(formatArgs);
+	}
+
+	operator +(a, b)
+	{
+		if b is not TimeSpan:
+			throw new TypeError();
+
+		return new TimeSpan(a.rawValue + b.rawValue);
+	}
+
+	operator +(a)
+	{
+		return a;
+	}
+
+	operator -(a, b)
+	{
+		if b is not TimeSpan:
+			throw new TypeError();
+
+		return new TimeSpan(a.rawValue - b.rawValue);
+	}
+
+	operator -(a)
+	{
+		var microseconds = a.rawValue;
+		if microseconds == Int.min:
+			throw new OverflowError();
+
+		return new TimeSpan(-microseconds);
+	}
+
+	operator ==(a, b)
+	{
+		return b is TimeSpan and a.rawValue == b.rawValue;
+	}
+
+	operator <=>(a, b)
+	{
+		if b is not TimeSpan:
+			throw new TypeError();
+
+		return a.rawValue <=> b.rawValue;
+	}
+
+	private static _zero = new TimeSpan(0);
+	/// Summary: Gets a {TimeSpan} representing an interval of 0.
+	/// Returns: A {TimeSpan} representing an interval of 0.
+	public static get zero = _zero;
+
+	private static _min = new TimeSpan(Int.min);
+	/// Summary: Gets the minimum time interval.
+	/// Returns: A {TimeSpan} representing the minimum time interval.
+	public static get min = _min;
+
+	private static _max = new TimeSpan(Int.max);
+	/// Summary: Gets the maximum time interval.
+	/// Returns: A {TimeSpan} representing the maximum time interval.
+	public static get max = _max;
+
+	/// Summary: Creates a time interval from the specified number of days, which may be
+	///          fractional.
+	/// Param value: The number of days. (Int, UInt or Real)
+	/// Returns: A new {TimeSpan} representing the specified number of days.
+	/// Throws TypeError:
+	///          {value} could not be converted to a Real.
+	public static fromDays(value)
+	{
+		return fromInterval(value, microsPerDay);
+	}
+
+	/// Summary: Creates a time interval from the specified number of hours, which may be
+	///          fractional.
+	/// Param value: The number of hours. (Int, UInt or Real)
+	/// Returns: A new {TimeSpan} representing the specified number of hours.
+	/// Throws TypeError:
+	///          {value} could not be converted to a Real.
+	public static fromHours(value)
+	{
+		return fromInterval(value, microsPerHour);
+	}
+
+	/// Summary: Creates a time interval from the specified number of minutes, which may be
+	///          fractional.
+	/// Param value: The number of minutes. (Int, UInt or Real)
+	/// Returns: A new {TimeSpan} representing the specified number of minutes.
+	/// Throws TypeError:
+	///          {value} could not be converted to a Real.
+	public static fromMinutes(value)
+	{
+		return fromInterval(value, microsPerMinute);
+	}
+
+	/// Summary: Creates a time interval from the specified number of seconds, which may be
+	///          fractional.
+	/// Param value: The number of seconds. (Int, UInt or Real)
+	/// Returns: A new {TimeSpan} representing the specified number of seconds.
+	/// Throws TypeError:
+	///          {value} could not be converted to a Real.
+	public static fromSeconds(value)
+	{
+		return fromInterval(value, microsPerSecond);
+	}
+
+	/// Summary: Creates a time interval from the specified number of milliseconds, which may be
+	///          fractional.
+	/// Param value: The number of milliseconds. (Int, UInt or Real)
+	/// Returns: A new {TimeSpan} representing the specified number of milliseconds.
+	/// Throws TypeError:
+	///          {value} could not be converted to a Real.
+	public static fromMilliseconds(value)
+	{
+		return fromInterval(value, microsPerMilli);
+	}
+
+	private static fromInterval(value, unitFactor)
+	{
+		value = real(value);
+		if value.isNaN or value.isInfinite:
+			throw new ArgumentRangeError("value");
+		var microseconds = int(value * unitFactor);
+		return new TimeSpan(microseconds);
+	}
+
+	private const microsPerMilli  = 1_000;
+	private const microsPerSecond = 1_000_000;
+	private const microsPerMinute = 60 * microsPerSecond;
+	private const microsPerHour   = 60 * microsPerMinute;
+	private const microsPerDay    = 24 * microsPerHour;
+
+	private const millisPerMicro  = 1.0 / microsPerMilli;
+	private const secondsPerMicro = 1.0 / microsPerSecond;
+	private const minutesPerMicro = 1.0 / microsPerMinute;
+	private const hoursPerMicro   = 1.0 / microsPerHour;
+	private const daysPerMicro    = 1.0 / microsPerDay;
+
+	private const formatBasic = "{0}{1}:{2}:{3}";
+	private const formatWithDays = "{0}{1}d {2}:{3}:{4}";
+}
