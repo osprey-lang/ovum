@@ -32,40 +32,43 @@ int MethodOverload::VerifyRefSignature(uint32_t signature, ovlocals_t argCount) 
 	if (argSignature.IsParamRef(0))
 		return 0;
 
-	ovlocals_t im = 1; // index into methodSignature
-	ovlocals_t ia = 1; // and into argSignature
+	// Since we always reserve space for the instance, even if there isn't one, we start
+	// numbering named parameters (i.e. anything that isn't 'this') at 1.
+	ovlocals_t methodIndex = 1; // index into methodSignature
+	ovlocals_t argIndex = 1; // and into argSignature
 
-	ovlocals_t paramCount = this->GetEffectiveParamCount();
+	// Don't use GetEffectiveParamCount, as the instance is already accounted for (if any).
+	ovlocals_t paramsToCheck = this->paramCount;
+
+	// When the method is variadic, the last parameter is verified separately, as it may
+	// be represented by zero or more arguments.
+	if (this->IsVariadic())
+		paramsToCheck--;
+
+	// Test each parameter against its corresponding argument. When an optional parameter
+	// is missing from the argument list, IsParamRef will return false for it. Optional
+	// parameters can never be passed by reference, so the refness will match.
+	while (methodIndex <= paramsToCheck) // numbering from 1
+	{
+		if (methodSignature.IsParamRef(methodIndex) != argSignature.IsParamRef(argIndex))
+			return argIndex;
+		methodIndex++;
+		argIndex++;
+	}
+
+	// If the method is variadic, all remaining arguments will be packed into a list.
+	// These are not allowed to be passed by referenced.
 	if (this->IsVariadic())
 	{
-		// Test each required parameter against its argument
-		while (im < paramCount - 1)
+		while (argIndex <= argCount) // numbering from 1
 		{
-			if (methodSignature.IsParamRef(im) != argSignature.IsParamRef(ia))
-				return ia;
-			im++;
-			ia++;
-		}
-		// And then make sure every remaining argument is not by ref;
-		// these will be packed into a list
-		while (ia < argCount)
-		{
-			if (argSignature.IsParamRef(ia))
-				return ia;
-			ia++;
+			if (argSignature.IsParamRef(argIndex))
+				return argIndex;
+			argIndex++;
 		}
 	}
-	else
-	{
-		// Test each parameter against its corresponding argument
-		while (im < paramCount)
-		{
-			if (methodSignature.IsParamRef(im) != argSignature.IsParamRef(ia))
-				return ia;
-			im++;
-			ia++;
-		}
-	}
+
+	// No mismatches
 	return -1;
 }
 

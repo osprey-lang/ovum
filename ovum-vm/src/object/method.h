@@ -177,7 +177,19 @@ public:
 
 	RefSignaturePool *GetRefSignaturePool() const;
 
-	// argCount does NOT include the instance.
+	// Verifies the ref signature of an invocation against the overload's ref signature,
+	// by comparing each argument against the referenceness expected by each corresponding
+	// parameter.
+	//
+	// Parameters:
+	//   signature:
+	//     The ref signature of an invocation.
+	//   argCount:
+	//     The number of arguments passed to the overload, NOT including the instance.
+	// Returns:
+	//   -1 if there is no refness mismatch. If there is a mismatch, returns the index of
+	//   the first argument with incorrect refness. Argument 0 is reserved for the instance;
+	//   hence named argument numbering starts at 1.
 	int VerifyRefSignature(uint32_t signature, ovlocals_t argCount) const;
 };
 
