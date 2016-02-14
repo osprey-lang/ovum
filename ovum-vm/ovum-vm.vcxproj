@@ -180,6 +180,7 @@
     <ClCompile Include="src\ee\instructions.cpp" />
     <ClCompile Include="src\ee\methodbuilder.cpp" />
     <ClCompile Include="src\ee\methodinitializer.cpp" />
+    <ClCompile Include="src\ee\refsignature.cpp" />
     <ClCompile Include="src\ee\stacktraceformatter.cpp" />
     <ClCompile Include="src\gc\gcobject.cpp" />
     <ClCompile Include="src\module\modulefinder.cpp" />

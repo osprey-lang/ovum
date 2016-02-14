@@ -388,5 +388,8 @@
     <ClCompile Include="src\object\standardtypeiniters.cpp">
       <Filter>Source Files\object</Filter>
     </ClCompile>
+    <ClCompile Include="src\ee\refsignature.cpp">
+      <Filter>Source Files\ee</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
