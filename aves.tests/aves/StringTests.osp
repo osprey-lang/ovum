@@ -63,6 +63,90 @@ public class StringTests is TestFixture
 
 	// End surroundWith tests
 
+	// substring tests
+
+	public test_Substring1Basic()
+	{
+		var str = "Pandion";
+		Assert.areEqual("dion", str.substring(3));
+	}
+
+	public test_Substring1Empty()
+	{
+		var str = "Pandion";
+		Assert.areEqual("", str.substring(7));
+	}
+
+	public test_Substring1Full()
+	{
+		var str = "Pandion";
+		Assert.areEqual(str, str.substring(0));
+	}
+
+	public test_Substring1Invalid()
+	{
+		var str = "Pandion";
+		Assert.throws(typeof(ArgumentRangeError), @= str.substring(10));
+		Assert.throws(typeof(ArgumentRangeError), @= str.substring(-1));
+	}
+
+	public test_Substring2Basic()
+	{
+		var str = "Pandion";
+		Assert.areEqual("dio", str.substring(3, 3));
+	}
+
+	public test_Substring2Empty()
+	{
+		var str = "Pandion";
+		Assert.areEqual("", str.substring(3, 0));
+		Assert.areEqual("", str.substring(7, 0));
+	}
+
+	public test_Substring2Full()
+	{
+		var str = "Pandion";
+		Assert.areEqual(str, str.substring(0, 7));
+	}
+
+	public test_Substring2Invalid()
+	{
+		var str = "Pandion";
+		Assert.throws(typeof(ArgumentRangeError), @= str.substring(10, 0));
+		Assert.throws(typeof(ArgumentError), @= str.substring(3, 10));
+		Assert.throws(typeof(ArgumentRangeError), @= str.substring(0, -1));
+		Assert.throws(typeof(ArgumentRangeError), @= str.substring(-1, 0));
+	}
+
+	// substringTo tests
+
+	public test_SubstringToBasic()
+	{
+		var str = "Pandion";
+		Assert.areEqual("dio", str.substringTo(3, 6));
+	}
+
+	public test_SubstringToEmpty()
+	{
+		var str = "Pandion";
+		Assert.areEqual("", str.substringTo(3, 3));
+	}
+
+	public test_SubstringToFull()
+	{
+		var str = "Pandion";
+		Assert.areEqual(str, str.substringTo(0, 7));
+	}
+
+	public test_SubstringToInvalid()
+	{
+		var str = "Pandion";
+		Assert.throws(typeof(ArgumentRangeError), @= str.substringTo(3, 10));
+		Assert.throws(typeof(ArgumentRangeError), @= str.substringTo(10, 10));
+		Assert.throws(typeof(ArgumentRangeError), @= str.substringTo(-1, 5));
+		Assert.throws(typeof(ArgumentRangeError), @= str.substringTo(5, -1));
+	}
+
 	// Booleanness tests
 
 	public test_Truth()

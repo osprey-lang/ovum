@@ -231,10 +231,10 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_substringInternal)
 	int32_t startIndex = (int32_t)args[1].v.integer;
 	int32_t count = (int32_t)args[2].v.integer;
 
-	String *output = nullptr;
+	String *output;
 	if (count == 0)
 	{
-		VM_PushString(thread, strings::Empty);
+		output = strings::Empty;
 	}
 	else if (startIndex == 0 && count == str->length)
 	{
