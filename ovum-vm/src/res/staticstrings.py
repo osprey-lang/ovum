@@ -206,7 +206,7 @@ def _read_all_text(filename):
   return file_text
 
 def _write_all_text(filename, text):
-  with open(filename, mode='w', encoding='utf-8') as f:
+  with open(filename, mode='w', encoding='utf-8', newline='') as f:
     f.write(text)
 
 if __name__ == '__main__':
