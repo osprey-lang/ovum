@@ -1,0 +1,119 @@
+use namespace aves;
+use namespace testing.unit;
+
+namespace aves.tests;
+
+// Tests for the class aves.TimeSpan
+
+public class TimeSpanTests is TestFixture
+{
+	public new() { new base("aves.TimeSpan tests"); }
+
+	// Constructor tests
+
+	public test_Constructor1Valid()
+	{
+		var micros = 123;
+		var ts = new TimeSpan(micros);
+		Assert.areEqual(ts.totalMicroseconds, micros);
+	}
+
+	public test_Constructor1Invalid()
+	{
+		// Unary constructor doesn't throw an ArgumentRangeError – the entire Int range is valid.
+		Assert.throws(typeof(TypeError), @= new TimeSpan("0"));
+	}
+
+	public test_Constructor3Valid()
+	{
+		// 9:69:70 should come to 10:10:10
+		var hours = 9;
+		var minutes = 69; // 1 extra hour; 69 % 60 == 9
+		var seconds = 70; // 1 extra minute
+		var ts = new TimeSpan(hours, minutes, seconds);
+
+		Assert.areEqual(ts.days, 0);
+		Assert.areEqual(ts.hours, 10);
+		Assert.areEqual(ts.minutes, 10);
+		Assert.areEqual(ts.seconds, 10);
+		Assert.areEqual(ts.microseconds, 0);
+	}
+
+	public test_Constructor3Invalid()
+	{
+		const microsecondsPerSecond = 1_000_000;
+		const maxSeconds = Int.max / microsecondsPerSecond;
+		Assert.throws(typeof(ArgumentRangeError), @= new TimeSpan(0, 0, maxSeconds + 1));
+
+		Assert.throws(typeof(TypeError), @= new TimeSpan("0", 0, 0));
+		Assert.throws(typeof(TypeError), @= new TimeSpan(0, "0", 0));
+		Assert.throws(typeof(TypeError), @= new TimeSpan(0, 0, "0"));
+	}
+
+	public test_Constructor4Valid()
+	{
+		// 9:33:69:70 should come to 10:10:10:10
+		var days = 9;
+		var hours = 33;   // 1 extra day; 33 % 24 == 9
+		var minutes = 69; // 1 extra hour; 69 % 60 == 9
+		var seconds = 70; // 1 extra minute
+		var ts = new TimeSpan(days, hours, minutes, seconds);
+
+		Assert.areEqual(ts.days, 10);
+		Assert.areEqual(ts.hours, 10);
+		Assert.areEqual(ts.minutes, 10);
+		Assert.areEqual(ts.seconds, 10);
+		Assert.areEqual(ts.microseconds, 0);
+	}
+
+	public test_Constructor4Invalid()
+	{
+		const microsecondsPerSecond = 1_000_000;
+		const maxSeconds = Int.max / microsecondsPerSecond;
+		Assert.throws(typeof(ArgumentRangeError), @= new TimeSpan(0, 0, 0, maxSeconds + 1));
+
+		Assert.throws(typeof(TypeError), @= new TimeSpan("0", 0, 0, 0));
+		Assert.throws(typeof(TypeError), @= new TimeSpan(0, "0", 0, 0));
+		Assert.throws(typeof(TypeError), @= new TimeSpan(0, 0, "0", 0));
+		Assert.throws(typeof(TypeError), @= new TimeSpan(0, 0, 0, "0"));
+	}
+
+	public test_Constructor5Valid()
+	{
+		// 9:33:69:70:1010 should come to 10:10:10:10:10
+		var days = 9;
+		var hours = 33; // 1 extra day; 33 % 24 == 9
+		var minutes = 69; // 1 extra hour; 69 % 60 == 9
+		var seconds = 69; // 1 extra minute; 69 % 60 == 9
+		var milliseconds = 1010; // 1 extra second; 1010 % 1000 = 10
+		var ts = new TimeSpan(days, hours, minutes, seconds, milliseconds);
+
+		Assert.areEqual(ts.days, 10);
+		Assert.areEqual(ts.hours, 10);
+		Assert.areEqual(ts.minutes, 10);
+		Assert.areEqual(ts.seconds, 10);
+		Assert.areEqual(ts.milliseconds, 10);
+	}
+
+	public test_Constructor5Invalid()
+	{
+		const microsecondsPerMillisecond = 1_000;
+		const maxMilliseconds = Int.max / microsecondsPerMillisecond;
+		Assert.throws(typeof(ArgumentRangeError), @= new TimeSpan(0, 0, 0, 0, maxMilliseconds + 1));
+
+		Assert.throws(typeof(TypeError), @= new TimeSpan("0", 0, 0, 0, 0));
+		Assert.throws(typeof(TypeError), @= new TimeSpan(0, "0", 0, 0, 0));
+		Assert.throws(typeof(TypeError), @= new TimeSpan(0, 0, "0", 0, 0));
+		Assert.throws(typeof(TypeError), @= new TimeSpan(0, 0, 0, "0", 0));
+		Assert.throws(typeof(TypeError), @= new TimeSpan(0, 0, 0, 0, "0"));
+	}
+
+	public test_MinMax()
+	{
+		var min = new TimeSpan(Int.min);
+		var max = new TimeSpan(Int.max);
+
+		Assert.areEqual(min.totalMicroseconds, Int.min);
+		Assert.areEqual(max.totalMicroseconds, Int.max);
+	}
+}
