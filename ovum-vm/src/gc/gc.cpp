@@ -350,8 +350,13 @@ int GC::ConstructLL(Thread *const thread, Type *type, ovlocals_t argc, Value *ar
 			goto done;
 
 		// If everything went okay, copy the result to the right place.
-		output->type = type;
-		output->v.instance = gco->InstanceBase();
+		// At this point, we CANNOT rely on gco->InstanceBase(), because
+		// the constructor may have triggered a GC cycle, which means that
+		// gco will be pointing to the old location. But realArgs is on
+		// the managed stack, so it is guaranteed to have been updated,
+		// and so we use that.
+		output->type = realArgs->type;
+		output->v.instance = realArgs->v.instance;
 	}
 
 done:
