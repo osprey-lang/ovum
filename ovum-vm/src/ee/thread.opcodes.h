@@ -104,8 +104,8 @@ enum Opcode : uint8_t
 	OPC_POW        = 0x55,
 	OPC_SHL        = 0x56,
 	OPC_SHR        = 0x57,
-	OPC_HASHOP     = 0x58,
-	OPC_DOLLAR     = 0x59,
+	// RESERVED (0x58)
+	// RESERVED (0x59)
 	OPC_PLUS       = 0x5a,
 	OPC_NEG        = 0x5b,
 	OPC_NOT        = 0x5c,

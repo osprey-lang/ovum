@@ -1275,8 +1275,6 @@ void MethodInitializer::ReadInstructions(instr::MethodBuilder &builder)
 		case OPC_POW:
 		case OPC_SHL:
 		case OPC_SHR:
-		case OPC_HASHOP:
-		case OPC_DOLLAR:
 		case OPC_PLUS:
 		case OPC_NEG:
 		case OPC_NOT:

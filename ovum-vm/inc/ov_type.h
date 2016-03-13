@@ -130,24 +130,24 @@ OVUM_API MethodHandle Property_GetSetter(PropertyHandle prop);
 // See ov_thread.opcodes.h/Opcode
 enum class Operator : uint8_t
 {
-	ADD,    // The binary + operator.
-	SUB,    // The binary - operator.
-	OR,     // The | operator.
-	XOR,    // The ^ operator.
-	MUL,    // The * operator.
-	DIV,    // The / operator.
-	MOD,    // The % operator.
-	AND,    // The & operator.
-	POW,    // The ** operator.
-	SHL,    // The << operator.
-	SHR,    // The >> operator.
-	HASHOP, // The # operator.
-	DOLLAR, // The $ operator.
-	PLUS,   // The unary + operator.
-	NEG,    // The unary - operator.
-	NOT,    // The ~ operator.
-	EQ,     // The == operator.
-	CMP,    // The <=> operator.
+	ADD  =  0,   // The binary + operator.
+	SUB  =  1,   // The binary - operator.
+	OR   =  2,   // The | operator.
+	XOR  =  3,   // The ^ operator.
+	MUL  =  4,   // The * operator.
+	DIV  =  5,   // The / operator.
+	MOD  =  6,   // The % operator.
+	AND  =  7,   // The & operator.
+	POW  =  8,   // The ** operator.
+	SHL  =  9,   // The << operator.
+	SHR  = 10,   // The >> operator.
+	// RESERVED (11)
+	// RESERVED (12)
+	PLUS = 13,   // The unary + operator.
+	NEG  = 14,   // The unary - operator.
+	NOT  = 15,   // The ~ operator.
+	EQ   = 16,   // The == operator.
+	CMP  = 17,   // The <=> operator.
 };
 
 inline unsigned int Arity(Operator op)
