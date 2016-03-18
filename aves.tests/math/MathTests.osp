@@ -1,5 +1,5 @@
-use namespace aves;
-use namespace testing.unit;
+use aves;
+use testing.unit;
 
 namespace math.tests;
 
