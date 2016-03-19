@@ -1,6 +1,6 @@
 use "Random.osp";
 
-use namespace aves;
+use aves;
 
 namespace math
 {
