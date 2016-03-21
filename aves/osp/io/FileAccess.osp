@@ -1,0 +1,18 @@
+use aves;
+
+namespace io;
+
+/// Summary: Specifies desired access modes for a file.
+public enum set FileAccess
+{
+	/// Summary: Opens the file for reading. This flag cannot be used together with
+	///          {FileMode.truncate} or {FileMode.append}.
+	read = 1,
+
+	/// Summary: Opens the file for writing.
+	write = 2,
+
+	/// Summary: Combines the {read} and {write} flags, thus opening the file for both reading
+	///          and writing.
+	readWrite = read | write,
+}

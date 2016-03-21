@@ -1,0 +1,31 @@
+use aves;
+
+namespace io;
+
+/// Summary: Specifies the mode a file should be opened with.
+public enum set FileMode
+{
+	/// Summary: Opens an existing file. If the file does not exist, an {io.FileNotFoundError} is
+	///          thrown.
+	open = 1,
+
+	/// Summary: Opens the file if it exists, or creates the file if it does not.
+	openOrCreate = 2,
+
+	/// Summary: Creates a new file. If the file already exists, it is overwritten.
+	create = 3,
+
+	/// Summary: Creates a new file. If the file already exists, an {io.IOError} is thrown.
+	createNew = 4,
+
+	/// Summary: Opens an existing file, and truncates it to zero bytes. Files opened for
+	///          truncation cannot be read from. This mode must be used together with
+	///          {FileAccess.write}, and cannot be combined with {FileAccess.read}.
+	truncate = 5,
+
+	/// Summary: Opens an existing file, and places the file pointer at the end, or creates a new
+	///          file. Writing to the file appends to the end of it. Files opened for appending
+	///          cannot be read from. This mode must be combined with {FileAccess.write}, and
+	///          cannot be combined with {FileAccess.read}.
+	append = 6,
+}

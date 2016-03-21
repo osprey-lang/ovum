@@ -1,0 +1,22 @@
+use aves;
+
+namespace io;
+
+/// Summary: Specifies how subsequently opened handles may interact with a file.
+public enum set FileShare
+{
+	/// Summary: No other handles to the file may read from, write to or delete the file.
+	none = 0,
+
+	/// Summary: Subsequently opened handles to the file may read from it.
+	read = 1,
+
+	/// Summary: Subsequently opened handles to the file may write to it.
+	write = 2,
+
+	/// Summary: Subsequently opened handles to the file may both read from and write to it.
+	readWrite = read | write,
+
+	/// Summary: The file may subsequently be deleted.
+	delete = 4,
+}
