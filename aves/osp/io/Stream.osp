@@ -478,22 +478,3 @@ private class VoidStream is Stream
 
 	override seek(amount, origin) { return 0; }
 }
-
-/// Summary: Specifies the position within a file that
-///          a seek operation is relative to.
-public enum SeekOrigin
-{
-	/// Summary: The seek offset is relative to the start
-	///          of the file.
-	start = 1,
-	/// Summary: The seek offset is relative to the current
-	///          position of the stream cursor.
-	current = 2,
-	/// Summary: The seek offset is relative to the end
-	///          of the file.
-	/// Remarks: A positive seek offset still seeks forward,
-	///          while a negative offset is required to back up.
-	///          For example, to seek to the 16th byte before the
-	///          end, call `stream.seek(-16, SeekOrigin.end)`.
-	end = 3,
-}

@@ -9,6 +9,7 @@ use "FileNotFoundError.osp";
 use "FileStream.osp";
 use "IOError.osp";
 use "Path.osp";
+use "SeekOrigin.osp";
 use "Stream.osp";
 use "TextReader.osp";
 use "TextWriter.osp";
