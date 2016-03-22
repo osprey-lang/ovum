@@ -33,7 +33,7 @@ namespace type_names
 	LitString<20> UnicodeCategory    = { 20, 0, SFS, AVES,'U','n','i','c','o','d','e','C','a','t','e','g','o','r','y',0 };
 	LitString<12> Version            = { 12, 0, SFS, AVES,'V','e','r','s','i','o','n',0 };
 
-	LitString<27> AccessLevel        = { 27, 0, SFS, REFLECTION,'A','c','c','e','s','s','L','e','v','e','l',0 };
+	LitString<29> Accessibility      = { 29, 0, SFS, REFLECTION,'A','c','c','e','s','s','i','b','i','l','i','t','y',0 };
 	LitString<27> Constructor        = { 27, 0, SFS, REFLECTION,'C','o','n','s','t','r','u','c','t','o','r',0 };
 	LitString<21> Field              = { 21, 0, SFS, REFLECTION,'F','i','e','l','d',0 };
 	LitString<30> GlobalConstant     = { 30, 0, SFS, REFLECTION,'G','l','o','b','a','l','C','o','n','s','t','a','n','t',0 };
@@ -87,7 +87,7 @@ void Aves::InitTypes(ModuleHandle module)
 	aves.UnicodeCategory    = Module_FindType(module, type_names::UnicodeCategory.AsString(),    true);
 	aves.Version            = Module_FindType(module, type_names::Version.AsString(),            true);
 
-	aves.reflection.AccessLevel       = Module_FindType(module, type_names::AccessLevel.AsString(),       true);
+	aves.reflection.Accessibility     = Module_FindType(module, type_names::Accessibility.AsString(),     true);
 	aves.reflection.Constructor       = Module_FindType(module, type_names::Constructor.AsString(),       true);
 	aves.reflection.Field             = Module_FindType(module, type_names::Field.AsString(),             true);
 	aves.reflection.GlobalConstant    = Module_FindType(module, type_names::GlobalConstant.AsString(),    true);

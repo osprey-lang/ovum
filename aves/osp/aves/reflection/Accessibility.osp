@@ -2,10 +2,10 @@ namespace aves.reflection;
 
 // These values must be synchronsied with the MemberAccess enum in Ovum.
 
-/// Summary: Specifies the access level of a member.
-public enum AccessLevel
+/// Summary: Specifies the accessibility of a member.
+public enum Accessibility
 {
-	/// Summary: Specifies an invalid access level.
+	/// Summary: Specifies an invalid accessibility.
 	invalid = -1,
 
 	/// Summary: The member is public.

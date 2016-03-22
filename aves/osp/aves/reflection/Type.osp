@@ -11,11 +11,11 @@ public class Type is Member
 
 	override get kind = MemberKind.type;
 
-	override get accessLevel
+	override get accessibility
 	{
 		if isPrivate:
-			return AccessLevel.isPrivate;
-		return AccessLevel.isPublic;
+			return Accessibility.isPrivate;
+		return Accessibility.isPublic;
 	}
 
 	private get _name
@@ -78,7 +78,8 @@ public class Type is Member
 	///          static properties and constants. Static types differ from
 	///          namespaces in their support for properties and fields, as
 	///          well as being able to declare private members.
-	public get isStatic                     __extern("aves_reflection_Type_get_isStatic");
+	public get isStatic
+		__extern("aves_reflection_Type_get_isStatic");
 
 	/// Summary: Gets a value that indicates whether the type is primitive.
 	/// Returns: True if the type is primitive; otherwise, false.

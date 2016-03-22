@@ -23,8 +23,8 @@ public abstract class MethodBase is Member
 
 	// Don't override Member.kind; implementations of MethodBase should provide it.
 
-	override get accessLevel
-		__extern("aves_reflection_MethodBase_get_accessLevel");
+	override get accessibility
+		__extern("aves_reflection_MethodBase_get_accessibility");
 
 	private get handle
 		__extern("aves_reflection_MethodBase_get_handle");
@@ -73,15 +73,15 @@ public abstract class MethodBase is Member
 
 	/// Summary: Gets a value that indicates whether the method is public.
 	/// Returns: True if the method is public; otherwise, false.
-	public get isPublic = accessLevel == AccessLevel.isPublic;
+	public get isPublic = accessibility == Accessibility.isPublic;
 
 	/// Summary: Gets a value that indicates whether the method is protected.
 	/// Returns: True if the method is protected; otherwise, false.
-	public get isProtected = accessLevel == AccessLevel.isProtected;
+	public get isProtected = accessibility == Accessibility.isProtected;
 
 	/// Summary: Gets a value that indicates whether the method is private.
 	/// Returns: True if the method is private; otherwise, false.
-	public get isPrivate = accessLevel == AccessLevel.isPrivate;
+	public get isPrivate = accessibility == Accessibility.isPrivate;
 
 	/// Summary: Gets a value that indicates whether the method is a global function.
 	/// Returns: True if the method is global; otherwise, false.

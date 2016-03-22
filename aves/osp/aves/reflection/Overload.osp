@@ -9,7 +9,7 @@ public class Overload is Member
 
 	override get kind = MemberKind.overload;
 
-	override get accessLevel = method.accessLevel;
+	override get accessibility = method.accessibility;
 
 	override get name = method.name;
 

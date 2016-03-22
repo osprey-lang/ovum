@@ -12,7 +12,7 @@ public:
 
 AVES_API int OVUM_CDECL aves_reflection_Property_init(TypeHandle type);
 
-AVES_API NATIVE_FUNCTION(aves_reflection_Property_get_accessLevel);
+AVES_API NATIVE_FUNCTION(aves_reflection_Property_get_accessibility);
 
 AVES_API NATIVE_FUNCTION(aves_reflection_Property_get_handle);
 

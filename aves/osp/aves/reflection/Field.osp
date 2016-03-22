@@ -12,8 +12,8 @@ public class Field is Member
 
 	override get kind = MemberKind.field;
 
-	override get accessLevel
-		__extern("aves_reflection_Field_get_accessLevel");
+	override get accessibility
+		__extern("aves_reflection_Field_get_accessibility");
 
 	override get name
 		__extern("aves_reflection_Field_get_name");
@@ -41,15 +41,15 @@ public class Field is Member
 
 	/// Summary: Gets a value that indicates whether the field is public.
 	/// Returns: True if the field is public; otherwise, false.
-	public get isPublic = accessLevel == AccessLevel.isPublic;
+	public get isPublic = accessibility == Accessibility.isPublic;
 
 	/// Summary: Gets a value that indicates whether the field is protected.
 	/// Returns: True if the field is protected; otherwise, false.
-	public get isProtected = accessLevel == AccessLevel.isProtected;
+	public get isProtected = accessibility == Accessibility.isProtected;
 
 	/// Summary: Gets a value that indicates whether the field is private.
 	/// Returns: True if the field is private; otherwise, false.
-	public get isPrivate = accessLevel == AccessLevel.isPrivate;
+	public get isPrivate = accessibility == Accessibility.isPrivate;
 
 	/// Summary: Gets a value that indicates whether the field is static.
 	/// Returns: True if the field is static; otherwise, false.

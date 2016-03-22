@@ -44,7 +44,7 @@ public:
 
 		struct Reflection
 		{
-			TypeHandle AccessLevel;
+			TypeHandle Accessibility;
 			TypeHandle Constructor;
 			TypeHandle Field;
 			TypeHandle GlobalConstant;

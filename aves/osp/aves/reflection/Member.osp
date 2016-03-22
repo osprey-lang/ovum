@@ -10,9 +10,9 @@ public abstract class Member
 	/// Returns: The member kind, as a {MemberKind}.
 	public abstract get kind;
 
-	/// Summary: Gets the access level of the member.
-	/// Returns: The access level of the member, as an {AccessLevel}.
-	public abstract get accessLevel;
+	/// Summary: Gets the accessibility of the member.
+	/// Returns: The accessibility of the member, as an {Accessibility}.
+	public abstract get accessibility;
 
 	/// Summary: Gets the name of the member, without qualifying path.
 	/// Returns: The name of the member, as a String.

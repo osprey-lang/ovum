@@ -32,14 +32,14 @@ AVES_API NATIVE_FUNCTION(aves_reflection_Field_new)
 	RETURN_SUCCESS;
 }
 
-AVES_API NATIVE_FUNCTION(aves_reflection_Field_get_accessLevel)
+AVES_API NATIVE_FUNCTION(aves_reflection_Field_get_accessibility)
 {
 	Aves *aves = Aves::Get(thread);
 
 	FieldInst *inst = THISV.Get<FieldInst>();
 
 	Value access;
-	access.type = aves->aves.reflection.AccessLevel;
+	access.type = aves->aves.reflection.Accessibility;
 	access.v.integer = (int)Member_GetAccessLevel(inst->field);
 	VM_Push(thread, &access);
 

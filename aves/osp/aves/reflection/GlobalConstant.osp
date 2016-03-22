@@ -24,11 +24,11 @@ public class GlobalConstant is Member
 
 	override get kind = MemberKind.globalConstant;
 
-	override get accessLevel
+	override get accessibility
 	{
 		if isPrivate:
-			return AccessLevel.isPrivate;
-		return AccessLevel.isPublic;
+			return Accessibility.isPrivate;
+		return Accessibility.isPublic;
 	}
 
 	override get name
