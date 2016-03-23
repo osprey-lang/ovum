@@ -33,7 +33,7 @@ public class Field is Member
 	override get declaringType
 		__extern("aves_reflection_Field_get_declaringType");
 
-	override get declaringModule				//__extern("aves_reflection_Field_get_declaringModule");
+	override get declaringModule
 	{
 		// Not implemented just yet
 		throw new NotSupportedError();
@@ -41,15 +41,15 @@ public class Field is Member
 
 	/// Summary: Gets a value that indicates whether the field is public.
 	/// Returns: True if the field is public; otherwise, false.
-	public get isPublic = accessibility == Accessibility.isPublic;
+	public get isPublic = accessibility == Accessibility.\public;
 
 	/// Summary: Gets a value that indicates whether the field is protected.
 	/// Returns: True if the field is protected; otherwise, false.
-	public get isProtected = accessibility == Accessibility.isProtected;
+	public get isProtected = accessibility == Accessibility.\protected;
 
 	/// Summary: Gets a value that indicates whether the field is private.
 	/// Returns: True if the field is private; otherwise, false.
-	public get isPrivate = accessibility == Accessibility.isPrivate;
+	public get isPrivate = accessibility == Accessibility.\private;
 
 	/// Summary: Gets a value that indicates whether the field is static.
 	/// Returns: True if the field is static; otherwise, false.

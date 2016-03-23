@@ -73,15 +73,15 @@ public abstract class MethodBase is Member
 
 	/// Summary: Gets a value that indicates whether the method is public.
 	/// Returns: True if the method is public; otherwise, false.
-	public get isPublic = accessibility == Accessibility.isPublic;
+	public get isPublic = accessibility == Accessibility.\public;
 
 	/// Summary: Gets a value that indicates whether the method is protected.
 	/// Returns: True if the method is protected; otherwise, false.
-	public get isProtected = accessibility == Accessibility.isProtected;
+	public get isProtected = accessibility == Accessibility.\protected;
 
 	/// Summary: Gets a value that indicates whether the method is private.
 	/// Returns: True if the method is private; otherwise, false.
-	public get isPrivate = accessibility == Accessibility.isPrivate;
+	public get isPrivate = accessibility == Accessibility.\private;
 
 	/// Summary: Gets a value that indicates whether the method is a global function.
 	/// Returns: True if the method is global; otherwise, false.

@@ -14,8 +14,8 @@ public class Type is Member
 	override get accessibility
 	{
 		if isPrivate:
-			return Accessibility.isPrivate;
-		return Accessibility.isPublic;
+			return Accessibility.\private;
+		return Accessibility.\public;
 	}
 
 	private get _name

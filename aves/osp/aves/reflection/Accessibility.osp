@@ -9,14 +9,14 @@ public enum Accessibility
 	invalid = -1,
 
 	/// Summary: The member is public.
-	isPublic = 0,
+	\public = 0,
 
 	/// Summary: The member is protected.
 	/// Remarks: This value is not valid on global members.
-	isProtected = 1,
+	\protected = 1,
 
 	/// Summary: The member is private.
 	/// Remarks: On global members, this value indicates that the member
 	///          is internal to the module.
-	isPrivate = 2,
+	\private = 2,
 }
