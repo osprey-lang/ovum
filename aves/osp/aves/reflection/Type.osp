@@ -246,9 +246,9 @@ public class Type is Member
 	}
 
 	private const defaultSearchFlags =
-		MemberSearchFlags.isPublic |
-		MemberSearchFlags.isStatic |
-		MemberSearchFlags.isInstance;
+		MemberSearchFlags.\public |
+		MemberSearchFlags.\static |
+		MemberSearchFlags.instance;
 }
 
 public enum set MemberSearchFlags
@@ -257,20 +257,20 @@ public enum set MemberSearchFlags
 	none = 0,
 
 	/// Summary: Includes public members in the search.
-	isPublic     = 0x01,
+	\public      = 0x01,
 	/// Summary: Includes non-public members in the search.
 	///          This means protected and private members.
-	isNonPublic  = 0x02,
+	nonPublic    = 0x02,
 	/// Summary: Includes instance members in the search.
-	isInstance   = 0x04,
+	instance     = 0x04,
 	/// Summary: Includes static members in the search.
-	isStatic     = 0x08,
+	\static      = 0x08,
 	/// Summary: Excludes inherited members from the search. Only members
 	///          declared in the type are considered.
 	declaredOnly = 0x10,
 
-	/// Summary: Combines the flags {isPublic}, {isNonPublic}, {isInstance}
-	///          and {isStatic}, thus specifying all members. This value can
+	/// Summary: Combines the flags {\public}, {nonPublic}, {instance}
+	///          and {\static}, thus specifying all members. This value can
 	///          be combined with the flag {declaredOnly}.
-	all = isPublic | isNonPublic | isInstance | isStatic,
+	all = \public | nonPublic | instance | \static,
 }

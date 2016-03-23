@@ -146,6 +146,6 @@ public class Module
 	}
 
 	private const defaultSearchFlags =
-		MemberSearchFlags.isPublic |
-		MemberSearchFlags.isStatic;
+		MemberSearchFlags.\public |
+		MemberSearchFlags.\static;
 }
