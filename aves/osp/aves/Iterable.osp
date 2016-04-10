@@ -870,33 +870,57 @@ private class RangeIterable is Iterable
 	private end;
 	private step;
 
-	private iterUp()
-	{
-		var i = start;
-
-		while i < end
-		{
-			yield i;
-			i += step;
-		}
-	}
-
-	private iterDown()
-	{
-		var i = start;
-
-		while i > end
-		{
-			yield i;
-			i += step;
-		}
-	}
-
 	iter
 	{
 		if step < 0:
-			return iterDown();
+			return new RangeDownIterator(start, end, step);
 		else:
-			return iterUp();
+			return new RangeUpIterator(start, end, step);
+	}
+}
+
+private class RangeUpIterator is Iterator
+{
+	public new(this.i, this.end, this.step);
+
+	private _current;
+	override get current = _current;
+
+	private i;
+	private end;
+	private step;
+
+	override moveNext()
+	{
+		if i < end
+		{
+			_current = i;
+			i += step;
+			return true;
+		}
+		return false;
+	}
+}
+
+private class RangeDownIterator is Iterator
+{
+	public new(this.i, this.end, this.step);
+
+	private _current;
+	override get current = _current;
+
+	private i;
+	private end;
+	private step;
+
+	override moveNext()
+	{
+		if i > end
+		{
+			_current = i;
+			i += step;
+			return true;
+		}
+		return false;
 	}
 }
