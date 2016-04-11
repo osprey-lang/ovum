@@ -15,9 +15,7 @@ public:
 	struct StandardNativeFunctions
 	{
 		ListInitializer initListInstance;
-		ValueConcatenator concatLists;
 		HashInitializer initHashInstance;
-		ValueConcatenator concatHashes;
 		TypeTokenInitializer initTypeToken;
 	};
 

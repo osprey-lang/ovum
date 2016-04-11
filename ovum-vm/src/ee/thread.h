@@ -154,8 +154,8 @@ public:
 
 	inline void Dup()
 	{
-		Value *top = currentFrame->evalStack + currentFrame->stackCount++;
-		*(top + 1) = *top;
+		Value *top = currentFrame->NextStackSlot();
+		*top = *(top - 1);
 	}
 
 	inline Value *Local(ovlocals_t n)

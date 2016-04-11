@@ -22,14 +22,13 @@ AVES_API NATIVE_FUNCTION(aves_List_add);
 AVES_API NATIVE_FUNCTION(aves_List_insert);
 AVES_API NATIVE_FUNCTION(aves_List_removeAt);
 AVES_API NATIVE_FUNCTION(aves_List_clear);
+AVES_API NATIVE_FUNCTION(aves_List_concatInternal);
 AVES_API NATIVE_FUNCTION(aves_List_slice1);
 AVES_API NATIVE_FUNCTION(aves_List_slice2);
 AVES_API NATIVE_FUNCTION(aves_List_sliceTo);
 AVES_API NATIVE_FUNCTION(aves_List_reverse);
 
 AVES_API int OVUM_CDECL InitListInstance(ThreadHandle thread, ListInst *list, const int32_t capacity);
-
-AVES_API int OVUM_CDECL ConcatenateLists(ThreadHandle thread, Value *a, Value *b, Value *result);
 
 int EnsureMinCapacity(ThreadHandle thread, ListInst *list, const int32_t capacity);
 

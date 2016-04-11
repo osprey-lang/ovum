@@ -327,23 +327,6 @@ typedef int (OVUM_CDECL *ListInitializer)(ThreadHandle thread, ListInst *list, i
 //     A storage location that receives the initialized hash table.
 typedef int (OVUM_CDECL *HashInitializer)(ThreadHandle thread, int32_t capacity, Value *result);
 
-// Concatenates two values together. Native functions with this signature are
-// used to concatenate lists and hash tables. The native library of the module
-// that declare aves.List and aves.Hash must export two functions named "ConcatenateLists"
-// and "ConcatenateHashes", respectively, which are called by the runtime.
-//
-// Note: String concatenation is managed entirely inside the runtime.
-//
-// Parameters:
-//   thread:
-//     The current managed thread.
-//   a, b:
-//     The two values to concatenate. The runtime guarantees that these are of
-//     the same type.
-//   result:
-//     A storage location that receives the concatenated value.
-typedef int (OVUM_CDECL *ValueConcatenator)(ThreadHandle thread, Value *a, Value *b, Value *result);
-
 // Initializes a value of the aves.reflection.Type class for a specific
 // underlying TypeHandle. The standard module must expose a method with
 // the name "InitTypeToken", with this signature, so that the VM can create

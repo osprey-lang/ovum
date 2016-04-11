@@ -22,15 +22,11 @@ int StandardTypeIniters::InitObjectType(VM *vm, Module *declModule, Type *type)
 int StandardTypeIniters::InitListType(VM *vm, Module *declModule, Type *type)
 {
 	void *initListInstance = declModule->FindNativeFunction(ListIniterFunctionName);
-	void *concatLists = declModule->FindNativeFunction(ListConcatenatorFunctionName);
 
 	if (initListInstance == nullptr)
 		throw ModuleLoadException(declModule->GetFileName(), "Missing native initializer function for aves.List.");
-	if (concatLists == nullptr)
-		throw ModuleLoadException(declModule->GetFileName(), "Missing native function to concatenate lists.");
 
 	vm->functions.initListInstance = (ListInitializer)initListInstance;
-	vm->functions.concatLists = (ValueConcatenator)concatLists;
 
 	RETURN_SUCCESS;
 }
@@ -38,16 +34,11 @@ int StandardTypeIniters::InitListType(VM *vm, Module *declModule, Type *type)
 int StandardTypeIniters::InitHashType(VM *vm, Module *declModule, Type *type)
 {
 	void *initHashInstance = declModule->FindNativeFunction(HashIniterFunctionName);
-	void *concatHashes = declModule->FindNativeFunction(HashConcatenatorFunctionName);
 
 	if (initHashInstance == nullptr)
 		throw ModuleLoadException(declModule->GetFileName(), "Missing native initializer function for aves.Hash.");
 
-	if (concatHashes == nullptr)
-		throw ModuleLoadException(declModule->GetFileName(), "Missing native function to concatenate hash tables.");
-
 	vm->functions.initHashInstance = (HashInitializer)initHashInstance;
-	vm->functions.concatHashes = (ValueConcatenator)concatHashes;
 
 	RETURN_SUCCESS;
 }

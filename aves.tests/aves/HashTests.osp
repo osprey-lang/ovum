@@ -111,8 +111,6 @@ public class HashTests is TestFixture
 		Assert.areSameRef(h.keyComparer, comparer);
 	}
 
-	// End constructor tests
-
 	// Indexer tests
 
 	public test_IndexerSingleAssignmentWithDefaultComparer()
@@ -198,5 +196,72 @@ public class HashTests is TestFixture
 		Assert.collectionsMatch(h.keys, [writeKey1], Assert.areEqual);
 	}
 
-	// End indexer tests
+	// Concat tests
+
+	public test_ConcatWithUniqueKeys()
+	{
+		var a = new Hash(1);
+		var b = new Hash(1);
+		a[1] = "one";
+		b[2] = "two";
+
+		var result = a.concat(b);
+
+		Assert.areEqual(result.length, 2);
+		Assert.areSameRef(result[1], "one");
+		Assert.areSameRef(result[2], "two");
+	}
+
+	public test_ConcatWithOverlappingKeys()
+	{
+		var a = new Hash(2);
+		var b = new Hash(2);
+		a[1] = "one";
+		a[2] = "two";
+		b[2] = "three";
+		b[3] = "four";
+
+		var result = a.concat(b);
+
+		Assert.areEqual(result.length, 3);
+		Assert.areEqual(result[1], "one");
+		// b[2] overwrites a[2]
+		Assert.areEqual(result[2], "three");
+		Assert.areEqual(result[3], "four");
+	}
+
+	public test_ConcatWithCustomComparer()
+	{
+		var a = new Hash(1, new Mod10Comparer());
+		var b = new Hash(1);
+		a[1] = "one";
+		b[2] = "two";
+
+		var result = a.concat(b);
+
+		Assert.areEqual(result.length, 2);
+		// The resulting hash "inherits" the key comparer of the first hash
+		Assert.areSameRef(result.keyComparer, a.keyComparer);
+		Assert.areEqual(result[11], "one");
+		Assert.areEqual(result[12], "two");
+	}
+
+	public test_ConcatWithOverlappingKeysAndCustomComparer()
+	{
+		var a = new Hash(2, new Mod10Comparer());
+		var b = new Hash(2);
+		a[3] = "one";
+		a[7] = "two";
+		b[13] = "three";
+		b[27] = "four";
+
+		var result = a.concat(b);
+
+		Assert.areEqual(result.length, 2);
+		Assert.areSameRef(result.keyComparer, a.keyComparer);
+		// Here, b[13] should overwrite a[3], and b[27] overwrites a[7], because of
+		// the custom key comparer.
+		Assert.areEqual(result[3], "three");
+		Assert.areEqual(result[7], "four");
+	}
 }

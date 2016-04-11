@@ -196,8 +196,6 @@ public class ListTests is TestFixture
 		Assert.throws(typeof(TypeError), @= list.indexOf(0, 0, "0"));
 	}
 
-	// End indexOf tests
-
 	// slice tests
 
 	public test_Slice1Empty()
@@ -243,8 +241,6 @@ public class ListTests is TestFixture
 		Assert.throws(typeof(ArgumentError), @= list.slice(5, 1));
 	}
 
-	// End slice tests
-
 	// sliceTo tests
 	// Remember: the endIndex is exclusive!
 
@@ -280,7 +276,17 @@ public class ListTests is TestFixture
 		Assert.throws(typeof(TypeError), @= list.sliceTo(0, "0"));
 	}
 
-	// End sliceTo tests
+	// Concat tests
+
+	public test_Concat()
+	{
+		var a = [1, 2];
+		var b = [3, 4];
+
+		var result = a.concat(b);
+
+		Assert.collectionsMatch(result, [1, 2, 3, 4], Assert.areEqual);
+	}
 
 	// Iterator tests
 
@@ -310,6 +316,4 @@ public class ListTests is TestFixture
 		Assert.areEqual(iterator.current, 2);
 		Assert.isFalse(iterator.moveNext());
 	}
-
-	// End iterator tests
 }

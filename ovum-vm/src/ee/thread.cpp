@@ -528,32 +528,15 @@ int Thread::ConcatLL(Value *args, Value *result)
 	int status__;
 	Value *a = args;
 	Value *b = args + 1;
-	if (a->type == vm->types.List || b->type == vm->types.List)
-	{
-		// list concatenation
-		if (a->type != b->type)
-			return ThrowTypeError(strings->error.WrongTypesForConcatOperator);
 
-		CHECKED(vm->functions.concatLists(this, a, b, result));
-	}
-	else if (a->type == vm->types.Hash || b->type == vm->types.Hash)
-	{
-		// hash concatenation
-		if (a->type != b->type)
-			return ThrowTypeError(strings->error.WrongTypesForConcatOperator);
+	// string concatenation
+	CHECKED(StringFromValue(this, a));
+	CHECKED(StringFromValue(this, b));
 
-		CHECKED(vm->functions.concatHashes(this, a, b, result));
-	}
-	else
-	{
-		// string concatenation
-		CHECKED(StringFromValue(this, a));
-		CHECKED(StringFromValue(this, b));
+	String *str;
+	CHECKED_MEM(str = String_Concat(this, a->v.string, b->v.string));
+	SetString_(vm, result, str);
 
-		String *str;
-		CHECKED_MEM(str = String_Concat(this, a->v.string, b->v.string));
-		SetString_(vm, result, str);
-	}
 	currentFrame->stackCount -= 2;
 	RETURN_SUCCESS;
 

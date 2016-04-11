@@ -167,6 +167,33 @@ AVES_API NATIVE_FUNCTION(aves_List_clear)
 	RETURN_SUCCESS;
 }
 
+AVES_API BEGIN_NATIVE_FUNCTION(aves_List_concatInternal)
+{
+	// concatInternal(other: List)
+
+	Value *result = VM_Local(thread, 0);
+
+	PinnedAlias<ListInst> la(THISP), lb(args + 1);
+
+	int64_t totalLength = (int64_t)la->length + (int64_t)lb->length;
+	VM_PushInt(thread, totalLength);
+	CHECKED(GC_Construct(thread, GetType_List(thread), 1, result));
+
+	ListInst *resultList = result->Get<ListInst>();
+	// Copy entries to the output
+	if (totalLength > 0)
+	{
+		CopyMemoryT(resultList->values, la->values, la->length);
+		CopyMemoryT(resultList->values + la->length, lb->values, lb->length);
+	}
+
+	resultList->length = (int32_t)totalLength;
+	resultList->version++;
+
+	VM_Push(thread, result);
+}
+END_NATIVE_FUNCTION
+
 AVES_API BEGIN_NATIVE_FUNCTION(aves_List_slice1)
 {
 	// slice(startIndex)
@@ -260,32 +287,6 @@ AVES_API int OVUM_CDECL InitListInstance(ThreadHandle thread, ListInst *list, co
 		if (r != OVUM_SUCCESS) return r;
 	}
 	RETURN_SUCCESS;
-}
-
-AVES_API int OVUM_CDECL ConcatenateLists(ThreadHandle thread, Value *a, Value *b, Value *result)
-{
-	int status__;
-
-	PinnedAlias<ListInst> la(a), lb(b);
-
-	int32_t totalLength = la->length + lb->length;
-
-	// Construct the output list first. We can safely assign it directly to result.
-	VM_PushInt(thread, totalLength);
-	CHECKED(GC_Construct(thread, GetType_List(thread), 1, result));
-	ListInst *lres = result->Get<ListInst>();
-
-	// Copy entries to the output
-	if (totalLength > 0)
-	{
-		CopyMemoryT(lres->values, la->values, la->length);
-		CopyMemoryT(lres->values + la->length, lb->values, lb->length);
-	}
-	lres->length = totalLength;
-	lres->version++;
-
-retStatus__:
-	return status__;
 }
 
 int EnsureMinCapacity(ThreadHandle thread, ListInst *list, const int32_t capacity)

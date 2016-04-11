@@ -74,6 +74,7 @@ AVES_API NATIVE_FUNCTION(aves_Hash_containsKeyInternal);
 AVES_API NATIVE_FUNCTION(aves_Hash_containsValue);
 AVES_API NATIVE_FUNCTION(aves_Hash_tryGetInternal);
 AVES_API NATIVE_FUNCTION(aves_Hash_removeInternal);
+AVES_API NATIVE_FUNCTION(aves_Hash_concatInternal);
 AVES_API NATIVE_FUNCTION(aves_Hash_pinEntries);
 AVES_API NATIVE_FUNCTION(aves_Hash_unpinEntries);
 

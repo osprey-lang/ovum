@@ -405,6 +405,25 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Hash_removeInternal)
 }
 END_NATIVE_FUNCTION
 
+AVES_API BEGIN_NATIVE_FUNCTION(aves_Hash_concatInternal)
+{
+	// concatInternal(other: Hash)
+
+	PinnedAlias<aves::Hash> ha(THISP), hb(args + 1);
+
+	// Construct the output hash, and leave it on the stack.
+	// Always use the key comparer from the first hash table.
+	VM_PushInt(thread, ha->GetLength() + hb->GetLength()); // capacity
+	VM_Push(thread, &ha->keyComparer); // keyComparer
+	CHECKED(GC_Construct(thread, GetType_Hash(thread), 2, nullptr));
+
+	CHECKED(ha->MergeIntoTopOfStack(thread));
+	CHECKED(hb->MergeIntoTopOfStack(thread));
+
+	// Result is on the top of the stack
+}
+END_NATIVE_FUNCTION;
+
 AVES_API NATIVE_FUNCTION(aves_Hash_pinEntries)
 {
 	aves::Hash *hash = THISV.Get<aves::Hash>();
@@ -423,28 +442,6 @@ AVES_API int OVUM_CDECL InitHashInstance(ThreadHandle thread, int32_t capacity, 
 {
 	VM_PushInt(thread, capacity);
 	return GC_Construct(thread, GetType_Hash(thread), 1, result);
-}
-
-AVES_API int OVUM_CDECL ConcatenateHashes(ThreadHandle thread, Value *a, Value *b, Value *result)
-{
-	int status__;
-
-	PinnedAlias<aves::Hash> ha(a), hb(b);
-
-	// Construct the output hash, and leave it on the stack.
-	// Always use the key comparer from the first hash table.
-	VM_PushInt(thread, ha->GetLength() + hb->GetLength()); // capacity
-	VM_Push(thread, &ha->keyComparer); // keyComparer
-	CHECKED(GC_Construct(thread, GetType_Hash(thread), 2, nullptr));
-
-	ha->MergeIntoTopOfStack(thread);
-	hb->MergeIntoTopOfStack(thread);
-
-	*result = VM_Pop(thread);
-	status__ = OVUM_SUCCESS;
-
-retStatus__:
-	return status__;
 }
 
 int OVUM_CDECL aves_Hash_getReferences(void *basePtr, ReferenceVisitor callback, void *cbState)

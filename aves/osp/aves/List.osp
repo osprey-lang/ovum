@@ -209,6 +209,28 @@ public inheritable List is Collection
 	public clear()
 		__extern("aves_List_clear");
 
+	/// Summary: Concatenates the specified list onto the current list.
+	/// Param other: The list to concatenate onto this list. (List)
+	/// Returns: A new List containing the items from this list immediately followed by the items
+	///          of {other}.
+	/// Throws ArgumentNullError:
+	///          {other} is null.
+	/// Throws TypeError:
+	///          {other} is not a List.
+	/// Remarks: This method returns a new list. It does not modify the original value in any
+	///          way.
+	public concat(other)
+	{
+		if other is null:
+			throw new ArgumentNullError("other");
+		if other is not List:
+			throw new TypeError("other must be an aves.List");
+
+		return concatInternal(other);
+	}
+	private concatInternal(other)
+		__extern("aves_List_concatInternal", locals=1);
+
 	/// Summary: Creates a new list with items from this list, starting at the specified
 	///          index, up to the end of this list.
 	/// Param startIndex: The index at which to start reading items. (Int, UInt or Real)

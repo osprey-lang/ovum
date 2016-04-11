@@ -199,6 +199,30 @@ public inheritable Hash is Collection
 	private removeInternal(key, hash)
 		__extern("aves_Hash_removeInternal");
 
+	/// Summary: Concatenates the specified hash table onto the current hash table.
+	/// Param other: The hash table to concatenate onto this hash table. (Hash)
+	/// Returns: A new hash table containing the entries of {other} concatenated onto the current
+	///          hash table. If the two hash tables have entries with equivalent keys, the value
+	///          from {other} will be used. The resulting hash table has the same {keyComparer}
+	///          as the current hash table.
+	/// Throws ArgumentNullError:
+	///          {other} is null.
+	/// Throws TypeError:
+	///          {other} is not a Hash.
+	/// Remarks: This method returns a new hash table. It does not modify the original value in
+	///          any way.
+	public concat(other)
+	{
+		if other is null:
+			throw new ArgumentNullError("other");
+		if other is not Hash:
+			throw new TypeError("other must be an aves.Hash");
+
+		return concatInternal(other);
+	}
+	private concatInternal(other)
+		__extern("aves_Hash_concatInternal");
+
 	private pinEntries()
 		__extern("aves_Hash_pinEntries");
 	private unpinEntries()
