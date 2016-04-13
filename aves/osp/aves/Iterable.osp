@@ -731,7 +731,8 @@ private class FilterIterable is Iterable
 {
 	public new(this.inner, this.predicate);
 
-	private inner, predicate;
+	private inner;
+	private predicate;
 
 	iter
 	{
@@ -743,7 +744,8 @@ private class MapIterable is Iterable
 {
 	public new(this.inner, this.func);
 
-	private inner, func;
+	private inner;
+	private func;
 
 	iter
 	{
@@ -756,7 +758,9 @@ private class IntersperseIterable is Iterable
 	public new(this.inner, this.value);
 	public new(this.inner, this.value, this.frequency);
 
-	private inner, value, frequency = -1;
+	private inner;
+	private value;
+	private frequency = -1;
 
 	iter
 	{
@@ -772,7 +776,8 @@ private class GroupEveryIterable is Iterable
 {
 	public new(this.inner, this.frequency);
 
-	private inner, frequency;
+	private inner;
+	private frequency;
 
 	iter
 	{
@@ -784,7 +789,8 @@ private class TakeIterable is Iterable
 {
 	public new(this.inner, this.takeCount);
 
-	private inner, takeCount;
+	private inner;
+	private takeCount;
 
 	override take(count)
 	{
@@ -818,7 +824,8 @@ private class SkipIterable is Iterable
 {
 	public new(this.inner, this.skipCount);
 
-	private inner, skipCount;
+	private inner;
+	private skipCount;
 
 	override skip(count)
 	{
@@ -852,7 +859,9 @@ private class ZipIterable is Iterable
 {
 	public new(this.one, this.two, this.func);
 
-	private one, two, func;
+	private one;
+	private two;
+	private func;
 
 	iter
 	{

@@ -591,6 +591,7 @@ private class HashIterator is Iterator
 	private cur = null;
 
 	override get current = cur;
+
 	override moveNext()
 	{
 		if HashUtils.getVersion(hash) != version:
@@ -623,7 +624,8 @@ private class KeyOrValueCollection is Collection
 {
 	public new(this.hash, this.useKey);
 
-	private hash, useKey;
+	private hash;
+	private useKey;
 
 	override get length = hash.length;
 
@@ -647,6 +649,7 @@ private class KeyOrValueIterator is Iterator
 	private cur = null;
 
 	override get current = cur;
+
 	override moveNext()
 	{
 		if HashUtils.getVersion(hash) != version:

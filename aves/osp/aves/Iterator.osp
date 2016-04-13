@@ -842,7 +842,9 @@ private class FilterIterator is Iterator
 {
 	public new(this.inner, this.predicate);
 
-	private inner, predicate, ended = false;
+	private inner;
+	private predicate;
+	private ended = false;
 
 	override get current = inner.current;
 
@@ -865,7 +867,10 @@ private class MapIterator is Iterator
 {
 	public new(this.inner, this.func);
 
-	private inner, func, cur, ended = false;
+	private inner;
+	private func;
+	private cur;
+	private ended = false;
 
 	override get current = cur;
 
@@ -891,7 +896,8 @@ private class TakeIterator is Iterator
 {
 	public new(this.inner, this.count);
 
-	private inner, count;
+	private inner;
+	private count;
 
 	override get current = inner.current;
 
@@ -938,7 +944,9 @@ private class SkipIterator is Iterator
 {
 	public new(this.inner, this.count);
 
-	private inner, count, hasMore = true;
+	private inner;
+	private count;
+	private hasMore = true;
 
 	override get current = inner.current;
 

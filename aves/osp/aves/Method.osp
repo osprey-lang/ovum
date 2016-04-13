@@ -105,7 +105,8 @@ private class MethodChain
 {
 	public new(this.first, this.second);
 
-	private first, second;
+	private first;
+	private second;
 
 	public call(arg)
 	{
