@@ -37,6 +37,33 @@ public inheritable ReadOnlyIterable is Iterable
 	/// Summary: Gets a reference to the collection wrapped by the iterable.
 	protected get collection = _collection;
 
+	// The wrapped collection may contain optimized versions of certain Iterable methods.
+	// Call through to the underlying methods whenever possible.
+
+	overridable override count()
+	{
+		if _collection is null:
+			return 0;
+
+		return _collection.count();
+	}
+
+	overridable override toList()
+	{
+		if _collection is null:
+			return [];
+
+		return _collection.toList();
+	}
+
+	overridable override toArray()
+	{
+		if _collection is null:
+			return new Array(0);
+
+		return _collection.toArray();
+	}
+
 	iter
 	{
 		if _collection is null:

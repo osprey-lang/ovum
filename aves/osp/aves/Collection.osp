@@ -26,7 +26,7 @@ public abstract class Collection is Iterable
 		return length;
 	}
 
-	override overridable toList()
+	overridable override toList()
 	{
 		// Since we know the length of the collection, we can optimize this
 		// method by creating a list with the right initial capacity.
@@ -38,7 +38,7 @@ public abstract class Collection is Iterable
 		return list;
 	}
 
-	override overridable toArray()
+	overridable override toArray()
 	{
 		// Since we know the length of the collection, we only ever have to
 		// create a single array.
