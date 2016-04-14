@@ -1,17 +1,33 @@
 namespace aves;
 
+/// Summary: Represents an error that occurs when attempting to access a member that does not
+///          exist in a particular value or is not accessible from the current location.
 public inheritable MemberNotFoundError is TypeError
 {
+	/// Summary: Creates a new {MemberNotFoundError} with no member name and the default message.
+	public new()
+	{
+		new this(null, null, null);
+	}
+	/// Summary: Creates a new {MemberNotFoundError} with the specified member name and the
+	///          default message.
+	/// Param member: The name of the member that could not be found, or null.
 	public new(member)
 	{
-		new base(defaultMessage);
-		this._member = member ?! string(member);
+		new this(member, null, null);
 	}
+	/// Summary: Creates a new {MemberNotFoundError} with the specified member name and message.
+	/// Param member: The name of the member that could not be found, or null.
+	/// Param message: An error message describing the error. If null, uses the default messsage.
 	public new(member, message)
 	{
-		new base(message ?? defaultMessage);
-		this._member = member ?! string(member);
+		new this(member, message, null);
 	}
+	/// Summary: Creates a new {MemberNotFoundError} with the specified member name, message and
+	///          inner error.
+	/// Param member: The name of the member that could not be found, or null.
+	/// Param message: An error message describing the error. If null, uses the default messsage.
+	/// Param innerError: The error that caused this error.
 	public new(member, message, innerError)
 	{
 		new base(message ?? defaultMessage, innerError);
@@ -20,6 +36,8 @@ public inheritable MemberNotFoundError is TypeError
 
 	private _member;
 	/// Summary: Gets the name of the member that could not be found.
+	/// Returns: A String containing the name of the member that could not be found, or null if
+	///          that information is not available.
 	public get member = _member;
 
 	overridable override get message

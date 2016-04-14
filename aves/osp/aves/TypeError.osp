@@ -1,15 +1,24 @@
 namespace aves;
 
+/// Summary: Represents an error that occurs when a type does not meet a certain expectation,
+///          such as accessing a member that doesn’t exist, or using an operator that is not
+///          supported. This error is also produced when a type conversion fails.
 public inheritable TypeError is Error
 {
+	/// Summary: Creates a new {TypeError} with the default message.
 	public new()
 	{
-		new base(defaultMessage);
+		new this(null, null);
 	}
+	/// Summary: Creates a new {TypeError} with the specified message.
+	/// Param message: An error message describing the error. If null, uses the default messsage.
 	public new(message)
 	{
-		new base(message ?? defaultMessage);
+		new this(message, null);
 	}
+	/// Summary: Creates a new {TypeError} with the specified message and inner error.
+	/// Param message: An error message describing the error. If null, uses the default messsage.
+	/// Param innerError: The error that caused this error.
 	public new(message, innerError)
 	{
 		new base(message ?? defaultMessage, innerError);
