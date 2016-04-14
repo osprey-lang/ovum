@@ -1,0 +1,33 @@
+namespace aves;
+
+public inheritable MemberNotFoundError is TypeError
+{
+	public new(member)
+	{
+		new base(defaultMessage);
+		this._member = member ?! string(member);
+	}
+	public new(member, message)
+	{
+		new base(message ?? defaultMessage);
+		this._member = member ?! string(member);
+	}
+	public new(member, message, innerError)
+	{
+		new base(message ?? defaultMessage, innerError);
+		this._member = member ?! string(member);
+	}
+
+	private _member;
+	/// Summary: Gets the name of the member that could not be found.
+	public get member = _member;
+
+	overridable override get message
+	{
+		if _member is not null:
+			return "{0} (member: {1})".format([base.message, _member]);
+		return base.message;
+	}
+
+	private const defaultMessage = "The member could not be found.";
+}

@@ -26,6 +26,7 @@ use "InvalidStateError.osp";
 use "Iterable.osp";
 use "Iterator.osp";
 use "List.osp";
+use "MemberNotFoundError.osp";
 use "MemoryError.osp";
 use "Method.osp";
 use "MethodIterable.osp";
