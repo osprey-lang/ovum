@@ -82,7 +82,6 @@ struct StaticStringData
 	LitString<28> error_ValueNotComparable;
 	LitString<27> error_ValueNotInvokable;
 	LitString<71> error_WrongApplyArgumentsType;
-	LitString<92> error_WrongTypesForConcatOperator;
 };
 
 class StaticStrings
@@ -166,7 +165,6 @@ public:
 		::String *ValueNotComparable;
 		::String *ValueNotInvokable;
 		::String *WrongApplyArgumentsType;
-		::String *WrongTypesForConcatOperator;
 	} error;
 
 private:

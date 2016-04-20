@@ -73,7 +73,6 @@
 		"ToUIntFailed": "The value could not be converted to a UInt.",
 		"ValueNotComparable": "The value is not comparable.",
 		"ValueNotInvokable": "The value is not invokable.",
-		"WrongApplyArgumentsType": "The arguments list in a function application must be of type aves.List.",
-		"WrongTypesForConcatOperator": "The concatenation operator requires two Lists, two Hashes, or two values of any other types."
+		"WrongApplyArgumentsType": "The arguments list in a function application must be of type aves.List."
 	}
 }

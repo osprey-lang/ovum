@@ -79,7 +79,6 @@ const StaticStringData staticStringData = {
 	{ 28, 0, StringFlags::STATIC, 84,104,101,32,118,97,108,117,101,32,105,115,32,110,111,116,32,99,111,109,112,97,114,97,98,108,101,46,0 },
 	{ 27, 0, StringFlags::STATIC, 84,104,101,32,118,97,108,117,101,32,105,115,32,110,111,116,32,105,110,118,111,107,97,98,108,101,46,0 },
 	{ 71, 0, StringFlags::STATIC, 84,104,101,32,97,114,103,117,109,101,110,116,115,32,108,105,115,116,32,105,110,32,97,32,102,117,110,99,116,105,111,110,32,97,112,112,108,105,99,97,116,105,111,110,32,109,117,115,116,32,98,101,32,111,102,32,116,121,112,101,32,97,118,101,115,46,76,105,115,116,46,0 },
-	{ 92, 0, StringFlags::STATIC, 84,104,101,32,99,111,110,99,97,116,101,110,97,116,105,111,110,32,111,112,101,114,97,116,111,114,32,114,101,113,117,105,114,101,115,32,116,119,111,32,76,105,115,116,115,44,32,116,119,111,32,72,97,115,104,101,115,44,32,111,114,32,116,119,111,32,118,97,108,117,101,115,32,111,102,32,97,110,121,32,111,116,104,101,114,32,116,121,112,101,115,46,0 },
 };
 
 int StaticStrings::Create(StaticStrings *&result)
@@ -186,7 +185,6 @@ void StaticStrings::InitStrings()
 	this->error.ValueNotComparable = reinterpret_cast<String*>(&data->error_ValueNotComparable);
 	this->error.ValueNotInvokable = reinterpret_cast<String*>(&data->error_ValueNotInvokable);
 	this->error.WrongApplyArgumentsType = reinterpret_cast<String*>(&data->error_WrongApplyArgumentsType);
-	this->error.WrongTypesForConcatOperator = reinterpret_cast<String*>(&data->error_WrongTypesForConcatOperator);
 }
 
 } // namespace ovum
