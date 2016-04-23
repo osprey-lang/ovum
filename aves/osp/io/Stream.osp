@@ -136,7 +136,7 @@ public abstract class Stream
 	/// Throws ArgumentRangeError:
 	///          {offset} or {count} is less than zero.
 	/// Throws ArgumentNullError:
-	////         {buf} is null.
+	///          {buf} is null.
 	/// Throws ArgumentError:
 	///          {offset} + {count} is greater than the size of {buf}.
 	public abstract readMax(buf, offset, count); // → >0 if not EOF, 0 otherwise
@@ -250,7 +250,7 @@ public abstract class Stream
 	///
 	///          The stream is not writable.
 	/// Throws ArgumentNullError:
-	////         {buf} is null.
+	///          {buf} is null.
 	/// Throws TypeError:
 	///          {buf} is not a {Buffer} or {BufferView}.
 	public overridable write(buf)
@@ -274,7 +274,7 @@ public abstract class Stream
 	/// Throws ArgumentRangeError:
 	///          {offset} or {count} is less than zero.
 	/// Throws ArgumentNullError:
-	////         {buf} is null.
+	///          {buf} is null.
 	/// Throws ArgumentError:
 	///          {offset} + {count} is greater than the size of {buf}.
 	/// Throws TypeError:
