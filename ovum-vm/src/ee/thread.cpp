@@ -33,6 +33,11 @@ int Thread::Create(VM *owner, Thread *&result)
 	return status;
 }
 
+Thread *Thread::GetCurrent()
+{
+	return threadKey.Get();
+}
+
 Thread::Thread(VM *owner, int &status) :
 	ip(nullptr),
 	currentFrame(nullptr),

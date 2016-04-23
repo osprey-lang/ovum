@@ -44,6 +44,10 @@ class Thread
 public:
 	OVUM_NOINLINE static int Create(VM *owner, Thread *&result);
 
+	// Gets the currently executing managed thread. If no managed thread is associated with
+	// the current native thread, returns null.
+	static Thread *GetCurrent();
+
 	Thread(VM *owner, int &status);
 	~Thread();
 
