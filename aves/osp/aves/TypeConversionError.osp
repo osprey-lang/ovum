@@ -1,0 +1,26 @@
+namespace aves;
+
+/// Summary: Represents an error that occurs when a type conversion fails.
+public inheritable TypeConversionError is TypeError
+{
+	/// Summary: Creates a new {TypeConversionError} with the default message.
+	public new()
+	{
+		new this(null, null);
+	}
+	/// Summary: Creates a new {TypeConversionError} with the specified message.
+	/// Param message: An error message describing the error. If null, uses the default messsage.
+	public new(message)
+	{
+		new this(message, null);
+	}
+	/// Summary: Creates a new {TypeConversionError} with the specified message and inner error.
+	/// Param message: An error message describing the error. If null, uses the default messsage.
+	/// Param innerError: The error that caused this error.
+	public new(message, innerError)
+	{
+		new base(message ?? defaultMessage, innerError);
+	}
+
+	private const defaultMessage = "A type conversion failed.";
+}

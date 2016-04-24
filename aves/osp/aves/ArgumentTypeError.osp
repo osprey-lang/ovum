@@ -1,0 +1,133 @@
+use Type = aves.reflection.Type;
+
+namespace aves;
+
+/// Summary: Represents an error that occurs when an argument is of the wrong type.
+/// Remarks: This class differs from {TypeError}. This class is used when an argument to a
+///          parametrized member (such as a method, indexer, operator or constructor) is of
+///          an unexpected or incorrect type. By contrast, {TypeError} is used when the type
+///          of a value does not meet a certain expectation; for example, attempting to
+///          access a member that doesn’t exist, or using an operator that is not supported.
+///
+///          Instances of {TypeError} are usually thrown by the runtime, not by user code,
+///          whereas {ArgumentTypeError} is thrown as a normal part of argument validation.
+///
+///          {TypeError} also has certain common derived types with more specific meanings,
+///          such as {MemberNotFoundError} and {TypeConversionError}.
+public inheritable ArgumentTypeError is ArgumentError
+{
+	/// Summary: Creates a new {ArgumentTypeError} with the default message, no parameter name
+	///          and no specified expected types.
+	public new()
+	{
+		new this(null, null, null, null);
+	}
+	/// Summary: Creates a new {ArgumentTypeError} with the specified parameter name, and the
+	///          default message and no specified expected types.
+	/// Param paramName: A String containing the name of the parameter that caused the error,
+	///                  or null.
+	public new(paramName)
+	{
+		new this(paramName, null, null, null);
+	}
+	/// Summary: Creates a new {ArgumentTypeError} with the specified parameter name and expected
+	///          types, and the default message.
+	/// Param paramName: A String containing the name of the parameter that caused the error,
+	///                  or null.
+	/// Param expectedTypes: The type or types that the named parameter must be of. This can be a
+	///                  single {aves.reflection.Type} or an {Iterable} containing any number of
+	///                  such values. If this information is not available, pass null.
+	/// Throws ArgumentTypeError:
+	///          {expectedTypes} is not an {Iterable} or {aves.reflection.Type}.
+	///
+	///          {expectedTypes} is an iterable and contains a value that is not an
+	///          {aves.reflection.Type}.
+	public new(paramName, expectedTypes)
+	{
+		new this(paramName, expectedTypes, null, null);
+	}
+	/// Summary: Creates a new {ArgumentTypeError} with the specified parameter name, expected
+	///          types and message.
+	/// Param paramName: A String containing the name of the parameter that caused the error,
+	///                  or null.
+	/// Param expectedTypes: The type or types that the named parameter must be of. This can be a
+	///                  single {aves.reflection.Type} or an {Iterable} containing any number of
+	///                  such values. If this information is not available, pass null.
+	/// Param message: An error message describing the error. If null, uses the default messsage.
+	/// Throws ArgumentTypeError:
+	///          {expectedTypes} is not an {Iterable} or {aves.reflection.Type}.
+	///
+	///          {expectedTypes} is an iterable and contains a value that is not an
+	///          {aves.reflection.Type}.
+	public new(paramName, expectedTypes, message)
+	{
+		new this(paramName, expectedTypes, message, null);
+	}
+	/// Summary: Creates a new {ArgumentTypeError} with the specified parameter name, expected
+	///          types, message and inner error.
+	/// Param paramName: A String containing the name of the parameter that caused the error,
+	///                  or null.
+	/// Param expectedTypes: The type or types that the named parameter must be of. This can be a
+	///                  single {aves.reflection.Type} or an {Iterable} containing any number of
+	///                  such values. If this information is not available, pass null.
+	/// Param message: An error message describing the error. If null, uses the default messsage.
+	/// Param innerError: The error that caused this error.
+	/// Throws ArgumentTypeError:
+	///          {expectedTypes} is not an {Iterable} or {aves.reflection.Type}.
+	///
+	///          {expectedTypes} is an iterable and contains a value that is not an
+	///          {aves.reflection.Type}.
+	public new(paramName, expectedTypes, message, innerError)
+	{
+		new base(message ?? defaultMessage, paramName, innerError);
+		_expectedTypes = getExpectedTypes(expectedTypes);
+	}
+
+	private _expectedTypes;
+	/// Summary: Gets an iterable containing the expected types for the parameter.
+	/// Returns: An {Iterable} containing the expected types for the parameter, or null if that
+	///          information is not available.
+	public get expectedTypes = _expectedTypes;
+
+	override get message
+	{
+		if _expectedTypes is not null:
+			return "{0} (expectedTypes: {1})".format([
+				base.message,
+				_expectedTypes.map(@.fullName).joinNatural(", ", " or ")
+			]);
+		return base.message;
+	}
+
+	private static getExpectedTypes(expectedTypes)
+	{
+		if expectedTypes is null:
+			return null;
+
+		if expectedTypes is Type
+		{
+			// Make sure we can wrap expectedTypes in a ReadOnlyIterable.
+			expectedTypes = [expectedTypes];
+		}
+		else if expectedTypes is Iterable
+		{
+			// This could go terribly wrong if expectedTypes is an infinite or gigantic collection,
+			// but the risk of that being passed into ArgumentTypeError is pretty minimal.
+			if expectedTypes.any(@type = type is not Type):
+				// ArgumentTypeErrorception
+				throw new ArgumentTypeError(
+					"expectedTypes",
+					typeof(Type),
+					"All values in expectedTypes must be of type aves.reflection.Type."
+				);
+		}
+		else
+		{
+			throw new ArgumentTypeError("expectedTypes", [typeof(Iterable), typeof(Type)]);
+		}
+
+		return new ReadOnlyIterable(expectedTypes);
+	}
+
+	private const defaultMessage = "An argument was of the wrong type.";
+}

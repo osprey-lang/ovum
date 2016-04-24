@@ -2,7 +2,9 @@ namespace aves;
 
 /// Summary: Represents an error that occurs when a type does not meet a certain expectation,
 ///          such as accessing a member that doesn’t exist, or using an operator that is not
-///          supported. This error is also produced when a type conversion fails.
+///          supported.
+/// Remarks: This class has several derived types with more specialised meanings, including
+///          {MemberNotFoundError} and {TypeConversionError}.
 public inheritable TypeError is Error
 {
 	/// Summary: Creates a new {TypeError} with the default message.
@@ -24,5 +26,5 @@ public inheritable TypeError is Error
 		new base(message ?? defaultMessage, innerError);
 	}
 
-	private const defaultMessage = "A value was of an invalid type.";
+	private const defaultMessage = "A type expectation failed.";
 }

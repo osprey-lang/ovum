@@ -1,7 +1,9 @@
 // These files should be listed in alphabetical order
+use "reflection/reflection.osp";
 use "ArgumentError.osp";
 use "ArgumentNullError.osp";
 use "ArgumentRangeError.osp";
+use "ArgumentTypeError.osp";
 use "Array.osp";
 use "Boolean.osp";
 use "Buffer.osp";
@@ -43,13 +45,13 @@ use "Stack.osp";
 use "String.osp";
 use "StringBuffer.osp";
 use "TimeSpan.osp";
+use "TypeConversionError.osp";
 use "TypeError.osp";
 use "UInt.osp";
 use "UnicodeCategory.osp";
 use "Utf16Encoding.osp";
 use "Utf8Encoding.osp";
 use "Version.osp";
-use "reflection/reflection.osp";
 
 namespace aves;
 
