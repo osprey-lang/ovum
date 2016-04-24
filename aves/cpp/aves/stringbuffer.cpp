@@ -67,7 +67,10 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_StringBuffer_set_item)
 	StringBuffer *buf = THISV.Get<StringBuffer>();
 	CHECKED(IntFromValue(thread, args + 1));
 	if (args[2].type != aves->aves.Char)
-		return VM_ThrowTypeError(thread);
+	{
+		VM_PushString(thread, strings::value); // paramName
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentTypeError, 1);
+	}
 
 	if (args[1].v.integer < 0 || args[1].v.integer >= buf->GetLength())
 	{

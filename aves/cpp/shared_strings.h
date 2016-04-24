@@ -49,6 +49,8 @@ namespace strings
 	extern String *equals;
 	extern String *length;
 	extern String *count;
+	extern String *n;
+	extern String *buffer;
 	
 	extern String *newline;
 }

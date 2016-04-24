@@ -24,7 +24,7 @@ public inheritable MethodIterable is Iterable
 		if args is null:
 			throw new ArgumentNullError("args");
 		if args is not List:
-			throw new TypeError("The arguments must be in a List.");
+			throw new ArgumentTypeError("args", typeof(List));
 
 		this.method = method;
 		this.args = args;

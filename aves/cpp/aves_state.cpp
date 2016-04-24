@@ -14,6 +14,7 @@ namespace type_names
 	LitString<18> ArgumentError      = { 18, 0, SFS, AVES,'A','r','g','u','m','e','n','t','E','r','r','o','r',0 };
 	LitString<22> ArgumentNullError  = { 22, 0, SFS, AVES,'A','r','g','u','m','e','n','t','N','u','l','l','E','r','r','o','r',0 };
 	LitString<23> ArgumentRangeError = { 23, 0, SFS, AVES,'A','r','g','u','m','e','n','t','R','a','n','g','e','E','r','r','o','r',0 };
+	LitString<22> ArgumentTypeError  = { 22, 0, SFS, AVES,'A','r','g','u','m','e','n','t','T','y','p','e','E','r','r','o','r',0 };
 	LitString<10> Array              = { 10, 0, SFS, AVES,'A','r','r','a','y',0 };
 	LitString<11> Buffer             = { 11, 0, SFS, AVES,'B','u','f','f','e','r',0 };
 	LitString<19> BufferViewKind     = { 19, 0, SFS, AVES,'B','u','f','f','e','r','V','i','e','w','K','i','n','d',0 };
@@ -68,6 +69,7 @@ void Aves::InitTypes(ModuleHandle module)
 	aves.ArgumentError      = Module_FindType(module, type_names::ArgumentError.AsString(),      true);
 	aves.ArgumentNullError  = Module_FindType(module, type_names::ArgumentNullError.AsString(),  true);
 	aves.ArgumentRangeError = Module_FindType(module, type_names::ArgumentRangeError.AsString(), true);
+	aves.ArgumentTypeError  = Module_FindType(module, type_names::ArgumentTypeError.AsString(),  true);
 	aves.Array              = Module_FindType(module, type_names::Array.AsString(),              true);
 	aves.BufferViewKind     = Module_FindType(module, type_names::BufferViewKind.AsString(),     true);
 	aves.Buffer             = Module_FindType(module, type_names::Buffer.AsString(),             true);

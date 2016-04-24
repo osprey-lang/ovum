@@ -23,7 +23,7 @@ public class Method
 	/// Param argCount: The number of arguments to test against. (Int, UInt or Real)
 	/// Returns: True if the method accepts the specified number of arguments;
 	///          otherwise, false.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {argCount} could not be converted to an Int.
 	public accepts(argCount)
 		__extern("aves_Method_accepts");

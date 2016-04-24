@@ -32,8 +32,8 @@ public class IterableTests is TestFixture
 	{
 		Assert.throws(typeof(ArgumentRangeError), @= Iterable.range(0, -1));
 		Assert.throws(typeof(ArgumentError), @= Iterable.range(Int.max, 1));
-		Assert.throws(typeof(TypeError), @= Iterable.range("0", 0));
-		Assert.throws(typeof(TypeError), @= Iterable.range(0, "0"));
+		Assert.throws(typeof(TypeConversionError), @= Iterable.range("0", 0));
+		Assert.throws(typeof(TypeConversionError), @= Iterable.range(0, "0"));
 	}
 
 	public test_RangeWithStepEmpty()
@@ -60,9 +60,9 @@ public class IterableTests is TestFixture
 		Assert.throws(typeof(ArgumentRangeError), @= Iterable.range(0, 1, -1));
 		Assert.throws(typeof(ArgumentError), @= Iterable.range(Int.max, 1, 1));
 		Assert.throws(typeof(ArgumentError), @= Iterable.range(Int.max - 4, 1, 5));
-		Assert.throws(typeof(TypeError), @= Iterable.range("0", 0, 1));
-		Assert.throws(typeof(TypeError), @= Iterable.range(0, "0", 1));
-		Assert.throws(typeof(TypeError), @= Iterable.range(0, 0, "1"));
+		Assert.throws(typeof(TypeConversionError), @= Iterable.range("0", 0, 1));
+		Assert.throws(typeof(TypeConversionError), @= Iterable.range(0, "0", 1));
+		Assert.throws(typeof(TypeConversionError), @= Iterable.range(0, 0, "1"));
 	}
 
 	// End range tests
@@ -94,8 +94,8 @@ public class IterableTests is TestFixture
 
 	public test_RangeToInvalid()
 	{
-		Assert.throws(typeof(TypeError), @= Iterable.rangeTo("0", 0));
-		Assert.throws(typeof(TypeError), @= Iterable.rangeTo(0, "0"));
+		Assert.throws(typeof(TypeConversionError), @= Iterable.rangeTo("0", 0));
+		Assert.throws(typeof(TypeConversionError), @= Iterable.rangeTo(0, "0"));
 	}
 
 	public test_RangeToWithStepEmpty()
@@ -124,9 +124,9 @@ public class IterableTests is TestFixture
 	public test_RangeToWithStepInvalid()
 	{
 		Assert.throws(typeof(ArgumentRangeError), @= Iterable.rangeTo(0, 0, 0));
-		Assert.throws(typeof(TypeError), @= Iterable.rangeTo("0", 0, 1));
-		Assert.throws(typeof(TypeError), @= Iterable.rangeTo(0, "0", 1));
-		Assert.throws(typeof(TypeError), @= Iterable.rangeTo(0, 0, "1"));
+		Assert.throws(typeof(TypeConversionError), @= Iterable.rangeTo("0", 0, 1));
+		Assert.throws(typeof(TypeConversionError), @= Iterable.rangeTo(0, "0", 1));
+		Assert.throws(typeof(TypeConversionError), @= Iterable.rangeTo(0, 0, "1"));
 	}
 
 	// End rangeTo tests

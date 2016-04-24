@@ -192,7 +192,7 @@ public class StringSpliceTests is TestFixture
 	{
 		Assert.throws(typeof(ArgumentRangeError), @= str.insert(-1, ""));
 		Assert.throws(typeof(ArgumentRangeError), @= str.insert(4, ""));
-		Assert.throws(typeof(TypeError), @= str.insert("0", ""));
+		Assert.throws(typeof(TypeConversionError), @= str.insert("0", ""));
 	}
 
 	// End insert tests
@@ -221,7 +221,7 @@ public class StringSpliceTests is TestFixture
 	{
 		Assert.throws(typeof(ArgumentRangeError), @= str.remove(-1));
 		Assert.throws(typeof(ArgumentRangeError), @= str.remove(4));
-		Assert.throws(typeof(TypeError), @= str.remove("0"));
+		Assert.throws(typeof(TypeConversionError), @= str.remove("0"));
 	}
 
 	public test_Remove2Start()
@@ -254,8 +254,8 @@ public class StringSpliceTests is TestFixture
 		Assert.throws(typeof(ArgumentRangeError), @= str.remove(4, 0));
 		Assert.throws(typeof(ArgumentRangeError), @= str.remove(0, -1));
 		Assert.throws(typeof(ArgumentError), @= str.remove(1, 3));
-		Assert.throws(typeof(TypeError), @= str.remove("0", 0));
-		Assert.throws(typeof(TypeError), @= str.remove(0, "0"));
+		Assert.throws(typeof(TypeConversionError), @= str.remove("0", 0));
+		Assert.throws(typeof(TypeConversionError), @= str.remove(0, "0"));
 	}
 
 	// End remove tests
@@ -286,8 +286,8 @@ public class StringSpliceTests is TestFixture
 		Assert.throws(typeof(ArgumentRangeError), @= str.replaceSubstring(4, 0, ""));
 		Assert.throws(typeof(ArgumentRangeError), @= str.replaceSubstring(0, -1, ""));
 		Assert.throws(typeof(ArgumentError), @= str.replaceSubstring(1, 3, ""));
-		Assert.throws(typeof(TypeError), @= str.replaceSubstring("0", 0, ""));
-		Assert.throws(typeof(TypeError), @= str.replaceSubstring(0, "0", ""));
+		Assert.throws(typeof(TypeConversionError), @= str.replaceSubstring("0", 0, ""));
+		Assert.throws(typeof(TypeConversionError), @= str.replaceSubstring(0, "0", ""));
 	}
 
 	// End replaceSubstring tests
@@ -488,8 +488,8 @@ public class StringPadTests is TestFixture
 		var minLength = 6;
 		var char = 123;
 
-		Assert.throws(typeof(TypeError), @= str.padStart(minLength, char));
-		Assert.throws(typeof(TypeError), @= str.pad(minLength, char, StringPad.start));
+		Assert.throws(typeof(ArgumentTypeError), @= str.padStart(minLength, char));
+		Assert.throws(typeof(ArgumentTypeError), @= str.pad(minLength, char, StringPad.start));
 	}
 
 	public test_PadStartWithCharAndInvalidLength()
@@ -585,8 +585,8 @@ public class StringPadTests is TestFixture
 		var minLength = 6;
 		var char = 123;
 
-		Assert.throws(typeof(TypeError), @= str.padEnd(minLength, char));
-		Assert.throws(typeof(TypeError), @= str.pad(minLength, char, StringPad.end));
+		Assert.throws(typeof(ArgumentTypeError), @= str.padEnd(minLength, char));
+		Assert.throws(typeof(ArgumentTypeError), @= str.pad(minLength, char, StringPad.end));
 	}
 
 	public test_PadEndWithCharAndInvalidLength()
@@ -678,7 +678,7 @@ public class StringPadTests is TestFixture
 		var minLength = 6;
 		var char = 123;
 
-		Assert.throws(typeof(TypeError), @= str.pad(minLength, char, StringPad.both));
+		Assert.throws(typeof(ArgumentTypeError), @= str.pad(minLength, char, StringPad.both));
 	}
 
 	public test_PadBothWithCharAndInvalidLength()

@@ -1,4 +1,5 @@
 #include "boolean.h"
+#include "../aves_state.h"
 
 AVES_API NATIVE_FUNCTION(aves_Boolean_opEquals)
 {
@@ -11,8 +12,11 @@ AVES_API NATIVE_FUNCTION(aves_Boolean_opEquals)
 
 AVES_API NATIVE_FUNCTION(aves_Boolean_opCompare)
 {
+	using namespace aves;
+	Aves *aves = Aves::Get(thread);
+
 	if (args[0].type != args[1].type)
-		return VM_ThrowTypeError(thread, nullptr);
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentTypeError, 0);
 
 	int64_t left = args[0].v.integer;
 	int64_t right = args[1].v.integer;

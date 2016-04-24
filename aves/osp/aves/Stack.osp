@@ -21,7 +21,7 @@ public inheritable Stack is Collection
 	}
 	/// Summary: Creates a new, empty {Stack} with the specified initial capacity.
 	/// Param capacity: The capacity of the new stack. (Int, UInt or Real)
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {capacity} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {capacity} is less than zero.
@@ -52,7 +52,7 @@ public inheritable Stack is Collection
 	public get capacity = items.length;
 	/// Summary: Sets the capacity of the stack; that is, the number of items it
 	///          can contain without resizing its internal container.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          The value could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          The value is less than {length}.

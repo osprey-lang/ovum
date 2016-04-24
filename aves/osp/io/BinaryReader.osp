@@ -31,7 +31,7 @@ public inheritable BinaryReader
 	/// Param stream: The stream to read from.
 	/// Throws ArgumentNullError:
 	///          {stream} is null.
-	/// Throws TypeError:
+	/// Throws ArgumentTypeError:
 	///          {stream} is not an {io.Stream}.
 	/// Throws ArgumentError:
 	///          {stream} is not readable.
@@ -46,7 +46,7 @@ public inheritable BinaryReader
 	/// Param encoding: The character encoding of the data in the stream.
 	/// Throws ArgumentNullError:
 	///          {stream} or {encoding} is null.
-	/// Throws TypeError:
+	/// Throws ArgumentTypeError:
 	///          {stream} is not an {io.Stream}.
 	///
 	///          {encoding} is not an {aves.Encoding}.
@@ -65,7 +65,7 @@ public inheritable BinaryReader
 	///                  false for little-endian.
 	/// Throws ArgumentNullError:
 	///          {stream} or {encoding} is null.
-	/// Throws TypeError:
+	/// Throws ArgumentTypeError:
 	///          {stream} is not an {io.Stream}.
 	///
 	///          {encoding} is not an {aves.Encoding}.
@@ -86,7 +86,7 @@ public inheritable BinaryReader
 	///                  on the binary reader; false to close it.
 	/// Throws ArgumentNullError:
 	///          {stream} or {encoding} is null.
-	/// Throws TypeError:
+	/// Throws ArgumentTypeError:
 	///          {stream} is not an {io.Stream}.
 	///
 	///          {encoding} is not an {aves.Encoding}.
@@ -97,13 +97,13 @@ public inheritable BinaryReader
 		if stream is null:
 			throw new ArgumentNullError("stream");
 		if stream is not Stream:
-			throw new TypeError("stream must be an io.Stream instance.");
+			throw new ArgumentTypeError("stream", typeof(Stream));
 		if not stream.canRead:
 			throw new ArgumentError("The stream must be readable.", "stream");
 		if encoding is null:
 			throw new ArgumentNullError("encoding");
 		if encoding is not Encoding:
-			throw new TypeError("encoding must be an aves.Encoding instance.");
+			throw new ArgumentTypeError("encoding", typeof(Encoding));
 
 		_stream = stream;
 		_encoding = encoding;

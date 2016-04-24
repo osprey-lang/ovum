@@ -42,7 +42,7 @@ OVUM_API int IntFromValue(ThreadHandle thread, Value *v)
 		}
 		else
 		{
-			return thread->ThrowTypeError(thread->GetStrings()->error.ToIntFailed);
+			return thread->ThrowTypeConversionError(thread->GetStrings()->error.ToIntFailed);
 		}
 	}
 	RETURN_SUCCESS;
@@ -70,7 +70,7 @@ OVUM_API int UIntFromValue(ThreadHandle thread, Value *v)
 		}
 		else
 		{
-			return thread->ThrowTypeError(thread->GetStrings()->error.ToUIntFailed);
+			return thread->ThrowTypeConversionError(thread->GetStrings()->error.ToUIntFailed);
 		}
 	}
 	RETURN_SUCCESS;
@@ -90,7 +90,7 @@ OVUM_API int RealFromValue(ThreadHandle thread, Value *v)
 		else if (v->type == vm->types.UInt)
 			result = (double)v->v.uinteger;
 		else
-			return thread->ThrowTypeError(thread->GetStrings()->error.ToRealFailed);
+			return thread->ThrowTypeConversionError(thread->GetStrings()->error.ToRealFailed);
 		v->type = vm->types.Real;
 		v->v.real = result;
 	}
@@ -113,7 +113,7 @@ OVUM_API int StringFromValue(ThreadHandle thread, Value *v)
 		if (r != OVUM_SUCCESS) return r;
 
 		if (v->type != vm->types.String)
-			return thread->ThrowTypeError(thread->GetStrings()->error.ToStringWrongReturnType);
+			return thread->ThrowTypeConversionError(thread->GetStrings()->error.ToStringWrongReturnType);
 	}
 	RETURN_SUCCESS;
 }

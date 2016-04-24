@@ -123,7 +123,7 @@ public class Module
 	///          no such module is loaded.
 	/// Throws ArgumentNullError:
 	///          {name} or {version} is null.
-	/// Throws TypeError:
+	/// Throws ArgumentTypeError:
 	///          {version} is not a {Version}.
 	public static find(name, version)
 	{
@@ -133,7 +133,7 @@ public class Module
 		if version is null:
 			throw new ArgumentNullError("version");
 		if version is not Version:
-			throw new TypeError("version must be an aves.Version.");
+			throw new ArgumentTypeError("version", typeof(Version));
 		return findInternal(name, version);
 	}
 

@@ -110,7 +110,7 @@ public class Type is Member
 	///          A List of arguments to pass to the constructor. If this argument
 	///          is null, it is treated as an empty List.
 	/// Returns: The newly constructed instance.
-	/// Throws TypeError:
+	/// Throws ArgumentTypeError:
 	///          {arguments} is not null and is not a {List}.
 	/// Throws NoOverloadError:
 	///          The instance constructor contains no overload that accepts the
@@ -131,7 +131,7 @@ public class Type is Member
 	///          True to allow the method to call private and protected instance
 	///          constructors. If false, only public constructors will be called.
 	/// Returns: The newly constructed instance.
-	/// Throws TypeError:
+	/// Throws ArgumentTypeError:
 	///          {arguments} is not null and is not a {List}.
 	/// Throws NoOverloadError:
 	///          The instance constructor contains no overload that accepts the
@@ -144,7 +144,7 @@ public class Type is Member
 		if isStatic or isAbstract or isPrimitive:
 			throw new InvalidStateError("Cannot create an instance of a static, abstract or primitive type.");
 		if arguments is not null and arguments is not List:
-			throw new TypeError("arguments must be an aves.List or null.");
+			throw new ArgumentTypeError("arguments", typeof(List));
 
 		return createInstanceInternal(arguments, bool(nonPublic));
 	}
@@ -156,13 +156,15 @@ public class Type is Member
 	/// Param type: The {Type} instance to test against.
 	/// Returns: True if this type is the same as {type} or inherits from it;
 	///          otherwise, false.
+	/// Throws ArgumentTypeError:
+	///          {type} is not a {Type}.
 	/// Remarks: `typeof(x).inheritsFrom(typeof(T))`, where `T` is a type name,
 	///          is functionally equivalent to `x is T`. Prefer using the `is`
 	///          operator whenever possible.
 	public inheritsFrom(type)
 	{
 		if type is not Type:
-			throw new TypeError("type must be an instance of aves.reflection.Type.");
+			throw new ArgumentTypeError("type", typeof(Type));
 		return inheritsFromInternal(type);
 	}
 	private inheritsFromInternal(type)

@@ -8,7 +8,7 @@ public class GlobalConstant is Member
 	private new(module, isInternal, fullName, value)
 	{
 		if module is not Module or fullName is not String:
-			throw new TypeError();
+			throw new ArgumentTypeError();
 
 		_module     = module;
 		_isInternal = bool(isInternal);

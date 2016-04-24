@@ -49,8 +49,8 @@ public class SetTests is TestFixture
 	public test_Constructor1WithInvalidCapacity()
 	{
 		Assert.throws(typeof(ArgumentRangeError), @= new Set(-1));
-		Assert.throws(typeof(TypeError), @= new Set("123"));
-		Assert.throws(typeof(TypeError), @= new Set("feather"));
+		Assert.throws(typeof(TypeConversionError), @= new Set("123"));
+		Assert.throws(typeof(TypeConversionError), @= new Set("feather"));
 	}
 
 	public test_Constructor2WithZeroCapacity()
@@ -86,8 +86,8 @@ public class SetTests is TestFixture
 	public test_Constructor2WithInvalidCapacity()
 	{
 		Assert.throws(typeof(ArgumentRangeError), @= new Set(-1, EqualityComparer.default));
-		Assert.throws(typeof(TypeError), @= new Set("123", EqualityComparer.default));
-		Assert.throws(typeof(TypeError), @= new Set("feather", EqualityComparer.default));
+		Assert.throws(typeof(TypeConversionError), @= new Set("123", EqualityComparer.default));
+		Assert.throws(typeof(TypeConversionError), @= new Set("feather", EqualityComparer.default));
 	}
 
 	public test_Constructor2WithNullComparer()

@@ -180,14 +180,18 @@ AVES_API NATIVE_FUNCTION(aves_Char_opCompare)
 	int result;
 
 	if (args[1].type == aves->aves.Char)
+	{
 		result = (int32_t)args[0].v.integer - (int32_t)args[1].v.integer;
+	}
 	else if (args[1].type == aves->aves.String)
 	{
 		LitString<2> left = Char::ToLitString((ovwchar_t)args[0].v.integer);
 		result = String_Compare(left.AsString(), args[1].v.string);
 	}
 	else
-		VM_ThrowTypeError(thread);
+	{
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentTypeError, 0);
+	}
 
 	VM_PushInt(thread, result);
 	RETURN_SUCCESS;

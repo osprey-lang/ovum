@@ -205,7 +205,7 @@ AVES_API NATIVE_FUNCTION(aves_Real_opCompare)
 	else if (RIGHT.type == aves->aves.UInt)
 		right = (double)RIGHT.v.uinteger;
 	else
-		return VM_ThrowTypeError(thread);
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentTypeError, 0);
 
 	int result = real::Compare(LEFT.v.real, right);
 

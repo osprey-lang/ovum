@@ -20,7 +20,7 @@ public class Array is Collection
 
 	/// Summary: Creates a new array of the specified length.
 	/// Param length: The length of the array. (Int, UInt or Real)
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {length} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {length} is less than zero, or greater than the maximum length
@@ -31,7 +31,7 @@ public class Array is Collection
 	/// Summary: Gets the item at the specified index.
 	/// Param index: The index of the item to read. (Int, UInt or Real)
 	/// Returns: The item at index {index}.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {index} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {index} is less than zero or greater than or equal to {length}.
@@ -43,7 +43,7 @@ public class Array is Collection
 
 	/// Summary: Sets the item at the specified index. The previous value is overwritten.
 	/// Param index: The index at which to write the value. (Int, UInt or Real)
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {index} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {index} is less than zero or greater than or equal to {length}.
@@ -103,7 +103,7 @@ public class Array is Collection
 	///          specified region of the array, as an Int, or null if it could
 	///          not be found. If found, the return value is greater than or
 	///          equal to {startIndex}.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {startIndex} or {count} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {startIndex} is less than zero or greater than {length}.
@@ -152,7 +152,7 @@ public class Array is Collection
 	/// Param value:      The value to fill the array region with.
 	/// Param startIndex: The index at which to start writing. (Int, UInt or Real)
 	/// Param count:      The number of entries to write. (Int, UInt or Real)
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {startIndex} or {count} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {startIndex} is less than zero.
@@ -184,7 +184,7 @@ public class Array is Collection
 	/// Param startIndex: The index to start reading values from. (Int, UInt or Real)
 	/// Returns: A new array with values copied from index {startIndex} in the current
 	///          array to the end.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {startIndex} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {startIndex} is less than zero or greater than {length}.
@@ -203,7 +203,7 @@ public class Array is Collection
 	/// Param count:      The number of values to copy. (Int, UInt or Real)
 	/// Returns: A new array with {count} values copied from this array, starting
 	///          at index {startIndex}.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {startIndex} or {count} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {startIndex} is less than zero or greater than {length}.
@@ -231,7 +231,7 @@ public class Array is Collection
 	/// Param endIndex:   The exclusive end index. (Int, UInt or Real)
 	/// Returns: A new array with values copied from this array at index {startIndex}
 	///          up to, but not including, {endIndex}.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {startIndex} or {endIndex} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {startIndex} is less than zero or greater than {length}.
@@ -267,7 +267,7 @@ public class Array is Collection
 	///              This parameter can also be null, in which case a new array
 	///              without contents is assigned to it.
 	/// Param newLength: The new length of {array}. (Int, UInt or Real)
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {newLength} could not be converted to an Int.
 	/// Throws ArgumentError:
 	///          {array} is not null and is not an instance of {Array}.
@@ -328,7 +328,7 @@ public class Array is Collection
 	/// Param source:      The source array.
 	/// Param destination: The destination array.
 	/// Param count:       The number of items to copy. (Int, UInt or Real)
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {count} could not be converted to an Int.
 	/// Throws ArgumentError:
 	///          {source} or {destination} is not an {Array}.
@@ -359,7 +359,7 @@ public class Array is Collection
 	/// Param destIndex:   The index at which to start writing values into {dest}.
 	///                    (Int, UInt or Real)
 	/// Param count:       The number of items to copy. (Int, UInt or Real)
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {sourceIndex}, {destIndex} or {count} could not be converted to an Int.
 	/// Throws ArgumentError:
 	///          {source} or {destination} is not an {Array}.

@@ -7,7 +7,7 @@ public class Char __primitive
 	/// Summary: Creates a new Char with the specified code point.
 	/// Param codePoint: The Unicode code point, in the range 0 to 1,114,111 (U+10FFFF).
 	///          (Int, UInt or Real)
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {codePoint} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {codePoint} is less than zero or greater than 1,114,111 (U+10FFFF).
@@ -134,7 +134,7 @@ public class Char __primitive
 	/// Param codePoint: The Unicode code point, in the range 0 to 1,114,111 (U+10FFFF).
 	///           (Int, UInt or Real)
 	/// Returns: A new Char value with the specified code point.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {codePoint} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {codePoint} is less than zero or greater than 1,114,111 (U+10FFFF).

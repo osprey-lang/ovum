@@ -262,7 +262,7 @@ public abstract class Iterator
 	/// Param separator: The separator to put between items in the sequence.
 	/// Returns: A String value containing the items of this sequence converted to
 	///          strings and separated by the {separator} value.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {separator} could not be converted to a string.
 	/// Remarks: This method uses {aves.string} to convert each item in the sequence
 	///          to its string representation, and does not catch any error thrown
@@ -296,7 +296,7 @@ public abstract class Iterator
 	///          in the sequence.
 	/// Returns: A String value containing the items of this sequence converted to
 	///          strings and separated by one of the separator values.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {separator} or {lastSeparator} could not be converted to a string.
 	/// Remarks: This method uses {aves.string} to convert each item in the sequence
 	///          to its string representation, and does not catch any error thrown
@@ -429,7 +429,7 @@ public abstract class Iterator
 	/// Returns: An Iterator which, when iterated over, produces groups of
 	///          values from this sequence. Each group is a List of at most
 	///          {frequency} values, and at least one.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {frequency} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {frequency} is less than or equal to zero.
@@ -492,7 +492,7 @@ public abstract class Iterator
 	/// Returns: An Iterator which, when iterated over, produces the items
 	///          of this sequence with {value} inserted every {frequency}
 	///          item.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {frequency} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {frequency} is less than or equal to zero.
@@ -668,7 +668,7 @@ public abstract class Iterator
 	///          values from this sequence. If this sequence produces fewer than
 	///          {count} values, no error is thrown; the resulting iterator will
 	///          simply stop when this sequence does.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {count} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {count} is less than zero.
@@ -708,7 +708,7 @@ public abstract class Iterator
 	///          that may remain in the original sequence. If this sequence
 	///          produces fewer than {count} values, no error is thrown; the
 	///          resulting iterable will simply stop when this sequence does.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {count} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {count} is less than zero.

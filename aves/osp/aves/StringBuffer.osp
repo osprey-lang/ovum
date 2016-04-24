@@ -31,7 +31,7 @@ public class StringBuffer
 	/// Summary: Creates a new {StringBuffer} with the specified initial capacity.
 	/// Param capacity: The initial capacity of the string buffer.
 	///                 (Int, UInt or Real)
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {capacity} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {capacity} is less than zero.
@@ -40,7 +40,7 @@ public class StringBuffer
 
 	/// Summary: Gets the UTF-16 code unit at the specified index.
 	/// Param index: The index of the UTF-16 code unit to get. (Int, UInt or Real)
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {index} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {index} is less than zero, or greater than or equal to {length}.
@@ -48,9 +48,9 @@ public class StringBuffer
 		__extern("aves_StringBuffer_get_item");
 	/// Summary: Sets the UTF-16 code unit at the specified index.
 	/// Param index: The index of the UTF-16 code unit to set. (Int, UInt or Real)
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {index} could not be converted to an Int.
-	///
+	/// Throws ArgumentTypeError:
 	///          The value is not a {Char}.
 	/// Throws ArgumentRangeError:
 	///          {index} is less than zero, or greater than or equal to {length}.
@@ -76,7 +76,7 @@ public class StringBuffer
 	/// Summary: Appends the specified value to the end of the string buffer.
 	/// Param value: The value to append.
 	/// Returns: The string buffer.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {value} could not be converted to a String.
 	public append(value)
 	{
@@ -91,7 +91,7 @@ public class StringBuffer
 	/// Param value: The value to append.
 	/// Param times: The number of times to repeat the value. (Int, UInt or Real)
 	/// Returns: The string buffer.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {value} could not be converted to a String.
 	///
 	///          {times} could not be converted to an Int.
@@ -116,7 +116,7 @@ public class StringBuffer
 	///          followed by a line separator.
 	/// Param value: The value to append.
 	/// Returns: The string buffer.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {value} could not be converted to a String.
 	public appendLine(value)
 	{
@@ -131,7 +131,7 @@ public class StringBuffer
 	///          must be between 0 and 1,114,111 (0x10FFFF), inclusive.
 	///          (Int, UInt or Real)
 	/// Returns: The string buffer.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {codePoint} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {codePoint} is less than zero or greater than 1,114,111 (0x10FFFF).
@@ -152,7 +152,7 @@ public class StringBuffer
 	///              (Int, UInt or Real)
 	/// Param count: The number of characters to copy from {str}. (Int, UInt or Real)
 	/// Returns: The string buffer.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {str} is not a {StringBuffer} and could not be converted to
 	///          a String.
 	///
@@ -189,7 +189,7 @@ public class StringBuffer
 	/// Param index: The index at which to insert the value. (Int, UInt or Real)
 	/// Param value: The value to insert.
 	/// Returns: The string buffer.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {index} could not be converted to an Int.
 	///
 	///          {value} could not be converted to a String.
@@ -217,7 +217,7 @@ public class StringBuffer
 	/// Param start: The index at which to start extracting characters. (Int, UInt or Real)
 	/// Returns: A new {StringBuffer} with characters from this buffer, from
 	///          index {start} to the end of the string.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {start} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {start} is less than zero or greater than {length}.
@@ -238,7 +238,7 @@ public class StringBuffer
 	/// Param count: The number of characters to extract. (Int, UInt or Real)
 	/// Returns: A new {StringBuffer} with {count} characters from this buffer,
 	///          starting at index {start}.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {start} or {count} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {start} is less than zero or greater than {length}.
@@ -271,7 +271,7 @@ public class StringBuffer
 	/// Param count: The number of characters to extract.
 	/// Returns: A new String with {count} characters from this buffer,
 	///          starting at index {start}.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {start} or {count} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {start} is less than zero or greater than {length}.

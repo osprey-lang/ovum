@@ -166,7 +166,7 @@ public class ListTests is TestFixture
 		var list = [0, 1, 2, 0, 1, 2];
 		Assert.throws(typeof(ArgumentRangeError), @= list.indexOf(0, 7));
 		Assert.throws(typeof(ArgumentRangeError), @= list.indexOf(0, -1));
-		Assert.throws(typeof(TypeError), @= list.indexOf(0, "0"));
+		Assert.throws(typeof(TypeConversionError), @= list.indexOf(0, "0"));
 	}
 
 	public test_IndexOf3Found()
@@ -192,8 +192,8 @@ public class ListTests is TestFixture
 		Assert.throws(typeof(ArgumentRangeError), @= list.indexOf(0, -1, 0));
 		Assert.throws(typeof(ArgumentRangeError), @= list.indexOf(0, 0, -1));
 		Assert.throws(typeof(ArgumentError), @= list.indexOf(0, 6, 1));
-		Assert.throws(typeof(TypeError), @= list.indexOf(0, "0", 0));
-		Assert.throws(typeof(TypeError), @= list.indexOf(0, 0, "0"));
+		Assert.throws(typeof(TypeConversionError), @= list.indexOf(0, "0", 0));
+		Assert.throws(typeof(TypeConversionError), @= list.indexOf(0, 0, "0"));
 	}
 
 	// slice tests
@@ -272,8 +272,8 @@ public class ListTests is TestFixture
 		var list = [0, 1, 2, 3, 4];
 		Assert.throws(typeof(ArgumentRangeError), @= list.sliceTo(5, 0));
 		Assert.throws(typeof(ArgumentRangeError), @= list.sliceTo(0, 6));
-		Assert.throws(typeof(TypeError), @= list.sliceTo("0", 0));
-		Assert.throws(typeof(TypeError), @= list.sliceTo(0, "0"));
+		Assert.throws(typeof(TypeConversionError), @= list.sliceTo("0", 0));
+		Assert.throws(typeof(TypeConversionError), @= list.sliceTo(0, "0"));
 	}
 
 	// Concat tests

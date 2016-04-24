@@ -89,7 +89,7 @@ public class Overload is Member
 	/// Summary: Gets metadata for the parameter at the specified index.
 	/// Param index: The index of the parameter to get. (Int, UInt or Real)
 	/// Returns: A {Parameter} object for the parameter at the specified index.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {index} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {index} is less than zero, or greater than or equal to {paramCount}.

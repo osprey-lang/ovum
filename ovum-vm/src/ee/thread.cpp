@@ -910,7 +910,7 @@ int Thread::ToString(String **result)
 			return r;
 
 		if (currentFrame->PeekType(0) != vm->types.String)
-			return ThrowTypeError(strings->error.ToStringWrongReturnType);
+			return ThrowTypeConversionError(strings->error.ToStringWrongReturnType);
 	}
 
 	if (result != nullptr)
@@ -1008,6 +1008,18 @@ int Thread::ThrowNullReferenceError(String *message)
 	return r;
 }
 
+int Thread::ThrowTypeConversionError(String *message)
+{
+	if (message == nullptr)
+		PushNull();
+	else
+		PushString(message);
+	int r = GetGC()->Construct(this, vm->types.TypeConversionError, 1, nullptr);
+	if (r == OVUM_SUCCESS)
+		r = Throw();
+	return r;
+}
+
 int Thread::ThrowNoOverloadError(ovlocals_t argCount, String *message)
 {
 	PushInt(argCount);
@@ -1032,7 +1044,7 @@ int Thread::ThrowMemberNotFoundError(String *member)
 
 int Thread::ThrowMissingOperatorError(Operator op)
 {
-	StaticStrings::operatorsStrings &operators = this->strings->operators;
+	auto &operators = this->strings->operators;
 	String *operatorNames[] = {
 		operators.add,        // Operator::ADD
 		operators.subtract,   // Operator::SUB
@@ -1350,6 +1362,10 @@ OVUM_API int VM_ThrowDivideByZeroError(ThreadHandle thread, String *message)
 OVUM_API int VM_ThrowNullReferenceError(ThreadHandle thread, String *message)
 {
 	return thread->ThrowNullReferenceError(message);
+}
+OVUM_API int VM_ThrowTypeConversionError(ThreadHandle thread, String *message)
+{
+	return thread->ThrowTypeConversionError(message);
 }
 OVUM_API int VM_ThrowErrorOfType(ThreadHandle thread, TypeHandle type, ovlocals_t argc)
 {

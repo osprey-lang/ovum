@@ -167,7 +167,10 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_writeByte)
 	CHECKED(GetBufferIndex(thread, buf, args[1], 1, index));
 
 	if (args[2].type != aves->aves.Int && args[2].type != aves->aves.UInt)
-		return VM_ThrowTypeError(thread);
+	{
+		VM_PushString(thread, strings::value); // paramName
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentTypeError, 1);
+	}
 
 	buf->bytes[index] = (uint8_t)args[2].v.uinteger;
 }
@@ -182,7 +185,10 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_writeSByte)
 	CHECKED(GetBufferIndex(thread, buf, args[1], 1, index));
 
 	if (args[2].type != aves->aves.Int && args[2].type != aves->aves.UInt)
-		return VM_ThrowTypeError(thread);
+	{
+		VM_PushString(thread, strings::value); // paramName
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentTypeError, 1);
+	}
 
 	buf->sbytes[index] = (int8_t)args[2].v.integer;
 }
@@ -197,7 +203,10 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_writeInt16)
 	CHECKED(GetBufferIndex(thread, buf, args[1], 2, index));
 
 	if (args[2].type != aves->aves.Int && args[2].type != aves->aves.UInt)
-		return VM_ThrowTypeError(thread);
+	{
+		VM_PushString(thread, strings::value); // paramName
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentTypeError, 1);
+	}
 
 	buf->int16s[index] = (int16_t)args[2].v.integer;
 }
@@ -212,7 +221,10 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_writeInt32)
 	CHECKED(GetBufferIndex(thread, buf, args[1], 4, index));
 
 	if (args[2].type != aves->aves.Int && args[2].type != aves->aves.UInt)
-		return VM_ThrowTypeError(thread);
+	{
+		VM_PushString(thread, strings::value); // paramName
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentTypeError, 1);
+	}
 
 	buf->int32s[index] = (int32_t)args[2].v.integer;
 }
@@ -227,7 +239,10 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_writeInt64)
 	CHECKED(GetBufferIndex(thread, buf, args[1], 8, index));
 
 	if (args[2].type != aves->aves.Int && args[2].type != aves->aves.UInt)
-		return VM_ThrowTypeError(thread);
+	{
+		VM_PushString(thread, strings::value); // paramName
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentTypeError, 1);
+	}
 
 	buf->int64s[index] = args[2].v.integer;
 }
@@ -242,7 +257,10 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_writeUInt16)
 	CHECKED(GetBufferIndex(thread, buf, args[1], 2, index));
 
 	if (args[2].type != aves->aves.Int && args[2].type != aves->aves.UInt)
-		return VM_ThrowTypeError(thread);
+	{
+		VM_PushString(thread, strings::value); // paramName
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentTypeError, 1);
+	}
 
 	buf->uint16s[index] = (uint16_t)args[2].v.uinteger;
 }
@@ -257,7 +275,10 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_writeUInt32)
 	CHECKED(GetBufferIndex(thread, buf, args[1], 4, index));
 
 	if (args[2].type != aves->aves.Int && args[2].type != aves->aves.UInt)
-		return VM_ThrowTypeError(thread);
+	{
+		VM_PushString(thread, strings::value); // paramName
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentTypeError, 1);
+	}
 
 	buf->uint32s[index] = (uint32_t)args[2].v.uinteger;
 }
@@ -272,7 +293,10 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_writeUInt64)
 	CHECKED(GetBufferIndex(thread, buf, args[1], 8, index));
 
 	if (args[2].type != aves->aves.Int && args[2].type != aves->aves.UInt)
-		return VM_ThrowTypeError(thread);
+	{
+		VM_PushString(thread, strings::value); // paramName
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentTypeError, 1);
+	}
 
 	buf->uint64s[index] = args[2].v.uinteger;
 }
@@ -287,7 +311,10 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_writeFloat32)
 	CHECKED(GetBufferIndex(thread, buf, args[1], 4, index));
 
 	if (args[2].type != aves->aves.Real)
-		return VM_ThrowTypeError(thread);
+	{
+		VM_PushString(thread, strings::value); // paramName
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentTypeError, 1);
+	}
 
 	buf->floats[index] = (float)args[2].v.real;
 }
@@ -302,7 +329,10 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Buffer_writeFloat64)
 	CHECKED(GetBufferIndex(thread, buf, args[1], 8, index));
 
 	if (args[2].type != aves->aves.Real)
-		return VM_ThrowTypeError(thread);
+	{
+		VM_PushString(thread, strings::value); // paramName
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentTypeError, 1);
+	}
 
 	buf->doubles[index] = args[2].v.real;
 }
@@ -368,9 +398,15 @@ AVES_API NATIVE_FUNCTION(aves_BufferView_new)
 	if (IS_NULL(args[1]))
 		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentNullError, 0);
 	if (!IsType(args + 1, aves->aves.Buffer))
-		return VM_ThrowTypeError(thread);
+	{
+		VM_PushString(thread, strings::buffer); // paramName
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentTypeError, 1);
+	}
 	if (!IsType(args + 2, aves->aves.BufferViewKind))
-		return VM_ThrowTypeError(thread);
+	{
+		VM_PushString(thread, strings::kind); // paramName
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentTypeError, 1);
+	}
 	if (args[2].v.integer < BufferView::BYTE ||
 		args[2].v.integer > BufferView::FLOAT64)
 	{
@@ -458,14 +494,13 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_BufferView_set_item)
 	BufferView *view = THISV.Get<BufferView>();
 	Buffer *buf = view->buffer.Get<Buffer>();
 
-	if (view->kind >= BufferView::BYTE && view->kind <= BufferView::UINT64)
+	bool isValueRightType = view->kind >= BufferView::BYTE && view->kind <= BufferView::UINT64
+		? args[2].type == aves->aves.Int || args[2].type == aves->aves.UInt
+		: args[2].type == aves->aves.Real;
+	if (!isValueRightType)
 	{
-		if (args[2].type != aves->aves.Int && args[2].type != aves->aves.UInt)
-			return VM_ThrowTypeError(thread);
-	}
-	else if (args[2].type != aves->aves.Real)
-	{
-		return VM_ThrowTypeError(thread);
+		VM_PushString(thread, strings::value); // paramName
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentTypeError, 1);
 	}
 
 	int valueSize = -1;

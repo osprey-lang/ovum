@@ -1,4 +1,5 @@
 #include "enum.h"
+#include "../aves_state.h"
 #include <ov_stringbuffer.h>
 
 AVES_API NATIVE_FUNCTION(aves_Enum_getHashCode)
@@ -46,8 +47,11 @@ AVES_API NATIVE_FUNCTION(aves_Enum_opEquals)
 }
 AVES_API NATIVE_FUNCTION(aves_Enum_opCompare)
 {
+	using namespace aves;
+	Aves *aves = Aves::Get(thread);
+
 	if (args[0].type != args[1].type)
-		return VM_ThrowTypeError(thread);
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentTypeError, 0);
 
 	int64_t left = args[0].v.integer;
 	int64_t right = args[0].v.integer;
@@ -65,8 +69,11 @@ AVES_API NATIVE_FUNCTION(aves_Enum_opPlus)
 
 AVES_API NATIVE_FUNCTION(aves_EnumSet_hasFlag)
 {
+	using namespace aves;
+	Aves *aves = Aves::Get(thread);
+
 	if (THISV.type != args[1].type)
-		return VM_ThrowTypeError(thread);
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentTypeError, 0);
 
 	VM_PushBool(thread, (THISV.v.integer & args[1].v.integer) == args[1].v.integer);
 	RETURN_SUCCESS;
@@ -144,8 +151,11 @@ END_NATIVE_FUNCTION
 
 AVES_API NATIVE_FUNCTION(aves_EnumSet_opOr)
 {
+	using namespace aves;
+	Aves *aves = Aves::Get(thread);
+
 	if (args[0].type != args[1].type)
-		return VM_ThrowTypeError(thread);
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentTypeError, 0);
 
 	Value output;
 	output.type = args[0].type;
@@ -155,8 +165,11 @@ AVES_API NATIVE_FUNCTION(aves_EnumSet_opOr)
 }
 AVES_API NATIVE_FUNCTION(aves_EnumSet_opXor)
 {
+	using namespace aves;
+	Aves *aves = Aves::Get(thread);
+
 	if (args[0].type != args[1].type)
-		return VM_ThrowTypeError(thread);
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentTypeError, 0);
 
 	Value output;
 	output.type = args[0].type;
@@ -166,8 +179,11 @@ AVES_API NATIVE_FUNCTION(aves_EnumSet_opXor)
 }
 AVES_API NATIVE_FUNCTION(aves_EnumSet_opAnd)
 {
+	using namespace aves;
+	Aves *aves = Aves::Get(thread);
+
 	if (args[0].type != args[1].type)
-		return VM_ThrowTypeError(thread);
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentTypeError, 0);
 
 	Value output;
 	output.type = args[0].type;

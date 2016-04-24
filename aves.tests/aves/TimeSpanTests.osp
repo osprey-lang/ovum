@@ -21,7 +21,7 @@ public class TimeSpanTests is TestFixture
 	public test_Constructor1Invalid()
 	{
 		// Unary constructor doesn't throw an ArgumentRangeError – the entire Int range is valid.
-		Assert.throws(typeof(TypeError), @= new TimeSpan("0"));
+		Assert.throws(typeof(TypeConversionError), @= new TimeSpan("0"));
 	}
 
 	public test_Constructor3Valid()
@@ -45,9 +45,9 @@ public class TimeSpanTests is TestFixture
 		const maxSeconds = Int.max / microsecondsPerSecond;
 		Assert.throws(typeof(ArgumentRangeError), @= new TimeSpan(0, 0, maxSeconds + 1));
 
-		Assert.throws(typeof(TypeError), @= new TimeSpan("0", 0, 0));
-		Assert.throws(typeof(TypeError), @= new TimeSpan(0, "0", 0));
-		Assert.throws(typeof(TypeError), @= new TimeSpan(0, 0, "0"));
+		Assert.throws(typeof(TypeConversionError), @= new TimeSpan("0", 0, 0));
+		Assert.throws(typeof(TypeConversionError), @= new TimeSpan(0, "0", 0));
+		Assert.throws(typeof(TypeConversionError), @= new TimeSpan(0, 0, "0"));
 	}
 
 	public test_Constructor4Valid()
@@ -72,10 +72,10 @@ public class TimeSpanTests is TestFixture
 		const maxSeconds = Int.max / microsecondsPerSecond;
 		Assert.throws(typeof(ArgumentRangeError), @= new TimeSpan(0, 0, 0, maxSeconds + 1));
 
-		Assert.throws(typeof(TypeError), @= new TimeSpan("0", 0, 0, 0));
-		Assert.throws(typeof(TypeError), @= new TimeSpan(0, "0", 0, 0));
-		Assert.throws(typeof(TypeError), @= new TimeSpan(0, 0, "0", 0));
-		Assert.throws(typeof(TypeError), @= new TimeSpan(0, 0, 0, "0"));
+		Assert.throws(typeof(TypeConversionError), @= new TimeSpan("0", 0, 0, 0));
+		Assert.throws(typeof(TypeConversionError), @= new TimeSpan(0, "0", 0, 0));
+		Assert.throws(typeof(TypeConversionError), @= new TimeSpan(0, 0, "0", 0));
+		Assert.throws(typeof(TypeConversionError), @= new TimeSpan(0, 0, 0, "0"));
 	}
 
 	public test_Constructor5Valid()
@@ -101,11 +101,11 @@ public class TimeSpanTests is TestFixture
 		const maxMilliseconds = Int.max / microsecondsPerMillisecond;
 		Assert.throws(typeof(ArgumentRangeError), @= new TimeSpan(0, 0, 0, 0, maxMilliseconds + 1));
 
-		Assert.throws(typeof(TypeError), @= new TimeSpan("0", 0, 0, 0, 0));
-		Assert.throws(typeof(TypeError), @= new TimeSpan(0, "0", 0, 0, 0));
-		Assert.throws(typeof(TypeError), @= new TimeSpan(0, 0, "0", 0, 0));
-		Assert.throws(typeof(TypeError), @= new TimeSpan(0, 0, 0, "0", 0));
-		Assert.throws(typeof(TypeError), @= new TimeSpan(0, 0, 0, 0, "0"));
+		Assert.throws(typeof(TypeConversionError), @= new TimeSpan("0", 0, 0, 0, 0));
+		Assert.throws(typeof(TypeConversionError), @= new TimeSpan(0, "0", 0, 0, 0));
+		Assert.throws(typeof(TypeConversionError), @= new TimeSpan(0, 0, "0", 0, 0));
+		Assert.throws(typeof(TypeConversionError), @= new TimeSpan(0, 0, 0, "0", 0));
+		Assert.throws(typeof(TypeConversionError), @= new TimeSpan(0, 0, 0, 0, "0"));
 	}
 
 	public test_MinMax()

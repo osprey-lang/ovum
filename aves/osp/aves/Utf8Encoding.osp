@@ -45,7 +45,7 @@ public class Utf8Encoding is Encoding
 		offset = int(offset);
 		count = int(count);
 		if stringBuf is not StringBuffer:
-			throw new TypeError("stringBuf must be a StringBuffer.");
+			throw new ArgumentTypeError("stringBuf", typeof(StringBuffer));
 
 		buf.verifyRange(offset, count);
 
@@ -109,7 +109,7 @@ private class Utf8Decoder is Decoder
 		count = int(count);
 
 		if strBuf is not StringBuffer:
-			throw new TypeError("strBuf must be a StringBuffer.");
+			throw new ArgumentTypeError("strBuf", typeof(StringBuffer));
 
 		buf.verifyRange(offset, count);
 

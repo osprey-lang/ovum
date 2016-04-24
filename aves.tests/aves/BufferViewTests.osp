@@ -65,7 +65,7 @@ public class BufferViewTests is TestFixture
 	public test_WriteByteWrongType()
 	{
 		var view = new BufferView(buffer, BufferViewKind.byte);
-		Assert.throws(typeof(TypeError), @{ view[0] = 0.0; });
+		Assert.throws(typeof(ArgumentTypeError), @{ view[0] = 0.0; });
 	}
 
 	public test_IterateByte()
@@ -128,7 +128,7 @@ public class BufferViewTests is TestFixture
 	public test_WriteSByteWrongType()
 	{
 		var view = new BufferView(buffer, BufferViewKind.sbyte);
-		Assert.throws(typeof(TypeError), @{ view[0] = 0.0; });
+		Assert.throws(typeof(ArgumentTypeError), @{ view[0] = 0.0; });
 	}
 
 	public test_IterateSByte()
@@ -191,7 +191,7 @@ public class BufferViewTests is TestFixture
 	public test_WriteInt16WrongType()
 	{
 		var view = new BufferView(buffer, BufferViewKind.int16);
-		Assert.throws(typeof(TypeError), @{ view[0] = 0.0; });
+		Assert.throws(typeof(ArgumentTypeError), @{ view[0] = 0.0; });
 	}
 
 	public test_IterateInt16()
@@ -254,7 +254,7 @@ public class BufferViewTests is TestFixture
 	public test_WriteUInt16WrongType()
 	{
 		var view = new BufferView(buffer, BufferViewKind.uint16);
-		Assert.throws(typeof(TypeError), @{ view[0] = 0.0; });
+		Assert.throws(typeof(ArgumentTypeError), @{ view[0] = 0.0; });
 	}
 
 	public test_IterateUInt16()
@@ -317,7 +317,7 @@ public class BufferViewTests is TestFixture
 	public test_WriteInt32WrongType()
 	{
 		var view = new BufferView(buffer, BufferViewKind.int32);
-		Assert.throws(typeof(TypeError), @{ view[0] = 0.0; });
+		Assert.throws(typeof(ArgumentTypeError), @{ view[0] = 0.0; });
 	}
 
 	public test_IterateInt32()
@@ -380,7 +380,7 @@ public class BufferViewTests is TestFixture
 	public test_WriteUInt32WrongType()
 	{
 		var view = new BufferView(buffer, BufferViewKind.uint32);
-		Assert.throws(typeof(TypeError), @{ view[0] = 0.0; });
+		Assert.throws(typeof(ArgumentTypeError), @{ view[0] = 0.0; });
 	}
 
 	public test_IterateUInt32()
@@ -433,7 +433,7 @@ public class BufferViewTests is TestFixture
 	public test_WriteInt64WrongType()
 	{
 		var view = new BufferView(buffer, BufferViewKind.int64);
-		Assert.throws(typeof(TypeError), @{ view[0] = 0.0; });
+		Assert.throws(typeof(ArgumentTypeError), @{ view[0] = 0.0; });
 	}
 
 	public test_IterateInt64()
@@ -486,7 +486,7 @@ public class BufferViewTests is TestFixture
 	public test_WriteUInt64WrongType()
 	{
 		var view = new BufferView(buffer, BufferViewKind.uint64);
-		Assert.throws(typeof(TypeError), @{ view[0] = 0.0; });
+		Assert.throws(typeof(ArgumentTypeError), @{ view[0] = 0.0; });
 	}
 
 	public test_IterateUInt64()
@@ -511,12 +511,12 @@ public class BufferViewTests is TestFixture
 	public test_ConstructInvalidBuffer()
 	{
 		Assert.throws(typeof(ArgumentNullError), @= new BufferView(null, BufferViewKind.byte));
-		Assert.throws(typeof(TypeError), @= new BufferView(new Object(), BufferViewKind.byte));
+		Assert.throws(typeof(ArgumentTypeError), @= new BufferView(new Object(), BufferViewKind.byte));
 	}
 
 	public test_ConstructInvalidKind()
 	{
-		Assert.throws(typeof(TypeError), @= new BufferView(buffer, null));
-		Assert.throws(typeof(TypeError), @= new BufferView(buffer, +BufferViewKind.int32));
+		Assert.throws(typeof(ArgumentTypeError), @= new BufferView(buffer, null));
+		Assert.throws(typeof(ArgumentTypeError), @= new BufferView(buffer, +BufferViewKind.int32));
 	}
 }

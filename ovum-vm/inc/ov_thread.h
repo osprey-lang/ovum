@@ -232,8 +232,8 @@ OVUM_API int VM_LoadStaticField(ThreadHandle thread, FieldHandle field, Value *r
 OVUM_API int VM_StoreStaticField(ThreadHandle thread, FieldHandle field);
 
 // Stringifies the top value on the stack, by calling .toString on it. Additionally,
-// this method makes sure that the return value is indeed a string, and throws a TypeError
-// if it is not.
+// this method makes sure that the return value is a indeed string, and throws a
+// TypeConversionError if it is not.
 //   thread:
 //     The thread on which to call toString.
 //   result:
@@ -247,6 +247,7 @@ OVUM_API int VM_ThrowMemoryError(ThreadHandle thread, String *message = nullptr)
 OVUM_API int VM_ThrowOverflowError(ThreadHandle thread, String *message = nullptr);
 OVUM_API int VM_ThrowDivideByZeroError(ThreadHandle thread, String *message = nullptr);
 OVUM_API int VM_ThrowNullReferenceError(ThreadHandle thread, String *message = nullptr);
+OVUM_API int VM_ThrowTypeConversionError(ThreadHandle thread, String *message = nullptr);
 // Constructs and throws an error of the specified type. The caller
 // pushes the constructor arguments onto the stack before calling
 // this function.

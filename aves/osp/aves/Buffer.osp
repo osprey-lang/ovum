@@ -18,7 +18,7 @@ public class Buffer
 
 	/// Summary: Creates a new Buffer with the specified byte size.
 	/// Param size: The size, in bytes, of the new buffer. (Int, UInt or Real)
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {size} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {size} is less than zero.
@@ -29,7 +29,7 @@ public class Buffer
 	/// Param index: The byte offset from which to read an unsigned byte.
 	///              (Int, UInt or Real)
 	/// Returns: A UInt containing the byte value at the specified offset.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {index} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {index} is less than zero or greater than or equal to {size}.
@@ -38,9 +38,9 @@ public class Buffer
 	/// Summary: Writes an unsigned byte to the buffer at the specified offset.
 	/// Param index: The byte offset at which to write the unsigned byte.
 	///              (Int, UInt or Real)
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {index} could not be converted to an Int.
-	///
+	/// Throws ArgumentTypeError:
 	///          The value is not an Int or UInt.
 	/// Throws ArgumentRangeError:
 	///          {index} is less than zero or greater than or equal to {size}.
@@ -60,7 +60,7 @@ public class Buffer
 	/// Param index: The byte offset from which to read an unsigned byte.
 	///              (Int, UInt or Real)
 	/// Returns: A UInt containing the byte value at the specified offset.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {index} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {index} is less than zero or greater than or equal to {size}.
@@ -70,7 +70,7 @@ public class Buffer
 	/// Param index: The byte offset from which to read a signed byte.
 	///              (Int, UInt or Real)
 	/// Returns: A UInt containing the byte value at the specified offset.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {index} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {index} is less than zero or greater than or equal to {size}.
@@ -81,7 +81,7 @@ public class Buffer
 	/// Param index: The index from which to read a 16-bit signed integer. This index
 	///              is multiplied by 2 to get the byte offset. (Int, UInt or Real)
 	/// Returns: An Int containing the 16-bit signed integer value at the specified index.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {index} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {index} is less than zero or greater than or equal to {size} / 2.
@@ -92,7 +92,7 @@ public class Buffer
 	/// Param index: The index from which to read a 16-bit signed integer. This index
 	///              is multiplied by 4 to get the byte offset. (Int, UInt or Real)
 	/// Returns: An Int containing the 32-bit signed integer value at the specified index.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {index} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {index} is less than zero or greater than or equal to {size} / 4.
@@ -103,7 +103,7 @@ public class Buffer
 	/// Param index: The index from which to read a 64-bit signed integer. This index
 	///              is multiplied by 8 to get the byte offset. (Int, UInt or Real)
 	/// Returns: An Int containing the 64-bit signed integer value at the specified index.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {index} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {index} is less than zero or greater than or equal to {size} / 8.
@@ -114,7 +114,7 @@ public class Buffer
 	/// Param index: The index from which to read a 16-bit unsigned integer. This index
 	///              is multiplied by 2 to get the byte offset. (Int, UInt or Real)
 	/// Returns: A UInt containing the 16-bit unsigned integer value at the specified index.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {index} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {index} is less than zero or greater than or equal to {size} / 2.
@@ -125,7 +125,7 @@ public class Buffer
 	/// Param index: The index from which to read a 32-bit unsigned integer. This index
 	///              is multiplied by 4 to get the byte offset. (Int, UInt or Real)
 	/// Returns: A UInt containing the 32-bit unsigned integer value at the specified index.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {index} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {index} is less than zero or greater than or equal to {size} / 4.
@@ -136,7 +136,7 @@ public class Buffer
 	/// Param index: The index from which to read a 64-bit unsigned integer. This index
 	///              is multiplied by 4 to get the byte offset. (Int, UInt or Real)
 	/// Returns: A UInt containing the 32-bit unsigned integer value at the specified index.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {index} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {index} is less than zero or greater than or equal to {size} / 8.
@@ -147,7 +147,7 @@ public class Buffer
 	/// Param index: The index from which to read a 32-bit floating-point value. This index
 	///              is multiplied by 4 to get the byte offset. (Int, UInt or Real)
 	/// Returns: A Real containing the 32-bit floating-point value at the specified index.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {index} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {index} is less than zero or greater than or equal to {size} / 4.
@@ -167,7 +167,7 @@ public class Buffer
 	/// Param index: The index from which to read a 64-bit floating-point value. This index
 	///              is multiplied by 8 to get the byte offset. (Int, UInt or Real)
 	/// Returns: A Real containing the 64-bit floating-point value at the specified index.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {index} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {index} is less than zero or greater than or equal to {size} / 8.
@@ -177,7 +177,7 @@ public class Buffer
 	/// Summary: Writes an unsigned byte to the buffer at the specified offset.
 	/// Param index: The byte offset at which to write the unsigned byte.
 	///              (Int, UInt or Real)
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {index} could not be converted to an Int.
 	///
 	///          {value} is not an Int or UInt.
@@ -192,9 +192,9 @@ public class Buffer
 	/// Param index: The byte offset at which to write the signed byte.
 	///              (Int, UInt or Real)
 	/// Param value: The value to write to the buffer. (Int or UInt)
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {index} could not be converted to an Int.
-	///
+	/// Throws ArgumentTypeError:
 	///          {value} is not an Int or UInt.
 	/// Throws ArgumentRangeError:
 	///          {index} is less than zero or greater than or equal to {size}.
@@ -209,9 +209,9 @@ public class Buffer
 	/// Param index: The index at which to write the value. This index is multiplied
 	///              by 2 to get the byte offset. (Int, UInt or Real)
 	/// Param value: The value to write to the buffer. (Int or UInt)
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {index} could not be converted to an Int.
-	///
+	/// Throws ArgumentTypeError:
 	///          {value} is not an Int or UInt.
 	/// Throws ArgumentRangeError:
 	///          {index} is less than zero or greater than or equal to {size} / 2.
@@ -224,9 +224,9 @@ public class Buffer
 	/// Param index: The index at which to write the value. This index is multiplied
 	///              by 4 to get the byte offset. (Int, UInt or Real)
 	/// Param value: The value to write to the buffer. (Int or UInt)
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {index} could not be converted to an Int.
-	///
+	/// Throws ArgumentTypeError:
 	///          {value} is not an Int or UInt.
 	/// Throws ArgumentRangeError:
 	///          {index} is less than zero or greater than or equal to {size} / 4.
@@ -239,9 +239,9 @@ public class Buffer
 	/// Param index: The index at which to write the value. This index is multiplied
 	///              by 8 to get the byte offset. (Int, UInt or Real)
 	/// Param value: The value to write to the buffer. (Int or UInt)
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {index} could not be converted to an Int.
-	///
+	/// Throws ArgumentTypeError:
 	///          {value} is not an Int or UInt.
 	/// Throws ArgumentRangeError:
 	///          {index} is less than zero or greater than or equal to {size} / 8.
@@ -252,9 +252,9 @@ public class Buffer
 	/// Param index: The index at which to write the value. This index is multiplied
 	///              by 2 to get the byte offset. (Int, UInt or Real)
 	/// Param value: The value to write to the buffer. (Int or UInt)
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {index} could not be converted to an Int.
-	///
+	/// Throws ArgumentTypeError:
 	///          {value} is not an Int or UInt.
 	/// Throws ArgumentRangeError:
 	///          {index} is less than zero or greater than or equal to {size} / 2.
@@ -267,9 +267,9 @@ public class Buffer
 	/// Param index: The index at which to write the value. This index is multiplied
 	///              by 4 to get the byte offset. (Int, UInt or Real)
 	/// Param value: The value to write to the buffer. (Int or UInt)
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {index} could not be converted to an Int.
-	///
+	/// Throws ArgumentTypeError:
 	///          {value} is not an Int or UInt.
 	/// Throws ArgumentRangeError:
 	///          {index} is less than zero or greater than or equal to {size} / 4.
@@ -282,9 +282,9 @@ public class Buffer
 	/// Param index: The index at which to write the value. This index is multiplied
 	///              by 8 to get the byte offset. (Int, UInt or Real)
 	/// Param value: The value to write to the buffer. (Int or UInt)
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {index} could not be converted to an Int.
-	///
+	/// Throws ArgumentTypeError:
 	///          {value} is not an Int or UInt.
 	/// Throws ArgumentRangeError:
 	///          {index} is less than zero or greater than or equal to {size} / 8.
@@ -295,9 +295,9 @@ public class Buffer
 	/// Param index: The index at which to write the value. This index is multiplied
 	///              by 4 to get the byte offset. (Int, UInt or Real)
 	/// Param value: The value to write to the buffer. (Real)
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {index} could not be converted to an Int.
-	///
+	/// Throws ArgumentTypeError:
 	///          {value} is not a Real.
 	/// Throws ArgumentRangeError:
 	///          {index} is less than zero or greater than or equal to {size} / 4.
@@ -317,9 +317,9 @@ public class Buffer
 	/// Param index: The index at which to write the value. This index is multiplied
 	///              by 8 to get the byte offset. (Int, UInt or Real)
 	/// Param value: The value to write to the buffer. (Real)
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {index} could not be converted to an Int.
-	///
+	/// Throws ArgumentTypeError:
 	///          {value} is not a Real.
 	/// Throws ArgumentRangeError:
 	///          {index} is less than zero or greater than or equal to {size} / 8.
@@ -360,7 +360,7 @@ public class Buffer
 	///          a {BufferView}, the underlying buffer is returned.
 	/// Throws ArgumentNullError:
 	///          {buf} is null.
-	/// Throws TypeError:
+	/// Throws ArgumentTypeError:
 	///          {buf} is not a {Buffer} or {BufferView}.
 	public static fromValue(buf)
 	{
@@ -369,7 +369,7 @@ public class Buffer
 		if buf is BufferView:
 			buf = buf.buffer;
 		else if buf is not Buffer:
-			throw new TypeError("buf must be an aves.Buffer or aves.BufferView.");
+			throw new ArgumentTypeError("buf", [typeof(Buffer), typeof(BufferView)]);
 		return buf;
 	}
 
@@ -380,9 +380,9 @@ public class Buffer
 	///            This parameter can also be null, in which case a new buffer full
 	///            of zero bytes is assigned to it.
 	/// Param newSize: The new size of {buf}. (Int, UInt or Real)
-	/// Throws TypeError:
+	/// Throws ArgumentTypeError:
 	///          {buf} is not null and is not an instance of {Buffer}.
-	///
+	/// Throws TypeConversionError:
 	///          {newSize} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {newSize} is less than zero.
@@ -398,7 +398,7 @@ public class Buffer
 	public static resize(ref buf, newSize)
 	{
 		if buf is not null and buf is not Buffer:
-			throw new TypeError("buf must be an aves.Buffer");
+			throw new ArgumentTypeError("buf", typeof(Buffer));
 		newSize = int(newSize);
 		if newSize < 0:
 			throw new ArgumentRangeError("newSize");
@@ -417,7 +417,7 @@ public class Buffer
 	///          `source.size` bytes are copied.
 	/// Param source:      The source buffer. (Buffer or BufferView)
 	/// Param destination: The destination buffer. (Buffer or BufferView)
-	/// Throws TypeError:
+	/// Throws ArgumentTypeError:
 	///          {source} is not a {Buffer} or {BufferView}.
 	///
 	///          {destination} is not a {Buffer} or {BufferView}.
@@ -443,11 +443,11 @@ public class Buffer
 	/// Param source:      The source buffer. (Buffer or BufferView)
 	/// Param destination: The destination buffer. (Buffer or BufferView)
 	/// Param count:       The number of bytes to copy. (Int, UInt or Real)
-	/// Throws TypeError:
+	/// Throws ArgumentTypeError:
 	///          {source} is not a {Buffer} or {BufferView}.
 	///
 	///          {destination} is not a {Buffer} or {BufferView}.
-	///
+	/// Throws TypeConversionError:
 	///          {count} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {count} is less than zero, or {count} is larger than the size
@@ -474,11 +474,11 @@ public class Buffer
 	/// Param destIndex:   The byte offset at which to start writing bytes
 	///                    into {dest}. (Int, UInt or Real)
 	/// Param count:       The number of bytes to copy. (Int, UInt or Real)
-	/// Throws TypeError:
+	/// Throws ArgumentTypeError:
 	///          {source} is not a {Buffer} or {BufferView}.
 	///
 	///          {destination} is not a {Buffer} or {BufferView}.
-	///
+	/// Throws TypeConversionError:
 	///          {sourceIndex}, {destIndex} or {count} could not be converted
 	///          to an Int.
 	/// Throws ArgumentRangeError:
@@ -530,7 +530,7 @@ public class BufferView
 	/// Summary: Creates a new BufferView from the specified buffer, with the specified kind.
 	/// Param buf:  The buffer to create a view of. (Buffer)
 	/// Param kind: A {BufferViewKind} which specifies how to read data in the buffer.
-	/// Throws TypeError:
+	/// Throws ArgumentTypeError:
 	///          {buf} is not a {Buffer}.
 	///
 	///          {kind} is not a {BufferViewKind}.
@@ -546,7 +546,7 @@ public class BufferView
 	///              data to obtain a byte offset. (Int, UInt or Real)
 	/// Returns: The data at the specified index in the buffer, according to the buffer view’s
 	///          {kind}.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {index} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {index} is less than zero, or the calculated byte offset is outside of the
@@ -556,9 +556,9 @@ public class BufferView
 	/// Summary: Writes a value to the underlying buffer at the specified index.
 	/// Param index: The index from which to read data. This is multiplied by the size of the
 	///              data to obtain a byte offset. (Int, UInt or Real)
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {index} could not be converted to an Int.
-	///
+	/// Throws ArgumentTypeError:
 	///          The value was of the wrong type. For {BufferViewKind.float32} and {BufferViewKind.float64},
 	///          the value must be a Real. Otherwise, it must be an Int or UInt.
 	/// Throws ArgumentRangeError:

@@ -114,7 +114,7 @@ public class Version
 	operator <=>(a, b)
 	{
 		if b is not Version:
-			throw new TypeError("The right-hand operand must be an aves.Version.");
+			throw new ArgumentTypeError();
 
 		if a._major != b._major:
 			return a._major <=> b._major;

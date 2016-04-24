@@ -32,7 +32,7 @@ namespace io;
 ///
 ///          When a method takes a buffer as an argument, implementations should consider
 ///          using {Buffer.fromValue} to ensure the argument is indeed a buffer. This method
-///          extracts the {Buffer} from a {BufferView}, or throws a {TypeError} if the
+///          extracts the {Buffer} from a {BufferView}, or throws a {ArgumentTypeError} if the
 ///          argument is not a {Buffer} instance. Additionally, {Buffer.verifyRange} should
 ///          be used to verify that the offset and count are actually within the buffer.
 ///          For example,
@@ -95,7 +95,7 @@ public abstract class Stream
 	///          The stream is not seekable.
 	///
 	///          The stream has been closed.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          The value could not be converted to an Int.
 	public abstract set position;
 
@@ -129,9 +129,9 @@ public abstract class Stream
 	///          The stream has been closed.
 	///
 	///          The stream is not writable.
-	/// Throws TypeError:
+	/// Throws ArgumentTypeError:
 	///          {buf} is not a {Buffer} or {BufferView}.
-	///
+	/// Throws TypeConversionError:
 	///          {offset} or {count} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {offset} or {count} is less than zero.
@@ -158,7 +158,7 @@ public abstract class Stream
 	/// Throws EndOfFileError:
 	///          The end of the stream was reached before the requested number of bytes could be
 	///          read.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {count} could not be converted to an Int.
 	public overridable read(count)
 	{
@@ -195,9 +195,9 @@ public abstract class Stream
 	///          {buf} is null.
 	/// Throws ArgumentError:
 	///          {offset} + {count} is greater than the size of the buffer.
-	/// Throws TypeError:
+	/// Throws ArgumentTypeError:
 	///          {buf} is not a {Buffer} or {BufferView}.
-	///
+	/// Throws TypeConversionError:
 	///          {offset} or {count} could not be converted to an Int.
 	public overridable readInto(buf, offset, count)
 	{
@@ -231,7 +231,7 @@ public abstract class Stream
 	///          The stream has been closed.
 	///
 	///          The stream is not writable.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {value} could not be converted to an Int.
 	public overridable writeByte(value)
 	{
@@ -251,7 +251,7 @@ public abstract class Stream
 	///          The stream is not writable.
 	/// Throws ArgumentNullError:
 	///          {buf} is null.
-	/// Throws TypeError:
+	/// Throws ArgumentTypeError:
 	///          {buf} is not a {Buffer} or {BufferView}.
 	public overridable write(buf)
 	{
@@ -277,9 +277,9 @@ public abstract class Stream
 	///          {buf} is null.
 	/// Throws ArgumentError:
 	///          {offset} + {count} is greater than the size of {buf}.
-	/// Throws TypeError:
+	/// Throws ArgumentTypeError:
 	///          {buf} is not a {Buffer} or {BufferView}.
-	///
+	/// Throws TypeConversionError:
 	///          {offset} or {count} could not be converted to an Int.
 	public abstract write(buf, offset, count);
 
@@ -297,7 +297,7 @@ public abstract class Stream
 	///          {dest} is not writable.
 	/// Throws ArgumentNullError:
 	///          {dest} is null.
-	/// Throws TypeError:
+	/// Throws ArgumentTypeError:
 	///          {dest} is not a {Stream}.
 	/// Throws ArgumentError:
 	///          {dest} is not writable.
@@ -320,7 +320,7 @@ public abstract class Stream
 	///          {dest} is not readable.
 	/// Throws ArgumentNullError:
 	///          {source} is null.
-	/// Throws TypeError:
+	/// Throws ArgumentTypeError:
 	///          {source} is not a {Stream}.
 	/// Throws ArgumentError:
 	///          {source} is not readable.
@@ -355,9 +355,9 @@ public abstract class Stream
 	/// Throws ArgumentRangeError:
 	///          {amount} specifies a seek offset that is outside the range of the stream, such
 	///          as before the beginning or past the end, and the stream does not support that.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {amount} could not be converted to an Int.
-	///
+	/// Throws ArgumentTypeError:
 	///          {origin} is not a {SeekOrigin} value.
 	public abstract seek(amount, origin);
 
@@ -393,7 +393,7 @@ public abstract class Stream
 	///          {source} or {desc} is closed.
 	/// Throws ArgumentNullError:
 	///          {source} or {dest} is null.
-	/// Throws TypeError:
+	/// Throws ArgumentTypeError:
 	///          {source} or {dest} is not a {Stream}.
 	/// Throws ArgumentError:
 	///          {source} is not readable.
@@ -415,9 +415,9 @@ public abstract class Stream
 	///          {source} or {desc} is closed.
 	/// Throws ArgumentNullError:
 	///          {source} or {dest} is null.
-	/// Throws TypeError:
+	/// Throws ArgumentTypeError:
 	///          {source} or {dest} is not a {Stream}.
-	///
+	/// Throws TypeConversionError:
 	///          {bufferSize} could not be converted to an Int.
 	/// Throws ArgumentError:
 	///          {source} is not readable.
@@ -431,9 +431,9 @@ public abstract class Stream
 		if source is null or dest is null:
 			throw new ArgumentNullError(source is null ? "source" : "dest");
 		if source is not Stream:
-			throw new TypeError("source must be an instance of io.Stream.");
+			throw new ArgumentTypeError("source", typeof(Stream));
 		if dest is not Stream:
-			throw new TypeError("dest must be an instance of io.Stream.");
+			throw new ArgumentTypeError("dest", typeof(Stream));
 		if not source.canRead:
 			throw new ArgumentError("The source stream must be readable.", "source");
 		if not dest.canWrite:

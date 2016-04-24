@@ -223,6 +223,7 @@ OVUM_API TypeHandle GetType_NoOverloadError(ThreadHandle thread)     { return th
 OVUM_API TypeHandle GetType_DivideByZeroError(ThreadHandle thread)   { return thread->GetVM()->types.DivideByZeroError; }
 OVUM_API TypeHandle GetType_NullReferenceError(ThreadHandle thread)  { return thread->GetVM()->types.NullReferenceError; }
 OVUM_API TypeHandle GetType_MemberNotFoundError(ThreadHandle thread) { return thread->GetVM()->types.MemberNotFoundError; }
+OVUM_API TypeHandle GetType_TypeConversionError(ThreadHandle thread) { return thread->GetVM()->types.TypeConversionError; }
 
 OVUM_API TypeFlags Type_GetFlags(TypeHandle type)
 {

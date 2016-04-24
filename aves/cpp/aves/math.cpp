@@ -13,9 +13,13 @@ AVES_API NATIVE_FUNCTION(aves_math_abs)
 	TypeHandle type = args[0].type;
 
 	if (type == aves->aves.UInt)
+	{
 		VM_Push(thread, args + 0);
+	}
 	else if (type == aves->aves.Real)
+	{
 		VM_PushReal(thread, abs(args[0].v.real));
+	}
 	else if (type == aves->aves.Int)
 	{
 		int64_t integer = args[0].v.integer;
@@ -26,7 +30,10 @@ AVES_API NATIVE_FUNCTION(aves_math_abs)
 		VM_PushInt(thread, integer);
 	}
 	else
-		return VM_ThrowTypeError(thread);
+	{
+		VM_PushString(thread, strings::n); // paramName
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentTypeError, 1);
+	}
 	RETURN_SUCCESS;
 }
 
@@ -41,12 +48,6 @@ END_NATIVE_FUNCTION
 AVES_API BEGIN_NATIVE_FUNCTION(aves_math_asin)
 {
 	GET_REAL_VALUE();
-
-	//if (value < -1 || value > 1)
-	//{
-	//	GC_Construct(thread, ArgumentRangeError, 0, nullptr);
-	//	VM_Throw(thread);
-	//}
 
 	VM_PushReal(thread, asin(value));
 }
@@ -86,11 +87,18 @@ AVES_API NATIVE_FUNCTION(aves_math_ceil)
 	TypeHandle type = args[0].type;
 
 	if (type == aves->aves.Int || type == aves->aves.UInt)
+	{
 		VM_Push(thread, args + 0);
+	}
 	else if (type == aves->aves.Real)
+	{
 		VM_PushReal(thread, ceil(args[0].v.real));
+	}
 	else
-		return VM_ThrowTypeError(thread);
+	{
+		VM_PushString(thread, strings::n); // paramName
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentTypeError, 1);
+	}
 	RETURN_SUCCESS;
 }
 
@@ -125,11 +133,18 @@ AVES_API NATIVE_FUNCTION(aves_math_floor)
 	TypeHandle type = args[0].type;
 
 	if (type == aves->aves.Int || type == aves->aves.UInt)
+	{
 		VM_Push(thread, args + 0);
+	}
 	else if (type == aves->aves.Real)
+	{
 		VM_PushReal(thread, floor(args[0].v.real));
+	}
 	else
-		return VM_ThrowTypeError(thread);
+	{
+		VM_PushString(thread, strings::n); // paramName
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentTypeError, 1);
+	}
 	RETURN_SUCCESS;
 }
 
@@ -168,7 +183,9 @@ AVES_API NATIVE_FUNCTION(aves_math_sign)
 
 	Value value = args[0];
 	if (value.type == aves->aves.UInt)
+	{
 		VM_PushInt(thread, value.v.uinteger > 0); // If value.uinteger > 0, then push 1; otherwise, 0!
+	}
 	else if (value.type == aves->aves.Int)
 	{
 		int64_t intValue = value.v.integer;
@@ -186,7 +203,10 @@ AVES_API NATIVE_FUNCTION(aves_math_sign)
 			0); // includes NaN
 	}
 	else
-		return VM_ThrowTypeError(thread);
+	{
+		VM_PushString(thread, strings::n); // paramName
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentTypeError, 1);
+	}
 	RETURN_SUCCESS;
 }
 

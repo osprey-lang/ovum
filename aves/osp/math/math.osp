@@ -20,7 +20,7 @@ namespace math
 	///
 	///          If {n} is NaN, the function returns NaN, and if {n} is negative infinity, the
 	///          function returns positive infinity.
-	/// Throws TypeError:
+	/// Throws ArgumentTypeError:
 	///          {n} is not an Int, UInt or Real.
 	public function abs(n)
 		__extern("aves_math_abs");
@@ -30,7 +30,7 @@ namespace math
 	/// Returns: A Real representing an angle in radians, θ, such that 0 ≤ θ ≤ π.
 	///
 	///          If {n} is NaN, or {n} < −1, or {n} > 1, the function returns NaN.
-	/// Throws TypeError:
+	/// Throws ArgumentTypeError:
 	///          {n} could not be converted to a Real.
 	public function acos(n)
 		__extern("aves_math_acos");
@@ -40,7 +40,7 @@ namespace math
 	/// Returns: A Real representing an angle in radians, θ, such that −π/2 ≤ θ ≤ π/2.
 	///
 	///          If {n} is NaN, or {n} < −1, or {n} > 1, the function returns NaN.
-	/// Throws TypeError:
+	/// Throws ArgumentTypeError:
 	///          {n} could not be converted to a Real.
 	public function asin(n)
 		__extern("aves_math_asin");
@@ -52,7 +52,7 @@ namespace math
 	///          If {n} is NaN, the function returns NaN;
 	///          if {n} is negative infinity, −π/2; and
 	///          if {n} is positive infinity, π/2.
-	/// Throws TypeError:
+	/// Throws ArgumentTypeError:
 	///          {n} could not be converted to a Real.
 	public function atan(n)
 		__extern("aves_math_atan");
@@ -67,7 +67,7 @@ namespace math
 	///          the quadrant.
 	///
 	///          If {x} or {y} is NaN, or either is infinite, this function returns NaN.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {x} or {y} could not be converted to a Real.
 	public function atan2(y, x)
 		__extern("aves_math_atan2");
@@ -75,7 +75,7 @@ namespace math
 	/// Summary: Returns the cube root of {n}.
 	/// Param n: The number to calculate the cube root of. (Int, UInt or Real)
 	/// Returns: The cube root of {n}, as a Real.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {n} could not be converted to a Real.
 	public function cbrt(n)
 		__extern("aves_math_cbrt");
@@ -87,7 +87,7 @@ namespace math
 	///          If {n} is a Real, the function returns a Real with the value of {n}
 	///          rounded up to the nearest integer. If {n} is NaN, the function returns
 	///          NaN.
-	/// Throws TypeError:
+	/// Throws ArgumentTypeError:
 	///          {n} is not an Int, UInt or Real.
 	public function ceil(n)
 		__extern("aves_math_ceil");
@@ -111,7 +111,7 @@ namespace math
 	/// Returns: The cosine of {θ}, as a Real.
 	///
 	///          If {θ} is NaN or positive or negative infinity, this function returns NaN.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {θ} could not be converted to a Real.
 	public function cos(θ)
 		__extern("aves_math_cos");
@@ -122,7 +122,7 @@ namespace math
 	///
 	///          If {α} is positive or negative infinity, this function returns positive infinity.
 	///          If {α} is NaN, this function returns NaN.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {α} could not be converted to a Real.
 	public function cosh(α)
 		__extern("aves_math_cosh");
@@ -152,7 +152,7 @@ namespace math
 	///
 	///          If {n} is NaN or positive infinity, that value is returned.
 	///          If {n} is negative infinity, this function returns 0.0.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {n} could not be convereted to a Real.
 	public function exp(n)
 		__extern("aves_math_exp");
@@ -164,7 +164,7 @@ namespace math
 	///          If {n} is a Real, the function returns a Real with the value of {n}
 	///          rounded down to the nearest integer.
 	///          If {n} is NaN, this function returns NaN.
-	/// Throws TypeError:
+	/// Throws ArgumentTypeError:
 	///          {n} is not an Int, UInt or Real.
 	public function floor(n)
 		__extern("aves_math_floor");
@@ -176,7 +176,7 @@ namespace math
 	///          If {n} is negative or is NaN, this function returns NaN.
 	///          If {n} is zero, the return value is negative infinity.
 	///          If {n} is positive infinity, that value is returned.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {n} could not be converted to a Real.
 	public function log(n)
 		__extern("aves_math_logE");
@@ -186,7 +186,7 @@ namespace math
 	/// Param logBase: The base of the logarithm. (Int, UInt or Real)
 	/// Returns: The logarithm of {n} in base {logBase}, as a Real.
 	///          If either value is NaN, this function returns NaN.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {n} or {logBase} could not be converted to a Real.
 	public function log(n, logBase)
 		__extern("aves_math_logBase");
@@ -280,7 +280,7 @@ namespace math
 	///          Otherwise (including if {n} is NaN), 0.
 	///
 	///          The return value is always an Int.
-	/// Throws TypeError:
+	/// Throws ArgumentTypeError:
 	///          {n} is not an Int, UInt or Real.
 	public function sign(n)
 		__extern("aves_math_sign");
@@ -290,7 +290,7 @@ namespace math
 	/// Returns: The sine of {θ}, as a Real.
 	///
 	///          If {θ} is NaN or positive or negative infinity, this function returns NaN.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {θ} could not be converted to a Real.
 	public function sin(θ)
 		__extern("aves_math_sin");
@@ -300,7 +300,7 @@ namespace math
 	/// Returns: The hyperbolic sine of {α}, as a Real.
 	///
 	///          If {α} is NaN or positive or negative infinity, that value is returned.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {α} could not be converted to a Real.
 	public function sinh(α)
 		__extern("aves_math_sinh");
@@ -308,7 +308,7 @@ namespace math
 	/// Summary: Returns the square root of {n}.
 	/// Param n: The number to calculate the square root of. (Int, UInt or Real)
 	/// Returns: The square root of {n}, as a Real.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {n} could not be converted to a Real.
 	public function sqrt(n)
 		__extern("aves_math_sqrt");
@@ -318,7 +318,7 @@ namespace math
 	/// Returns: The sine of {θ}, as a Real.
 	///
 	///          If {θ} is NaN or positive or negative infinity, this function returns NaN.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {θ} could not be converted to a Real.
 	public function tan(θ)
 		__extern("aves_math_tan");
@@ -330,7 +330,7 @@ namespace math
 	///          If {α} is positive infinity, then 1 is returned.
 	///          If {α} is negative infinity, then −1 is returned.
 	///          If {α} is NaN, this function returns NaN.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {α} could not be converted to a Real.
 	public function tanh(α)
 		__extern("aves_math_tanh");
@@ -339,7 +339,7 @@ namespace math
 	/// Param degrees: The angle, in degrees. (Int, UInt or Real)
 	/// Returns: {degrees} converted to radians, as a Real. If {degrees} is NaN, the
 	///          return value is NaN.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {degrees} could not be converted to a Real.
 	/// Remarks: 1 degree is equal to π / 180 radians. Hence, 360° = 2π radians,
 	///          and 180° = π radians.
@@ -352,7 +352,7 @@ namespace math
 	/// Param radians: The angle, in radians. (Int, UInt or Real)
 	/// Returns: {radians} converted to degrees, as a Real. If {radians} is NaN, the
 	///          return value is NaN.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {radians} could not be converted to a Real.
 	/// Remarks: 1 radian is equal to 180 / π degrees. Hence, π radians = 180°,
 	///          and 2π radians = 360°.

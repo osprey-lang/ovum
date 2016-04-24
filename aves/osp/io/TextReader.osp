@@ -12,7 +12,7 @@ public inheritable TextReader
 	/// Param stream: The stream to read from.
 	/// Throws ArgumentNullError:
 	///          {stream} is null.
-	/// Throws TypeError:
+	/// Throws ArgumentTypeError:
 	///          {stream} is not an {io.Stream}.
 	/// Throws ArgumentError:
 	///          {stream} is not readable.
@@ -26,7 +26,7 @@ public inheritable TextReader
 	/// Param encoding: The character encoding of the data in the stream.
 	/// Throws ArgumentNullError:
 	///          {stream} or {encoding} is null.
-	/// Throws TypeError:
+	/// Throws ArgumentTypeError:
 	///          {stream} is not an {io.Stream}.
 	///
 	///          {encoding} is not an {aves.Encoding}.
@@ -45,7 +45,7 @@ public inheritable TextReader
 	///                  on the text reader; false to close it.
 	/// Throws ArgumentNullError:
 	///          {stream} or {encoding} is null.
-	/// Throws TypeError:
+	/// Throws ArgumentTypeError:
 	///          {stream} is not an {io.Stream}.
 	///
 	///          {encoding} is not an {aves.Encoding}.
@@ -56,13 +56,13 @@ public inheritable TextReader
 		if stream is null:
 			throw new ArgumentNullError("stream");
 		if stream is not Stream:
-			throw new TypeError("stream must be an io.Stream instance.");
+			throw new ArgumentTypeError("stream", typeof(Stream));
 		if not stream.canRead:
 			throw new ArgumentError("The stream must be readable.", "stream");
 		if encoding is null:
 			throw new ArgumentNullError("encoding");
 		if encoding is not Encoding:
-			throw new TypeError("encoding must be an aves.Encoding instance.");
+			throw new ArgumentTypeError("encoding", typeof(Encoding));
 
 		_stream = stream;
 		_encoding = encoding;
@@ -189,7 +189,7 @@ public inheritable TextReader
 	///          stream. If the end of the stream is encountered before {count}
 	///          characters could be read, the returned string will be shorter
 	///          than requested.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {count} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {count} is less than zero.
@@ -291,7 +291,7 @@ public inheritable TextReader
 	/// Returns: A new {TextReader} that reads from the specified file.
 	/// Throws ArgumentNullError:
 	///          {fileName} is null.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {fileName} could not be converted to a String.
 	/// Throws FileNotFoundError:
 	///          The specified file could not be found.
@@ -311,9 +311,9 @@ public inheritable TextReader
 	///          specified encoding.
 	/// Throws ArgumentNullError:
 	///          {fileName} or {encoding} is null.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {fileName} could not be converted to a String.
-	///
+	/// Throws ArgumentTypeError:
 	///          {encoding} is not an {Encoding}.
 	/// Throws FileNotFoundError:
 	///          The specified file could not be found.
@@ -324,7 +324,7 @@ public inheritable TextReader
 		if encoding is null:
 			throw new ArgumentNullError("encoding");
 		if encoding is not Encoding:
-			throw new TypeError("encoding must be an aves.Encoding.");
+			throw new ArgumentTypeError("encoding", typeof(Encoding));
 
 		return new TextReader(File.openRead(fileName), encoding);
 	}

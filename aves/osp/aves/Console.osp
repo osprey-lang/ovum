@@ -127,6 +127,6 @@ public static class Console
 
 	private static throwFormatTypeError()
 	{
-		throw new TypeError("The format string must be a string.");
+		throw new ArgumentTypeError("format", typeof(String));
 	}
 }

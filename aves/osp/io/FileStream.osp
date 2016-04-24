@@ -18,7 +18,7 @@ public class FileStream is Stream
 		if fileName is null:
 			throw new ArgumentNullError("fileName");
 		if mode is not FileMode:
-			throw new TypeError(invalidFileMode);
+			throw new ArgumentTypeError("mode", typeof(FileMode));
 
 		var access = mode == FileMode.truncate or mode == FileMode.append ?
 			FileAccess.write :
@@ -31,9 +31,9 @@ public class FileStream is Stream
 		if fileName is null:
 			throw new ArgumentNullError("fileName");
 		if mode is not FileMode:
-			throw new TypeError(invalidFileMode);
+			throw new ArgumentTypeError("mode", typeof(FileMode));
 		if access is not FileAccess:
-			throw new TypeError(invalidFileAccess);
+			throw new ArgumentTypeError("access", typeof(FileAccess));
 
 		init(string(fileName), mode, access, FileShare.none);
 	}
@@ -43,11 +43,11 @@ public class FileStream is Stream
 		if fileName is null:
 			throw new ArgumentNullError("fileName");
 		if mode is not FileMode:
-			throw new TypeError(invalidFileMode);
+			throw new ArgumentTypeError("mode", typeof(FileMode));
 		if access is not FileAccess:
-			throw new TypeError(invalidFileAccess);
+			throw new ArgumentTypeError("access", typeof(FileAccess));
 		if share is not FileShare:
-			throw new TypeError(invalidFileShare);
+			throw new ArgumentTypeError("share", typeof(FileShare));
 
 		init(string(fileName), mode, access, share);
 	}
@@ -108,7 +108,7 @@ public class FileStream is Stream
 	{
 		offset = int(offset);
 		if origin is not SeekOrigin:
-			throw new TypeError("origin must be an io.SeekOrigin value.");
+			throw new ArgumentTypeError("origin", typeof(SeekOrigin));
 
 		return seekInternal(offset, origin);
 	}

@@ -11,7 +11,7 @@ public inheritable BinaryWriter
 	/// Param stream: The stream to write to.
 	/// Throws ArgumentNullError:
 	///          {stream} is null.
-	/// Throws TypeError:
+	/// Throws ArgumentTypeError:
 	///          {stream} is not an {io.Stream}.
 	/// Throws ArgumentError:
 	///          {stream} is not writable.
@@ -26,7 +26,7 @@ public inheritable BinaryWriter
 	/// Param encoding: The character encoding of the data in the stream.
 	/// Throws ArgumentNullError:
 	///          {stream} or {encoding} is null.
-	/// Throws TypeError:
+	/// Throws ArgumentTypeError:
 	///          {stream} is not an {io.Stream}.
 	///
 	///          {encoding} is not an {aves.Encoding}.
@@ -45,7 +45,7 @@ public inheritable BinaryWriter
 	///                  false for little-endian.
 	/// Throws ArgumentNullError:
 	///          {stream} or {encoding} is null.
-	/// Throws TypeError:
+	/// Throws ArgumentTypeError:
 	///          {stream} is not an {io.Stream}.
 	///
 	///          {encoding} is not an {aves.Encoding}.
@@ -66,7 +66,7 @@ public inheritable BinaryWriter
 	///                  on the binary writer; false to close it.
 	/// Throws ArgumentNullError:
 	///          {stream} or {encoding} is null.
-	/// Throws TypeError:
+	/// Throws ArgumentTypeError:
 	///          {stream} is not an {io.Stream}.
 	///
 	///          {encoding} is not an {aves.Encoding}.
@@ -77,13 +77,13 @@ public inheritable BinaryWriter
 		if stream is null:
 			throw new ArgumentNullError("stream");
 		if stream is not Stream:
-			throw new TypeError("stream must be an io.Stream instance.");
+			throw new ArgumentTypeError("stream", typeof(Stream));
 		if not stream.canWrite:
 			throw new ArgumentError("The stream must be writable.", "stream");
 		if encoding is null:
 			throw new ArgumentNullError("encoding");
 		if encoding is not Encoding:
-			throw new TypeError("encoding must be an aves.Encoding instance.");
+			throw new ArgumentTypeError("encoding", typeof(Encoding));
 
 		_stream = stream;
 		_encoding = encoding;
@@ -158,7 +158,7 @@ public inheritable BinaryWriter
 	/// Summary: Writes an unsigned byte, and advances the stream by 1 byte.
 	///          The value written is in the range 0 to 255, inclusive.
 	/// Param value: The value to write. (Int, UInt or Real)
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {value} could not be converted to an Int.
 	public overridable writeByte(value)
 	{
@@ -172,7 +172,7 @@ public inheritable BinaryWriter
 	/// Summary: Writes a signed byte, and advances the stream by 1 byte.
 	///          The value written is in the range -128 to 127, inclusive.
 	/// Param value: The value to write. (Int, UInt or Real)
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {value} could not be converted to an Int.
 	public overridable writeSByte(value)
 	{
@@ -188,7 +188,7 @@ public inheritable BinaryWriter
 	///          by 2 bytes. The value written is in the range -32,768 to
 	///          32,767, inclusive.
 	/// Param value: The value to write. (Int, UInt or Real)
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {value} could not be converted to an Int.
 	public overridable writeInt16(value)
 	{
@@ -205,7 +205,7 @@ public inheritable BinaryWriter
 	///          by 4 bytes. The value written is in the range -2,147,483,648
 	///          to 2,147,483,647, inclusive.
 	/// Param value: The value to write. (Int, UInt or Real)
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {value} could not be converted to an Int.
 	public overridable writeInt32(value)
 	{
@@ -223,7 +223,7 @@ public inheritable BinaryWriter
 	///          -9,223,372,036,854,775,808 to 9,223,372,036,854,775,807,
 	///          inclusive.
 	/// Param value: The value to write. (Int, UInt or Real)
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {value} could not be converted to an Int.
 	public overridable writeInt64(value)
 	{
@@ -255,7 +255,7 @@ public inheritable BinaryWriter
 	///          written, will be:
 	///
 	///          `10111000 11011110 00000001`
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {value} could not be converted to an Int.
 	public writePackedInt(value)
 	{
@@ -278,7 +278,7 @@ public inheritable BinaryWriter
 	///          by 2 bytes. The value written is in the range 0 to 65,535,
 	///          inclusive.
 	/// Param value: The value to write. (Int, UInt or Real)
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {value} could not be converted to a UInt.
 	public overridable writeUInt16(value)
 	{
@@ -295,7 +295,7 @@ public inheritable BinaryWriter
 	///          by 4 bytes. The value written is in the range 0 to
 	///          4,294,967,295, inclusive.
 	/// Param value: The value to write. (Int, UInt or Real)
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {value} could not be converted to a UInt.
 	public overridable writeUInt32(value)
 	{
@@ -312,7 +312,7 @@ public inheritable BinaryWriter
 	///          by 8 bytes. The value written is in the range 0 to
 	///          18,446,744,073,709,551,615, inclusive.
 	/// Param value: The value to write. (Int, UInt or Real)
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {value} could not be converted to a UInt.
 	public overridable writeUInt64(value)
 	{
@@ -334,7 +334,7 @@ public inheritable BinaryWriter
 	///          result in a loss of precision, as Real is double-precision.
 	///          However, “not a number” (NaN) values as well as positive
 	///          and negative infinity are guaranteed to be preserved.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {value} could not be converted to a Real.
 	public overridable writeFloat32(value)
 	{
@@ -350,7 +350,7 @@ public inheritable BinaryWriter
 	/// Summary: Writes a double-precision (64-bit) floating-point number,
 	///          and advances the stream by 8 bytes.
 	/// Param value: The value to write. (Int, UInt or Real)
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {value} could not be converted to a Real.
 	public overridable writeFloat64(value)
 	{

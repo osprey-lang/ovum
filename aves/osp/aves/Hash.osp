@@ -30,7 +30,7 @@ public inheritable Hash is Collection
 	}
 	/// Summary: Creates a new, empty hash table with the specified initial capacity.
 	/// Param capacity: The initial capacity of the hash table. (Int, UInt or Real)
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {capacity} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {capacity} is less than zero, or greater than {maxCapacity}.
@@ -44,7 +44,7 @@ public inheritable Hash is Collection
 	/// Param keyComparer: An {EqualityComparer} instance that hashes and compares
 	///                    keys for equality. Null can be passed to use the default
 	///                    key comparer.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {capacity} could not be converted to an Int.
 	/// Throws ArgumentError:
 	///          {keyComparer} is not null and not an {EqualityComparer}.
@@ -207,7 +207,7 @@ public inheritable Hash is Collection
 	///          as the current hash table.
 	/// Throws ArgumentNullError:
 	///          {other} is null.
-	/// Throws TypeError:
+	/// Throws ArgumentTypeError:
 	///          {other} is not a Hash.
 	/// Remarks: This method returns a new hash table. It does not modify the original value in
 	///          any way.
@@ -216,7 +216,7 @@ public inheritable Hash is Collection
 		if other is null:
 			throw new ArgumentNullError("other");
 		if other is not Hash:
-			throw new TypeError("other must be an aves.Hash");
+			throw new ArgumentTypeError("other", typeof(Hash));
 
 		return concatInternal(other);
 	}
@@ -489,7 +489,7 @@ public inheritable Hash is Collection
 		var h = keyComparer.getHashCode(key);
 
 		if h is not Int and h is not UInt:
-			throw new TypeError("The hash code must be of type Int or UInt.");
+			throw new TypeConversionError("The hash code must be of type Int or UInt.");
 
 		return h;
 	}
@@ -522,9 +522,9 @@ public inheritable Hash is Collection
 	///          One of the values in {keys} is null.
 	/// Throws DuplicateKeyError:
 	///          One of the values in {keys} occurs more than once.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          One of the values in {keys} could not be converted to a string.
-	///
+	/// Throws TypeError:
 	///          One of the values in {keys} does not correspond to a public member of {object}.
 	public static fromObject(object, keys...)
 	{

@@ -43,6 +43,7 @@ struct StaticStringData
 	LitString<18> types_aves_OverflowError;
 	LitString<9> types_aves_Real;
 	LitString<11> types_aves_String;
+	LitString<24> types_aves_TypeConversionError;
 	LitString<14> types_aves_TypeError;
 	LitString<9> types_aves_UInt;
 	LitString<20> types_aves_reflection_Type;
@@ -119,6 +120,7 @@ public:
 			::String *OverflowError;
 			::String *Real;
 			::String *String;
+			::String *TypeConversionError;
 			::String *TypeError;
 			::String *UInt;
 			struct reflectionStrings {

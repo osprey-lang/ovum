@@ -167,7 +167,7 @@ public static class File
 		if encoding is null:
 			throw new ArgumentNullError("encoding");
 		if encoding is not Encoding:
-			throw new TypeError("The encoding must be an aves.Encoding instance.");
+			throw new ArgumentTypeError("encoding", typeof(Encoding));
 		fileName = string(fileName);
 
 		var result;
@@ -203,7 +203,7 @@ public static class File
 		else if buf is BufferView:
 			buf = buf.buffer;
 		else if buf is not Buffer:
-			throw new TypeError("buf must be an aves.Buffer.");
+			throw new ArgumentTypeError("buf", [typeof(Buffer), typeof(BufferView)]);
 
 		with f = new FileStream(fileName, FileMode.create, FileAccess.write, FileShare.none)
 		{
@@ -222,7 +222,7 @@ public static class File
 		if encoding is null:
 			throw new ArgumentNullError("encoding");
 		if encoding is not Encoding:
-			throw new ArgumentError("encoding must be an aves.Encoding instance.", "encoding");
+			throw new ArgumentTypeError("encoding", typeof(Encoding));
 		contents = string(contents);
 		fileName = string(fileName);
 

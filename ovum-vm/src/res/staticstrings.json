@@ -28,6 +28,7 @@
 			"OverflowError": "aves.OverflowError",
 			"Real": "aves.Real",
 			"String": "aves.String",
+			"TypeConversionError": "aves.TypeConversionError",
 			"TypeError": "aves.TypeError",
 			"UInt": "aves.UInt",
 			"reflection": {

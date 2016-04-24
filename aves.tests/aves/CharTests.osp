@@ -22,7 +22,7 @@ public class CharTests is TestFixture
 	{
 		Assert.throws(typeof(ArgumentRangeError), @= new Char(-1));
 		Assert.throws(typeof(ArgumentRangeError), @= new Char(0x110000));
-		Assert.throws(typeof(TypeError), @= new Char("65"));
+		Assert.throws(typeof(TypeConversionError), @= new Char("65"));
 	}
 
 	// TODO: Figure out a good way of testing Unicode character categories.

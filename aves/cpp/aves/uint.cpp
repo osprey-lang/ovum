@@ -59,7 +59,10 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_UInt_toStringf)
 		str = uinteger::ToString(thread, THISV.v.uinteger, radix, minWidth, upper);
 	}
 	else
-		return VM_ThrowTypeError(thread);
+	{
+		VM_PushString(thread, strings::format); // paramName
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentTypeError, 1);
+	}
 	CHECKED_MEM(str);
 	VM_PushString(thread, str);
 }
@@ -114,7 +117,9 @@ AVES_API NATIVE_FUNCTION(aves_UInt_opCompare)
 		result = real::Compare(left, right);
 	}
 	else
-		return VM_ThrowTypeError(thread);
+	{
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentTypeError, 0);
+	}
 	VM_PushInt(thread, result);
 	RETURN_SUCCESS;
 }
@@ -204,7 +209,7 @@ AVES_API NATIVE_FUNCTION(aves_UInt_opOr)
 	Aves *aves = Aves::Get(thread);
 
 	if (RIGHT.type != aves->aves.Int && RIGHT.type != aves->aves.UInt)
-		return VM_ThrowTypeError(thread);
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentTypeError, 0);
 
 	VM_PushUInt(thread, LEFT.v.uinteger | RIGHT.v.uinteger);
 	RETURN_SUCCESS;
@@ -215,7 +220,7 @@ AVES_API NATIVE_FUNCTION(aves_UInt_opXor)
 	Aves *aves = Aves::Get(thread);
 
 	if (RIGHT.type != aves->aves.Int && RIGHT.type != aves->aves.UInt)
-		return VM_ThrowTypeError(thread);
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentTypeError, 0);
 
 	VM_PushUInt(thread, LEFT.v.uinteger ^ RIGHT.v.uinteger);
 	RETURN_SUCCESS;
@@ -293,7 +298,7 @@ AVES_API NATIVE_FUNCTION(aves_UInt_opAnd)
 	Aves *aves = Aves::Get(thread);
 
 	if (RIGHT.type != aves->aves.Int && RIGHT.type != aves->aves.UInt)
-		return VM_ThrowTypeError(thread);
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentTypeError, 0);
 
 	VM_PushUInt(thread, LEFT.v.uinteger & RIGHT.v.uinteger);
 	RETURN_SUCCESS;

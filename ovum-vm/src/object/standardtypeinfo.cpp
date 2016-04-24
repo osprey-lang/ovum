@@ -7,7 +7,7 @@
 namespace ovum
 {
 
-const int StandardTypeCollection::STANDARD_TYPE_COUNT = 19;
+const int StandardTypeCollection::STANDARD_TYPE_COUNT = 20;
 
 int StandardTypeCollection::Create(VM *vm, StandardTypeCollection *&result)
 {
@@ -54,6 +54,7 @@ void StandardTypeCollection::InitTypeInfo(VM *vm)
 	Add(t.aves.DivideByZeroError,   &T::DivideByZeroError,   nullptr);
 	Add(t.aves.NullReferenceError,  &T::NullReferenceError,  nullptr);
 	Add(t.aves.MemberNotFoundError, &T::MemberNotFoundError, nullptr);
+	Add(t.aves.TypeConversionError, &T::TypeConversionError, nullptr);
 	Add(t.aves.reflection.Type,     &T::Type,                StandardTypeIniters::InitTypeType);
 }
 

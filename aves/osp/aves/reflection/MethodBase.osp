@@ -152,7 +152,7 @@ public abstract class MethodBase is Member
 	/// Throws TypeError:
 	///          {instance} is not of the method’s declaring type or of a type derived
 	///          from it.
-	///
+	/// Throws ArgumentTypeError:
 	///          {arguments} is not null and is not a List.
 	/// Throws NoOverloadError:
 	///          The method contains no overload that accepts the specified arguments.
@@ -166,7 +166,7 @@ public abstract class MethodBase is Member
 				throw new TypeError();
 		}
 		if arguments is not null and arguments is not List:
-			throw new TypeError("arguments must be an aves.List.");
+			throw new ArgumentTypeError("arguments", typeof(List));
 		return invokeInternal(instance, arguments);
 	}
 	private invokeInternal(inst, args)

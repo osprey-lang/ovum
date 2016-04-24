@@ -10,7 +10,7 @@ public inheritable TextWriter
 	/// Param stream: The stream to write to.
 	/// Throws ArgumentNullError:
 	///          {stream} is null.
-	/// Throws TypeError:
+	/// Throws ArgumentTypeError:
 	///          {stream} is not an {io.Stream}.
 	/// Throws ArgumentError:
 	///          {stream} is not writable.
@@ -24,7 +24,7 @@ public inheritable TextWriter
 	/// Param encoding: The character encoding of the data in the stream.
 	/// Throws ArgumentNullError:
 	///          {stream} or {encoding} is null.
-	/// Throws TypeError:
+	/// Throws ArgumentTypeError:
 	///          {stream} is not an {io.Stream}.
 	///
 	///          {encoding} is not an {aves.Encoding}.
@@ -43,7 +43,7 @@ public inheritable TextWriter
 	///                  on the text writer; false to close it.
 	/// Throws ArgumentNullError:
 	///          {stream} or {encoding} is null.
-	/// Throws TypeError:
+	/// Throws ArgumentTypeError:
 	///          {stream} is not an {io.Stream}.
 	///
 	///          {encoding} is not an {aves.Encoding}.
@@ -54,13 +54,13 @@ public inheritable TextWriter
 		if stream is null:
 			throw new ArgumentNullError("stream");
 		if stream is not Stream:
-			throw new TypeError("stream must be an io.Stream instance.");
+			throw new ArgumentTypeError("stream", typeof(Stream));
 		if not stream.canRead:
 			throw new ArgumentError("The stream must be readable.", "stream");
 		if encoding is null:
 			throw new ArgumentNullError("encoding");
 		if encoding is not Encoding:
-			throw new TypeError("encoding must be an aves.Encoding instance.");
+			throw new ArgumentTypeError("encoding", typeof(Encoding));
 
 		_stream = stream;
 		_encoding = encoding;
@@ -161,7 +161,7 @@ public inheritable TextWriter
 	/// Summary: Writes the specified value to the stream, converted to
 	///          a String.
 	/// Param value: The value to write. This will be converted to a String.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {value} could not be converted to a String.
 	/// Throws InvalidStateError:
 	///          The text writer is closed.
@@ -207,7 +207,7 @@ public inheritable TextWriter
 	/// Summary: Writes a formatted string to the stream.
 	/// Param format: The format string.
 	/// Param values: The values to pass to {String.format}.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {format} could not be converted to a String.
 	/// Throws InvalidStateError:
 	///          The text writer is closed.
@@ -228,7 +228,7 @@ public inheritable TextWriter
 	/// Summary: Writes the specified value to the stream, converted to
 	///          a String, followed by a line separator (see {newline}).
 	/// Param value: The value to write. This will be converted to a String.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {value} could not be converted to a String.
 	/// Throws InvalidStateError:
 	///          The text writer is closed.
@@ -242,7 +242,7 @@ public inheritable TextWriter
 	///          separator (see {newline}).
 	/// Param format: The format string.
 	/// Param values: The values to pass to {String.format}.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {format} could not be converted to a String.
 	/// Throws InvalidStateError:
 	///          The text writer is closed.
@@ -259,7 +259,7 @@ public inheritable TextWriter
 	/// Returns: A new {TextWriter} that writes to the specified file.
 	/// Throws ArgumentNullError:
 	///          {fileName} is null.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {fileName} could not be converted to a String.
 	public static open(fileName)
 	{
@@ -278,9 +278,9 @@ public inheritable TextWriter
 	///          specified encoding.
 	/// Throws ArgumentNullError:
 	///          {fileName} or {encoding} is null.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {fileName} could not be converted to a String.
-	///
+	/// Throws ArgumentTypeError:
 	///          {encoding} is not an {Encoding}.
 	public static open(fileName, encoding)
 	{
@@ -289,7 +289,7 @@ public inheritable TextWriter
 		if encoding is null:
 			throw new ArgumentNullError("encoding");
 		if encoding is not Encoding:
-			throw new TypeError("encoding must be an aves.Encoding.");
+			throw new ArgumentTypeError("encoding", typeof(Encoding));
 
 		return new TextWriter(File.create(fileName), encoding);
 	}

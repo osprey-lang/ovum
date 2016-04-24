@@ -23,6 +23,7 @@ public:
 		TypeHandle ArgumentError;
 		TypeHandle ArgumentNullError;
 		TypeHandle ArgumentRangeError;
+		TypeHandle ArgumentTypeError;
 		TypeHandle Array;
 		TypeHandle Buffer;
 		TypeHandle BufferViewKind;
@@ -42,7 +43,7 @@ public:
 		TypeHandle UnicodeCategory;
 		TypeHandle Version;
 
-		struct Reflection
+		struct ReflectionTypes
 		{
 			TypeHandle Accessibility;
 			TypeHandle Constructor;

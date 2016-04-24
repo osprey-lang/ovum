@@ -426,6 +426,7 @@ typedef struct StandardTypes_S
 	TypeHandle DivideByZeroError;
 	TypeHandle NullReferenceError;
 	TypeHandle MemberNotFoundError;
+	TypeHandle TypeConversionError;
 } StandardTypes;
 
 OVUM_API void GetStandardTypes(ThreadHandle thread, StandardTypes *target, size_t targetSize);
@@ -448,6 +449,7 @@ OVUM_API TypeHandle GetType_NoOverloadError(ThreadHandle thread);
 OVUM_API TypeHandle GetType_DivideByZeroError(ThreadHandle thread);
 OVUM_API TypeHandle GetType_NullReferenceError(ThreadHandle thread);
 OVUM_API TypeHandle GetType_MemberNotFoundError(ThreadHandle thread);
+OVUM_API TypeHandle GetType_TypeConversionError(ThreadHandle thread);
 
 class TypeMemberIterator
 {

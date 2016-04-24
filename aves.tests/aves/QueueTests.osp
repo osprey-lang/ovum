@@ -38,8 +38,8 @@ public class QueueTests is TestFixture
 	public test_Constructor1WithInvalidCapacity()
 	{
 		Assert.throws(typeof(ArgumentRangeError), @= new Queue(-1));
-		Assert.throws(typeof(TypeError), @= new Queue("123"));
-		Assert.throws(typeof(TypeError), @= new Queue("rachis"));
+		Assert.throws(typeof(TypeConversionError), @= new Queue("123"));
+		Assert.throws(typeof(TypeConversionError), @= new Queue("rachis"));
 	}
 
 	// End constructor tests

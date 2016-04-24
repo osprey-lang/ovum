@@ -18,7 +18,7 @@ public class TimeSpan __primitive
 
 	/// Summary: Creates a new {TimeSpan} from the specified number of microseconds.
 	/// Param microseconds: The time interval in microseconds (µs). (Int, UInt or Real)
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {microseconds} could not be converted to an Int.
 	/// Remarks: If {microseconds} is not an integral value, it will be truncated, as {TimeSpan}
 	///          has a resolution of 1 µs.
@@ -34,7 +34,7 @@ public class TimeSpan __primitive
 	///                (Int, UInt or Real)
 	/// Param seconds: The number of seconds in the time interval. The value may be fractional.
 	///                (Int, UInt or Real)
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {hours}, {minutes} or {seconds} was not a Real and could not be converted to
 	///          an Int.
 	/// Throws ArgumentRangeError:
@@ -76,7 +76,7 @@ public class TimeSpan __primitive
 	///                (Int, UInt or Real)
 	/// Param seconds: The number of seconds in the time interval. The value may be fractional.
 	///                (Int, UInt or Real)
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {days}, {hours}, {minutes} or {seconds} was not a Real and could not be
 	///          converted to an Int.
 	/// Throws ArgumentRangeError:
@@ -121,7 +121,7 @@ public class TimeSpan __primitive
 	///                (Int, UInt or Real)
 	/// Param milliseconds: The number of milliseconds in the time interval. The value may be
 	///                fractional. (Int, UInt or Real)
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {days}, {hours}, {minutes}, {seconds} or {milliseconds} was not a Real and could
 	///          not be converted to an Int.
 	/// Throws ArgumentRangeError:
@@ -261,7 +261,7 @@ public class TimeSpan __primitive
 	operator +(a, b)
 	{
 		if b is not TimeSpan:
-			throw new TypeError();
+			throw new ArgumentTypeError();
 
 		return new TimeSpan(a.rawValue + b.rawValue);
 	}
@@ -274,7 +274,7 @@ public class TimeSpan __primitive
 	operator -(a, b)
 	{
 		if b is not TimeSpan:
-			throw new TypeError();
+			throw new ArgumentTypeError();
 
 		return new TimeSpan(a.rawValue - b.rawValue);
 	}
@@ -296,7 +296,7 @@ public class TimeSpan __primitive
 	operator <=>(a, b)
 	{
 		if b is not TimeSpan:
-			throw new TypeError();
+			throw new ArgumentTypeError();
 
 		return a.rawValue <=> b.rawValue;
 	}
@@ -320,7 +320,7 @@ public class TimeSpan __primitive
 	///          fractional.
 	/// Param value: The number of days. (Int, UInt or Real)
 	/// Returns: A new {TimeSpan} representing the specified number of days.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {value} could not be converted to a Real.
 	public static fromDays(value)
 	{
@@ -331,7 +331,7 @@ public class TimeSpan __primitive
 	///          fractional.
 	/// Param value: The number of hours. (Int, UInt or Real)
 	/// Returns: A new {TimeSpan} representing the specified number of hours.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {value} could not be converted to a Real.
 	public static fromHours(value)
 	{
@@ -342,7 +342,7 @@ public class TimeSpan __primitive
 	///          fractional.
 	/// Param value: The number of minutes. (Int, UInt or Real)
 	/// Returns: A new {TimeSpan} representing the specified number of minutes.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {value} could not be converted to a Real.
 	public static fromMinutes(value)
 	{
@@ -353,7 +353,7 @@ public class TimeSpan __primitive
 	///          fractional.
 	/// Param value: The number of seconds. (Int, UInt or Real)
 	/// Returns: A new {TimeSpan} representing the specified number of seconds.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {value} could not be converted to a Real.
 	public static fromSeconds(value)
 	{
@@ -364,7 +364,7 @@ public class TimeSpan __primitive
 	///          fractional.
 	/// Param value: The number of milliseconds. (Int, UInt or Real)
 	/// Returns: A new {TimeSpan} representing the specified number of milliseconds.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {value} could not be converted to a Real.
 	public static fromMilliseconds(value)
 	{

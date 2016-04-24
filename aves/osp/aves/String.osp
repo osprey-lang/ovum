@@ -2,10 +2,9 @@ namespace aves;
 
 /// Summary: Returns a string representing the specified value.
 /// Param value: The value to get a string representation of.
-/// Returns: If {value} is null, this function returns the empty string;
-///          otherwise, the return value is the result of calling `.toString()`
-///          on {value} with no arguments.
-/// Throws TypeError:
+/// Returns: If {value} is null, this function returns the empty string; otherwise, the
+///          return value is the result of calling `toString` on {value} with no arguments.
+/// Throws TypeConversionError:
 ///          The `toString` method of {value} did not return a String.
 public function string(value)
 {
@@ -15,7 +14,7 @@ public function string(value)
 	{
 		value = value.toString();
 		if value is not String:
-			throw new TypeError("Could not convert the value to a string: toString() did not return a string.");
+			throw new TypeConversionError("String conversion failed: toString() did not return a string.");
 	}
 	return value;
 }
@@ -93,7 +92,7 @@ public class String is Collection
 	/// Param value: The substring to look for in this string. (String, Char)
 	/// Returns: True if this string contains {value} as a substring; otherwise,
 	///          false.
-	/// Throws TypeError:
+	/// Throws ArgumentTypeError:
 	///          {value} is not a String or Char.
 	public contains(value)
 		__extern("aves_String_contains");
@@ -102,7 +101,7 @@ public class String is Collection
 	///          string. The comparison is case-sensitive.
 	/// Param value: The value to test against.
 	/// Returns: True if this string starts with {value}; otherwise, false.
-	/// Throws TypeError:
+	/// Throws ArgumentTypeError:
 	///          {value} is not a String or Char.
 	public startsWith(value)
 		__extern("aves_String_startsWith");
@@ -111,7 +110,7 @@ public class String is Collection
 	///          string. The comparison is case-sensitive.
 	/// Param value: The value to test against.
 	/// Returns: True if this string starts with {value}; otherwise, false.
-	/// Throws TypeError:
+	/// Throws ArgumentTypeError:
 	///          {value} is not a String or Char.
 	public endsWith(value)
 		__extern("aves_String_endsWith");
@@ -120,7 +119,7 @@ public class String is Collection
 	/// Param value: The string to search for.
 	/// Returns: The index of the first occurrence of {value} within this string, as an Int, or
 	///          null if this string doesn’t contain {value}.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {value} could not be converted to a String.
 	public indexOf(value)
 	{
@@ -134,7 +133,7 @@ public class String is Collection
 	/// Returns: The index of the first occurrence of {value} within the string, as an Int, or
 	///          null if it this string doesn’t contain {value}. If found, the return value is
 	///          greater than or equal to {startIndex}.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {value} could not be converted to a String.
 	///
 	///          {startIndex} could not be converted to an Int.
@@ -158,7 +157,7 @@ public class String is Collection
 	/// Returns: The index of the first occurrence of {value} within the specified region of the
 	///          string, as an Int, or null if the region doesn’t contain {value}. If found, the
 	///          return value is greater than or equal to {startIndex}.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {value} could not be converted to a string.
 	///
 	///          {startIndex} or {count} could not be converted to an Int.
@@ -192,7 +191,7 @@ public class String is Collection
 	/// Returns: The index of the last occurrence of the given substring within
 	///          this string, as an Int, or null if this string doesn’t contain
 	///          the substring.
-	/// Throws TypeError:
+	/// Throws ArgumentTypeError:
 	///          {value} is not a String or Char.
 	public lastIndexOf(value)
 		__extern("aves_String_lastIndexOf");
@@ -263,7 +262,7 @@ public class String is Collection
 	/// Param startIndex: The index at which to start reading characters. (Int, UInt or Real)
 	/// Returns: A new String instance containing characters from this string, from
 	///          index {startIndex} to the end of this string.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {startIndex} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {startIndex} is less than zero or greater than {length}.
@@ -281,7 +280,7 @@ public class String is Collection
 	/// Param count: The total number of characters to extract. (Int, UInt or Real)
 	/// Returns: A new String instance containing {count} characters extracted from
 	///          this string, starting at index {startIndex}.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {startIndex} or {count} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {startIndex} is less than zero or greater than {length}.
@@ -309,7 +308,7 @@ public class String is Collection
 	/// Param endIndex: The index of the last character to read, exclusive. (Int, UInt or Real)
 	/// Returns: A new String instance containing characters from this string within
 	///          the range specified by {startIndex} and {endIndex}.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {startIndex} or {endIndex} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {startIndex} is less than zero or greater than {length}.
@@ -338,9 +337,9 @@ public class String is Collection
 	/// Param values: A List or Hash containing values to replace format placeholders with.
 	/// Returns: A new String with the format placeholders replaced by values from {values}.
 	///          See the remarks section for more details about the format placeholders.
-	/// Throws TypeError:
+	/// Throws ArgumentTypeError:
 	///          {values} is not a List or a Hash.
-	///
+	/// Throws TypeConversionError:
 	///          A placeholder value could not be converted to a String.
 	/// Throws ArgumentRangeError:
 	///          {values} is a List and a placeholder value is not a valid index in that list.
@@ -361,7 +360,7 @@ public class String is Collection
 	///          the function `aves.string`: if the placeholder value is null, an empty string
 	///          is inserted; otherwise, if the value is not a String, `.toString()` is called
 	///          on it with no arguments. If that call does not return a String, this method
-	///          throws a TypeError.
+	///          throws a TypeConversionError.
 	///
 	///          Additionally, you can align placeholder values to specific widths:
 	///              `{ph>n}` aligns the value `n` characters to the right;
@@ -387,7 +386,7 @@ public class String is Collection
 	/// Param index: The index at which to insert the value. (Int, UInt or Real)
 	/// Returns: A new String instance containing characters from the current string,
 	///          with {value} inserted at the specified index.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {index} could not be converted to an Int.
 	///
 	///          {value} could not be converted to a string.
@@ -409,7 +408,7 @@ public class String is Collection
 	/// Param startIndex: The index of the first character to remove. (Int, UInt or Real)
 	/// Returns: A new String instance with characters from the current string
 	///          up to {startIndex}.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {startIndex} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {startIndex} is less than zero or greater than {length}.
@@ -429,7 +428,7 @@ public class String is Collection
 	/// Param count: The total number of characters to remove. (Int, UInt or Real)
 	/// Returns: A new String instance with characters from the current string excluding
 	///          the substring defined by {startIndex} and {count}.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {startIndex} or {count} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {startIndex} is less than zero or greater than {length}.
@@ -459,9 +458,9 @@ public class String is Collection
 	/// Param newValue: The string to replace {oldValue}.
 	/// Returns: A new String instance with all occurrences of {oldValue} replaced
 	///          with {newValue}.
-	/// Throws TypeError:
+	/// Throws ArgumentNullError:
 	///          {oldValue} is null.
-	///
+	/// Throws TypeConversionError:
 	///          {oldValue} or {newValue} could not be converted to a string.
 	/// Throws ArgumentError:
 	///          {oldValue} is of length 0.
@@ -483,9 +482,9 @@ public class String is Collection
 	/// Returns: A new String instance with occurrences of {oldValue} replaced
 	///          with {newValue}, a maxiumim of {maxTimes} times, or with all
 	///          occurrences replaced if {maxTimes} is negative.
-	/// Throws TypeError:
+	/// Throws ArgumentNullError:
 	///          {oldValue} is null.
-	///
+	/// Throws TypeConversionError:
 	///          {oldValue} or {newValue} could not be converted to a string.
 	///
 	///          {maxTimes} could not be converted to an Int.
@@ -508,7 +507,7 @@ public class String is Collection
 	/// Param count: The total number of characters to replace. (Int, UInt or Real)
 	/// Returns: A new string instance with the specified substring replaced with
 	///          {value}.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {startIndex} or {count} could not be converted to an Int.
 	///
 	///          {newValue} could not be converted to a string.
@@ -545,7 +544,7 @@ public class String is Collection
 	///          split the string on. (String)
 	/// Returns: A List instance containing the substrings of this string
 	///          that were delineated by {separator}.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {separator} could not be converted to a string.
 	/// Remarks: This method does not remove empty strings from the returned
 	///          list. For example:
@@ -741,9 +740,9 @@ public class String is Collection
 	/// Returns: A padded version of this string, no shorter than {minLength} characters.
 	///          If {minLength} is less than or equal to the string’s {length}, the same
 	///          instance is returned.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {minLength} could not be converted to an Int.
-	///
+	/// Throws ArgumentTypeError:
 	///          {side} is not a {StringPad} value.
 	/// Throws ArgumentRangeError:
 	///          {minLength} is less than zero.
@@ -755,7 +754,7 @@ public class String is Collection
 		if minLength < 0:
 			throw new ArgumentRangeError("minLength");
 		if side is not StringPad:
-			throw new TypeError("side must be a StringPad value.");
+			throw new ArgumentTypeError("side", typeof(StringPad));
 
 		return padInner(minLength, ' ', side);
 	}
@@ -769,9 +768,9 @@ public class String is Collection
 	/// Returns: A padded version of this string, no shorter than {minLength} characters.
 	///          If {minLength} is less than or equal to the string’s {length}, the same
 	///          instance is returned.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {minLength} could not be converted to an Int.
-	///
+	/// Throws ArgumentTypeError:
 	///          {char} is not a Char or String.
 	///
 	///          {side} is not a {StringPad} value.
@@ -788,7 +787,7 @@ public class String is Collection
 			throw new ArgumentRangeError("minLength");
 		char = getPaddingChar(char);
 		if side is not StringPad:
-			throw new TypeError("side must be a StringPad value.");
+			throw new ArgumentTypeError("side", typeof(StringPad));
 
 		return padInner(minLength, char, side);
 	}
@@ -798,7 +797,7 @@ public class String is Collection
 	/// Returns: A padded version of this string, no shorter than {minLength} characters.
 	///          If {minLength} is less than or equal to the string’s {length}, the same
 	///          instance is returned.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {minLength} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {minLength} is less than zero.
@@ -820,9 +819,9 @@ public class String is Collection
 	/// Returns: A padded version of this string, no shorter than {minLength} characters.
 	///          If {minLength} is less than or equal to the string’s {length}, the same
 	///          instance is returned.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {minLength} could not be converted to an Int.
-	///
+	/// Throws ArgumentTypeError:
 	///          {char} is not a Char or String.
 	/// Throws ArgumentRangeError:
 	///          {minLength} is less than zero.
@@ -845,7 +844,7 @@ public class String is Collection
 	/// Returns: A padded version of this string, no shorter than {minLength} characters.
 	///          If {minLength} is less than or equal to the string’s {length}, the same
 	///          instance is returned.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {minLength} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {minLength} is less than zero.
@@ -867,9 +866,9 @@ public class String is Collection
 	/// Returns: A padded version of this string, no shorter than {minLength} characters.
 	///          If {minLength} is less than or equal to the string’s {length}, the same
 	///          instance is returned.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {minLength} could not be converted to an Int.
-	///
+	/// Throws ArgumentTypeError:
 	///          {char} is not a Char or String.
 	/// Throws ArgumentRangeError:
 	///          {minLength} is less than zero.
@@ -893,7 +892,7 @@ public class String is Collection
 	private static getPaddingChar(char)
 	{
 		if char is not String and char is not Char:
-			throw new TypeError("The padding character must be an aves.Char or an aves.String.");
+			throw new ArgumentTypeError("char", [typeof(Char), typeof(String)]);
 
 		if char.length != 1:
 			throw new ArgumentError("The padding character must be of length 1.");
@@ -980,7 +979,7 @@ public class String is Collection
 	/// Param startIndex: The first index of the substring to hash. (Int, UInt or Real)
 	/// Param count: The number of characters to hash from this string. (Int, UInt or Real)
 	/// Returns: An Int with a hash code for the specified substring.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {startIndex} or {count} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {startIndex} is less than zero or greater than {length}.
@@ -1017,7 +1016,7 @@ public class String is Collection
 	///           in the range 0 to 1,114,111 (U+10FFFF). (Char, Int, UInt or Real)
 	/// Returns: A string of length 1 or 2 that represents the UTF-16 string
 	///          with the single code point {codePoint}.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {codePoint} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {codePoint} is less than zero, or greater than 1,114,111 (0x10FFFF).

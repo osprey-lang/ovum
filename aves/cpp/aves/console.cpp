@@ -339,7 +339,8 @@ int AssertIsConsoleColor(ThreadHandle thread, Value *arg)
 	Aves *aves = Aves::Get(thread);
 
 	if (arg->type != aves->aves.ConsoleColor)
-		return VM_ThrowTypeError(thread);
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentTypeError, 0);
+
 	RETURN_SUCCESS;
 }
 

@@ -46,9 +46,9 @@ public abstract class Encoding
 	/// Param offset: The offset within the buffer at which to start placing
 	///               the bytes of the converted string. (Int, UInt or Real)
 	/// Returns: The number of bytes written to {buf}, as an Int.
-	/// Throws TypeError:
+	/// Throws ArgumentTypeError:
 	///          {buf} is not a {Buffer} or {BufferView}.
-	///
+	/// Throws TypeConversionError:
 	///          {offset} could not be converted to an Int.
 	/// Throws ArgumentNullError:
 	///          {buf} is null.
@@ -69,7 +69,8 @@ public abstract class Encoding
 	/// Param str: The string to encode. (String)
 	/// Returns: A new {Buffer} instance containing the bytes of the
 	///          encoded string value.
-	/// Throws TypeError: {str} could not be converted to a string.
+	/// Throws TypeConversionError:
+	///          {str} could not be converted to a string.
 	/// Remarks: This method expects discrete conversions. While {Encoder}
 	///          and {Decoder} maintain state between calls to encoding and
 	///          decoding methods, this method does not. Calling this method
@@ -96,9 +97,9 @@ public abstract class Encoding
 	/// Param count:  The number of bytes to decode. (Int, UInt or Real)
 	/// Returns: The number of characters (UTF-16 code units) that would be
 	///          required to decode the given buffer, as an Int.
-	/// Throws TypeError:
+	/// Throws ArgumentTypeError:
 	///          {buf} is not a {Buffer} or {BufferView}.
-	///
+	/// Throws TypeConversionError:
 	///          {offset} or {count} could not be converted to an Int.
 	/// Throws ArgumentNullError:
 	///          {buf} is null.
@@ -124,7 +125,7 @@ public abstract class Encoding
 	/// Param stringBuf: A {StringBuffer} which receives the decoded characters.
 	/// Returns: The number of characters (UTF-16 code units) that were appended
 	///          to the string buffer.
-	/// Throws TypeError:
+	/// Throws ArgumentTypeError:
 	///          {buf} is not a {Buffer} or {BufferView}.
 	///
 	///          {stringBuf} is not a {StringBuffer}.
@@ -150,12 +151,12 @@ public abstract class Encoding
 	/// Param stringBuf: A {StringBuffer} which receives the decoded characters.
 	/// Returns: The number of characters (UTF-16 code units) that were appended
 	///          to the string buffer.
-	/// Throws TypeError:
+	/// Throws ArgumentTypeError:
 	///          {buf} is not a {Buffer} or {BufferView}.
 	///
-	///          {offset} or {count} could not be converted to an Int.
-	///
 	///          {stringBuf} is not a {StringBuffer}.
+	/// Throws TypeConversionError:
+	///          {offset} or {count} could not be converted to an Int.
 	/// Throws ArgumentNullError:
 	///          {buf} or {stringBuf} is null.
 	/// Throws ArgumentRangeError:

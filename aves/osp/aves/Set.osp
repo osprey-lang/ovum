@@ -32,7 +32,7 @@ public inheritable Set is Collection
 	}
 	/// Summary: Creates a new, empty set with the specified initial capacity.
 	/// Param capacity: The initial capacity of the set. (Int, UInt or Real)
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {capacity} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {capacity} is less than zero, or greater than {maxCapacity}.
@@ -46,7 +46,7 @@ public inheritable Set is Collection
 	/// Param itemComparer: An {EqualityComparer} that hashes set values and
 	///                     compares them for equality. Null can be passed to
 	///                     use the default comparer.
-	/// Throws TypeError:
+	/// Throws TypeConversionError:
 	///          {capacity} could not be converted to an Int.
 	/// Throws ArgumentError:
 	///          {itemComparer} is not null and not an {EqualityComparer}.

@@ -426,7 +426,7 @@ public class IteratorTests is TestFixture
 	public test_SkipNonNumericAmount()
 	{
 		var iterator = wrap(Iterator.empty);
-		Assert.throws(typeof(TypeError), @= iterator.skip("3"));
+		Assert.throws(typeof(TypeConversionError), @= iterator.skip("3"));
 	}
 
 	public test_SkipNegativeAmount()

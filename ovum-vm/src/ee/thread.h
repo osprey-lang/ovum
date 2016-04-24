@@ -207,6 +207,7 @@ public:
 	OVUM_NOINLINE int ThrowOverflowError(String *message = nullptr);
 	OVUM_NOINLINE int ThrowDivideByZeroError(String *message = nullptr);
 	OVUM_NOINLINE int ThrowNullReferenceError(String *message = nullptr);
+	OVUM_NOINLINE int ThrowTypeConversionError(String *message = nullptr);
 	OVUM_NOINLINE int ThrowMemberNotFoundError(String *member);
 	OVUM_NOINLINE int ThrowNoOverloadError(ovlocals_t argCount, String *message = nullptr);
 

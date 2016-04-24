@@ -40,6 +40,7 @@ const StaticStringData staticStringData = {
 	{ 18, 0, StringFlags::STATIC, 97,118,101,115,46,79,118,101,114,102,108,111,119,69,114,114,111,114,0 },
 	{ 9, 0, StringFlags::STATIC, 97,118,101,115,46,82,101,97,108,0 },
 	{ 11, 0, StringFlags::STATIC, 97,118,101,115,46,83,116,114,105,110,103,0 },
+	{ 24, 0, StringFlags::STATIC, 97,118,101,115,46,84,121,112,101,67,111,110,118,101,114,115,105,111,110,69,114,114,111,114,0 },
 	{ 14, 0, StringFlags::STATIC, 97,118,101,115,46,84,121,112,101,69,114,114,111,114,0 },
 	{ 9, 0, StringFlags::STATIC, 97,118,101,115,46,85,73,110,116,0 },
 	{ 20, 0, StringFlags::STATIC, 97,118,101,115,46,114,101,102,108,101,99,116,105,111,110,46,84,121,112,101,0 },
@@ -146,6 +147,7 @@ void StaticStrings::InitStrings()
 	this->types.aves.OverflowError = reinterpret_cast<String*>(&data->types_aves_OverflowError);
 	this->types.aves.Real = reinterpret_cast<String*>(&data->types_aves_Real);
 	this->types.aves.String = reinterpret_cast<String*>(&data->types_aves_String);
+	this->types.aves.TypeConversionError = reinterpret_cast<String*>(&data->types_aves_TypeConversionError);
 	this->types.aves.TypeError = reinterpret_cast<String*>(&data->types_aves_TypeError);
 	this->types.aves.UInt = reinterpret_cast<String*>(&data->types_aves_UInt);
 	this->types.aves.reflection.Type = reinterpret_cast<String*>(&data->types_aves_reflection_Type);

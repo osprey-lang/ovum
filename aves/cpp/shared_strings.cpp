@@ -52,6 +52,8 @@ namespace strings
 	LitString<6> _equals    = { 6, 0, SFS, 'e','q','u','a','l','s',0 };
 	LitString<6> _length    = { 6, 0, SFS, 'l','e','n','g','t','h',0 };
 	LitString<5> _count     = { 5, 0, SFS, 'c','o','u','n','t',0 };
+	LitString<1> _n         = { 1, 0, SFS, 'n',0 };
+	LitString<6> _buffer    = { 6, 0, SFS, 'b','u','f','f','e','r',0 };
 
 	String *str       = _str.AsString();
 	String *i         = _i.AsString();
@@ -92,6 +94,8 @@ namespace strings
 	String *equals    = _equals.AsString();
 	String *length    = _length.AsString();
 	String *count     = _count.AsString();
+	String *n         = _n.AsString();
+	String *buffer    = _buffer.AsString();
 
 #if OVUM_WINDOWS
 	LitString<2> _newline = { 2, 0, SFS, '\r','\n',0 };

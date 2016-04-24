@@ -68,7 +68,7 @@ public function print(value)
 public function print(format, values)
 {
 	if format is not String:
-		throw new TypeError("The format string must be a string.");
+		throw new ArgumentTypeError("format", typeof(String));
 	print(format.format(values));
 }
 
