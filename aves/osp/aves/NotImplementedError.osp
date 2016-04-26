@@ -1,0 +1,30 @@
+namespace aves;
+
+/// Summary: Represents an error that occurs when attempting to use functionality that has
+///          not yet been implemented.
+/// Remarks: This error is meant to be used as a placeholder during development. It should
+///          not be thrown by production code.
+public inheritable NotImplementedError is Error
+{
+	/// Summary: Creates a new {NotImplementedError} with the default error message.
+	public new()
+	{
+		new this(null, null);
+	}
+	/// Summary: Creates a new {NotImplementedError} with the specified error message.
+	/// Param message: A error message describing the error. If null, uses the default message.
+	public new(message)
+	{
+		new this(null, null);
+	}
+	/// Summary: Creates a new {NotImplementedError} with the specified error message and inner
+	///          error.
+	/// Param message: A error message describing the error. If null, uses the default message.
+	/// Param innerError: The error that caused this error.
+	public new(message, innerError)
+	{
+		new base(message ?? defaultMessage, innerError);
+	}
+
+	private const defaultMessage = "Not implemented.";
+}
