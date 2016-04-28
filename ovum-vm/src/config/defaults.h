@@ -21,8 +21,8 @@ namespace config
 		static const size_t GEN1_DEAD_OBJECT_THRESHOLD = 768 * 1024;
 
 		// The size of the managed call stack.
-		// (1 MB)
-		static const size_t CALL_STACK_SIZE = 1024 * 1024;
+		// (4 MB)
+		static const size_t CALL_STACK_SIZE = 4096 * 1024;
 	};
 } // namespace ovum::config
 
