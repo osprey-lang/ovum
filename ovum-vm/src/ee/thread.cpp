@@ -12,6 +12,7 @@
 #include "../debug/debugsymbols.h"
 #include "../util/stringbuffer.h"
 #include "../res/staticstrings.h"
+#include "../config/defaults.h"
 #include <memory>
 
 namespace ovum
@@ -1094,7 +1095,7 @@ int Thread::InitCallStack()
 {
 	callStack = (unsigned char*)os::VirtualAlloc(
 		nullptr,
-		CALL_STACK_SIZE + 256,
+		config::Defaults::CALL_STACK_SIZE + 256,
 		os::VPROT_READ_WRITE
 	);
 	if (callStack == nullptr)
@@ -1102,10 +1103,10 @@ int Thread::InitCallStack()
 
 	// Make sure the page following the call stack will cause an instant segfault,
 	// as a very dirty way of signalling a stack overflow.
-	os::VirtualProtect(callStack + CALL_STACK_SIZE, 256, os::VPROT_NO_ACCESS);
+	os::VirtualProtect(callStack + config::Defaults::CALL_STACK_SIZE, 256, os::VPROT_NO_ACCESS);
 
 	// The call stack should never be swapped out.
-	os::VirtualLock(callStack, CALL_STACK_SIZE);
+	os::VirtualLock(callStack, config::Defaults::CALL_STACK_SIZE);
 
 	// Push a "fake" stack frame onto the stack, so that we can
 	// push values onto the evaluation stack before invoking the

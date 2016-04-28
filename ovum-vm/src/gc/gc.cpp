@@ -9,6 +9,7 @@
 #include "../object/value.h"
 #include "../debug/debugsymbols.h"
 #include "../res/staticstrings.h"
+#include "../config/defaults.h"
 
 namespace ovum
 {
@@ -75,7 +76,7 @@ GC::~GC()
 bool GC::InitializeHeaps()
 {
 	// Create the mainHeap with enough initial memory for the gen0 chunk
-	if (!os::HeapCreate(&mainHeap, GEN0_SIZE))
+	if (!os::HeapCreate(&mainHeap, config::Defaults::GEN0_SIZE))
 		return false;
 
 	// The LOH has no initial size
@@ -83,13 +84,13 @@ bool GC::InitializeHeaps()
 		return false;
 
 	// Allocate gen0
-	gen0Base = os::HeapAlloc(&mainHeap, GEN0_SIZE, false);
+	gen0Base = os::HeapAlloc(&mainHeap, config::Defaults::GEN0_SIZE, false);
 	if (!gen0Base)
 		// This shouldn't happen since mainHeap is initialized with
 		// a size that should be enough for gen0, but let's check
 		// for it anyway.
 		return false;
-	gen0End = (char*)gen0Base + GEN0_SIZE;
+	gen0End = (char*)gen0Base + config::Defaults::GEN0_SIZE;
 	gen0Current = (char*)gen0Base;
 
 	return true;
@@ -606,7 +607,7 @@ void GC::RunCycle(Thread *const thread, bool collectGen1)
 	// memory. We only collect gen1 if collectGen1 is true, or if there are
 	// enough dead objects in it.
 	if (!collectGen1)
-		collectGen1 = gen1Size - gcoLists.survivors.gen1SurvivorSize >= GEN1_DEAD_OBJECTS_THRESHOLD;
+		collectGen1 = gen1Size - gcoLists.survivors.gen1SurvivorSize >= config::Defaults::GEN1_DEAD_OBJECT_THRESHOLD;
 
 	{
 		GCObject *item = collectList;

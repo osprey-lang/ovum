@@ -81,6 +81,12 @@
     <Filter Include="Source Files\res">
       <UniqueIdentifier>{9a7e0ef0-2048-42a0-bb40-6c94d067d657}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\src\config">
+      <UniqueIdentifier>{ff0c5482-0194-44f0-8558-4b5b37ea6176}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\config">
+      <UniqueIdentifier>{435af01e-c648-4d89-8808-af07d2da4805}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\os\windows.h">
@@ -280,6 +286,9 @@
     </ClInclude>
     <ClInclude Include="src\object\standardtypeiniters.h">
       <Filter>Header Files\src\object</Filter>
+    </ClInclude>
+    <ClInclude Include="src\config\defaults.h">
+      <Filter>Header Files\src\config</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

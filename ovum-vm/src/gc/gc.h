@@ -27,11 +27,7 @@ struct MutableString
 class GC
 {
 private:
-	static const size_t GEN0_SIZE = 1536 * 1024;
 	static const size_t LARGE_OBJECT_SIZE = 87040;
-	// If there is more than this amount of dead memory in gen1,
-	// that generation is always collected.
-	static const size_t GEN1_DEAD_OBJECTS_THRESHOLD = 768 * 1024;
 	static const intptr_t GC_VALUE_ARRAY = (intptr_t)1;
 
 	struct TempLists

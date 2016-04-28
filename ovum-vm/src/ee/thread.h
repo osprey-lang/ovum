@@ -54,9 +54,6 @@ public:
 	int Start(ovlocals_t argCount, MethodOverload *mo, Value &result);
 
 private:
-	// The size of the managed call stack
-	static const size_t CALL_STACK_SIZE = 1024 * 1024;
-
 	// The currently executing managed thread.
 	static TlsEntry<Thread> threadKey;
 
