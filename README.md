@@ -2,9 +2,9 @@
 
 **NOTE:** Ovum is currently very much in development. Although it successfully runs all [Osprey][osp] programs I have tested, it probably has a lot of memory issues and bugs all over the place. It is not ready for primetime.
 
-Ovum is the virtual machine that runs programs written in [Osprey][osp]. For the time being, this is _not_ a pure C++ implementation, and will not compile outside Windows; there are several calls to various Windows API functions. If you want to try compiling this project outside of Visual Studio 2012, good luck to you!
+Ovum is the virtual machine that runs programs written in [Osprey][osp]. For the time being, this is _not_ a pure C++ implementation, and will not compile outside Windows; there are several calls to various Windows API functions. If you want to try compiling this project outside of Visual Studio, good luck to you!
 
-The Ovum solution consists of four projects: Ovum, VM, aves and aves.tests.
+The Ovum solution consists of four projects: Ovum, ovum-vm, aves and aves.tests.
 
 ## The Ovum project
 
@@ -14,7 +14,7 @@ This is the main executable project. It is responsible for parsing VM arguments 
 
 This VM was originally going to be called “OVM”, for “Osprey Virtual Machine”, but then I realised I would end up reading it as “ovum” anyway, so that became its official name. Also the word “ovum” is Latin for “egg”, which seems fitting given <del>my obsession with birds</del> the overall bird theme of this language and its VM.
 
-## The VM project
+## The ovum-vm project
 
 This project contains the virtual machine implementation, and is responsible for loading modules (and native libraries), maintaining the garbage collector, providing APIs for native libraries to interface with, as well as executing bytecode.
 
@@ -28,7 +28,7 @@ To compile the Osprey part of aves, run the [`build.bat` script][aves.build]. Th
 
 ### Why “aves”?
 
-[Because birds](http://en.wikipedia.org/wiki/Aves).
+[Because birds](http://en.wikipedia.org/wiki/Aves). Also, “aves” is short, memorable and extremely unlikely to be used by anything else.
 
 ## The aves.tests project
 
