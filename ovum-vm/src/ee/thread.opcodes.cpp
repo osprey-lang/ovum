@@ -65,14 +65,6 @@ int Thread::Evaluate()
 		ip += OVUM_ALIGN_TO(sizeof(IntermediateOpcode), oa::ALIGNMENT);
 		switch (*this->ip)
 		{
-		TARGET(OPI_NOP) NEXT_INSTR(); // Really, do nothing!
-
-		TARGET(OPI_POP)
-			{
-				f->stackCount--; // pop just decrements the stack height
-			}
-			NEXT_INSTR();
-
 		TARGET(OPI_RET)
 			{
 				OVUM_ASSERT(f->stackCount == 1);
@@ -88,6 +80,17 @@ int Thread::Evaluate()
 			}
 			retCode = OVUM_SUCCESS;
 			goto ret;
+
+		TARGET(OPI_NOP)
+			// Really, do nothing!
+			NEXT_INSTR();
+
+		TARGET(OPI_POP)
+			{
+				// pop just decrements the stack height
+				f->stackCount--;
+			}
+			NEXT_INSTR();
 
 		// mvloc: LocalOffset source, LocalOffset destination
 		TARGET(OPI_MVLOC_LL) // local to local

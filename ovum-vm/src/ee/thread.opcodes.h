@@ -168,12 +168,12 @@ enum Opcode : uint8_t
 // sense to keep a less optimised (for execution time) format.
 enum IntermediateOpcode
 { 
-	OPI_NOP         = 0x00,
-	OPI_POP         = 0x01,
+	OPI_RET         = 0x00,
+	OPI_RETNULL     = 0x01,
 
 	// These are put here mostly to use up 0x02 and 0x03.
-	OPI_RET         = 0x02,
-	OPI_RETNULL     = 0x03,
+	OPI_NOP         = 0x02,
+	OPI_POP         = 0x03,
 
 	// mvloc encodes the stack change in its lowest two bits:
 	// 0000 001ar
