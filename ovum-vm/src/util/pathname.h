@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../vm.h"
-#include <new>
 
 namespace ovum
 {

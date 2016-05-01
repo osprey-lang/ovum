@@ -2,7 +2,6 @@
 #include "standardtypeiniters.h"
 #include "../ee/vm.h"
 #include "../res/staticstrings.h"
-#include <new>
 
 namespace ovum
 {
