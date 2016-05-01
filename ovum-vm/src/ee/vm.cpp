@@ -15,7 +15,6 @@
 #include <fcntl.h>
 #include <io.h>
 #include <cstdio>
-#include <memory>
 
 #ifdef _MSC_VER
 // Microsoft's C++ implementation uses %s to mean wchar_t* in wide functions,

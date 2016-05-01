@@ -3,7 +3,6 @@
 #include "../object/type.h"
 #include "../ee/instructions.h"
 #include "../debug/debugsymbols.h"
-#include <memory>
 
 namespace ovum
 {

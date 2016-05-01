@@ -3,7 +3,6 @@
 
 #include "../vm.h"
 #include <vector>
-#include <memory>
 
 namespace ovum
 {

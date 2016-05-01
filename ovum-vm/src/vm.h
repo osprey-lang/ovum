@@ -91,6 +91,9 @@ typedef ovum::Property       *PropertyHandle;
 # include "os/windows.h"
 #endif
 
+// std::unique_ptr<> is used more or less everywhere.
+#include <memory>
+
 // Some fundamental typedefs. Should probably eventually be removed from this file.
 
 namespace ovum

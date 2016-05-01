@@ -7,7 +7,6 @@
 #include "../gc/gc.h"
 #include "../gc/staticref.h"
 #include "../res/staticstrings.h"
-#include <memory>
 
 namespace ovum
 {

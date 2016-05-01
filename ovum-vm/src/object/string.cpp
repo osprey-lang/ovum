@@ -4,7 +4,6 @@
 #include "../gc/gc.h"
 #include "../ee/thread.h"
 #include "../res/staticstrings.h"
-#include <memory>
 
 inline const bool IsHashed(const String *const str)
 {

@@ -13,7 +13,6 @@
 #include "../util/stringbuffer.h"
 #include "../res/staticstrings.h"
 #include "../config/defaults.h"
-#include <memory>
 
 namespace ovum
 {

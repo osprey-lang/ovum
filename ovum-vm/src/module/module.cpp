@@ -14,7 +14,6 @@
 #include "../ee/thread.h"
 #include "../ee/refsignature.h"
 #include "../res/staticstrings.h"
-#include <memory>
 
 namespace ovum
 {

@@ -8,7 +8,6 @@
 #include "../module/module.h"
 #include "../debug/debugsymbols.h"
 #include <queue>
-#include <memory>
 
 namespace ovum
 {

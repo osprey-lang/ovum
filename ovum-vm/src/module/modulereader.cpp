@@ -1,7 +1,6 @@
 #include "modulereader.h"
 #include "module.h"
 #include "../gc/gc.h"
-#include <memory>
 
 namespace ovum
 {
