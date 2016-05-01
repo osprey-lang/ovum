@@ -1,5 +1,9 @@
 #pragma once
 
+#if !defined(UNICODE) || !defined(_UNICODE)
+#error Ovum on Windows must be compiled with Unicode support; make sure UNICODE and _UNICODE are defined.
+#endif
+
 #include <WinSDKVer.h>
 #define _WIN32_WINNT _WIN32_WINNT_WIN7
 

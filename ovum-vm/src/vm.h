@@ -84,9 +84,6 @@ typedef ovum::Property       *PropertyHandle;
 // OS-specific code, which also implements everything in ovum::os.
 
 #if OVUM_WINDOWS
-# if !defined(UNICODE) || !defined(_UNICODE)
-#  error Ovum on Windows must be compiled with Unicode support; make sure UNICODE and _UNICODE are defined.
-# endif
 # include "os/windows.h"
 #endif
 
