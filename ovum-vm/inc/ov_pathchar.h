@@ -1,5 +1,5 @@
-#ifndef VM__PATHCHAR_H
-#define VM__PATHCHAR_H
+#ifndef OVUM__PATHCHAR_H
+#define OVUM__PATHCHAR_H
 
 // This header file exports the following members:
 //   pathchar_t:
@@ -78,4 +78,4 @@ typedef char pathchar_t;
 
 #endif
 
-#endif // VM__PATHCHAR_H
+#endif // OVUM__PATHCHAR_H

@@ -1,5 +1,5 @@
-#ifndef VM__VALUE_H
-#define VM__VALUE_H
+#ifndef OVUM__VALUE_H
+#define OVUM__VALUE_H
 
 #include "ov_vm.h"
 
@@ -92,4 +92,4 @@ public:
 	}
 };
 
-#endif // VM__VALUE_H
+#endif // OVUM__VALUE_H

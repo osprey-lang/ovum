@@ -1,5 +1,5 @@
-#ifndef VM__UNICODE_H
-#define VM__UNICODE_H
+#ifndef OVUM__UNICODE_H
+#define OVUM__UNICODE_H
 
 #include "ov_vm.h"
 
@@ -230,4 +230,4 @@ inline bool UC_IsLower(const ovchar_t chars[], unsigned int index)
 
 #undef assert_valid_wuchar
 
-#endif // VM__UNICODE_H
+#endif // OVUM__UNICODE_H

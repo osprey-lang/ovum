@@ -1,5 +1,5 @@
-#ifndef VM__THREAD_H
-#define VM__THREAD_H
+#ifndef OVUM__THREAD_H
+#define OVUM__THREAD_H
 
 #include "ov_vm.h"
 
@@ -387,4 +387,4 @@ typedef struct StackFrameInfo_S
 // If stackFrame refers to an invalid stack frame, returns false.
 OVUM_API bool VM_GetStackFrameInfo(ThreadHandle thread, int stackFrame, StackFrameInfo *dest);
 
-#endif // VM__THREAD_H
+#endif // OVUM__THREAD_H

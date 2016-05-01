@@ -1,5 +1,5 @@
-#ifndef VM__MODULE_H
-#define VM__MODULE_H
+#ifndef OVUM__MODULE_H
+#define OVUM__MODULE_H
 
 #include "ov_vm.h"
 
@@ -234,5 +234,4 @@ public:
 	}
 };
 
-
-#endif // VM__MODULE_H
+#endif // OVUM__MODULE_H

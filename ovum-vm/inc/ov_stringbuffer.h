@@ -1,5 +1,5 @@
-#ifndef VM__STRINGBUFFER_H
-#define VM__STRINGBUFFER_H
+#ifndef OVUM__STRINGBUFFER_H
+#define OVUM__STRINGBUFFER_H
 
 #include <memory>
 
@@ -232,4 +232,4 @@ private:
 	}
 };
 
-#endif // VM__STRINGBUFFER_H
+#endif // OVUM__STRINGBUFFER_H

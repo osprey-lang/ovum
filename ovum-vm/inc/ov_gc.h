@@ -1,5 +1,5 @@
-#ifndef VM__GC_H
-#define VM__GC_H
+#ifndef OVUM__GC_H
+#define OVUM__GC_H
 
 #include "ov_vm.h"
 
@@ -217,4 +217,4 @@ public:
 	inline T &operator[](unsigned long long index) const { return value[index]; }
 };
 
-#endif // VM__GC_H
+#endif // OVUM__GC_H

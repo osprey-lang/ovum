@@ -1,5 +1,5 @@
-#ifndef VM__TYPE_H
-#define VM__TYPE_H
+#ifndef OVUM__TYPE_H
+#define OVUM__TYPE_H
 
 #include "ov_vm.h"
 
@@ -491,4 +491,4 @@ public:
 	}
 };
 
-#endif // VM__TYPE_H
+#endif // OVUM__TYPE_H

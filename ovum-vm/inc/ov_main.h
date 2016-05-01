@@ -1,5 +1,5 @@
-#ifndef VM__MAIN_H
-#define VM__MAIN_H
+#ifndef OVUM__MAIN_H
+#define OVUM__MAIN_H
 
 // Defines types and API functions for starting the VM.
 
@@ -27,4 +27,4 @@ typedef struct VMStartParams_S
 
 OVUM_API int VM_Start(VMStartParams *params);
 
-#endif // VM__MAIN_H
+#endif // OVUM__MAIN_H

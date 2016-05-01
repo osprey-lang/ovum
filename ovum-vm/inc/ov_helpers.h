@@ -1,5 +1,5 @@
-#ifndef VM__HELPERS_H
-#define VM__HELPERS_H
+#ifndef OVUM__HELPERS_H
+#define OVUM__HELPERS_H
 
 // Various helper functions
 
@@ -385,4 +385,4 @@ inline int Int_ModuloChecked(int64_t left, int64_t right, int64_t &result)
 // The prime number is suitable for use as the size of a hash table.
 OVUM_API int32_t HashHelper_GetPrime(int32_t min);
 
-#endif // VM__HELPERS_H
+#endif // OVUM__HELPERS_H

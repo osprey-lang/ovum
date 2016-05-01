@@ -1,5 +1,5 @@
-#ifndef VM__STRING_H
-#define VM__STRING_H
+#ifndef OVUM__STRING_H
+#define OVUM__STRING_H
 
 #include "ov_vm.h"
 
@@ -98,4 +98,4 @@ OVUM_API String *String_GetInterned(ThreadHandle thread, String *str);
 //     The string to intern.
 OVUM_API String *String_Intern(ThreadHandle thread, String *str);
 
-#endif // VM__STRING_H
+#endif // OVUM__STRING_H

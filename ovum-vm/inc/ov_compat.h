@@ -1,5 +1,5 @@
-#ifndef VM__COMPAT_H
-#define VM__COMPAT_H
+#ifndef OVUM__COMPAT_H
+#define OVUM__COMPAT_H
 
 /*
  * This file contains various compatibility and utility macros.
@@ -164,4 +164,4 @@
 # endif
 #endif // OVUM_ASSERT
 
-#endif // VM__COMPAT_H
+#endif // OVUM__COMPAT_H

@@ -1,5 +1,5 @@
-#ifndef VM__VM_H
-#define VM__VM_H
+#ifndef OVUM__VM_H
+#define OVUM__VM_H
 
 // Define some macros for the target OS.
 // The following macros will be defined as 0 or 1 depending
@@ -271,4 +271,4 @@ OVUM_API int VM_GetArgCount(ThreadHandle thread);
 OVUM_API int VM_GetArgs(ThreadHandle thread, int destLength, String *dest[]);
 OVUM_API int VM_GetArgValues(ThreadHandle thread, int destLength, Value dest[]);
 
-#endif // VM__VM_H
+#endif // OVUM__VM_H
