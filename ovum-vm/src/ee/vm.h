@@ -41,7 +41,7 @@ private:
 	GC *gc;
 	ModulePool *modules;
 	RefSignaturePool *refSignatures;
-	StandardTypeCollection *standardTypeCollection;
+	std::unique_ptr<StandardTypeCollection> standardTypeCollection;
 	std::unique_ptr<StaticStrings> strings;
 
 	int LoadModules(VMStartParams &params);
@@ -83,7 +83,7 @@ public:
 
 	inline StandardTypeCollection *GetStandardTypeCollection() const
 	{
-		return standardTypeCollection;
+		return standardTypeCollection.get();
 	}
 
 	inline const PathName *GetStartupPathLib() const

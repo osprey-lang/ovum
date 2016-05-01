@@ -51,7 +51,6 @@ VM::~VM()
 	delete gc;
 	delete modules;
 	delete refSignatures;
-	delete standardTypeCollection;
 
 	delete mainThread;
 
@@ -118,7 +117,7 @@ int VM::Create(VMStartParams &params, VM *&result)
 
 		CHECKED(Thread::Create(vm.get(), vm->mainThread));
 		CHECKED(GC::Create(vm.get(), vm->gc));
-		CHECKED(StandardTypeCollection::Create(vm.get(), vm->standardTypeCollection));
+		CHECKED_MEM(vm->standardTypeCollection = StandardTypeCollection::New(vm.get()));
 		CHECKED_MEM(vm->modules = new(std::nothrow) ModulePool(10));
 		CHECKED_MEM(vm->refSignatures = new(std::nothrow) RefSignaturePool());
 

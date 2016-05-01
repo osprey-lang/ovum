@@ -9,16 +9,16 @@ namespace ovum
 
 const int StandardTypeCollection::STANDARD_TYPE_COUNT = 20;
 
-int StandardTypeCollection::Create(VM *vm, StandardTypeCollection *&result)
+std::unique_ptr<StandardTypeCollection> StandardTypeCollection::New(VM *vm)
 {
-	StandardTypeCollection *output = new(std::nothrow) StandardTypeCollection();
-	if (output == nullptr)
-		return OVUM_ERROR_NO_MEMORY;
+	std::unique_ptr<StandardTypeCollection> output(new(std::nothrow) StandardTypeCollection());
+	if (!output)
+		return nullptr;
 
-	output->InitTypeInfo(vm);
+	if (!output->Init(vm))
+		return nullptr;
 
-	result = output;
-	RETURN_SUCCESS;
+	return output;
 }
 
 StandardTypeCollection::StandardTypeCollection() :
@@ -30,11 +30,11 @@ StandardTypeCollection::~StandardTypeCollection()
 	// Nothing really to do here!
 }
 
-void StandardTypeCollection::InitTypeInfo(VM *vm)
+bool StandardTypeCollection::Init(VM *vm)
 {
 	using T = ::StandardTypes;
 	
-	StaticStrings::typesStrings &t = vm->GetStrings()->types;
+	auto &t = vm->GetStrings()->types;
 
 	Add(t.aves.Object,              &T::Object,              StandardTypeIniters::InitObjectType);
 	Add(t.aves.Boolean,             &T::Boolean,             nullptr);
@@ -56,6 +56,8 @@ void StandardTypeCollection::InitTypeInfo(VM *vm)
 	Add(t.aves.MemberNotFoundError, &T::MemberNotFoundError, nullptr);
 	Add(t.aves.TypeConversionError, &T::TypeConversionError, nullptr);
 	Add(t.aves.reflection.Type,     &T::Type,                StandardTypeIniters::InitTypeType);
+
+	return true;
 }
 
 inline void StandardTypeCollection::Add(String *name, TypeHandle StandardTypes::*member, StandardTypeIniter extendedIniter)
