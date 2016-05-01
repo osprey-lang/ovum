@@ -1414,36 +1414,42 @@ int Thread::EvaluateLeave(StackFrame *frame, int32_t target)
 	for (int32_t t = 0; t < method->tryBlockCount; t++)
 	{
 		TryBlock &tryBlock = method->tryBlocks[t];
-		if (tryBlock.kind == TryKind::FINALLY &&
-			tryBlock.Contains(ipOffset) &&
-			!tryBlock.Contains(tOffset) &&
-			!tryBlock.finallyBlock.Contains(tOffset))
+		// We can evaluate a finally clause here if all of the following are true:
+		//   1. tryBlock is a try-finally (i.e. there is a finally to evaluate)
+		//   2. The instruction pointer is inside the try clause
+		//   3. The branch target is outside of the try clause.
+		// That means we're leaving the try clause of a try-finally, hence we have
+		// to execute the finally.
+		if (tryBlock.kind != TryKind::FINALLY ||
+			!tryBlock.Contains(ipOffset) ||
+			tryBlock.Contains(tOffset))
+			continue;
+
+		// Let's evaluate the finally!
+
+		uint8_t *const prevIp = this->ip;
+		// We must save the current error, because if an error is thrown and
+		// caught inside the finally, currentError will be updated to contain
+		// that error. We will cause problems if we don't restore the old one.
+		Value prevError = this->currentError;
+
+		this->ip = method->entry + tryBlock.finallyBlock.finallyStart;
+		enter:
+		int r = Evaluate();
+		if (r != OVUM_SUCCESS)
 		{
-			// Evaluate the finally!
-			uint8_t *const prevIp = this->ip;
-			// We must save the current error, because if an error is thrown and
-			// caught inside the finally, currentError will be updated to contain
-			// that error. We will cause problems if we don't restore the old one.
-			Value prevError = this->currentError;
-
-			this->ip = method->entry + tryBlock.finallyBlock.finallyStart;
-			enter:
-			int r = Evaluate();
-			if (r != OVUM_SUCCESS)
+			if (r == OVUM_ERROR_THROWN)
 			{
-				if (r == OVUM_ERROR_THROWN)
-				{
-					int r2 = FindErrorHandler(t);
-					if (r2 == OVUM_SUCCESS)
-						goto enter;
-					r = r2;
-				}
-				return r;
+				int r2 = FindErrorHandler(t);
+				if (r2 == OVUM_SUCCESS)
+					goto enter;
+				r = r2;
 			}
-			this->ip = prevIp;
-
-			this->currentError = prevError;
+			return r;
 		}
+		this->ip = prevIp;
+
+		this->currentError = prevError;
 	}
 
 	RETURN_SUCCESS;
