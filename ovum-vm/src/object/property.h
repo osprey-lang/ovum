@@ -1,5 +1,4 @@
-#ifndef VM__PROPERTY_H
-#define VM__PROPERTY_H
+#pragma once
 
 #include "../vm.h"
 #include "member.h"
@@ -19,5 +18,3 @@ public:
 };
 
 } // namespace ovum
-
-#endif // VM__PROPERTY_H

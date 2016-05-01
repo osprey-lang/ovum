@@ -1,5 +1,4 @@
-#ifndef VM__OS_DEF_H
-#define VM__OS_DEF_H
+#pragma once
 
 // File system
 #include "filesystem.h"
@@ -18,5 +17,3 @@
 
 // Console output
 #include "console.h"
-
-#endif // VM__OS_DEF_H

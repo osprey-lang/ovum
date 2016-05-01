@@ -1,5 +1,4 @@
-#ifndef VM__UNICODE_INTERNAL_H
-#define VM__UNICODE_INTERNAL_H
+#pragma once
 
 #include "../vm.h"
 #include "../../inc/ov_unicode.h"
@@ -48,5 +47,3 @@ namespace unicode
 } // namespace unicode
 
 } // namespace ovum
-
-#endif // VM__UNICODE_INTERNAL_H

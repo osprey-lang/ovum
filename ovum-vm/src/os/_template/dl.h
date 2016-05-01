@@ -1,5 +1,4 @@
-#ifndef VM__OS_DL_H
-#define VM__OS_DL_H
+#pragma once
 
 #include "def.h"
 #include "../../vm.h"
@@ -95,5 +94,3 @@ namespace os
 } // namespace os
 
 } // namespace ovum
-
-#endif // VM__OS_DL_H

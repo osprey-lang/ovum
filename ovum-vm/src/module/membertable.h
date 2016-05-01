@@ -1,5 +1,4 @@
-#ifndef VM__MEMBERTABLE_INTERNAL_H
-#define VM__MEMBERTABLE_INTERNAL_H
+#pragma once
 
 #include "../vm.h"
 #include "module.h"
@@ -87,5 +86,3 @@ private:
 };
 
 } // namespace ovum
-
-#endif // VM__MEMBERTABLE_INTERNAL_H

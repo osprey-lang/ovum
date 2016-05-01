@@ -1,10 +1,9 @@
-// This file contains a platform-independent API implementation
-// for dealing with thread-local storage.
-
-#ifndef VM__TLS_INTERNAL_H
-#define VM__TLS_INTERNAL_H
+#pragma once
 
 #include "../vm.h"
+
+// This file contains a platform-independent API implementation
+// for dealing with thread-local storage.
 
 namespace ovum
 {
@@ -73,5 +72,3 @@ public:
 };
 
 } // namespace ovum
-
-#endif

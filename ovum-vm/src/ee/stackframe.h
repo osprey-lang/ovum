@@ -1,5 +1,4 @@
-#ifndef VM__STACKFRAME_H
-#define VM__STACKFRAME_H
+#pragma once
 
 #include "../vm.h"
 
@@ -85,5 +84,3 @@ inline Value *StackFrame::Locals() const
 }
 
 } // namespace ovum
-
-#endif // VM__STACKFRAME_H

@@ -1,5 +1,4 @@
-#ifndef VM__STANDARDTYPEINFO_H
-#define VM__STANDARDTYPEINFO_H
+#pragma once
 
 #include "../vm.h"
 #include "../util/stringhash.h"
@@ -89,5 +88,3 @@ private:
 };
 
 } // namespace ovum
-
-#endif // VM__STANDARDTYPEINFO_H

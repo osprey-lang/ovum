@@ -1,5 +1,4 @@
-#ifndef VM__TYPE_INTERNAL_H
-#define VM__TYPE_INTERNAL_H
+#pragma once
 
 #include "../vm.h"
 #include "../ee/vm.h"
@@ -154,5 +153,3 @@ private:
 };
 
 } // namespace ovum
-
-#endif

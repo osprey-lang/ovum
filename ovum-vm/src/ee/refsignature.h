@@ -1,5 +1,4 @@
-#ifndef VM__REFSIGNATURE_INTERNAL_H
-#define VM__REFSIGNATURE_INTERNAL_H
+#pragma once
 
 #include "../../inc/ov_vm.h"
 #include <vector>
@@ -220,5 +219,3 @@ inline RefSignature::RefSignature(uint32_t mask, RefSignaturePool *pool)
 }
 
 } // namespace ovum
-
-#endif // VM__REFSIGNATURE_INTERNAL_H

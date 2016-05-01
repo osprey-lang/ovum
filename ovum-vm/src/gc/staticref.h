@@ -1,5 +1,4 @@
-#ifndef VM__STATICREF_H
-#define VM__STATICREF_H
+#pragma once
 
 #include "../vm.h"
 #include "../threading/sync.h"
@@ -82,5 +81,3 @@ public:
 };
 
 } // namespace ovum
-
-#endif // VM__STATICREF_H

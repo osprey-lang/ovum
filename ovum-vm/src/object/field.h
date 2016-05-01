@@ -1,5 +1,4 @@
-#ifndef VM__FIELD_H
-#define VM__FIELD_H
+#pragma once
 
 #include "../vm.h"
 #include "member.h"
@@ -30,5 +29,3 @@ public:
 };
 
 } // namespace ovum
-
-#endif // VM__FIELD_H

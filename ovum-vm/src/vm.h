@@ -1,12 +1,11 @@
+#pragma once
+
 // This file includes all the internal features of the VM, which are not visible
 // if you just include "ov_vm.h". These are not supposed to be visible to users
 // of the VM API.
 //
 // You should only ever include this from within CPP files of the VM project, or
 // from within other internal header files.
-
-#ifndef VM__VM_INTERNAL_H
-#define VM__VM_INTERNAL_H
 
 #ifndef VM_EXPORTS
 #error You're not supposed to include this file from outside the VM project!
@@ -102,5 +101,3 @@ namespace ovum
 typedef uint32_t TokenId;
 
 } // namespace ovum
-
-#endif // VM__VM_INTERNAL

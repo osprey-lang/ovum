@@ -1,5 +1,4 @@
-#ifndef OVUM__DEFAULTS_H
-#define OVUM__DEFAULTS_H
+#pragma once
 
 #include "../vm.h"
 
@@ -27,5 +26,3 @@ namespace config
 } // namespace ovum::config
 
 } // namespace ovum
-
-#endif // OVUM__DEFAULTS_H

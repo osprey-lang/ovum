@@ -1,5 +1,4 @@
-#ifndef VM__EE_VM_H
-#define VM__EE_VM_H
+#pragma once
 
 #include "../vm.h"
 #include "../../inc/ov_main.h"
@@ -127,5 +126,3 @@ public:
 };
 
 } // namespace ovum
-
-#endif // VM__EE_VM_H

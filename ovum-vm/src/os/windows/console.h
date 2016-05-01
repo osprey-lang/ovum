@@ -1,5 +1,4 @@
-#ifndef VM__OS_CONSOLE_H
-#define VM__OS_CONSOLE_H
+#pragma once
 
 #include "def.h"
 
@@ -106,5 +105,3 @@ namespace os
 } // namespace os
 
 } // namespace ovum
-
-#endif // VM__OS_CONSOLE_H

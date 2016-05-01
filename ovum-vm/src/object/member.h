@@ -1,5 +1,4 @@
-#ifndef VM__MEMBER_H
-#define VM__MEMBER_H
+#pragma once
 
 #include "../vm.h"
 
@@ -86,5 +85,3 @@ private:
 };
 
 } // namespace ovum
-
-#endif // VM__MEMBER_H

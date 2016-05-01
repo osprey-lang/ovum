@@ -1,5 +1,4 @@
-#ifndef VM__METHOD_H
-#define VM__METHOD_H
+#pragma once
 
 #include "../vm.h"
 #include "member.h"
@@ -223,5 +222,3 @@ public:
 };
 
 } // namespace ovum
-
-#endif // VM__METHOD_H

@@ -1,12 +1,9 @@
-#ifndef VM__STRING_TABLE_INTERNAL_H
-#define VM__STRING_TABLE_INTERNAL_H
+#pragma once
 
 #include "../vm.h"
 
 namespace ovum
 {
-
-class GC;
 
 // The StringTable class contains the implementation of the string
 // intern table, which is effectively a hash set of String* values.
@@ -55,5 +52,3 @@ public:
 };
 
 } // namespace ovum
-
-#endif // VM__STRING_TABLE_INTERNAL_H

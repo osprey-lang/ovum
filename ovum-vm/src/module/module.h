@@ -1,5 +1,4 @@
-#ifndef VM__MODULE_INTERNAL_H
-#define VM__MODULE_INTERNAL_H
+#pragma once
 
 #include <cstdio>
 #include <vector>
@@ -319,5 +318,3 @@ public:
 };
 
 } // namespace ovum
-
-#endif // VM__MODULE_INTERNAL_H

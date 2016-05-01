@@ -1,5 +1,4 @@
-#ifndef VM__INSTRUCTIONS_INTERNAL_H
-#define VM__INSTRUCTIONS_INTERNAL_H
+#pragma once
 
 #include "../vm.h"
 #include "thread.opcodes.h"
@@ -1371,5 +1370,3 @@ namespace instr
 } // namespace instr
 
 } // namespace ovum
-
-#endif // VM__INSTRUCTIONS_INTERNAL_H

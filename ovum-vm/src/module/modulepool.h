@@ -1,5 +1,4 @@
-#ifndef VM__MODULEPOOL_H
-#define VM__MODULEPOOL_H
+#pragma once
 
 #include "../vm.h"
 #include "../../inc/ov_module.h"
@@ -47,5 +46,3 @@ private:
 };
 
 } // namespace ovum
-
-#endif // VM__MODULEPOOL_H

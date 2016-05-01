@@ -1,5 +1,4 @@
-#ifndef VM__MODULEFINDER_H
-#define VM__MODULEFINDER_H
+#pragma once
 
 #include "../vm.h"
 #include "../util/pathname.h"
@@ -88,5 +87,3 @@ private:
 };
 
 } // namespace ovum
-
-#endif // VM__MODULEFINDER_H

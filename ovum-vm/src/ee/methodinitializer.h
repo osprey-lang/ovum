@@ -1,5 +1,4 @@
-#ifndef VM__METHODINITIALIZER_INTERNAL_H
-#define VM__METHODINITIALIZER_INTERNAL_H
+#pragma once
 
 #include "../vm.h"
 #include "instructions.h"
@@ -99,5 +98,3 @@ protected:
 };
 
 } // namespace ovum
-
-#endif // VM__METHODINITIALIZER_INTERNAL_H

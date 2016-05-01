@@ -1,10 +1,8 @@
-#ifndef OVUM__MAIN_H
-#define OVUM__MAIN_H
+#pragma once
 
 #include "targetver.h"
-
-#define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
-
+// Exclude rarely-used stuff from Windows headers
+#define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <stdio.h>
 #include <Shlwapi.h>
@@ -34,5 +32,3 @@ void PrintUsageAndExit();
 
 void GetStartupFile(const wchar_t *path, wchar_t *buf, size_t bufSize);
 void GetModulePath(wchar_t *buf, size_t bufSize);
-
-#endif

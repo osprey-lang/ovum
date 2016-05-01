@@ -1,5 +1,4 @@
-#ifndef VM__OS_THREADING_H
-#define VM__OS_THREADING_H
+#pragma once
 
 #include "../../../inc/ov_vm.h"
 #include "def.h"
@@ -204,5 +203,3 @@ namespace os
 } // namespace os
 
 } // namespace ovum
-
-#endif // VM__OS_THREADING_H

@@ -1,5 +1,4 @@
-#ifndef VM__GCOBJECT_H
-#define VM__GCOBJECT_H
+#pragma once
 
 #include "../vm.h"
 #include "../threading/sync.h"
@@ -165,5 +164,3 @@ public:
 static const size_t GCO_SIZE = OVUM_ALIGN_TO(sizeof(GCObject), 8);
 
 } // namespace ovum
-
-#endif // VM__GCOBJECT_H

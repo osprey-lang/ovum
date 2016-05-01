@@ -1,5 +1,4 @@
-#ifndef VM__METHODINITEXCEPTION_INTERNAL_H
-#define VM__METHODINITEXCEPTION_INTERNAL_H
+#pragma once
 
 #include "../vm.h"
 
@@ -80,6 +79,4 @@ public:
 	inline uint32_t GetArgumentCount() const { return noOverload.argCount; }
 };
 
-}
-
-#endif //VM__METHODINITEXCEPTION_INTERNAL_H
+} // namespace ovum

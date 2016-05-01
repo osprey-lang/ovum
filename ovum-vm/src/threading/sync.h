@@ -1,8 +1,6 @@
-#ifndef VM__CRITICAL_SECTION_H
-#define VM__CRITICAL_SECTION_H
+#pragma once
 
 #include "../vm.h"
-
 #include <atomic>
 
 namespace ovum
@@ -185,5 +183,3 @@ public:
 };
 
 } // namespace ovum
-
-#endif // VM__CRITICAL_SECTION_H

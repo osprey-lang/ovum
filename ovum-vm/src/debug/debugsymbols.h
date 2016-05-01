@@ -1,5 +1,4 @@
-#ifndef VM__DEBUG_SYMBOLS_INTERNAL_H
-#define VM__DEBUG_SYMBOLS_INTERNAL_H
+#pragma once
 
 #include "../vm.h"
 
@@ -66,5 +65,3 @@ namespace debug
 } // namespace ovum::debug
 
 } // namespace ovum
-
-#endif // VM__DEBUG_SYMBOLS_INTERNAL_H

@@ -1,5 +1,4 @@
-#ifndef VM__METHODBUILDER_INTERNAL_H
-#define VM__METHODBUILDER_INTERNAL_H
+#pragma once
 
 #include "../vm.h"
 #include <vector>
@@ -181,5 +180,3 @@ namespace instr
 } // namespace instr
 
 } // namespace ovum
-
-#endif // VM__METHODBUILDER_INTERNAL_H

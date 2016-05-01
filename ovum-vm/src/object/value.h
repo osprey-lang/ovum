@@ -1,5 +1,4 @@
-#ifndef VM__VALUE_INTERNAL_H
-#define VM__VALUE_INTERNAL_H
+#pragma once
 
 #include "../vm.h"
 #include "../object/type.h"
@@ -127,6 +126,4 @@ inline bool IsSameReference_(Value *a, Value *b)
 	return a->v.instance == b->v.instance;
 }
 
-}
-
-#endif // VM__VALUE_INTERNAL_H
+} // namespace ovum

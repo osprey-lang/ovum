@@ -1,5 +1,4 @@
-#ifndef VM__STRINGBUFFER_INTERNAL_H
-#define VM__STRINGBUFFER_INTERNAL_H
+#pragma once
 
 #include "../vm.h"
 
@@ -56,5 +55,3 @@ private:
 };
 
 } // namespace ovum
-
-#endif // VM__STRINGBUFFER_INTERNAL_H

@@ -1,5 +1,4 @@
-#ifndef VM__STRING_HASH_INTERNAL_H
-#define VM__STRING_HASH_INTERNAL_H
+#pragma once
 
 #include "../vm.h"
 #include "../../inc/ov_string.h"
@@ -203,6 +202,4 @@ void StringHash<T>::DeleteArrayValues()
 	}
 }
 
-}
-
-#endif // VM__STRING_HASH_INTERNAL_H
+} // namespace ovum

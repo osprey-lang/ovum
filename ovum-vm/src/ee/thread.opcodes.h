@@ -1,5 +1,4 @@
-#ifndef VM__VM_OPCODES_H
-#define VM__VM_OPCODES_H
+#pragma once
 
 #include "../vm.h"
 #include "thread.h"
@@ -663,5 +662,3 @@ namespace opcode_args
 } // namespace opcode_args
 
 } // namespace ovum
-
-#endif // VM__VM_OPCODES_H

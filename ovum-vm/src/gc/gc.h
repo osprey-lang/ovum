@@ -1,5 +1,4 @@
-#ifndef VM__GC_INTERNAL_H
-#define VM__GC_INTERNAL_H
+#pragma once
 
 #include "../vm.h"
 #include "gcobject.h"
@@ -226,5 +225,3 @@ private:
 };
 
 } // namespace ovum
-
-#endif // VM__GC_INTERNAL_H

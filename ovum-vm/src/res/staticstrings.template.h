@@ -1,5 +1,4 @@
-#ifndef VM__STATICSTRINGS_H
-#define VM__STATICSTRINGS_H
+#pragma once
 
 /*********************************************************/
 /*                                                       */
@@ -39,5 +38,3 @@ private:
 };
 
 } // namespace ovum
-
-#endif // VM__STATICSTRINGS_H

@@ -1,5 +1,4 @@
-#ifndef VM__OS_MMAP_H
-#define VM__OS_MMAP_H
+#pragma once
 
 #include "def.h"
 #include "../../vm.h"
@@ -165,5 +164,3 @@ namespace os
 } // namespace os
 
 } // namespace ovum
-
-#endif // VM__OS_MMAP_H

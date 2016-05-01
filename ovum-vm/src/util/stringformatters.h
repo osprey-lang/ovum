@@ -1,5 +1,4 @@
-#ifndef VM__STRINGFORMATTERS_H
-#define VM__STRINGFORMATTERS_H
+#pragma once
 
 #include "../vm.h"
 #include "pathname.h"
@@ -74,5 +73,3 @@ private:
 };
 
 } // namespace ovum
-
-#endif // VM__STRINGFORMATTERS_H

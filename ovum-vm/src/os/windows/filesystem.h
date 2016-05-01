@@ -1,5 +1,4 @@
-#ifndef VM__OS_FILESYSTEM_H
-#define VM__OS_FILESYSTEM_H
+#pragma once
 
 #include "def.h"
 #include "../../vm.h"
@@ -289,5 +288,3 @@ namespace os
 } // namespace os
 
 } // namespace ovum
-
-#endif // VM__OS_FILESYSTEM_H

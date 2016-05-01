@@ -1,5 +1,4 @@
-#ifndef VM__PATHNAME_INTERNAL_H
-#define VM__PATHNAME_INTERNAL_H
+#pragma once
 
 #include "../vm.h"
 #include <new>
@@ -208,5 +207,3 @@ private:
 };
 
 } // namespace ovum
-
-#endif // VM__PATHNAME_INTERNAL_H
