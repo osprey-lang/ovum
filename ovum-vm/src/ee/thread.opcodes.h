@@ -166,7 +166,7 @@ enum Opcode : uint8_t
 // and are used to keep the jump table in Thread::Evaluate small.
 // Since we need to mangle the bytecode anyway, it makes no real
 // sense to keep a less optimised (for execution time) format.
-enum IntermediateOpcode : uint8_t
+enum IntermediateOpcode
 { 
 	OPI_NOP         = 0x00,
 	OPI_POP         = 0x01,
