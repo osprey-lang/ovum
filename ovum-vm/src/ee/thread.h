@@ -266,8 +266,46 @@ private:
 	OVUM_NOINLINE void EndGCSuspension();
 	OVUM_NOINLINE void SuspendForGC();
 
+	// Evaluates managed bytecode at the current instruction pointer, in the current
+	// stack frame.
+	//
+	// This method assumes the instruction pointer is pointing at the starting address
+	// of a valid intermediate bytecode instruction, as well as that a suitable stack
+	// frame exists on the call stack. This method does NOT pop the stack frame upon
+	// returning, nor does it guarantee any particular state of the evaluation stack.
+	//
+	// This method is used when entering a managed call, to execute the method. It is
+	// also used to evaluate finally blocks, which are effectively executed in their
+	// own isolated context.
+	//
+	// If this method returns with anything other than OVUM_SUCCESS, it is guaranteed
+	// that the instruction pointer is in the middle of an instruction.
 	int Evaluate();
+
+	// Attempts to locate an error handler (catch block) for a managed error that has
+	// been thrown on the thread. The error is read from the 'currentError' field of
+	// the current thread.
+	//
+	// This method assumes that the instruction pointer is pointing to the start of an
+	// instruction. If the instruction pointer goes past the end of the instruction
+	// that caused the error, and that instruction happens to be the last instruction
+	// in its containing try block, the IP will be considered to be outside the block.
+	// Hence, that block's catch clauses will not be found, nor will its finally block
+	// be executed.
+	//
+	// Both catch and finally clauses can cause errors to be thrown. This method returns
+	// OVUM_SUCCESS if an error handler was successfully found and executed.
 	int FindErrorHandler(int32_t maxIndex);
+
+	// Attempts to evaluate a 'leave' instruction. This will execute any finally blocks
+	// that lie between the 'leave' instruction and the specified target.
+	//
+	// This method assumes the instruction pointer is at the 'leave' instruction, and
+	// will always add the size of the instruction's arguments to calculate the actual
+	// target offset.
+	//
+	// Finally clauses can cause errors to be thrown. This method returns OVUM_SUCCESS
+	// if all finally clauses were successfully executed.
 	int EvaluateLeave(StackFrame *frame, int32_t target);
 
 	String *GetStackTrace();
