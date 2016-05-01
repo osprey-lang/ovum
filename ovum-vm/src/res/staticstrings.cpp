@@ -82,27 +82,16 @@ const StaticStringData staticStringData = {
 	{ 71, 0, StringFlags::STATIC, 84,104,101,32,97,114,103,117,109,101,110,116,115,32,108,105,115,116,32,105,110,32,97,32,102,117,110,99,116,105,111,110,32,97,112,112,108,105,99,97,116,105,111,110,32,109,117,115,116,32,98,101,32,111,102,32,116,121,112,101,32,97,118,101,115,46,76,105,115,116,46,0 },
 };
 
-int StaticStrings::Create(StaticStrings *&result)
+std::unique_ptr<StaticStrings> StaticStrings::New()
 {
-	StaticStrings *output = new(std::nothrow) StaticStrings();
-	if (output == nullptr)
-		return OVUM_ERROR_NO_MEMORY;
+	std::unique_ptr<StaticStrings> output(new(std::nothrow) StaticStrings());
+	if (!output)
+		return nullptr;
 
-	// StaticStringData has no default constructor, because LitString
-	// has const members, so we can't use 'new' here. Since we're going
-	// to copy all the string data from a static instance anyway, it's
-	// probably fine to use malloc/free for this member.
-	output->data = reinterpret_cast<StaticStringData*>(malloc(sizeof(StaticStringData)));
-	if (output->data == nullptr)
-	{
-		delete output;
-		return OVUM_ERROR_NO_MEMORY;
-	}
-	output->InitData();
-	output->InitStrings();
+	if (!output->Init())
+		return nullptr;
 
-	result = output;
-	RETURN_SUCCESS;
+	return output;
 }
 
 StaticStrings::StaticStrings() :
@@ -112,6 +101,21 @@ StaticStrings::StaticStrings() :
 StaticStrings::~StaticStrings()
 {
 	free(data);
+}
+
+bool StaticStrings::Init()
+{
+	// StaticStringData has no default constructor, because LitString
+	// has const members, so we can't use 'new' here. Since we're going
+	// to copy all the string data from a static instance anyway, it's
+	// probably fine to use malloc/free for this member.
+	data = reinterpret_cast<StaticStringData*>(malloc(sizeof(StaticStringData)));
+	if (data == nullptr)
+		return false;
+
+	InitData();
+	InitStrings();
+	return true;
 }
 
 void StaticStrings::InitData()

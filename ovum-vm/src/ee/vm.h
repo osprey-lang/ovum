@@ -42,7 +42,7 @@ private:
 	ModulePool *modules;
 	RefSignaturePool *refSignatures;
 	StandardTypeCollection *standardTypeCollection;
-	StaticStrings *strings;
+	std::unique_ptr<StaticStrings> strings;
 
 	int LoadModules(VMStartParams &params);
 	int InitArgs(int argCount, const wchar_t *args[]);
@@ -78,7 +78,7 @@ public:
 
 	inline StaticStrings *GetStrings() const
 	{
-		return strings;
+		return strings.get();
 	}
 
 	inline StandardTypeCollection *GetStandardTypeCollection() const

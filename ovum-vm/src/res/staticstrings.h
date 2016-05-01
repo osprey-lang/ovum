@@ -87,7 +87,7 @@ struct StaticStringData
 class StaticStrings
 {
 public:
-	OVUM_NOINLINE static int Create(StaticStrings *&result);
+	OVUM_NOINLINE static std::unique_ptr<StaticStrings> New();
 	~StaticStrings();
 
 	::String *empty;
@@ -173,6 +173,7 @@ private:
 
 	StaticStrings();
 
+	bool Init();
 	void InitData();
 	void InitStrings();
 };

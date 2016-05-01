@@ -52,7 +52,6 @@ VM::~VM()
 	delete modules;
 	delete refSignatures;
 	delete standardTypeCollection;
-	delete strings;
 
 	delete mainThread;
 
@@ -115,14 +114,14 @@ int VM::Create(VMStartParams &params, VM *&result)
 		CHECKED_MEM(vm.get());
 
 		// Most things rely on static strings, so initialize them first.
-		CHECKED(StaticStrings::Create(vm->strings));
+		CHECKED_MEM(vm->strings = StaticStrings::New());
 
 		CHECKED(Thread::Create(vm.get(), vm->mainThread));
 		CHECKED(GC::Create(vm.get(), vm->gc));
 		CHECKED(StandardTypeCollection::Create(vm.get(), vm->standardTypeCollection));
 		CHECKED_MEM(vm->modules = new(std::nothrow) ModulePool(10));
 		CHECKED_MEM(vm->refSignatures = new(std::nothrow) RefSignaturePool());
-		
+
 		CHECKED(vm->LoadModules(params));
 		CHECKED(vm->InitArgs(params.argc, params.argv));
 
