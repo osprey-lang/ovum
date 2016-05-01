@@ -1337,7 +1337,7 @@ int Thread::FindErrorHandler(int32_t maxIndex)
 	for (int32_t t = 0; t < maxIndex; t++)
 	{
 		TryBlock &tryBlock = method->tryBlocks[t];
-		if (offset >= tryBlock.tryStart && offset <= tryBlock.tryEnd)
+		if (tryBlock.Contains(offset))
 		{
 			// The ip is inside a try block! Let's find a catch or finally.
 			switch (tryBlock.kind)
@@ -1402,22 +1402,22 @@ int Thread::EvaluateLeave(StackFrame *frame, int32_t target)
 {
 	typedef TryBlock::TryKind TryKind;
 
-	// Note: the IP currently points to the leave instruction.
-	// We must add the size of the instructions to get the right ipOffset and tOffset.
-	const size_t TOTAL_INSTR_SIZE = // including the opcode, not just its args
+	// Note: the IP currently points to the leave instruction. We must add the size
+	// of the opcode and the instruction arguments to get the right target offset.
+	const size_t LEAVE_SIZE =
 		OVUM_ALIGN_TO(sizeof(IntermediateOpcode), opcode_args::ALIGNMENT) +
 		opcode_args::BRANCH_SIZE;
 
 	MethodOverload *method = frame->method;
-	const uint32_t ipOffset = (uint32_t)(this->ip + TOTAL_INSTR_SIZE - method->entry);
-	const uint32_t tOffset  = ipOffset + target;
+	const uint32_t ipOffset = (uint32_t)(this->ip - method->entry);
+	const uint32_t tOffset = ipOffset + target + LEAVE_SIZE;
 	for (int32_t t = 0; t < method->tryBlockCount; t++)
 	{
 		TryBlock &tryBlock = method->tryBlocks[t];
 		if (tryBlock.kind == TryKind::FINALLY &&
-			ipOffset >= tryBlock.tryStart && ipOffset <= tryBlock.tryEnd &&
-			(tOffset < tryBlock.tryStart || tOffset >= tryBlock.tryEnd) &&
-			(tOffset < tryBlock.finallyBlock.finallyStart || tOffset >= tryBlock.finallyBlock.finallyEnd))
+			tryBlock.Contains(ipOffset) &&
+			!tryBlock.Contains(tOffset) &&
+			!tryBlock.finallyBlock.Contains(tOffset))
 		{
 			// Evaluate the finally!
 			uint8_t *const prevIp = this->ip;

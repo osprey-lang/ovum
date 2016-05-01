@@ -12,6 +12,11 @@ struct CatchBlock
 	uint32_t caughtTypeId;
 	uint32_t catchStart;
 	uint32_t catchEnd;
+
+	inline bool Contains(uint32_t offset) const
+	{
+		return catchStart <= offset && offset < catchEnd;
+	}
 };
 
 struct CatchBlocks
@@ -24,6 +29,11 @@ struct FinallyBlock
 {
 	uint32_t finallyStart;
 	uint32_t finallyEnd;
+
+	inline bool Contains(uint32_t offset) const
+	{
+		return finallyStart <= offset && offset < finallyEnd;
+	}
 };
 
 class TryBlock
@@ -64,6 +74,11 @@ public:
 			catches.blocks = nullptr;
 			catches.count = 0;
 		}
+	}
+
+	inline bool Contains(uint32_t offset) const
+	{
+		return tryStart <= offset && offset < tryEnd;
 	}
 };
 
