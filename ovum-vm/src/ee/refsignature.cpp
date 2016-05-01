@@ -3,6 +3,36 @@
 namespace ovum
 {
 
+RefSignature::RefSignature(uint32_t mask, RefSignaturePool *pool)
+{
+	if (mask & SignatureKindMask)
+	{
+		const LongRefSignature *signature = pool->Get(mask & SignatureDataMask);
+		paramCount = signature->paramCount;
+		longMask = signature->maskValues;
+	}
+	else
+	{
+		paramCount = MaxShortParamCount;
+		shortMask = mask & SignatureDataMask;
+	}
+}
+
+bool RefSignature::IsParamRef(ovlocals_t index) const
+{
+	if (paramCount > MaxShortParamCount)
+	{
+		uint32_t mask = longMask[index / 32];
+		return ((mask >> index % 32) & 1) == 1;
+	}
+	else
+	{
+		if (index > MaxShortParamCount)
+			return false;
+		return ((shortMask >> index) & 1) == 1;
+	}
+}
+
 LongRefSignature::LongRefSignature(ovlocals_t paramCount)
 {
 	uint32_t maskCount = (paramCount + 31) / 32;
@@ -18,6 +48,30 @@ LongRefSignature::~LongRefSignature()
 {
 	delete[] maskValues;
 	maskValues = nullptr;
+}
+
+bool LongRefSignature::IsParamRef(ovlocals_t index) const
+{
+	uint32_t mask = maskValues[index / 32];
+	return ((mask >> index % 32) & 1) == 1;
+}
+
+void LongRefSignature::SetParam(ovlocals_t index, bool isRef)
+{
+	uint32_t *mask = maskValues + index / 32;
+	index %= 32;
+	if (isRef)
+		*mask |= 1 << index;
+	else
+		*mask &= ~(1 << index);
+}
+
+bool LongRefSignature::HasRefs() const
+{
+	for (ovlocals_t i = 0; i < paramCount / 32; i++)
+		if (maskValues[i] != 0)
+			return true;
+	return false;
 }
 
 bool LongRefSignature::Equals(const LongRefSignature &other) const
@@ -82,6 +136,29 @@ RefSignatureBuilder::~RefSignatureBuilder()
 	{
 		delete longSignature;
 		longSignature = nullptr;
+	}
+}
+
+bool RefSignatureBuilder::IsParamRef(ovlocals_t index) const
+{
+	if (isLong)
+		return longSignature->IsParamRef(index);
+	else
+		return ((shortMask >> index) & 1) == 1;
+}
+
+void RefSignatureBuilder::SetParam(ovlocals_t index, bool isRef)
+{
+	if (isLong)
+	{
+		longSignature->SetParam(index, isRef);
+	}
+	else
+	{
+		if (isRef)
+			shortMask |= 1 << index;
+		else
+			shortMask &= ~(1 << index);
 	}
 }
 

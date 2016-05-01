@@ -73,20 +73,7 @@ private:
 public:
 	RefSignature(uint32_t mask, RefSignaturePool *pool);
 
-	inline bool IsParamRef(ovlocals_t index) const
-	{
-		if (paramCount > MaxShortParamCount)
-		{
-			uint32_t mask = longMask[index / 32];
-			return ((mask >> index % 32) & 1) == 1;
-		}
-		else
-		{
-			if (index > MaxShortParamCount)
-				return false;
-			return ((shortMask >> index) & 1) == 1;
-		}
-	}
+	bool IsParamRef(ovlocals_t index) const;
 
 	static const ovlocals_t MaxShortParamCount = 31;
 	static const uint32_t SignatureKindMask = 0x80000000u;
@@ -106,29 +93,11 @@ public:
 
 	~LongRefSignature();
 
-	inline bool IsParamRef(ovlocals_t index) const
-	{
-		uint32_t mask = maskValues[index / 32];
-		return ((mask >> index % 32) & 1) == 1;
-	}
+	bool IsParamRef(ovlocals_t index) const;
 
-	inline void SetParam(ovlocals_t index, bool isRef)
-	{
-		uint32_t *mask = maskValues + index / 32;
-		index %= 32;
-		if (isRef)
-			*mask |= 1 << index;
-		else
-			*mask &= ~(1 << index);
-	}
+	void SetParam(ovlocals_t index, bool isRef);
 
-	inline bool HasRefs() const
-	{
-		for (ovlocals_t i = 0; i < paramCount / 32; i++)
-			if (maskValues[i] != 0)
-				return true;
-		return false;
-	}
+	bool HasRefs() const;
 
 	bool Equals(const LongRefSignature &other) const;
 
@@ -176,46 +145,11 @@ public:
 
 	~RefSignatureBuilder();
 
-	inline bool IsParamRef(ovlocals_t index) const
-	{
-		if (isLong)
-			return longSignature->IsParamRef(index);
-		else
-			return ((shortMask >> index) & 1) == 1;
-	}
+	bool IsParamRef(ovlocals_t index) const;
 
-	inline void SetParam(ovlocals_t index, bool isRef)
-	{
-		if (isLong)
-		{
-			longSignature->SetParam(index, isRef);
-		}
-		else
-		{
-			if (isRef)
-				shortMask |= 1 << index;
-			else
-				shortMask &= ~(1 << index);
-		}
-	}
+	void SetParam(ovlocals_t index, bool isRef);
 
 	uint32_t Commit(RefSignaturePool *pool);
 };
-
-// Keep this inline, for performance reasons
-inline RefSignature::RefSignature(uint32_t mask, RefSignaturePool *pool)
-{
-	if (mask & SignatureKindMask)
-	{
-		const LongRefSignature *signature = pool->Get(mask & SignatureDataMask);
-		paramCount = signature->paramCount;
-		longMask = signature->maskValues;
-	}
-	else
-	{
-		paramCount = MaxShortParamCount;
-		shortMask = mask & SignatureDataMask;
-	}
-}
 
 } // namespace ovum
