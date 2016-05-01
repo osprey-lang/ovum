@@ -6,9 +6,7 @@ namespace ovum
 {
 
 const char *const StandardTypeIniters::ListIniterFunctionName = "InitListInstance";
-const char *const StandardTypeIniters::ListConcatenatorFunctionName = "ConcatenateLists";
 const char *const StandardTypeIniters::HashIniterFunctionName = "InitHashInstance";
-const char *const StandardTypeIniters::HashConcatenatorFunctionName = "ConcatenateHashes";
 const char *const StandardTypeIniters::TypeIniterFunctionName = "InitTypeToken";
 
 int StandardTypeIniters::InitObjectType(VM *vm, Module *declModule, Type *type)

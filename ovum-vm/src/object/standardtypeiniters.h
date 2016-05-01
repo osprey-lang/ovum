@@ -22,9 +22,7 @@ public:
 
 private:
 	static const char *const ListIniterFunctionName;
-	static const char *const ListConcatenatorFunctionName;
 	static const char *const HashIniterFunctionName;
-	static const char *const HashConcatenatorFunctionName;
 	static const char *const TypeIniterFunctionName;
 };
 
