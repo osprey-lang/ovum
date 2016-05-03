@@ -1,0 +1,54 @@
+namespace aves;
+
+/// Summary: Implements {Iterable.skip}.
+private class SkipIterable is Iterable
+{
+	public new(this.inner, this.skipCount);
+
+	private inner;
+	private skipCount;
+
+	override skip(count)
+	{
+		count = int(count);
+		if count < 0:
+			throw new ArgumentRangeError("count");
+
+		return new SkipIterable(inner, skipCount + count);
+	}
+
+	iter
+	{
+		return new SkipIterator(inner.iter, skipCount);
+	}
+}
+
+private class SkipIterator is Iterator
+{
+	public new(this.inner, this.count);
+
+	private inner;
+	private count;
+	private hasMore = true;
+
+	override get current = inner.current;
+
+	override moveNext()
+	{
+		if hasMore
+		{
+			while count > 0
+			{
+				if not inner.moveNext()
+				{
+					hasMore = false;
+					return false;
+				}
+				count -= 1;
+			}
+
+			return hasMore = inner.moveNext();
+		}
+		return false;
+	}
+}

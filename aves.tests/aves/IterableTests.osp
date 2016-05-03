@@ -9,6 +9,471 @@ public class IterableTests is TestFixture
 {
 	public new() { new base("aves.Iterable tests"); }
 
+	private static failCallback1(a)
+	{
+		throw new AssertionError("Callback should not be called");
+	}
+
+	private static failCallback2(a, b)
+	{
+		throw new AssertionError("Callback should not be called");
+	}
+
+	// Wraps a list (or other specialised iterable) in a ReadOnlyIterable.
+	private wrap(items)
+	{
+		return new ReadOnlyIterable(items);
+	}
+
+	// map
+
+	public test_MapEmpty()
+	{
+		var sequence = Iterable.empty;
+		var mapped = sequence.map(failCallback1);
+		Assert.collectionsMatch(mapped, [], failCallback2);
+	}
+
+	public test_MapIdentity()
+	{
+		var sequence = wrap([1, 2, 3]);
+		var mapped = sequence.map(@x = x);
+		Assert.collectionsMatch(mapped, [1, 2, 3], Assert.areEqual);
+	}
+
+	public test_MapDouble()
+	{
+		var sequence = wrap([1, 2, 3]);
+		var mapped = sequence.map(@x = x * 2);
+		Assert.collectionsMatch(mapped, [2, 4, 6], Assert.areEqual);
+	}
+
+	public test_MapNullCallback()
+	{
+		var sequence = wrap([1, 2, 3]);
+		Assert.throws(typeof(ArgumentNullError), @= sequence.map(null));
+	}
+
+	public test_MapInvalidCallback()
+	{
+		var sequence = wrap([1, 2, 3]);
+		var mapped;
+		Assert.doesNotThrow(@{ mapped = sequence.map("not a callback"); });
+		// The callback shouldn't be called until you try to advance the iterator.
+		Assert.throws(typeof(TypeError), mapped.toList);
+	}
+
+	// filter
+
+	public test_FilterEmpty()
+	{
+		var sequence = Iterable.empty;
+		var filtered = sequence.filter(failCallback1);
+		Assert.collectionsMatch(filtered, [], failCallback2);
+	}
+
+	public test_FilterIdentity()
+	{
+		var item1 = new Object();
+		var item2 = new Object();
+		var sequence = wrap([0, item1, null, item2, false]);
+		var filtered = sequence.filter(@x = x);
+		// The filtered iterator should contain item1 and item2,
+		// in that order. The other (falsy) items are filtered out.
+		Assert.collectionsMatch(filtered, [item1, item2], Assert.areSameRef);
+	}
+
+	public test_FilterNullCallback()
+	{
+		var sequence = wrap([1, 2, 3]);
+		Assert.throws(typeof(ArgumentNullError), @= sequence.filter(null));
+	}
+
+	public test_FilterInvalidCallback()
+	{
+		var sequence = wrap([1, 2, 3]);
+		var filtered;
+		Assert.doesNotThrow(@{ filtered = sequence.filter("not a callback"); });
+		// The callback shouldn't be called until you try to advance the iterator
+		Assert.throws(typeof(TypeError), filtered.toList);
+	}
+
+	// fold
+
+	public test_FoldEmptyWithoutInitial()
+	{
+		var sequence = Iterable.empty;
+		Assert.throws(typeof(InvalidStateError), @= sequence.fold(failCallback2));
+	}
+
+	public test_FoldEmptyWithInitial()
+	{
+		var sequence = Iterable.empty;
+		var initial = new Object();
+		Assert.areSameRef(initial, sequence.fold(initial, failCallback2));
+	}
+
+	public test_FoldOneWithoutInitial()
+	{
+		var value = new Object();
+		var sequence = wrap([value]);
+		// The callback should not be called when folding
+		// a one-element sequence without initial value.
+		Assert.areSameRef(value, sequence.fold(failCallback2));
+	}
+
+	public test_FoldOneWithInitial()
+	{
+		var sequence = wrap([1]);
+		// The callback *should* be called when folding a
+		// one-element sequence with an initial value.
+		Assert.areEqual(1 + 2, sequence.fold(2, @+));
+	}
+
+	public test_FoldTwoWithoutInitial()
+	{
+		var sequence = wrap([1, 2]);
+		Assert.areEqual(1 + 2, sequence.fold(@+));
+	}
+
+	public test_FoldTwoWithInitial()
+	{
+		var sequence = wrap([1, 2]);
+		Assert.areEqual(1 + 2 + 3, sequence.fold(3, @+));
+	}
+
+	public test_FoldWithInvalidCallbackWithoutInitial()
+	{
+		var sequence = wrap([1, 2, 3]);
+		Assert.throws(typeof(ArgumentNullError), @= sequence.fold(null));
+	}
+
+	public test_FoldWithInvalidCallbackWithInitial()
+	{
+		var sequence = wrap([1, 2, 3]);
+		Assert.throws(typeof(ArgumentNullError), @= sequence.fold(null, null));
+	}
+
+	// first
+
+	public test_FirstOfEmpty()
+	{
+		var sequence = Iterable.empty;
+		Assert.throws(typeof(InvalidStateError), @= sequence.first());
+	}
+
+	public test_FirstOf1()
+	{
+		var sequence = wrap([1]);
+		Assert.areEqual(sequence.first(), 1);
+	}
+
+	public test_FirstOf2()
+	{
+		var sequence = wrap([1, 2]);
+		Assert.areEqual(sequence.first(), 1);
+	}
+
+	public test_FirstPredicateOfEmpty()
+	{
+		var sequence = Iterable.empty;
+		// Since the sequence is empty, the callback should not be called
+		Assert.throws(typeof(InvalidStateError), @= sequence.first(failCallback1));
+	}
+
+	public test_FirstPredicateWithNoMatches()
+	{
+		var sequence = wrap([1, 3, 5]);
+		Assert.throws(typeof(InvalidStateError), @= sequence.first(@x = x % 2 == 0));
+	}
+
+	public test_FirstPredicateWithOneMatch()
+	{
+		var list = [1, 2];
+		var sequence = wrap(list);
+		Assert.areEqual(sequence.first(@x = x % 2 == 1), 1);
+		Assert.areEqual(sequence.first(@x = x % 2 == 0), 2);
+	}
+
+	public test_FirstPredicateWithSeveralMatches()
+	{
+		var list = [1, 2, 3, 4];
+		var sequence = wrap(list);
+		Assert.areEqual(sequence.first(@x = x % 2 == 1), 1);
+		Assert.areEqual(sequence.first(@x = x % 2 == 0), 2);
+	}
+
+	public test_FirstPredicateWithInvalidCallback()
+	{
+		var sequence = wrap([1, 2]);
+		Assert.throws(typeof(ArgumentNullError), @= sequence.first(null));
+	}
+
+	// firstOrNull
+
+	public test_FirstOrNullOfEmpty()
+	{
+		var sequence = Iterable.empty;
+		Assert.isNull(sequence.firstOrNull());
+	}
+
+	public test_FirstOrNullOf1()
+	{
+		var sequence = wrap([1]);
+		Assert.areEqual(sequence.firstOrNull(), 1);
+	}
+
+	public test_FirstOrNullOf2()
+	{
+		var sequence = wrap([1, 2]);
+		Assert.areEqual(sequence.firstOrNull(), 1);
+	}
+
+	public test_FirstOrNullPredicateOfEmpty()
+	{
+		var sequence = Iterable.empty;
+		// Since the sequence is empty, the callback should not be called
+		Assert.isNull(sequence.firstOrNull(failCallback1));
+	}
+
+	public test_FirstOrNullPredicateWithNoMatches()
+	{
+		var sequence = wrap([1, 3, 5]);
+		Assert.isNull(sequence.firstOrNull(@x = x % 2 == 0));
+	}
+
+	public test_FirstOrNullPredicateWithOneMatch()
+	{
+		var list = [1, 2];
+		var sequence = wrap(list);
+		Assert.areEqual(sequence.firstOrNull(@x = x % 2 == 1), 1);
+		Assert.areEqual(sequence.firstOrNull(@x = x % 2 == 0), 2);
+	}
+
+	public test_FirstOrNullPredicateWithSeveralMatches()
+	{
+		var list = [1, 2, 3, 4];
+		var sequence = wrap(list);
+		Assert.areEqual(sequence.firstOrNull(@x = x % 2 == 1), 1);
+		Assert.areEqual(sequence.firstOrNull(@x = x % 2 == 0), 2);
+	}
+
+	public test_FirstOrNullPredicateWithInvalidCallback()
+	{
+		var sequence = wrap([1, 2]);
+		Assert.throws(typeof(ArgumentNullError), @= sequence.firstOrNull(null));
+	}
+
+	// last
+
+	public test_LastOfEmpty()
+	{
+		var sequence = Iterable.empty;
+		Assert.throws(typeof(InvalidStateError), @= sequence.last());
+	}
+
+	public test_LastOf1()
+	{
+		var sequence = wrap([1]);
+		Assert.areEqual(sequence.last(), 1);
+	}
+
+	public test_LastOf2()
+	{
+		var sequence = wrap([1, 2]);
+		Assert.areEqual(sequence.last(), 2);
+	}
+
+	public test_LastPredicateOfEmpty()
+	{
+		var sequence = Iterable.empty;
+		// Since the sequence is empty, the callback should not be called
+		Assert.throws(typeof(InvalidStateError), @= sequence.last(failCallback1));
+	}
+
+	public test_LastPredicateWithNoMatches()
+	{
+		var sequence = wrap([1, 3, 5]);
+		Assert.throws(typeof(InvalidStateError), @= sequence.last(@x = x % 2 == 0));
+	}
+
+	public test_LastPredicateWithOneMatch()
+	{
+		var list = [1, 2];
+		var sequence = wrap(list);
+		Assert.areEqual(sequence.last(@x = x % 2 == 1), 1);
+		Assert.areEqual(sequence.last(@x = x % 2 == 0), 2);
+	}
+
+	public test_LastPredicateWithSeveralMatches()
+	{
+		var list = [1, 2, 3, 4];
+		var sequence = wrap(list);
+		Assert.areEqual(sequence.last(@x = x % 2 == 1), 3);
+		Assert.areEqual(sequence.last(@x = x % 2 == 0), 4);
+	}
+
+	public test_LastPredicateWithInvalidCallback()
+	{
+		var sequence = wrap([1, 2]);
+		Assert.throws(typeof(ArgumentNullError), @= sequence.last(null));
+	}
+
+	// lastOrNull
+
+	public test_LastOrNullOfEmpty()
+	{
+		var sequence = Iterable.empty;
+		Assert.isNull(sequence.lastOrNull());
+	}
+
+	public test_LastOrNullOf1()
+	{
+		var sequence = wrap([1]);
+		Assert.areEqual(sequence.lastOrNull(), 1);
+	}
+
+	public test_LastOrNullOf2()
+	{
+		var sequence = wrap([1, 2]);
+		Assert.areEqual(sequence.lastOrNull(), 2);
+	}
+
+	public test_LastOrNullPredicateOfEmpty()
+	{
+		var sequence = Iterable.empty;
+		// Since the sequence is empty, the callback should not be called
+		Assert.isNull(sequence.lastOrNull(failCallback1));
+	}
+
+	public test_LastOrNullPredicateWithNoMatches()
+	{
+		var sequence = wrap([1, 3, 5]);
+		Assert.isNull(sequence.lastOrNull(@x = x % 2 == 0));
+	}
+
+	public test_LastOrNullPredicateWithOneMatch()
+	{
+		var list = [1, 2];
+		var sequence = wrap(list);
+		Assert.areEqual(sequence.lastOrNull(@x = x % 2 == 1), 1);
+		Assert.areEqual(sequence.lastOrNull(@x = x % 2 == 0), 2);
+	}
+
+	public test_LastOrNullPredicateWithSeveralMatches()
+	{
+		var list = [1, 2, 3, 4];
+		var sequence = wrap(list);
+		Assert.areEqual(sequence.lastOrNull(@x = x % 2 == 1), 3);
+		Assert.areEqual(sequence.lastOrNull(@x = x % 2 == 0), 4);
+	}
+
+	public test_LastOrNullPredicateWithInvalidCallback()
+	{
+		var sequence = wrap([1, 2]);
+		Assert.throws(typeof(ArgumentNullError), @= sequence.lastOrNull(null));
+	}
+
+	// skip
+
+	public test_Skip0OfEmpty()
+	{
+		var sequence = Iterable.empty;
+		var skipped = sequence.skip(0);
+		Assert.collectionsMatch(skipped, [], failCallback2);
+	}
+
+	public test_SkipPastEndOfEmpty()
+	{
+		var sequence = Iterable.empty;
+		var skipped = sequence.skip(5);
+		Assert.collectionsMatch(skipped, [], failCallback2);
+	}
+
+	public test_Skip2Of4()
+	{
+		var sequence = wrap([1, 2, 3, 4]);
+		var skipped = sequence.skip(2);
+		Assert.collectionsMatch(skipped, [3, 4], Assert.areEqual);
+	}
+
+	public test_Skip4Of2()
+	{
+		var sequence = wrap([1, 2]);
+		var skipped = sequence.skip(4);
+		Assert.collectionsMatch(skipped, [], failCallback2);
+	}
+
+	public test_SkipNonNumericAmount()
+	{
+		var sequence = Iterable.empty;
+		Assert.throws(typeof(TypeConversionError), @= sequence.skip("3"));
+	}
+
+	public test_SkipNegativeAmount()
+	{
+		var sequence = Iterable.empty;
+		Assert.throws(typeof(ArgumentRangeError), @= sequence.skip(-1));
+	}
+
+	// join
+
+	public test_JoinEmpty()
+	{
+		var sequence = Iterable.empty;
+		Assert.areEqual(sequence.join(","), "");
+	}
+
+	public test_JoinOne()
+	{
+		var sequence = wrap(["a"]);
+		Assert.areEqual(sequence.join(","), "a");
+	}
+
+	public test_JoinTwo()
+	{
+		var sequence = wrap(["a", "b"]);
+		Assert.areEqual(sequence.join(","), "a,b");
+	}
+
+	public test_JoinThree()
+	{
+		var sequence = wrap(["a", "b", "c"]);
+		Assert.areEqual(sequence.join(","), "a,b,c");
+	}
+
+	// joinNatural
+
+	public test_JoinNaturalEmpty()
+	{
+		var sequence = Iterable.empty;
+		Assert.areEqual(sequence.joinNatural(",", "&"), "");
+	}
+
+	public test_JoinNaturalOne()
+	{
+		var sequence = wrap(["a"]);
+		Assert.areEqual(sequence.joinNatural(",", "&"), "a");
+	}
+
+	public test_JoinNaturalTwo()
+	{
+		var sequence = wrap(["a", "b"]);
+		Assert.areEqual(sequence.joinNatural(",", "&"), "a&b");
+	}
+
+	public test_JoinNaturalThree()
+	{
+		var sequence = wrap(["a", "b", "c"]);
+		Assert.areEqual(sequence.joinNatural(",", "&"), "a,b&c");
+	}
+
+	public test_JoinNaturalFour()
+	{
+		var sequence = wrap(["a", "b", "c", "d"]);
+		Assert.areEqual(sequence.joinNatural(",", "&"), "a,b,c&d");
+	}
+
 	// range tests
 
 	public test_RangeEmpty()

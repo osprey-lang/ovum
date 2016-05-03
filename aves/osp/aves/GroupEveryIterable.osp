@@ -1,0 +1,52 @@
+namespace aves;
+
+/// Summary: Implements {Iterable.groupEvery}.
+private class GroupEveryIterable is Iterable
+{
+	public new(this.inner, this.frequency);
+
+	private inner;
+	private frequency;
+
+	iter
+	{
+		return new GroupEveryIterator(inner.iter, frequency);
+	}
+}
+
+private class GroupEveryIterator is Iterator
+{
+	public new(this.inner, this.frequency);
+
+	private inner;
+	private frequency;
+	private cur;
+	private ended = false;
+
+	override get current = cur;
+
+	override moveNext()
+	{
+		if not ended
+		{
+			var items = [];
+
+			while ended = inner.moveNext()
+			{
+				items.add(inner.current);
+
+				if items.length == frequency:
+					break;
+			}
+
+			// Only return the list if we actually collected something
+			if items.length > 0
+			{
+				cur = items;
+				return true;
+			}
+		}
+
+		return false;
+	}
+}

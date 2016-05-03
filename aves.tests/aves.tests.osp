@@ -1,5 +1,3 @@
-use "WrappedIterator.osp";
-
 use aves;
 use aves.reflection; // for Module
 use testing.unit;

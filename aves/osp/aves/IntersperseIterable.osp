@@ -1,0 +1,52 @@
+namespace aves;
+
+/// Summary: Implements {Iterable.intersperse}.
+private class IntersperseIterable is Iterable
+{
+	public new(this.inner, this.value);
+	public new(this.inner, this.value, this.frequency);
+
+	private inner;
+	private value;
+	private frequency = -1;
+
+	private intersperseIter(inner, value)
+	{
+		if inner.moveNext()
+		{
+			yield inner.current;
+
+			while inner.moveNext()
+			{
+				yield value;
+				yield inner.current;
+			}
+		}
+	}
+
+	private intersperseIter(inner, value, frequency)
+	{
+		if inner.moveNext()
+		{
+			yield inner.current;
+
+			var i = 1;
+			while inner.moveNext()
+			{
+				if i == 0:
+					yield value;
+				i = (i + 1) % frequency;
+				yield inner.current;
+			}
+		}
+	}
+
+	iter
+	{
+		var i = inner.iter;
+		if frequency > 1:
+			return intersperseIter(i, value, frequency);
+		else
+			return intersperseIter(i, value);
+	}
+}

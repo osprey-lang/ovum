@@ -3,8 +3,7 @@ namespace aves;
 /// Summary: Represents the base of all sequence and collection types. An
 ///          {Iterable} can be iterated over any number of times, and is
 ///          typically used for collection types.
-///
-///          This class should be used as the base class of all collection
+/// Remarks: This class should be used as the base class of all collection
 ///          types, because {Iterable} exposes a variety of useful methods
 ///          for manipulating the sequence or collection. These include {map},
 ///          {filter}, {group}, {fold}, {take}, {skip}, {intersperse} and
@@ -36,7 +35,13 @@ public abstract class Iterable
 	/// Remarks: This method returns false if the sequence is empty.
 	public overridable any()
 	{
-		return this.iter.any();
+		// This method could equivalently be written as:
+		//   return any(bool);
+		// but it's nice to avoid the function call for large sequences.
+		for item in this:
+			if item:
+				return true;
+		return false;
 	}
 	/// Summary: Determines whether all items in the sequence match
 	///          the given predicate.
@@ -46,10 +51,17 @@ public abstract class Iterable
 	///          otherwise.
 	/// Returns: True if all items in the sequence match the predicate;
 	///          otherwise, false.
-	/// Throws ArgumentNullError: {predicate} is null.
+	/// Throws ArgumentNullError:
+	///          {predicate} is null.
 	public overridable any(predicate)
 	{
-		return this.iter.any(predicate);
+		if predicate is null:
+			throw new ArgumentNullError("predicate");
+
+		for item in this:
+			if predicate(item):
+				return true;
+		return false;
 	}
 
 	/// Summary: Determines whether all items in the sequence are
@@ -59,7 +71,13 @@ public abstract class Iterable
 	/// Remarks: This method returns true if the sequence is empty.
 	public overridable all()
 	{
-		return this.iter.all();
+		// This method could equivalently be written as:
+		//   return all(bool);
+		// but it's nice to avoid the function call for large sequences.
+		for item in this:
+			if not item:
+				return false;
+		return true;
 	}
 	/// Summary: Determines whether any item in the sequence matches
 	///          the given predicate.
@@ -72,7 +90,13 @@ public abstract class Iterable
 	/// Throws ArgumentNullError: {predicate} is null.
 	public overridable all(predicate)
 	{
-		return this.iter.all(predicate);
+		if predicate is null:
+			throw new ArgumentNullError("predicate");
+
+		for item in this:
+			if not predicate(item):
+				return false;
+		return true;
 	}
 
 	/// Summary: Counts the items in the sequence.
@@ -80,8 +104,7 @@ public abstract class Iterable
 	public overridable count()
 	{
 		var length = 0;
-		var iterator = this.iter;
-		while iterator.moveNext():
+		for item in this:
 			length += 1;
 		return length;
 	}
@@ -99,9 +122,8 @@ public abstract class Iterable
 			throw new ArgumentNullError("predicate");
 
 		var length = 0;
-		var iterator = this.iter;
-		while iterator.moveNext():
-			if predicate(iterator.current):
+		for item in this:
+			if predicate(item):
 				length += 1;
 		return length;
 	}
@@ -117,7 +139,8 @@ public abstract class Iterable
 		if func is null:
 			throw new ArgumentNullError("func");
 
-		this.iter.each(func);
+		for item in this:
+			func(item);
 	}
 
 	/// Summary: Returns a new {Iterable} which produces the items from
@@ -144,7 +167,12 @@ public abstract class Iterable
 	///          The collection is empty.
 	public overridable first()
 	{
-		return this.iter.first();
+		var iterator = this.iter;
+
+		if iterator.moveNext():
+			return iterator.current;
+
+		throw new InvalidStateError(emptySequence);
 	}
 	/// Summary: Returns the first element in the sequence that matches
 	///          the given predicate.
@@ -162,7 +190,21 @@ public abstract class Iterable
 	///          No item in the collection matches the predicate.
 	public overridable first(predicate)
 	{
-		return this.iter.first(predicate);
+		if predicate is null:
+			throw new ArgumentNullError("predicate");
+
+		var iterator = this.iter;
+		if not iterator.moveNext():
+			throw new InvalidStateError(emptySequence);
+
+		do
+		{
+			var item = iterator.current;
+			if predicate(item):
+				return item;
+		} while iterator.moveNext();
+
+		throw new InvalidStateError(noMatchFound);
 	}
 
 	/// Summary: Returns the first element in the sequence, or null
@@ -171,7 +213,10 @@ public abstract class Iterable
 	///          sequence is empty.
 	public overridable firstOrNull()
 	{
-		return this.iter.firstOrNull();
+		var iterator = this.iter;
+		if iterator.moveNext():
+			return iterator.current;
+		return null;
 	}
 	/// Summary: Returns the first element in the sequence that matches
 	///          the given predicate, or null if there is no match.
@@ -186,7 +231,14 @@ public abstract class Iterable
 	///          was no match.
 	public overridable firstOrNull(predicate)
 	{
-		return this.iter.firstOrNull(predicate);
+		if predicate is null:
+			throw new ArgumentNullError("predicate");
+
+		for item in this:
+			if predicate(item):
+				return item;
+
+		return null;
 	}
 
 	/// Summary: Applies an accumulator function over the sequence.
@@ -200,7 +252,18 @@ public abstract class Iterable
 	///          takes an initial accumulator value.
 	public overridable fold(func)
 	{
-		return this.iter.fold(func);
+		if func is null:
+			throw new ArgumentNullError("func");
+
+		var iterator = this.iter;
+		if not iterator.moveNext():
+			throw new InvalidStateError("Cannot fold an empty sequence without an initial value.");
+
+		var init = iterator.current;
+		while iterator.moveNext():
+			init = func(init, iterator.current);
+
+		return init;
 	}
 	/// Summary: Applies an accumulator function over the sequence using the specified initial
 	///          accumulator value.
@@ -213,7 +276,13 @@ public abstract class Iterable
 	///          {func} is null.
 	public overridable fold(init, func)
 	{
-		return this.iter.fold(init, func);
+		if func is null:
+			throw new ArgumentNullError("func");
+
+		for item in this:
+			init = func(init, item);
+
+		return init;
 	}
 
 	/// Summary: Joins the values of the sequence into a string, separated by the
@@ -229,7 +298,21 @@ public abstract class Iterable
 	///          empty string.
 	public overridable join(separator)
 	{
-		return this.iter.join(separator);
+		separator = string(separator);
+		var output = new StringBuffer();
+
+		var first = true;
+		for item in this
+		{
+			if not first:
+				output.append(separator);
+			else:
+				first = false;
+
+			output.append(item);
+		}
+
+		return output.toString();
 	}
 
 	/// Summary: Joins the values of the sequence into a “natural” list, where the
@@ -249,7 +332,41 @@ public abstract class Iterable
 	///          empty string.
 	public overridable joinNatural(separator, lastSeparator)
 	{
-		return this.iter.joinNatural(separator, lastSeparator);
+		separator = string(separator);
+		lastSeparator = string(lastSeparator);
+
+		var iterator = this.iter;
+		if not iterator.moveNext():
+			return "";
+
+		var output = new StringBuffer();
+		var first = true;
+		var prevItem = iterator.current;
+		while iterator.moveNext()
+		{
+			// If we get here, we know prevItem definitely isn't
+			// the last item in the sequence. So we can append it
+			// to the output buffer.
+			if not first
+			{
+				output.append(separator);
+				output.append(prevItem);
+			}
+			else
+			{
+				output.append(prevItem);
+				first = false;
+			}
+			prevItem = iterator.current;
+		}
+		// And once we get here, we know prevItem was definitely
+		// the last item. If it wasn't also the first, we can
+		// append the lastSeparator.
+		if not first:
+			output.append(lastSeparator);
+		output.append(prevItem);
+
+		return output.toString();
 	}
 
 	/// Summary: Groups the contents of the sequence according to a key selector
@@ -271,7 +388,7 @@ public abstract class Iterable
 		if keyFunc is null:
 			throw new ArgumentNullError("keyFunc");
 
-		return this.iter.group(keyFunc);
+		return group(keyFunc, @x = x, null);
 	}
 	/// Summary: Groups the contents of the sequence according to a key selector
 	///          function, and simultaneously transforms the values according to
@@ -298,7 +415,7 @@ public abstract class Iterable
 		if valueFunc is null:
 			throw new ArgumentNullError("valueFunc");
 
-		return this.iter.group(keyFunc, valueFunc);
+		return group(keyFunc, valueFunc, null);
 	}
 	/// Summary: Groups the contents of the sequence according to a key selector
 	///          function, and simultaneously transforms the values according to
@@ -329,9 +446,23 @@ public abstract class Iterable
 		if keyComparer is null:
 			keyComparer = EqualityComparer.default;
 		else if keyComparer is not EqualityComparer:
-			throw new ArgumentError("keyComparer must be an aves.EqualityComparer or null.");
+			throw new ArgumentTypeError("keyComparer", typeof(EqualityComparer));
 
-		return this.iter.group(keyFunc, valueFunc, keyComparer);
+		var result = new Hash(5, keyComparer);
+
+		for item in this
+		{
+			var key = keyFunc(item);
+			var value = valueFunc(item);
+
+			var groupValues;
+			if not result.tryGet(key, ref groupValues):
+				result.add(key, groupValues = new List(2));
+
+			groupValues.add(value);
+		}
+
+		return result;
 	}
 
 	/// Summary: Groups the contents of the sequence into fixed-size intervals.
@@ -397,7 +528,17 @@ public abstract class Iterable
 	///          to find the last element.
 	public overridable last()
 	{
-		return this.iter.last();
+		var iterator = this.iter;
+		if not iterator.moveNext():
+			throw new InvalidStateError(emptySequence);
+
+		var output;
+		do
+		{
+			output = iterator.current;
+		} while iterator.moveNext();
+
+		return output;
 	}
 	/// Summary: Returns the last element in the sequence that matches the
 	///          specified predicate.
@@ -419,7 +560,30 @@ public abstract class Iterable
 	///          called for every single element.
 	public overridable last(predicate)
 	{
-		return this.iter.last(predicate);
+		if predicate is null:
+			throw new ArgumentNullError("predicate");
+
+		var iterator = this.iter;
+		if not iterator.moveNext():
+			throw new InvalidStateError(emptySequence);
+
+		var hasMatch = false;
+		var output = null;
+
+		do
+		{
+			var item = iterator.current;
+			if predicate(item)
+			{
+				hasMatch = true;
+				output = item;
+			}
+		} while iterator.moveNext();
+
+		if not hasMatch:
+			throw new InvalidStateError(noMatchFound);
+
+		return output;
 	}
 
 	/// Summary: Returns the last element in the sequence, or null if the
@@ -432,7 +596,10 @@ public abstract class Iterable
 	///          to find the last element.
 	public overridable lastOrNull()
 	{
-		return this.iter.lastOrNull();
+		var output = null;
+		for item in this:
+			output = item;
+		return output;
 	}
 	/// Summary: Returns the last element in the sequence that matches the
 	///          specified predicate, or null if there is no match.
@@ -451,7 +618,14 @@ public abstract class Iterable
 	///          called for every single element.
 	public overridable lastOrNull(predicate)
 	{
-		return this.iter.lastOrNull(predicate);
+		if predicate is null:
+			throw new ArgumentNullError("predicate");
+
+		var output = null;
+		for item in this:
+			if predicate(item):
+				output = item;
+		return output;
 	}
 
 	/// Summary: Transforms the items in this sequence.
@@ -725,211 +899,7 @@ public abstract class Iterable
 
 		return new RangeIterable(start, end, step);
 	}
-}
 
-private class FilterIterable is Iterable
-{
-	public new(this.inner, this.predicate);
-
-	private inner;
-	private predicate;
-
-	iter
-	{
-		return inner.iter.filter(predicate);
-	}
-}
-
-private class MapIterable is Iterable
-{
-	public new(this.inner, this.func);
-
-	private inner;
-	private func;
-
-	iter
-	{
-		return inner.iter.map(func);
-	}
-}
-
-private class IntersperseIterable is Iterable
-{
-	public new(this.inner, this.value);
-	public new(this.inner, this.value, this.frequency);
-
-	private inner;
-	private value;
-	private frequency = -1;
-
-	iter
-	{
-		var i = inner.iter;
-		if frequency > 0:
-			return i.intersperse(value, frequency);
-		else
-			return i.intersperse(value);
-	}
-}
-
-private class GroupEveryIterable is Iterable
-{
-	public new(this.inner, this.frequency);
-
-	private inner;
-	private frequency;
-
-	iter
-	{
-		return inner.iter.groupEvery(frequency);
-	}
-}
-
-private class TakeIterable is Iterable
-{
-	public new(this.inner, this.takeCount);
-
-	private inner;
-	private takeCount;
-
-	override take(count)
-	{
-		count = int(count);
-		if count < 0:
-			throw new ArgumentRangeError("count");
-
-		return new TakeIterable(inner, math.min(count, takeCount));
-	}
-
-	iter
-	{
-		return inner.iter.take(takeCount);
-	}
-}
-
-private class TakeWhileIterable is Iterable
-{
-	public new(this.inner, this.predicate);
-
-	private inner;
-	private predicate;
-
-	iter
-	{
-		return inner.iter.takeWhile(predicate);
-	}
-}
-
-private class SkipIterable is Iterable
-{
-	public new(this.inner, this.skipCount);
-
-	private inner;
-	private skipCount;
-
-	override skip(count)
-	{
-		count = int(count);
-		if count < 0:
-			throw new ArgumentRangeError("count");
-
-		return new SkipIterable(inner, skipCount + count);
-	}
-
-	iter
-	{
-		return inner.iter.skip(skipCount);
-	}
-}
-
-private class SkipWhileIterable is Iterable
-{
-	public new(this.inner, this.predicate);
-
-	private inner;
-	private predicate;
-
-	iter
-	{
-		return inner.iter.skipWhile(predicate);
-	}
-}
-
-private class ZipIterable is Iterable
-{
-	public new(this.one, this.two, this.func);
-
-	private one;
-	private two;
-	private func;
-
-	iter
-	{
-		if func is null:
-			return one.iter.zip(two.iter);
-		return one.iter.zip(two.iter, func);
-	}
-}
-
-private class RangeIterable is Iterable
-{
-	public new(this.start, this.end, this.step);
-
-	private start;
-	private end;
-	private step;
-
-	iter
-	{
-		if step < 0:
-			return new RangeDownIterator(start, end, step);
-		else:
-			return new RangeUpIterator(start, end, step);
-	}
-}
-
-private class RangeUpIterator is Iterator
-{
-	public new(this.i, this.end, this.step);
-
-	private _current;
-	override get current = _current;
-
-	private i;
-	private end;
-	private step;
-
-	override moveNext()
-	{
-		if i < end
-		{
-			_current = i;
-			i += step;
-			return true;
-		}
-		return false;
-	}
-}
-
-private class RangeDownIterator is Iterator
-{
-	public new(this.i, this.end, this.step);
-
-	private _current;
-	override get current = _current;
-
-	private i;
-	private end;
-	private step;
-
-	override moveNext()
-	{
-		if i > end
-		{
-			_current = i;
-			i += step;
-			return true;
-		}
-		return false;
-	}
+	private const emptySequence = "The sequence is empty.";
+	private const noMatchFound = "No matching item found.";
 }

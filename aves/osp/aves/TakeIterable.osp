@@ -1,0 +1,49 @@
+namespace aves;
+
+/// Summary: Implements {Iterable.take}.
+private class TakeIterable is Iterable
+{
+	public new(this.inner, this.takeCount);
+
+	private inner;
+	private takeCount;
+
+	override take(count)
+	{
+		count = int(count);
+		if count < 0:
+			throw new ArgumentRangeError("count");
+
+		return new TakeIterable(inner, math.min(count, takeCount));
+	}
+
+	iter
+	{
+		return new TakeIterator(inner.iter, takeCount);
+	}
+}
+
+private class TakeIterator is Iterator
+{
+	public new(this.inner, this.count);
+
+	private inner;
+	private count;
+
+	override get current = inner.current;
+
+	override moveNext()
+	{
+		if count > 0
+		{
+			if inner.moveNext()
+			{
+				count -= 1;
+				return true;
+			}
+
+			count = 0;
+		}
+		return false;
+	}
+}

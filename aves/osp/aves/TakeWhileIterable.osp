@@ -1,0 +1,38 @@
+namespace aves;
+
+/// Summary: Implements {Iterable.takeWhile}.
+private class TakeWhileIterable is Iterable
+{
+	public new(this.inner, this.predicate);
+
+	private inner;
+	private predicate;
+
+	iter
+	{
+		return new TakeWhileIterator(inner.iter, predicate);
+	}
+}
+
+private class TakeWhileIterator is Iterator
+{
+	public new(this.inner, this.predicate);
+
+	private inner;
+	private predicate;
+	private continue = true;
+
+	override get current = inner.current;
+
+	override moveNext()
+	{
+		if continue
+		{
+			continue = inner.moveNext() and predicate(inner.current);
+			if continue:
+				return true;
+		}
+
+		return false;
+	}
+}

@@ -1,0 +1,65 @@
+namespace aves;
+
+/// Summary: Implements {Iterable.range}.
+private class RangeIterable is Iterable
+{
+	public new(this.start, this.end, this.step);
+
+	private start;
+	private end;
+	private step;
+
+	iter
+	{
+		if step < 0:
+			return new RangeDownIterator(start, end, step);
+		else:
+			return new RangeUpIterator(start, end, step);
+	}
+}
+
+private class RangeUpIterator is Iterator
+{
+	public new(this.i, this.end, this.step);
+
+	private _current;
+	override get current = _current;
+
+	private i;
+	private end;
+	private step;
+
+	override moveNext()
+	{
+		if i < end
+		{
+			_current = i;
+			i += step;
+			return true;
+		}
+		return false;
+	}
+}
+
+private class RangeDownIterator is Iterator
+{
+	public new(this.i, this.end, this.step);
+
+	private _current;
+	override get current = _current;
+
+	private i;
+	private end;
+	private step;
+
+	override moveNext()
+	{
+		if i > end
+		{
+			_current = i;
+			i += step;
+			return true;
+		}
+		return false;
+	}
+}

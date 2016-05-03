@@ -1,0 +1,44 @@
+namespace aves;
+
+/// Summary: Implements {Iterable.map}.
+private class MapIterable is Iterable
+{
+	public new(this.inner, this.func);
+
+	private inner;
+	private func;
+
+	iter
+	{
+		return new MapIterator(inner.iter, func);
+	}
+}
+
+private class MapIterator is Iterator
+{
+	public new(this.inner, this.func);
+
+	private inner;
+	private func;
+	private cur;
+	private ended = false;
+
+	override get current = cur;
+
+	override moveNext()
+	{
+		if not ended
+		{
+			if inner.moveNext()
+			{
+				cur = func(inner.current);
+				return true;
+			}
+
+			cur = null;
+			ended = true;
+		}
+
+		return false;
+	}
+}

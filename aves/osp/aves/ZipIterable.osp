@@ -1,0 +1,47 @@
+namespace aves;
+
+/// Summary: Implements {Iterable.zip}.
+private class ZipIterable is Iterable
+{
+	public new(this.one, this.two, this.func);
+
+	private one;
+	private two;
+	private func;
+
+	iter
+	{
+		return new ZipIterator(one.iter, two.iter, func ?? defaultZipFunc);
+	}
+
+	private static defaultZipFunc = @(a, b) = [a, b];
+}
+
+private class ZipIterator is Iterator
+{
+	public new(this.one, this.two, this.func);
+
+	private one;
+	private two;
+	private func;
+	private cur;
+	private ended = false;
+
+	override get current = cur;
+
+	override moveNext()
+	{
+		if not ended
+		{
+			if one.moveNext() and two.moveNext()
+			{
+				cur = func(one.current, two.current);
+				return true;
+			}
+
+			ended = true;
+		}
+
+		return false;
+	}
+}
