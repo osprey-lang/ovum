@@ -1230,9 +1230,9 @@ int Thread::Evaluate()
 				else
 				{
 					uint32_t offset = ~(uint32_t)dest->type;
-					GCObject *gco = reinterpret_cast<GCObject*>(dest->v.instance - offset);
+					GCObject *gco = reinterpret_cast<GCObject*>((char*)dest->v.reference - offset);
 					gco->fieldAccessLock.Enter();
-					*reinterpret_cast<Value*>(dest->v.instance) = *args->Source(f);
+					*reinterpret_cast<Value*>(dest->v.reference) = *args->Source(f);
 					gco->fieldAccessLock.Leave();
 				}
 
