@@ -106,7 +106,6 @@ void GC::DestroyHeaps()
 
 GCObject *GC::AllocRaw(size_t size)
 {
-	using namespace std;
 	OVUM_ASSERT(size >= GCO_SIZE);
 
 	GCObject *result;
