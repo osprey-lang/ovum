@@ -474,6 +474,33 @@ public class IterableTests is TestFixture
 		Assert.areEqual(sequence.joinNatural(",", "&"), "a,b,c&d");
 	}
 
+	// groupEvery tests
+
+	public test_GroupEvery()
+	{
+		var sequence = Iterable.range(0, 10);
+		var grouped = sequence.groupEvery(4);
+
+		var expectedGroups = [
+			[0, 1, 2, 3],
+			[4, 5, 6, 7],
+			[8, 9],
+		];
+
+		Assert.collectionsMatch(grouped, expectedGroups, @(a, b) {
+			return Assert.collectionsMatch(a, b, Assert.areEqual);
+		});
+	}
+
+	public test_GroupEveryInvalid()
+	{
+		var sequence = wrap([1, 2, 3, 4]);
+
+		Assert.throws(typeof(ArgumentRangeError), @=> sequence.groupEvery(-1));
+		Assert.throws(typeof(ArgumentRangeError), @=> sequence.groupEvery(0));
+		Assert.throws(typeof(TypeConversionError), @=> sequence.groupEvery("1"));
+	}
+
 	// sort tests
 
 	public test_Sort()

@@ -21,21 +21,21 @@ private class GroupEveryIterator is Iterator
 	private inner;
 	private frequency;
 	private cur;
-	private ended = false;
+	private hasMore = true;
 
 	override get current = cur;
 
 	override moveNext()
 	{
-		if not ended
+		if hasMore
 		{
 			var items = [];
 
-			while ended = inner.moveNext()
+			while hasMore = inner.moveNext()
 			{
 				items.add(inner.current);
 
-				if items.length == frequency:
+				if items.length % frequency == 0:
 					break;
 			}
 

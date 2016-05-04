@@ -477,7 +477,7 @@ public abstract class Iterable
 	public overridable groupEvery(frequency)
 	{
 		frequency = int(frequency);
-		if frequency < 0:
+		if frequency <= 0:
 			throw new ArgumentRangeError("frequency");
 
 		return new GroupEveryIterable(this, frequency);
