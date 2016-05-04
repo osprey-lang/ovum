@@ -14,7 +14,7 @@ public class ObjectTests is TestFixture
 	public test_Apply1()
 	{
 		var object = new Object();
-		var result = object.apply(@x = x);
+		var result = object.apply(@x => x);
 		Assert.areSameRef(object, result);
 	}
 
@@ -22,7 +22,7 @@ public class ObjectTests is TestFixture
 	{
 		var object = new Object();
 		var arg = new Object();
-		var result = object.apply(@(a, b) = [a, b], arg);
+		var result = object.apply(@(a, b) => [a, b], arg);
 		Assert.areSameRef(object, result[0]);
 		Assert.areSameRef(arg, result[1]);
 	}
@@ -32,7 +32,7 @@ public class ObjectTests is TestFixture
 		var object = new Object();
 		var arg1 = new Object();
 		var arg2 = new Object();
-		var result = object.apply(@(a, b, c) = [a, b, c], arg1, arg2);
+		var result = object.apply(@(a, b, c) => [a, b, c], arg1, arg2);
 		Assert.areSameRef(object, result[0]);
 		Assert.areSameRef(arg1, result[1]);
 		Assert.areSameRef(arg2, result[2]);
@@ -41,7 +41,7 @@ public class ObjectTests is TestFixture
 	public test_ApplyInvalid()
 	{
 		var object = new Object();
-		Assert.throws(typeof(ArgumentNullError), @= object.apply(null));
+		Assert.throws(typeof(ArgumentNullError), @=> object.apply(null));
 	}
 
 	// End apply tests

@@ -37,9 +37,9 @@ public class StackTests is TestFixture
 
 	public test_Constructor1WithInvalidCapacity()
 	{
-		Assert.throws(typeof(ArgumentRangeError), @= new Stack(-1));
-		Assert.throws(typeof(TypeConversionError), @= new Stack("123"));
-		Assert.throws(typeof(TypeConversionError), @= new Stack("chirp"));
+		Assert.throws(typeof(ArgumentRangeError), @=> new Stack(-1));
+		Assert.throws(typeof(TypeConversionError), @=> new Stack("123"));
+		Assert.throws(typeof(TypeConversionError), @=> new Stack("chirp"));
 	}
 
 	// End constructor tests
@@ -101,7 +101,7 @@ public class StackTests is TestFixture
 	public test_PopEmpty()
 	{
 		var stack = new Stack();
-		Assert.throws(typeof(InvalidStateError), @= stack.pop());
+		Assert.throws(typeof(InvalidStateError), @=> stack.pop());
 	}
 
 	// End manipulation tests

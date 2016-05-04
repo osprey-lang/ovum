@@ -58,7 +58,7 @@ public class BufferViewTests is TestFixture
 	public test_ReadWriteByteOutOfBounds()
 	{
 		var view = new BufferView(buffer, BufferViewKind.byte);
-		Assert.throws(typeof(ArgumentRangeError), @= view[view.length]);
+		Assert.throws(typeof(ArgumentRangeError), @=> view[view.length]);
 		Assert.throws(typeof(ArgumentRangeError), @{ view[view.length] = 0; });
 	}
 
@@ -121,7 +121,7 @@ public class BufferViewTests is TestFixture
 	public test_ReadWriteSByteOutOfBounds()
 	{
 		var view = new BufferView(buffer, BufferViewKind.sbyte);
-		Assert.throws(typeof(ArgumentRangeError), @= view[view.length]);
+		Assert.throws(typeof(ArgumentRangeError), @=> view[view.length]);
 		Assert.throws(typeof(ArgumentRangeError), @{ view[view.length] = 0; });
 	}
 
@@ -184,7 +184,7 @@ public class BufferViewTests is TestFixture
 	public test_ReadWriteInt16OutOfBounds()
 	{
 		var view = new BufferView(buffer, BufferViewKind.int16);
-		Assert.throws(typeof(ArgumentRangeError), @= view[view.length]);
+		Assert.throws(typeof(ArgumentRangeError), @=> view[view.length]);
 		Assert.throws(typeof(ArgumentRangeError), @{ view[view.length] = 0; });
 	}
 
@@ -247,7 +247,7 @@ public class BufferViewTests is TestFixture
 	public test_ReadWriteUInt16OutOfBounds()
 	{
 		var view = new BufferView(buffer, BufferViewKind.uint16);
-		Assert.throws(typeof(ArgumentRangeError), @= view[view.length]);
+		Assert.throws(typeof(ArgumentRangeError), @=> view[view.length]);
 		Assert.throws(typeof(ArgumentRangeError), @{ view[view.length] = 0; });
 	}
 
@@ -310,7 +310,7 @@ public class BufferViewTests is TestFixture
 	public test_ReadWriteInt32OutOfBounds()
 	{
 		var view = new BufferView(buffer, BufferViewKind.int32);
-		Assert.throws(typeof(ArgumentRangeError), @= view[view.length]);
+		Assert.throws(typeof(ArgumentRangeError), @=> view[view.length]);
 		Assert.throws(typeof(ArgumentRangeError), @{ view[view.length] = 0; });
 	}
 
@@ -373,7 +373,7 @@ public class BufferViewTests is TestFixture
 	public test_ReadWriteUInt32OutOfBounds()
 	{
 		var view = new BufferView(buffer, BufferViewKind.uint32);
-		Assert.throws(typeof(ArgumentRangeError), @= view[view.length]);
+		Assert.throws(typeof(ArgumentRangeError), @=> view[view.length]);
 		Assert.throws(typeof(ArgumentRangeError), @{ view[view.length] = 0; });
 	}
 
@@ -426,7 +426,7 @@ public class BufferViewTests is TestFixture
 	public test_ReadWriteInt64OutOfBounds()
 	{
 		var view = new BufferView(buffer, BufferViewKind.int64);
-		Assert.throws(typeof(ArgumentRangeError), @= view[view.length]);
+		Assert.throws(typeof(ArgumentRangeError), @=> view[view.length]);
 		Assert.throws(typeof(ArgumentRangeError), @{ view[view.length] = 0; });
 	}
 
@@ -479,7 +479,7 @@ public class BufferViewTests is TestFixture
 	public test_ReadWriteUInt64OutOfBounds()
 	{
 		var view = new BufferView(buffer, BufferViewKind.uint64);
-		Assert.throws(typeof(ArgumentRangeError), @= view[view.length]);
+		Assert.throws(typeof(ArgumentRangeError), @=> view[view.length]);
 		Assert.throws(typeof(ArgumentRangeError), @{ view[view.length] = 0; });
 	}
 
@@ -510,13 +510,13 @@ public class BufferViewTests is TestFixture
 
 	public test_ConstructInvalidBuffer()
 	{
-		Assert.throws(typeof(ArgumentNullError), @= new BufferView(null, BufferViewKind.byte));
-		Assert.throws(typeof(ArgumentTypeError), @= new BufferView(new Object(), BufferViewKind.byte));
+		Assert.throws(typeof(ArgumentNullError), @=> new BufferView(null, BufferViewKind.byte));
+		Assert.throws(typeof(ArgumentTypeError), @=> new BufferView(new Object(), BufferViewKind.byte));
 	}
 
 	public test_ConstructInvalidKind()
 	{
-		Assert.throws(typeof(ArgumentTypeError), @= new BufferView(buffer, null));
-		Assert.throws(typeof(ArgumentTypeError), @= new BufferView(buffer, +BufferViewKind.int32));
+		Assert.throws(typeof(ArgumentTypeError), @=> new BufferView(buffer, null));
+		Assert.throws(typeof(ArgumentTypeError), @=> new BufferView(buffer, +BufferViewKind.int32));
 	}
 }

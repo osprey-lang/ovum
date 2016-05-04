@@ -11,12 +11,12 @@ public class ListTests is TestFixture
 
 	// first tests
 
-	private isZeroMod10 = @x = x % 10 == 0;
+	private isZeroMod10 = @x => x % 10 == 0;
 
 	public test_First1Empty()
 	{
 		var list = [];
-		Assert.throws(typeof(InvalidStateError), @= list.first());
+		Assert.throws(typeof(InvalidStateError), @=> list.first());
 	}
 
 	public test_First1NonEmpty()
@@ -29,7 +29,7 @@ public class ListTests is TestFixture
 	public test_First2NoMatch()
 	{
 		var list = [1, 2, 3, 4];
-		Assert.throws(typeof(InvalidStateError), @= list.first(isZeroMod10));
+		Assert.throws(typeof(InvalidStateError), @=> list.first(isZeroMod10));
 	}
 
 	public test_First2Match()
@@ -74,7 +74,7 @@ public class ListTests is TestFixture
 	public test_Last1Empty()
 	{
 		var list = [];
-		Assert.throws(typeof(InvalidStateError), @= list.last());
+		Assert.throws(typeof(InvalidStateError), @=> list.last());
 	}
 
 	public test_Last1NonEmpty()
@@ -87,7 +87,7 @@ public class ListTests is TestFixture
 	public test_Last2NoMatch()
 	{
 		var list = [1, 2, 3, 4];
-		Assert.throws(typeof(InvalidStateError), @= list.last(isZeroMod10));
+		Assert.throws(typeof(InvalidStateError), @=> list.last(isZeroMod10));
 	}
 
 	public test_Last2Match()
@@ -164,9 +164,9 @@ public class ListTests is TestFixture
 	public test_IndexOf2Invalid()
 	{
 		var list = [0, 1, 2, 0, 1, 2];
-		Assert.throws(typeof(ArgumentRangeError), @= list.indexOf(0, 7));
-		Assert.throws(typeof(ArgumentRangeError), @= list.indexOf(0, -1));
-		Assert.throws(typeof(TypeConversionError), @= list.indexOf(0, "0"));
+		Assert.throws(typeof(ArgumentRangeError), @=> list.indexOf(0, 7));
+		Assert.throws(typeof(ArgumentRangeError), @=> list.indexOf(0, -1));
+		Assert.throws(typeof(TypeConversionError), @=> list.indexOf(0, "0"));
 	}
 
 	public test_IndexOf3Found()
@@ -188,12 +188,12 @@ public class ListTests is TestFixture
 	public test_IndexOf3Invalid()
 	{
 		var list = [0, 1, 2, 0, 1, 2];
-		Assert.throws(typeof(ArgumentRangeError), @= list.indexOf(0, 7, 0));
-		Assert.throws(typeof(ArgumentRangeError), @= list.indexOf(0, -1, 0));
-		Assert.throws(typeof(ArgumentRangeError), @= list.indexOf(0, 0, -1));
-		Assert.throws(typeof(ArgumentError), @= list.indexOf(0, 6, 1));
-		Assert.throws(typeof(TypeConversionError), @= list.indexOf(0, "0", 0));
-		Assert.throws(typeof(TypeConversionError), @= list.indexOf(0, 0, "0"));
+		Assert.throws(typeof(ArgumentRangeError), @=> list.indexOf(0, 7, 0));
+		Assert.throws(typeof(ArgumentRangeError), @=> list.indexOf(0, -1, 0));
+		Assert.throws(typeof(ArgumentRangeError), @=> list.indexOf(0, 0, -1));
+		Assert.throws(typeof(ArgumentError), @=> list.indexOf(0, 6, 1));
+		Assert.throws(typeof(TypeConversionError), @=> list.indexOf(0, "0", 0));
+		Assert.throws(typeof(TypeConversionError), @=> list.indexOf(0, 0, "0"));
 	}
 
 	// slice tests
@@ -215,8 +215,8 @@ public class ListTests is TestFixture
 	public test_Slice1Invalid()
 	{
 		var list = [0, 1, 2, 3, 4];
-		Assert.throws(typeof(ArgumentRangeError), @= list.slice(6));
-		Assert.throws(typeof(ArgumentRangeError), @= list.slice(-1));
+		Assert.throws(typeof(ArgumentRangeError), @=> list.slice(6));
+		Assert.throws(typeof(ArgumentRangeError), @=> list.slice(-1));
 	}
 
 	public test_Slice2Empty()
@@ -236,9 +236,9 @@ public class ListTests is TestFixture
 	public test_Slice2Invalid()
 	{
 		var list = [0, 1, 2, 3, 4];
-		Assert.throws(typeof(ArgumentRangeError), @= list.slice(6, 0));
-		Assert.throws(typeof(ArgumentRangeError), @= list.slice(0, -1));
-		Assert.throws(typeof(ArgumentError), @= list.slice(5, 1));
+		Assert.throws(typeof(ArgumentRangeError), @=> list.slice(6, 0));
+		Assert.throws(typeof(ArgumentRangeError), @=> list.slice(0, -1));
+		Assert.throws(typeof(ArgumentError), @=> list.slice(5, 1));
 	}
 
 	// sliceTo tests
@@ -270,10 +270,10 @@ public class ListTests is TestFixture
 	public test_SliceToInvalid()
 	{
 		var list = [0, 1, 2, 3, 4];
-		Assert.throws(typeof(ArgumentRangeError), @= list.sliceTo(5, 0));
-		Assert.throws(typeof(ArgumentRangeError), @= list.sliceTo(0, 6));
-		Assert.throws(typeof(TypeConversionError), @= list.sliceTo("0", 0));
-		Assert.throws(typeof(TypeConversionError), @= list.sliceTo(0, "0"));
+		Assert.throws(typeof(ArgumentRangeError), @=> list.sliceTo(5, 0));
+		Assert.throws(typeof(ArgumentRangeError), @=> list.sliceTo(0, 6));
+		Assert.throws(typeof(TypeConversionError), @=> list.sliceTo("0", 0));
+		Assert.throws(typeof(TypeConversionError), @=> list.sliceTo(0, "0"));
 	}
 
 	// Concat tests

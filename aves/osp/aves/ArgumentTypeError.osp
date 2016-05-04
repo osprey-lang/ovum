@@ -113,7 +113,7 @@ public inheritable ArgumentTypeError is ArgumentError
 		{
 			// This could go terribly wrong if expectedTypes is an infinite or gigantic collection,
 			// but the risk of that being passed into ArgumentTypeError is pretty minimal.
-			if expectedTypes.any(@type = type is not Type):
+			if expectedTypes.any(@type => type is not Type):
 				// ArgumentTypeErrorception
 				throw new ArgumentTypeError(
 					"expectedTypes",

@@ -74,7 +74,7 @@ public class Method
 	///              value of this method.
 	/// Returns: A new {Method} that can be called with one argument.
 	/// Remarks: The expression `left << right` is effectively equivalent to
-	///          `@arg = left(right(arg))`, as well as `right >> left`.
+	///          `@arg => left(right(arg))`, as well as `right >> left`.
 	///
 	///          Authors are strongly discouraged from mixing `<<` and `>>` in
 	///          the same expression. It is likely to lead to confusion.
@@ -91,7 +91,7 @@ public class Method
 	/// Param right: The {Method} to invoke with the return value of {left}.
 	/// Returns: A new {Method} that can be called with one argument.
 	/// Remarks: The expression `left >> right` is effectively equivalent to
-	///          `@arg = right(left(arg))`, as well as `right << left`.
+	///          `@arg => right(left(arg))`, as well as `right << left`.
 	///
 	///          Authors are strongly discouraged from mixing `<<` and `>>` in
 	///          the same expression. It is likely to lead to confusion.

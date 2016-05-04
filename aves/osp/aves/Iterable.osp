@@ -388,7 +388,7 @@ public abstract class Iterable
 		if keyFunc is null:
 			throw new ArgumentNullError("keyFunc");
 
-		return group(keyFunc, @x = x, null);
+		return group(keyFunc, @x => x, null);
 	}
 	/// Summary: Groups the contents of the sequence according to a key selector
 	///          function, and simultaneously transforms the values according to
@@ -795,12 +795,12 @@ public abstract class Iterable
 	///
 	///          To order a sequence by the values themselves – that is, without an explicit key
 	///          selector function – you can either use {sort}, or pass the identity function,
-	///          `@x = x`, or {Order.default}.
+	///          `@x => x`, or {Order.default}.
 	public overridable sortBy(keySelectors...)
 	{
 		if keySelectors.isEmpty:
 			throw new ArgumentError("At least one key selector must be specified.", "keySelectors");
-		if keySelectors.any(@ks = ks is null):
+		if keySelectors.any(@ks => ks is null):
 			throw new ArgumentNullError(null, "An item in keySelectors is null.");
 
 		if keySelectors.length == 1:

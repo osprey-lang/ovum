@@ -28,7 +28,7 @@ public class BufferTests is TestFixture
 	public test_ConstructionNegativeSize()
 	{
 		// Cannot have a buffer of a negative size
-		Assert.throws(typeof(ArgumentRangeError), @= new Buffer(-1));
+		Assert.throws(typeof(ArgumentRangeError), @=> new Buffer(-1));
 	}
 
 	// Byte tests
@@ -58,15 +58,15 @@ public class BufferTests is TestFixture
 	{
 		var buffer = new Buffer(1);
 		// Can only write Ints and UInts with writeByte.
-		Assert.throws(typeof(ArgumentTypeError), @= buffer.writeByte(0, 0.0));
+		Assert.throws(typeof(ArgumentTypeError), @=> buffer.writeByte(0, 0.0));
 	}
 
 	public test_ReadWriteByteOutOfBounds()
 	{
 		// Cannot read/write outside the buffer
 		var buffer = new Buffer(1);
-		Assert.throws(typeof(ArgumentRangeError), @= buffer.readByte(1));
-		Assert.throws(typeof(ArgumentRangeError), @= buffer.writeByte(1, 0));
+		Assert.throws(typeof(ArgumentRangeError), @=> buffer.readByte(1));
+		Assert.throws(typeof(ArgumentRangeError), @=> buffer.writeByte(1, 0));
 	}
 
 	// End byte tests
@@ -107,7 +107,7 @@ public class BufferTests is TestFixture
 	{
 		// Cannot read/write outside the buffer
 		var buffer = new Buffer(1);
-		Assert.throws(typeof(ArgumentRangeError), @= buffer[1]);
+		Assert.throws(typeof(ArgumentRangeError), @=> buffer[1]);
 		Assert.throws(typeof(ArgumentRangeError), @{ buffer[1] = 0; });
 	}
 
@@ -143,15 +143,15 @@ public class BufferTests is TestFixture
 	{
 		var buffer = new Buffer(1);
 		// Can only write Ints and UInts with writeSByte.
-		Assert.throws(typeof(ArgumentTypeError), @= buffer.writeSByte(0, 0.0));
+		Assert.throws(typeof(ArgumentTypeError), @=> buffer.writeSByte(0, 0.0));
 	}
 
 	public test_ReadWriteSbyteOutOfBounds()
 	{
 		// Cannot read/write outside the buffer
 		var buffer = new Buffer(1);
-		Assert.throws(typeof(ArgumentRangeError), @= buffer.readSByte(1));
-		Assert.throws(typeof(ArgumentRangeError), @= buffer.writeSByte(1, 0));
+		Assert.throws(typeof(ArgumentRangeError), @=> buffer.readSByte(1));
+		Assert.throws(typeof(ArgumentRangeError), @=> buffer.writeSByte(1, 0));
 	}
 
 	// End sbyte tests
@@ -184,15 +184,15 @@ public class BufferTests is TestFixture
 	{
 		var buffer = new Buffer(2);
 		// Can only write Ints and UInts with writeInt16.
-		Assert.throws(typeof(ArgumentTypeError), @= buffer.writeInt16(0, 0.0));
+		Assert.throws(typeof(ArgumentTypeError), @=> buffer.writeInt16(0, 0.0));
 	}
 
 	public test_ReadWriteInt16OutOfBounds()
 	{
 		// Cannot read/write outside the buffer
 		var buffer = new Buffer(2);
-		Assert.throws(typeof(ArgumentRangeError), @= buffer.readInt16(1));
-		Assert.throws(typeof(ArgumentRangeError), @= buffer.writeInt16(1, 0));
+		Assert.throws(typeof(ArgumentRangeError), @=> buffer.readInt16(1));
+		Assert.throws(typeof(ArgumentRangeError), @=> buffer.writeInt16(1, 0));
 	}
 
 	// End int16 tests
@@ -223,15 +223,15 @@ public class BufferTests is TestFixture
 	{
 		var buffer = new Buffer(2);
 		// Can only write Ints and UInts with writeUInt16.
-		Assert.throws(typeof(ArgumentTypeError), @= buffer.writeUInt16(0, 0.0));
+		Assert.throws(typeof(ArgumentTypeError), @=> buffer.writeUInt16(0, 0.0));
 	}
 
 	public test_ReadWriteUInt16OutOfBounds()
 	{
 		// Cannot read/write outside the buffer
 		var buffer = new Buffer(2);
-		Assert.throws(typeof(ArgumentRangeError), @= buffer.readUInt16(1));
-		Assert.throws(typeof(ArgumentRangeError), @= buffer.writeUInt16(1, 0));
+		Assert.throws(typeof(ArgumentRangeError), @=> buffer.readUInt16(1));
+		Assert.throws(typeof(ArgumentRangeError), @=> buffer.writeUInt16(1, 0));
 	}
 
 	// End uint16 tests
@@ -264,15 +264,15 @@ public class BufferTests is TestFixture
 	{
 		var buffer = new Buffer(4);
 		// Can only write Ints and UInts with writeInt32.
-		Assert.throws(typeof(ArgumentTypeError), @= buffer.writeInt32(0, 0.0));
+		Assert.throws(typeof(ArgumentTypeError), @=> buffer.writeInt32(0, 0.0));
 	}
 
 	public test_ReadWriteInt32OutOfBounds()
 	{
 		// Cannot read/write outside the buffer
 		var buffer = new Buffer(4);
-		Assert.throws(typeof(ArgumentRangeError), @= buffer.readInt32(1));
-		Assert.throws(typeof(ArgumentRangeError), @= buffer.writeInt32(1, 0));
+		Assert.throws(typeof(ArgumentRangeError), @=> buffer.readInt32(1));
+		Assert.throws(typeof(ArgumentRangeError), @=> buffer.writeInt32(1, 0));
 	}
 
 	// End int32 tests
@@ -303,15 +303,15 @@ public class BufferTests is TestFixture
 	{
 		var buffer = new Buffer(4);
 		// Can only write Ints and UInts with writeUInt32.
-		Assert.throws(typeof(ArgumentTypeError), @= buffer.writeUInt32(0, 0.0));
+		Assert.throws(typeof(ArgumentTypeError), @=> buffer.writeUInt32(0, 0.0));
 	}
 
 	public test_ReadWriteUInt32OutOfBounds()
 	{
 		// Cannot read/write outside the buffer
 		var buffer = new Buffer(4);
-		Assert.throws(typeof(ArgumentRangeError), @= buffer.readUInt32(1));
-		Assert.throws(typeof(ArgumentRangeError), @= buffer.writeUInt32(1, 0));
+		Assert.throws(typeof(ArgumentRangeError), @=> buffer.readUInt32(1));
+		Assert.throws(typeof(ArgumentRangeError), @=> buffer.writeUInt32(1, 0));
 	}
 
 	// End uint32 tests
@@ -332,15 +332,15 @@ public class BufferTests is TestFixture
 	{
 		// Cannot read/write outside the buffer
 		var buffer = new Buffer(8);
-		Assert.throws(typeof(ArgumentRangeError), @= buffer.readInt64(1));
-		Assert.throws(typeof(ArgumentRangeError), @= buffer.writeInt64(1, 0));
+		Assert.throws(typeof(ArgumentRangeError), @=> buffer.readInt64(1));
+		Assert.throws(typeof(ArgumentRangeError), @=> buffer.writeInt64(1, 0));
 	}
 
 	public test_WriteInt64WrongType()
 	{
 		var buffer = new Buffer(8);
 		// Can only write Ints and UInts with writeInt64.
-		Assert.throws(typeof(ArgumentTypeError), @= buffer.writeInt64(0, 0.0));
+		Assert.throws(typeof(ArgumentTypeError), @=> buffer.writeInt64(0, 0.0));
 	}
 
 	// End int64 tests
@@ -361,15 +361,15 @@ public class BufferTests is TestFixture
 	{
 		// Cannot read/write outside the buffer
 		var buffer = new Buffer(8);
-		Assert.throws(typeof(ArgumentRangeError), @= buffer.readUInt64(1));
-		Assert.throws(typeof(ArgumentRangeError), @= buffer.writeUInt64(1, 0));
+		Assert.throws(typeof(ArgumentRangeError), @=> buffer.readUInt64(1));
+		Assert.throws(typeof(ArgumentRangeError), @=> buffer.writeUInt64(1, 0));
 	}
 
 	public test_WriteUInt64WrongType()
 	{
 		var buffer = new Buffer(8);
 		// Can only write Ints and UInts with writeUInt64.
-		Assert.throws(typeof(ArgumentTypeError), @= buffer.writeUInt64(0, 0.0));
+		Assert.throws(typeof(ArgumentTypeError), @=> buffer.writeUInt64(0, 0.0));
 	}
 
 	// End uint64 tests
@@ -414,15 +414,15 @@ public class BufferTests is TestFixture
 	{
 		// Cannot read/write outside the buffer
 		var buffer = new Buffer(4);
-		Assert.throws(typeof(ArgumentRangeError), @= buffer.readFloat32(1));
-		Assert.throws(typeof(ArgumentRangeError), @= buffer.writeFloat32(1, 0.0));
+		Assert.throws(typeof(ArgumentRangeError), @=> buffer.readFloat32(1));
+		Assert.throws(typeof(ArgumentRangeError), @=> buffer.writeFloat32(1, 0.0));
 	}
 
 	public test_WriteFloat32WrongType()
 	{
 		var buffer = new Buffer(4);
 		// Can only write Reals with writeFloat32
-		Assert.throws(typeof(ArgumentTypeError), @= buffer.writeFloat32(0, 0));
+		Assert.throws(typeof(ArgumentTypeError), @=> buffer.writeFloat32(0, 0));
 	}
 
 	// End float32 tests
@@ -466,15 +466,15 @@ public class BufferTests is TestFixture
 	{
 		// Cannot read/write outside the buffer
 		var buffer = new Buffer(8);
-		Assert.throws(typeof(ArgumentRangeError), @= buffer.readFloat64(1));
-		Assert.throws(typeof(ArgumentRangeError), @= buffer.writeFloat64(1, 0.0));
+		Assert.throws(typeof(ArgumentRangeError), @=> buffer.readFloat64(1));
+		Assert.throws(typeof(ArgumentRangeError), @=> buffer.writeFloat64(1, 0.0));
 	}
 
 	public test_WriteFloat64WrongType()
 	{
 		var buffer = new Buffer(8);
 		// Can only write Reals with writeFloat64
-		Assert.throws(typeof(ArgumentTypeError), @= buffer.writeFloat64(0, 0));
+		Assert.throws(typeof(ArgumentTypeError), @=> buffer.writeFloat64(0, 0));
 	}
 
 	// End float64 tests

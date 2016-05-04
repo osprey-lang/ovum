@@ -43,14 +43,14 @@ public class HashTests is TestFixture
 			return;
 
 		var capacity = Hash.maxCapacity + 1;
-		Assert.throws(typeof(ArgumentRangeError), @= new Hash(capacity));
+		Assert.throws(typeof(ArgumentRangeError), @=> new Hash(capacity));
 	}
 
 	public test_Constructor1WithInvalidCapacity()
 	{
-		Assert.throws(typeof(ArgumentRangeError), @= new Hash(-1));
-		Assert.throws(typeof(TypeConversionError), @= new Hash("123"));
-		Assert.throws(typeof(TypeConversionError), @= new Hash("feather"));
+		Assert.throws(typeof(ArgumentRangeError), @=> new Hash(-1));
+		Assert.throws(typeof(TypeConversionError), @=> new Hash("123"));
+		Assert.throws(typeof(TypeConversionError), @=> new Hash("feather"));
 	}
 
 	public test_Constructor2WithZeroCapacity()
@@ -80,14 +80,14 @@ public class HashTests is TestFixture
 			return;
 
 		var capacity = Hash.maxCapacity + 1;
-		Assert.throws(typeof(ArgumentRangeError), @= new Hash(capacity, EqualityComparer.default));
+		Assert.throws(typeof(ArgumentRangeError), @=> new Hash(capacity, EqualityComparer.default));
 	}
 
 	public test_Constructor2WithInvalidCapacity()
 	{
-		Assert.throws(typeof(ArgumentRangeError), @= new Hash(-1, EqualityComparer.default));
-		Assert.throws(typeof(TypeConversionError), @= new Hash("123", EqualityComparer.default));
-		Assert.throws(typeof(TypeConversionError), @= new Hash("feather", EqualityComparer.default));
+		Assert.throws(typeof(ArgumentRangeError), @=> new Hash(-1, EqualityComparer.default));
+		Assert.throws(typeof(TypeConversionError), @=> new Hash("123", EqualityComparer.default));
+		Assert.throws(typeof(TypeConversionError), @=> new Hash("feather", EqualityComparer.default));
 	}
 
 	public test_Constructor2WithNullComparer()

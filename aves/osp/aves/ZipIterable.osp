@@ -14,7 +14,7 @@ private class ZipIterable is Iterable
 		return new ZipIterator(one.iter, two.iter, func ?? defaultZipFunc);
 	}
 
-	private static defaultZipFunc = @(a, b) = [a, b];
+	private static defaultZipFunc = @(a, b) => [a, b];
 }
 
 private class ZipIterator is Iterator

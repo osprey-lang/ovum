@@ -85,8 +85,8 @@ public class BooleanTests is TestFixture
 	{
 		// Operator <=> can only be applied to (Boolean, Boolean),
 		// and no other combination of types.
-		Assert.throws(typeof(ArgumentTypeError), @= trueValue <=> 1);
-		Assert.throws(typeof(ArgumentTypeError), @= falseValue <=> 0);
+		Assert.throws(typeof(ArgumentTypeError), @=> trueValue <=> 1);
+		Assert.throws(typeof(ArgumentTypeError), @=> falseValue <=> 0);
 	}
 
 	public test_UnaryPlusOperator()
