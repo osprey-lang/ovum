@@ -474,6 +474,31 @@ public class IterableTests is TestFixture
 		Assert.areEqual(sequence.joinNatural(",", "&"), "a,b,c&d");
 	}
 
+	// sort tests
+
+	public test_Sort()
+	{
+		var sequence = wrap([4, 2, -3, 0, -1]);
+		var sorted = sequence.sort();
+		Assert.collectionsMatch(sorted, [-3, -1, 0, 2, 4], Assert.areEqual);
+	}
+
+	// sortBy tests
+
+	public test_SortBySingle()
+	{
+		var sequence = wrap([4, 2, -3, 0, -1]);
+		var sorted = sequence.sortBy(math.abs);
+		Assert.collectionsMatch(sorted, [0, -1, 2, -3, 4], Assert.areEqual);
+	}
+
+	public test_SortByMultiple()
+	{
+		var sequence = wrap([-2, 3, 1, -3, -1, 2]);
+		var sorted = sequence.sortBy(math.abs, Order.reverse);
+		Assert.collectionsMatch(sorted, [1, -1, 2, -2, 3, -3], Assert.areEqual);
+	}
+
 	// range tests
 
 	public test_RangeEmpty()

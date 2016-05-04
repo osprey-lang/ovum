@@ -1,0 +1,262 @@
+namespace aves;
+
+/// Summary: Implements {Iterable.sortBy}.
+/// Remarks: This class is broken up into three derived classes – {SortByWithoutKeyIterable},
+///          {SortBySingleKeyIterable} and {SortByMultipleKeysIterable}. Sorting by a single
+///          key or none is vastly more common than sorting by multiple, so it makes sense to
+///          optimize for those cases.
+private abstract class SortByIterable is Iterable
+{
+	public new(this.inner);
+
+	private inner;
+	/// Summary: Array or List of all items in this iterable. Initialized the first time the
+	///          sequence is iterated over.
+	protected items;
+	/// Summary: Array of indexes into {items}, which define the order in which to read items
+	///          from the sequence. Initialized when sorting begins, but does not contain any
+	///          meaningful values until sorting is finished.
+	protected indexTable;
+
+	private get isSorted = items is not null;
+
+	/// Summary: Creates the sort key table in the derived class. This method is called when
+	///          sorting is about to start.
+	protected abstract createSortKeyTable();
+
+	/// Summary: Destroys the sort key table in the derived class. This method is called when
+	///          sorting has finished, and {indexTable} contains valid indices.
+	protected abstract destroySortKeyTable();
+
+	/// Summary: Compares the items at the specified indices. The indices refer to positons in
+	///          the {items} array.
+	/// Param index1: The index of the first item. (Int)
+	/// Param index2: The index of the second item. (Int)
+	protected abstract compare(index1, index2);
+
+	private sortCollection()
+	{
+		createTables();
+
+		quicksort(indexTable, 0, items.length - 1);
+
+		cleanUpTables();
+	}
+
+	private quicksort(indexTable, left, right)
+	{
+		var pivot = indexTable[(left + right) / 2];
+		var i = left;
+		var j = right;
+
+		do
+		{
+			while compare(indexTable[i], pivot) < 0:
+				i += 1;
+			while compare(pivot, indexTable[j]) < 0:
+				j -= 1;
+
+			if i <= j
+			{
+				indexTable[i], indexTable[j] = indexTable[j], indexTable[i];
+				i += 1;
+				j -= 1;
+			}
+		} while i <= j;
+
+		if left < j:
+			quicksort(indexTable, left, j);
+		if i < right:
+			quicksort(indexTable, i, right);
+	}
+
+	private createTables()
+	{
+		// In general, calling toArray() will result in an unnecessary list allocation, as
+		// the default Iterable.toArray() implementation uses List as an intermediate. But
+		// if the type is a Collection, there's a very good chance it does not override
+		// Collection.toArray(), which has an optimized solution that makes no use of an
+		// intermediate List.
+		// In general, Array has slightly more efficient storage than List, and in particular
+		// indexing into it does not cause double indirection. For a large collection, the
+		// time spent copying the temporary list into an array may be prohibitive. Since
+		// we can't easily know what toArray() or toList() implementation is available in
+		// the general case, we fall back to toList() if none of the special cases work...
+
+		var items;
+		if inner is Collection:
+			// Note: have to call toArray() even for arrays, lest the array
+			// be changed after sorting.
+			items = inner.toArray();
+		else:
+			items = inner.toList();
+
+		// Since we DO know the size of the collection now, we can use arrays for the rest
+		// of the collections we need.
+		var indexTable = new Array(items.length);
+		// No way to get around having to fill the array with indices.
+		for i in Iterable.range(0, items.length):
+			indexTable[i] = i;
+
+		this.items = items;
+		this.indexTable = indexTable;
+		this.createSortKeyTable();
+	}
+
+	private cleanUpTables()
+	{
+		this.destroySortKeyTable();
+	}
+
+	iter
+	{
+		if not isSorted:
+			sortCollection();
+
+		return new SortByIterator(items, indexTable);
+	}
+}
+
+private class SortByIterator is Iterator
+{
+	public new(this.items, this.indexTable);
+
+	private items;
+	private indexTable;
+	private i = 0;
+	private cur = null;
+
+	override get current = cur;
+
+	override moveNext()
+	{
+		if i < items.length
+		{
+			cur = items[indexTable[i]];
+			i += 1;
+			return true;
+		}
+
+		return false;
+	}
+}
+
+private class SortByWithoutKeyIterable is SortByIterable
+{
+	public new(inner)
+	{
+		new base(inner);
+	}
+
+	override createSortKeyTable()
+	{
+		// No sort key selector, so no sort table!
+	}
+
+	override destroySortKeyTable()
+	{
+		// No sort key selector, so no sort table!
+	}
+
+	override compare(index1, index2)
+	{
+		return items[index1] <=> items[index2];
+	}
+}
+
+private class SortBySingleKeyIterable is SortByIterable
+{
+	public new(inner, this.sortKeySelector)
+	{
+		new base(inner);
+	}
+
+	private sortKeySelector;
+
+	/// Summary: Array of sort keys for each corresponding item in {items}.
+	private sortKeys;
+
+	override createSortKeyTable()
+	{
+		sortKeys = new Array(items.length);
+
+		for i in Iterable.range(0, items.length):
+			sortKeys[i] = sortKeySelector(items[i]);
+	}
+
+	override destroySortKeyTable()
+	{
+		sortKeys = null;
+	}
+
+	override compare(index1, index2)
+	{
+		return sortKeys[index1] <=> sortKeys[index2];
+	}
+}
+
+private class SortByMultipleKeysIterable is SortByIterable
+{
+	public new(inner, this.sortKeySelectors)
+	{
+		new base(inner);
+
+		this.sortKeyCount = sortKeySelectors.length;
+	}
+
+	private sortKeySelectors;
+	private sortKeyCount;
+
+	/// Summary: Array of arrays, each containing a sort key for each corresponding item in
+	///          {items}, for the corresponding sort key getter function.
+	/// Remarks: The arrays are laid out such that `allSortKeys[k][i]` is the sort key returned
+	///          by `sortKeySelectors[k]` for `items[i]`, rather than the more logical opposite
+	///          order. The chosen ordering produces fewer arrays overall; the number of sort
+	///          keys is likely to be small (maybe 2–3 in most common cases), and two or three
+	///          large arrays are more efficient than many small ones.
+	private allSortKeys;
+
+	override createSortKeyTable()
+	{
+		var itemCount = items.length;
+		allSortKeys = new Array(itemCount);
+
+		var itemIndices = Iterable.range(0, itemCount);
+		for k in Iterable.range(0, sortKeyCount)
+		{
+			var sortKeySelector = sortKeySelectors[k];
+			var sortKeys = new Array(itemCount);
+
+			for i in itemIndices:
+				sortKeys[i] = sortKeySelector(items[i]);
+
+			allSortKeys[k] = sortKeys;
+		}
+	}
+
+	override destroySortKeyTable()
+	{
+		allSortKeys = null;
+	}
+
+	override compare(index1, index2)
+	{
+		// Don't use Iterable.range() here - this is pretty performance-sensitive code,
+		// and we can't afford to allocate an Iterable for every single comparison, of
+		// which there are likely to be many.
+
+		var relation = 0;
+		var k = 0;
+		while k < sortKeyCount
+		{
+			var sortKeys = allSortKeys[k];
+			k += 1;
+
+			relation = sortKeys[index1] <=> sortKeys[index2];
+			if relation != 0:
+				break;
+		}
+
+		return relation;
+	}
+}
