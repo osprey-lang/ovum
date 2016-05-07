@@ -35,7 +35,7 @@ private class GroupEveryIterator is Iterator
 			{
 				items.add(inner.current);
 
-				if items.length % frequency == 0:
+				if items.length == frequency:
 					break;
 			}
 
