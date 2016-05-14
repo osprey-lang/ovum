@@ -6,7 +6,7 @@ namespace aves;
 /// Remarks: This class should be used as the base class of all collection
 ///          types, because {Iterable} exposes a variety of useful methods
 ///          for manipulating the sequence or collection. These include {map},
-///          {filter}, {group}, {fold}, {take}, {skip}, {intersperse} and
+///          {filter}, {groupBy}, {fold}, {take}, {skip}, {intersperse} and
 ///          {zip}. Most of these methods return an {Iterable} that is lazily
 ///          evaluated; that is, its items are computed only on demand,
 ///          when the iterable is iterated over.
@@ -383,12 +383,12 @@ public abstract class Iterable
 	///          {keyComparer} is not null and not an {EqualityComparer}.
 	/// Remarks: Keys are compared for equality using the default {EqualityComparer},
 	///          {EqualityComparer.default}.
-	public overridable group(keyFunc)
+	public overridable groupBy(keyFunc)
 	{
 		if keyFunc is null:
 			throw new ArgumentNullError("keyFunc");
 
-		return group(keyFunc, @x => x, null);
+		return groupBy(keyFunc, @x => x, null);
 	}
 	/// Summary: Groups the contents of the sequence according to a key selector
 	///          function, and simultaneously transforms the values according to
@@ -408,14 +408,14 @@ public abstract class Iterable
 	///          {keyComparer} is not null and not an {EqualityComparer}.
 	/// Remarks: Keys are compared for equality using the default {EqualityComparer},
 	///          {EqualityComparer.default}.
-	public overridable group(keyFunc, valueFunc)
+	public overridable groupBy(keyFunc, valueFunc)
 	{
 		if keyFunc is null:
 			throw new ArgumentNullError("keyFunc");
 		if valueFunc is null:
 			throw new ArgumentNullError("valueFunc");
 
-		return group(keyFunc, valueFunc, null);
+		return groupBy(keyFunc, valueFunc, null);
 	}
 	/// Summary: Groups the contents of the sequence according to a key selector
 	///          function, and simultaneously transforms the values according to
@@ -437,7 +437,7 @@ public abstract class Iterable
 	///          {keyFunc} or {valueFunc} is null.
 	/// Throws ArgumentError:
 	///          {keyComparer} is not null and not an {EqualityComparer}.
-	public overridable group(keyFunc, valueFunc, keyComparer)
+	public overridable groupBy(keyFunc, valueFunc, keyComparer)
 	{
 		if keyFunc is null:
 			throw new ArgumentNullError("keyFunc");
