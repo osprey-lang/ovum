@@ -1,15 +1,13 @@
 namespace aves;
 
-/// Summary: The base class of all collection types. {Collection} specifically
-///          represents a sequence of a known length. Depending on the precise
-///          implementation, a collection may expose an indexer, but this is not
-///          guaranteed.
+/// Summary: {Collection} represents a sequence of a known length, and is the base class of
+///          all collection types. Many collection types expose an indexer, but this is not
+///          a guarantee.
+/// Remarks: This class cannot be used to represent a sequence of infinite or indeterminate
+///          length. For that, see the base type of this class, {Iterable}.
 ///
-///          This class cannot be used to represent a sequence of infinite or
-///          indeterminate length.
-///
-///          This class is abstract. Classes that inherit from this must provide
-///          an iterator as well as implement the {length} property.
+///          This class is abstract. Classes that inherit from this must provide an iterator
+///          as well as implement the {length} property.
 public abstract class Collection is Iterable
 {
 	/// Summary: Creates a new Collection.
