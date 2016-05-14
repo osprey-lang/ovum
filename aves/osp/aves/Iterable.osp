@@ -1,37 +1,30 @@
 namespace aves;
 
-/// Summary: Represents the base of all sequence and collection types. An
-///          {Iterable} can be iterated over any number of times, and is
-///          typically used for collection types.
-/// Remarks: This class should be used as the base class of all collection
-///          types, because {Iterable} exposes a variety of useful methods
-///          for manipulating the sequence or collection. These include {map},
-///          {filter}, {groupBy}, {fold}, {take}, {skip}, {intersperse} and
-///          {zip}. Most of these methods return an {Iterable} that is lazily
-///          evaluated; that is, its items are computed only on demand,
-///          when the iterable is iterated over.
+/// Summary: Represents the base of all sequence and collection types. An {Iterable} can be
+///          iterated over any number of times, and is typically used for collection types.
+/// Remarks: This class should be used as the base class of all collection types, because
+///          {Iterable} exposes a variety of useful methods for manipulating the sequence or
+///          collection. These include {map}, {filter}, {groupBy}, {fold}, {take}, {skip},
+///          {intersperse}, {zip}, {sortBy} and many more. Most of these methods return an
+///          {Iterable} that is lazily evaluated; that is, its items are computed only on
+///          demand, when the iterable is iterated over.
 ///
-///          Most of the utility methods are overridable, so that derived
-///          classes can override them with versions that are more optimised
-///          for the collection at hand. The utility methods that do not
-///          return an {Iterable} call the corresponding method on the
-///          collection’s {Iterator}.
+///          Most of these methods are overridable, so that derived classes can override them
+///          with versions that are more optimised for the collection at hand.
 ///
-///          Since {Iterable} supports all kinds of types that represent a
-///          sequence of values, some of which may be infinite, this class
-///          does not declare a `length` member.
+///          Since {Iterable} supports all kinds of types that represent a sequence of
+///          values, some of which may be infinite, this class does not declare a `length`
+///          member. For that, see {Collection}.
 ///
-///          This class is abstract. Classes that inherit from this only
-///          have to provide an iterator.
+///          This class is abstract. Classes that inherit from this only have to provide an
+///          iterator.
 public abstract class Iterable
 {
 	/// Summary: Creates a new Iterable.
 	public new();
 
-	/// Summary: Determines whether any item in the sequence is a truthy
-	///          value.
-	/// Returns: True if any item in the sequence is a truthy value;
-	///          otherwise, false.
+	/// Summary: Determines whether any item in the sequence is a truthy value.
+	/// Returns: True if any item in the sequence is a truthy value; otherwise, false.
 	/// Remarks: This method returns false if the sequence is empty.
 	public overridable any()
 	{
@@ -43,14 +36,11 @@ public abstract class Iterable
 				return true;
 		return false;
 	}
-	/// Summary: Determines whether all items in the sequence match
-	///          the given predicate.
-	/// Param predicate: An invokable value that takes one argument
-	///          (the current element) and returns a truthy value if
-	///          the element matches the predicate, or a falsy value
+	/// Summary: Determines whether all items in the sequence match the given predicate.
+	/// Param predicate: An invokable value that takes one argument (the current element) and
+	///          returns a truthy value if the element matches the predicate, or a falsy value
 	///          otherwise.
-	/// Returns: True if all items in the sequence match the predicate;
-	///          otherwise, false.
+	/// Returns: True if all items in the sequence match the predicate; otherwise, false.
 	/// Throws ArgumentNullError:
 	///          {predicate} is null.
 	public overridable any(predicate)
@@ -64,10 +54,8 @@ public abstract class Iterable
 		return false;
 	}
 
-	/// Summary: Determines whether all items in the sequence are
-	///          truthy values.
-	/// Returns: True if all items in the sequence are truthy values;
-	///          otherwise, false.
+	/// Summary: Determines whether all items in the sequence are truthy values.
+	/// Returns: True if all items in the sequence are truthy values; otherwise, false.
 	/// Remarks: This method returns true if the sequence is empty.
 	public overridable all()
 	{
@@ -79,15 +67,13 @@ public abstract class Iterable
 				return false;
 		return true;
 	}
-	/// Summary: Determines whether any item in the sequence matches
-	///          the given predicate.
-	/// Param predicate: An invokable value that takes one argument
-	///          (the current element) and returns a truthy value if
-	///          the element matches the predicate, or a falsy value
+	/// Summary: Determines whether any item in the sequence matches the given predicate.
+	/// Param predicate: An invokable value that takes one argument (the current element) and
+	///          returns a truthy value if the element matches the predicate, or a falsy value
 	///          otherwise.
-	/// Returns: True if any item in the sequence matches the predicate;
-	///          otherwise, false.
-	/// Throws ArgumentNullError: {predicate} is null.
+	/// Returns: True if any item in the sequence matches the predicate; otherwise, false.
+	/// Throws ArgumentNullError:
+	///          {predicate} is null.
 	public overridable all(predicate)
 	{
 		if predicate is null:
@@ -108,14 +94,13 @@ public abstract class Iterable
 			length += 1;
 		return length;
 	}
-	/// Summary: Counts all the items in the sequence that match the
-	///          the specified predicate.
-	/// Param predicate: An invokable value that takes one argument
-	///          (the current element) and returns a truthy value if
-	///          the element matches the predicate, or a falsy value
+	/// Summary: Counts all the items in the sequence that match the the specified predicate.
+	/// Param predicate: An invokable value that takes one argument (the current element) and
+	///          returns a truthy value if the element matches the predicate, or a falsy value
 	///          otherwise.
 	/// Returns: The number of items that match {predicate}, as an Int.
-	/// Throws ArgumentNullError: {predicate} is null.
+	/// Throws ArgumentNullError:
+	///          {predicate} is null.
 	public overridable count(predicate)
 	{
 		if predicate is null:
@@ -128,12 +113,15 @@ public abstract class Iterable
 		return length;
 	}
 
-	/// Summary: Calls the specified callback once for each item in the
-	///          sequence.
-	/// Param func: An invokable value that takes one argument (the
-	///             current element). The return value is discarded.
+	/// Summary: Calls the specified callback once for each item in the sequence.
+	/// Param func: An invokable value that takes one argument (the current element). The return
+	///          value is discarded.
 	/// Throws ArgumentNullError:
 	///          {func} is null.
+	/// Remarks: This method evaluates the sequence eagerly; that is, {func} is called for each
+	///          element immediately, and the method does not return until each element has been
+	///          visited. To create an {Iterable} with values transformed by to a callback, use
+	///          {map}.
 	public overridable each(func)
 	{
 		if func is null:
@@ -143,14 +131,13 @@ public abstract class Iterable
 			func(item);
 	}
 
-	/// Summary: Returns a new {Iterable} which produces the items from
-	///          this sequence that match the given predicate.
-	/// Param predicate: An invokable value that takes one argument
-	///          (the current element) and returns a truthy value if
-	///          the element matches the predicate, or a falsy value
+	/// Summary: Returns a new {Iterable} which produces the items from this sequence that match
+	///          the given predicate.
+	/// Param predicate: An invokable value that takes one argument (the current element) and
+	///          returns a truthy value if the element matches the predicate, or a falsy value
 	///          otherwise.
-	/// Returns: A new {Iterable} which, when iterated over, produces
-	///          the items from this sequence that match the predicate.
+	/// Returns: A new {Iterable} which, when iterated over, produces the items from this
+	///          sequence that match the predicate.
 	/// Throws ArgumentNullError:
 	///          {predicate} is null.
 	public overridable filter(predicate)
@@ -174,14 +161,11 @@ public abstract class Iterable
 
 		throw new InvalidStateError(emptySequence);
 	}
-	/// Summary: Returns the first element in the sequence that matches
-	///          the given predicate.
-	/// Param predicate: An invokable value that takes one argument
-	///          (the current element) and returns a truthy value if
-	///          the element matches the predicate, or a falsy value
+	/// Summary: Returns the first element in the sequence that matches the given predicate.
+	/// Param predicate: An invokable value that takes one argument (the current element) and
+	///          returns a truthy value if the element matches the predicate, or a falsy value
 	///          otherwise.
-	/// Returns: The first element in the sequence that matches the
-	///          predicate.
+	/// Returns: The first element in the sequence that matches the predicate.
 	/// Throws ArgumentNullError:
 	///          {predicate} is null.
 	/// Throws InvalidStateError:
@@ -207,10 +191,8 @@ public abstract class Iterable
 		throw new InvalidStateError(noMatchFound);
 	}
 
-	/// Summary: Returns the first element in the sequence, or null
-	///          if the sequence is empty.
-	/// Returns: The first element in the sequence, or null if the
-	///          sequence is empty.
+	/// Summary: Returns the first element in the sequence, or null if the sequence is empty.
+	/// Returns: The first element in the sequence, or null if the sequence is empty.
 	public overridable firstOrNull()
 	{
 		var iterator = this.iter;
@@ -218,17 +200,15 @@ public abstract class Iterable
 			return iterator.current;
 		return null;
 	}
-	/// Summary: Returns the first element in the sequence that matches
-	///          the given predicate, or null if there is no match.
-	/// Param predicate: An invokable value that takes one argument
-	///          (the current element) and returns a truthy value if
-	///          the element matches the predicate, or a falsy value
+	/// Summary: Returns the first element in the sequence that matches the given predicate, or
+	///          null if there is no match.
+	/// Param predicate: An invokable value that takes one argument (the current element) and
+	///          returns a truthy value if the element matches the predicate, or a falsy value
 	///          otherwise.
 	/// Throws ArgumentNullError:
 	///          {predicate} is null.
-	/// Returns: The first element in the sequence that matches the
-	///          predicate, or null if the sequence is empty or there
-	///          was no match.
+	/// Returns: The first element in the sequence that matches the predicate, or null if the
+	///          sequence is empty or there was no match.
 	public overridable firstOrNull(predicate)
 	{
 		if predicate is null:
@@ -242,14 +222,14 @@ public abstract class Iterable
 	}
 
 	/// Summary: Applies an accumulator function over the sequence.
-	/// Param func: In invokable value that accepts two arguments (the current accumulator
-	///          value and the current element) and returns the new accumulator value.
-	///          The initial value of the accumulator is the first item in the sequence.
-	/// Returns: The final accumulator value. If the sequence contains only one item, then
-	///          that item is returned.
+	/// Param func: In invokable value that accepts two arguments (the current accumulator value
+	///          and the current element) and returns the new accumulator value. The initial
+	///          value of the accumulator is the first item in the sequence.
+	/// Returns: The final accumulator value. If the sequence contains only one item, then that
+	///          item is returned without calling {func}.
 	/// Throws InvalidStateError:
-	///          The sequence is empty. To fold an empty sequence, use the overload that
-	///          takes an initial accumulator value.
+	///          The sequence is empty. To fold an empty sequence, use the overload that takes an
+	///          initial accumulator value.
 	public overridable fold(func)
 	{
 		if func is null:
@@ -268,9 +248,9 @@ public abstract class Iterable
 	/// Summary: Applies an accumulator function over the sequence using the specified initial
 	///          accumulator value.
 	/// Param init: The initial accumulator value.
-	/// Param func: In invokable value that accepts two arguments (the current accumulator
-	///             value and the current element) and returns the new accumulator value.
-	///             The initial value of the accumulator is {init}.
+	/// Param func: In invokable value that accepts two arguments (the current accumulator value
+	///          and the current element) and returns the new accumulator value. The initial
+	///          value of the accumulator is {init}.
 	/// Returns: The final accumulator value. If the list is empty, {init} is returned.
 	/// Throws ArgumentNullError:
 	///          {func} is null.
@@ -285,17 +265,16 @@ public abstract class Iterable
 		return init;
 	}
 
-	/// Summary: Joins the values of the sequence into a string, separated by the
-	///          specified separator.
+	/// Summary: Joins the values of the sequence into a string, separated by the specified
+	///          separator.
 	/// Param separator: The separator to put between items in the sequence.
-	/// Returns: A String value containing the items of this sequence converted to
-	///          strings and separated by the {separator} value.
+	/// Returns: A String value containing the items of this sequence converted to strings and
+	///          separated by the {separator} value.
 	/// Throws TypeConversionError:
 	///          {separator} could not be converted to a string.
-	/// Remarks: This method uses {aves.string} to convert each item in the sequence
-	///          to its string representation, and does not catch any error thrown
-	///          by that function. As a result, null values get turned into the
-	///          empty string.
+	///
+	///          A value in the sequence could not be converted to a string.
+	/// Remarks: Null values are treated as the empty string.
 	public overridable join(separator)
 	{
 		separator = string(separator);
@@ -315,21 +294,29 @@ public abstract class Iterable
 		return output.toString();
 	}
 
-	/// Summary: Joins the values of the sequence into a “natural” list, where the
-	///          last pair in the list uses a different separator. This is typically
-	///          used to create lists such as “a, b, c and d”.
-	/// Param separator: The separator to put between items in the sequence,
-	///          except the last pair.
-	/// Param lastSeparator: The separator to put between the last pair of items
-	///          in the sequence.
-	/// Returns: A String value containing the items of this sequence converted to
-	///          strings and separated by one of the separator values.
+	/// Summary: Joins the values of the sequence into a string, separated by the specified
+	///          separator, using the specified secondary separator for the last pair.
+	/// Param separator: The separator to put between pairs of items in the sequence, except the
+	///          last pair.
+	/// Param lastSeparator: The separator to put between the last pair of items in the sequence.
+	/// Returns: A String value containing the items of this sequence converted to strings and
+	///          separated by one of the separator values.
 	/// Throws TypeConversionError:
 	///          {separator} or {lastSeparator} could not be converted to a string.
-	/// Remarks: This method uses {aves.string} to convert each item in the sequence
-	///          to its string representation, and does not catch any error thrown
-	///          by that function. As a result, null values get turned into the
-	///          empty string.
+	///
+	///          A value in the sequence could not be converted to a string.
+	/// Remarks: This method is typically used to create lists such as “a, b, c and d”. Note that
+	///          the separators are used verbatim. Therefore, you must explicitly include spaces
+	///          as required. The example
+	///
+	///          ```
+	///          var list = ["Peter", "Ray", "Egon"];
+	///          print(list.joinNatural(", ", " and "))
+	///          ```
+	///
+	///          outputs “Peter, Ray and Egon”.
+	///
+	///          Null values are treated as the empty string.
 	public overridable joinNatural(separator, lastSeparator)
 	{
 		separator = string(separator);
@@ -369,18 +356,14 @@ public abstract class Iterable
 		return output.toString();
 	}
 
-	/// Summary: Groups the contents of the sequence according to a key selector
-	///          function.
-	/// Param keyFunc: An invokable value which is called with one argument (the
-	///          the current element) and returns the key for that element. The
-	///          key cannot be null.
-	/// Returns: A {Hash} containing the grouping. The keys correspond to those
-	///          returned by {keyFunc}, and the value of each entry is a {List}
-	///          of elements with compatible keys.
+	/// Summary: Groups the contents of the sequence according to a key selector function.
+	/// Param keyFunc: An invokable value which is called with one argument (the the current
+	///          element) and returns the key for that element. The key cannot be null.
+	/// Returns: A {Hash} containing the grouping. The keys correspond to those returned by
+	///          {keyFunc}, and the value of each entry is a {List} of elements with matching
+	///          keys.
 	/// Throws ArgumentNullError:
 	///          {keyFunc} is null.
-	/// Throws ArgumentError:
-	///          {keyComparer} is not null and not an {EqualityComparer}.
 	/// Remarks: Keys are compared for equality using the default {EqualityComparer},
 	///          {EqualityComparer.default}.
 	public overridable groupBy(keyFunc)
@@ -390,22 +373,17 @@ public abstract class Iterable
 
 		return groupBy(keyFunc, @x => x, null);
 	}
-	/// Summary: Groups the contents of the sequence according to a key selector
-	///          function, and simultaneously transforms the values according to
-	///          a separate function.
-	/// Param keyFunc: An invokable value which is called with one argument (the
-	///          the current element) and returns the key for that element. The
-	///          key cannot be null.
-	/// Param valueFunc: An invokable value which is called with one argument
-	///          (the current element) and returns a projection of it, which is
-	///          included in the result.
-	/// Returns: A {Hash} containing the grouping. The keys correspond to those
-	///          returned by {keyFunc}, and the value of each entry is a {List}
-	///          of elements (as transformed by {valueFunc}) with compatible keys.
+	/// Summary: Groups the contents of the sequence according to a key selector function, and
+	///          simultaneously transforms the values according to a separate function.
+	/// Param keyFunc: An invokable value which is called with one argument (the the current
+	///          element) and returns the key for that element. The key cannot be null.
+	/// Param valueFunc: An invokable value which is called with one argument (the current
+	///          element) and returns a projection of it, which is included in the result.
+	/// Returns: A {Hash} containing the grouping. The keys correspond to those returned by
+	///          {keyFunc}, and the value of each entry is a {List} of elements (as transformed
+	///          by {valueFunc}) with matching keys.
 	/// Throws ArgumentNullError:
 	///          {keyFunc} or {valueFunc} is null.
-	/// Throws ArgumentError:
-	///          {keyComparer} is not null and not an {EqualityComparer}.
 	/// Remarks: Keys are compared for equality using the default {EqualityComparer},
 	///          {EqualityComparer.default}.
 	public overridable groupBy(keyFunc, valueFunc)
@@ -417,25 +395,22 @@ public abstract class Iterable
 
 		return groupBy(keyFunc, valueFunc, null);
 	}
-	/// Summary: Groups the contents of the sequence according to a key selector
-	///          function, and simultaneously transforms the values according to
-	///          a separate function. Keys are compared for equality using the
-	///          specified {EqualityComparer}.
-	/// Param keyFunc: An invokable value which is called with one argument (the
-	///          the current element) and returns the key for that element. The
-	///          key cannot be null.
-	/// Param valueFunc: An invokable value which is called with one argument
-	///          (the current element) and returns a projection of it, which is
-	///          included in the result.
-	/// Param keyComparer: An {EqualityComparer} that is used to compare keys
-	///          returned by {keyFunc} for equality. This parameter can be null,
-	///          to use the default {EqualityComparer}.
-	/// Returns: A {Hash} containing the grouping. The keys correspond to those
-	///          returned by {keyFunc}, and the value of each entry is a {List}
-	///          of elements (as transformed by {valueFunc}) with compatible keys.
+	/// Summary: Groups the contents of the sequence according to a key selector function, and
+	///          simultaneously transforms the values according to a separate function. Keys are
+	///          compared for equality using the specified {EqualityComparer}.
+	/// Param keyFunc: An invokable value which is called with one argument (the the current
+	///          element) and returns the key for that element. The key cannot be null.
+	/// Param valueFunc: An invokable value which is called with one argument (the current
+	///          element) and returns a projection of it, which is included in the result.
+	/// Param keyComparer: An {EqualityComparer} that is used to compare keys returned by
+	///          {keyFunc} for equality. This parameter can be null, in which case the default
+	///          {EqualityComparer} is used.
+	/// Returns: A {Hash} containing the grouping. The keys correspond to those returned by
+	///          {keyFunc}, and the value of each entry is a {List} of elements (as transformed
+	///          by {valueFunc}) with matching keys.
 	/// Throws ArgumentNullError:
 	///          {keyFunc} or {valueFunc} is null.
-	/// Throws ArgumentError:
+	/// Throws ArgumentTypeError:
 	///          {keyComparer} is not null and not an {EqualityComparer}.
 	public overridable groupBy(keyFunc, valueFunc, keyComparer)
 	{
@@ -467,9 +442,8 @@ public abstract class Iterable
 
 	/// Summary: Groups the contents of the sequence into fixed-size intervals.
 	/// Param frequency: The maximum size of each group. (Int, UInt or Real)
-	/// Returns: An Iterator which, when iterated over, produces groups of
-	///          values from this sequence. Each group is a List of at most
-	///          {frequency} values, and at least one.
+	/// Returns: An Iterator which, when iterated over, produces groups of values from this
+	///          sequence. Each group is a List of at most {frequency} values, and at least one.
 	/// Throws TypeConversionError:
 	///          {frequency} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
@@ -483,32 +457,30 @@ public abstract class Iterable
 		return new GroupEveryIterable(this, frequency);
 	}
 
-	/// Summary: Inserts the specified value between the values of this
-	///          sequence.
+	/// Summary: Inserts the specified value between the values of this sequence.
 	/// Param value: The value to insert.
-	/// Returns: An Iterable which, when iterated over, produces the items
-	///          of this sequence with {value} inserted inbetween them.
-	/// Remarks: The {value} is not inserted before the first item or
-	///          after the last item of the original sequence.
+	/// Returns: An Iterable which, when iterated over, produces the items of this sequence with
+	///          {value} inserted inbetween them.
+	/// Remarks: The {value} is not inserted before the first item or after the last item of the
+	///          original sequence.
 	public overridable intersperse(value)
 	{
 		return new IntersperseIterable(this, value);
 	}
-	/// Summary: Inserts the specified value between the values of this
-	///          sequence at the specified interval.
+	/// Summary: Inserts the specified value between the values of this sequence at the specified
+	///          interval.
 	/// Param value: The value to insert.
-	/// Param frequency: The interval at which to insert {value}. After
-	///          this number of items from the original sequence have
-	///          been yielded, {value} will be the next item. (Int, UInt or Real)
-	/// Returns: An Iterable which, when iterated over, produces the items
-	///          of this sequence with {value} inserted every {frequency}
-	///          item.
+	/// Param frequency: The interval at which to insert {value}. After this number of items from
+	///          the original sequence have been yielded, {value} will be the next item. (Int,
+	///          UInt or Real)
+	/// Returns: An Iterable which, when iterated over, produces the items of this sequence with
+	///          {value} inserted every {frequency} items.
 	/// Throws TypeConversionError:
 	///          {frequency} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {frequency} is less than or equal to zero.
-	/// Remarks: The {value} is not inserted before the first item or
-	///          after the last item of the original sequence.
+	/// Remarks: The {value} is not inserted before the first item or after the last item of the
+	///          original sequence.
 	public overridable intersperse(value, frequency)
 	{
 		frequency = int(frequency);
@@ -522,10 +494,12 @@ public abstract class Iterable
 	/// Returns: The last element in the sequence.
 	/// Throws InvalidStateError:
 	///          The collection is empty.
-	/// Remarks: This method will traverse the entire sequence. Hence, if
-	///          the sequence is infinite, this method will never return.
-	///          If the sequence is especially large, it will take a while
-	///          to find the last element.
+	/// Remarks: This method will traverse the entire sequence. Hence, if the sequence is
+	///          infinite, this method will never return. If the sequence is especially large, it
+	///          will take a while to find the last element.
+	///
+	///          This method is strongly recommended to be overridden in derived classes that can
+	///          computer their last element in constant time.
 	public overridable last()
 	{
 		var iterator = this.iter;
@@ -540,11 +514,9 @@ public abstract class Iterable
 
 		return output;
 	}
-	/// Summary: Returns the last element in the sequence that matches the
-	///          specified predicate.
-	/// Param predicate: An invokable value that takes one argument
-	///          (the current element) and returns a truthy value if
-	///          the element matches the predicate, or a falsy value
+	/// Summary: Returns the last element in the sequence that matches the specified predicate.
+	/// Param predicate: An invokable value that takes one argument (the current element) and
+	///          returns a truthy value if the element matches the predicate, or a falsy value
 	///          otherwise.
 	/// Returns: The last element in the sequence that matches the predicate.
 	/// Throws ArgumentNullError:
@@ -553,11 +525,13 @@ public abstract class Iterable
 	///          The collection is empty.
 	///
 	///          No item in the collection matches the predicate.
-	/// Remarks: This method will traverse the entire sequence. Hence, if
-	///          the sequence is infinite, this method will never return.
-	///          If the sequence is especially large, it will take a while
-	///          to find the last element. Moreover, {predicate} will be
-	///          called for every single element.
+	/// Remarks: This method will traverse the entire sequence. Hence, if the sequence is
+	///          infinite, this method will never return. If the sequence is especially large, it
+	///          will take a while to find the last element. {predicate} will be called at most
+	///          once for each element.
+	///
+	///          This method is strongly recommended to be overridden in derived classes that can
+	///          traverse the sequence backwards.
 	public overridable last(predicate)
 	{
 		if predicate is null:
@@ -586,14 +560,14 @@ public abstract class Iterable
 		return output;
 	}
 
-	/// Summary: Returns the last element in the sequence, or null if the
-	///          sequence is empty.
-	/// Returns: The last element in the sequence, or null if the sequence
-	///          is empty.
-	/// Remarks: This method will traverse the entire sequence. Hence, if
-	///          the sequence is infinite, this method will never return.
-	///          If the sequence is especially large, it will take a while
-	///          to find the last element.
+	/// Summary: Returns the last element in the sequence, or null if the sequence is empty.
+	/// Returns: The last element in the sequence, or null if the sequence is empty.
+	/// Remarks: This method will traverse the entire sequence. Hence, if the sequence is
+	///          infinite, this method will never return. If the sequence is especially large, it
+	///          will take a while to find the last element.
+	///
+	///          This method is strongly recommended to be overridden in derived classes that can
+	///          computer their last element in constant time.
 	public overridable lastOrNull()
 	{
 		var output = null;
@@ -601,21 +575,22 @@ public abstract class Iterable
 			output = item;
 		return output;
 	}
-	/// Summary: Returns the last element in the sequence that matches the
-	///          specified predicate, or null if there is no match.
-	/// Param predicate: An invokable value that takes one argument
-	///          (the current element) and returns a truthy value if
-	///          the element matches the predicate, or a falsy value
+	/// Summary: Returns the last element in the sequence that matches the specified predicate,
+	///          or null if there is no match.
+	/// Param predicate: An invokable value that takes one argument (the current element) and
+	///          returns a truthy value if the element matches the predicate, or a falsy value
 	///          otherwise.
-	/// Returns: The last element in the sequence that matches the predicate,
-	///          or null if the sequence is empty or there was no match.
+	/// Returns: The last element in the sequence that matches the predicate, or null if the
+	///          sequence is empty or there was no match.
 	/// Throws ArgumentNullError:
 	///          {predicate} is null.
-	/// Remarks: This method will traverse the entire sequence. Hence, if
-	///          the sequence is infinite, this method will never return.
-	///          If the sequence is especially large, it will take a while
-	///          to find the last element. Moreover, {predicate} will be
-	///          called for every single element.
+	/// Remarks: This method will traverse the entire sequence. Hence, if the sequence is
+	///          infinite, this method will never return. If the sequence is especially large, it
+	///          will take a while to find the last element. {predicate} will be called at most
+	///          once for each element.
+	///
+	///          This method is strongly recommended to be overridden in derived classes that can
+	///          traverse the sequence backwards.
 	public overridable lastOrNull(predicate)
 	{
 		if predicate is null:
@@ -628,11 +603,10 @@ public abstract class Iterable
 		return output;
 	}
 
-	/// Summary: Transforms the items in this sequence.
-	/// Param func: An invokable value that takes one argument and returns
-	///             a transformed version of it.
-	/// Returns: An Iterable which, when iterated over, produces a sequence
-	///          of values transformed by {func}.
+	/// Summary: Projects the items in this sequence.
+	/// Param func: An invokable value that takes one argument and returns a projection of it.
+	/// Returns: An Iterable which, when iterated over, produces a sequence of values as returned
+	///          by {func}.
 	/// Throws ArgumentNullError:
 	///          {func} is null.
 	public overridable map(func)
@@ -643,13 +617,12 @@ public abstract class Iterable
 		return new MapIterable(this, func);
 	}
 
-	/// Summary: Returns an iterable that takes a specified maximum number of items
-	///          from this sequence.
+	/// Summary: Returns an iterable that takes a specified maximum number of items from this
+	///          sequence.
 	/// Param count: The maximum number of items to take. (Int, UInt or Real)
-	/// Returns: A new Iterable which, when iterated over, produces up to {count}
-	///          values from this sequence. If this sequence produces fewer than
-	///          {count} values, no error is thrown; the resulting iterable will
-	///          simply stop when this sequence does.
+	/// Returns: A new Iterable which, when iterated over, produces up to {count} values from
+	///          this sequence. If this sequence produces fewer than {count} values, no error is
+	///          thrown; the resulting iterable will simply stop when this sequence does.
 	/// Throws TypeConversionError:
 	///          {count} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
@@ -663,13 +636,14 @@ public abstract class Iterable
 		return new TakeIterable(this, count);
 	}
 
-	/// Summary: Returns an iterable that takes items from this sequence as long
-	///          as the specified predicate returns true.
-	/// Param predicate: An invokable value that takes one argument (the current
-	///          element) and returns a truthy value if the element matches the
-	///          predicate, or a falsy value otherwise.
-	/// Returns: A new Iterable which, when iterated over, produces values from
-	///          this sequence until {predicate} returns false.
+	/// Summary: Returns an iterable that takes items from this sequence as long as the specified
+	///          predicate returns true.
+	/// Param predicate: An invokable value that takes one argument (the current element) and
+	///          returns a truthy value if the element matches the predicate, or a falsy value
+	///          otherwise.
+	/// Returns: A new Iterable which, when iterated over, produces values from this sequence
+	///          until {predicate} returns false. No further elements are tested once {predicate}
+	///          has returned false.
 	/// Throws ArgumentNullError:
 	///          {predicate} is null.
 	public overridable takeWhile(predicate)
@@ -680,14 +654,12 @@ public abstract class Iterable
 		return new TakeWhileIterable(this, predicate);
 	}
 
-	/// Summary: Returns an iterable that skips a specified number of items in
-	///          this sequence.
+	/// Summary: Returns an iterable that skips a specified number of items in this sequence.
 	/// Param count: The number of items to skip. (Int, UInt or Real)
-	/// Returns: A new Iterable which, when iterated over, skips {count} items
-	///          from this sequence, and then continues to produce any items
-	///          that may remain in the original sequence. If this sequence
-	///          produces fewer than {count} values, no error is thrown; the
-	///          resulting iterable will simply stop when this sequence does.
+	/// Returns: A new Iterable which, when iterated over, skips {count} items from this sequence
+	///          and then continues to produce any items that may remain in the underlying
+	///          sequence. If this sequence produces fewer than {count} values, no error is
+	///          thrown; the resulting iterable will simply stop when this sequence does.
 	/// Throws TypeConversionError:
 	///          {count} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
@@ -701,14 +673,14 @@ public abstract class Iterable
 		return new SkipIterable(this, count);
 	}
 
-	/// Summary: Returns an iterable that skips items from this sequence as long
-	///          as the specified predicate returns true.
-	/// Param predicate: An invokable value that takes one argument (the current
-	///          element) and returns a truthy value if the element matches the
-	///          predicate, or a falsy value otherwise.
-	/// Returns: A new Iterable which, when iterated over, skips values from this
-	///          sequence until {predicate} returns false, and then produces the
-	///          remaining values from this sequence.
+	/// Summary: Returns an iterable that skips items from this sequence as long as the specified
+	///          predicate returns true.
+	/// Param predicate: An invokable value that takes one argument (the current element) and
+	///          returns a truthy value if the element matches the predicate, or a falsy value
+	///          otherwise.
+	/// Returns: A new Iterable which, when iterated over, skips values from this sequence until
+	///          {predicate} returns false, and then produces the remaining values from this
+	///          sequence, if any.
 	public overridable skipWhile(predicate)
 	{
 		if predicate is null:
@@ -809,20 +781,17 @@ public abstract class Iterable
 			return new SortByMultipleKeysIterable(this, keySelectors);
 	}
 
-	/// Summary: Combines the items from this sequence with those from
-	///          another sequence.
-	/// Param other: The sequence to combine this sequence with. This can
-	///          be any value that implements an iterator.
-	/// Returns: A new Iterable which, when iterated over, produces pairs
-	///          pairs of items from this sequence and {other}, represented
-	///          as two-element lists.
+	/// Summary: Combines the items from this sequence with those from another sequence.
+	/// Param other: The sequence to combine this sequence with. This can be any value that
+	///          implements an iterator.
+	/// Returns: A new Iterable which, when iterated over, produces pairs pairs of items from
+	///          this sequence and {other}, represented as two-element lists.
 	/// Throws ArgumentNullError:
 	///          {other} is null.
-	/// Remarks: The resulting iterable will yield no more than the number
-	///          of items produced by the smallest sequence involved. In
-	///          other words, if this sequence produces five values and
-	///          {other} produces three, the returned iterable will produce
-	///          three values.
+	/// Remarks: The resulting iterable will produce no more than the number of items produced by
+	///          the smallest of the two sequences. In other words, if this sequence produces
+	///          five values and {other} produces three, the returned iterable will produce three
+	///          values.
 	public overridable zip(other)
 	{
 		if other is null:
@@ -830,24 +799,20 @@ public abstract class Iterable
 
 		return new ZipIterable(this, other, null);
 	}
-	/// Summary: Combines the items from this sequence with those from
-	///          another sequence using a specified function.
-	/// Param other: The sequence to combine this sequence with. This can
-	///          be any value that implements an iterator.
-	/// Param func: An invokable value that is called with two arguments
-	///          (the current element from each sequence) and returns a
-	///          combination of the two. The return value is subsequently
-	///          yielded.
-	/// Returns: A new Iterable which, when iterated over, produces a
-	///          sequence of elements combined from the contents of this
-	///          sequence and {other}.
+	/// Summary: Combines the items from this sequence with those from another sequence using a
+	///          specified function.
+	/// Param other: The sequence to combine this sequence with. This can be any value that
+	///          implements an iterator.
+	/// Param func: An invokable value that is called with two arguments (the current element
+	///          from each sequence) and returns a combination of the two.
+	/// Returns: A new Iterable which, when iterated over, produces a sequence of elements
+	///          combined from the contents of this sequence and {other}.
 	/// Throws ArgumentNullError:
 	///          {other} or {func} is null.
-	/// Remarks: The resulting iterable will yield no more than the number
-	///          of items produced by the smallest sequence involved. In
-	///          other words, if this sequence produces five values and
-	///          {other} produces three, the returned iterator will produce
-	///          three values.
+	/// Remarks: The resulting iterable will produce no more than the number of items produced by
+	///          the smallest of the two sequences. In other words, if this sequence produces
+	///          five values and {other} produces three, the returned iterator will produce three
+	///          values.
 	public overridable zip(other, func)
 	{
 		if other is null:
@@ -860,10 +825,9 @@ public abstract class Iterable
 
 	/// Summary: Collects all the items in the iterable into a {List}.
 	/// Returns: A {List} containing all the items of the iterable.
-	/// Remarks: This method will attempt to enumerate the iterable all the
-	///          way to the end. If the iterable represents an infinite
-	///          sequence, the program will attempt to allocate a lot of
-	///          memory before throwing a {MemoryError}.
+	/// Remarks: This method will attempt to enumerate the iterable all the way to the end. If
+	///          the iterable represents an infinite sequence, the program will attempt to
+	///          allocate a lot of memory before throwing a {MemoryError}.
 	public overridable toList()
 	{
 		return this.iter.toList();
@@ -871,10 +835,9 @@ public abstract class Iterable
 
 	/// Summary: Collects all the items in the iterable into an {Array}.
 	/// Returns: An {Array} containing all the items of the iterable.
-	/// Remarks: This method will attempt to enumerate the iterable all the
-	///          way to the end. If the iterable represents an infinite
-	///          sequence, the program will attempt to allocate a lot of
-	///          memory before throwing a {MemoryError}.
+	/// Remarks: This method will attempt to enumerate the iterable all the way to the end. If
+	///          the iterable represents an infinite sequence, the program will attempt to
+	///          allocate a lot of memory before throwing a {MemoryError}.
 	public overridable toArray()
 	{
 		return this.iter.toArray();
@@ -889,32 +852,31 @@ public abstract class Iterable
 	/// Returns: A new {Iterable} that represents an empty sequence.
 	public static get empty = new ReadOnlyIterable();
 
-	/// Summary: Gets an {Iterable} that produces the specified number of consecutive
-	///          integers, starting at the specified value.
+	/// Summary: Gets an {Iterable} that produces the specified number of consecutive integers,
+	///          starting at the specified value.
 	/// Param start: The first value to produce. (Int, UInt or Real)
 	/// Param count: The number of values to produce. (Int, UInt or Real)
-	/// Returns: A new {Iterable} that produces Ints from {start} up to, but not
-	///          including, {start} + {count}.
+	/// Returns: A new {Iterable} that produces Ints from {start} up to, but not including,
+	///          {start} + {count}.
 	/// Throws TypeConversionError:
 	///          {start} or {count} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {count} is less than zero.
 	///
 	///          {start} + {count} is greater than {Int.max}.
-	/// Remarks: To create an iterable that counts up or down towards a specific
-	///          value, use {rangeTo}.
+	/// Remarks: To create an iterable that counts up or down towards a specific value, use
+	///          {rangeTo}.
 	public static range(start, count)
 	{
 		return range(start, count, 1);
 	}
-	/// Summary: Gets an {Iterable} that produces the specified number of integers,
-	///          starting at the specified value and using the specified increment.
+	/// Summary: Gets an {Iterable} that produces the specified number of integers, starting at
+	///          the specified value and using the specified increment.
 	/// Param start: The first value to produce. (Int, UInt or Real)
 	/// Param count: The total number of values to produce. (Int, UInt or Real)
-	/// Param step:  The step size; that is, the distance between the values.
-	///              (Int, UInt or Real)
-	/// Returns: A new {Iterable} that produces every {step}th Int from {start} up
-	///          to, but not including, {start} + {step} * {count}.
+	/// Param step: The step size; that is, the distance between the values. (Int, UInt or Real)
+	/// Returns: A new {Iterable} that produces every {step}th Int from {start} up to, but not
+	///          including, {start} + {step} * {count}.
 	/// Throws TypeConversionError:
 	///          {start}, {count} or {step} could not be converted to an Int.
 	/// Throw ArgumentRangeError:
@@ -923,8 +885,8 @@ public abstract class Iterable
 	///          {step} is less than or equal to zero.
 	/// Throws ArgumentError:
 	///          {start} + {step} * {count} is greater than {Int.max}.
-	/// Remarks: To create an iterable that counts up or down towards a specific
-	///          value, use {rangeTo}.
+	/// Remarks: To create an iterable that counts up or down towards a specific value, use
+	///          {rangeTo}.
 	public static range(start, count, step)
 	{
 		start = int(start);
@@ -952,13 +914,13 @@ public abstract class Iterable
 		return new RangeIterable(start, end, step);
 	}
 
-	/// Summary: Gets an {Iterable} that produces consecutive integers between the
-	///          specified values.
+	/// Summary: Gets an {Iterable} that produces consecutive integers between the specified
+	///          values.
 	/// Param start: The start value, inclusive. (Int, UInt or Real)
-	/// Param end:   The end value, exclusive. (Int, UInt or Real)
-	/// Returns: A new {Iterable} that produces Ints from {start} up to, but not
-	///          including, {end}. If {end} is less than {start}, the iterable will
-	///          count down from {start} to {end}.
+	/// Param end: The end value, exclusive. (Int, UInt or Real)
+	/// Returns: A new {Iterable} that produces Ints from {start} up to, but not including,
+	///          {end}. If {end} is less than {start}, the iterable will count down from {start}
+	///          to {end}.
 	/// Throws TypeConversionError:
 	///          {start} or {end} could not be converted to an Int.
 	public static rangeTo(start, end)
@@ -969,14 +931,14 @@ public abstract class Iterable
 
 		return new RangeIterable(start, end, step);
 	}
-	/// Summary: Gets an {Iterable} that produces integers between the specified values,
-	///          using the specified step size.
+	/// Summary: Gets an {Iterable} that produces integers between the specified values, using
+	///          the specified step size.
 	/// Param start: The start value, inclusive. (Int, UInt or Real)
-	/// Param end:   The end value, exclusive. (Int, UInt or Real)
-	/// Param step:  The step size. The returned {Iterator} produces every {step}th
-	///              value from {start} to {end}.
-	/// Returns: A new {Iterable} that produces every {step}th Int from {start} up to,
-	///          but not including, {end}.
+	/// Param end: The end value, exclusive. (Int, UInt or Real)
+	/// Param step: The step size. The returned {Iterator} produces every {step}th value from
+	///          {start} to {end}.
+	/// Returns: A new {Iterable} that produces every {step}th Int from {start} up to, but not
+	///          including, {end}.
 	/// Throws TypeConversionError:
 	///          {start}, {end} or {step} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
