@@ -1,43 +1,40 @@
 namespace aves;
 
 /// Summary: Exposes a read-only interface for iterating over a sequence.
-///          The method {moveNext} is used to move to the next element in
-///          the sequence, and {current} is used to obtain the current value.
-/// Remarks: The {Iterator} class only allows for a single iteration over
-///          the sequence. To obtain a read-only wrapper for a collection
-///          that can be iterated any number of times, consider using the
-///          {Iterable} class. See that class for more details.
+/// Remarks: The {Iterator} class only allows for a single iteration over the sequence, and
+///          is primarily a support class which you won’t interact with directly. Typically
+///          {Iterable} is used instead; see that class for details.
+///
+///          This class is abstract. Derived classes must implement {moveNext}, which moves
+///          to the next item in the sequence, and {current}, which retuns the current item.
 public abstract class Iterator
 {
 	public new();
 
 	/// Summary: Gets the current value in the sequence.
-	/// Remarks: This return value of this getter is undefined before
-	///          {moveNext} has been called for the first time, and
-	///          after {moveNext} has returned false.
+	/// Remarks: This return value of this getter is undefined before {moveNext} has been called
+	///          for the first time, and after {moveNext} has returned false.
 	public abstract get current;
-	/// Summary: Moves to the next value in the sequence, and returns a
-	///          value to indicate whether the end has been reached.
-	/// Returns: True if the iterator advanced to a new element, or false
-	///          if the end of the sequence has been reached.
-	/// Remarks: The iterator is initially positioned before the first
-	///          element; the first time {moveNext} is called on the
-	///          iterator, it moves to the first element.
+	/// Summary: Moves to the next value in the sequence, and returns a value to indicate whether
+	///          the end has been reached.
+	/// Returns: True if the iterator advanced to a new element, or false if the end of the
+	///          sequence has been reached.
+	/// Remarks: The iterator is initially positioned before the first element; the first time
+	///          {moveNext} is called on the iterator, it moves to the first element.
 	///
-	///          When there are no more elements to consume, {moveNext}
-	///          must return false, and the value of {current} is undefined.
+	///          When there are no more elements to consume, {moveNext} must return false, and
+	///          the value of {current} is undefined.
 	///
-	///          When {moveNext} has returned false, it must continue to
-	///          return false for every subsequent call. In other words,
-	///          when the iterator has reached its end, it stays there.
+	///          When {moveNext} has returned false, it must continue to return false for every
+	///          subsequent call. In other words, once the iterator has reached its end, it stays
+	///          there.
 	public abstract moveNext();
 
 	/// Summary: Collects all the items in the iterator into a {List}.
 	/// Returns: A {List} containing all the items of the iterator.
-	/// Remarks: This method will attempt to enumerate the iterator all the
-	///          way to the end. If the iterator represents an infinite
-	///          sequence, the program will attempt to allocate a lot of
-	///          memory before throwing a {MemoryError}.
+	/// Remarks: This method will attempt to enumerate the iterator all the way to the end. If
+	///          the iterator represents an infinite sequence, the program will attempt to
+	///          allocate a lot of memory before throwing a {MemoryError}.
 	public overridable toList()
 	{
 		var output = [];
@@ -50,10 +47,9 @@ public abstract class Iterator
 
 	/// Summary: Collects all the items in the iterator into an {Array}.
 	/// Returns: An {Array} containing all the items of the iterator.
-	/// Remarks: This method will attempt to enumerate the iterator all the
-	///          way to the end. If the iterator represents an infinite
-	///          sequence, the program will attempt to allocate a lot of
-	///          memory before throwing a {MemoryError}.
+	/// Remarks: This method will attempt to enumerate the iterator all the way to the end. If
+	///          the iterator represents an infinitesequence, the program will attempt to
+	///          allocate a lot of memory before throwing a {MemoryError}.
 	public overridable toArray()
 	{
 		// List is good enough as an intermediate
