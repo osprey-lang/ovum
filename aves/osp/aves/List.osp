@@ -1,11 +1,9 @@
 namespace aves;
 
-/// Summary: Represents a mutable, dynamically sized sequence of values.
-///          The values in a List can be accessed by numeric index, starting
-///          at zero.
-///
-///          The list is one of the fundamental collection types, alongside
-///          {Hash}, {Set} and {Array}.
+/// Summary: Represents a mutable, dynamically sized sequence of values. The values in a List
+///          can be accessed by numeric index, starting at zero.
+/// Remarks: The list is one of the fundamental collection types, alongside {Hash}, {Set} and
+///          {Array}.
 public inheritable List is Collection
 {
 	__init_type("aves_List_init");
@@ -41,18 +39,17 @@ public inheritable List is Collection
 		__extern("aves_List_set_item");
 
 	/// Summary: Gets the total number of items contained in the list.
-	/// Returns: The total number of items actually contained in the list,
-	///          as an Int.
+	/// Returns: The total number of items actually contained in the list, as an Int.
 	override get length
 		__extern("aves_List_get_length");
 
-	/// Summary: Gets the capacity of the list; that is, the number of items
-	///          it can contain before needing to be resized.
+	/// Summary: Gets the capacity of the list; that is, the number of items it can contain
+	///          before needing to be resized.
 	/// Returns: The capacity of the list, as an Int.
 	public get capacity
 		__extern("aves_List_get_capacity");
-	/// Summary: Sets the capacity of the list; that is, the number of items
-	///          it can contain before needing to be resized.
+	/// Summary: Sets the capacity of the list; that is, the number of items it can contain
+	///          before needing to be resized.
 	/// Throws TypeConversionError:
 	///          The value could not be converted to an Int.
 	/// Throws ArgumentRangeError:
@@ -75,43 +72,42 @@ public inheritable List is Collection
 
 	/// Summary: Inserts an item at the specified index.
 	/// Param index: The index at which to insert the item. (Int, UInt or Real)
-	/// Param item:  The item to insert into the list.
+	/// Param item: The item to insert into the list.
 	/// Throws TypeConversionError:
 	///          {index} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
 	///          {index} is less than zero or greater than {length}.
-	/// Remarks: If {index} is equal to {length}, then the item is inserted
-	///          at the end of the list.
+	/// Remarks: If {index} is equal to {length}, then the item is inserted at the end of the
+	///          list.
 	public insert(index, item)
 		__extern("aves_List_insert");
 
 	/// Summary: Determines whether the list contains the specified item.
 	/// Param item: The item to look for.
 	/// Returns: True if the item is in the list; otherwise, false.
-	/// Remarks: Items are compared for equality using the `==` operator,
-	///          invoked on {item}.
+	/// Remarks: Items are compared for equality using the `==` operator, invoked on {item}.
 	public contains(item)
 	{
 		return indexOf(item) is not null;
 	}
 
-	/// Summary: Returns the index of the first occurrence of the
-	///          specified item within this list.
+	/// Summary: Returns the index of the first occurrence of the specified item within this
+	///          list.
 	/// Param item: The item to look for.
-	/// Returns: The index of the first occurrence of {item} within
-	///          the list, as an Int, or null if it could not be found.
+	/// Returns: The index of the first occurrence of {item} within the list, as an Int, or null
+	///          if it could not be found.
+	/// Remarks: Items are compared for equality using the `==` operator, invoked on {item}.
 	public indexOf(item)
 	{
 		return indexOfInternal(item, 0, length);
 	}
-	/// Summary: Returns the index of the first occurrence of the specified
-	///          item within this list. The search starts at the specified
-	///          index.
+	/// Summary: Returns the index of the first occurrence of the specified item within this
+	///          list. The search starts at the specified index.
 	/// Param item: The item to look for.
 	/// Param startIndex: The index to start the search at. (Int, UInt or Real)
-	/// Returns: The index of the first occurrence of {item} within the list,
-	///          as an Int, or null if it could not be found. If found, the
-	///          return value is greater than or equal to {startIndex}.
+	/// Returns: The index of the first occurrence of {item} within the list, as an Int, or null
+	///          if it could not be found. If found, the return value is greater than or equal to
+	///          {startIndex}.
 	public indexOf(item, startIndex)
 	{
 		startIndex = int(startIndex);
@@ -120,18 +116,15 @@ public inheritable List is Collection
 
 		return indexOfInternal(item, startIndex, length);
 	}
-	/// Summary: Returns the index of the first occurrence of the specified
-	///          item within this list. The search spans over the specified
-	///          region of the list.
+	/// Summary: Returns the index of the first occurrence of the specified item within this
+	///          list. The search spans over the specified region of the list.
 	/// Param item: The item to look for.
 	/// Param startIndex: The index to start the search at. (Int, UInt or Real)
-	/// Param count: The total number of items to test against. The search
-	///              is aborted when this many items have been tested without
-	///              a match. (Int, UInt or Real)
-	/// Returns: The index of the first occurrence of {item} within the
-	///          specified region of the list, as an Int, or null if it could
-	///          not be found. If found, the return value is greater than or
-	///          equal to {startIndex}.
+	/// Param count: The total number of items to test against. The search is aborted when this
+	///          many items have been tested without a match. (Int, UInt or Real)
+	/// Returns: The index of the first occurrence of {item} within the specified region of the
+	///          list, as an Int, or null if it could not be found. If found, the return value is
+	///          greater than or equal to {startIndex}.
 	/// Throws TypeConversionError:
 	///          {startIndex} or {count} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
@@ -166,12 +159,11 @@ public inheritable List is Collection
 		return null;
 	}
 
-	/// Summary: Returns the index of the last occurrence of the
-	///          specified item within this list, or null if it could
-	///          not be found.
+	/// Summary: Returns the index of the last occurrence of the specified item within this list,
+	///          or null if it could not be found.
 	/// Param item: The item to look for.
-	/// Returns: The index of the last occurrence of {item} within
-	///          the list, as an Int, or null if it could not be found.
+	/// Returns: The index of the last occurrence of {item} within the list, as an Int, or null
+	///          if it could not be found.
 	public lastIndexOf(item)
 	{
 		for i in [1 to length]:
@@ -181,8 +173,7 @@ public inheritable List is Collection
 		return null;
 	}
 
-	/// Summary: Removes the first occurrence of the specified item
-	///          from this list.
+	/// Summary: Removes the first occurrence of the specified item from this list.
 	/// Param item: The item to remove.
 	/// Returns: True if the item was in the list; otherwise, false.
 	public remove(item)
@@ -231,11 +222,11 @@ public inheritable List is Collection
 	private concatInternal(other)
 		__extern("aves_List_concatInternal", locals=1);
 
-	/// Summary: Creates a new list with items from this list, starting at the specified
-	///          index, up to the end of this list.
+	/// Summary: Creates a new list with items from this list, starting at the specified index,
+	///          up to the end of this list.
 	/// Param startIndex: The index at which to start reading items. (Int, UInt or Real)
-	/// Returns: A new List containing items from this list, starting at index {startIndex}
-	///          to the end of this list.
+	/// Returns: A new List containing items from this list, starting at index {startIndex} to
+	///          the end of this list.
 	/// Throws TypeConversionError:
 	///          {startIndex} could not be converted to an Int.
 	/// Throws ArgumentRangeError:
@@ -243,8 +234,8 @@ public inheritable List is Collection
 	/// Remarks: If {startIndex} is equal to {length}, the returned list will be empty.
 	public slice(startIndex)
 		__extern("aves_List_slice1", locals=1);
-	/// Summary: Creates a new list with the specified number of items from this list,
-	///          starting at the specified index.
+	/// Summary: Creates a new list with the specified number of items from this list, starting
+	///          at the specified index.
 	/// Param startIndex: The index at which to start reading items. (Int, UInt or Real)
 	/// Param count: The total number of items to copy from the list. (Int, UInt or Real)
 	/// Returns: A new List containing {count} items from this list, starting at index
@@ -260,9 +251,10 @@ public inheritable List is Collection
 	public slice(startIndex, count)
 		__extern("aves_List_slice2", locals=1);
 
-	/// Summary: Creates a new list with items from this list, starting at the specified
-	///          start index up to the specified end index.
-	/// Param startIndex: The index at which to start reading items, inclusive. (Int, UInt or Real)
+	/// Summary: Creates a new list with items from this list, starting at the specified start
+	///          index up to the specified end index.
+	/// Param startIndex: The index at which to start reading items, inclusive. (Int, UInt or
+	///          Real)
 	/// Param endIndex: The end index of the slice, exclusive. (Int, UInt or Real)
 	/// Returns: A new List containing the items from this list between {startIndex} and
 	///          {endIndex}.
@@ -272,11 +264,9 @@ public inheritable List is Collection
 	///          {startIndex} is less than zero or greater than {length}.
 	///
 	///          {endIndex} is less than zero or greater than {length}.
-	/// Remarks: Because {endIndex} is exclusive, if {startIndex} = {endIndex}, the returned
-	///          list will be empty. Additionally, passing `-1` as the end index will cause
-	///          the return value to contain items up to but not including the last. To get
-	///          all values up to the end, pass the {length} of the list into {end}, or call
-	///          {slice} with one argument.
+	/// Remarks: Because {endIndex} is exclusive, if {startIndex} = {endIndex}, the returned list
+	///          will be empty. To get all values up to the end, pass the {length} of the list
+	///          into {end}, or call {slice} with one argument.
 	public sliceTo(startIndex, endIndex)
 		__extern("aves_List_sliceTo", locals=1);
 
@@ -449,14 +439,12 @@ public inheritable List is Collection
 		return init;
 	}
 
-	/// Summary: Returns the index of the first item that matches the
-	///          specified predicate.
-	/// Param predicate: An invokable value that takes one argument
-	///          (the current element) and returns a truthy value if
-	///          the element matches the predicate, or a falsy value
+	/// Summary: Returns the index of the first item that matches the specified predicate.
+	/// Param predicate: An invokable value that takes one argument (the current element) and
+	///          returns a truthy value if the element matches the predicate, or a falsy value
 	///          otherwise.
-	/// Returns: The index of the first item that matches {predicate},
-	///          or null if there was no match.
+	/// Returns: The index of the first item that matches {predicate}, or null if there was no
+	///          match.
 	/// Throws ArgumentNullError:
 	///          {predicate} is null.
 	public indexOfFirst(predicate)
@@ -477,14 +465,12 @@ public inheritable List is Collection
 		return null;
 	}
 
-	/// Summary: Returns the index of the last item that matches the
-	///          specified predicate.
-	/// Param predicate: An invokable value that takes one argument
-	///          (the current element) and returns a truthy value if
-	///          the element matches the predicate, or a falsy value
+	/// Summary: Returns the index of the last item that matches the specified predicate.
+	/// Param predicate: An invokable value that takes one argument (the current element) and
+	///          returns a truthy value if the element matches the predicate, or a falsy value
 	///          otherwise.
-	/// Returns: The index of the last item that matches {predicate},
-	///          or null if there was no match.
+	/// Returns: The index of the last item that matches {predicate}, or null if there was no
+	///          match.
 	/// Throws ArgumentNullError:
 	///          {predicate} is null.
 	public indexOfLast(predicate)
