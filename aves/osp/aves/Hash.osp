@@ -495,45 +495,6 @@ public inheritable Hash is Collection
 		return "Hash[length = {0}]".format([length]);
 	}
 
-	/// Summary: Constructs a new hash table by extracting the values of the specified members of
-	///          an object.
-	/// Param object: The object to get member values from.
-	/// Param keys: (variadic) The names of the members to load values of.
-	/// Returns: A new Hash instance with the specified keys.
-	/// Remarks: The keys in {keys} will be converted to strings, as all member names must be
-	///          strings. Examples:
-	///
-	///          ```
-	///          Hash.fromObject(o, "a", "b", "c") // => {"a": o.a, "b": o.b, "c": o.c}
-	///          Hash.fromObject(pt, "x", "y")     // => {"x": pt.x, "y": pt.y}
-	///          ```
-	/// Throws ArgumentNullError:
-	///          {object} is null.
-	/// Throws ArgumentError:
-	///          One of the values in {keys} is null.
-	/// Throws DuplicateKeyError:
-	///          One of the values in {keys} occurs more than once.
-	/// Throws TypeConversionError:
-	///          One of the values in {keys} could not be converted to a string.
-	/// Throws TypeError:
-	///          One of the values in {keys} does not correspond to a public member of {object}.
-	public static fromObject(object, keys...)
-	{
-		if object is null:
-			throw new ArgumentNullError("object");
-
-		var output = new Hash(keys.length);
-		for k in keys
-		{
-			if k is null:
-				throw new ArgumentError("The keys list cannot contain any null values.", "keys");
-			var stringKey = string(k);
-			output.add(stringKey, helpers.loadMember(object, stringKey));
-		}
-
-		return output;
-	}
-
 	iter
 	{
 		return new HashIterator(this);

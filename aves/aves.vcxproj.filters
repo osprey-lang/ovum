@@ -71,9 +71,6 @@
     <ClInclude Include="cpp\aves\hash.h">
       <Filter>Header Files\aves</Filter>
     </ClInclude>
-    <ClInclude Include="cpp\aves\helpers.h">
-      <Filter>Header Files\aves</Filter>
-    </ClInclude>
     <ClInclude Include="cpp\aves\int.h">
       <Filter>Header Files\aves</Filter>
     </ClInclude>
@@ -200,9 +197,6 @@
       <Filter>Source Files\aves</Filter>
     </ClCompile>
     <ClCompile Include="cpp\aves\hash.cpp">
-      <Filter>Source Files\aves</Filter>
-    </ClCompile>
-    <ClCompile Include="cpp\aves\helpers.cpp">
       <Filter>Source Files\aves</Filter>
     </ClCompile>
     <ClCompile Include="cpp\aves\int.cpp">
