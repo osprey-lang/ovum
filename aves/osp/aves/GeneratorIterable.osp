@@ -1,0 +1,71 @@
+namespace aves;
+
+/// Summary: Encloses a generator method in an Iterable, by capturing arguments to the method
+///          and invoking it when the iterable is enumerated.
+/// Remarks: This class captures a reference to a generator method (not the iterator returned
+///          when invoking it), and zero or more arguments to that method. When the iterator
+///          of the {GeneratorIterable} is loaded, it invokes the captured method with the
+///          captured arguments, and returns the resulting iterator. Example:
+///
+///          ```
+///          function countUp(start) {
+///            while true {
+///              yield start;
+///              start += 1;
+///            }
+///          }
+///
+///          var numbers1 = new GeneratorIterable(countUp, [1]);
+///          var numbers2 = new GeneratorIterable(countUp, [10]);
+///
+///          print(numbers1.take(3).join(", "));
+///          print(numbers1.take(3).join(", "));
+///          print(numbers2.take(3).join(", "));
+///          ```
+///
+///          This program will print “1, 2, 3” twice (each `numbers1` iterator is independent
+///          of the other), followed by “10, 11, 13”. The method `countUp` is called exactly
+///          three times.
+public inheritable GeneratorIterable is Iterable
+{
+	/// Summary: Creates a new {GeneratorIterable} that captures the specified method.
+	/// Param method: The method to capture. An invokable value that returns an {Iterator}.
+	/// Throws ArgumentNullError:
+	///          {method} is null.
+	public new(method)
+	{
+		if method is null:
+			throw new ArgumentNullError("method");
+
+		this.method = method;
+		this.args = [];
+	}
+	/// Summary: Creates a new {GeneratorIterable} that captures the specified method and
+	///          arguments.
+	/// Param method: The method to capture. An invokable value that returns an {Iterator}.
+	/// Param args: A List containing the arguments that are sent to the method.
+	/// Throws ArgumentNullError:
+	///          {method} or {args} is null.
+	/// Throws ArgumentTypeError:
+	///          {args} is not a List.
+	public new(method, args)
+	{
+		if method is null:
+			throw new ArgumentNullError("method");
+		if args is null:
+			throw new ArgumentNullError("args");
+		if args is not List:
+			throw new ArgumentTypeError("args", typeof(List));
+
+		this.method = method;
+		this.args = args;
+	}
+
+	private method;
+	private args;
+
+	iter
+	{
+		return method -> args;
+	}
+}
