@@ -24,7 +24,7 @@ namespace aves;
 ///          ```
 ///
 ///          This program will print “1, 2, 3” twice (each `numbers1` iterator is independent
-///          of the other), followed by “10, 11, 13”. The method `countUp` is called exactly
+///          of the other), followed by “10, 11, 12”. The method `countUp` is called exactly
 ///          three times.
 public inheritable GeneratorIterable is Iterable
 {
