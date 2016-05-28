@@ -128,6 +128,33 @@ public inheritable Hash is Collection
 	private getEntry(index)
 		__extern("aves_Hash_getEntry");
 
+	/// Summary: Gets the value associated with the specified key, or null if the key is not in
+	///          the hash table.
+	/// Param key: The key to look up.
+	/// Returns: The value associated with {key}, or null if the key is not in the hash table.
+	/// Throws ArgumentNullError:
+	///          {key} is null.
+	/// Remarks: To get a different default value, call {get} with two arguments.
+	public get(key)
+	{
+		var value = null;
+		tryGet(key, ref value);
+		return value;
+	}
+	/// Summary: Gets the value associated with the specified key, or the specified fallback
+	///          value if the key is not in the hash table.
+	/// Param key: The key to look up.
+	/// Param default: The default value to return if the key is not in the hash table.
+	/// Returns: The value associated with {key}, or {default} if the key is not in the hash
+	///          table.
+	/// Throws ArgumentNullError:
+	///          {key} is null.
+	public get(key, default)
+	{
+		tryGet(key, ref default);
+		return default;
+	}
+
 	/// Summary: Adds the specified key–value pair to the hash table. If the hash table already
 	///          has an entry with the specified key, an error is thrown.
 	/// Param key: The key to add.

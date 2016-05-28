@@ -196,6 +196,56 @@ public class HashTests is TestFixture
 		Assert.collectionsMatch(h.keys, [writeKey1], Assert.areEqual);
 	}
 
+	// get tests
+
+	public test_Get1Existing()
+	{
+		var h = new Hash(1);
+		h[42] = "value";
+
+		Assert.areEqual(h.get(42), "value");
+	}
+
+	public test_Get1Missing()
+	{
+		var h = new Hash(1);
+		h[42] = "value";
+
+		Assert.isNull(h.get(47));
+	}
+
+	public test_Get1Invalid()
+	{
+		var h = new Hash(1);
+		h[42] = "value";
+
+		Assert.throws(typeof(ArgumentNullError), @=> h.get(null));
+	}
+
+	public test_Get2Existing()
+	{
+		var h = new Hash(1);
+		h[42] = "right";
+
+		Assert.areEqual(h.get(42, "wrong"), "right");
+	}
+
+	public test_Get2Missing()
+	{
+		var h = new Hash(1);
+		h[42] = "wrong";
+
+		Assert.areEqual(h.get(47, "right"), "right");
+	}
+
+	public test_Get2Invalid()
+	{
+		var h = new Hash(1);
+		h[42] = "value";
+
+		Assert.throws(typeof(ArgumentNullError), @=> h.get(null, 0));
+	}
+
 	// Concat tests
 
 	public test_ConcatWithUniqueKeys()
