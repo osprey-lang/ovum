@@ -44,6 +44,13 @@ public static class Order
 	///          ```
 	///          5, 4, 2, 0, -1, -3, -6
 	///          ```
+	///
+	///          One may of course also invoke this method in a perfectly normal fashion, like
+	///          so:
+	///
+	///          ```
+	///          list.sortBy(@item => Order.reverse(item.getSortKey()))
+	///          ```
 	public static reverse(value)
 	{
 		return new ReverseOrdering(value);
