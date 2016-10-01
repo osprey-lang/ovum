@@ -37,7 +37,7 @@ void Type::InitOperators()
 	if (!baseType)
 		return;
 
-	OVUM_ASSERT((baseType->flags & TypeFlags::OPS_INITED) == TypeFlags::OPS_INITED);
+	OVUM_ASSERT(baseType->AreOpsInited());
 	for (int op = 0; op < OPERATOR_COUNT; op++)
 	{
 		if (!this->operators[op])

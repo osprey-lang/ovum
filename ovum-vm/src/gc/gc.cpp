@@ -288,8 +288,7 @@ void GC::EndAlloc()
 
 int GC::Construct(Thread *const thread, Type *type, ovlocals_t argc, Value *output)
 {
-	if (type == vm->types.String ||
-		(type->flags & TypeFlags::ABSTRACT) == TypeFlags::ABSTRACT)
+	if (type == vm->types.String || type->IsAbstract())
 		return thread->ThrowTypeError();
 
 	int r;
@@ -859,7 +858,7 @@ void GC::ProcessObjectAndFields(GCObject *gco)
 	{
 		while (type)
 		{
-			if ((type->flags & TypeFlags::CUSTOMPTR) != TypeFlags::NONE)
+			if (type->IsCustomPtr())
 				ProcessCustomFields(type, gco->InstanceBase(), &hasGen0Refs);
 			else if (type->fieldCount)
 				ProcessFields(type->fieldCount, gco->FieldsBase(type), &hasGen0Refs);
@@ -1104,7 +1103,7 @@ void GC::UpdateObjectFields(GCObject *gco)
 	{
 		while (type)
 		{
-			if ((type->flags & TypeFlags::CUSTOMPTR) != TypeFlags::NONE)
+			if (type->IsCustomPtr())
 				UpdateCustomFields(type, gco->InstanceBase());
 			else if (type->fieldCount)
 				UpdateFields(type->fieldCount, gco->FieldsBase(type));

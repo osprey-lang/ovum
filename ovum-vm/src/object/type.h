@@ -188,9 +188,9 @@ public:
 		return (flags & TypeFlags::PRIMITIVE) == TypeFlags::PRIMITIVE;
 	}
 
-	inline bool IsInited() const
+	inline bool IsCustomPtr() const
 	{
-		return (flags & TypeFlags::INITED) == TypeFlags::INITED;
+		return (flags & TypeFlags::CUSTOMPTR) == TypeFlags::CUSTOMPTR;
 	}
 
 	inline bool ConstructorIsAllocator() const
@@ -198,9 +198,14 @@ public:
 		return (flags & TypeFlags::ALLOCATOR_CTOR) == TypeFlags::ALLOCATOR_CTOR;
 	}
 
-	inline bool HasFinalizer() const
+	inline bool AreOpsInited() const
 	{
-		return (flags & TypeFlags::HAS_FINALIZER) == TypeFlags::HAS_FINALIZER;
+		return (flags & TypeFlags::OPS_INITED) == TypeFlags::OPS_INITED;
+	}
+
+	inline bool IsInited() const
+	{
+		return (flags & TypeFlags::INITED) == TypeFlags::INITED;
 	}
 
 	inline bool HasStaticCtorRun() const
@@ -211,6 +216,11 @@ public:
 	inline bool IsStaticCtorRunning() const
 	{
 		return (flags & TypeFlags::STATIC_CTOR_RUNNING) == TypeFlags::STATIC_CTOR_RUNNING;
+	}
+
+	inline bool HasFinalizer() const
+	{
+		return (flags & TypeFlags::HAS_FINALIZER) == TypeFlags::HAS_FINALIZER;
 	}
 
 	void InitOperators();

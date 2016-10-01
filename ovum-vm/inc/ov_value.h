@@ -38,7 +38,6 @@ public:
 	}
 };
 
-#define IS_PRIMITIVE(value) ((Type_GetFlags((value).type) & TypeFlags::PRIMITIVE) == TypeFlags::PRIMITIVE)
 #define IS_REFERENCE(value) (((uintptr_t)(value).type & 1) == 1)
 
 #define NULL_CONSTANT  { nullptr, 0 }
