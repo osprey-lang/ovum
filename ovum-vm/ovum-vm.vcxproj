@@ -98,6 +98,7 @@
     <ClInclude Include="src\ee\stacktraceformatter.h" />
     <ClInclude Include="src\gc\gcobject.h" />
     <ClInclude Include="src\gc\staticref.h" />
+    <ClInclude Include="src\module\modulefile.h" />
     <ClInclude Include="src\module\modulefinder.h" />
     <ClInclude Include="src\module\modulepool.h" />
     <ClInclude Include="src\object\field.h" />

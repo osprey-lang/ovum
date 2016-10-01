@@ -290,6 +290,9 @@
     <ClInclude Include="src\config\defaults.h">
       <Filter>Header Files\src\config</Filter>
     </ClInclude>
+    <ClInclude Include="src\module\modulefile.h">
+      <Filter>Header Files\src\module</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\os\windows\dllmain.cpp">
