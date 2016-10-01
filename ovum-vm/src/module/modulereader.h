@@ -7,12 +7,40 @@
 namespace ovum
 {
 
+class ModuleFile
+{
+public:
+	ModuleFile();
+	~ModuleFile();
+
+	void Open(const pathchar_t *fileName);
+	void Open(const PathName &fileName);
+
+	inline const PathName &GetFileName() const
+	{
+		return fileName;
+	}
+
+	inline void *GetData() const
+	{
+		return data;
+	}
+
+private:
+	// Memoy-mapped file contents
+	void *data;
+
+	os::MemoryMappedFile file;
+	PathName fileName;
+
+	void HandleFileOpenError(os::FileStatus err);
+};
+
 class ModuleReader
 {
 private:
-	os::MemoryMappedFile file;
+	ModuleFile file;
 
-	PathName fileName;
 	// The VM instance that the reader reads module data for.
 	VM *vm;
 
@@ -25,7 +53,7 @@ public:
 
 	inline const PathName &GetFileName() const
 	{
-		return fileName;
+		return file.GetFileName();
 	}
 
 	inline VM *GetVM() const
@@ -41,8 +69,6 @@ public:
 private:
 	String *ReadShortString(uint32_t address, int32_t length);
 	String *ReadLongString(uint32_t address, int32_t length);
-
-	void HandleFileOpenError(os::FileStatus err);
 
 	static const int MaxShortStringLength = 128;
 };

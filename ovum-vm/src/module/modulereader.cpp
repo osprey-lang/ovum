@@ -5,16 +5,23 @@
 namespace ovum
 {
 
-ModuleReader::ModuleReader(VM *owner) :
-	fileName(256),
-	vm(owner)
+ModuleFile::ModuleFile() :
+	data(nullptr),
+	file(),
+	fileName(256)
 { }
-ModuleReader::~ModuleReader()
+
+ModuleFile::~ModuleFile()
 {
+	if (data != nullptr)
+		os::UnmapView(data);
+
+	os::CloseMemoryMappedFile(&file);
 }
 
-void ModuleReader::Open(const pathchar_t *fileName)
+void ModuleFile::Open(const pathchar_t *fileName)
 {
+
 	this->fileName.Clear();
 	this->fileName.Append(fileName);
 
@@ -25,9 +32,34 @@ void ModuleReader::Open(const pathchar_t *fileName)
 		os::FILE_SHARE_READ,
 		&this->file
 	);
-
 	if (r != os::FILE_OK)
 		HandleFileOpenError(r);
+
+	data = os::MapView(&file, os::MMF_VIEW_READ, 0, 0);
+}
+
+void ModuleFile::HandleFileOpenError(os::FileStatus error)
+{
+	const char *message;
+	switch (error)
+	{
+	case os::FILE_NOT_FOUND:     message = "The file could not be found.";   break;
+	case os::FILE_ACCESS_DENIED: message = "Access to the file was denied."; break;
+	default:                     message = "Unspecified I/O error.";         break;
+	}
+	throw ModuleIOException(message);
+}
+
+ModuleReader::ModuleReader(VM *owner) :
+	vm(owner)
+{ }
+ModuleReader::~ModuleReader()
+{
+}
+
+void ModuleReader::Open(const pathchar_t *fileName)
+{
+	file.Open(fileName);
 }
 void ModuleReader::Open(const PathName &fileName)
 {
@@ -64,18 +96,6 @@ String *ModuleReader::ReadLongString(uint32_t address, int32_t length)
 	string = GetGC()->InternString(nullptr, string);
 
 	return string;
-}
-
-void ModuleReader::HandleFileOpenError(os::FileStatus error)
-{
-	const char *message;
-	switch (error)
-	{
-	case os::FILE_NOT_FOUND:     message = "The file could not be found.";   break;
-	case os::FILE_ACCESS_DENIED: message = "Access to the file was denied."; break;
-	default:                     message = "Unspecified I/O error.";         break;
-	}
-	throw ModuleIOException(message);
 }
 
 } // namespace ovum
