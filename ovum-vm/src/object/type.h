@@ -8,6 +8,54 @@
 namespace ovum
 {
 
+// NOTE: The TypeFlags enum members are meant to be synchronised with those
+//       declared in the module specification, but also includes a variety
+//       of internal implementation details.
+//
+//       To prevent problems, the TypeFlags enum is not exposed verbatim to
+//       the outside world; this means we can change it whenever we like.
+//       In addition to this, to avoid collisions with values defined in the
+//       module specification, we only use the two most significant bytes.
+//       When the module spec changes to occupy those bytes, we'll have to
+//       change our approach.
+enum class TypeFlags : uint32_t
+{
+	NONE            = 0x00000000,
+	// Mask of flags to be exposed by API function Type_GetFlags().
+	VISIBLE_MASK    = 0x0000ffff,
+
+	ACCESSIBILITY   = 0x000000ff,
+	PUBLIC          = 0x00000001,
+	INTERNAL        = 0x00000002,
+
+	ABSTRACT        = 0x00000100,
+	SEALED          = 0x00000200,
+	STATIC          = ABSTRACT | SEALED,
+	IMPL            = 0x00001000,
+	PRIMITIVE       = 0x00002000,
+
+	// Non-standard flags follow
+
+	// The type does not use a standard Value array for its fields.
+	// This is used only by the GC during collection.
+	CUSTOMPTR           = 0x00010000,
+	// The type's constructor also takes care of allocation. Only available
+	// for types with native implementations.
+	ALLOCATOR_CTOR      = 0x00020000,
+	// The type's operators have been initialized.
+	OPS_INITED          = 0x00040000,
+	// The type has been initialised.
+	INITED              = 0x00080000,
+	// The static constructor for the type has been run.
+	STATIC_CTOR_HAS_RUN = 0x00100000,
+	// The static constructor is currently running.
+	STATIC_CTOR_RUNNING = 0x00200000,
+	// The type or any of its base types has a finalizer,
+	// which must be run before the value is collected.
+	HAS_FINALIZER       = 0x00400000,
+};
+OVUM_ENUM_OPS(TypeFlags, uint32_t);
+
 // Types, once initialized, are supposed to be (more or less) immutable.
 // If you assign to any of the members in a Type, you have no one to blame but yourself.
 // That said, the VM occasionally updates the flags.
@@ -105,26 +153,61 @@ public:
 		return vm->GetGC();
 	}
 
-	inline bool IsInited() const
+	inline bool IsPublic() const
 	{
-		return (flags & TypeFlags::INITED) == TypeFlags::INITED;
+		return (flags & TypeFlags::PUBLIC) == TypeFlags::PUBLIC;
 	}
+
+	inline bool IsInternal() const
+	{
+		return (flags & TypeFlags::INTERNAL) == TypeFlags::INTERNAL;
+	}
+
+	inline bool IsAbstract() const
+	{
+		return (flags & TypeFlags::ABSTRACT) == TypeFlags::ABSTRACT;
+	}
+
+	inline bool IsSealed() const
+	{
+		return (flags & TypeFlags::SEALED) == TypeFlags::SEALED;
+	}
+
+	inline bool IsStatic() const
+	{
+		return (flags & TypeFlags::STATIC) == TypeFlags::STATIC;
+	}
+
+	inline bool IsImpl() const
+	{
+		return (flags & TypeFlags::IMPL) == TypeFlags::IMPL;
+	}
+
 	inline bool IsPrimitive() const
 	{
 		return (flags & TypeFlags::PRIMITIVE) == TypeFlags::PRIMITIVE;
 	}
+
+	inline bool IsInited() const
+	{
+		return (flags & TypeFlags::INITED) == TypeFlags::INITED;
+	}
+
 	inline bool ConstructorIsAllocator() const
 	{
 		return (flags & TypeFlags::ALLOCATOR_CTOR) == TypeFlags::ALLOCATOR_CTOR;
 	}
+
 	inline bool HasFinalizer() const
 	{
 		return (flags & TypeFlags::HAS_FINALIZER) == TypeFlags::HAS_FINALIZER;
 	}
+
 	inline bool HasStaticCtorRun() const
 	{
-		return (flags & TypeFlags::STATIC_CTOR_RUN) == TypeFlags::STATIC_CTOR_RUN;
+		return (flags & TypeFlags::STATIC_CTOR_HAS_RUN) == TypeFlags::STATIC_CTOR_HAS_RUN;
 	}
+
 	inline bool IsStaticCtorRunning() const
 	{
 		return (flags & TypeFlags::STATIC_CTOR_RUNNING) == TypeFlags::STATIC_CTOR_RUNNING;

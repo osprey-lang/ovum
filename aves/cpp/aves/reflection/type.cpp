@@ -227,40 +227,40 @@ END_NATIVE_FUNCTION
 AVES_API NATIVE_FUNCTION(aves_reflection_Type_get_isPrivate)
 {
 	TypeInst *inst = THISV.Get<TypeInst>();
-	TypeFlags flags = Type_GetFlags(inst->type);
-	VM_PushBool(thread, (flags & TypeFlags::PRIVATE) == TypeFlags::PRIVATE);
+	uint32_t flags = Type_GetFlags(inst->type);
+	VM_PushBool(thread, (flags & OVUM_TYPE_INTERNAL) == OVUM_TYPE_INTERNAL);
 	RETURN_SUCCESS;
 }
 
 AVES_API NATIVE_FUNCTION(aves_reflection_Type_get_isAbstract)
 {
 	TypeInst *inst = THISV.Get<TypeInst>();
-	TypeFlags flags = Type_GetFlags(inst->type);
-	VM_PushBool(thread, (flags & TypeFlags::ABSTRACT) == TypeFlags::ABSTRACT);
+	uint32_t flags = Type_GetFlags(inst->type);
+	VM_PushBool(thread, (flags & OVUM_TYPE_ABSTRACT) == OVUM_TYPE_ABSTRACT);
 	RETURN_SUCCESS;
 }
 
 AVES_API NATIVE_FUNCTION(aves_reflection_Type_get_isInheritable)
 {
 	TypeInst *inst = THISV.Get<TypeInst>();
-	TypeFlags flags = Type_GetFlags(inst->type);
-	VM_PushBool(thread, (flags & TypeFlags::SEALED) == TypeFlags::NONE);
+	uint32_t flags = Type_GetFlags(inst->type);
+	VM_PushBool(thread, (flags & OVUM_TYPE_SEALED) == 0);
 	RETURN_SUCCESS;
 }
 
 AVES_API NATIVE_FUNCTION(aves_reflection_Type_get_isStatic)
 {
 	TypeInst *inst = THISV.Get<TypeInst>();
-	TypeFlags flags = Type_GetFlags(inst->type);
-	VM_PushBool(thread, (flags & TypeFlags::STATIC) == TypeFlags::STATIC);
+	uint32_t flags = Type_GetFlags(inst->type);
+	VM_PushBool(thread, (flags & OVUM_TYPE_STATIC) == OVUM_TYPE_STATIC);
 	RETURN_SUCCESS;
 }
 
 AVES_API NATIVE_FUNCTION(aves_reflection_Type_get_isPrimitive)
 {
 	TypeInst *inst = THISV.Get<TypeInst>();
-	TypeFlags flags = Type_GetFlags(inst->type);
-	VM_PushBool(thread, (flags & TypeFlags::PRIMITIVE) == TypeFlags::PRIMITIVE);
+	uint32_t flags = Type_GetFlags(inst->type);
+	VM_PushBool(thread, (flags & OVUM_TYPE_PRIMITIVE) == OVUM_TYPE_PRIMITIVE);
 	RETURN_SUCCESS;
 }
 

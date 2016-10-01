@@ -168,7 +168,7 @@ int Type::RunStaticCtor(Thread *const thread)
 			}
 		}
 		flags &= ~TypeFlags::STATIC_CTOR_RUNNING;
-		flags |= TypeFlags::STATIC_CTOR_RUN;
+		flags |= TypeFlags::STATIC_CTOR_HAS_RUN;
 	}
 	r = OVUM_SUCCESS;
 leave:
@@ -225,9 +225,9 @@ OVUM_API TypeHandle GetType_NullReferenceError(ThreadHandle thread)  { return th
 OVUM_API TypeHandle GetType_MemberNotFoundError(ThreadHandle thread) { return thread->GetVM()->types.MemberNotFoundError; }
 OVUM_API TypeHandle GetType_TypeConversionError(ThreadHandle thread) { return thread->GetVM()->types.TypeConversionError; }
 
-OVUM_API TypeFlags Type_GetFlags(TypeHandle type)
+OVUM_API uint32_t Type_GetFlags(TypeHandle type)
 {
-	return type->flags;
+	return static_cast<uint32_t>(type->flags & ovum::TypeFlags::VISIBLE_MASK);
 }
 OVUM_API String *Type_GetFullName(TypeHandle type)
 {
@@ -291,11 +291,11 @@ OVUM_API void Type_SetFinalizer(TypeHandle type, Finalizer finalizer)
 	{
 		type->finalizer = finalizer;
 		if (finalizer)
-			type->flags |= TypeFlags::HAS_FINALIZER;
+			type->flags |= ovum::TypeFlags::HAS_FINALIZER;
 		else if (type->baseType)
-			type->flags |= type->baseType->flags & TypeFlags::HAS_FINALIZER;
+			type->flags |= type->baseType->flags & ovum::TypeFlags::HAS_FINALIZER;
 		else
-			type->flags &= ~TypeFlags::HAS_FINALIZER;
+			type->flags &= ~ovum::TypeFlags::HAS_FINALIZER;
 	}
 }
 
@@ -305,7 +305,7 @@ OVUM_API void Type_SetInstanceSize(TypeHandle type, size_t size)
 	{
 		// Ensure the effective size is a multiple of 8
 		type->size = OVUM_ALIGN_TO(size, 8);
-		type->flags |= TypeFlags::CUSTOMPTR;
+		type->flags |= ovum::TypeFlags::CUSTOMPTR;
 	}
 }
 
@@ -322,9 +322,9 @@ OVUM_API void Type_SetConstructorIsAllocator(TypeHandle type, bool isAllocator)
 	if (!type->IsInited())
 	{
 		if (isAllocator)
-			type->flags |= TypeFlags::ALLOCATOR_CTOR;
+			type->flags |= ovum::TypeFlags::ALLOCATOR_CTOR;
 		else
-			type->flags &= ~TypeFlags::ALLOCATOR_CTOR;
+			type->flags &= ~ovum::TypeFlags::ALLOCATOR_CTOR;
 	}
 }
 

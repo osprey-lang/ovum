@@ -814,8 +814,7 @@ Type *MethodInitializer::TypeFromToken(uint32_t token)
 		throw MethodInitException("Unresolved TypeDef or TypeRef token ID.",
 			method, token, MethodInitException::UNRESOLVED_TOKEN_ID);
 
-	if ((result->flags & TypeFlags::PROTECTION) == TypeFlags::PRIVATE &&
-		result->module != method->group->declModule)
+	if (result->IsInternal() && result->module != method->group->declModule)
 		throw MethodInitException("The type is not accessible from outside its declaring module.",
 			method, result, MethodInitException::INACCESSIBLE_TYPE);
 
@@ -894,8 +893,7 @@ Field *MethodInitializer::FieldFromToken(uint32_t token, bool shouldBeStatic)
 
 void MethodInitializer::EnsureConstructible(Type *type, ovlocals_t argCount)
 {
-	if ((type->flags & TypeFlags::ABSTRACT) == TypeFlags::ABSTRACT ||
-		(type->flags & TypeFlags::STATIC) == TypeFlags::STATIC)
+	if (type->IsAbstract() || type->IsStatic())
 		throw MethodInitException("Abstract and static types cannot be used with the newobj instruction.",
 			method, type, MethodInitException::TYPE_NOT_CONSTRUCTIBLE);
 

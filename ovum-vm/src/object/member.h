@@ -55,6 +55,21 @@ public:
 
 	inline virtual ~Member() { }
 
+	inline bool IsField() const
+	{
+		return (flags & MemberFlags::FIELD) == MemberFlags::FIELD;
+	}
+
+	inline bool IsMethod() const
+	{
+		return (flags & MemberFlags::METHOD) == MemberFlags::METHOD;
+	}
+
+	inline bool IsProperty() const
+	{
+		return (flags & MemberFlags::PROPERTY) == MemberFlags::PROPERTY;
+	}
+
 	inline bool IsStatic() const
 	{
 		return (flags & MemberFlags::INSTANCE) == MemberFlags::NONE;
