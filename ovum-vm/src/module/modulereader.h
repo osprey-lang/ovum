@@ -1,5 +1,6 @@
 #pragma once
 
+#include "modulefile.h"
 #include "../vm.h"
 #include "../ee/vm.h"
 #include "../util/pathname.h"
@@ -26,8 +27,40 @@ public:
 		return data;
 	}
 
+	template<class T>
+	inline const T *Read(uint32_t address) const
+	{
+		return reinterpret_cast<const T*>(
+			reinterpret_cast<const char*>(data) + address
+		);
+	}
+
+	template<class T>
+	inline void Read(uint32_t address, T *output) const
+	{
+		*output = *reinterpret_cast<const T*>(
+			reinterpret_cast<const char*>(data) + address
+		);
+	}
+
+	template<class T>
+	inline T *Deref(module_file::Rva<T> rva) const
+	{
+		return reinterpret_cast<const T*>(
+			reinterpret_cast<const char*>(data) + rva.address
+		);
+	}
+
+	template<class T>
+	inline void Deref(module_file::Rva<T> rva, T *output) const
+	{
+		*output = *reinterpret_cast<const T*>(
+			reinterpret_cast<const char*>(data) + rva.address
+		);
+	}
+
 private:
-	// Memoy-mapped file contents
+	// Memory-mapped file contents
 	const void *data;
 
 	os::MemoryMappedFile file;
