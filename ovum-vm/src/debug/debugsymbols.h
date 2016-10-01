@@ -54,10 +54,6 @@ namespace debug
 		static void TryLoad(const PathName &moduleFile, Module *module);
 
 	private:
-		static void ReadSourceFiles(ModuleReader &reader, ModuleDebugData *target);
-		static void ReadMethodSymbols(ModuleReader &reader, Module *module, ModuleDebugData *target);
-		static void ReadSourceLocation(ModuleReader &reader, ModuleDebugData *data, SourceLocation *location);
-
 		void AttachSymbols();
 
 		friend class GC;
