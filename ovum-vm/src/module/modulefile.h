@@ -59,17 +59,6 @@ namespace module_file
 	};
 
 	template<typename T>
-	struct Rva<T[]>
-	{
-		uint32_t address;
-
-		inline bool IsNull() const
-		{
-			return address == 0;
-		}
-	};
-
-	template<typename T>
 	struct InlineArray
 	{
 		// We need to put at least one field in here, to make sure
