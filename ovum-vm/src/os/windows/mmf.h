@@ -156,7 +156,7 @@ namespace os
 	// with the mapping will no longer be usable.
 	//   viewBase:
 	//     The base address of the mapped view.
-	inline void UnmapView(void *viewBase)
+	inline void UnmapView(const void *viewBase)
 	{
 		::UnmapViewOfFile(viewBase);
 	}

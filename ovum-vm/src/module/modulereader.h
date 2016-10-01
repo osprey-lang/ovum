@@ -21,14 +21,14 @@ public:
 		return fileName;
 	}
 
-	inline void *GetData() const
+	inline const void *GetData() const
 	{
 		return data;
 	}
 
 private:
 	// Memoy-mapped file contents
-	void *data;
+	const void *data;
 
 	os::MemoryMappedFile file;
 	PathName fileName;
@@ -50,6 +50,16 @@ public:
 
 	void Open(const pathchar_t *fileName);
 	void Open(const PathName &fileName);
+
+	inline const ModuleFile &GetFile() const
+	{
+		return file;
+	}
+
+	inline const void *GetData() const
+	{
+		return file.GetData();
+	}
 
 	inline const PathName &GetFileName() const
 	{
