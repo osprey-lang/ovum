@@ -2,6 +2,7 @@
 #include "modulepool.h"
 #include "modulereader.h"
 #include "modulefinder.h"
+#include "modulefile.h"
 #include "../object/type.h"
 #include "../object/member.h"
 #include "../object/field.h"
@@ -22,12 +23,6 @@ const char *const Module::NativeModuleIniterName = "OvumModuleMain";
 
 namespace module_file
 {
-	// The magic number that must be present in all Ovum modules.
-	static const char MagicNumber[] = { 'O', 'V', 'M', 'M' };
-
-	// The start of the "real" data in the module.
-	static const unsigned int DataStart = 16;
-
 	// The minimum supported file format version
 	static const uint32_t MinFileFormatVersion = 0x00000100u;
 

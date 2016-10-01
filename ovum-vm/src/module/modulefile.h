@@ -348,16 +348,16 @@ namespace module_file
 		Token name;
 	};
 
-	struct StringMapHeader
-	{
-		int32_t length;
-		InlineArray<StringMapEntry> entries;
-	};
-
 	struct StringMapEntry
 	{
 		Rva<WideString> key;
 		Rva<WideString> value;
+	};
+
+	struct StringMapHeader
+	{
+		int32_t length;
+		InlineArray<StringMapEntry> entries;
 	};
 
 	struct TypeDef
@@ -509,12 +509,6 @@ namespace module_file
 		ByteString entryPointName;
 	};
 
-	struct Annotations
-	{
-		int32_t count;
-		InlineArray<Annotation> members;
-	};
-
 	struct Annotation
 	{
 		Token type;
@@ -524,6 +518,12 @@ namespace module_file
 
 		int32_t namedCount;
 		Rva<NamedAnnotationArgument[]> namedArguments;
+	};
+
+	struct Annotations
+	{
+		int32_t count;
+		InlineArray<Annotation> members;
 	};
 
 	struct AnnotationArgumentList
