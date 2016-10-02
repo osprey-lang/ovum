@@ -242,6 +242,8 @@ public:
 	}
 
 private:
+	OVUM_DISABLE_COPY_AND_ASSIGN(Type);
+
 	int LoadTypeToken(Thread *const thread);
 };
 
