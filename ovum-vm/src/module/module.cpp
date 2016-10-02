@@ -19,17 +19,6 @@
 namespace ovum
 {
 
-const char *const Module::NativeModuleIniterName = "OvumModuleMain";
-
-namespace module_file
-{
-	// The minimum supported file format version
-	static const uint32_t MinFileFormatVersion = 0x00000100u;
-
-	// The maximum supported file format version
-	static const uint32_t MaxFileFormatVersion = 0x00000100u;
-}
-
 ModuleMember::ModuleMember(Type *type, bool isInternal) :
 	type(type), name(type->fullName),
 	flags(ModuleMemberFlags::TYPE | (isInternal ? ModuleMemberFlags::INTERNAL : ModuleMemberFlags::PUBLIC))
@@ -43,29 +32,27 @@ ModuleMember::ModuleMember(String *name, Value value, bool isInternal) :
 	flags(ModuleMemberFlags::CONSTANT | (isInternal ? ModuleMemberFlags::INTERNAL : ModuleMemberFlags::PUBLIC))
 { }
 
-Module::Module(uint32_t fileFormatVersion, ModuleMeta &meta, const PathName &fileName, VM *vm) :
+Module::Module(VM *vm, const PathName &fileName, ModuleParams &params) :
 	// This initializer list is kind of silly
-	fileFormatVersion(fileFormatVersion),
-	name(meta.name),
-	version(meta.version),
+	name(params.name),
+	version(params.version),
 	fileName(fileName),
 	fullyOpened(false),
 	staticState(nullptr),
 	staticStateDeallocator(nullptr),
-	// defs
-	functions(meta.functionCount),
-	types(meta.typeCount),
-	fields(meta.fieldCount),
-	methods(meta.methodCount),
-	strings(0), // for now, initialized with stuff later
-	members(meta.functionCount + meta.typeCount + meta.constantCount),
-	// refs
+	// defs - initialized later
+	functions(0),
+	types(0),
+	fields(0),
+	methods(0),
+	strings(0),
+	members(params.globalMemberCount),
+	// refs - initialized later
 	moduleRefs(0),
 	functionRefs(0),
 	typeRefs(0),
 	fieldRefs(0),
 	methodRefs(0),
-	methodStart(meta.methodStart),
 	nativeLib(),
 	mainMethod(nullptr),
 	debugData(nullptr),
@@ -260,7 +247,11 @@ Module *Module::Open(VM *vm, const PathName &fileName, ModuleVersion *requiredVe
 		ModuleReader reader(vm);
 		reader.Open(fileName);
 
-		throw ModuleLoadException(fileName, "Not implemented");
+		std::unique_ptr<Module> output = reader.ReadModule();
+
+		//debug::ModuleDebugData::TryLoad(fileName, output.get());
+
+		outputModule = output.release();
 	}
 	catch (ModuleIOException &ioError)
 	{

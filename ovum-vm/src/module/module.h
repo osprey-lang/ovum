@@ -51,27 +51,19 @@ enum ModuleMemberId : uint32_t
 	IDMASK_METHODREF   = 0x54000000u,
 };
 
-// Types that are specific to module loading
-struct ModuleMeta
+struct ModuleParams
 {
 	String *name; // The name of the module
 	ModuleVersion version;
-
-	String *nativeLib; // The name of the native library file
-
-	int32_t typeCount;
-	int32_t functionCount;
-	int32_t constantCount;
-	int32_t fieldCount;
-	int32_t methodCount;
-	uint32_t methodStart;
+	// Type count + function count + constant count
+	int32_t globalMemberCount;
 };
 
 // And then the actual Module class! Hurrah!
 class Module
 {
 public:
-	Module(uint32_t fileFormatVersion, ModuleMeta &meta, const PathName &fileName, VM *vm);
+	Module(VM *vm, const PathName &fileName, ModuleParams &params);
 	~Module();
 
 	Module *FindModuleRef(String *name) const;
@@ -95,18 +87,6 @@ public:
 	static Module *Open(VM *vm, const PathName &fileName, ModuleVersion *requiredVersion);
 
 private:
-	class FieldConstData
-	{
-	public:
-		Field *field;
-		TokenId typeId;
-		int64_t value;
-
-		inline FieldConstData(Field *field, TokenId typeId, int64_t value) :
-			field(field), typeId(typeId), value(value)
-		{ }
-	};
-
 	String *name;
 	ModuleVersion version;
 	const PathName fileName;
@@ -115,10 +95,6 @@ private:
 	                  // If a module depends on another module with this set to false,
 	                  // then there's a circular dependency issue.
 
-	// The version number of the file format that the module was saved with.
-	uint32_t fileFormatVersion;
-
-	uint32_t methodStart; // The start offset of the method block in the file (set to 0 after opening)
 	Method *mainMethod;
 
 	os::LibraryHandle nativeLib; // Handle to native library
@@ -191,8 +167,6 @@ private:
 	void *FindNativeEntryPoint(const char *name);
 	void FreeNativeLibrary();
 
-	static const char *const NativeModuleIniterName;
-
 	void TryRegisterStandardType(Type *type);
 
 	static inline int CompareVersion(const ModuleVersion &a, const ModuleVersion &b)
@@ -211,8 +185,6 @@ private:
 
 		return 0; // equal
 	}
-
-	typedef void (OVUM_CDECL *NativeModuleMain)(ModuleHandle module);
 
 	friend class ModulePool;
 	friend class ModuleReader;

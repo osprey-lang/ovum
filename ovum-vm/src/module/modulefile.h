@@ -111,7 +111,7 @@ namespace module_file
 		TYPE_SEALED    = 0x00000200,
 		TYPE_STATIC    = 0x00000300,
 		TYPE_IMPL      = 0x00001000,
-		TYPE_PRIMITIVE = 0x00002200,
+		TYPE_PRIMITIVE = 0x00002000,
 	};
 
 	enum Operator : uint32_t
