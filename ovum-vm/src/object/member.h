@@ -5,39 +5,45 @@
 namespace ovum
 {
 
+// The MemberFlags enum represents a kind of combination of the various
+// member flags found in the raw module format. This enum contains less
+// information than the corresponding flags enums in the module format;
+// that missing information is stored elsewhere in the member.
+//
+// The least significant byte is the member's accessibility, which is
+// made deliberately to match the module format's values.
 enum class MemberFlags : uint32_t
 {
 	NONE      = 0x0000,
 
-	// The member is a field.
-	FIELD     = 0x0001,
-	// The member is a method.
-	METHOD    = 0x0002,
-	// The member is a property.
-	PROPERTY  = 0x0004,
-
+	ACCESSIBILITY = 0x000000ff,
 	// The member is public.
-	PUBLIC    = 0x0010,
+	PUBLIC        = 0x00000001,
+	// The member is internal.
+	INTERNAL      = 0x00000002,
 	// The member is protected.
-	PROTECTED = 0x0020,
+	PROTECTED     = 0x00000004,
 	// The member is private.
-	PRIVATE   = 0x0040,
+	PRIVATE       = 0x00000008,
 
-	// The member is a constructor.
-	CTOR      = 0x0100,
+	KIND_MASK     = 0x00000f00,
+	// The member is a field.
+	FIELD         = 0x00000100,
+	// The member is a method.
+	METHOD        = 0x00000200,
+	// The member is a property.
+	PROPERTY      = 0x00000400,
 
 	// The member is an instance member.
-	INSTANCE  = 0x0400,
+	INSTANCE      = 0x00001000,
+
+	// The member is a constructor.
+	CTOR          = 0x00002000,
 
 	// The member is used internally to implement some behaviour.
 	// Primarily used by getters, setters, iterator accessors and
 	// operator overloads.
-	IMPL      = 0x0800,
-
-	// A mask for extracting the access level of a member.
-	ACCESS_LEVEL = 0x00f0,
-	// A mask for extracting the kind of a member.
-	KIND = 0x000f,
+	IMPL          = 0x00004000,
 };
 OVUM_ENUM_OPS(MemberFlags, uint32_t);
 
@@ -54,6 +60,26 @@ public:
 	Member(String *name, Module *declModule, MemberFlags flags);
 
 	inline virtual ~Member() { }
+
+	inline bool IsPublic() const
+	{
+		return (flags & MemberFlags::PUBLIC) == MemberFlags::PUBLIC;
+	}
+
+	inline bool IsInternal() const
+	{
+		return (flags & MemberFlags::INTERNAL) == MemberFlags::INTERNAL;
+	}
+
+	inline bool IsProtected() const
+	{
+		return (flags & MemberFlags::PROTECTED) == MemberFlags::PROTECTED;
+	}
+
+	inline bool IsPrivate() const
+	{
+		return (flags & MemberFlags::PRIVATE) == MemberFlags::PRIVATE;
+	}
 
 	inline bool IsField() const
 	{
@@ -73,6 +99,16 @@ public:
 	inline bool IsStatic() const
 	{
 		return (flags & MemberFlags::INSTANCE) == MemberFlags::NONE;
+	}
+
+	inline bool IsCtor() const
+	{
+		return (flags & MemberFlags::CTOR) == MemberFlags::CTOR;
+	}
+
+	inline bool IsImpl() const
+	{
+		return (flags & MemberFlags::IMPL) == MemberFlags::IMPL;
 	}
 
 	// Determines whether a member is accessible from a given type.

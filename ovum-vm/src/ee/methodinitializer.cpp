@@ -848,9 +848,8 @@ Method *MethodInitializer::MethodFromToken(uint32_t token)
 			// we pretend the method is being accessed through an instance of fromMethod->declType
 			result->IsAccessible(method->declType, method->declType) :
 			// Otherwise, the method is accessible if it's public,
-			// or private and declared in the same module as fromMethod
-			(result->flags & MemberFlags::ACCESS_LEVEL) == MemberFlags::PUBLIC ||
-				result->declModule == method->group->declModule;
+			// or internal and declared in the same module as fromMethod
+			result->IsPublic() || result->declModule == method->group->declModule;
 		if (!accessible)
 			throw MethodInitException("The method is inaccessible from this location.",
 				method, result, MethodInitException::INACCESSIBLE_MEMBER);
@@ -863,7 +862,8 @@ MethodOverload *MethodInitializer::MethodOverloadFromToken(uint32_t token, ovloc
 {
 	Method *method = MethodFromToken(token);
 
-	argCount -= (int)(method->flags & MemberFlags::INSTANCE) >> 10;
+	if (!method->IsStatic())
+		argCount--;
 
 	MethodOverload *overload = method->ResolveOverload(argCount);
 	if (!overload)

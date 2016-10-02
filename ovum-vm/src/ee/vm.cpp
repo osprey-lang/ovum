@@ -312,8 +312,7 @@ void VM::PrintUnhandledError(Thread *const thread)
 	// If the member exists and is a readable instance property,
 	// we can actually try to invoke the 'message' getter!
 	Member *msgMember = error.type->FindMember(strings->members.message, nullptr);
-	if (msgMember && !msgMember->IsStatic() &&
-		(msgMember->flags & MemberFlags::KIND) == MemberFlags::PROPERTY)
+	if (msgMember && !msgMember->IsStatic() && msgMember->IsProperty())
 	{
 		Property *msgProp = static_cast<Property*>(msgMember);
 		if (msgProp->getter != nullptr)

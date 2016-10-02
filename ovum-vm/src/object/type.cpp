@@ -105,8 +105,8 @@ bool Type::InitStaticFields(Thread *const thread)
 	for (int32_t i = 0; i < members.count; i++)
 	{
 		Member *m = members.entries[i].value;
-		if ((m->flags & MemberFlags::FIELD) == MemberFlags::FIELD &&
-			(m->flags & MemberFlags::INSTANCE) == MemberFlags::NONE &&
+		if (m->IsField() &&
+			m->IsStatic() &&
 			static_cast<Field*>(m)->staticValue == nullptr)
 		{
 			Field *f = static_cast<Field*>(m);
@@ -147,7 +147,7 @@ int Type::RunStaticCtor(Thread *const thread)
 		if (member)
 		{
 			// If there is a member '.init', it must be a method!
-			OVUM_ASSERT((member->flags & MemberFlags::METHOD) == MemberFlags::METHOD);
+			OVUM_ASSERT(member->IsMethod());
 
 			MethodOverload *mo = ((Method*)member)->ResolveOverload(0);
 			if (!mo)
