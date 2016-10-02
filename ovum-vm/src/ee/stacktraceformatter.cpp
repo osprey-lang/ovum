@@ -66,16 +66,15 @@ void StackTraceFormatter::AppendStackFrame(Thread *const thread, StringBuffer &b
 
 void StackTraceFormatter::AppendMethodName(Thread *const thread, StringBuffer &buf, Method *method)
 {
-	// The method name is the fully qualified name of the method, quite simply.
+	// The method name is the fully qualified name of the method.
+
 	// If method->declType is null, we're dealing with a global function, where
 	// method->name already contains the fully qualified name.
-
 	if (method->declType != nullptr)
 	{
 		buf.Append(method->declType->fullName);
 		buf.Append('.');
 	}
-
 	buf.Append(method->name);
 }
 
@@ -94,7 +93,7 @@ void StackTraceFormatter::AppendParameters(Thread *const thread, StringBuffer &b
 		else
 			buf.Append(method->paramNames[i - method->InstanceOffset()]);
 
-		buf.Append('=');
+		buf.Append(2, ": ");
 
 		AppendArgumentType(thread, buf, args + i);
 	}
@@ -109,7 +108,7 @@ void StackTraceFormatter::AppendArgumentType(Thread *const thread, StringBuffer 
 		// If the argument is a reference, it must be dereferenced before
 		// we can make use of the type information.
 		buf.Append(4, "ref ");
-		ReadReference(const_cast<Value *>(arg), &argValue);
+		ReadReference(const_cast<Value*>(arg), &argValue);
 	}
 	else
 	{
@@ -123,24 +122,26 @@ void StackTraceFormatter::AppendArgumentType(Thread *const thread, StringBuffer 
 		return;
 	}
 
-	buf.Append(type->fullName);
+	// To make the stack trace more readable, we only append the last component
+	// of the type name, so 'osprey.compiler.parser.Token' becomes just 'Token'.
+	AppendShortMemberName(thread, buf, type->fullName);
 
 	// When the argument is an aves.Method, we append some information about
 	// the instance and method group, too, in the format
-	//   aves.Method(this=<instance type>, <method name>)
+	//   Method(this: <instance type>, <method name>)
 	//
 	// Note that this is applied recursively to the instance type, which means
 	// you can end up with situations like
-	//   aves.Method(this=aves.Method(this=aves.Method(...), ...), ...)
+	//   Method(this: Method(this: Method(...), ...), ...)
 	//
-	// However, it should be impossible for an aves.Method to be bound to iself.
+	// It should at least be impossible for an aves.Method to be bound to iself.
 	// Otherwise, well, we'll get infinite recursion!
 	if (type == thread->GetVM()->types.Method)
 	{
 		// Append some information about the instance and method group, too.
 		MethodInst *method = argValue.v.method;
 
-		buf.Append(6, "(this=");
+		buf.Append(7, "(this: ");
 
 		// It should be impossible for an aves.Method to be bound to iself.
 		OVUM_ASSERT(method->instance.v.instance != argValue.v.instance);
@@ -148,9 +149,49 @@ void StackTraceFormatter::AppendArgumentType(Thread *const thread, StringBuffer 
 
 		buf.Append(2, ", ");
 
-		AppendMethodName(thread, buf, method->method);
+		AppendShortMethodName(thread, buf, method->method);
 
 		buf.Append(')');
+	}
+}
+
+void StackTraceFormatter::AppendShortMemberName(Thread *const thread, StringBuffer &buf, String *fullName)
+{
+	const ovchar_t *fullNameChars = &fullName->firstChar;
+	int32_t lastDotIndex = fullName->length - 1;
+	while (lastDotIndex >= 0)
+	{
+		if (fullNameChars[lastDotIndex] == '.')
+			break;
+		lastDotIndex--;
+	}
+
+	if (lastDotIndex >= 0)
+		// The name contains one or more dots! Append everything
+		// after the last dot.
+		buf.Append(fullName->length - lastDotIndex - 1, fullNameChars + lastDotIndex + 1);
+	else
+		// No dot found, so just append the whole name
+		buf.Append(fullName);
+}
+
+void StackTraceFormatter::AppendShortMethodName(Thread *const thread, StringBuffer &buf, Method *method)
+{
+	// The short method name is the semi-qualified name of the method. That means
+	// the last component of the name if it's a global function, or the last part
+	// of the type name followed by the method name if it's a class method.
+
+	// If method->declType is null, we're dealing with a global function, where
+	// method->name already contains the fully qualified name.
+	if (method->declType != nullptr)
+	{
+		AppendShortMemberName(thread, buf, method->declType->fullName);
+		buf.Append('.');
+		buf.Append(method->name);
+	}
+	else
+	{
+		AppendShortMemberName(thread, buf, method->name);
 	}
 }
 
@@ -162,6 +203,7 @@ void StackTraceFormatter::AppendSourceLocation(Thread *const thread, StringBuffe
 	if (sym == nullptr)
 		return;
 
+	buf.Append(5, "\n    ");
 	buf.Append(9, " at line ");
 	AppendLineNumber(thread, buf, sym->startLocation.lineNumber);
 
