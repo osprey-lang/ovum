@@ -127,7 +127,7 @@ public:
 	// The number of overloadable operators.
 	// If you change Operator and/or Opcode without changing this,
 	// you have no one to blame but yourself.
-	static const int OPERATOR_COUNT = 18;
+	static const int OPERATOR_COUNT = 16;
 	// Operator implementations. If an operator implementation is null,
 	// then the type does not implement that operator.
 	MethodOverload *operators[OPERATOR_COUNT];

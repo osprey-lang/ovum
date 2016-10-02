@@ -14,11 +14,16 @@ namespace ovum
 {
 
 Type::Type(Module *module, int32_t memberCount) :
-	members(memberCount), typeToken(nullptr),
-	size(0), fieldCount(0),
-	getReferences(nullptr), finalizer(nullptr),
-	nativeFieldCapacity(0), nativeFields(nullptr),
-	module(module), vm(module->GetVM()),
+	members(memberCount),
+	typeToken(nullptr),
+	size(0),
+	fieldCount(0),
+	getReferences(nullptr),
+	finalizer(nullptr),
+	nativeFieldCapacity(0),
+	nativeFields(nullptr),
+	module(module),
+	vm(module->GetVM()),
 	staticCtorLock(8000)
 {
 	memset(operators, 0, sizeof(MethodOverload*) * OPERATOR_COUNT);

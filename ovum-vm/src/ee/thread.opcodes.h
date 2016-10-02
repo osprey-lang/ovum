@@ -103,18 +103,18 @@ enum Opcode : uint8_t
 	OPC_POW        = 0x55,
 	OPC_SHL        = 0x56,
 	OPC_SHR        = 0x57,
-	// RESERVED (0x58)
-	// RESERVED (0x59)
-	OPC_PLUS       = 0x5a,
-	OPC_NEG        = 0x5b,
-	OPC_NOT        = 0x5c,
-	OPC_EQ         = 0x5d,
-	OPC_CMP        = 0x5e,
-	OPC_LT         = 0x5f,
-	OPC_GT         = 0x60,
-	OPC_LTE        = 0x61,
-	OPC_GTE        = 0x62,
-	OPC_CONCAT     = 0x63,
+	OPC_PLUS       = 0x58,
+	OPC_NEG        = 0x59,
+	OPC_NOT        = 0x5a,
+	OPC_EQ         = 0x5b,
+	OPC_CMP        = 0x5c,
+	OPC_LT         = 0x5d,
+	OPC_GT         = 0x5e,
+	OPC_LTE        = 0x5f,
+	OPC_GTE        = 0x60,
+	OPC_CONCAT     = 0x61,
+	// RESERVED (0x62)
+	// RESERVED (0x63)
 	// Misc. data
 	OPC_LIST_0     = 0x64,
 	OPC_LIST_S     = 0x65,

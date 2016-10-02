@@ -125,8 +125,10 @@ public:
 	// We need a default constructor so we can use the type in
 	// an array.
 	inline MethodOverload() :
-		paramCount(0), optionalParamCount(0),
-		locals(0), maxStack(0),
+		paramCount(0),
+		optionalParamCount(0),
+		locals(0),
+		maxStack(0),
 		flags(MethodFlags::NONE),
 		paramNames(nullptr),
 		refSignature(0),
