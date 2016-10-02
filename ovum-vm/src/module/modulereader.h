@@ -215,6 +215,8 @@ private:
 
 	void VerifyHeader(const module_file::ModuleHeader *header);
 
+	void VerifyAnnotations(module_file::Rva<module_file::Annotations> rva);
+
 	OVUM_NOINLINE void ModuleLoadError(const char *message);
 
 	struct UnresolvedConstant

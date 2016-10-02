@@ -110,6 +110,8 @@ std::unique_ptr<Module> ModuleReader::ReadModule()
 	// And finally definitions!
 	ReadDefinitions(output.get(), header);
 
+	VerifyAnnotations(header->annotations);
+
 	// Now that we're done reading all the members, we only need to locate the main
 	// method (if there is one), and call the native library's initialization (if
 	// applicable).
@@ -419,6 +421,8 @@ std::unique_ptr<Type> ModuleReader::ReadSingleTypeDef(Module *module, const mf::
 	ReadPropertyDefs(module, type.get(), def->propertyCount, def->properties);
 	ReadOperatorDefs(module, type.get(), def->operatorCount, def->operators);
 
+	VerifyAnnotations(def->annotations);
+
 	// Lift inherited operators to the newly declared type
 	type->InitOperators();
 
@@ -518,6 +522,8 @@ void ModuleReader::ReadFieldDefs(Module *module, Type *type, uint32_t fieldsBase
 			type->fieldCount++;
 			type->size += sizeof(Value);
 		}
+
+		VerifyAnnotations(def->annotations);
 
 		if (!type->members.Add(name, field.get()))
 			ModuleLoadError("Duplicate member name in type.");
@@ -778,6 +784,8 @@ void ModuleReader::ReadConstantDefs(Module *module, const mf::ModuleHeader *head
 		if (!ReadConstantValue(module, file.Deref(def->value), value))
 			ModuleLoadError("Unresolved type in ConstantDef.");
 
+		VerifyAnnotations(def->annotations);
+
 		ModuleMember member(
 			name,
 			value,
@@ -858,6 +866,8 @@ std::unique_ptr<Method> ModuleReader::ReadSingleMethodDef(Module *module, const 
 			overloadDef->paramCount,
 			overloadDef->params
 		);
+
+		VerifyAnnotations(overloadDef->annotations);
 
 		// If the overload isn't abstract, it has a body of some kind,
 		// so we have to read it.
@@ -1086,6 +1096,12 @@ void ModuleReader::VerifyHeader(const mf::ModuleHeader *header)
 	if (header->formatVersion < mf::MinFileFormatVersion ||
 		header->formatVersion > mf::MaxFileFormatVersion)
 		ModuleLoadError("Unsupported module file format version.");
+}
+
+void ModuleReader::VerifyAnnotations(mf::Rva<mf::Annotations> rva)
+{
+	if (!rva.IsNull())
+		ModuleLoadError("Annotations are not yet supported.");
 }
 
 OVUM_NOINLINE void ModuleReader::ModuleLoadError(const char *message)
