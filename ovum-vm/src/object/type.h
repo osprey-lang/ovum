@@ -15,9 +15,9 @@ namespace ovum
 //       To prevent problems, the TypeFlags enum is not exposed verbatim to
 //       the outside world; this means we can change it whenever we like.
 //       In addition to this, to avoid collisions with values defined in the
-//       module specification, we only use the two most significant bytes.
-//       When the module spec changes to occupy those bytes, we'll have to
-//       change our approach.
+//       module specification, we only use the two most significant bytes
+//       for internal flags. If the module spec changes to occupy those bytes,
+//       we'll have to change our approach.
 enum class TypeFlags : uint32_t
 {
 	NONE            = 0x00000000,
@@ -34,7 +34,7 @@ enum class TypeFlags : uint32_t
 	IMPL            = 0x00001000,
 	PRIMITIVE       = 0x00002000,
 
-	// Non-standard flags follow
+	// Non-standard/internal flags follow
 
 	// The type does not use a standard Value array for its fields.
 	// This is used only by the GC during collection.

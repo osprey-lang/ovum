@@ -756,7 +756,7 @@ void MethodInitializer::WriteInitializedBody(instr::MethodBuilder &builder)
 	delete[] method->entry;
 	method->entry  = buffer.Release();
 	method->length = builder.GetByteSize();
-	method->flags |= MethodFlags::INITED;
+	method->flags |= OverloadFlags::INITED;
 }
 
 void MethodInitializer::FinalizeTryBlockOffsets(instr::MethodBuilder &builder)

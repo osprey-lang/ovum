@@ -52,35 +52,14 @@ OVUM_API MethodHandle Method_GetBaseMethod(MethodHandle method);
 OVUM_API bool Method_Accepts(MethodHandle method, ovlocals_t argc);
 OVUM_API OverloadHandle Method_FindOverload(MethodHandle method, ovlocals_t argc);
 
-enum class MethodFlags : int32_t
-{
-	NONE      = 0x0000,
-	// The method signature is variadic. Only the last parameter is
-	// allowed to be variadic.
-	VARIADIC  = 0x0001,
+#define OVUM_OVERLOAD_VARIADIC      0x00000001
+#define OVUM_OVERLOAD_VIRTUAL       0x00000100
+#define OVUM_OVERLOAD_ABSTRACT      0x00000200
+#define OVUM_OVERLOAD_OVERRIDE      0x00000400
+#define OVUM_OVERLOAD_NATIVE        0x00001000
+#define OVUM_OVERLOAD_SHORT_HEADER  0x00002000
 
-	// The method has a native-code implementation.
-	NATIVE    = 0x0004,
-
-	// The method is an instance method. Without this flag,
-	// methods are static.
-	INSTANCE  = 0x0008,
-
-	// The method is virtual (overridable in Osprey).
-	VIRTUAL   = 0x0010,
-	// The method is abstract (it has no implementation).
-	ABSTRACT  = 0x0020,
-
-	// The method is a constructor.
-	CTOR      = 0x0040,
-
-	// The method has been initialized. Used for bytecode methods only,
-	// to indicate that the bytecode initializer has processed the method.
-	INITED    = 0x0080,
-};
-OVUM_ENUM_OPS(MethodFlags, int32_t);
-
-OVUM_API MethodFlags Overload_GetFlags(OverloadHandle overload);
+OVUM_API uint32_t Overload_GetFlags(OverloadHandle overload);
 
 typedef struct ParamInfo_S
 {
@@ -141,13 +120,11 @@ enum class Operator : uint8_t
 	POW  =  8,   // The ** operator.
 	SHL  =  9,   // The << operator.
 	SHR  = 10,   // The >> operator.
-	// RESERVED (11)
-	// RESERVED (12)
-	PLUS = 13,   // The unary + operator.
-	NEG  = 14,   // The unary - operator.
-	NOT  = 15,   // The ~ operator.
-	EQ   = 16,   // The == operator.
-	CMP  = 17,   // The <=> operator.
+	PLUS = 11,   // The unary + operator.
+	NEG  = 12,   // The unary - operator.
+	NOT  = 13,   // The ~ operator.
+	EQ   = 14,   // The == operator.
+	CMP  = 15,   // The <=> operator.
 };
 
 inline unsigned int Arity(Operator op)

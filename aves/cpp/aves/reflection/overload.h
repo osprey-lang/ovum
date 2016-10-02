@@ -18,7 +18,6 @@ AVES_API NATIVE_FUNCTION(aves_reflection_Overload_new);
 AVES_API NATIVE_FUNCTION(aves_reflection_Overload_get_handle);
 AVES_API NATIVE_FUNCTION(aves_reflection_Overload_get_method);
 AVES_API NATIVE_FUNCTION(aves_reflection_Overload_get_index);
-AVES_API NATIVE_FUNCTION(aves_reflection_Overload_get_isConstructor);
 AVES_API NATIVE_FUNCTION(aves_reflection_Overload_get_isOverridable);
 AVES_API NATIVE_FUNCTION(aves_reflection_Overload_get_isAbstract);
 AVES_API NATIVE_FUNCTION(aves_reflection_Overload_get_isVariadic);

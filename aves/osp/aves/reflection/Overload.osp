@@ -52,8 +52,7 @@ public class Overload is Member
 
 	/// Summary: Gets a value that indicates whether the overload belongs to a constructor.
 	/// Returns: True if the overload belongs to a constructor; otherwise, false.
-	public get isConstructor
-		__extern("aves_reflection_Overload_get_isConstructor");
+	public get isConstructor = method.isConstructor;
 
 	/// Summary: Gets a value that indicates whether the overload’s containing method has the
 	///          `impl` flag. A method with this flag is typically an internal implementation

@@ -70,7 +70,7 @@ int Thread::Start(ovlocals_t argCount, MethodOverload *mo, Value &result)
 {
 	OVUM_ASSERT(mo != nullptr);
 	OVUM_ASSERT(this->state == ThreadState::CREATED);
-	OVUM_ASSERT((mo->flags & MethodFlags::INSTANCE) == MethodFlags::NONE);
+	OVUM_ASSERT(!mo->IsInstanceMethod());
 
 	state = ThreadState::RUNNING;
 
@@ -284,23 +284,21 @@ int Thread::InvokeMemberLL(String *name, ovlocals_t argCount, Value *value, Valu
 int Thread::InvokeMethodOverload(MethodOverload *mo, ovlocals_t argCount,
                                  Value *args, Value *result)
 {
-	MethodFlags flags = mo->flags; // used several times below!
-
 	int r;
-	if ((flags & MethodFlags::VARIADIC) != MethodFlags::NONE)
+	if (mo->IsVariadic())
 	{
-		r = PrepareVariadicArgs(flags, argCount, mo->paramCount, currentFrame);
+		r = PrepareVariadicArgs(argCount, mo->paramCount, currentFrame);
 		if (r != OVUM_SUCCESS) return r;
 		argCount = mo->paramCount;
 	}
 
-	argCount += (int)(flags & MethodFlags::INSTANCE) >> 3;
+	argCount += mo->instanceCount;
 
 	// And now we can push the new stack frame!
 	// Note: this updates currentFrame
 	PushStackFrame(argCount, args, mo);
 
-	if ((flags & MethodFlags::NATIVE) == MethodFlags::NATIVE)
+	if (mo->IsNative())
 	{
 		if (pendingRequest != ThreadRequest::NONE)
 			HandleRequest();
@@ -1166,7 +1164,7 @@ void Thread::PushStackFrame(ovlocals_t argCount, Value *args, MethodOverload *me
 	currentFrame = newFrame;
 }
 
-int Thread::PrepareVariadicArgs(MethodFlags flags, ovlocals_t argCount, ovlocals_t paramCount, StackFrame *frame)
+int Thread::PrepareVariadicArgs(ovlocals_t argCount, ovlocals_t paramCount, StackFrame *frame)
 {
 	int32_t count = argCount >= paramCount - 1 ? argCount - paramCount + 1 : 0;
 
