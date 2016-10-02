@@ -1328,8 +1328,6 @@ exitMethod:
 
 int Thread::FindErrorHandler(int32_t maxIndex)
 {
-	typedef TryBlock::TryKind TryKind;
-
 	StackFrame *frame = currentFrame;
 	MethodOverload *method = frame->method;
 	uint32_t offset = (uint32_t)(this->ip - method->entry);
@@ -1403,8 +1401,6 @@ int Thread::FindErrorHandler(int32_t maxIndex)
 
 int Thread::EvaluateLeave(StackFrame *frame, int32_t target)
 {
-	typedef TryBlock::TryKind TryKind;
-
 	// Note: the IP currently points to the leave instruction. We must add the size
 	// of the opcode and the instruction arguments to get the right target offset.
 	const size_t LEAVE_SIZE =

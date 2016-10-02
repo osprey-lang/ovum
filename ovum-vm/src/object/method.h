@@ -82,15 +82,15 @@ struct FinallyBlock
 	}
 };
 
+enum class TryKind
+{
+	CATCH = 0x01,
+	FINALLY = 0x02,
+};
+
 class TryBlock
 {
 public:
-	// NOTE: These values must match those used in the module spec!
-	enum class TryKind : uint8_t
-	{
-		CATCH = 0x01,
-		FINALLY = 0x02,
-	};
 
 	TryKind kind;
 	uint32_t tryStart;

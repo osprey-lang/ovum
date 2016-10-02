@@ -364,8 +364,6 @@ void MethodInitializer::InitBranchOffsets(instr::MethodBuilder &builder)
 
 void MethodInitializer::InitTryBlockOffsets(instr::MethodBuilder &builder)
 {
-	typedef TryBlock::TryKind TryKind;
-
 	for (int32_t i = 0; i < method->tryBlockCount; i++)
 	{
 		TryBlock &tryBlock = method->tryBlocks[i];
@@ -482,8 +480,6 @@ void MethodInitializer::CalculateStackHeights(instr::MethodBuilder &builder, Sta
 
 void MethodInitializer::EnqueueInitialBranches(instr::MethodBuilder &builder, StackManager &stack)
 {
-	typedef TryBlock::TryKind TryKind;
-
 	// The first instruction is always reachable, and always with a stack
 	// height of 0.
 	stack.EnqueueBranch(0, 0);
@@ -761,8 +757,6 @@ void MethodInitializer::WriteInitializedBody(instr::MethodBuilder &builder)
 
 void MethodInitializer::FinalizeTryBlockOffsets(instr::MethodBuilder &builder)
 {
-	typedef TryBlock::TryKind TryKind;
-
 	for (int32_t t = 0; t < method->tryBlockCount; t++)
 	{
 		TryBlock &tryBlock = method->tryBlocks[t];

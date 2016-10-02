@@ -80,7 +80,6 @@ namespace instr
 
 	void MethodBuilder::PerformRemovalsInternal(int32_t newIndices[], MethodOverload *method)
 	{
-		typedef TryBlock::TryKind TryKind;
 		this->lastOffset = 0; // Must recalculate byte offsets as well
 
 		int32_t oldIndex = 0, newIndex = 0;
