@@ -398,12 +398,13 @@ void MethodInitializer::InitDebugSymbolOffsets(instr::MethodBuilder &builder)
 	if (!method->debugSymbols)
 		return;
 
-	debug::DebugSymbols *debug = method->debugSymbols;
-	for (int32_t i = 0; i < debug->symbolCount; i++)
+	debug::OverloadSymbols *debug = method->debugSymbols;
+	int32_t debugSymbolCount = debug->GetSymbolCount();
+	for (int32_t i = 0; i < debugSymbolCount; i++)
 	{
-		debug::SourceLocation &loc = debug->symbols[i];
-		loc.startOffset = builder.FindIndex(loc.startOffset);
-		loc.endOffset = builder.FindIndex(loc.endOffset);
+		debug::DebugSymbol &sym = debug->GetSymbol(i);
+		sym.startOffset = builder.FindIndex(sym.startOffset);
+		sym.endOffset = builder.FindIndex(sym.endOffset);
 	}
 }
 
@@ -790,12 +791,13 @@ void MethodInitializer::FinalizeDebugSymbolOffsets(instr::MethodBuilder &builder
 	if (!method->debugSymbols)
 		return;
 
-	debug::DebugSymbols *debug = method->debugSymbols;
-	for (int32_t i = 0; i < debug->symbolCount; i++)
+	debug::OverloadSymbols *debug = method->debugSymbols;
+	int32_t debugSymbolCount = debug->GetSymbolCount();
+	for (int32_t i = 0; i < debugSymbolCount; i++)
 	{
-		debug::SourceLocation &loc = debug->symbols[i];
-		loc.startOffset = builder.GetNewOffset(loc.startOffset);
-		loc.endOffset = builder.GetNewOffset(loc.endOffset);
+		debug::DebugSymbol &sym = debug->GetSymbol(i);
+		sym.startOffset = builder.GetNewOffset(sym.startOffset);
+		sym.endOffset = builder.GetNewOffset(sym.endOffset);
 	}
 }
 

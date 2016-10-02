@@ -158,15 +158,15 @@ void StackTraceFormatter::AppendSourceLocation(Thread *const thread, StringBuffe
 {
 	uint32_t offset = (uint32_t)((uint8_t*)ip - method->entry);
 
-	debug::SourceLocation *loc = method->debugSymbols->FindSymbol(offset);
-	if (loc == nullptr)
+	debug::DebugSymbol *sym = method->debugSymbols->FindSymbol(offset);
+	if (sym == nullptr)
 		return;
 
 	buf.Append(9, " at line ");
-	AppendLineNumber(thread, buf, loc->lineNumber);
+	AppendLineNumber(thread, buf, sym->startLocation.lineNumber);
 
 	buf.Append(5, " in \"");
-	buf.Append(loc->file->fileName);
+	buf.Append(sym->file->fileName);
 	buf.Append('"');
 }
 

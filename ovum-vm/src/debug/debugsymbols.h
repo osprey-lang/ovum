@@ -1,25 +1,15 @@
 #pragma once
 
+#include "debugfile.h"
 #include "../vm.h"
+#include "../module/modulereader.h"
+#include "../util/pathname.h"
 
 namespace ovum
 {
 
 namespace debug
 {
-	class DebugSymbols
-	{
-	public:
-		DebugSymbols(MethodOverload *overload, int32_t symbolCount, SourceLocation *symbols);
-		~DebugSymbols();
-
-		MethodOverload *overload;
-		int32_t symbolCount;
-		SourceLocation *symbols;
-
-		SourceLocation *FindSymbol(uint32_t offset);
-	};
-
 	struct SourceFile
 	{
 		String *fileName;
@@ -28,35 +18,166 @@ namespace debug
 
 	struct SourceLocation
 	{
-		SourceFile *file;
+		int32_t lineNumber;
+		int32_t column;
+	};
 
+	struct DebugSymbol
+	{
 		uint32_t startOffset;
 		uint32_t endOffset;
 
-		int32_t lineNumber;
-		int32_t column;
-		int32_t sourceStartIndex;
-		int32_t sourceEndIndex;
+		SourceFile *file;
+
+		SourceLocation startLocation;
+		SourceLocation endLocation;
+	};
+
+	class OverloadSymbols
+	{
+	public:
+		inline MethodOverload *GetOverload() const
+		{
+			return overload;
+		}
+
+		inline MethodSymbols *GetParent() const
+		{
+			return parent;
+		}
+
+		inline int32_t GetSymbolCount() const
+		{
+			return symbolCount;
+		}
+
+		inline DebugSymbol &GetSymbol(int32_t index) const
+		{
+			return symbols[index];
+		}
+
+		DebugSymbol *FindSymbol(uint32_t offset) const;
+
+	private:
+		OVUM_DISABLE_COPY_AND_ASSIGN(OverloadSymbols);
+
+		OverloadSymbols(MethodSymbols *parent, MethodOverload *overload, int32_t symbolCount, std::unique_ptr<DebugSymbol[]> symbols);
+
+		MethodSymbols *parent;
+		MethodOverload *overload;
+		int32_t symbolCount;
+		std::unique_ptr<DebugSymbol[]> symbols;
+
+		friend class DebugSymbolsReader;
+	};
+
+	class MethodSymbols
+	{
+	public:
+		inline Method *GetMethod() const
+		{
+			return method;
+		}
+
+		OverloadSymbols *GetOverload(int32_t index) const;
+
+	private:
+		OVUM_DISABLE_COPY_AND_ASSIGN(MethodSymbols);
+
+		MethodSymbols(Method *method);
+
+		Method *method;
+
+		int32_t overloadCount;
+		std::unique_ptr<std::unique_ptr<OverloadSymbols>[]> overloads;
+
+		void SetOverloads(int32_t count, std::unique_ptr<std::unique_ptr<OverloadSymbols>[]> overloads);
+
+		friend class DebugSymbolsReader;
 	};
 
 	class ModuleDebugData
 	{
-	private:
-		int32_t fileCount;
-		SourceFile *files;
-		int32_t symbolCount;
-		DebugSymbols **symbols;
-
 	public:
-		ModuleDebugData();
-		~ModuleDebugData();
-
 		static void TryLoad(const PathName &moduleFile, Module *module);
 
-	private:
-		void AttachSymbols();
+		inline SourceFile *GetSourceFile(int32_t index) const
+		{
+			if (index < 0 || index >= fileCount)
+				return nullptr;
+			return files.get() + index;
+		}
 
+	private:
+		OVUM_DISABLE_COPY_AND_ASSIGN(ModuleDebugData);
+
+		ModuleDebugData();
+
+		int32_t fileCount;
+		std::unique_ptr<SourceFile[]> files;
+
+		int32_t methodSymbolCount;
+		std::unique_ptr<std::unique_ptr<MethodSymbols>[]> methodSymbols;
+		
 		friend class GC;
+		friend class DebugSymbolsReader;
+	};
+
+	class DebugSymbolsReader
+	{
+	public:
+		DebugSymbolsReader(VM *vm);
+		~DebugSymbolsReader();
+
+		void Open(const pathchar_t *fileName);
+		void Open(const PathName &fileName);
+
+		inline const PathName &GetFileName() const
+		{
+			return file.GetFileName();
+		}
+
+		inline VM *GetVM() const
+		{
+			return vm;
+		}
+
+		inline GC *GetGC() const
+		{
+			return vm->GetGC();
+		}
+
+		void ReadDebugSymbols(Module *module);
+
+	private:
+		ModuleFile file;
+
+		VM *vm;
+
+		void ReadSourceFiles(ModuleDebugData *data, const debug_file::SourceFileList *list);
+
+		void ReadMethodSymbols(Module *module, ModuleDebugData *data, const debug_file::DebugSymbolsHeader *header);
+
+		std::unique_ptr<MethodSymbols> ReadSingleMethodSymbols(
+			ModuleDebugData *data,
+			Module *module,
+			const debug_file::MethodSymbols *symbols
+		);
+
+		std::unique_ptr<OverloadSymbols> ReadSingleOverloadSymbols(
+			ModuleDebugData *data,
+			MethodSymbols *parent,
+			MethodOverload *overload,
+			const debug_file::OverloadSymbols *symbols
+		);
+
+		String *ReadString(const module_file::WideString *str);
+
+		void VerifyHeader(const debug_file::DebugSymbolsHeader *header);
+
+		void AttachSymbols(ModuleDebugData *data);
+
+		OVUM_NOINLINE void ModuleLoadError(const char *message);
 	};
 } // namespace ovum::debug
 

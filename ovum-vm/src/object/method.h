@@ -157,7 +157,7 @@ public:
 	// number of stack slots.
 	ovlocals_t maxStack;
 
-	debug::DebugSymbols *debugSymbols;
+	debug::OverloadSymbols *debugSymbols;
 
 	union
 	{

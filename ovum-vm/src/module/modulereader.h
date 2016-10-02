@@ -90,16 +90,6 @@ public:
 	void Open(const pathchar_t *fileName);
 	void Open(const PathName &fileName);
 
-	inline const ModuleFile &GetFile() const
-	{
-		return file;
-	}
-
-	inline const void *GetData() const
-	{
-		return file.GetData();
-	}
-
 	inline const PathName &GetFileName() const
 	{
 		return file.GetFileName();

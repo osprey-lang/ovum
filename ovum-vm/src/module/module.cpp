@@ -249,7 +249,7 @@ Module *Module::Open(VM *vm, const PathName &fileName, ModuleVersion *requiredVe
 
 		std::unique_ptr<Module> output = reader.ReadModule();
 
-		//debug::ModuleDebugData::TryLoad(fileName, output.get());
+		debug::ModuleDebugData::TryLoad(fileName, output.get());
 
 		outputModule = output.release();
 	}

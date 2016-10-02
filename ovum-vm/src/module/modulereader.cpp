@@ -67,8 +67,7 @@ ModuleReader::ModuleReader(VM *owner) :
 	unresolvedConstants()
 { }
 ModuleReader::~ModuleReader()
-{
-}
+{ }
 
 void ModuleReader::Open(const pathchar_t *fileName)
 {

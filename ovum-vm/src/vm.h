@@ -49,8 +49,11 @@ struct StandardTypeInfo;
 
 namespace debug
 {
-	class DebugSymbols;
+	class DebugSymbolsReader;
+	class MethodSymbols;
 	class ModuleDebugData;
+	class OverloadSymbols;
+	struct DebugSymbol;
 	struct SourceFile;
 	struct SourceLocation;
 } // namespace ovum::debug

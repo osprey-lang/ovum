@@ -190,6 +190,7 @@ private:
 	friend class ModuleReader;
 	friend class GC;
 	friend class debug::ModuleDebugData;
+	friend class debug::DebugSymbolsReader;
 };
 
 class ModuleLoadException : public std::exception

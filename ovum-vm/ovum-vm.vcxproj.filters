@@ -296,6 +296,9 @@
     <ClInclude Include="src\module\modulefacts.h">
       <Filter>Header Files\src\module</Filter>
     </ClInclude>
+    <ClInclude Include="src\debug\debugfile.h">
+      <Filter>Header Files\src\debug</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\os\windows\dllmain.cpp">
