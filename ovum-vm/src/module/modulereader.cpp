@@ -1,6 +1,7 @@
 #include "modulereader.h"
 #include "module.h"
 #include "modulefacts.h"
+#include "modulepool.h"
 #include "../gc/gc.h"
 #include "../object/type.h"
 #include "../object/field.h"
@@ -92,6 +93,8 @@ std::unique_ptr<Module> ModuleReader::ReadModule()
 		header->constantCount;
 
 	std::unique_ptr<Module> output(new Module(vm, GetFileName(), params));
+	// We have to add the module to the pool, so that we can detect circular references.
+	vm->GetModulePool()->Add(output.get());
 
 	// Load the native library first, if there is one.
 	if (!header->nativeLib.IsNull())
