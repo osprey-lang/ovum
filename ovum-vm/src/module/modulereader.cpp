@@ -340,7 +340,7 @@ void ModuleReader::ReadFunctionRefs(Module *module, const mf::RefTableHeader *he
 
 		String *functionName = ResolveString(module, ref->name);
 
-		Method *function = module->FindGlobalFunction(functionName, false);
+		Method *function = declModule->FindGlobalFunction(functionName, false);
 		if (function == nullptr)
 			ModuleLoadError("No matching member for FunctionRef.");
 
