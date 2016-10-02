@@ -625,6 +625,8 @@ Method *ModuleReader::FindBaseMethod(Method *method, Type *declType)
 			return static_cast<Method*>(member);
 		}
 	} while (t = t->baseType);
+
+	return nullptr;
 }
 
 void ModuleReader::ReadPropertyDefs(Module *module, Type *type, int32_t count, mf::Rva<mf::PropertyDef[]> properties)
@@ -811,6 +813,8 @@ bool ModuleReader::ReadConstantValue(Module *module, const mf::ConstantValue *va
 	{
 		result.v.uinteger = value->v.uintValue;
 	}
+
+	return true;
 }
 
 std::unique_ptr<Method> ModuleReader::ReadSingleMethodDef(Module *module, const mf::MethodDef *def)
