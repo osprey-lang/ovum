@@ -72,7 +72,7 @@ public:
 	~Type();
 
 	Member *GetMember(String *name) const;
-	Member *FindMember(String *name, Type *fromType) const;
+	Member *FindMember(String *name, MethodOverload *fromMethod) const;
 
 	// Flags associated with the type.
 	TypeFlags flags;

@@ -270,7 +270,7 @@ AVES_API NATIVE_FUNCTION(aves_reflection_Type_get_canIterate)
 
 	bool result = false;
 	// If there is a public method called ".iter", we can iterate over the type.
-	// Pass null into fromType to exclude non-public members.
+	// Pass null into fromMethod to exclude non-public members.
 	MemberHandle iterMember = Type_FindMember(inst->type, strings::_iter, nullptr);
 	MethodHandle method;
 	if (iterMember && (method = Member_ToMethod(iterMember)))

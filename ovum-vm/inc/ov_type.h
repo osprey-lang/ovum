@@ -34,7 +34,7 @@ OVUM_API ModuleHandle Member_GetDeclModule(MemberHandle member);
 
 OVUM_API bool Member_IsStatic(MemberHandle member);
 OVUM_API bool Member_IsImpl(MemberHandle member);
-OVUM_API bool Member_IsAccessible(MemberHandle member, TypeHandle instType, TypeHandle fromType);
+OVUM_API bool Member_IsAccessible(MemberHandle member, TypeHandle instType, OverloadHandle fromMethod);
 
 OVUM_API MethodHandle Member_ToMethod(MemberHandle member);
 OVUM_API FieldHandle Member_ToField(MemberHandle member);
@@ -275,7 +275,7 @@ OVUM_API TypeHandle Type_GetBaseType(TypeHandle type);
 OVUM_API ModuleHandle Type_GetDeclModule(TypeHandle type);
 
 OVUM_API MemberHandle Type_GetMember(TypeHandle type, String *name);
-OVUM_API MemberHandle Type_FindMember(TypeHandle type, String *name, TypeHandle fromType);
+OVUM_API MemberHandle Type_FindMember(TypeHandle type, String *name, OverloadHandle fromMethod);
 
 OVUM_API int32_t Type_GetMemberCount(TypeHandle type);
 OVUM_API MemberHandle Type_GetMemberByIndex(TypeHandle type, int32_t index);

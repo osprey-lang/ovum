@@ -114,10 +114,9 @@ public:
 	// Determines whether a member is accessible from a given type.
 	//   instType:
 	//     The type of the instance that the member is being loaded from.
-	//   fromType:
-	//     The type which declares the method that is accessing the member.
-	//     This is null for global functions.
-	bool IsAccessible(const Type *instType, const Type *fromType) const;
+	//   fromMethod:
+	//     The method in which the member access is occurring.
+	bool IsAccessible(const Type *instType, const MethodOverload *fromMethod) const;
 
 private:
 	// Gets the type that originally declared the member.

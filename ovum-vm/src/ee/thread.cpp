@@ -178,7 +178,7 @@ int Thread::InvokeLL(ovlocals_t argCount, Value *value, Value *result, uint32_t 
 	}
 	else
 	{
-		Member *member = value->type->FindMember(strings->members.call_, currentFrame->method->declType);
+		Member *member = value->type->FindMember(strings->members.call_, currentFrame->method);
 		if (member && member->IsMethod())
 			mo = static_cast<Method*>(member)->ResolveOverload(argCount);
 		else
@@ -236,7 +236,7 @@ int Thread::InvokeMemberLL(String *name, ovlocals_t argCount, Value *value, Valu
 		return ThrowNullReferenceError();
 
 	Member *member;
-	if (member = value->type->FindMember(name, currentFrame->method->declType))
+	if (member = value->type->FindMember(name, currentFrame->method))
 	{
 		if (member->IsStatic())
 			return ThrowTypeError(strings->error.CannotAccessStaticMemberThroughInstance);
@@ -617,7 +617,7 @@ int Thread::LoadMemberLL(Value *instance, String *member, Value *result)
 	if (IS_NULL(*instance))
 		return ThrowNullReferenceError();
 
-	const Member *m = instance->type->FindMember(member, currentFrame->method->declType);
+	const Member *m = instance->type->FindMember(member, currentFrame->method);
 	if (m == nullptr)
 		return ThrowMemberNotFoundError(member);
 	if (m->IsStatic())
@@ -678,7 +678,7 @@ int Thread::StoreMemberLL(Value *instance, String *member)
 	if (IS_NULL(*instance))
 		return ThrowNullReferenceError();
 
-	Member *m = instance->type->FindMember(member, currentFrame->method->declType);
+	Member *m = instance->type->FindMember(member, currentFrame->method);
 	if (m == nullptr)
 		return ThrowMemberNotFoundError(member);
 	if (m->IsStatic())
@@ -741,7 +741,7 @@ int Thread::LoadIndexerLL(ovlocals_t argCount, Value *args, Value *result)
 	if (IS_NULL(args[0]))
 		return ThrowNullReferenceError();
 
-	Member *member = args[0].type->FindMember(strings->members.item_, currentFrame->method->declType);
+	Member *member = args[0].type->FindMember(strings->members.item_, currentFrame->method);
 	if (!member)
 		return ThrowTypeError(strings->error.IndexerNotFound);
 
@@ -770,7 +770,7 @@ int Thread::StoreIndexerLL(ovlocals_t argCount, Value *args)
 	if (IS_NULL(args[0]))
 		return ThrowNullReferenceError();
 
-	Member *member = args[0].type->FindMember(strings->members.item_, currentFrame->method->declType);
+	Member *member = args[0].type->FindMember(strings->members.item_, currentFrame->method);
 	if (!member)
 		return ThrowTypeError(strings->error.IndexerNotFound);
 
@@ -807,7 +807,7 @@ int Thread::LoadMemberRefLL(Value *inst, String *member)
 	if (IS_NULL(*inst))
 		return ThrowNullReferenceError();
 
-	Member *m = inst->type->FindMember(member, currentFrame->method->declType);
+	Member *m = inst->type->FindMember(member, currentFrame->method);
 	if (m == nullptr)
 		return ThrowMemberNotFoundError(member);
 	if (m->IsStatic())

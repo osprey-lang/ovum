@@ -58,12 +58,12 @@ Member *Type::GetMember(String *name) const
 	return nullptr;
 }
 
-Member *Type::FindMember(String *name, Type *fromType) const
+Member *Type::FindMember(String *name, MethodOverload *fromMethod) const
 {
 	const Type *type = this;
 	do {
 		Member *m;
-		if (type->members.Get(name, m) && m->IsAccessible(this, fromType))
+		if (type->members.Get(name, m) && m->IsAccessible(this, fromMethod))
 			return m;
 	} while (type = type->baseType);
 
@@ -251,9 +251,9 @@ OVUM_API MemberHandle Type_GetMember(TypeHandle type, String *name)
 {
 	return type->GetMember(name);
 }
-OVUM_API MemberHandle Type_FindMember(TypeHandle type, String *name, TypeHandle fromType)
+OVUM_API MemberHandle Type_FindMember(TypeHandle type, String *name, OverloadHandle fromMethod)
 {
-	return type->FindMember(name, fromType);
+	return type->FindMember(name, fromMethod);
 }
 
 OVUM_API int32_t Type_GetMemberCount(TypeHandle type)

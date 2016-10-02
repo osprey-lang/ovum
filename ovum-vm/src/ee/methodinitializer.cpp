@@ -842,7 +842,7 @@ Method *MethodInitializer::MethodFromToken(uint32_t token)
 			// If the method is declared in a type, use IsAccessible
 			// Note: instType is only used by protected members. For static methods,
 			// we pretend the method is being accessed through an instance of fromMethod->declType
-			result->IsAccessible(method->declType, method->declType) :
+			result->IsAccessible(method->declType, method) :
 			// Otherwise, the method is accessible if it's public,
 			// or internal and declared in the same module as fromMethod
 			result->IsPublic() || result->declModule == method->group->declModule;
@@ -876,7 +876,7 @@ Field *MethodInitializer::FieldFromToken(uint32_t token, bool shouldBeStatic)
 		throw MethodInitException("Unresolved FieldDef or FieldRef token ID.",
 			method, token, MethodInitException::UNRESOLVED_TOKEN_ID);
 
-	if (field->IsStatic() && !field->IsAccessible(nullptr, method->declType))
+	if (field->IsStatic() && !field->IsAccessible(nullptr, method))
 		throw MethodInitException("The field is inaccessible from this location.",
 			method, field, MethodInitException::INACCESSIBLE_MEMBER);
 
@@ -897,7 +897,7 @@ void MethodInitializer::EnsureConstructible(Type *type, ovlocals_t argCount)
 		throw MethodInitException("The type does not declare an instance constructor.",
 			method, type, MethodInitException::TYPE_NOT_CONSTRUCTIBLE);
 
-	if (!type->instanceCtor->IsAccessible(type, method->declType))
+	if (!type->instanceCtor->IsAccessible(type, method))
 		throw MethodInitException("The instance constructor is not accessible from this location.",
 			method, type, MethodInitException::TYPE_NOT_CONSTRUCTIBLE);
 
