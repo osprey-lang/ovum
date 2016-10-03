@@ -18,6 +18,7 @@ AVES_API NATIVE_FUNCTION(aves_String_lastIndexOf);
 AVES_API NATIVE_FUNCTION(aves_String_reverse);
 AVES_API NATIVE_FUNCTION(aves_String_substringInternal);
 AVES_API NATIVE_FUNCTION(aves_String_format);
+AVES_API NATIVE_FUNCTION(aves_String_repeat);
 AVES_API NATIVE_FUNCTION(aves_String_replaceInner);
 AVES_API NATIVE_FUNCTION(aves_String_splice);
 AVES_API NATIVE_FUNCTION(aves_String_split);
@@ -43,7 +44,6 @@ AVES_API NATIVE_FUNCTION(aves_String_fromCodePoint);
 
 AVES_API NATIVE_FUNCTION(aves_String_opEquals);
 AVES_API NATIVE_FUNCTION(aves_String_opCompare);
-AVES_API NATIVE_FUNCTION(aves_String_opMultiply);
 
 // Note: These values must be synchronised with aves.StringPad (in String.osp)
 enum StringPad

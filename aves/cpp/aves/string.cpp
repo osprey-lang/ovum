@@ -296,6 +296,47 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_format)
 }
 END_NATIVE_FUNCTION
 
+AVES_API BEGIN_NATIVE_FUNCTION(aves_String_repeat)
+{
+	Aves *aves = Aves::Get(thread);
+
+	CHECKED(IntFromValue(thread, args + 1));
+
+	int64_t times = args[1].v.integer;
+	if (times < 0)
+	{
+		VM_PushString(thread, strings::times); // paramName
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentRangeError, 1);
+	}
+
+	if (times == 0)
+	{
+		VM_PushString(thread, strings::Empty);
+		RETURN_SUCCESS;
+	}
+
+	String *str = THISV.v.string;
+	int64_t length;
+	if (Int_MultiplyChecked(times, str->length, length) != OVUM_SUCCESS)
+		return VM_ThrowOverflowError(thread);
+	if (length > INT32_MAX)
+	{
+		VM_PushString(thread, strings::times); // paramName
+		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentRangeError, 1);
+	}
+
+	StringBuffer buf;
+	CHECKED_MEM(buf.Init((int32_t)length));
+
+	for (int32_t i = 0; i < (int32_t)times; i++)
+		CHECKED_MEM(buf.Append(str));
+
+	String *result;
+	CHECKED_MEM(result = buf.ToString(thread));
+	VM_PushString(thread, result);
+}
+END_NATIVE_FUNCTION
+
 AVES_API BEGIN_NATIVE_FUNCTION(aves_String_replaceInner)
 {
 	// replaceInner(oldValue is String, newValue is String, maxTimes is Int)
@@ -722,41 +763,6 @@ AVES_API NATIVE_FUNCTION(aves_String_opCompare)
 	VM_PushInt(thread, result);
 	RETURN_SUCCESS;
 }
-
-AVES_API BEGIN_NATIVE_FUNCTION(aves_String_opMultiply)
-{
-	Aves *aves = Aves::Get(thread);
-
-	CHECKED(IntFromValue(thread, args + 1));
-
-	int64_t times = args[1].v.integer;
-	if (times == 0)
-	{
-		VM_PushString(thread, strings::Empty);
-		RETURN_SUCCESS;
-	}
-
-	String *str = THISV.v.string;
-	int64_t length;
-	if (Int_MultiplyChecked(times, str->length, length) != OVUM_SUCCESS)
-		return VM_ThrowOverflowError(thread);
-	if (length > INT32_MAX)
-	{
-		VM_PushString(thread, strings::times); // paramName
-		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentRangeError, 1);
-	}
-
-	StringBuffer buf;
-	CHECKED_MEM(buf.Init((int32_t)length));
-
-	for (int32_t i = 0; i < (int32_t)times; i++)
-		CHECKED_MEM(buf.Append(str));
-
-	String *result;
-	CHECKED_MEM(result = buf.ToString(thread));
-	VM_PushString(thread, result);
-}
-END_NATIVE_FUNCTION
 
 int32_t string::IndexOf(const String *str, const String *part, int32_t startIndex, int32_t count)
 {

@@ -452,6 +452,19 @@ public class String is Collection
 		return splice(startIndex, count, "");
 	}
 
+	/// Summary: Repeats the string the specified number of times.
+	/// Param times: The number of times to repeat this string.
+	/// Returns: A new String instance containing the current string repeated {times}
+	///          times.
+	/// Throws TypeConversionError:
+	///          {times} could not be converted to an Int.
+	/// Throws ArgumentRangeError:
+	///          {times} is less than zero.
+	///
+	///          The resulting string length is too large.
+	public repeat(times)
+		__extern("aves_String_repeat");
+
 	/// Summary: Returns a new string with all occurrences of {oldValue} replaced
 	///          with {newValue}
 	/// Param oldValue: The string to be replaced.
@@ -1030,8 +1043,6 @@ public class String is Collection
 		__extern("aves_String_opEquals");
 	operator <=>(a, b)
 		__extern("aves_String_opCompare");
-	operator *(str, times)
-		__extern("aves_String_opMultiply");
 
 	iter
 	{
