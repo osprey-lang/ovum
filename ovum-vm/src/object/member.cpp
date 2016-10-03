@@ -20,25 +20,34 @@ Member::Member(String *name, Type *declType, MemberFlags flags) :
 // Determines whether a member is accessible from a given type.
 //   instType:
 //     The type of the instance that the member is being loaded from.
-//   fromType:
-//     The type which declares the method that is accessing the member.
-//     This is null for global functions.
-bool Member::IsAccessible(const Type *instType, const Type *fromType) const
+//   fromMethod:
+//     The method in which the member access is occurring.
+bool Member::IsAccessible(const Type *instType, const MethodOverload *fromMethod) const
 {
-	if ((this->flags & MemberFlags::PRIVATE) != MemberFlags::NONE)
-		return fromType && (declType == fromType || declType == fromType->sharedType);
-
-	if ((this->flags & MemberFlags::PROTECTED) != MemberFlags::NONE)
+	switch (this->flags & MemberFlags::ACCESSIBILITY)
 	{
-		if (!fromType)
-			return false;
+	case MemberFlags::PUBLIC:
+		return true;
+	case MemberFlags::INTERNAL:
+		return this->declModule == fromMethod->group->declModule;
+	case MemberFlags::PROTECTED:
+		{
+			Type *fromType = fromMethod ? fromMethod->declType : nullptr;
+			if (!fromType)
+				return false;
 
-		return fromType->sharedType ?
-			IsAccessibleProtectedWithSharedType(instType, fromType) :
-			IsAccessibleProtected(instType, fromType);
+			return fromType->sharedType ?
+				IsAccessibleProtectedWithSharedType(instType, fromType) :
+				IsAccessibleProtected(instType, fromType);
+		}
+	case MemberFlags::PRIVATE:
+		{
+			Type *fromType = fromMethod ? fromMethod->declType : nullptr;
+			return fromType && (declType == fromType || declType == fromType->sharedType);
+		}
+	default:
+		return false;
 	}
-
-	return true; // MemberFlags::PUBLIC or accessible
 }
 
 bool Member::IsAccessibleProtected(const Type *instType, const Type *fromType) const
@@ -95,12 +104,12 @@ bool Member::IsAccessibleProtectedWithSharedType(const Type *instType, const Typ
 
 Type *Member::GetOriginatingType() const
 {
-	OVUM_ASSERT((flags & MemberFlags::ACCESS_LEVEL) == MemberFlags::PROTECTED);
+	OVUM_ASSERT(IsProtected());
 	const Method *method = nullptr;
 
-	if ((flags & MemberFlags::KIND) == MemberFlags::METHOD)
+	if (IsMethod())
 		method = static_cast<const Method*>(this);
-	else if ((flags & MemberFlags::KIND) == MemberFlags::PROPERTY)
+	else if (IsProperty())
 	{
 		const Property *prop = static_cast<const Property*>(this);
 		method = prop->getter ? prop->getter : prop->setter;
@@ -123,7 +132,7 @@ OVUM_API String *Member_GetName(MemberHandle member)
 OVUM_API MemberKind Member_GetKind(MemberHandle member)
 {
 	using namespace ovum;
-	switch (member->flags & MemberFlags::KIND)
+	switch (member->flags & MemberFlags::KIND_MASK)
 	{
 	case MemberFlags::METHOD:   return MemberKind::METHOD;
 	case MemberFlags::FIELD:    return MemberKind::FIELD;
@@ -134,14 +143,17 @@ OVUM_API MemberKind Member_GetKind(MemberHandle member)
 OVUM_API MemberAccess Member_GetAccessLevel(MemberHandle member)
 {
 	using namespace ovum;
-	switch (member->flags & MemberFlags::ACCESS_LEVEL)
+	switch (member->flags & MemberFlags::ACCESSIBILITY)
 	{
 	case MemberFlags::PUBLIC:
 		return MemberAccess::PUBLIC;
-	case MemberFlags::PRIVATE:
-		return MemberAccess::PRIVATE;
+	case MemberFlags::INTERNAL:
+		// TODO: internal accessibility
+		return MemberAccess::INVALID;
 	case MemberFlags::PROTECTED:
 		return MemberAccess::PROTECTED;
+	case MemberFlags::PRIVATE:
+		return MemberAccess::PRIVATE;
 	default:
 		return MemberAccess::INVALID;
 	}
@@ -163,26 +175,26 @@ OVUM_API bool Member_IsImpl(MemberHandle member)
 {
 	return (member->flags & ovum::MemberFlags::IMPL) == ovum::MemberFlags::IMPL;
 }
-OVUM_API bool Member_IsAccessible(MemberHandle member, TypeHandle instType, TypeHandle fromType)
+OVUM_API bool Member_IsAccessible(MemberHandle member, TypeHandle instType, OverloadHandle fromMethod)
 {
-	return member->IsAccessible(instType, fromType);
+	return member->IsAccessible(instType, fromMethod);
 }
 
 OVUM_API MethodHandle Member_ToMethod(MemberHandle member)
 {
-	if ((member->flags & ovum::MemberFlags::METHOD) == ovum::MemberFlags::METHOD)
+	if (member->IsMethod())
 		return (MethodHandle)member;
 	return nullptr;
 }
 OVUM_API FieldHandle Member_ToField(MemberHandle member)
 {
-	if ((member->flags & ovum::MemberFlags::FIELD) == ovum::MemberFlags::FIELD)
+	if (member->IsField())
 		return (FieldHandle)member;
 	return nullptr;
 }
 OVUM_API PropertyHandle Member_ToProperty(MemberHandle member)
 {
-	if ((member->flags & ovum::MemberFlags::PROPERTY) == ovum::MemberFlags::PROPERTY)
+	if (member->IsProperty())
 		return (PropertyHandle)member;
 	return nullptr;
 }

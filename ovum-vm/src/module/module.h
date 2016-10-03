@@ -51,27 +51,19 @@ enum ModuleMemberId : uint32_t
 	IDMASK_METHODREF   = 0x54000000u,
 };
 
-// Types that are specific to module loading
-struct ModuleMeta
+struct ModuleParams
 {
 	String *name; // The name of the module
 	ModuleVersion version;
-
-	String *nativeLib; // The name of the native library file
-
-	int32_t typeCount;
-	int32_t functionCount;
-	int32_t constantCount;
-	int32_t fieldCount;
-	int32_t methodCount;
-	uint32_t methodStart;
+	// Type count + function count + constant count
+	int32_t globalMemberCount;
 };
 
 // And then the actual Module class! Hurrah!
 class Module
 {
 public:
-	Module(uint32_t fileFormatVersion, ModuleMeta &meta, const PathName &fileName, VM *vm);
+	Module(VM *vm, const PathName &fileName, ModuleParams &params);
 	~Module();
 
 	Module *FindModuleRef(String *name) const;
@@ -95,18 +87,6 @@ public:
 	static Module *Open(VM *vm, const PathName &fileName, ModuleVersion *requiredVersion);
 
 private:
-	class FieldConstData
-	{
-	public:
-		Field *field;
-		TokenId typeId;
-		int64_t value;
-
-		inline FieldConstData(Field *field, TokenId typeId, int64_t value) :
-			field(field), typeId(typeId), value(value)
-		{ }
-	};
-
 	String *name;
 	ModuleVersion version;
 	const PathName fileName;
@@ -115,10 +95,6 @@ private:
 	                  // If a module depends on another module with this set to false,
 	                  // then there's a circular dependency issue.
 
-	// The version number of the file format that the module was saved with.
-	uint32_t fileFormatVersion;
-
-	uint32_t methodStart; // The start offset of the method block in the file (set to 0 after opening)
 	Method *mainMethod;
 
 	os::LibraryHandle nativeLib; // Handle to native library
@@ -191,40 +167,7 @@ private:
 	void *FindNativeEntryPoint(const char *name);
 	void FreeNativeLibrary();
 
-	static const char *const NativeModuleIniterName;
-
-	static void VerifyMagicNumber(ModuleReader &reader);
-
-	static void ReadModuleMeta(ModuleReader &reader, ModuleMeta &target);
-
-	static void ReadVersion(ModuleReader &reader, ModuleVersion &target);
-
-	void ReadStringTable(ModuleReader &reader);
-
-	// Reads the module reference table and opens all dependent modules.
-	// Also initializes the moduleRefs table (and moduleRefCount).
-	void ReadModuleRefs(ModuleReader &reader);
-	void ReadTypeRefs(ModuleReader &reader);
-	void ReadFunctionRefs(ModuleReader &reader);
-	void ReadFieldRefs(ModuleReader &reader);
-	void ReadMethodRefs(ModuleReader &reader);
-
-	void ReadTypeDefs(ModuleReader &reader);
-	void ReadFunctionDefs(ModuleReader &reader);
-	void ReadConstantDefs(ModuleReader &reader, int32_t headerConstantCount);
-
-	Type *ReadSingleType(ModuleReader &reader, TokenId typeId, std::vector<FieldConstData> &unresolvedConstants);
-	void ReadFields(ModuleReader &reader, Type *targetType, std::vector<FieldConstData> &unresolvedConstants);
-	void ReadMethods(ModuleReader &reader, Type *targetType);
-	void ReadProperties(ModuleReader &reader, Type *targetType);
-	void ReadOperators(ModuleReader &reader, Type *targetType);
-
-	void SetConstantFieldValue(ModuleReader &reader, Field *field, Type *constantType, int64_t value);
-
-	Method *ReadSingleMethod(ModuleReader &reader);
-	TryBlock *ReadTryBlocks(ModuleReader &reader, int32_t &tryCount);
-
-	void TryRegisterStandardType(Type *type, ModuleReader &reader);
+	void TryRegisterStandardType(Type *type);
 
 	static inline int CompareVersion(const ModuleVersion &a, const ModuleVersion &b)
 	{
@@ -243,47 +186,11 @@ private:
 		return 0; // equal
 	}
 
-	typedef void (OVUM_CDECL *NativeModuleMain)(ModuleHandle module);
-
-	enum FileMethodFlags : uint32_t
-	{
-		FM_PUBLIC    = 0x01,
-		FM_PRIVATE   = 0x02,
-		FM_PROTECTED = 0x04,
-		FM_INSTANCE  = 0x08,
-		FM_CTOR      = 0x10,
-		FM_IMPL      = 0x20,
-	};
-	enum OverloadFlags : uint32_t
-	{
-		OV_VARIADIC    = 0x01,
-		OV_NATIVE      = 0x04,
-		OV_SHORTHEADER = 0x08,
-		OV_VIRTUAL     = 0x10,
-		OV_ABSTRACT    = 0x20,
-	};
-	enum ParamFlags : uint16_t
-	{
-		PF_BY_REF = 0x0001,
-	};
-	enum FieldFlags : uint32_t
-	{
-		FIELD_PUBLIC    = 0x01,
-		FIELD_PRIVATE   = 0x02,
-		FIELD_PROTECTED = 0x04,
-		FIELD_INSTANCE  = 0x08,
-		FIELD_HASVALUE  = 0x10,
-	};
-	enum ConstantFlags : uint32_t
-	{
-		CONST_PUBLIC  = 0x01,
-		CONST_PRIVATE = 0x02,
-	};
-
 	friend class ModulePool;
 	friend class ModuleReader;
 	friend class GC;
 	friend class debug::ModuleDebugData;
+	friend class debug::DebugSymbolsReader;
 };
 
 class ModuleLoadException : public std::exception

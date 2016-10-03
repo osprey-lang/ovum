@@ -80,7 +80,6 @@ namespace instr
 
 	void MethodBuilder::PerformRemovalsInternal(int32_t newIndices[], MethodOverload *method)
 	{
-		typedef TryBlock::TryKind TryKind;
 		this->lastOffset = 0; // Must recalculate byte offsets as well
 
 		int32_t oldIndex = 0, newIndex = 0;
@@ -148,12 +147,13 @@ namespace instr
 
 		if (method->debugSymbols)
 		{
-			debug::DebugSymbols *debug = method->debugSymbols;
-			for (int32_t i = 0; i < debug->symbolCount; i++)
+			debug::OverloadSymbols *debug = method->debugSymbols;
+			int32_t debugSymbolCount = debug->GetSymbolCount();
+			for (int32_t i = 0; i < debugSymbolCount; i++)
 			{
-				debug::SourceLocation &loc = debug->symbols[i];
-				loc.startOffset = newIndices[loc.startOffset];
-				loc.endOffset = newIndices[loc.endOffset];
+				debug::DebugSymbol &sym = debug->GetSymbol(i);
+				sym.startOffset = newIndices[sym.startOffset];
+				sym.endOffset = newIndices[sym.endOffset];
 			}
 		}
 	}

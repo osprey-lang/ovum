@@ -34,7 +34,7 @@ OVUM_API ModuleHandle Member_GetDeclModule(MemberHandle member);
 
 OVUM_API bool Member_IsStatic(MemberHandle member);
 OVUM_API bool Member_IsImpl(MemberHandle member);
-OVUM_API bool Member_IsAccessible(MemberHandle member, TypeHandle instType, TypeHandle fromType);
+OVUM_API bool Member_IsAccessible(MemberHandle member, TypeHandle instType, OverloadHandle fromMethod);
 
 OVUM_API MethodHandle Member_ToMethod(MemberHandle member);
 OVUM_API FieldHandle Member_ToField(MemberHandle member);
@@ -52,35 +52,14 @@ OVUM_API MethodHandle Method_GetBaseMethod(MethodHandle method);
 OVUM_API bool Method_Accepts(MethodHandle method, ovlocals_t argc);
 OVUM_API OverloadHandle Method_FindOverload(MethodHandle method, ovlocals_t argc);
 
-enum class MethodFlags : int32_t
-{
-	NONE      = 0x0000,
-	// The method signature is variadic. Only the last parameter is
-	// allowed to be variadic.
-	VARIADIC  = 0x0001,
+#define OVUM_OVERLOAD_VARIADIC      0x00000001
+#define OVUM_OVERLOAD_VIRTUAL       0x00000100
+#define OVUM_OVERLOAD_ABSTRACT      0x00000200
+#define OVUM_OVERLOAD_OVERRIDE      0x00000400
+#define OVUM_OVERLOAD_NATIVE        0x00001000
+#define OVUM_OVERLOAD_SHORT_HEADER  0x00002000
 
-	// The method has a native-code implementation.
-	NATIVE    = 0x0004,
-
-	// The method is an instance method. Without this flag,
-	// methods are static.
-	INSTANCE  = 0x0008,
-
-	// The method is virtual (overridable in Osprey).
-	VIRTUAL   = 0x0010,
-	// The method is abstract (it has no implementation).
-	ABSTRACT  = 0x0020,
-
-	// The method is a constructor.
-	CTOR      = 0x0040,
-
-	// The method has been initialized. Used for bytecode methods only,
-	// to indicate that the bytecode initializer has processed the method.
-	INITED    = 0x0080,
-};
-OVUM_ENUM_OPS(MethodFlags, int32_t);
-
-OVUM_API MethodFlags Overload_GetFlags(OverloadHandle overload);
+OVUM_API uint32_t Overload_GetFlags(OverloadHandle overload);
 
 typedef struct ParamInfo_S
 {
@@ -141,13 +120,11 @@ enum class Operator : uint8_t
 	POW  =  8,   // The ** operator.
 	SHL  =  9,   // The << operator.
 	SHR  = 10,   // The >> operator.
-	// RESERVED (11)
-	// RESERVED (12)
-	PLUS = 13,   // The unary + operator.
-	NEG  = 14,   // The unary - operator.
-	NOT  = 15,   // The ~ operator.
-	EQ   = 16,   // The == operator.
-	CMP  = 17,   // The <=> operator.
+	PLUS = 11,   // The unary + operator.
+	NEG  = 12,   // The unary - operator.
+	NOT  = 13,   // The ~ operator.
+	EQ   = 14,   // The == operator.
+	CMP  = 15,   // The <=> operator.
 };
 
 inline unsigned int Arity(Operator op)
@@ -163,56 +140,15 @@ inline unsigned int Arity(Operator op)
 	}
 }
 
-// NOTE: This TypeFlags enum has exactly the same member values as
-//       those in the module format specification. Please make sure
-//       that they are synchronised!
-//       However, the following flags are implementation details:
-//         CUSTOMPTR
-//         OPS_INITED
-//         INITED
-//         STATIC_CTOR_RUN
-//         STATIC_CTOR_RUNNING
-//         HAS_FINALIZER
-enum class TypeFlags : uint32_t
-{
-	NONE            = 0x0000,
+// Type flags
 
-	PROTECTION      = 0x0003,
-	PUBLIC          = 0x0001,
-	PRIVATE         = 0x0002,
-
-	ABSTRACT        = 0x0004,
-	SEALED          = 0x0008,
-	// The type is static; that is, instances of it cannot be created.
-	STATIC          = ABSTRACT | SEALED,
-
-	// The type is a value type; that is, it does not have an instance pointer.
-	// Value types are always implicitly sealed, hence the TYPE_SEALED flag.
-	// TYPES USING THIS FLAG WILL NOT BE ELIGIBLE FOR GARBAGE COLLECTION.
-	// If you use this flag and still store a pointer in the Value, you are an
-	// evil, wicked, truly malevolent person who deserves to be punished.
-	// Unless there's a good reason to do so.
-	PRIMITIVE       = 0x0010 | SEALED,
-	// The type does not use a standard Value array for its fields.
-	// This is used only by the GC during collection.
-	CUSTOMPTR       = 0x0020,
-	// The type's constructor also takes care of allocation. Only available
-	// for types with native implementations.
-	ALLOCATOR_CTOR  = 0x0040,
-
-	// Internal use only. If set, the type's operators have been initialized.
-	OPS_INITED          = 0x0100,
-	// Internal use only. If set, the type has been initialised.
-	INITED              = 0x0200,
-	// Internal use only. If set, the static constructor for the type has been run.
-	STATIC_CTOR_RUN     = 0x0400,
-	// Internal use only. If set, the static constructor is currently running.
-	STATIC_CTOR_RUNNING = 0x0800,
-	// Internal use only. If set, the type or any of its base types has a finalizer,
-	// which must be run before the value is collected.
-	HAS_FINALIZER       = 0x1000,
-};
-OVUM_ENUM_OPS(TypeFlags, uint32_t);
+#define OVUM_TYPE_PUBLIC    0x00000001
+#define OVUM_TYPE_INTERNAL  0x00000002
+#define OVUM_TYPE_ABSTRACT  0x00000100
+#define OVUM_TYPE_SEALED    0x00000200
+#define OVUM_TYPE_STATIC    0x00000300
+#define OVUM_TYPE_IMPL      0x00001000
+#define OVUM_TYPE_PRIMITIVE 0x00002000
 
 // A ReferenceVisitor receives a set of zero or more managed references stored
 // in an object with a native implementation.
@@ -333,13 +269,13 @@ typedef int (OVUM_CDECL *HashInitializer)(ThreadHandle thread, int32_t capacity,
 // type tokens when they are requested.
 typedef int (OVUM_CDECL *TypeTokenInitializer)(ThreadHandle thread, void *basePtr, TypeHandle type);
 
-OVUM_API TypeFlags Type_GetFlags(TypeHandle type);
+OVUM_API uint32_t Type_GetFlags(TypeHandle type);
 OVUM_API String *Type_GetFullName(TypeHandle type);
 OVUM_API TypeHandle Type_GetBaseType(TypeHandle type);
 OVUM_API ModuleHandle Type_GetDeclModule(TypeHandle type);
 
 OVUM_API MemberHandle Type_GetMember(TypeHandle type, String *name);
-OVUM_API MemberHandle Type_FindMember(TypeHandle type, String *name, TypeHandle fromType);
+OVUM_API MemberHandle Type_FindMember(TypeHandle type, String *name, OverloadHandle fromMethod);
 
 OVUM_API int32_t Type_GetMemberCount(TypeHandle type);
 OVUM_API MemberHandle Type_GetMemberByIndex(TypeHandle type, int32_t index);

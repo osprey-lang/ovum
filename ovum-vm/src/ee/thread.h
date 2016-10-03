@@ -253,7 +253,7 @@ private:
 	//     The overload that is being invoked in the stack frame.
 	void PushStackFrame(ovlocals_t argCount, Value *args, MethodOverload *method);
 
-	int PrepareVariadicArgs(MethodFlags flags, ovlocals_t argCount, ovlocals_t paramCount, StackFrame *frame);
+	int PrepareVariadicArgs(ovlocals_t argCount, ovlocals_t paramCount, StackFrame *frame);
 
 	OVUM_NOINLINE void HandleRequest();
 

@@ -290,6 +290,15 @@
     <ClInclude Include="src\config\defaults.h">
       <Filter>Header Files\src\config</Filter>
     </ClInclude>
+    <ClInclude Include="src\module\modulefile.h">
+      <Filter>Header Files\src\module</Filter>
+    </ClInclude>
+    <ClInclude Include="src\module\modulefacts.h">
+      <Filter>Header Files\src\module</Filter>
+    </ClInclude>
+    <ClInclude Include="src\debug\debugfile.h">
+      <Filter>Header Files\src\debug</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\os\windows\dllmain.cpp">
@@ -399,6 +408,9 @@
     </ClCompile>
     <ClCompile Include="src\ee\refsignature.cpp">
       <Filter>Source Files\ee</Filter>
+    </ClCompile>
+    <ClCompile Include="src\module\modulefacts.cpp">
+      <Filter>Source Files\module</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

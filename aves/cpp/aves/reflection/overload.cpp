@@ -64,43 +64,35 @@ AVES_API NATIVE_FUNCTION(aves_reflection_Overload_get_index)
 	RETURN_SUCCESS;
 }
 
-AVES_API NATIVE_FUNCTION(aves_reflection_Overload_get_isConstructor)
-{
-	OverloadInst *inst = THISV.Get<OverloadInst>();
-	MethodFlags flags = Overload_GetFlags(inst->overload);
-	VM_PushBool(thread, (flags & MethodFlags::CTOR) == MethodFlags::CTOR);
-	RETURN_SUCCESS;
-}
-
 AVES_API NATIVE_FUNCTION(aves_reflection_Overload_get_isOverridable)
 {
 	OverloadInst *inst = THISV.Get<OverloadInst>();
-	MethodFlags flags = Overload_GetFlags(inst->overload);
-	VM_PushBool(thread, (flags & MethodFlags::VIRTUAL) == MethodFlags::VIRTUAL);
+	uint32_t flags = Overload_GetFlags(inst->overload);
+	VM_PushBool(thread, (flags & OVUM_OVERLOAD_VIRTUAL) == OVUM_OVERLOAD_VIRTUAL);
 	RETURN_SUCCESS;
 }
 
 AVES_API NATIVE_FUNCTION(aves_reflection_Overload_get_isAbstract)
 {
 	OverloadInst *inst = THISV.Get<OverloadInst>();
-	MethodFlags flags = Overload_GetFlags(inst->overload);
-	VM_PushBool(thread, (flags & MethodFlags::ABSTRACT) == MethodFlags::ABSTRACT);
+	uint32_t flags = Overload_GetFlags(inst->overload);
+	VM_PushBool(thread, (flags & OVUM_OVERLOAD_ABSTRACT) == OVUM_OVERLOAD_ABSTRACT);
 	RETURN_SUCCESS;
 }
 
 AVES_API NATIVE_FUNCTION(aves_reflection_Overload_get_isVariadic)
 {
 	OverloadInst *inst = THISV.Get<OverloadInst>();
-	MethodFlags flags = Overload_GetFlags(inst->overload);
-	VM_PushBool(thread, (flags & MethodFlags::VARIADIC) != MethodFlags::NONE);
+	uint32_t flags = Overload_GetFlags(inst->overload);
+	VM_PushBool(thread, (flags & OVUM_OVERLOAD_VARIADIC) == OVUM_OVERLOAD_VARIADIC);
 	RETURN_SUCCESS;
 }
 
 AVES_API NATIVE_FUNCTION(aves_reflection_Overload_get_isNative)
 {
 	OverloadInst *inst = THISV.Get<OverloadInst>();
-	MethodFlags flags = Overload_GetFlags(inst->overload);
-	VM_PushBool(thread, (flags & MethodFlags::NATIVE) == MethodFlags::NATIVE);
+	uint32_t flags = Overload_GetFlags(inst->overload);
+	VM_PushBool(thread, (flags & OVUM_OVERLOAD_NATIVE) == OVUM_OVERLOAD_NATIVE);
 	RETURN_SUCCESS;
 }
 
@@ -139,7 +131,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Overload_getCurrentOverload)
 
 	// Select type Method or Constructor based on the CTOR flag
 	TypeHandle type = aves->aves.reflection.Method;
-	if ((Overload_GetFlags(overload) & MethodFlags::CTOR) == MethodFlags::CTOR)
+	if (Method_IsConstructor(method))
 		type = aves->aves.reflection.Constructor;
 
 	// Leave Method/Constructor on stack

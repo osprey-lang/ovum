@@ -111,7 +111,7 @@ void Method::SetDeclType(Type *type)
 
 OVUM_API bool Method_IsConstructor(MethodHandle method)
 {
-	return (method->flags & ovum::MemberFlags::CTOR) == ovum::MemberFlags::CTOR;
+	return method->IsCtor();
 }
 OVUM_API int32_t Method_GetOverloadCount(MethodHandle method)
 {
@@ -152,9 +152,9 @@ OVUM_API OverloadHandle Method_FindOverload(MethodHandle method, ovlocals_t argc
 }
 
 
-OVUM_API MethodFlags Overload_GetFlags(OverloadHandle overload)
+OVUM_API uint32_t Overload_GetFlags(OverloadHandle overload)
 {
-	return overload->flags;
+	return static_cast<uint32_t>(overload->flags & ovum::OverloadFlags::VISIBLE_MASK);
 }
 OVUM_API int32_t Overload_GetParamCount(OverloadHandle overload)
 {

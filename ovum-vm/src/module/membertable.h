@@ -83,6 +83,7 @@ private:
 	}
 
 	friend class Module;
+	friend class ModuleReader;
 };
 
 } // namespace ovum

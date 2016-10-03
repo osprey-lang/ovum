@@ -70,7 +70,7 @@ int Thread::Start(ovlocals_t argCount, MethodOverload *mo, Value &result)
 {
 	OVUM_ASSERT(mo != nullptr);
 	OVUM_ASSERT(this->state == ThreadState::CREATED);
-	OVUM_ASSERT((mo->flags & MethodFlags::INSTANCE) == MethodFlags::NONE);
+	OVUM_ASSERT(!mo->IsInstanceMethod());
 
 	state = ThreadState::RUNNING;
 
@@ -178,10 +178,9 @@ int Thread::InvokeLL(ovlocals_t argCount, Value *value, Value *result, uint32_t 
 	}
 	else
 	{
-		Member *member;
-		if ((member = value->type->FindMember(strings->members.call_, currentFrame->method->declType)) &&
-			(member->flags & MemberFlags::METHOD) != MemberFlags::NONE)
-			mo = ((Method*)member)->ResolveOverload(argCount);
+		Member *member = value->type->FindMember(strings->members.call_, currentFrame->method);
+		if (member && member->IsMethod())
+			mo = static_cast<Method*>(member)->ResolveOverload(argCount);
 		else
 			return ThrowTypeError(strings->error.MemberNotInvokable);
 	}
@@ -237,17 +236,16 @@ int Thread::InvokeMemberLL(String *name, ovlocals_t argCount, Value *value, Valu
 		return ThrowNullReferenceError();
 
 	Member *member;
-	if (member = value->type->FindMember(name, currentFrame->method->declType))
+	if (member = value->type->FindMember(name, currentFrame->method))
 	{
-		if ((member->flags & MemberFlags::INSTANCE) == MemberFlags::NONE)
+		if (member->IsStatic())
 			return ThrowTypeError(strings->error.CannotAccessStaticMemberThroughInstance);
 
-		switch (member->flags & MemberFlags::KIND)
+		switch (member->flags & MemberFlags::KIND_MASK)
 		{
 		case MemberFlags::FIELD:
 			((Field*)member)->ReadFieldUnchecked(value, value);
 			return InvokeLL(argCount, value, result, refSignature);
-			break;
 		case MemberFlags::PROPERTY:
 			{
 				if (((Property*)member)->getter == nullptr)
@@ -267,7 +265,6 @@ int Thread::InvokeMemberLL(String *name, ovlocals_t argCount, Value *value, Valu
 				// And then invoke the result of that call (which is in 'value')
 				return InvokeLL(argCount, value, result, refSignature);
 			}
-			break;
 		default: // method
 			{
 				MethodOverload *mo = ((Method*)member)->ResolveOverload(argCount);
@@ -287,23 +284,21 @@ int Thread::InvokeMemberLL(String *name, ovlocals_t argCount, Value *value, Valu
 int Thread::InvokeMethodOverload(MethodOverload *mo, ovlocals_t argCount,
                                  Value *args, Value *result)
 {
-	MethodFlags flags = mo->flags; // used several times below!
-
 	int r;
-	if ((flags & MethodFlags::VARIADIC) != MethodFlags::NONE)
+	if (mo->IsVariadic())
 	{
-		r = PrepareVariadicArgs(flags, argCount, mo->paramCount, currentFrame);
+		r = PrepareVariadicArgs(argCount, mo->paramCount, currentFrame);
 		if (r != OVUM_SUCCESS) return r;
 		argCount = mo->paramCount;
 	}
 
-	argCount += (int)(flags & MethodFlags::INSTANCE) >> 3;
+	argCount += mo->instanceCount;
 
 	// And now we can push the new stack frame!
 	// Note: this updates currentFrame
 	PushStackFrame(argCount, args, mo);
 
-	if ((flags & MethodFlags::NATIVE) == MethodFlags::NATIVE)
+	if (mo->IsNative())
 	{
 		if (pendingRequest != ThreadRequest::NONE)
 			HandleRequest();
@@ -450,7 +445,7 @@ int Thread::InvokeApplyMethodLL(Method *method, Value *args, Value *result)
 	if (!Type::ValueIsType(args, vm->types.List))
 		return ThrowTypeError(strings->error.WrongApplyArgumentsType);
 
-	OVUM_ASSERT((method->flags & MemberFlags::INSTANCE) == MemberFlags::NONE);
+	OVUM_ASSERT(method->IsStatic());
 
 	ListInst *argsList = args->v.list;
 
@@ -622,14 +617,14 @@ int Thread::LoadMemberLL(Value *instance, String *member, Value *result)
 	if (IS_NULL(*instance))
 		return ThrowNullReferenceError();
 
-	const Member *m = instance->type->FindMember(member, currentFrame->method->declType);
+	const Member *m = instance->type->FindMember(member, currentFrame->method);
 	if (m == nullptr)
 		return ThrowMemberNotFoundError(member);
-	if ((m->flags & MemberFlags::INSTANCE) == MemberFlags::NONE)
+	if (m->IsStatic())
 		return ThrowTypeError(strings->error.CannotAccessStaticMemberThroughInstance);
 
 	int r = OVUM_SUCCESS;
-	switch (m->flags & MemberFlags::KIND)
+	switch (m->flags & MemberFlags::KIND_MASK)
 	{
 	case MemberFlags::FIELD:
 		reinterpret_cast<const Field*>(m)->ReadFieldUnchecked(instance, result);
@@ -683,17 +678,17 @@ int Thread::StoreMemberLL(Value *instance, String *member)
 	if (IS_NULL(*instance))
 		return ThrowNullReferenceError();
 
-	Member *m = instance->type->FindMember(member, currentFrame->method->declType);
+	Member *m = instance->type->FindMember(member, currentFrame->method);
 	if (m == nullptr)
 		return ThrowMemberNotFoundError(member);
-	if ((m->flags & MemberFlags::INSTANCE) == MemberFlags::NONE)
+	if (m->IsStatic())
 		return ThrowTypeError(strings->error.CannotAccessStaticMemberThroughInstance);
 
 	int r = OVUM_SUCCESS;
-	switch (m->flags & MemberFlags::KIND)
+	switch (m->flags & MemberFlags::KIND_MASK)
 	{
 	case MemberFlags::FIELD:
-		reinterpret_cast<Field*>(m)->WriteFieldUnchecked(instance);
+		static_cast<Field*>(m)->WriteFieldUnchecked(instance);
 		currentFrame->Pop(2); // Done with the instance and the value!
 		break;
 	case MemberFlags::METHOD:
@@ -746,13 +741,12 @@ int Thread::LoadIndexerLL(ovlocals_t argCount, Value *args, Value *result)
 	if (IS_NULL(args[0]))
 		return ThrowNullReferenceError();
 
-	Member *member = args[0].type->FindMember(strings->members.item_, currentFrame->method->declType);
+	Member *member = args[0].type->FindMember(strings->members.item_, currentFrame->method);
 	if (!member)
 		return ThrowTypeError(strings->error.IndexerNotFound);
 
 	// The indexer, if present, MUST be an instance property.
-	OVUM_ASSERT((member->flags & MemberFlags::INSTANCE) == MemberFlags::INSTANCE);
-	OVUM_ASSERT((member->flags & MemberFlags::PROPERTY) == MemberFlags::PROPERTY);
+	OVUM_ASSERT(!member->IsStatic() && member->IsProperty());
 
 	if (((Property*)member)->getter == nullptr)
 		return ThrowTypeError(strings->error.CannotGetWriteOnlyProperty);
@@ -776,13 +770,12 @@ int Thread::StoreIndexerLL(ovlocals_t argCount, Value *args)
 	if (IS_NULL(args[0]))
 		return ThrowNullReferenceError();
 
-	Member *member = args[0].type->FindMember(strings->members.item_, currentFrame->method->declType);
+	Member *member = args[0].type->FindMember(strings->members.item_, currentFrame->method);
 	if (!member)
 		return ThrowTypeError(strings->error.IndexerNotFound);
 
 	// The indexer, if present, MUST be an instance property.
-	OVUM_ASSERT((member->flags & MemberFlags::INSTANCE) == MemberFlags::INSTANCE);
-	OVUM_ASSERT((member->flags & MemberFlags::PROPERTY) == MemberFlags::PROPERTY);
+	OVUM_ASSERT(!member->IsStatic() && member->IsProperty());
 
 	if (((Property*)member)->setter == nullptr)
 		return ThrowTypeError(strings->error.CannotSetReadOnlyProperty);
@@ -814,12 +807,12 @@ int Thread::LoadMemberRefLL(Value *inst, String *member)
 	if (IS_NULL(*inst))
 		return ThrowNullReferenceError();
 
-	Member *m = inst->type->FindMember(member, currentFrame->method->declType);
+	Member *m = inst->type->FindMember(member, currentFrame->method);
 	if (m == nullptr)
 		return ThrowMemberNotFoundError(member);
-	if ((m->flags & MemberFlags::INSTANCE) == MemberFlags::NONE)
+	if (m->IsStatic())
 		return ThrowTypeError(strings->error.CannotAccessStaticMemberThroughInstance);
-	if ((m->flags & MemberFlags::FIELD) == MemberFlags::NONE)
+	if (!m->IsField())
 		return ThrowTypeError(strings->error.MemberIsNotAField);
 
 	Field *field = static_cast<Field*>(m);
@@ -1171,7 +1164,7 @@ void Thread::PushStackFrame(ovlocals_t argCount, Value *args, MethodOverload *me
 	currentFrame = newFrame;
 }
 
-int Thread::PrepareVariadicArgs(MethodFlags flags, ovlocals_t argCount, ovlocals_t paramCount, StackFrame *frame)
+int Thread::PrepareVariadicArgs(ovlocals_t argCount, ovlocals_t paramCount, StackFrame *frame)
 {
 	int32_t count = argCount >= paramCount - 1 ? argCount - paramCount + 1 : 0;
 

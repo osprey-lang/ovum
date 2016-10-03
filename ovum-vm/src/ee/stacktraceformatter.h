@@ -37,6 +37,10 @@ private:
 
 	static void AppendArgumentType(Thread *const thread, StringBuffer &buf, const Value *arg);
 
+	static void AppendShortMemberName(Thread *const thread, StringBuffer &buf, String *fullName);
+
+	static void AppendShortMethodName(Thread *const thread, StringBuffer &buf, Method *method);
+
 	static void AppendSourceLocation(Thread *const thread, StringBuffer &buf, MethodOverload *method, const void *ip);
 
 	static void AppendLineNumber(Thread *const thread, StringBuffer &buf, int32_t line);

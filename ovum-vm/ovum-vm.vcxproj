@@ -90,6 +90,7 @@
     <ClInclude Include="inc\ov_main.h" />
     <ClInclude Include="inc\ov_pathchar.h" />
     <ClInclude Include="src\config\defaults.h" />
+    <ClInclude Include="src\debug\debugfile.h" />
     <ClInclude Include="src\ee\instructions.h" />
     <ClInclude Include="src\ee\methodbuilder.h" />
     <ClInclude Include="src\ee\methodinitexception.h" />
@@ -98,6 +99,8 @@
     <ClInclude Include="src\ee\stacktraceformatter.h" />
     <ClInclude Include="src\gc\gcobject.h" />
     <ClInclude Include="src\gc\staticref.h" />
+    <ClInclude Include="src\module\modulefacts.h" />
+    <ClInclude Include="src\module\modulefile.h" />
     <ClInclude Include="src\module\modulefinder.h" />
     <ClInclude Include="src\module\modulepool.h" />
     <ClInclude Include="src\object\field.h" />
@@ -184,6 +187,7 @@
     <ClCompile Include="src\ee\refsignature.cpp" />
     <ClCompile Include="src\ee\stacktraceformatter.cpp" />
     <ClCompile Include="src\gc\gcobject.cpp" />
+    <ClCompile Include="src\module\modulefacts.cpp" />
     <ClCompile Include="src\module\modulefinder.cpp" />
     <ClCompile Include="src\module\modulepool.cpp" />
     <ClCompile Include="src\object\field.cpp" />

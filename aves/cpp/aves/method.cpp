@@ -26,7 +26,7 @@ AVES_API NATIVE_FUNCTION(aves_Method_new)
 		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentNullError, 1);
 	}
 
-	MemberHandle invocator = Type_FindMember(args[1].type, strings::_call, THISV.type);
+	MemberHandle invocator = Type_FindMember(args[1].type, strings::_call, VM_GetCurrentOverload(thread));
 	if (invocator == nullptr ||
 		Member_GetKind(invocator) != MemberKind::METHOD ||
 		Member_IsStatic(invocator))

@@ -14,11 +14,16 @@ namespace ovum
 {
 
 Type::Type(Module *module, int32_t memberCount) :
-	members(memberCount), typeToken(nullptr),
-	size(0), fieldCount(0),
-	getReferences(nullptr), finalizer(nullptr),
-	nativeFieldCapacity(0), nativeFields(nullptr),
-	module(module), vm(module->GetVM()),
+	members(memberCount),
+	typeToken(nullptr),
+	size(0),
+	fieldCount(0),
+	getReferences(nullptr),
+	finalizer(nullptr),
+	nativeFieldCapacity(0),
+	nativeFields(nullptr),
+	module(module),
+	vm(module->GetVM()),
 	staticCtorLock(8000)
 {
 	memset(operators, 0, sizeof(MethodOverload*) * OPERATOR_COUNT);
@@ -37,7 +42,7 @@ void Type::InitOperators()
 	if (!baseType)
 		return;
 
-	OVUM_ASSERT((baseType->flags & TypeFlags::OPS_INITED) == TypeFlags::OPS_INITED);
+	OVUM_ASSERT(baseType->AreOpsInited());
 	for (int op = 0; op < OPERATOR_COUNT; op++)
 	{
 		if (!this->operators[op])
@@ -53,12 +58,12 @@ Member *Type::GetMember(String *name) const
 	return nullptr;
 }
 
-Member *Type::FindMember(String *name, Type *fromType) const
+Member *Type::FindMember(String *name, MethodOverload *fromMethod) const
 {
 	const Type *type = this;
 	do {
 		Member *m;
-		if (type->members.Get(name, m) && m->IsAccessible(this, fromType))
+		if (type->members.Get(name, m) && m->IsAccessible(this, fromMethod))
 			return m;
 	} while (type = type->baseType);
 
@@ -105,8 +110,8 @@ bool Type::InitStaticFields(Thread *const thread)
 	for (int32_t i = 0; i < members.count; i++)
 	{
 		Member *m = members.entries[i].value;
-		if ((m->flags & MemberFlags::FIELD) == MemberFlags::FIELD &&
-			(m->flags & MemberFlags::INSTANCE) == MemberFlags::NONE &&
+		if (m->IsField() &&
+			m->IsStatic() &&
 			static_cast<Field*>(m)->staticValue == nullptr)
 		{
 			Field *f = static_cast<Field*>(m);
@@ -147,7 +152,7 @@ int Type::RunStaticCtor(Thread *const thread)
 		if (member)
 		{
 			// If there is a member '.init', it must be a method!
-			OVUM_ASSERT((member->flags & MemberFlags::METHOD) == MemberFlags::METHOD);
+			OVUM_ASSERT(member->IsMethod());
 
 			MethodOverload *mo = ((Method*)member)->ResolveOverload(0);
 			if (!mo)
@@ -168,7 +173,7 @@ int Type::RunStaticCtor(Thread *const thread)
 			}
 		}
 		flags &= ~TypeFlags::STATIC_CTOR_RUNNING;
-		flags |= TypeFlags::STATIC_CTOR_RUN;
+		flags |= TypeFlags::STATIC_CTOR_HAS_RUN;
 	}
 	r = OVUM_SUCCESS;
 leave:
@@ -225,9 +230,9 @@ OVUM_API TypeHandle GetType_NullReferenceError(ThreadHandle thread)  { return th
 OVUM_API TypeHandle GetType_MemberNotFoundError(ThreadHandle thread) { return thread->GetVM()->types.MemberNotFoundError; }
 OVUM_API TypeHandle GetType_TypeConversionError(ThreadHandle thread) { return thread->GetVM()->types.TypeConversionError; }
 
-OVUM_API TypeFlags Type_GetFlags(TypeHandle type)
+OVUM_API uint32_t Type_GetFlags(TypeHandle type)
 {
-	return type->flags;
+	return static_cast<uint32_t>(type->flags & ovum::TypeFlags::VISIBLE_MASK);
 }
 OVUM_API String *Type_GetFullName(TypeHandle type)
 {
@@ -246,9 +251,9 @@ OVUM_API MemberHandle Type_GetMember(TypeHandle type, String *name)
 {
 	return type->GetMember(name);
 }
-OVUM_API MemberHandle Type_FindMember(TypeHandle type, String *name, TypeHandle fromType)
+OVUM_API MemberHandle Type_FindMember(TypeHandle type, String *name, OverloadHandle fromMethod)
 {
-	return type->FindMember(name, fromType);
+	return type->FindMember(name, fromMethod);
 }
 
 OVUM_API int32_t Type_GetMemberCount(TypeHandle type)
@@ -291,11 +296,11 @@ OVUM_API void Type_SetFinalizer(TypeHandle type, Finalizer finalizer)
 	{
 		type->finalizer = finalizer;
 		if (finalizer)
-			type->flags |= TypeFlags::HAS_FINALIZER;
+			type->flags |= ovum::TypeFlags::HAS_FINALIZER;
 		else if (type->baseType)
-			type->flags |= type->baseType->flags & TypeFlags::HAS_FINALIZER;
+			type->flags |= type->baseType->flags & ovum::TypeFlags::HAS_FINALIZER;
 		else
-			type->flags &= ~TypeFlags::HAS_FINALIZER;
+			type->flags &= ~ovum::TypeFlags::HAS_FINALIZER;
 	}
 }
 
@@ -305,7 +310,7 @@ OVUM_API void Type_SetInstanceSize(TypeHandle type, size_t size)
 	{
 		// Ensure the effective size is a multiple of 8
 		type->size = OVUM_ALIGN_TO(size, 8);
-		type->flags |= TypeFlags::CUSTOMPTR;
+		type->flags |= ovum::TypeFlags::CUSTOMPTR;
 	}
 }
 
@@ -322,9 +327,9 @@ OVUM_API void Type_SetConstructorIsAllocator(TypeHandle type, bool isAllocator)
 	if (!type->IsInited())
 	{
 		if (isAllocator)
-			type->flags |= TypeFlags::ALLOCATOR_CTOR;
+			type->flags |= ovum::TypeFlags::ALLOCATOR_CTOR;
 		else
-			type->flags &= ~TypeFlags::ALLOCATOR_CTOR;
+			type->flags &= ~ovum::TypeFlags::ALLOCATOR_CTOR;
 	}
 }
 

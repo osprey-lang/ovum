@@ -364,8 +364,6 @@ void MethodInitializer::InitBranchOffsets(instr::MethodBuilder &builder)
 
 void MethodInitializer::InitTryBlockOffsets(instr::MethodBuilder &builder)
 {
-	typedef TryBlock::TryKind TryKind;
-
 	for (int32_t i = 0; i < method->tryBlockCount; i++)
 	{
 		TryBlock &tryBlock = method->tryBlocks[i];
@@ -400,12 +398,13 @@ void MethodInitializer::InitDebugSymbolOffsets(instr::MethodBuilder &builder)
 	if (!method->debugSymbols)
 		return;
 
-	debug::DebugSymbols *debug = method->debugSymbols;
-	for (int32_t i = 0; i < debug->symbolCount; i++)
+	debug::OverloadSymbols *debug = method->debugSymbols;
+	int32_t debugSymbolCount = debug->GetSymbolCount();
+	for (int32_t i = 0; i < debugSymbolCount; i++)
 	{
-		debug::SourceLocation &loc = debug->symbols[i];
-		loc.startOffset = builder.FindIndex(loc.startOffset);
-		loc.endOffset = builder.FindIndex(loc.endOffset);
+		debug::DebugSymbol &sym = debug->GetSymbol(i);
+		sym.startOffset = builder.FindIndex(sym.startOffset);
+		sym.endOffset = builder.FindIndex(sym.endOffset);
 	}
 }
 
@@ -482,8 +481,6 @@ void MethodInitializer::CalculateStackHeights(instr::MethodBuilder &builder, Sta
 
 void MethodInitializer::EnqueueInitialBranches(instr::MethodBuilder &builder, StackManager &stack)
 {
-	typedef TryBlock::TryKind TryKind;
-
 	// The first instruction is always reachable, and always with a stack
 	// height of 0.
 	stack.EnqueueBranch(0, 0);
@@ -756,13 +753,11 @@ void MethodInitializer::WriteInitializedBody(instr::MethodBuilder &builder)
 	delete[] method->entry;
 	method->entry  = buffer.Release();
 	method->length = builder.GetByteSize();
-	method->flags |= MethodFlags::INITED;
+	method->flags |= OverloadFlags::INITED;
 }
 
 void MethodInitializer::FinalizeTryBlockOffsets(instr::MethodBuilder &builder)
 {
-	typedef TryBlock::TryKind TryKind;
-
 	for (int32_t t = 0; t < method->tryBlockCount; t++)
 	{
 		TryBlock &tryBlock = method->tryBlocks[t];
@@ -796,12 +791,13 @@ void MethodInitializer::FinalizeDebugSymbolOffsets(instr::MethodBuilder &builder
 	if (!method->debugSymbols)
 		return;
 
-	debug::DebugSymbols *debug = method->debugSymbols;
-	for (int32_t i = 0; i < debug->symbolCount; i++)
+	debug::OverloadSymbols *debug = method->debugSymbols;
+	int32_t debugSymbolCount = debug->GetSymbolCount();
+	for (int32_t i = 0; i < debugSymbolCount; i++)
 	{
-		debug::SourceLocation &loc = debug->symbols[i];
-		loc.startOffset = builder.GetNewOffset(loc.startOffset);
-		loc.endOffset = builder.GetNewOffset(loc.endOffset);
+		debug::DebugSymbol &sym = debug->GetSymbol(i);
+		sym.startOffset = builder.GetNewOffset(sym.startOffset);
+		sym.endOffset = builder.GetNewOffset(sym.endOffset);
 	}
 }
 
@@ -814,8 +810,7 @@ Type *MethodInitializer::TypeFromToken(uint32_t token)
 		throw MethodInitException("Unresolved TypeDef or TypeRef token ID.",
 			method, token, MethodInitException::UNRESOLVED_TOKEN_ID);
 
-	if ((result->flags & TypeFlags::PROTECTION) == TypeFlags::PRIVATE &&
-		result->module != method->group->declModule)
+	if (result->IsInternal() && result->module != method->group->declModule)
 		throw MethodInitException("The type is not accessible from outside its declaring module.",
 			method, result, MethodInitException::INACCESSIBLE_TYPE);
 
@@ -847,11 +842,10 @@ Method *MethodInitializer::MethodFromToken(uint32_t token)
 			// If the method is declared in a type, use IsAccessible
 			// Note: instType is only used by protected members. For static methods,
 			// we pretend the method is being accessed through an instance of fromMethod->declType
-			result->IsAccessible(method->declType, method->declType) :
+			result->IsAccessible(method->declType, method) :
 			// Otherwise, the method is accessible if it's public,
-			// or private and declared in the same module as fromMethod
-			(result->flags & MemberFlags::ACCESS_LEVEL) == MemberFlags::PUBLIC ||
-				result->declModule == method->group->declModule;
+			// or internal and declared in the same module as fromMethod
+			result->IsPublic() || result->declModule == method->group->declModule;
 		if (!accessible)
 			throw MethodInitException("The method is inaccessible from this location.",
 				method, result, MethodInitException::INACCESSIBLE_MEMBER);
@@ -864,7 +858,8 @@ MethodOverload *MethodInitializer::MethodOverloadFromToken(uint32_t token, ovloc
 {
 	Method *method = MethodFromToken(token);
 
-	argCount -= (int)(method->flags & MemberFlags::INSTANCE) >> 10;
+	if (!method->IsStatic())
+		argCount--;
 
 	MethodOverload *overload = method->ResolveOverload(argCount);
 	if (!overload)
@@ -881,7 +876,7 @@ Field *MethodInitializer::FieldFromToken(uint32_t token, bool shouldBeStatic)
 		throw MethodInitException("Unresolved FieldDef or FieldRef token ID.",
 			method, token, MethodInitException::UNRESOLVED_TOKEN_ID);
 
-	if (field->IsStatic() && !field->IsAccessible(nullptr, method->declType))
+	if (field->IsStatic() && !field->IsAccessible(nullptr, method))
 		throw MethodInitException("The field is inaccessible from this location.",
 			method, field, MethodInitException::INACCESSIBLE_MEMBER);
 
@@ -894,8 +889,7 @@ Field *MethodInitializer::FieldFromToken(uint32_t token, bool shouldBeStatic)
 
 void MethodInitializer::EnsureConstructible(Type *type, ovlocals_t argCount)
 {
-	if ((type->flags & TypeFlags::ABSTRACT) == TypeFlags::ABSTRACT ||
-		(type->flags & TypeFlags::STATIC) == TypeFlags::STATIC)
+	if (type->IsAbstract() || type->IsStatic())
 		throw MethodInitException("Abstract and static types cannot be used with the newobj instruction.",
 			method, type, MethodInitException::TYPE_NOT_CONSTRUCTIBLE);
 
@@ -903,7 +897,7 @@ void MethodInitializer::EnsureConstructible(Type *type, ovlocals_t argCount)
 		throw MethodInitException("The type does not declare an instance constructor.",
 			method, type, MethodInitException::TYPE_NOT_CONSTRUCTIBLE);
 
-	if (!type->instanceCtor->IsAccessible(type, method->declType))
+	if (!type->instanceCtor->IsAccessible(type, method))
 		throw MethodInitException("The instance constructor is not accessible from this location.",
 			method, type, MethodInitException::TYPE_NOT_CONSTRUCTIBLE);
 

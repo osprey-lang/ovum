@@ -134,7 +134,7 @@ namespace os
 	// with the mapping will no longer be usable.
 	//   viewBase:
 	//     The base address of the mapped view.
-	void UnmapView(void *viewBase);
+	void UnmapView(const void *viewBase);
 
 } // namespace os
 
