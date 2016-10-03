@@ -33,6 +33,7 @@ use "Iterable.osp";
 use "Iterator.osp";
 use "List.osp";
 use "MapIterable.osp";
+use "MapManyIterable.osp";
 use "MemberNotFoundError.osp";
 use "MemoryError.osp";
 use "Method.osp";

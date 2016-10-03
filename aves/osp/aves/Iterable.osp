@@ -617,6 +617,21 @@ public abstract class Iterable
 		return new MapIterable(this, func);
 	}
 
+	/// Summary: Projects each item in this sequence and flattens the result into one sequence.
+	/// Param func: An invokable value that takes one argument and returns a projection of it.
+	///          The projection must be an iterable value.
+	/// Returns: An Iterable which, when iterated over, produces each item in the result of
+	///          invoking {func} on each item in this sequence.
+	/// Throws ArgumentNullError:
+	///          {func} is null.
+	public overridable mapMany(func)
+	{
+		if func is null:
+			throw new ArgumentNullError("func");
+
+		return new MapManyIterable(this, func);
+	}
+
 	/// Summary: Returns an iterable that takes a specified maximum number of items from this
 	///          sequence.
 	/// Param count: The maximum number of items to take. (Int, UInt or Real)

@@ -63,6 +63,54 @@ public class IterableTests is TestFixture
 		Assert.throws(typeof(TypeError), mapped.toList);
 	}
 
+	// mapMany
+
+	public test_MapManyEmpty()
+	{
+		var sequence = Iterable.empty;
+		var mapped = sequence.mapMany(failCallback1);
+		Assert.collectionsMatch(mapped, [], failCallback2);
+	}
+
+	public test_MapManyEmpty2()
+	{
+		var sequence = wrap([Iterable.empty, Iterable.empty]);
+		var mapped = sequence.mapMany(@x => x);
+		Assert.collectionsMatch(mapped, [], failCallback2);
+	}
+
+	public test_MapManyFlattenSimple()
+	{
+		var sequence = wrap([
+			[1, 2, 3],
+			[4, 5, 6],
+			[7, 8, 9],
+		]);
+		var mapped = sequence.mapMany(@x => x);
+		var expected = [
+			1, 2, 3,
+			4, 5, 6,
+			7, 8, 9,
+		];
+		Assert.collectionsMatch(mapped, expected, Assert.areEqual);
+	}
+
+	public test_MapManyFlattenComplex()
+	{
+		var sequence = wrap([
+			[1, 2],
+			[3, 4, 5, 6],
+			[7],
+			[8, 9],
+		]);
+		var mapped = sequence.mapMany(@list =>
+			// Get all even numbers from the list
+			list.filter(@x => x % 2 == 0)
+		);
+		var expected = [2, 4, 6, 8];
+		Assert.collectionsMatch(mapped, expected, Assert.areEqual);
+	}
+
 	// filter
 
 	public test_FilterEmpty()

@@ -1,0 +1,22 @@
+namespace aves;
+
+private class MapManyIterable is Iterable
+{
+	public new(this.inner, this.func);
+
+	private inner;
+	private func;
+
+	iter
+	{
+		var inner = this.inner;
+		var func = this.func;
+
+		for item in inner
+		{
+			var sequence = func(item);
+			for childItem in sequence:
+				yield childItem;
+		}
+	}
+}
