@@ -540,6 +540,7 @@ void ModuleReader::ReadFieldConstantValue(Module *module, Field *field, const mf
 			AddUnresolvedConstant(module, field, value);
 		else
 			ModuleLoadError("Unresolved type in constant field value.");
+		return;
 	}
 
 	field->staticValue = GetGC()->AddStaticReference(nullptr, fieldValue);
