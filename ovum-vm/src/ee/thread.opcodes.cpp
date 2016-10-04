@@ -697,6 +697,7 @@ int Thread::Evaluate()
 				if (Type::ValueIsType(args->Value(f), args->type))
 					ip += args->offset;
 				ip += oa::BRANCH_IF_TYPE_SIZE;
+				f->stackCount--;
 			}
 			NEXT_INSTR();
 
