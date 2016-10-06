@@ -203,8 +203,7 @@ void StackTraceFormatter::AppendSourceLocation(Thread *const thread, StringBuffe
 	if (sym == nullptr)
 		return;
 
-	buf.Append(5, "\n    ");
-	buf.Append(9, " at line ");
+	buf.Append(13, "\n    at line ");
 	AppendLineNumber(thread, buf, sym->startLocation.lineNumber);
 
 	buf.Append(5, " in \"");
