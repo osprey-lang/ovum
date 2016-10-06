@@ -1,7 +1,7 @@
 namespace aves;
 
 /// Summary: Implements {Iterable.zip}.
-private class ZipIterable is Iterable
+internal class ZipIterable is Iterable
 {
 	public new(this.one, this.two, this.func);
 
@@ -17,7 +17,7 @@ private class ZipIterable is Iterable
 	private static defaultZipFunc = @(a, b) => [a, b];
 }
 
-private class ZipIterator is Iterator
+internal class ZipIterator is Iterator
 {
 	public new(this.one, this.two, this.func);
 

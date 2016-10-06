@@ -57,7 +57,7 @@ public static class Order
 	}
 }
 
-private class ReverseOrdering
+internal class ReverseOrdering
 {
 	public new(this.value);
 

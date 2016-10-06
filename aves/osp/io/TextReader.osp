@@ -330,7 +330,7 @@ public inheritable TextReader
 	}
 }
 
-private class TextReaderLinesIterator is Iterator
+internal class TextReaderLinesIterator is Iterator
 {
 	public new(this.textReader);
 

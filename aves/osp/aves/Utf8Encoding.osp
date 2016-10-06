@@ -58,7 +58,7 @@ public class Utf8Encoding is Encoding
 		__extern("aves_Utf8Encoding_getCharsInternal");
 }
 
-private class Utf8Encoder is Encoder
+internal class Utf8Encoder is Encoder
 {
 	__init_type("aves_Utf8Encoder_init");
 
@@ -84,7 +84,7 @@ private class Utf8Encoder is Encoder
 		__extern("aves_Utf8Encoder_reset");
 }
 
-private class Utf8Decoder is Decoder
+internal class Utf8Decoder is Decoder
 {
 	__init_type("aves_Utf8Decoder_init");
 

@@ -1,7 +1,7 @@
 namespace aves;
 
 /// Summary: Implements {Iterable.skipWhile}.
-private class SkipWhileIterable is Iterable
+internal class SkipWhileIterable is Iterable
 {
 	public new(this.inner, this.predicate);
 
@@ -14,7 +14,7 @@ private class SkipWhileIterable is Iterable
 	}
 }
 
-private class SkipWhileIterator is Iterator
+internal class SkipWhileIterator is Iterator
 {
 	public new(this.inner, this.predicate);
 

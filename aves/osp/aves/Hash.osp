@@ -545,7 +545,7 @@ public inheritable Hash is Collection
 // back to it. You must also pin the entries array (see HashUtils.pin/unpinEntries)
 // for as long as you have a HashEntry, or a GC cycle could make the array
 // move and then this pointer would be invalidated.
-private class HashEntry __primitive
+internal class HashEntry __primitive
 {
 	public get hashCode
 		__extern("aves_HashEntry_get_hashCode");
@@ -557,7 +557,7 @@ private class HashEntry __primitive
 		__extern("aves_HashEntry_get_value");
 }
 
-private class HashIterator is Iterator
+internal class HashIterator is Iterator
 {
 	public new(this.hash)
 	{
@@ -599,7 +599,7 @@ private class HashIterator is Iterator
 	}
 }
 
-private class KeyOrValueCollection is Collection
+internal class KeyOrValueCollection is Collection
 {
 	public new(this.hash, this.useKey);
 
@@ -614,7 +614,7 @@ private class KeyOrValueCollection is Collection
 	}
 }
 
-private class KeyOrValueIterator is Iterator
+internal class KeyOrValueIterator is Iterator
 {
 	public new(this.hash, this.useKey)
 	{
@@ -657,7 +657,7 @@ private class KeyOrValueIterator is Iterator
 	}
 }
 
-private static class HashUtils
+internal static class HashUtils
 {
 	public const hashHasChanged = "The hash has changed since the iteration started.";
 

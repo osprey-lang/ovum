@@ -1,7 +1,7 @@
 namespace aves;
 
 /// Summary: Implements {Iterable.range}.
-private class RangeIterable is Iterable
+internal class RangeIterable is Iterable
 {
 	public new(this.start, this.end, this.step);
 
@@ -18,7 +18,7 @@ private class RangeIterable is Iterable
 	}
 }
 
-private class RangeUpIterator is Iterator
+internal class RangeUpIterator is Iterator
 {
 	public new(this.i, this.end, this.step);
 
@@ -41,7 +41,7 @@ private class RangeUpIterator is Iterator
 	}
 }
 
-private class RangeDownIterator is Iterator
+internal class RangeDownIterator is Iterator
 {
 	public new(this.i, this.end, this.step);
 

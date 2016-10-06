@@ -550,7 +550,7 @@ public inheritable List is Collection
 	private static defaultComparer = @<=>;
 }
 
-private class ListIterator is Iterator
+internal class ListIterator is Iterator
 {
 	public new(this.list)
 	{

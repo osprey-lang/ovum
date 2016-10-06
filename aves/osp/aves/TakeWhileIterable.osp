@@ -1,7 +1,7 @@
 namespace aves;
 
 /// Summary: Implements {Iterable.takeWhile}.
-private class TakeWhileIterable is Iterable
+internal class TakeWhileIterable is Iterable
 {
 	public new(this.inner, this.predicate);
 
@@ -14,7 +14,7 @@ private class TakeWhileIterable is Iterable
 	}
 }
 
-private class TakeWhileIterator is Iterator
+internal class TakeWhileIterator is Iterator
 {
 	public new(this.inner, this.predicate);
 

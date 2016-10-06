@@ -1,7 +1,7 @@
 namespace aves;
 
 /// Summary: Implements {Iterable.intersperse}.
-private class IntersperseIterable is Iterable
+internal class IntersperseIterable is Iterable
 {
 	public new(this.inner, this.value);
 	public new(this.inner, this.value, this.frequency);

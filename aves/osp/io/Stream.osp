@@ -456,7 +456,7 @@ public abstract class Stream
 	}
 }
 
-private class VoidStream is Stream
+internal class VoidStream is Stream
 {
 	override get canRead = true;
 	override get canWrite = true;

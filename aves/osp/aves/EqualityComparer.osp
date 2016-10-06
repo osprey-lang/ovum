@@ -48,7 +48,7 @@ public abstract class EqualityComparer
 	}
 }
 
-private class DefaultEqualityComparer is EqualityComparer
+internal class DefaultEqualityComparer is EqualityComparer
 {
 	override getHashCode(value)
 	{

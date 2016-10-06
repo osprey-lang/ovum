@@ -1,7 +1,7 @@
 namespace aves;
 
 /// Summary: Implements {Iterable.skip}.
-private class SkipIterable is Iterable
+internal class SkipIterable is Iterable
 {
 	public new(this.inner, this.skipCount);
 
@@ -23,7 +23,7 @@ private class SkipIterable is Iterable
 	}
 }
 
-private class SkipIterator is Iterator
+internal class SkipIterator is Iterator
 {
 	public new(this.inner, this.count);
 

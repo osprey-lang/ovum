@@ -1,7 +1,7 @@
 namespace aves;
 
 /// Summary: Implements {Iterable.take}.
-private class TakeIterable is Iterable
+internal class TakeIterable is Iterable
 {
 	public new(this.inner, this.takeCount);
 
@@ -23,7 +23,7 @@ private class TakeIterable is Iterable
 	}
 }
 
-private class TakeIterator is Iterator
+internal class TakeIterator is Iterator
 {
 	public new(this.inner, this.count);
 

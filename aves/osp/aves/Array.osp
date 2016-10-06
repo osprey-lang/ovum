@@ -401,7 +401,7 @@ public class Array is Collection
 	}
 }
 
-private class ArrayIterator is Iterator
+internal class ArrayIterator is Iterator
 {
 	public new(this.array);
 

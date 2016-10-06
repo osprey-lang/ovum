@@ -1,6 +1,6 @@
 namespace aves;
 
-private class MapManyIterable is Iterable
+internal class MapManyIterable is Iterable
 {
 	public new(this.inner, this.func);
 

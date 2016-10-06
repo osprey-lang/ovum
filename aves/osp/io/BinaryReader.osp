@@ -4,16 +4,18 @@ namespace io;
 
 namespace binHelpers
 {
-	private function reverse2(buf)
+	internal function reverse2(buf)
 	{
 		buf[0], buf[1] = buf[1], buf[0];
 	}
-	private function reverse4(buf)
+
+	internal function reverse4(buf)
 	{
 		buf[0], buf[3] = buf[3], buf[0];
 		buf[1], buf[2] = buf[2], buf[1];
 	}
-	private function reverse8(buf)
+
+	internal function reverse8(buf)
 	{
 		buf[0], buf[7] = buf[7], buf[0];
 		buf[1], buf[6] = buf[6], buf[1];

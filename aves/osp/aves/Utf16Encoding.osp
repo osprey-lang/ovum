@@ -68,7 +68,7 @@ public class Utf16Encoding is Encoding
 		__extern("aves_Utf16Encoding_getCharsInternal");
 }
 
-private class Utf16Encoder is Encoder
+internal class Utf16Encoder is Encoder
 {
 	__init_type("aves_Utf16Encoder_init");
 
@@ -97,7 +97,7 @@ private class Utf16Encoder is Encoder
 		__extern("aves_Utf16Encoder_reset");
 }
 
-private class Utf16Decoder is Decoder
+internal class Utf16Decoder is Decoder
 {
 	__init_type("aves_Utf16Decoder_init");
 

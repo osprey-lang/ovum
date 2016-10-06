@@ -5,7 +5,7 @@ namespace aves;
 ///          {SortBySingleKeyIterable} and {SortByMultipleKeysIterable}. Sorting by a single
 ///          key or none is vastly more common than sorting by multiple, so it makes sense to
 ///          optimize for those cases.
-private abstract class SortByIterable is Iterable
+internal abstract class SortByIterable is Iterable
 {
 	public new(this.inner);
 
@@ -117,7 +117,7 @@ private abstract class SortByIterable is Iterable
 	}
 }
 
-private class SortByIterator is Iterator
+internal class SortByIterator is Iterator
 {
 	public new(this.items, this.indexTable);
 
@@ -141,7 +141,7 @@ private class SortByIterator is Iterator
 	}
 }
 
-private class SortByWithoutKeyIterable is SortByIterable
+internal class SortByWithoutKeyIterable is SortByIterable
 {
 	public new(inner)
 	{
@@ -164,7 +164,7 @@ private class SortByWithoutKeyIterable is SortByIterable
 	}
 }
 
-private class SortBySingleKeyIterable is SortByIterable
+internal class SortBySingleKeyIterable is SortByIterable
 {
 	public new(inner, this.sortKeySelector)
 	{
@@ -195,7 +195,7 @@ private class SortBySingleKeyIterable is SortByIterable
 	}
 }
 
-private class SortByMultipleKeysIterable is SortByIterable
+internal class SortByMultipleKeysIterable is SortByIterable
 {
 	public new(inner, this.sortKeySelectors)
 	{

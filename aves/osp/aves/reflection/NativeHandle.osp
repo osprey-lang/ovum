@@ -1,6 +1,6 @@
 namespace aves.reflection;
 
-private class NativeHandle __primitive
+internal class NativeHandle __primitive
 {
 	private new();
 

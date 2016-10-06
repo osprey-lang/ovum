@@ -101,7 +101,7 @@ public class Method
 	}
 }
 
-private class MethodChain
+internal class MethodChain
 {
 	public new(this.first, this.second);
 

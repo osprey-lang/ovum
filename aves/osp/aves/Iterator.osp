@@ -69,7 +69,7 @@ public abstract class Iterator
 	}
 }
 
-private class EmptyIterator is Iterator
+internal class EmptyIterator is Iterator
 {
 	override get current = null;
 

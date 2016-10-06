@@ -1,7 +1,7 @@
 namespace aves;
 
 /// Summary: Implements {Iterable.filter}.
-private class FilterIterable is Iterable
+internal class FilterIterable is Iterable
 {
 	public new(this.inner, this.predicate);
 
@@ -14,7 +14,7 @@ private class FilterIterable is Iterable
 	}
 }
 
-private class FilterIterator is Iterator
+internal class FilterIterator is Iterator
 {
 	public new(this.inner, this.predicate);
 

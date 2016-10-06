@@ -1052,7 +1052,7 @@ public class String is Collection
 	}
 }
 
-private class StringIterator is Iterator
+internal class StringIterator is Iterator
 {
 	public new(this.str);
 

@@ -86,7 +86,7 @@ public class Random
 	private const listSize = 624;
 }
 
-private static class RandomInternal
+internal static class RandomInternal
 {
 	private static _instance = new Random();
 

@@ -1,7 +1,7 @@
 namespace aves;
 
 /// Summary: Implements {Iterable.groupEvery}.
-private class GroupEveryIterable is Iterable
+internal class GroupEveryIterable is Iterable
 {
 	public new(this.inner, this.frequency);
 
@@ -14,7 +14,7 @@ private class GroupEveryIterable is Iterable
 	}
 }
 
-private class GroupEveryIterator is Iterator
+internal class GroupEveryIterator is Iterator
 {
 	public new(this.inner, this.frequency);
 

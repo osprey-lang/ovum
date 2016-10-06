@@ -1,7 +1,7 @@
 namespace aves;
 
 /// Summary: Implements {Iterable.map}.
-private class MapIterable is Iterable
+internal class MapIterable is Iterable
 {
 	public new(this.inner, this.func);
 
@@ -14,7 +14,7 @@ private class MapIterable is Iterable
 	}
 }
 
-private class MapIterator is Iterator
+internal class MapIterator is Iterator
 {
 	public new(this.inner, this.func);
 

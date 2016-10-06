@@ -2,17 +2,17 @@ use aves;
 
 namespace io.errorHelpers;
 
-private function endOfFile()
+internal function endOfFile()
 {
 	throw new EndOfFileError();
 }
 
-private function readerClosed()
+internal function readerClosed()
 {
 	throw new InvalidStateError("The reader is closed.");
 }
 
-private function writerClosed()
+internal function writerClosed()
 {
 	throw new InvalidStateError("The writer is closed.");
 }
