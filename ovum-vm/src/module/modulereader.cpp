@@ -1079,12 +1079,10 @@ OverloadFlags ModuleReader::GetOverloadFlags(mf::OverloadFlags flags)
 
 ModuleVersion ModuleReader::ReadVersion(const mf::ModuleVersion &version)
 {
-	// TODO: Convert regular ModuleVersion to something semver-like
 	ModuleVersion result;
 	result.major = version.major;
 	result.minor = version.minor;
-	result.revision = version.patch;
-	result.build = 0;
+	result.patch = version.patch;
 	return result;
 }
 

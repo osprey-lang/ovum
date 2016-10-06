@@ -177,11 +177,8 @@ private:
 		if (a.minor != b.minor)
 			return a.minor < b.minor ? -1 : 1;
 
-		if (a.build != b.build)
-			return a.build < b.build ? -1 : 1;
-
-		if (a.revision != b.revision)
-			return a.revision < b.revision ? -1 : 1;
+		if (a.patch != b.patch)
+			return a.patch < b.patch ? -1 : 1;
 
 		return 0; // equal
 	}

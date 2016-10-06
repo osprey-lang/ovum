@@ -1,0 +1,62 @@
+use aves;
+use testing.unit;
+
+namespace aves.tests;
+
+// Tests for the class aves.Version.
+
+public class VersionTests is TestFixture
+{
+	public new() { new base("aves.Version tests"); }
+
+	public test_ConstructorValid()
+	{
+		var version = new Version(1, 2, 3);
+		Assert.areEqual(version.major, 1);
+		Assert.areEqual(version.minor, 2);
+		Assert.areEqual(version.patch, 3);
+	}
+
+	public test_ConstructorInvalid()
+	{
+		Assert.throws(typeof(TypeConversionError), @=> new Version("1", 2, 3));
+		Assert.throws(typeof(TypeConversionError), @=> new Version(1, "2", 3));
+		Assert.throws(typeof(TypeConversionError), @=> new Version(1, 2, "3"));
+		Assert.throws(typeof(ArgumentRangeError), @=> new Version(-1, 0, 0));
+		Assert.throws(typeof(ArgumentRangeError), @=> new Version(0, -1, 0));
+		Assert.throws(typeof(ArgumentRangeError), @=> new Version(0, 0, -1));
+	}
+
+	public test_ToString()
+	{
+		var version = new Version(43, 9, 5982);
+		Assert.areEqual(version.toString(), "43.9.5982");
+	}
+
+	public test_Equality()
+	{
+		var a = new Version(0, 4, 2);
+		var b = new Version(1, 5, 8);
+		var c = new Version(0, 4, 2);
+
+		Assert.areNotEqual(a, b);
+		Assert.areNotEqual(b, c);
+		Assert.areEqual(a, c);
+	}
+
+	public test_Ordering()
+	{
+		var a = new Version(0, 1, 3);
+		var b = new Version(0, 1, 17);
+		var c = new Version(0, 2, 0);
+		var d = new Version(1, 0, 0);
+		var e = new Version(1, 0, 3);
+		var f = new Version(2, 90, 4);
+
+		Assert.isLess(a, b);
+		Assert.isLess(b, c);
+		Assert.isLess(c, d);
+		Assert.isLess(d, e);
+		Assert.isLess(e, f);
+	}
+}

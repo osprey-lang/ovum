@@ -38,8 +38,7 @@ namespace strings
 	extern String *overload;
 	extern String *major;
 	extern String *minor;
-	extern String *build;
-	extern String *revision;
+	extern String *patch;
 	extern String *minLength;
 	extern String *side;
 	extern String *size;

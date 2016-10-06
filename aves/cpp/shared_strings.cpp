@@ -41,8 +41,7 @@ namespace strings
 	LitString<8> _overload  = { 8, 0, SFS, 'o','v','e','r','l','o','a','d',0 };
 	LitString<5> _major     = { 5, 0, SFS, 'm','a','j','o','r',0 };
 	LitString<5> _minor     = { 5, 0, SFS, 'm','i','n','o','r',0 };
-	LitString<5> _build     = { 5, 0, SFS, 'b','u','i','l','d',0 };
-	LitString<8> _revision  = { 8, 0, SFS, 'r','e','v','i','s','i','o','n',0 };
+	LitString<5> _patch     = { 5, 0, SFS, 'p','a','t','c','h',0 };
 	LitString<9> _minLength = { 9, 0, SFS, 'm','i','n','L','e','n','g','t','h',0 };
 	LitString<4> _side      = { 4, 0, SFS, 's','i','d','e',0 };
 	LitString<4> _size      = { 4, 0, SFS, 's','i','z','e',0 };
@@ -83,8 +82,7 @@ namespace strings
 	String *overload  = _overload.AsString();
 	String *major     = _major.AsString();
 	String *minor     = _minor.AsString();
-	String *build     = _build.AsString();
-	String *revision  = _revision.AsString();
+	String *patch     = _patch.AsString();
 	String *minLength = _minLength.AsString();
 	String *side      = _side.AsString();
 	String *size      = _size.AsString();

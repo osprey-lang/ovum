@@ -5,18 +5,16 @@
 
 typedef struct ModuleVersion_S
 {
-	int32_t major;
-	int32_t minor;
-	int32_t build;
-	int32_t revision;
+	uint32_t major;
+	uint32_t minor;
+	uint32_t patch;
 } ModuleVersion;
 
 inline bool operator==(const ModuleVersion &a, const ModuleVersion &b)
 {
 	return a.major == b.major &&
 		a.minor == b.minor &&
-		a.build == b.build &&
-		a.revision == b.revision;
+		a.patch == b.patch;
 }
 inline bool operator!=(const ModuleVersion &a, const ModuleVersion &b)
 {

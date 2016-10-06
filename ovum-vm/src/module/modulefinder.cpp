@@ -115,12 +115,7 @@ void ModuleFinder::AppendVersionString(PathName &dest, ModuleVersion *version) c
 
 	dest.Append(OVUM_PATH("."));
 
-	length = IntFormatter::ToDec(version->build, buffer, BUFFER_SIZE);
-	dest.Append(length, buffer);
-
-	dest.Append(OVUM_PATH("."));
-
-	length = IntFormatter::ToDec(version->revision, buffer, BUFFER_SIZE);
+	length = IntFormatter::ToDec(version->patch, buffer, BUFFER_SIZE);
 	dest.Append(length, buffer);
 }
 

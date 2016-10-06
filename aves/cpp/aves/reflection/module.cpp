@@ -203,9 +203,8 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Module_get_version)
 		Module_GetVersion(inst->module, &version);
 		VM_PushInt(thread, version.major);
 		VM_PushInt(thread, version.minor);
-		VM_PushInt(thread, version.build);
-		VM_PushInt(thread, version.revision);
-		CHECKED(GC_Construct(thread, aves->aves.Version, 4, &inst->version));
+		VM_PushInt(thread, version.patch);
+		CHECKED(GC_Construct(thread, aves->aves.Version, 3, &inst->version));
 	}
 
 	VM_Push(thread, &inst->version);
@@ -432,19 +431,15 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Module_find)
 		// major
 		VM_Push(thread, args + 1);
 		CHECKED(VM_LoadMember(thread, strings::major, &field));
-		version.major = (int32_t)field.v.integer;
+		version.major = static_cast<uint32_t>(field.v.integer);
 		// minor
 		VM_Push(thread, args + 1);
 		CHECKED(VM_LoadMember(thread, strings::minor, &field));
-		version.minor = (int32_t)field.v.integer;
-		// build
+		version.minor = static_cast<uint32_t>(field.v.integer);
+		// patch
 		VM_Push(thread, args + 1);
-		CHECKED(VM_LoadMember(thread, strings::build, &field));
-		version.build = (int32_t)field.v.integer;
-		// revision
-		VM_Push(thread, args + 1);
-		CHECKED(VM_LoadMember(thread, strings::revision, &field));
-		version.revision = (int32_t)field.v.integer;
+		CHECKED(VM_LoadMember(thread, strings::patch, &field));
+		version.patch = static_cast<uint32_t>(field.v.integer);
 
 		result = FindModule(thread, *name, &version);
 	}
