@@ -1,5 +1,3 @@
-version 0:1;
-
 use "aves/aves.osp";
 use "math/math.osp";
 use "io/io.osp";

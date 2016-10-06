@@ -1,5 +1,8 @@
 @echo off
 
+rem Library version
+set VERSION="0.1.0"
+
 rem Path to the compiler
 set OSPC="%OSP%\Osprey\bin\Release\Osprey.exe"
 rem Path to the library folder
@@ -12,4 +15,4 @@ if not exist "%LIB%\aves\" (
 	mkdir "%LIB%\aves"
 )
 
-%OSPC% /nativelib "%DLLDIR%\aves.dll" /meta meta.txt /type module /nostdlib /out "%LIB%\aves\aves.ovm" /doc "%LIB%\aves\aves.ovm.json" /formatjson /verbose %* aves.osp
+%OSPC% /version %VERSION% /nativelib "%DLLDIR%\aves.dll" /meta meta.txt /type module /nostdlib /out "%LIB%\aves\aves.ovm" /doc "%LIB%\aves\aves.ovm.json" /formatjson /verbose %* aves.osp
