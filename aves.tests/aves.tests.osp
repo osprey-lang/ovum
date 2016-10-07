@@ -4,7 +4,7 @@ use testing.unit;
 
 namespace aves.tests;
 
-private function main(args)
+internal function main(args)
 {
 	var module = Module.getCurrentModule();
 	if args.isEmpty

@@ -3,7 +3,7 @@ use testing.unit;
 
 namespace aves.tests;
 
-private class FailEqualityComparer is EqualityComparer
+internal class FailEqualityComparer is EqualityComparer
 {
 	override getHashCode(value)
 	{
@@ -16,7 +16,7 @@ private class FailEqualityComparer is EqualityComparer
 	}
 }
 
-private class Mod10Comparer is EqualityComparer
+internal class Mod10Comparer is EqualityComparer
 {
 	override getHashCode(value)
 	{
@@ -29,7 +29,7 @@ private class Mod10Comparer is EqualityComparer
 	}
 }
 
-private class TestEqualityComparer is EqualityComparer
+internal class TestEqualityComparer is EqualityComparer
 {
 	public hashCodeFunc;
 	public equalsFunc;
