@@ -84,31 +84,27 @@ public class Random
 	}
 
 	private const listSize = 624;
-}
 
-internal static class RandomInternal
-{
 	private static _instance = new Random();
-
-	public static get instance = _instance;
+	internal static get instance = _instance;
 }
 
 public function randomInt()
 {
-	return RandomInternal.instance.nextInt();
+	return Random.instance.nextInt();
 }
 
 public function randomUInt()
 {
-	return RandomInternal.instance.nextUInt();
+	return Random.instance.nextUInt();
 }
 
 public function randomReal()
 {
-	return RandomInternal.instance.nextReal();
+	return Random.instance.nextReal();
 }
 
 public function randomBoolean()
 {
-	return RandomInternal.instance.nextBoolean();
+	return Random.instance.nextBoolean();
 }
