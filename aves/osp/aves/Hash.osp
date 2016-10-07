@@ -114,9 +114,9 @@ public inheritable Hash is Collection
 	/// Returns: A new {Collection} instance that iterates over the values in the hash table.
 	public get values = new KeyOrValueCollection(this, false);
 
-	private get version
+	internal get version
 		__extern("aves_Hash_get_version");
-	private get entryCount
+	internal get entryCount
 		__extern("aves_Hash_get_entryCount");
 
 	private initialize(capacity, keyComparer)
@@ -125,7 +125,7 @@ public inheritable Hash is Collection
 	private getItemInternal(key, hash)
 		__extern("aves_Hash_getItemInternal");
 
-	private getEntry(index)
+	internal getEntry(index)
 		__extern("aves_Hash_getEntry");
 
 	/// Summary: Gets the value associated with the specified key, or null if the key is not in
@@ -244,9 +244,9 @@ public inheritable Hash is Collection
 	private concatInternal(other)
 		__extern("aves_Hash_concatInternal");
 
-	private pinEntries()
+	internal pinEntries()
 		__extern("aves_Hash_pinEntries");
-	private unpinEntries()
+	internal unpinEntries()
 		__extern("aves_Hash_unpinEntries");
 
 	/// Summary: Determines whether all the entries in the hash table match the specified
@@ -278,7 +278,7 @@ public inheritable Hash is Collection
 			for i in [0 to entryCount - 1]
 			{
 				if startVersion != version:
-					throw new InvalidStateError(HashUtils.hashHasChanged);
+					throw new InvalidStateError(hashHasChanged);
 				var entry = getEntry(i);
 				if entry is not null and
 					not predicate(entry.key, entry.value):
@@ -322,7 +322,7 @@ public inheritable Hash is Collection
 			for i in [0 to entryCount - 1]
 			{
 				if startVersion != version:
-					throw new InvalidStateError(HashUtils.hashHasChanged);
+					throw new InvalidStateError(hashHasChanged);
 				var entry = getEntry(i);
 				if entry is not null and
 					predicate(entry.key, entry.value):
@@ -360,7 +360,7 @@ public inheritable Hash is Collection
 			for i in [0 to entryCount - 1]
 			{
 				if startVersion != version:
-					throw new InvalidStateError(HashUtils.hashHasChanged);
+					throw new InvalidStateError(hashHasChanged);
 				var entry =	getEntry(i);
 				if entry is not null:
 					func(entry.key, entry.value);
@@ -402,7 +402,7 @@ public inheritable Hash is Collection
 			for i in [0 to entryCount - 1]
 			{
 				if startVersion != version:
-					throw new InvalidStateError(HashUtils.hashHasChanged);
+					throw new InvalidStateError(hashHasChanged);
 				var entry = getEntry(i);
 				if entry is not null and predicate(entry.key, entry.value):
 					output.add(entry.key, entry.value);
@@ -440,7 +440,7 @@ public inheritable Hash is Collection
 			for i in [0 to entryCount - 1]
 			{
 				if startVersion != version:
-					throw new InvalidStateError(HashUtils.hashHasChanged);
+					throw new InvalidStateError(hashHasChanged);
 				var entry = getEntry(i);
 				if entry is not null:
 					output.add(func(entry.key, entry.value), entry.value);
@@ -478,7 +478,7 @@ public inheritable Hash is Collection
 			for i in [0 to entryCount - 1]
 			{
 				if startVersion != version:
-					throw new InvalidStateError(HashUtils.hashHasChanged);
+					throw new InvalidStateError(hashHasChanged);
 				var entry = getEntry(i);
 				if entry is not null:
 					output.add(entry.key, func(entry.key, entry.value));
@@ -533,6 +533,8 @@ public inheritable Hash is Collection
 		__extern("aves_Hash_get_maxCapacity");
 
 	private const defaultCapacity = 0;
+
+	internal const hashHasChanged = "The hash has changed since the iteration started.";
 }
 
 // This class is a thin wrapper around the native code's HashEntry struct.
@@ -542,7 +544,7 @@ public inheritable Hash is Collection
 // NOTE: Instances of HashEntry MUST NOT leave the code of methods inside
 // Hash or HashIterator. Do not return values of this type, as the hash
 // itself may be released at any point by the GC, and there is no reference
-// back to it. You must also pin the entries array (see HashUtils.pin/unpinEntries)
+// back to it. You must also pin the entries array (see pinEntries/unpinEntries)
 // for as long as you have a HashEntry, or a GC cycle could make the array
 // move and then this pointer would be invalidated.
 internal class HashEntry __primitive
@@ -561,7 +563,7 @@ internal class HashIterator is Iterator
 {
 	public new(this.hash)
 	{
-		version = HashUtils.getVersion(hash);
+		version = hash.version;
 	}
 
 	private hash;
@@ -573,16 +575,16 @@ internal class HashIterator is Iterator
 
 	override moveNext()
 	{
-		if HashUtils.getVersion(hash) != version:
-			throw new InvalidStateError(HashUtils.hashHasChanged);
+		if hash.version != version:
+			throw new InvalidStateError(Hash.hashHasChanged);
 
-		while i < HashUtils.getEntryCount(hash) - 1
+		while i < hash.entryCount - 1
 		{
 			i += 1;
 			try
 			{
-				HashUtils.pinEntries(hash);
-				var entry = HashUtils.getEntry(hash, i);
+				hash.pinEntries();
+				var entry = hash.getEntry(i);
 				if entry is not null
 				{
 					cur = [entry.key, entry.value];
@@ -591,7 +593,7 @@ internal class HashIterator is Iterator
 			}
 			finally
 			{
-				HashUtils.unpinEntries(hash);
+				hash.unpinEntries();
 			}
 		}
 
@@ -618,7 +620,7 @@ internal class KeyOrValueIterator is Iterator
 {
 	public new(this.hash, this.useKey)
 	{
-		version = HashUtils.getVersion(hash);
+		version = hash.version;
 	}
 
 	private hash;
@@ -631,16 +633,16 @@ internal class KeyOrValueIterator is Iterator
 
 	override moveNext()
 	{
-		if HashUtils.getVersion(hash) != version:
-			throw new InvalidStateError(HashUtils.hashHasChanged);
+		if hash.version != version:
+			throw new InvalidStateError(Hash.hashHasChanged);
 
-		while i < HashUtils.getEntryCount(hash) - 1
+		while i < hash.entryCount - 1
 		{
 			i += 1;
 			try
 			{
-				HashUtils.pinEntries(hash);
-				var entry = HashUtils.getEntry(hash, i);
+				hash.pinEntries();
+				var entry = hash.getEntry(i);
 				if entry is not null
 				{
 					cur = useKey ? entry.key : entry.value;
@@ -649,27 +651,10 @@ internal class KeyOrValueIterator is Iterator
 			}
 			finally
 			{
-				HashUtils.unpinEntries(hash);
+				hash.unpinEntries();
 			}
 		}
 
 		return false;
 	}
-}
-
-internal static class HashUtils
-{
-	public const hashHasChanged = "The hash has changed since the iteration started.";
-
-	public static getVersion(hash)
-		__extern("aves_Hash_get_version");
-	public static getEntryCount(hash)
-		__extern("aves_Hash_get_entryCount");
-	public static getEntry(hash, index)
-		__extern("aves_Hash_getEntry");
-
-	public static pinEntries(hash)
-		__extern("aves_Hash_pinEntries");
-	public static unpinEntries(hash)
-		__extern("aves_Hash_unpinEntries");
 }
