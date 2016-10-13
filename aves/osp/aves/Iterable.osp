@@ -704,6 +704,25 @@ public abstract class Iterable
 		return new SkipWhileIterable(this, predicate);
 	}
 
+	/// Summary: Returns an iterable that skips a specified number of items counting from the end
+	///          of this sequence.
+	/// Param count: The number of items to skip. (Int, UInt or Real)
+	/// Returns: A new Iterable which, when iterated over, skips {count} items from the end of
+	///          this sequence. That is, it skips the last {count} items of the sequence. If the
+	///          sequence contains fewer than {count} items, the result iterable is empty.
+	/// Throws TypeConversionError:
+	///          {count} could not be converted to an int.
+	/// Throws ArgumentRangeError:
+	///          {count} is less than zero.
+	public overridable skipFromEnd(count)
+	{
+		count = int(count);
+		if count < 0:
+			throw new ArgumentRangeError("count");
+
+		return new SkipFromEndIterable(this, count);
+	}
+
 	/// Summary: Sorts the items of the sequence.
 	/// Returns: A new Iterable which, when iterated over, produces values from this sequence
 	///          sorted according to the values’ default ordering.

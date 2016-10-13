@@ -1,0 +1,45 @@
+namespace aves;
+
+internal class SkipFromEndIterable is Iterable
+{
+	internal new(this.inner, this.skipCount);
+
+	private inner;
+	private skipCount;
+
+	iter
+	{
+		return new SkipFromEndIterator(inner.iter, skipCount);
+	}
+}
+
+internal class SkipFromEndIterator is Iterator
+{
+	internal new(this.inner, this.count)
+	{
+		this.itemBuffer = new Queue(count + 1);
+	}
+
+	private inner;
+	private count;
+	private itemBuffer;
+	private cur;
+
+	override get current = cur;
+
+	override moveNext()
+	{
+		while inner.moveNext()
+		{
+			itemBuffer.enqueue(inner.current);
+			// We've got one more item than we need to remember
+			if itemBuffer.length > count
+			{
+				cur = itemBuffer.dequeue();
+				return true;
+			}
+		}
+
+		return false;
+	}
+}

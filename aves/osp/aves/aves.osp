@@ -49,6 +49,7 @@ use "RangeIterable.osp";
 use "ReadOnlyIterable.osp";
 use "Real.osp";
 use "Set.osp";
+use "SkipFromEndIterable.osp";
 use "SkipIterable.osp";
 use "SkipWhileIterable.osp";
 use "SortByIterable.osp";

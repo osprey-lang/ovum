@@ -464,6 +464,48 @@ public class IterableTests is TestFixture
 		Assert.throws(typeof(ArgumentRangeError), @=> sequence.skip(-1));
 	}
 
+	// skipFromEnd
+
+	public test_SkipFromEnd0OfEmpty()
+	{
+		var sequence = Iterable.empty;
+		var skipped = sequence.skipFromEnd(0);
+		Assert.collectionsMatch(skipped, [], failCallback2);
+	}
+
+	public test_SkipFromEndManyOfEmpty()
+	{
+		var sequence = Iterable.empty;
+		var skipped = sequence.skipFromEnd(5);
+		Assert.collectionsMatch(skipped, [], failCallback2);
+	}
+
+	public test_SkipFromEnd2Of4()
+	{
+		var sequence = wrap([1, 2, 3, 4]);
+		var skipped = sequence.skipFromEnd(2);
+		Assert.collectionsMatch(skipped, [1, 2], Assert.areEqual);
+	}
+
+	public test_SkipFromEnd4Of2()
+	{
+		var sequence = wrap([1, 2]);
+		var skipped = sequence.skipFromEnd(4);
+		Assert.collectionsMatch(skipped, [], failCallback2);
+	}
+
+	public test_SkipFromEndNonNumericAmount()
+	{
+		var sequence = Iterable.empty;
+		Assert.throws(typeof(TypeConversionError), @=> sequence.skip("3"));
+	}
+
+	public test_SkipFromEndNegativeAmount()
+	{
+		var sequence = Iterable.empty;
+		Assert.throws(typeof(ArgumentRangeError), @=> sequence.skip(-1));
+	}
+
 	// join
 
 	public test_JoinEmpty()
