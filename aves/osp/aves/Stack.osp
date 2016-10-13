@@ -137,11 +137,13 @@ public inheritable Stack is Collection
 	iter
 	{
 		var startVersion = version;
-		for i in [1 to _length]
+		var i = _length - 1;
+		while i >= 0
 		{
 			if startVersion != version:
 				throw new InvalidStateError("The stack has changed since the enumeration started.");
-			yield items[_length - i];
+			yield items[i];
+			i -= 1;
 		}
 	}
 

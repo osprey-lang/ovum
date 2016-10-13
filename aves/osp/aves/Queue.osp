@@ -127,8 +127,12 @@ public inheritable Queue is Collection
 		{
 			var newItems = new Array(newCapacity);
 
-			for i in [0 to _length - 1]:
+			var i = 0;
+			while i < _length
+			{
 				newItems[i] = items[(startIndex + i) % capacity];
+				i += 1;
+			}
 
 			startIndex = 0;
 			items = newItems;
@@ -146,12 +150,14 @@ public inheritable Queue is Collection
 	{
 		var startVersion = version;
 
-		for i in [0 to _length - 1]
+		var i = 0;
+		while i < _length
 		{
 			if startVersion != version:
 				throw new InvalidStateError("The queue has changed since the enumeration started.");
 
 			yield items[(startIndex + i) % capacity];
+			i += 1;
 		}
 	}
 

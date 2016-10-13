@@ -131,7 +131,7 @@ public abstract class MethodBase is Member
 	public getOverloads()
 	{
 		var output = new List(overloadCount);
-		for i in [0 to overloadCount - 1]:
+		for i in Iterable.range(0, overloadCount):
 			output.add(new Overload(getOverloadHandle(i), this, i));
 
 		return output;

@@ -46,9 +46,13 @@ public class Random
 	private init(seed)
 	{
 		state[0] = seed;
-		for i in [1 to listSize - 1]:
+		var i = 1;
+		while i < listSize
+		{
 			// Remember: Osprey's Ints are all 64 bits, so this multiplication will never overflow
 			state[i] = 0x6c07_8965 * (state[i - 1] ^ (state[i - 1] >> 30)) + i;
+			i += 1;
+		}
 	}
 
 	// Generates a number in the range [0, 2**32 - 1]
@@ -72,7 +76,8 @@ public class Random
 		const int32SignBit = 0x8000_0000;
 		const int32Max     = 0x7fff_ffff;
 
-		for i in [0 to listSize - 1]
+		var i = 0;
+		while i < listSize
 		{
 			var y = state[i] & int32SignBit +         // Bit 31 of state[i]
 				state[(i + 1) % listSize] & int32Max; // Bits 0-30 of "next" state
@@ -80,6 +85,7 @@ public class Random
 			state[i] = state[(i + 397) % listSize] ^ (y >> 1);
 			if y % 2 != 0: // y is odd
 				state[i] ^= 0x9908_b0df;
+			i += 1;
 		}
 	}
 

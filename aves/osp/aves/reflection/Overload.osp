@@ -106,7 +106,7 @@ public class Overload is Member
 	public getParameters()
 	{
 		var output = new List(paramCount);
-		for i in [0 to paramCount - 1]:
+		for i in Iterable.range(0, paramCount):
 			output.add(new Parameter(this, i));
 
 		return output;

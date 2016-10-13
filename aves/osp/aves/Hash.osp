@@ -275,7 +275,8 @@ public inheritable Hash is Collection
 		try
 		{
 			pinEntries();
-			for i in [0 to entryCount - 1]
+			var i = 0;
+			while i < entryCount
 			{
 				if startVersion != version:
 					throw new InvalidStateError(hashHasChanged);
@@ -283,6 +284,7 @@ public inheritable Hash is Collection
 				if entry is not null and
 					not predicate(entry.key, entry.value):
 					return false;
+				i += 1;
 			}
 		}
 		finally
@@ -319,7 +321,8 @@ public inheritable Hash is Collection
 		try
 		{
 			pinEntries();
-			for i in [0 to entryCount - 1]
+			var i = 0;
+			while i < entryCount
 			{
 				if startVersion != version:
 					throw new InvalidStateError(hashHasChanged);
@@ -327,6 +330,7 @@ public inheritable Hash is Collection
 				if entry is not null and
 					predicate(entry.key, entry.value):
 					return true;
+				i += 1;
 			}
 		}
 		finally
@@ -357,13 +361,15 @@ public inheritable Hash is Collection
 		try
 		{
 			pinEntries();
-			for i in [0 to entryCount - 1]
+			var i = 0;
+			while i < entryCount
 			{
 				if startVersion != version:
 					throw new InvalidStateError(hashHasChanged);
 				var entry =	getEntry(i);
 				if entry is not null:
 					func(entry.key, entry.value);
+				i += 1;
 			}
 		}
 		finally
@@ -399,13 +405,15 @@ public inheritable Hash is Collection
 		try
 		{
 			pinEntries();
-			for i in [0 to entryCount - 1]
+			var i = 0;
+			while i < entryCount
 			{
 				if startVersion != version:
 					throw new InvalidStateError(hashHasChanged);
 				var entry = getEntry(i);
 				if entry is not null and predicate(entry.key, entry.value):
 					output.add(entry.key, entry.value);
+				i += 1;
 			}
 		}
 		finally
@@ -437,13 +445,15 @@ public inheritable Hash is Collection
 		try
 		{
 			pinEntries();
-			for i in [0 to entryCount - 1]
+			var i = 0;
+			while i < entryCount
 			{
 				if startVersion != version:
 					throw new InvalidStateError(hashHasChanged);
 				var entry = getEntry(i);
 				if entry is not null:
 					output.add(func(entry.key, entry.value), entry.value);
+				i += 1;
 			}
 		}
 		finally
@@ -475,13 +485,15 @@ public inheritable Hash is Collection
 		try
 		{
 			pinEntries();
-			for i in [0 to entryCount - 1]
+			var i = 0;
+			while i < entryCount
 			{
 				if startVersion != version:
 					throw new InvalidStateError(hashHasChanged);
 				var entry = getEntry(i);
 				if entry is not null:
 					output.add(entry.key, func(entry.key, entry.value));
+				i += 1;
 			}
 		}
 		finally
