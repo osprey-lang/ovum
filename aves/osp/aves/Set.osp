@@ -263,7 +263,7 @@ public inheritable Set is Collection
 		return h;
 	}
 
-	internal hashEntryAt(index)
+	internal hasEntryAt(index)
 		__extern("aves_Set_hasEntryAt");
 
 	internal getEntryAt(index)
