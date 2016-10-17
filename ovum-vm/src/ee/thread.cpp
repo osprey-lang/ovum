@@ -248,18 +248,24 @@ int Thread::InvokeMemberLL(String *name, ovlocals_t argCount, Value *value, Valu
 			return InvokeLL(argCount, value, result, refSignature);
 		case MemberFlags::PROPERTY:
 			{
-				if (((Property*)member)->getter == nullptr)
-					return ThrowTypeError(strings->error.CannotGetWriteOnlyProperty);
-
-				MethodOverload *mo = ((Property*)member)->getter->ResolveOverload(0);
-				if (!mo) return ThrowNoOverloadError(0);
+				Property *property = static_cast<Property*>(member);
+				if (property->defaultGetter == nullptr)
+				{
+					if (property->getter == nullptr)
+						return ThrowTypeError(strings->error.CannotGetWriteOnlyProperty);
+					else
+						return ThrowNoOverloadError(0);
+				}
 				// Call the property getter!
 				// We do need to copy the instance, because the property getter
 				// would otherwise overwrite the arguments already on the stack.
 				Push(value);
-				int r = InvokeMethodOverload(mo, 0,
+				int r = InvokeMethodOverload(
+					property->defaultGetter,
+					0,
 					currentFrame->evalStack + currentFrame->stackCount - 1,
-					value);
+					value
+				);
 				if (r != OVUM_SUCCESS) return r;
 
 				// And then invoke the result of that call (which is in 'value')
@@ -627,7 +633,7 @@ int Thread::LoadMemberLL(Value *instance, String *member, Value *result)
 	switch (m->flags & MemberFlags::KIND_MASK)
 	{
 	case MemberFlags::FIELD:
-		reinterpret_cast<const Field*>(m)->ReadFieldUnchecked(instance, result);
+		static_cast<const Field*>(m)->ReadFieldUnchecked(instance, result);
 		currentFrame->Pop(1); // Done with the instance!
 		break;
 	case MemberFlags::METHOD:
@@ -645,22 +651,18 @@ int Thread::LoadMemberLL(Value *instance, String *member, Value *result)
 		break;
 	case MemberFlags::PROPERTY:
 		{
-			const Property *p = (Property*)m;
-			if (!p->getter)
+			const Property *p = static_cast<const Property*>(m);
+			if (p->defaultGetter == nullptr)
 			{
-				r = ThrowTypeError(strings->error.CannotGetWriteOnlyProperty);
-				break;
-			}
-
-			MethodOverload *mo = p->getter->ResolveOverload(0);
-			if (!mo)
-			{
-				r = ThrowNoOverloadError(0);
+				if (p->getter == nullptr)
+					r = ThrowTypeError(strings->error.CannotGetWriteOnlyProperty);
+				else
+					r = ThrowNoOverloadError(0);
 				break;
 			}
 
 			// Remember: the instance is already on the stack!
-			r = InvokeMethodOverload(mo, 0, instance, result);
+			r = InvokeMethodOverload(p->defaultGetter, 0, instance, result);
 		}
 		break;
 	}
@@ -697,21 +699,17 @@ int Thread::StoreMemberLL(Value *instance, String *member)
 	case MemberFlags::PROPERTY:
 		{
 			Property *p = (Property*)m;
-			if (!p->setter)
+			if (p->defaultSetter == nullptr)
 			{
-				r = ThrowTypeError(strings->error.CannotSetReadOnlyProperty);
-				break;
-			}
-
-			MethodOverload *mo = p->setter->ResolveOverload(1);
-			if (!mo)
-			{
-				r = ThrowNoOverloadError(1);
+				if (p->setter == nullptr)
+					r = ThrowTypeError(strings->error.CannotSetReadOnlyProperty);
+				else
+					r = ThrowNoOverloadError(1);
 				break;
 			}
 
 			// Remember: the instance and value are already on the stack!
-			r = InvokeMethodOverload(mo, 1, instance, instance);
+			r = InvokeMethodOverload(p->defaultSetter, 1, instance, instance);
 		}
 		break;
 	}
@@ -748,10 +746,11 @@ int Thread::LoadIndexerLL(ovlocals_t argCount, Value *args, Value *result)
 	// The indexer, if present, MUST be an instance property.
 	OVUM_ASSERT(!member->IsStatic() && member->IsProperty());
 
-	if (((Property*)member)->getter == nullptr)
+	Property *property = static_cast<Property*>(member);
+	if (property->getter == nullptr)
 		return ThrowTypeError(strings->error.CannotGetWriteOnlyProperty);
 
-	MethodOverload *method = ((Property*)member)->getter->ResolveOverload(argCount);
+	MethodOverload *method = property->getter->ResolveOverload(argCount);
 	if (!method)
 		return ThrowNoOverloadError(argCount);
 	return InvokeMethodOverload(method, argCount, args, result);
@@ -777,10 +776,11 @@ int Thread::StoreIndexerLL(ovlocals_t argCount, Value *args)
 	// The indexer, if present, MUST be an instance property.
 	OVUM_ASSERT(!member->IsStatic() && member->IsProperty());
 
-	if (((Property*)member)->setter == nullptr)
+	Property *property = static_cast<Property*>(member);
+	if (property->setter == nullptr)
 		return ThrowTypeError(strings->error.CannotSetReadOnlyProperty);
 
-	MethodOverload *method = ((Property*)member)->setter->ResolveOverload(argCount + 1);
+	MethodOverload *method = property->setter->ResolveOverload(argCount + 1);
 	if (!method)
 		return ThrowNoOverloadError(argCount + 1);
 

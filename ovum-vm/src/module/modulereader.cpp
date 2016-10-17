@@ -665,6 +665,14 @@ void ModuleReader::ReadPropertyDefs(Module *module, Type *type, int32_t count, m
 		property->getter = getter;
 		property->setter = setter;
 
+		// ResolveOverload may return null in these cases, which is fine: if
+		// it's an indexer property, there may not be any meaningful default
+		// accessors.
+		if (getter)
+			property->defaultGetter = getter->ResolveOverload(0);
+		if (setter)
+			property->defaultSetter = setter->ResolveOverload(1);
+
 		if (!type->members.Add(name, property.get()))
 			ModuleLoadError("Duplicate member name in type.");
 		property.release(); // The type owns it now
