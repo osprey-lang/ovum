@@ -802,7 +802,7 @@ public abstract class Iterable
 	///          To order a sequence by the values themselves – that is, without an explicit key
 	///          selector function – you can either use {sort}, or pass the identity function,
 	///          `@x => x`, or {Order.default}.
-	public overridable sortBy(keySelectors...)
+	public overridable sortBy(...keySelectors)
 	{
 		if keySelectors.isEmpty:
 			throw new ArgumentError("At least one key selector must be specified.", "keySelectors");

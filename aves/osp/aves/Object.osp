@@ -26,7 +26,7 @@ public inheritable Object
 	///          by the values in {args}.
 	/// Throws ArgumentNullError:
 	///          {func} is null.
-	public apply(func, args...)
+	public apply(func, ...args)
 	{
 		if func is null:
 			throw new ArgumentNullError("func");

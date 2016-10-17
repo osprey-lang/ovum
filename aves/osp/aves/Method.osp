@@ -12,7 +12,7 @@ public class Method
 	public get hasInstance
 		__extern("aves_Method_get_hasInstance");
 
-	public this(args...)
+	public this(...args)
 	{
 		// The VM is supposed to forward calls to the underlying method directly.
 		throw new Error("aves.Method's invocator is not supposed to be called directly.");
