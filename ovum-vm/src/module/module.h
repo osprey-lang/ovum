@@ -1,7 +1,5 @@
 #pragma once
 
-#include <cstdio>
-#include <vector>
 #include <exception>
 #include "../vm.h"
 #include "../../inc/ov_string.h"
