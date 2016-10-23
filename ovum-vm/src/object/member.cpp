@@ -8,13 +8,17 @@ namespace ovum
 {
 
 Member::Member(String *name, Module *declModule, MemberFlags flags) :
-	name(name), declType(nullptr),
-	declModule(declModule), flags(flags)
+	name(name),
+	declType(nullptr),
+	declModule(declModule),
+	flags(flags)
 { }
 
 Member::Member(String *name, Type *declType, MemberFlags flags) :
-	name(name), declType(declType),
-	declModule(declType->module), flags(flags)
+	name(name),
+	declType(declType),
+	declModule(declType->module),
+	flags(flags)
 { }
 
 // Determines whether a member is accessible from a given type.
@@ -52,17 +56,10 @@ bool Member::IsAccessible(const Type *instType, const MethodOverload *fromMethod
 
 bool Member::IsAccessibleProtected(const Type *instType, const Type *fromType) const
 {
-	while (instType && instType != fromType)
-		instType = instType->baseType;
-
-	if (!instType)
+	if (!Type::InheritsFrom(instType, fromType))
 		return false; // instType does not inherit from fromType
 
-	Type *originatingType = GetOriginatingType();
-	while (fromType && fromType != originatingType)
-		fromType = fromType->baseType;
-
-	if (!fromType)
+	if (!Type::InheritsFrom(fromType, GetOriginatingType()))
 		return false; // fromType does not inherit from originatingType
 
 	return true; // yay
@@ -70,34 +67,14 @@ bool Member::IsAccessibleProtected(const Type *instType, const Type *fromType) c
 
 bool Member::IsAccessibleProtectedWithSharedType(const Type *instType, const Type *fromType) const
 {
-	const Type *tempType = instType;
-	while (tempType && tempType != fromType)
-		tempType = tempType->baseType;
-
-	if (!tempType)
-	{
-		const Type *sharedType = fromType->sharedType;
-		while (instType && instType != sharedType)
-			instType = instType->baseType;
-
-		if (!instType)
-			return false; // instType does not inherit from fromType or fromType->sharedType
-	}
+	if (!Type::InheritsFrom(instType, fromType) &&
+		!Type::InheritsFrom(instType, fromType->sharedType))
+		return false; // instType does not inherit from fromType or fromType->sharedType
 
 	Type *originatingType = GetOriginatingType();
-	tempType = fromType;
-	while (tempType && tempType != originatingType)
-		tempType = tempType->baseType;
-
-	if (!tempType)
-	{
-		const Type *sharedType = fromType->sharedType;
-		while (sharedType && sharedType != originatingType)
-			sharedType = sharedType->baseType;
-
-		if (!sharedType)
-			return false; // neither fromType nor fromType->sharedType inherits from originatingType
-	}
+	if (!Type::InheritsFrom(fromType, originatingType) &&
+		!Type::InheritsFrom(fromType->sharedType, originatingType))
+		return false; // neither fromType nor fromType->sharedType inherits from originatingType
 
 	return true;
 }

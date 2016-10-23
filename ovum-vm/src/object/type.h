@@ -229,16 +229,36 @@ public:
 
 	int AddNativeField(size_t offset, NativeFieldType fieldType);
 
+	// Determines whether the specified type equals or inherits from another
+	// specified type.
+	// Parameters:
+	//   self:
+	//     The type whose inheritance hierarchy to examine. This value can
+	//     be null.
+	//   base:
+	//     The type to test whether 'self' inherits from. This value cannot
+	//     be null.
+	// Returns:
+	//   True if 'self' equals or inherits from 'base'. Otherwise, false.
+	static inline bool InheritsFrom(const Type *self, const Type *base)
+	{
+		// In general we avoid inline methods that contain loops. However,
+		// this method is extremely small and simple, and performance is of
+		// high importance. Therefore, this is an acceptable exception.
+
+		while (self && self != base)
+			self = self->baseType;
+
+		// When we get this far, either self == base (if the current type
+		// inherits from 'base'), or self == nullptr (if we've walked up
+		// the entire inheritance hierarchy without a match).
+
+		return self != nullptr;
+	}
+
 	static inline bool ValueIsType(Value *value, Type *const type)
 	{
-		Type *valtype = value->type;
-		while (valtype)
-		{
-			if (valtype == type)
-				return true;
-			valtype = valtype->baseType;
-		}
-		return false;
+		return InheritsFrom(value->type, type);
 	}
 
 private:
