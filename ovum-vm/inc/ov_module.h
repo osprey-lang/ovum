@@ -21,33 +21,28 @@ inline bool operator!=(const ModuleVersion &a, const ModuleVersion &b)
 	return !(a == b);
 }
 
-enum class ModuleMemberFlags : uint32_t
-{
-	// Mask for extracting the kind of member (type, function or constant).
-	KIND     = 0x000f,
+// Global member flags
+// MAKE SURE TO SYNCHRONIZE WITH INTERNAL VALUES.
+// See src/module/globalmember.h.
 
-	NONE     = 0x0000,
-
-	TYPE     = 0x0001,
-	FUNCTION = 0x0002,
-	CONSTANT = 0x0004,
-
-	PROTECTION = 0x00f0,
-	PUBLIC     = 0x0010,
-	INTERNAL   = 0x0020,
-};
-OVUM_ENUM_OPS(ModuleMemberFlags, uint32_t);
+#define OVUM_GLOBAL_ACCESSIBILITY 0x00ff
+#define OVUM_GLOBAL_PUBLIC        0x0001
+#define OVUM_GLOBAL_INTERNAL      0x0002
+#define OVUM_GLOBAL_KIND          0x0f00
+#define OVUM_GLOBAL_TYPE          0x0100
+#define OVUM_GLOBAL_FUNCTION      0x0200
+#define OVUM_GLOBAL_CONSTANT      0x0400
 
 typedef struct GlobalMember_S
 {
-	ModuleMemberFlags flags;
+	uint32_t flags;
 	String *name;
 	union
 	{
 		TypeHandle type;
 		MethodHandle function;
 		Value constant;
-	};
+	} m;
 } GlobalMember;
 
 // A StaticStateDeallocator, as the name suggests, is responsible for deallocating
@@ -194,27 +189,29 @@ OVUM_API ModuleHandle Module_FindDependency(ModuleHandle module, String *name);
 //   An Ovum status code. This function can fail with an out-of-memory error.
 OVUM_API int Module_GetSearchDirectories(ThreadHandle thread, int resultSize, String **result, int *count);
 
+#ifdef __cplusplus
+
 class ModuleMemberIterator
 {
 private:
 	ModuleHandle module;
 	int32_t index;
-	bool updateCurrent;
 	GlobalMember current;
 
 public:
-	inline ModuleMemberIterator(ModuleHandle module)
-		: module(module), index(-1), updateCurrent(false)
+	inline ModuleMemberIterator(ModuleHandle module) :
+		module(module),
+		index(0)
 	{
-		current.flags = ModuleMemberFlags::NONE;
+		current.flags = 0;
 	}
 
 	inline bool MoveNext()
 	{
-		if (index < Module_GetGlobalMemberCount(module) - 1)
+		if (index < Module_GetGlobalMemberCount(module))
 		{
+			Module_GetGlobalMemberByIndex(module, index, &current);
 			index++;
-			updateCurrent = true;
 			return true;
 		}
 
@@ -223,13 +220,10 @@ public:
 
 	inline GlobalMember &Current()
 	{
-		if (updateCurrent)
-		{
-			updateCurrent = false;
-			Module_GetGlobalMemberByIndex(module, index, &current);
-		}
 		return current;
 	}
 };
+
+#endif // __cplusplus
 
 #endif // OVUM__MODULE_H

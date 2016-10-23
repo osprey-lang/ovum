@@ -19,7 +19,7 @@ retStatus__:
 	return status__;
 }
 
-int GetMemberSearchFlags(ThreadHandle thread, Value *arg, ModuleMemberFlags *result)
+int GetMemberSearchFlags(ThreadHandle thread, Value *arg, uint32_t *result)
 {
 	Aves *aves = Aves::Get(thread);
 
@@ -39,22 +39,22 @@ int GetMemberSearchFlags(ThreadHandle thread, Value *arg, ModuleMemberFlags *res
 	{
 	case MemberSearchFlags::NONE:
 		// Never matches
-		*result = ModuleMemberFlags::NONE;
+		*result = 0;
 		RETURN_SUCCESS;
 	case MemberSearchFlags::PUBLIC:
-		*result = ModuleMemberFlags::PUBLIC;
+		*result = OVUM_GLOBAL_PUBLIC;
 		break;
 	case MemberSearchFlags::NON_PUBLIC:
-		*result = ModuleMemberFlags::INTERNAL;
+		*result = OVUM_GLOBAL_INTERNAL;
 		break;
 	case MemberSearchFlags::ACCESSIBILITY:
-		*result = ModuleMemberFlags::PUBLIC | ModuleMemberFlags::INTERNAL;
+		*result = OVUM_GLOBAL_PUBLIC | OVUM_GLOBAL_INTERNAL;
 		break;
 	}
 
 	if ((flags & MemberSearchFlags::STATIC) == MemberSearchFlags::NONE)
 	{
-		*result = ModuleMemberFlags::NONE;
+		*result = 0;
 		RETURN_SUCCESS;
 	}
 	// Ignore other flags: if we haven't returned yet, then
@@ -66,11 +66,11 @@ int GetMemberSearchFlags(ThreadHandle thread, Value *arg, ModuleMemberFlags *res
 	RETURN_SUCCESS;
 }
 
-bool GetSingleMember(ModuleHandle module, String *name, ModuleMemberFlags access, ModuleMemberFlags kind, GlobalMember *result)
+bool GetSingleMember(ModuleHandle module, String *name, uint32_t access, uint32_t kind, GlobalMember *result)
 {
 	if (Module_GetGlobalMember(module, name, true, result))
-		return (result->flags & access) != ModuleMemberFlags::NONE &&
-			(result->flags & kind) != ModuleMemberFlags::NONE;
+		return (result->flags & access) != 0 &&
+			(result->flags & kind) != 0;
 	return false;
 }
 
@@ -80,31 +80,31 @@ int ResultToMember(ThreadHandle thread, Value *module, GlobalMember *member)
 
 	int r = OVUM_SUCCESS;
 
-	switch (member->flags & ModuleMemberFlags::KIND)
+	switch (member->flags & OVUM_GLOBAL_KIND)
 	{
-	case ModuleMemberFlags::TYPE:
+	case OVUM_GLOBAL_TYPE:
 		{
 			Value typeToken;
-			r = Type_GetTypeToken(thread, member->type, &typeToken);
+			r = Type_GetTypeToken(thread, member->m.type, &typeToken);
 			if (r == OVUM_SUCCESS)
 				VM_Push(thread, &typeToken);
 		}
 		break;
-	case ModuleMemberFlags::FUNCTION:
+	case OVUM_GLOBAL_FUNCTION:
 		{
 			Value handle;
 			handle.type = aves->aves.reflection.NativeHandle;
-			handle.v.instance = (uint8_t*)member->function;
+			handle.v.instance = (uint8_t*)member->m.function;
 			VM_Push(thread, &handle);
 			r = GC_Construct(thread, aves->aves.reflection.Method, 1, nullptr);
 		}
 		break;
-	case ModuleMemberFlags::CONSTANT:
+	case OVUM_GLOBAL_CONSTANT:
 		{
 			VM_Push(thread, module);
-			VM_PushBool(thread, (member->flags & ModuleMemberFlags::INTERNAL) == ModuleMemberFlags::INTERNAL);
+			VM_PushBool(thread, (member->flags & OVUM_GLOBAL_INTERNAL) == OVUM_GLOBAL_INTERNAL);
 			VM_PushString(thread, member->name);
-			VM_Push(thread, &member->constant);
+			VM_Push(thread, &member->m.constant);
 			r = GC_Construct(thread, aves->aves.reflection.GlobalConstant, 4, nullptr);
 		}
 		break;
@@ -116,7 +116,7 @@ int ResultToMember(ThreadHandle thread, Value *module, GlobalMember *member)
 }
 
 int GetAllMembers(ThreadHandle thread, ModuleHandle module, Value *moduleValue,
-                  ModuleMemberFlags access, ModuleMemberFlags kind)
+                  uint32_t access, uint32_t kind)
 {
 	int status__;
 	{
@@ -131,8 +131,8 @@ int GetAllMembers(ThreadHandle thread, ModuleHandle module, Value *moduleValue,
 		while (iter.MoveNext())
 		{
 			GlobalMember &member = iter.Current();
-			if ((member.flags & access) != ModuleMemberFlags::NONE &&
-				(member.flags & kind) != ModuleMemberFlags::NONE)
+			if ((member.flags & access) != 0 &&
+				(member.flags & kind) != 0)
 			{
 				CHECKED(ResultToMember(thread, moduleValue, &member));
 				// On stack:
@@ -234,11 +234,11 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Module_getType)
 	CHECKED(StringFromValue(thread, args + 1));
 	String *name = args[1].v.string;
 
-	ModuleMemberFlags flags;
+	uint32_t flags;
 	CHECKED(GetMemberSearchFlags(thread, args + 2, &flags));
 
 	GlobalMember member;
-	if (GetSingleMember(inst->module, name, flags, ModuleMemberFlags::TYPE, &member))
+	if (GetSingleMember(inst->module, name, flags, OVUM_GLOBAL_TYPE, &member))
 		CHECKED(ResultToMember(thread, THISP, &member));
 	else
 		VM_PushNull(thread);
@@ -251,10 +251,10 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Module_getTypes)
 
 	ModuleInst *inst = THISV.Get<ModuleInst>();
 
-	ModuleMemberFlags flags;
+	uint32_t flags;
 	CHECKED(GetMemberSearchFlags(thread, args + 1, &flags));
 
-	CHECKED(GetAllMembers(thread, inst->module, THISP, flags, ModuleMemberFlags::TYPE));
+	CHECKED(GetAllMembers(thread, inst->module, THISP, flags, OVUM_GLOBAL_TYPE));
 }
 END_NATIVE_FUNCTION
 
@@ -267,11 +267,11 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Module_getFunction)
 	CHECKED(StringFromValue(thread, args + 1));
 	String *name = args[1].v.string;
 
-	ModuleMemberFlags flags;
+	uint32_t flags;
 	CHECKED(GetMemberSearchFlags(thread, args + 2, &flags));
 
 	GlobalMember member;
-	if (GetSingleMember(inst->module, name, flags, ModuleMemberFlags::FUNCTION, &member))
+	if (GetSingleMember(inst->module, name, flags, OVUM_GLOBAL_FUNCTION, &member))
 		CHECKED(ResultToMember(thread, THISP, &member));
 	else
 		VM_PushNull(thread);
@@ -284,10 +284,10 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Module_getFunctions)
 
 	ModuleInst *inst = THISV.Get<ModuleInst>();
 
-	ModuleMemberFlags flags;
+	uint32_t flags;
 	CHECKED(GetMemberSearchFlags(thread, args + 1, &flags));
 
-	CHECKED(GetAllMembers(thread, inst->module, THISP, flags, ModuleMemberFlags::FUNCTION));
+	CHECKED(GetAllMembers(thread, inst->module, THISP, flags, OVUM_GLOBAL_FUNCTION));
 }
 END_NATIVE_FUNCTION
 
@@ -300,11 +300,11 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Module_getGlobalConstant)
 	CHECKED(StringFromValue(thread, args + 1));
 	String *name = args[1].v.string;
 
-	ModuleMemberFlags flags;
+	uint32_t flags;
 	CHECKED(GetMemberSearchFlags(thread, args + 2, &flags));
 
 	GlobalMember member;
-	if (GetSingleMember(inst->module, name, flags, ModuleMemberFlags::CONSTANT, &member))
+	if (GetSingleMember(inst->module, name, flags, OVUM_GLOBAL_CONSTANT, &member))
 		CHECKED(ResultToMember(thread, THISP, &member));
 	else
 		VM_PushNull(thread);
@@ -317,10 +317,10 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Module_getGlobalConstants)
 
 	ModuleInst *inst = THISV.Get<ModuleInst>();
 
-	ModuleMemberFlags flags;
+	uint32_t flags;
 	CHECKED(GetMemberSearchFlags(thread, args + 1, &flags));
 
-	CHECKED(GetAllMembers(thread, inst->module, THISP, flags, ModuleMemberFlags::CONSTANT));
+	CHECKED(GetAllMembers(thread, inst->module, THISP, flags, OVUM_GLOBAL_CONSTANT));
 }
 END_NATIVE_FUNCTION
 
@@ -333,11 +333,11 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Module_getMember)
 	CHECKED(StringFromValue(thread, args + 1));
 	String *name = args[1].v.string;
 
-	ModuleMemberFlags flags;
+	uint32_t flags;
 	CHECKED(GetMemberSearchFlags(thread, args + 2, &flags));
 
 	GlobalMember member;
-	if (GetSingleMember(inst->module, name, flags, ModuleMemberFlags::KIND, &member))
+	if (GetSingleMember(inst->module, name, flags, OVUM_GLOBAL_KIND, &member))
 		CHECKED(ResultToMember(thread, THISP, &member));
 	else
 		VM_PushNull(thread);
@@ -350,10 +350,10 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Module_getMembers)
 
 	ModuleInst *inst = THISV.Get<ModuleInst>();
 
-	ModuleMemberFlags flags;
+	uint32_t flags;
 	CHECKED(GetMemberSearchFlags(thread, args + 1, &flags));
 
-	CHECKED(GetAllMembers(thread, inst->module, THISP, flags, ModuleMemberFlags::KIND));
+	CHECKED(GetAllMembers(thread, inst->module, THISP, flags, OVUM_GLOBAL_KIND));
 }
 END_NATIVE_FUNCTION
 

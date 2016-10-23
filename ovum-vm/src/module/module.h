@@ -4,6 +4,7 @@
 #include "../vm.h"
 #include "../../inc/ov_string.h"
 #include "../../inc/ov_module.h"
+#include "globalmember.h"
 #include "modulefile.h"
 #include "membertable.h"
 #include "../ee/vm.h"
@@ -12,26 +13,6 @@
 
 namespace ovum
 {
-
-class ModuleMember
-{
-public:
-	ModuleMemberFlags flags;
-	String *name;
-	union
-	{
-		Type   *type;
-		Method *function;
-		Value   constant;
-	};
-
-	inline ModuleMember() :
-		flags(ModuleMemberFlags::NONE), name(nullptr)
-	{ }
-	ModuleMember(Type *type, bool isInternal);
-	ModuleMember(Method *function, bool isInternal);
-	ModuleMember(String *name, Value value, bool isInternal);
-};
 
 struct ModuleParams
 {
@@ -49,20 +30,20 @@ public:
 	~Module();
 
 	Module *FindModuleRef(String *name) const;
-	bool    FindMember(String *name, bool includeInternal, ModuleMember &result) const;
-	Type   *FindType(String *name, bool includeInternal) const;
+	bool FindMember(String *name, bool includeInternal, GlobalMember &result) const;
+	Type *FindType(String *name, bool includeInternal) const;
 	Method *FindGlobalFunction(String *name, bool includeInternal) const;
-	bool    FindConstant(String *name, bool includeInternal, Value &result) const;
+	bool FindConstant(String *name, bool includeInternal, Value &result) const;
 
 	Module *FindModuleRef(Token token) const;
-	Type   *FindType(Token token) const;
+	Type *FindType(Token token) const;
 	Method *FindMethod(Token token) const;
-	Field  *FindField(Token token) const;
+	Field *FindField(Token token) const;
 	String *FindString(Token token) const;
 
 	Method *GetMainMethod() const;
 
-	void   *FindNativeFunction(const char *name);
+	void *FindNativeFunction(const char *name);
 
 	// See ModuleFinder for details on how modules are located.
 	static Module *OpenByName(VM *vm, String *name, ModuleVersion *requiredVersion);
@@ -99,7 +80,7 @@ private:
 	// String table
 	MemberTable<String*> strings;
 	// All global members defined in the module, indexed by name.
-	StringHash<ModuleMember> members;
+	StringHash<GlobalMember> members;
 
 	// Module references
 	MemberTable<Module*> moduleRefs;
@@ -140,7 +121,7 @@ public:
 		return members.GetCount();
 	}
 
-	inline bool GetMemberByIndex(int32_t index, ModuleMember &result) const
+	inline bool GetMemberByIndex(int32_t index, GlobalMember &result) const
 	{
 		return members.GetByIndex(index, result);
 	}

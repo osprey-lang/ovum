@@ -19,19 +19,6 @@
 namespace ovum
 {
 
-ModuleMember::ModuleMember(Type *type, bool isInternal) :
-	type(type), name(type->fullName),
-	flags(ModuleMemberFlags::TYPE | (isInternal ? ModuleMemberFlags::INTERNAL : ModuleMemberFlags::PUBLIC))
-{ }
-ModuleMember::ModuleMember(Method *function, bool isInternal) :
-	function(function), name(function->name),
-	flags(ModuleMemberFlags::FUNCTION | (isInternal ? ModuleMemberFlags::INTERNAL : ModuleMemberFlags::PUBLIC))
-{ }
-ModuleMember::ModuleMember(String *name, Value value, bool isInternal) :
-	constant(value), name(name),
-	flags(ModuleMemberFlags::CONSTANT | (isInternal ? ModuleMemberFlags::INTERNAL : ModuleMemberFlags::PUBLIC))
-{ }
-
 Module::Module(VM *vm, const PathName &fileName, ModuleParams &params) :
 	// This initializer list is kind of silly
 	name(params.name),
@@ -84,13 +71,13 @@ Module *Module::FindModuleRef(String *name) const
 	return nullptr;
 }
 
-bool Module::FindMember(String *name, bool includeInternal, ModuleMember &result) const
+bool Module::FindMember(String *name, bool includeInternal, GlobalMember &result) const
 {
-	ModuleMember member;
+	GlobalMember member;
 	if (!members.Get(name, member))
 		return false;
 	
-	if (!includeInternal && (member.flags & ModuleMemberFlags::PROTECTION) == ModuleMemberFlags::INTERNAL)
+	if (!includeInternal && member.IsInternal())
 		return false;
 
 	result = member;
@@ -99,44 +86,40 @@ bool Module::FindMember(String *name, bool includeInternal, ModuleMember &result
 
 Type *Module::FindType(String *name, bool includeInternal) const
 {
-	ModuleMember member;
+	GlobalMember member;
 	if (!members.Get(name, member))
 		return nullptr;
 
-	if (!includeInternal && (member.flags & ModuleMemberFlags::PROTECTION) == ModuleMemberFlags::INTERNAL
-		||
-		(member.flags & ModuleMemberFlags::KIND) != ModuleMemberFlags::TYPE)
+	if (!includeInternal && member.IsInternal())
 		return nullptr;
 
-	return member.type;
+	return member.GetType();
 }
 
 Method *Module::FindGlobalFunction(String *name, bool includeInternal) const
 {
-	ModuleMember member;
+	GlobalMember member;
 	if (!members.Get(name, member))
 		return nullptr;
 
-	if (!includeInternal && (member.flags & ModuleMemberFlags::PROTECTION) == ModuleMemberFlags::INTERNAL
-		||
-		(member.flags & ModuleMemberFlags::KIND) != ModuleMemberFlags::FUNCTION)
+	if (!includeInternal && member.IsInternal())
 		return nullptr;
 
-	return member.function;
+	return member.GetFunction();
 }
 
 bool Module::FindConstant(String *name, bool includeInternal, Value &result) const
 {
-	ModuleMember member;
+	GlobalMember member;
 	if (!members.Get(name, member))
 		return false;
 
-	if (!includeInternal && (member.flags & ModuleMemberFlags::PROTECTION) == ModuleMemberFlags::INTERNAL
+	if (!includeInternal && member.IsInternal()
 		||
-		(member.flags & ModuleMemberFlags::KIND) != ModuleMemberFlags::CONSTANT)
+		!member.IsConstant())
 		return false;
 
-	result = member.constant;
+	result = *member.GetConstant();
 	return true;
 }
 
@@ -404,23 +387,10 @@ OVUM_API void Module_InitStaticState(ModuleHandle module, void *state, StaticSta
 
 OVUM_API bool Module_GetGlobalMember(ModuleHandle module, String *name, bool includeInternal, GlobalMember *result)
 {
-	ovum::ModuleMember member;
+	ovum::GlobalMember member;
 	if (module->FindMember(name, includeInternal, member))
 	{
-		result->flags = member.flags;
-		result->name = member.name;
-		switch (member.flags & ModuleMemberFlags::KIND)
-		{
-		case ModuleMemberFlags::TYPE:
-			result->type = member.type;
-			break;
-		case ModuleMemberFlags::FUNCTION:
-			result->function = member.function;
-			break;
-		case ModuleMemberFlags::CONSTANT:
-			result->constant = member.constant;
-			break;
-		}
+		member.ToPublicGlobalMember(result);
 		return true;
 	}
 	return false;
@@ -433,23 +403,10 @@ OVUM_API int32_t Module_GetGlobalMemberCount(ModuleHandle module)
 
 OVUM_API bool Module_GetGlobalMemberByIndex(ModuleHandle module, int32_t index, GlobalMember *result)
 {
-	ovum::ModuleMember member;
+	ovum::GlobalMember member;
 	if (module->GetMemberByIndex(index, member))
 	{
-		result->flags = member.flags;
-		result->name = member.name;
-		switch (member.flags & ModuleMemberFlags::KIND)
-		{
-		case ModuleMemberFlags::TYPE:
-			result->type = member.type;
-			break;
-		case ModuleMemberFlags::FUNCTION:
-			result->function = member.function;
-			break;
-		case ModuleMemberFlags::CONSTANT:
-			result->constant = member.constant;
-			break;
-		}
+		member.ToPublicGlobalMember(result);
 		return true;
 	}
 	return false;

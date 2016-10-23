@@ -382,7 +382,7 @@ void ModuleReader::ReadTypeDefs(Module *module, const mf::ModuleHeader *header)
 
 		Box<Type> type = ReadSingleTypeDef(module, header, def);
 
-		ModuleMember member(type.get(), type->IsInternal());
+		GlobalMember member = GlobalMember::FromType(type.get());
 		if (!module->members.Add(type->fullName, member))
 			ModuleLoadError("Duplicate global member name.");
 
@@ -767,7 +767,7 @@ void ModuleReader::ReadFunctionDefs(Module *module, const mf::ModuleHeader *head
 		Box<Method> function = ReadSingleMethodDef(module, def);
 		function->SetDeclType(nullptr);
 
-		ModuleMember member(function.get(), function->IsInternal());
+		GlobalMember member = GlobalMember::FromFunction(function.get());
 		if (!module->members.Add(function->name, member))
 			ModuleLoadError("Duplicate global member name.");
 
@@ -794,9 +794,9 @@ void ModuleReader::ReadConstantDefs(Module *module, const mf::ModuleHeader *head
 
 		VerifyAnnotations(def->annotations);
 
-		ModuleMember member(
+		GlobalMember member = GlobalMember::FromConstant(
 			name,
-			value,
+			&value,
 			(def->flags & mf::CONSTANT_INTERNAL) == mf::CONSTANT_INTERNAL
 		);
 		if (!module->members.Add(name, member))

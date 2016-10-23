@@ -19,6 +19,7 @@ namespace ovum
 class Field;
 class GC;
 class GCObject;
+class GlobalMember;
 class Member;
 class Method;
 class MethodInitException;
