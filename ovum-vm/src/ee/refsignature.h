@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../inc/ov_vm.h"
+#include "../vm.h"
 #include <vector>
 
 /*\
@@ -62,7 +62,14 @@ class RefSignaturePool;
 
 class RefSignature
 {
+public:
+	RefSignature(uint32_t mask, RefSignaturePool *pool);
+
+	bool IsParamRef(ovlocals_t index) const;
+
 private:
+	OVUM_DISABLE_COPY_AND_ASSIGN(RefSignature);
+
 	ovlocals_t paramCount;
 	union
 	{
@@ -70,28 +77,18 @@ private:
 		const uint32_t *longMask;
 	};
 
-public:
-	RefSignature(uint32_t mask, RefSignaturePool *pool);
-
-	bool IsParamRef(ovlocals_t index) const;
-
 	static const ovlocals_t MaxShortParamCount = 31;
 	static const uint32_t SignatureKindMask = 0x80000000u;
 	static const uint32_t SignatureDataMask = 0x7fffffffu;
 
-private:
 	friend class RefSignatureBuilder;
+	friend class RefSignaturePool;
 };
 
 class LongRefSignature
 {
 public:
-	ovlocals_t paramCount;
-	uint32_t *maskValues;
-
 	LongRefSignature(ovlocals_t paramCount);
-
-	~LongRefSignature();
 
 	bool IsParamRef(ovlocals_t index) const;
 
@@ -110,36 +107,41 @@ public:
 	{
 		return !this->Equals(other);
 	}
+
+private:
+	OVUM_DISABLE_COPY_AND_ASSIGN(LongRefSignature);
+
+	ovlocals_t paramCount;
+	Box<uint32_t[]> maskValues;
+
+	static const uint32_t ParamsPerMask = 32;
+
+	friend class RefSignature;
 };
 
 class RefSignaturePool
 {
-private:
-	std::vector<LongRefSignature*> signatures;
-
 public:
-	inline RefSignaturePool() { } // Do nothing; initialize signatures to empty vector
-	~RefSignaturePool();
+	inline RefSignaturePool()
+	{
+		// Do nothing; initialize signatures to empty vector
+	}
 
 	const LongRefSignature *Get(ovlocals_t index) const
 	{
-		return signatures[index];
+		return signatures[index].get();
 	}
 
 	uint32_t Add(LongRefSignature *signature, bool &isNew);
+
+private:
+	OVUM_DISABLE_COPY_AND_ASSIGN(RefSignaturePool);
+
+	std::vector<Box<LongRefSignature>> signatures;
 };
 
 class RefSignatureBuilder
 {
-private:
-	bool isLong;
-	bool isCommitted;
-	union
-	{
-		uint32_t shortMask;
-		LongRefSignature *longSignature;
-	};
-
 public:
 	RefSignatureBuilder(ovlocals_t paramCount);
 
@@ -150,6 +152,17 @@ public:
 	void SetParam(ovlocals_t index, bool isRef);
 
 	uint32_t Commit(RefSignaturePool *pool);
+
+private:
+	OVUM_DISABLE_COPY_AND_ASSIGN(RefSignatureBuilder);
+
+	bool isLong;
+	bool isCommitted;
+	union
+	{
+		uint32_t shortMask;
+		LongRefSignature *longSignature;
+	};
 };
 
 } // namespace ovum

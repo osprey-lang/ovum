@@ -9,7 +9,7 @@ RefSignature::RefSignature(uint32_t mask, RefSignaturePool *pool)
 	{
 		const LongRefSignature *signature = pool->Get(mask & SignatureDataMask);
 		paramCount = signature->paramCount;
-		longMask = signature->maskValues;
+		longMask = signature->maskValues.get();
 	}
 	else
 	{
@@ -22,8 +22,8 @@ bool RefSignature::IsParamRef(ovlocals_t index) const
 {
 	if (paramCount > MaxShortParamCount)
 	{
-		uint32_t mask = longMask[index / 32];
-		return ((mask >> index % 32) & 1) == 1;
+		uint32_t mask = longMask[index / LongRefSignature::ParamsPerMask];
+		return ((mask >> index % LongRefSignature::ParamsPerMask) & 1) == 1;
 	}
 	else
 	{
@@ -35,31 +35,25 @@ bool RefSignature::IsParamRef(ovlocals_t index) const
 
 LongRefSignature::LongRefSignature(ovlocals_t paramCount)
 {
-	uint32_t maskCount = (paramCount + 31) / 32;
+	uint32_t maskCount = (paramCount + ParamsPerMask - 1) / ParamsPerMask;
 
-	this->paramCount = maskCount * 32;
+	this->paramCount = maskCount * ParamsPerMask;
 
-	maskValues = new uint32_t[maskCount];
+	maskValues = Box<uint32_t[]>(new uint32_t[maskCount]);
 	for (uint32_t i = 0; i < maskCount; i++)
 		maskValues[i] = 0;
 }
 
-LongRefSignature::~LongRefSignature()
-{
-	delete[] maskValues;
-	maskValues = nullptr;
-}
-
 bool LongRefSignature::IsParamRef(ovlocals_t index) const
 {
-	uint32_t mask = maskValues[index / 32];
-	return ((mask >> index % 32) & 1) == 1;
+	uint32_t mask = maskValues[index / ParamsPerMask];
+	return ((mask >> index % ParamsPerMask) & 1) == 1;
 }
 
 void LongRefSignature::SetParam(ovlocals_t index, bool isRef)
 {
-	uint32_t *mask = maskValues + index / 32;
-	index %= 32;
+	uint32_t *mask = maskValues.get() + index / ParamsPerMask;
+	index %= ParamsPerMask;
 	if (isRef)
 		*mask |= 1 << index;
 	else
@@ -68,7 +62,7 @@ void LongRefSignature::SetParam(ovlocals_t index, bool isRef)
 
 bool LongRefSignature::HasRefs() const
 {
-	for (ovlocals_t i = 0; i < paramCount / 32; i++)
+	for (ovlocals_t i = 0; i < paramCount / ParamsPerMask; i++)
 		if (maskValues[i] != 0)
 			return true;
 	return false;
@@ -86,23 +80,12 @@ bool LongRefSignature::Equals(const LongRefSignature &other) const
 	return true;
 }
 
-RefSignaturePool::~RefSignaturePool()
-{
-	typedef std::vector<LongRefSignature*>::iterator ref_iter;
-
-	for (ref_iter i = signatures.begin(); i != signatures.end(); ++i)
-	{
-		LongRefSignature *signature = *i;
-		delete signature;
-	}
-}
-
 uint32_t RefSignaturePool::Add(LongRefSignature *signature, bool &isNew)
 {
 	uint32_t i = 0;
 	while (i < (uint32_t)signatures.size())
 	{
-		LongRefSignature *item = signatures[i];
+		auto &item = signatures[i];
 		if (item->Equals(*signature))
 		{
 			isNew = false;
@@ -110,7 +93,9 @@ uint32_t RefSignaturePool::Add(LongRefSignature *signature, bool &isNew)
 		}
 		i++;
 	}
-	signatures.push_back(signature);
+
+	// Take ownership of the signature
+	signatures.push_back(Box<LongRefSignature>(signature));
 	isNew = true;
 	return i | RefSignature::SignatureKindMask;
 }
@@ -177,4 +162,4 @@ uint32_t RefSignatureBuilder::Commit(RefSignaturePool *pool)
 	}
 }
 
-}
+} // namespace ovum
