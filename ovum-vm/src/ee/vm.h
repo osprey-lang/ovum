@@ -72,7 +72,7 @@ public:
 
 	int Run();
 
-	OVUM_NOINLINE static int Create(VMStartParams &params, VM *&result);
+	OVUM_NOINLINE static int New(VMStartParams &params, Box<VM> &result);
 
 	inline GC *GetGC() const
 	{

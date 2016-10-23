@@ -94,7 +94,7 @@ int VM::Run()
 	return r;
 }
 
-int VM::Create(VMStartParams &params, VM *&result)
+int VM::New(VMStartParams &params, Box<VM> &result)
 {
 	int status__;
 	{
@@ -107,7 +107,7 @@ int VM::Create(VMStartParams &params, VM *&result)
 		// Most things rely on static strings, so initialize them first.
 		CHECKED_MEM(vm->strings = StaticStrings::New());
 
-		CHECKED(Thread::Create(vm.get(), vm->mainThread));
+		CHECKED(Thread::New(vm.get(), vm->mainThread));
 		CHECKED_MEM(vm->gc = GC::New(vm.get()));
 		CHECKED_MEM(vm->standardTypeCollection = StandardTypeCollection::New(vm.get()));
 		CHECKED_MEM(vm->modules = Box<ModulePool>(new(std::nothrow) ModulePool(10)));
@@ -116,7 +116,7 @@ int VM::Create(VMStartParams &params, VM *&result)
 		CHECKED(vm->LoadModules(params));
 		CHECKED(vm->InitArgs(params.argc, params.argv));
 
-		result = vm.release();
+		result = std::move(vm);
 	}
 
 	status__ = OVUM_SUCCESS;
@@ -415,12 +415,11 @@ OVUM_API int VM_Start(VMStartParams *params)
 		wprintf(L"Argument count: %d\n",  params->argc);
 	}
 
-	VM *vm;
-	int r = VM::Create(*params, vm);
+	Box<VM> vm;
+	int r = VM::New(*params, vm);
 	if (r == OVUM_SUCCESS)
 	{
 		r = vm->Run();
-		delete vm;
 	}
 
 #if EXIT_SUCCESS == 0

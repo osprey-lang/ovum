@@ -19,7 +19,7 @@ namespace ovum
 
 TlsEntry<Thread> Thread::threadKey;
 
-int Thread::Create(VM *owner, Box<Thread> &result)
+int Thread::New(VM *owner, Box<Thread> &result)
 {
 	// Try to allocate the TLS key first
 	if (!threadKey.IsValid() && !threadKey.Alloc())
