@@ -84,7 +84,7 @@ typedef ovum::Property       *PropertyHandle;
 
 #include "../inc/ov_vm.h"
 
-// OS-specific code, which also implements everything in ovum::os.
+// OS-specific code, which implements everything in ovum::os.
 
 #if OVUM_WINDOWS
 # include "os/windows.h"
@@ -94,3 +94,12 @@ typedef ovum::Property       *PropertyHandle;
 #include <memory>
 // Make placement new available everywhere too, especially std::nothrow.
 #include <new>
+
+namespace ovum
+{
+	// 'std::unique_ptr' is long and unsightly. For the benefit of everyone
+	// reading the code, we take some inspiration from Rust and alias that
+	// type to ovum::Box:
+	template<class T, class Del = std::default_delete<T>>
+	using Box = std::unique_ptr<T, Del>;
+}
