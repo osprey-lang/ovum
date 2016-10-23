@@ -31,8 +31,10 @@ TlsEntry<VM> VM::vmKey;
 
 VM::VM(VMStartParams &params) :
 	verbose(params.verbose),
-	argCount(params.argc), argValues(nullptr),
-	types(), functions(),
+	argCount(params.argc),
+	argValues(nullptr),
+	types(),
+	functions(),
 	startupPath(),
 	startupPathLib(),
 	modulePath(),
@@ -51,8 +53,6 @@ VM::~VM()
 	delete gc;
 	delete modules;
 	delete refSignatures;
-
-	delete mainThread;
 
 	delete startupPath;
 	delete startupPathLib;
@@ -93,7 +93,7 @@ int VM::Run()
 				r = (int)returnValue.v.real;
 		}
 		else if (r == OVUM_ERROR_THROWN)
-			PrintUnhandledError(mainThread);
+			PrintUnhandledError(mainThread.get());
 
 		if (verbose)
 			wprintf(L"<<< End program output >>>\n");
@@ -189,7 +189,7 @@ int VM::InitArgs(int argCount, const wchar_t *args[])
 
 	for (int i = 0; i < argCount; i++)
 	{
-		String *argString = String_FromWString(mainThread, args[i]);
+		String *argString = String_FromWString(mainThread.get(), args[i]);
 		if (!argString) return OVUM_ERROR_NO_MEMORY;
 
 		Value argValue;
@@ -220,11 +220,11 @@ int VM::GetMainMethodOverload(Method *method, ovlocals_t &argc, MethodOverload *
 		// If there is a one-argument overload, try to create an aves.List
 		// and put the argument values in it.
 		GCObject *listGco;
-		int r = gc->Alloc(mainThread, types.List, types.List->size, &listGco);
+		int r = gc->Alloc(mainThread.get(), types.List, types.List->size, &listGco);
 		if (r != OVUM_SUCCESS) return r;
 
 		ListInst *argsList = reinterpret_cast<ListInst*>(listGco->InstanceBase());
-		r = functions.initListInstance(mainThread, argsList, this->argCount);
+		r = functions.initListInstance(mainThread.get(), argsList, this->argCount);
 		if (r != OVUM_SUCCESS) return r;
 
 		OVUM_ASSERT(argsList->capacity >= this->argCount);

@@ -658,7 +658,7 @@ void GC::EndCycle(Thread *const thread)
 
 void GC::MarkRootSet()
 {
-	Thread *const mainThread = vm->mainThread;
+	Thread *const mainThread = vm->mainThread.get();
 
 	bool hasGen0Refs;
 	// Mark stack frames first.
@@ -1056,7 +1056,7 @@ void GC::UpdateGen0References()
 
 void GC::UpdateRootSet()
 {
-	Thread *const mainThread = vm->mainThread;
+	Thread *const mainThread = vm->mainThread.get();
 
 	// Update stack frames first
 	StackFrame *frame = mainThread->currentFrame;

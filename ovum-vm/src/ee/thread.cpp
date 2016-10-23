@@ -19,17 +19,17 @@ namespace ovum
 
 TlsEntry<Thread> Thread::threadKey;
 
-int Thread::Create(VM *owner, Thread *&result)
+int Thread::Create(VM *owner, Box<Thread> &result)
 {
 	// Try to allocate the TLS key first
 	if (!threadKey.IsValid() && !threadKey.Alloc())
 		return OVUM_ERROR_NO_MEMORY;
 
 	// And now make the thread!
-	int status;
-	result = new(std::nothrow) Thread(owner, status);
-	if (!result)
-		status = OVUM_ERROR_NO_MEMORY;
+	int status = OVUM_ERROR_NO_MEMORY;
+	Box<Thread> thread(new(std::nothrow) Thread(owner, status));
+	if (thread)
+		result = std::move(thread);
 	return status;
 }
 

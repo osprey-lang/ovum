@@ -20,7 +20,7 @@ public:
 
 private:
 	// The main thread on which the VM is running.
-	Thread *mainThread;
+	Box<Thread> mainThread;
 
 	// Number of command-line arguments.
 	int argCount;

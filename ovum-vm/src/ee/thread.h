@@ -41,7 +41,7 @@ OVUM_ENUM_OPS(ThreadFlags, int);
 class Thread
 {
 public:
-	OVUM_NOINLINE static int Create(VM *owner, Thread *&result);
+	OVUM_NOINLINE static int Create(VM *owner, Box<Thread> &result);
 
 	// Gets the currently executing managed thread. If no managed thread is associated with
 	// the current native thread, returns null.
