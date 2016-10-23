@@ -29,45 +29,110 @@ public:
 	Module(VM *vm, const PathName &fileName, ModuleParams &params);
 	~Module();
 
+	inline String *GetName() const
+	{
+		return name;
+	}
+
+	inline const ModuleVersion &GetVersion() const
+	{
+		return version;
+	}
+
+	inline const PathName &GetFileName() const
+	{
+		return fileName;
+	}
+
+	inline int32_t GetMemberCount() const
+	{
+		return members.GetCount();
+	}
+
+	inline bool GetMemberByIndex(int32_t index, GlobalMember &result) const
+	{
+		return members.GetByIndex(index, result);
+	}
+
+	inline Method *GetMainMethod() const
+	{
+		return mainMethod;
+	}
+
+	inline void *GetStaticState() const
+	{
+		return staticState;
+	}
+
+	inline VM *GetVM() const
+	{
+		return vm;
+	}
+
+	inline GC *GetGC() const
+	{
+		return vm->GetGC();
+	}
+
 	Module *FindModuleRef(String *name) const;
+
 	bool FindMember(String *name, bool includeInternal, GlobalMember &result) const;
+
 	Type *FindType(String *name, bool includeInternal) const;
+
 	Method *FindGlobalFunction(String *name, bool includeInternal) const;
+
 	bool FindConstant(String *name, bool includeInternal, Value &result) const;
 
 	Module *FindModuleRef(Token token) const;
-	Type *FindType(Token token) const;
-	Method *FindMethod(Token token) const;
-	Field *FindField(Token token) const;
-	String *FindString(Token token) const;
 
-	Method *GetMainMethod() const;
+	Type *FindType(Token token) const;
+
+	Method *FindMethod(Token token) const;
+
+	Field *FindField(Token token) const;
+
+	String *FindString(Token token) const;
 
 	void *FindNativeFunction(const char *name);
 
+	void InitStaticState(void *state, StaticStateDeallocator deallocator);
+
 	// See ModuleFinder for details on how modules are located.
 	static Module *OpenByName(VM *vm, String *name, ModuleVersion *requiredVersion);
+
 	static Module *Open(VM *vm, const PathName &fileName, ModuleVersion *requiredVersion);
 
 private:
+	// The module's name.
 	String *name;
+	// The module's version.
 	ModuleVersion version;
+	// The name of the file from which the module was loaded.
 	const PathName fileName;
 
-	bool fullyOpened; // Set to true when the module file has been fully loaded
-	                  // If a module depends on another module with this set to false,
-	                  // then there's a circular dependency issue.
+	// Set to true when the module file has been fully loaded
+	// If a module depends on another module with this set to false,
+	// then there's a circular dependency issue.
+	bool fullyOpened;
 
+	// The module's main method.
 	Method *mainMethod;
 
-	os::LibraryHandle nativeLib; // Handle to native library
-	void *staticState; // The module's static state (only used by the native library)
-	StaticStateDeallocator staticStateDeallocator; // Deallocation callback for the static state
+	// Handle to native library
+	os::LibraryHandle nativeLib;
+	// The module's static state (only used by the native library)
+	void *staticState;
+	// Deallocation callback for the static state
+	StaticStateDeallocator staticStateDeallocator;
 
+	// Debug data attached to the module.
 	Box<debug::ModuleDebugData> debugData;
 
-	VM *vm; // The VM instance that the module belongs to
-	ModulePool *pool; // The module pool that the module belongs to
+	// The VM instance that the module belongs to
+	VM *vm;
+	// The module pool that the module belongs to
+	ModulePool *pool;
 
 	// Types defined in the module
 	MemberTable<Box<Type>> types;
@@ -93,52 +158,10 @@ private:
 	// Class method references
 	MemberTable<Method*> methodRefs;
 
-public:
-	inline String *GetName() const
-	{
-		return name;
-	}
-
-	inline const ModuleVersion &GetVersion() const
-	{
-		return version;
-	}
-
-	inline const PathName &GetFileName() const
-	{
-		return fileName;
-	}
-
-	inline void *GetStaticState() const
-	{
-		return staticState;
-	}
-
-	void InitStaticState(void *state, StaticStateDeallocator deallocator);
-
-	inline int32_t GetMemberCount() const
-	{
-		return members.GetCount();
-	}
-
-	inline bool GetMemberByIndex(int32_t index, GlobalMember &result) const
-	{
-		return members.GetByIndex(index, result);
-	}
-
-	inline VM *GetVM() const
-	{
-		return vm;
-	}
-
-	inline GC *GetGC() const
-	{
-		return vm->GetGC();
-	}
-
-private:
 	void LoadNativeLibrary(String *nativeFileName, const PathName &path);
+
 	void *FindNativeEntryPoint(const char *name);
+
 	void FreeNativeLibrary();
 
 	void TryRegisterStandardType(Type *type);

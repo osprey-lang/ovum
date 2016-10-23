@@ -205,11 +205,6 @@ String *Module::FindString(Token token) const
 
 #undef TOKEN_INDEX
 
-Method *Module::GetMainMethod() const
-{
-	return mainMethod;
-}
-
 void *Module::FindNativeFunction(const char *name)
 {
 	if (os::LibraryHandleIsValid(&nativeLib))
