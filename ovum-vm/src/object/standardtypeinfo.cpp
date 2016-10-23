@@ -8,9 +8,9 @@ namespace ovum
 
 const int StandardTypeCollection::STANDARD_TYPE_COUNT = 20;
 
-std::unique_ptr<StandardTypeCollection> StandardTypeCollection::New(VM *vm)
+Box<StandardTypeCollection> StandardTypeCollection::New(VM *vm)
 {
-	std::unique_ptr<StandardTypeCollection> output(new(std::nothrow) StandardTypeCollection());
+	Box<StandardTypeCollection> output(new(std::nothrow) StandardTypeCollection());
 	if (!output)
 		return nullptr;
 

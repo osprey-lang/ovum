@@ -133,7 +133,7 @@ namespace instr
 	{
 	private:
 		uint8_t *current;
-		std::unique_ptr<uint8_t[]> buffer;
+		Box<uint8_t[]> buffer;
 
 		OVUM_DISABLE_COPY_AND_ASSIGN(MethodBuffer);
 

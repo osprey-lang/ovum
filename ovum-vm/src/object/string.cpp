@@ -574,7 +574,7 @@ OVUM_API String *String_FromWString(ThreadHandle thread, const wchar_t *source)
 		strp++;
 	}
 
-	std::unique_ptr<ovchar_t[]> buffer(new ovchar_t[outLength]);
+	ovum::Box<ovchar_t[]> buffer(new ovchar_t[outLength]);
 
 	strp = source;
 	ovchar_t *outp = buffer.get();

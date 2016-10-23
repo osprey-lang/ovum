@@ -17,9 +17,9 @@ const StaticStringData staticStringData = {
 /*@StringData@*/
 };
 
-std::unique_ptr<StaticStrings> StaticStrings::New()
+Box<StaticStrings> StaticStrings::New()
 {
-	std::unique_ptr<StaticStrings> output(new(std::nothrow) StaticStrings());
+	Box<StaticStrings> output(new(std::nothrow) StaticStrings());
 	if (!output)
 		return nullptr;
 

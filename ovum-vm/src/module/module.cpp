@@ -247,7 +247,7 @@ Module *Module::Open(VM *vm, const PathName &fileName, ModuleVersion *requiredVe
 		ModuleReader reader(vm);
 		reader.Open(fileName);
 
-		std::unique_ptr<Module> output = reader.ReadModule();
+		Box<Module> output = reader.ReadModule();
 
 		debug::ModuleDebugData::TryLoad(fileName, output.get());
 

@@ -41,8 +41,8 @@ private:
 	GC *gc;
 	ModulePool *modules;
 	RefSignaturePool *refSignatures;
-	std::unique_ptr<StandardTypeCollection> standardTypeCollection;
-	std::unique_ptr<StaticStrings> strings;
+	Box<StandardTypeCollection> standardTypeCollection;
+	Box<StaticStrings> strings;
 
 	int LoadModules(VMStartParams &params);
 	int InitArgs(int argCount, const wchar_t *args[]);

@@ -61,12 +61,12 @@ namespace debug
 	private:
 		OVUM_DISABLE_COPY_AND_ASSIGN(OverloadSymbols);
 
-		OverloadSymbols(MethodSymbols *parent, MethodOverload *overload, int32_t symbolCount, std::unique_ptr<DebugSymbol[]> symbols);
+		OverloadSymbols(MethodSymbols *parent, MethodOverload *overload, int32_t symbolCount, Box<DebugSymbol[]> symbols);
 
 		MethodSymbols *parent;
 		MethodOverload *overload;
 		int32_t symbolCount;
-		std::unique_ptr<DebugSymbol[]> symbols;
+		Box<DebugSymbol[]> symbols;
 
 		friend class DebugSymbolsReader;
 	};
@@ -89,9 +89,9 @@ namespace debug
 		Method *method;
 
 		int32_t overloadCount;
-		std::unique_ptr<std::unique_ptr<OverloadSymbols>[]> overloads;
+		Box<Box<OverloadSymbols>[]> overloads;
 
-		void SetOverloads(int32_t count, std::unique_ptr<std::unique_ptr<OverloadSymbols>[]> overloads);
+		void SetOverloads(int32_t count, Box<Box<OverloadSymbols>[]> overloads);
 
 		friend class DebugSymbolsReader;
 	};
@@ -114,10 +114,10 @@ namespace debug
 		ModuleDebugData();
 
 		int32_t fileCount;
-		std::unique_ptr<SourceFile[]> files;
+		Box<SourceFile[]> files;
 
 		int32_t methodSymbolCount;
-		std::unique_ptr<std::unique_ptr<MethodSymbols>[]> methodSymbols;
+		Box<Box<MethodSymbols>[]> methodSymbols;
 		
 		friend class GC;
 		friend class DebugSymbolsReader;
@@ -158,13 +158,13 @@ namespace debug
 
 		void ReadMethodSymbols(Module *module, ModuleDebugData *data, const debug_file::DebugSymbolsHeader *header);
 
-		std::unique_ptr<MethodSymbols> ReadSingleMethodSymbols(
+		Box<MethodSymbols> ReadSingleMethodSymbols(
 			ModuleDebugData *data,
 			Module *module,
 			const debug_file::MethodSymbols *symbols
 		);
 
-		std::unique_ptr<OverloadSymbols> ReadSingleOverloadSymbols(
+		Box<OverloadSymbols> ReadSingleOverloadSymbols(
 			ModuleDebugData *data,
 			MethodSymbols *parent,
 			MethodOverload *overload,

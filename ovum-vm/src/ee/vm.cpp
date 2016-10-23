@@ -109,7 +109,7 @@ int VM::Create(VMStartParams &params, VM *&result)
 		if (!vmKey.IsValid())
 			CHECKED_MEM(vmKey.Alloc());
 
-		std::unique_ptr<VM> vm(new(std::nothrow) VM(params));
+		Box<VM> vm(new(std::nothrow) VM(params));
 		CHECKED_MEM(vm.get());
 
 		// Most things rely on static strings, so initialize them first.
@@ -184,7 +184,7 @@ int VM::LoadModules(VMStartParams &params)
 int VM::InitArgs(int argCount, const wchar_t *args[])
 {
 	// Convert command-line arguments to String*s.
-	std::unique_ptr<Value*[]> argValues(new(std::nothrow) Value*[argCount]);
+	Box<Value*[]> argValues(new(std::nothrow) Value*[argCount]);
 	if (!argValues.get()) return OVUM_ERROR_NO_MEMORY;
 
 	for (int i = 0; i < argCount; i++)
@@ -268,7 +268,7 @@ void VM::PrintInternal(FILE *f, const wchar_t *format, String *str)
 	}
 	else
 	{
-		std::unique_ptr<wchar_t[]> buffer(new wchar_t[length]);
+		Box<wchar_t[]> buffer(new wchar_t[length]);
 		String_ToWString(buffer.get(), str);
 		fwprintf(f, format, buffer.get());
 	}

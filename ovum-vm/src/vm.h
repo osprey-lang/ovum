@@ -90,7 +90,7 @@ typedef ovum::Property       *PropertyHandle;
 # include "os/windows.h"
 #endif
 
-// std::unique_ptr<> is used more or less everywhere.
+// std::unique_ptr is used more or less everywhere, though aliased to ovum::Box.
 #include <memory>
 // Make placement new available everywhere too, especially std::nothrow.
 #include <new>

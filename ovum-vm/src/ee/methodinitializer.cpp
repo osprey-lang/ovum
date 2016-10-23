@@ -1240,7 +1240,7 @@ void MethodInitializer::ReadInstructions(instr::MethodBuilder &builder)
 			{
 				uint32_t count = U16_ARG(ip);
 				ip += sizeof(uint16_t);
-				std::unique_ptr<int32_t[]> targets(new int32_t[count]);
+				Box<int32_t[]> targets(new int32_t[count]);
 				for (uint32_t i = 0; i < count; i++)
 					targets[i] = *(int8_t*)ip++;
 				instr = new Switch(count, targets.release());
@@ -1250,7 +1250,7 @@ void MethodInitializer::ReadInstructions(instr::MethodBuilder &builder)
 			{
 				uint32_t count = U16_ARG(ip);
 				ip += sizeof(uint16_t);
-				std::unique_ptr<int32_t[]> targets(new int32_t[count]);
+				Box<int32_t[]> targets(new int32_t[count]);
 				CopyMemoryT(targets.get(), (int32_t*)ip, count);
 				ip += count * sizeof(int32_t);
 				instr = new Switch(count, targets.release());

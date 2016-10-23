@@ -81,9 +81,9 @@ const StaticStringData staticStringData = {
 	{ 71, 0, StringFlags::STATIC, 84,104,101,32,97,114,103,117,109,101,110,116,115,32,108,105,115,116,32,105,110,32,97,32,102,117,110,99,116,105,111,110,32,97,112,112,108,105,99,97,116,105,111,110,32,109,117,115,116,32,98,101,32,111,102,32,116,121,112,101,32,97,118,101,115,46,76,105,115,116,46,0 },
 };
 
-std::unique_ptr<StaticStrings> StaticStrings::New()
+Box<StaticStrings> StaticStrings::New()
 {
-	std::unique_ptr<StaticStrings> output(new(std::nothrow) StaticStrings());
+	Box<StaticStrings> output(new(std::nothrow) StaticStrings());
 	if (!output)
 		return nullptr;
 

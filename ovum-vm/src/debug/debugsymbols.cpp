@@ -19,7 +19,7 @@ namespace debug_file
 
 namespace debug
 {
-	OverloadSymbols::OverloadSymbols(MethodSymbols *parent, MethodOverload *overload, int32_t symbolCount, std::unique_ptr<DebugSymbol[]> symbols) :
+	OverloadSymbols::OverloadSymbols(MethodSymbols *parent, MethodOverload *overload, int32_t symbolCount, Box<DebugSymbol[]> symbols) :
 		parent(parent),
 		overload(overload),
 		symbolCount(symbolCount),
@@ -52,7 +52,7 @@ namespace debug
 		overloads()
 	{ }
 
-	void MethodSymbols::SetOverloads(int32_t count, std::unique_ptr<std::unique_ptr<OverloadSymbols>[]> overloads)
+	void MethodSymbols::SetOverloads(int32_t count, Box<Box<OverloadSymbols>[]> overloads)
 	{
 		this->overloadCount = count;
 		this->overloads = std::move(overloads);
@@ -114,7 +114,7 @@ namespace debug
 		const df::DebugSymbolsHeader *header = file.Read<df::DebugSymbolsHeader>(0);
 		VerifyHeader(header);
 
-		std::unique_ptr<ModuleDebugData> output(new ModuleDebugData());
+		Box<ModuleDebugData> output(new ModuleDebugData());
 		// Assign the unfinished data to the module already, so that the GC
 		// can reach it if it has to.
 		module->debugData = output.get();
@@ -157,7 +157,7 @@ namespace debug
 	{
 		int32_t count = header->methodSymbolCount;
 
-		std::unique_ptr<std::unique_ptr<MethodSymbols>[]> methodSymbols(new std::unique_ptr<MethodSymbols>[count]);
+		Box<Box<MethodSymbols>[]> methodSymbols(new Box<MethodSymbols>[count]);
 
 		const mf::Rva<df::MethodSymbols> *defRvas = header->methodSymbols.Get();
 		for (int32_t i = 0; i < count; i++)
@@ -172,7 +172,7 @@ namespace debug
 		data->methodSymbols = std::move(methodSymbols);
 	}
 
-	std::unique_ptr<MethodSymbols> DebugSymbolsReader::ReadSingleMethodSymbols(
+	Box<MethodSymbols> DebugSymbolsReader::ReadSingleMethodSymbols(
 		ModuleDebugData *data,
 		Module *module,
 		const df::MethodSymbols *symbols
@@ -184,10 +184,10 @@ namespace debug
 		if (method->declModule != module)
 			ModuleLoadError("Method belongs to the wrong module.");
 
-		std::unique_ptr<MethodSymbols> methodSymbols(new MethodSymbols(method));
+		Box<MethodSymbols> methodSymbols(new MethodSymbols(method));
 
 		int32_t count = symbols->overloadCount;
-		std::unique_ptr<std::unique_ptr<OverloadSymbols>[]> overloads(new std::unique_ptr<OverloadSymbols>[count]);
+		Box<Box<OverloadSymbols>[]> overloads(new Box<OverloadSymbols>[count]);
 
 		const mf::Rva<df::OverloadSymbols> *defRvas = symbols->overloads.Get();
 		for (int32_t i = 0; i < count; i++)
@@ -195,8 +195,8 @@ namespace debug
 			mf::Rva<df::OverloadSymbols> defRva = defRvas[i];
 			// If the overload is abstract or native, or just doesn't have any
 			// debug symbols, the RVA will be zero. In that case we can just
-			// skip it, since std::unique_ptr<>'s default constructor sets its
-			// pointer to null.
+			// skip it, since Box<>'s default constructor sets its pointer to
+			// null.
 			if (defRva.IsNull())
 				continue;
 
@@ -217,7 +217,7 @@ namespace debug
 		return std::move(methodSymbols);
 	}
 
-	std::unique_ptr<OverloadSymbols> DebugSymbolsReader::ReadSingleOverloadSymbols(
+	Box<OverloadSymbols> DebugSymbolsReader::ReadSingleOverloadSymbols(
 		ModuleDebugData *data,
 		MethodSymbols *parent,
 		MethodOverload *overload,
@@ -225,7 +225,7 @@ namespace debug
 	)
 	{
 		int32_t count = symbols->symbolCount;
-		std::unique_ptr<DebugSymbol[]> debugSymbols(new DebugSymbol[count]);
+		Box<DebugSymbol[]> debugSymbols(new DebugSymbol[count]);
 
 		const df::DebugSymbol *defs = symbols->symbols.Get();
 		for (int32_t i = 0; i < count; i++)
@@ -247,7 +247,7 @@ namespace debug
 			debugSymbol->endLocation.column = def->endLocation.column;
 		}
 
-		std::unique_ptr<OverloadSymbols> overloadSymbols(new OverloadSymbols(
+		Box<OverloadSymbols> overloadSymbols(new OverloadSymbols(
 			parent,
 			overload,
 			count,

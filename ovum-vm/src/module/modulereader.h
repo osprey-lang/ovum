@@ -105,7 +105,7 @@ public:
 		return vm->GetGC();
 	}
 
-	std::unique_ptr<Module> ReadModule();
+	Box<Module> ReadModule();
 
 private:
 	struct UnresolvedConstant;
@@ -144,7 +144,7 @@ private:
 
 	void ReadTypeDefs(Module *module, const module_file::ModuleHeader *header);
 
-	std::unique_ptr<Type> ReadSingleTypeDef(Module *module, const module_file::ModuleHeader *header, const module_file::TypeDef *def);
+	Box<Type> ReadSingleTypeDef(Module *module, const module_file::ModuleHeader *header, const module_file::TypeDef *def);
 
 	Type *GetBaseType(Module *module, Token baseTypeToken);
 
@@ -178,7 +178,7 @@ private:
 
 	bool ReadConstantValue(Module *module, const module_file::ConstantValue *value, Value &result);
 
-	std::unique_ptr<Method> ReadSingleMethodDef(Module *module, const module_file::MethodDef *def);
+	Box<Method> ReadSingleMethodDef(Module *module, const module_file::MethodDef *def);
 
 	void ReadParameters(Module *module, MethodOverload *overload, int32_t count, module_file::Rva<module_file::Parameter[]> rva);
 

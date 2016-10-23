@@ -78,7 +78,7 @@ void ModuleReader::Open(const PathName &fileName)
 	Open(fileName.GetDataPointer());
 }
 
-std::unique_ptr<Module> ModuleReader::ReadModule()
+Box<Module> ModuleReader::ReadModule()
 {
 	const mf::ModuleHeader *header = file.Read<mf::ModuleHeader>(0);
 	VerifyHeader(header);
@@ -91,7 +91,7 @@ std::unique_ptr<Module> ModuleReader::ReadModule()
 		header->functionCount +
 		header->constantCount;
 
-	std::unique_ptr<Module> output(new Module(vm, GetFileName(), params));
+	Box<Module> output(new Module(vm, GetFileName(), params));
 	// We have to add the module to the pool, so that we can detect circular references.
 	vm->GetModulePool()->Add(output.get());
 
@@ -380,7 +380,7 @@ void ModuleReader::ReadTypeDefs(Module *module, const mf::ModuleHeader *header)
 	{
 		const mf::TypeDef *def = defs + i;
 
-		std::unique_ptr<Type> type = ReadSingleTypeDef(module, header, def);
+		Box<Type> type = ReadSingleTypeDef(module, header, def);
 
 		ModuleMember member(type.get(), type->IsInternal());
 		if (!module->members.Add(type->fullName, member))
@@ -392,7 +392,7 @@ void ModuleReader::ReadTypeDefs(Module *module, const mf::ModuleHeader *header)
 	}
 }
 
-std::unique_ptr<Type> ModuleReader::ReadSingleTypeDef(Module *module, const mf::ModuleHeader *header, const mf::TypeDef *def)
+Box<Type> ModuleReader::ReadSingleTypeDef(Module *module, const mf::ModuleHeader *header, const mf::TypeDef *def)
 {
 	// Try to resolve as much as possible before constructing the Type.
 	String *name = ResolveString(module, def->name);
@@ -404,7 +404,7 @@ std::unique_ptr<Type> ModuleReader::ReadSingleTypeDef(Module *module, const mf::
 		def->fieldCount +
 		def->methodCount +
 		def->propertyCount;
-	std::unique_ptr<Type> type(new Type(module, memberCount));
+	Box<Type> type(new Type(module, memberCount));
 	// TypeFlags is compatible with module_file::TypeFlags by design.
 	type->flags = static_cast<TypeFlags>(def->flags);
 	type->fullName = name;
@@ -505,7 +505,7 @@ void ModuleReader::ReadFieldDefs(Module *module, Type *type, uint32_t fieldsBase
 		MemberFlags flags = GetMemberFlags(def->flags);
 		String *name = ResolveString(module, def->name);
 
-		std::unique_ptr<Field> field(new Field(name, type, flags));
+		Box<Field> field(new Field(name, type, flags));
 
 		if ((def->flags & mf::FIELD_HAS_VALUE) == mf::FIELD_HAS_VALUE)
 			ReadFieldConstantValue(module, field.get(), file.Deref(def->value), true);
@@ -571,7 +571,7 @@ void ModuleReader::ReadMethodDefs(Module *module, Type *type, uint32_t methodsBa
 	{
 		const mf::MethodDef *def = defs + i;
 
-		std::unique_ptr<Method> method = ReadSingleMethodDef(module, def);
+		Box<Method> method = ReadSingleMethodDef(module, def);
 
 		if (!type->members.Add(method->name, method.get()))
 			ModuleLoadError("Duplicate member name in type.");
@@ -661,7 +661,7 @@ void ModuleReader::ReadPropertyDefs(Module *module, Type *type, int32_t count, m
 		if (getter == nullptr && setter == nullptr)
 			ModuleLoadError("PropertyDef must have at least one accessor.");
 
-		std::unique_ptr<Property> property(new Property(name, type, flags));
+		Box<Property> property(new Property(name, type, flags));
 		property->getter = getter;
 		property->setter = setter;
 
@@ -764,7 +764,7 @@ void ModuleReader::ReadFunctionDefs(Module *module, const mf::ModuleHeader *head
 	{
 		const mf::MethodDef *def = defs + i;
 
-		std::unique_ptr<Method> function = ReadSingleMethodDef(module, def);
+		Box<Method> function = ReadSingleMethodDef(module, def);
 		function->SetDeclType(nullptr);
 
 		ModuleMember member(function.get(), function->IsInternal());
@@ -836,7 +836,7 @@ bool ModuleReader::ReadConstantValue(Module *module, const mf::ConstantValue *va
 	return true;
 }
 
-std::unique_ptr<Method> ModuleReader::ReadSingleMethodDef(Module *module, const mf::MethodDef *def)
+Box<Method> ModuleReader::ReadSingleMethodDef(Module *module, const mf::MethodDef *def)
 {
 	String *name = ResolveString(module, def->name);
 	MemberFlags flags = GetMemberFlags(def->flags);
@@ -845,10 +845,10 @@ std::unique_ptr<Method> ModuleReader::ReadSingleMethodDef(Module *module, const 
 	if (overloadCount == 0)
 		ModuleLoadError("Method must have at least one overload.");
 
-	std::unique_ptr<Method> method(new Method(name, module, flags));
+	Box<Method> method(new Method(name, module, flags));
 
 	// Note: this is not an array of pointers!
-	std::unique_ptr<MethodOverload[]> overloads(new MethodOverload[overloadCount]);
+	Box<MethodOverload[]> overloads(new MethodOverload[overloadCount]);
 
 	const mf::OverloadDef *overloadDefs = file.Deref(def->overloads);
 	for (int32_t i = 0; i < overloadCount; i++)
@@ -893,7 +893,7 @@ void ModuleReader::ReadParameters(Module *module, MethodOverload *overload, int3
 {
 	if (count > 0)
 	{
-		std::unique_ptr<String*[]> paramNames(new String*[count]);
+		Box<String*[]> paramNames(new String*[count]);
 		// Always reserve space for the instance, even if there isn't any.
 		RefSignatureBuilder refBuilder(count + 1);
 		ovlocals_t optionalCount = 0;
@@ -979,7 +979,7 @@ void ModuleReader::ReadTryBlocks(Module *module, MethodOverload *overload, int32
 		return;
 	}
 
-	std::unique_ptr<TryBlock[]> tryBlocks(new TryBlock[count]);
+	Box<TryBlock[]> tryBlocks(new TryBlock[count]);
 
 	const module_file::TryBlock *defs = file.Deref(rva);
 	for (int32_t i = 0; i < count; i++)
@@ -1021,7 +1021,7 @@ void ModuleReader::ReadCatchClauses(Module *module, TryBlock *tryBlock, const mf
 	if (catchClauses.count == 0)
 		ModuleLoadError("A try-catch block must have at least one catch clause.");
 
-	std::unique_ptr<CatchBlock[]> catchBlocks(new CatchBlock[catchClauses.count]);
+	Box<CatchBlock[]> catchBlocks(new CatchBlock[catchClauses.count]);
 
 	const mf::CatchClause *clauses = file.Deref(catchClauses.clauses);
 	for (int32_t i = 0; i < catchClauses.count; i++)
@@ -1044,7 +1044,7 @@ void ModuleReader::ReadCatchClauses(Module *module, TryBlock *tryBlock, const mf
 
 void ModuleReader::ReadBytecodeBody(Module *module, MethodOverload *overload, const mf::MethodBody *body)
 {
-	std::unique_ptr<uint8_t[]> bodyBytes(new uint8_t[body->size]);
+	Box<uint8_t[]> bodyBytes(new uint8_t[body->size]);
 	CopyMemoryT(bodyBytes.get(), body->data.Get(), static_cast<size_t>(body->size));
 
 	overload->length = body->size;
