@@ -59,8 +59,7 @@ private:
 	StringHash<StandardTypeInfo> types;
 
 public:
-	OVUM_NOINLINE static Box<StandardTypeCollection> New(VM *vm);
-	~StandardTypeCollection();
+	OVUM_NOINLINE static Box<StandardTypeCollection> &&New(VM *vm);
 
 	inline int32_t GetCount() const
 	{
