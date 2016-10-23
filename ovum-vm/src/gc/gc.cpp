@@ -14,7 +14,7 @@
 namespace ovum
 {
 
-Box<GC> &&GC::New(VM *owner)
+Box<GC> GC::New(VM *owner)
 {
 	Box<GC> result(new(std::nothrow) GC(owner));
 	if (!result)

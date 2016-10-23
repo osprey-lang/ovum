@@ -108,7 +108,7 @@ private:
 
 public:
 	// Creates a garbage collector instance.
-	OVUM_NOINLINE static Box<GC> &&New(VM *owner);
+	OVUM_NOINLINE static Box<GC> New(VM *owner);
 
 	GC(VM *owner);
 	~GC();

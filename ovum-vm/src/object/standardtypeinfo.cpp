@@ -8,7 +8,7 @@ namespace ovum
 
 const int StandardTypeCollection::STANDARD_TYPE_COUNT = 20;
 
-Box<StandardTypeCollection> &&StandardTypeCollection::New(VM *vm)
+Box<StandardTypeCollection> StandardTypeCollection::New(VM *vm)
 {
 	Box<StandardTypeCollection> output(new(std::nothrow) StandardTypeCollection());
 	if (!output)
