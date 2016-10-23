@@ -701,7 +701,7 @@ void GC::MarkRootSet()
 
 		if (m->debugData)
 		{
-			debug::ModuleDebugData *debug = m->debugData;
+			debug::ModuleDebugData *debug = m->debugData.get();
 			for (int32_t f = 0; f < debug->fileCount; f++)
 				TryMarkStringForProcessing(debug->files[f].fileName, &hasGen0Refs);
 		}

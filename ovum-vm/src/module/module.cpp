@@ -78,8 +78,6 @@ Module::~Module()
 		staticStateDeallocator(staticState);
 	FreeNativeLibrary();
 
-	delete debugData;
-
 	// If the module is not fullyOpened, then the module is being deallocated from
 	// an exception in Module::Open, so we must remove it from the pool again.
 	if (!fullyOpened && pool)

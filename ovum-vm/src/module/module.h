@@ -85,7 +85,7 @@ private:
 	void *staticState; // The module's static state (only used by the native library)
 	StaticStateDeallocator staticStateDeallocator; // Deallocation callback for the static state
 
-	debug::ModuleDebugData *debugData;
+	Box<debug::ModuleDebugData> debugData;
 
 	VM *vm; // The VM instance that the module belongs to
 	ModulePool *pool; // The module pool that the module belongs to

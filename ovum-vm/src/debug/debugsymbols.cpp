@@ -76,8 +76,6 @@ namespace debug
 			reader.Open(fileName);
 
 			reader.ReadDebugSymbols(module);
-
-			throw ModuleLoadException(fileName, "Not implemented");
 		}
 		catch (ModuleLoadException&)
 		{
@@ -114,20 +112,18 @@ namespace debug
 		const df::DebugSymbolsHeader *header = file.Read<df::DebugSymbolsHeader>(0);
 		VerifyHeader(header);
 
-		Box<ModuleDebugData> output(new ModuleDebugData());
 		// Assign the unfinished data to the module already, so that the GC
-		// can reach it if it has to.
-		module->debugData = output.get();
+		// can reach it if it has to. If an error occurs, TryLoad() will
+		// reset this value.
+		module->debugData = Box<ModuleDebugData>(new ModuleDebugData());
+		ModuleDebugData *output = module->debugData.get();
 
-		ReadSourceFiles(output.get(), file.Deref(header->sourceFiles));
-		ReadMethodSymbols(module, output.get(), header);
+		ReadSourceFiles(output, file.Deref(header->sourceFiles));
+		ReadMethodSymbols(module, output, header);
 
 		// Success! Now that we know we've successfully read all the symbols,
 		// we can attach them to their respective overloads.
-		AttachSymbols(output.get());
-
-		// And now let's make sure we don't delete our progress.
-		output.release();
+		AttachSymbols(output);
 	}
 
 	void DebugSymbolsReader::ReadSourceFiles(ModuleDebugData *data, const df::SourceFileList *list)
