@@ -39,9 +39,9 @@ VM::VM(VMStartParams &params) :
 	startupPathLib(),
 	modulePath(),
 	mainThread(),
-	gc(nullptr),
-	modules(nullptr),
-	refSignatures(nullptr)
+	gc(),
+	modules(),
+	refSignatures()
 { }
 
 VM::~VM()
@@ -50,9 +50,7 @@ VM::~VM()
 	// modules to perform cleanup, such as examining managed types and
 	// calling finalizers in native types. If we clean up modules first,
 	// then the GC will be very unhappy.
-	delete gc;
-	delete modules;
-	delete refSignatures;
+	gc.reset();
 }
 
 int VM::Run()
@@ -110,10 +108,10 @@ int VM::Create(VMStartParams &params, VM *&result)
 		CHECKED_MEM(vm->strings = StaticStrings::New());
 
 		CHECKED(Thread::Create(vm.get(), vm->mainThread));
-		CHECKED(GC::Create(vm.get(), vm->gc));
+		CHECKED_MEM(vm->gc = GC::New(vm.get()));
 		CHECKED_MEM(vm->standardTypeCollection = StandardTypeCollection::New(vm.get()));
-		CHECKED_MEM(vm->modules = new(std::nothrow) ModulePool(10));
-		CHECKED_MEM(vm->refSignatures = new(std::nothrow) RefSignaturePool());
+		CHECKED_MEM(vm->modules = Box<ModulePool>(new(std::nothrow) ModulePool(10)));
+		CHECKED_MEM(vm->refSignatures = Box<RefSignaturePool>(new(std::nothrow) RefSignaturePool()));
 
 		CHECKED(vm->LoadModules(params));
 		CHECKED(vm->InitArgs(params.argc, params.argv));

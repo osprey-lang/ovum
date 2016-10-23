@@ -14,26 +14,31 @@
 namespace ovum
 {
 
-int GC::Create(VM *owner, GC *&result)
+Box<GC> &&GC::New(VM *owner)
 {
-	GC *gc = new(std::nothrow) GC(owner);
-	if (!gc)
-		return OVUM_ERROR_NO_MEMORY;
-	if (!gc->InitializeHeaps())
-		return OVUM_ERROR_NO_MEMORY;
+	Box<GC> result(new(std::nothrow) GC(owner));
+	if (!result)
+		return nullptr;
+	if (!result->InitializeHeaps())
+		return nullptr;
 
-	result = gc;
-	RETURN_SUCCESS;
+	return std::move(result);
 }
 
 GC::GC(VM *owner) :
-	collectList(nullptr), pinnedList(nullptr),
+	collectList(nullptr),
+	pinnedList(nullptr),
 	currentCollectMark((GCOFlags)1),
 	currentKeepMark((GCOFlags)3),
 	gen1Size(0),
-	collectCount(0), strings(32), staticRefs(nullptr),
-	mainHeap(nullptr), largeObjectHeap(nullptr),
-	gen0Base(nullptr), gen0Current(nullptr), gen0End(nullptr),
+	collectCount(0),
+	strings(32),
+	staticRefs(nullptr),
+	mainHeap(nullptr),
+	largeObjectHeap(nullptr),
+	gen0Base(nullptr),
+	gen0Current(nullptr),
+	gen0End(nullptr),
 	gcoLists(nullptr),
 	allocSection(5000),
 	vm(owner)

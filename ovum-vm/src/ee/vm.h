@@ -41,10 +41,20 @@ private:
 
 	Module *startupModule;
 
-	GC *gc;
-	ModulePool *modules;
-	RefSignaturePool *refSignatures;
+	// The current garbage collector.
+	Box<GC> gc;
+
+	// The module pool, which contains all currently loaded modules.
+	Box<ModulePool> modules;
+
+	// The reference signature pool. See RefSignature for more details.
+	Box<RefSignaturePool> refSignatures;
+
+	// Standard types which the VM requires in order to operate, such as
+	// aves.Int, aves.String, aves.Error and the like.
 	Box<StandardTypeCollection> standardTypeCollection;
+
+	// Static strings, mostly member names and error messages.
 	Box<StaticStrings> strings;
 
 	int LoadModules(VMStartParams &params);
@@ -66,17 +76,17 @@ public:
 
 	inline GC *GetGC() const
 	{
-		return gc;
+		return gc.get();
 	}
 
 	inline ModulePool *GetModulePool() const
 	{
-		return modules;
+		return modules.get();
 	}
 
 	inline RefSignaturePool *GetRefSignaturePool() const
 	{
-		return refSignatures;
+		return refSignatures.get();
 	}
 
 	inline StaticStrings *GetStrings() const
