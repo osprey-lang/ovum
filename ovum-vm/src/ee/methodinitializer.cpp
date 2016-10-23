@@ -1120,7 +1120,7 @@ void MethodInitializer::ReadInstructions(instr::MethodBuilder &builder)
 			break;
 		case OPC_SCALL_S: // u4:func  ub:argc
 			{
-				TokenId funcId = U32_ARG(ip);
+				Token funcId = U32_ARG(ip);
 				ip += sizeof(uint32_t);
 				
 				ovlocals_t argCount = *ip++;
@@ -1131,7 +1131,7 @@ void MethodInitializer::ReadInstructions(instr::MethodBuilder &builder)
 			break;
 		case OPC_SCALL: // u4:func  u2:argc
 			{
-				TokenId funcId = U32_ARG(ip);
+				Token funcId = U32_ARG(ip);
 				ip += sizeof(uint32_t);
 
 				ovlocals_t argCount = U16_ARG(ip);

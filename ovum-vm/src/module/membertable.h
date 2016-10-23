@@ -2,6 +2,7 @@
 
 #include "../vm.h"
 #include "module.h"
+#include "modulefile.h"
 
 namespace ovum
 {
@@ -46,7 +47,7 @@ public:
 		return index >= 0 && index < length;
 	}
 
-	inline TokenId GetNextId(TokenId mask) const
+	inline Token GetNextId(Token mask) const
 	{
 		return (length + 1) | mask;
 	}

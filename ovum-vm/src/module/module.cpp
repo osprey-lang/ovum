@@ -153,14 +153,14 @@ bool Module::FindConstant(String *name, bool includeInternal, Value &result) con
 
 #define TOKEN_INDEX(tok)    (((tok) & IDMASK_MEMBERINDEX) - 1)
 
-Module *Module::FindModuleRef(TokenId token) const
+Module *Module::FindModuleRef(Token token) const
 {
 	OVUM_ASSERT((token & IDMASK_MEMBERKIND) == IDMASK_MODULEREF);
 
 	return moduleRefs[TOKEN_INDEX(token)];
 }
 
-Type *Module::FindType(TokenId token) const
+Type *Module::FindType(Token token) const
 {
 	OVUM_ASSERT((token & IDMASK_MEMBERKIND) == IDMASK_TYPEDEF ||
 		(token & IDMASK_MEMBERKIND) == IDMASK_TYPEREF);
@@ -173,7 +173,7 @@ Type *Module::FindType(TokenId token) const
 	return nullptr; // not found
 }
 
-Method *Module::FindMethod(TokenId token) const
+Method *Module::FindMethod(Token token) const
 {
 	OVUM_ASSERT((token & IDMASK_MEMBERKIND) == IDMASK_METHODDEF ||
 		(token & IDMASK_MEMBERKIND) == IDMASK_METHODREF ||
@@ -194,7 +194,7 @@ Method *Module::FindMethod(TokenId token) const
 	return nullptr; // not found
 }
 
-Field *Module::FindField(TokenId token) const
+Field *Module::FindField(Token token) const
 {
 	OVUM_ASSERT((token & IDMASK_MEMBERKIND) == IDMASK_FIELDDEF ||
 		(token & IDMASK_MEMBERKIND) == IDMASK_FIELDREF);
@@ -207,7 +207,7 @@ Field *Module::FindField(TokenId token) const
 	return nullptr; // not found
 }
 
-String *Module::FindString(TokenId token) const
+String *Module::FindString(Token token) const
 {
 	OVUM_ASSERT((token & IDMASK_MEMBERKIND) == IDMASK_STRING);
 

@@ -6,6 +6,7 @@
 #include "../vm.h"
 #include "../../inc/ov_string.h"
 #include "../../inc/ov_module.h"
+#include "modulefile.h"
 #include "membertable.h"
 #include "../ee/vm.h"
 #include "../util/pathname.h"
@@ -72,11 +73,11 @@ public:
 	Method *FindGlobalFunction(String *name, bool includeInternal) const;
 	bool    FindConstant(String *name, bool includeInternal, Value &result) const;
 
-	Module *FindModuleRef(TokenId token) const;
-	Type   *FindType(TokenId token) const;
-	Method *FindMethod(TokenId token) const;
-	Field  *FindField(TokenId token) const;
-	String *FindString(TokenId token) const;
+	Module *FindModuleRef(Token token) const;
+	Type   *FindType(Token token) const;
+	Method *FindMethod(Token token) const;
+	Field  *FindField(Token token) const;
+	String *FindString(Token token) const;
 
 	Method *GetMainMethod() const;
 

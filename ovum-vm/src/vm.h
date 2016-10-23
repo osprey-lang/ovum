@@ -94,12 +94,3 @@ typedef ovum::Property       *PropertyHandle;
 #include <memory>
 // Make placement new available everywhere too, especially std::nothrow.
 #include <new>
-
-// Some fundamental typedefs. Should probably eventually be removed from this file.
-
-namespace ovum
-{
-
-typedef uint32_t TokenId;
-
-} // namespace ovum
