@@ -24,15 +24,18 @@ private:
 
 	// Number of command-line arguments.
 	int argCount;
-	// Command-line argument values.
-	Value **argValues;
+	// Command-line argument values. Each Value* is a pointer into
+	// a StaticRef.
+	Box<Value*[]> argValues;
+
 	// The path (sans file name) of the startup file.
-	PathName *startupPath;
+	Box<PathName> startupPath;
 	// The path to the 'lib' subdirectory in the directory
 	// of the startup file.
-	PathName *startupPathLib;
+	Box<PathName> startupPathLib;
 	// The directory from which modules are loaded.
-	PathName *modulePath;
+	Box<PathName> modulePath;
+
 	// Whether the VM describes the startup process.
 	bool verbose;
 
@@ -88,17 +91,17 @@ public:
 
 	inline const PathName *GetStartupPathLib() const
 	{
-		return startupPathLib;
+		return startupPathLib.get();
 	}
 
 	inline const PathName *GetStartupPath() const
 	{
-		return startupPath;
+		return startupPath.get();
 	}
 
 	inline const PathName *GetModulePath() const
 	{
-		return modulePath;
+		return modulePath.get();
 	}
 
 	static void Print(String *str);

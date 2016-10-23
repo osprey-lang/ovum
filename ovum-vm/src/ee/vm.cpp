@@ -32,13 +32,13 @@ TlsEntry<VM> VM::vmKey;
 VM::VM(VMStartParams &params) :
 	verbose(params.verbose),
 	argCount(params.argc),
-	argValues(nullptr),
+	argValues(),
 	types(),
 	functions(),
 	startupPath(),
 	startupPathLib(),
 	modulePath(),
-	mainThread(nullptr),
+	mainThread(),
 	gc(nullptr),
 	modules(nullptr),
 	refSignatures(nullptr)
@@ -53,12 +53,6 @@ VM::~VM()
 	delete gc;
 	delete modules;
 	delete refSignatures;
-
-	delete startupPath;
-	delete startupPathLib;
-	delete modulePath;
-
-	delete[] argValues;
 }
 
 int VM::Run()
@@ -137,13 +131,13 @@ int VM::LoadModules(VMStartParams &params)
 	try
 	{
 		// Set up some stuff first
-		this->startupPath = new PathName(params.startupFile);
+		this->startupPath = Box<PathName>(new PathName(params.startupFile));
 		this->startupPath->RemoveFileName();
 
-		this->startupPathLib = new PathName(*this->startupPath);
+		this->startupPathLib = Box<PathName>(new PathName(*this->startupPath));
 		this->startupPathLib->Join(OVUM_PATH("lib"));
 
-		this->modulePath = new PathName(params.modulePath);
+		this->modulePath = Box<PathName>(new PathName(params.modulePath));
 
 		// And now we can start opening modules! Hurrah!
 
@@ -185,7 +179,7 @@ int VM::InitArgs(int argCount, const wchar_t *args[])
 {
 	// Convert command-line arguments to String*s.
 	Box<Value*[]> argValues(new(std::nothrow) Value*[argCount]);
-	if (!argValues.get()) return OVUM_ERROR_NO_MEMORY;
+	if (!argValues) return OVUM_ERROR_NO_MEMORY;
 
 	for (int i = 0; i < argCount; i++)
 	{
@@ -208,7 +202,7 @@ int VM::InitArgs(int argCount, const wchar_t *args[])
 		}
 	}
 
-	this->argValues = argValues.release();
+	this->argValues = std::move(argValues);
 	RETURN_SUCCESS;
 }
 
