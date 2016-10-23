@@ -368,7 +368,7 @@ void ModuleReader::ReadTypeDefs(Module *module, const mf::ModuleHeader *header)
 	if (header->typeCount == 0)
 		return;
 
-	MemberTable<Type*> &typeDefs = module->types;
+	auto &typeDefs = module->types;
 
 	int32_t count = header->typeCount;
 	typeDefs.Init(count);
@@ -388,7 +388,7 @@ void ModuleReader::ReadTypeDefs(Module *module, const mf::ModuleHeader *header)
 
 		module->TryRegisterStandardType(type.get());
 
-		typeDefs.Add(type.release());
+		typeDefs.Add(std::move(type));
 	}
 }
 
@@ -492,7 +492,7 @@ void ModuleReader::ReadFieldDefs(Module *module, Type *type, uint32_t fieldsBase
 	if (count == 0)
 		return;
 
-	MemberTable<Field*> &fields = module->fields;
+	auto &fields = module->fields;
 
 	uint32_t tokenIndex = (firstField & mf::TOKEN_INDEX_MASK) - 1;
 	const mf::FieldDef *defs = file.Read<mf::FieldDef>(
@@ -526,7 +526,7 @@ void ModuleReader::ReadFieldDefs(Module *module, Type *type, uint32_t fieldsBase
 
 		if (!type->members.Add(name, field.get()))
 			ModuleLoadError("Duplicate member name in type.");
-		fields.Add(field.release());
+		fields.Add(std::move(field));
 	}
 }
 
@@ -561,7 +561,7 @@ void ModuleReader::ReadMethodDefs(Module *module, Type *type, uint32_t methodsBa
 	if (count == 0)
 		return;
 
-	MemberTable<Method*> &methods = module->methods;
+	auto &methods = module->methods;
 
 	uint32_t tokenIndex = (firstMethod & mf::TOKEN_INDEX_MASK) - 1;
 	const mf::MethodDef *defs = file.Read<mf::MethodDef>(
@@ -579,7 +579,7 @@ void ModuleReader::ReadMethodDefs(Module *module, Type *type, uint32_t methodsBa
 
 		method->baseMethod = FindBaseMethod(method.get(), type);
 
-		methods.Add(method.release());
+		methods.Add(std::move(method));
 	}
 }
 
@@ -754,7 +754,7 @@ void ModuleReader::ReadFunctionDefs(Module *module, const mf::ModuleHeader *head
 	if (header->functionCount == 0)
 		return;
 
-	MemberTable<Method*> &functions = module->functions;
+	auto &functions = module->functions;
 
 	int32_t count = header->functionCount;
 	functions.Init(count);
@@ -771,7 +771,7 @@ void ModuleReader::ReadFunctionDefs(Module *module, const mf::ModuleHeader *head
 		if (!module->members.Add(function->name, member))
 			ModuleLoadError("Duplicate global member name.");
 
-		functions.Add(function.release());
+		functions.Add(std::move(function));
 	}
 }
 

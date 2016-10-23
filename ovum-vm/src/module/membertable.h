@@ -8,51 +8,21 @@ namespace ovum
 {
 
 template<class T>
-class MemberTable
+class MemberTableBase
 {
-private:
-	int32_t capacity; // The total number of slots
-	int32_t length; // The total number of entries
-	T *entries;
-
 public:
-	inline MemberTable(const int32_t capacity)
-		: capacity(0), length(0), entries(nullptr)
-	{
-		Init(capacity);
-	}
-	inline MemberTable()
-		: capacity(0), length(0), entries(nullptr)
+	// The total number of slots
+	int32_t capacity;
+	// The total number of entries (that is, number of used slots).
+	int32_t length;
+	Box<T[]> entries;
+
+	inline MemberTableBase() :
+		capacity(0),
+		length(0),
+		entries(nullptr)
 	{ }
 
-	inline ~MemberTable()
-	{
-		delete[] this->entries;
-	}
-
-	inline T operator[](const int32_t index) const
-	{
-		if (index < 0 || index >= length)
-			return nullptr; // niet gevonden
-		return entries[index];
-	}
-
-	inline const int32_t GetLength() const { return length; }
-	inline const int32_t GetCapacity() const { return capacity; }
-
-	inline T *GetEntryPointer(const int32_t index) { return entries + index; }
-	
-	inline bool HasItem(const int32_t index) const
-	{
-		return index >= 0 && index < length;
-	}
-
-	inline Token GetNextId(Token mask) const
-	{
-		return (length + 1) | mask;
-	}
-
-private:
 	inline void Init(const int32_t capacity)
 	{
 		// Init should only be called with a non-zero capacity once
@@ -60,27 +30,101 @@ private:
 
 		this->capacity = capacity;
 		if (capacity != 0)
-			this->entries = new T[capacity];
+			this->entries = Box<T[]>(new T[capacity]);
 		else
 			this->entries = nullptr;
 	}
 
-	inline void Add(const T item)
+	inline bool HasItem(const int32_t index) const
 	{
-		entries[length] = item;
+		return index >= 0 && index < length;
+	}
+};
+
+template<class T>
+class MemberTable : private MemberTableBase<T>
+{
+public:
+	inline MemberTable(const int32_t capacity) :
+		MemberTableBase()
+	{
+		Init(capacity);
+	}
+	inline MemberTable() :
+		MemberTableBase()
+	{ }
+
+	inline T &operator[](const int32_t index) const
+	{
+		return entries[index];
+	}
+
+	inline const int32_t GetLength() const
+	{
+		return length;
+	}
+
+	inline const int32_t GetCapacity() const
+	{
+		return capacity;
+	}
+
+private:
+	inline void Init(const int32_t capacity)
+	{
+		this->MemberTableBase::Init(capacity);
+	}
+
+	inline void Add(T &&item)
+	{
+		entries[length] = std::move(item);
 		length++;
 	}
 
-	inline void DeleteEntries()
+	friend class Module;
+	friend class ModuleReader;
+};
+
+template<class T>
+class MemberTable<T*> : private MemberTableBase<T*>
+{
+public:
+	inline MemberTable(const int32_t capacity) :
+		MemberTableBase()
 	{
-		for (int32_t i = 0; i < length; i++)
-			delete entries[i];
+		Init(capacity);
+	}
+	inline MemberTable() :
+		MemberTableBase()
+	{ }
+
+	inline T *operator[](const int32_t index) const
+	{
+		if (!HasItem(index))
+			return nullptr;
+		return entries[index];
 	}
 
-	inline void FreeEntries()
+	inline const int32_t GetLength() const
 	{
-		for (int32_t i = 0; i < length; i++)
-			free(entries[i]);
+		return length;
+	}
+
+	inline const int32_t GetCapacity() const
+	{
+		return capacity;
+	}
+
+private:
+	inline void Init(const int32_t capacity)
+	{
+		this->MemberTableBase::Init(capacity);
+	}
+
+	inline void Add(T *item)
+	{
+		entries[length] = item;
+		length++;
 	}
 
 	friend class Module;

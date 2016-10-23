@@ -65,15 +65,6 @@ Module::~Module()
 	// Note: Don't touch any of the string values.
 	// They're managed by the GC, so we let her clean it up.
 
-	functions.DeleteEntries();
-	fields.DeleteEntries();
-	methods.DeleteEntries();
-	types.DeleteEntries();
-
-	//members.DeleteValues(); // Nope, these values are not pointers
-
-	// Don't delete the refs here! They are in their own modules.
-
 	if (staticStateDeallocator)
 		staticStateDeallocator(staticState);
 	FreeNativeLibrary();
@@ -169,7 +160,7 @@ Type *Module::FindType(Token token) const
 	);
 
 	if (tokenKind == mf::TOKEN_TYPEDEF)
-		return types[TOKEN_INDEX(token)];
+		return types[TOKEN_INDEX(token)].get();
 	if (tokenKind == mf::TOKEN_TYPEREF)
 		return typeRefs[TOKEN_INDEX(token)];
 
@@ -190,11 +181,11 @@ Method *Module::FindMethod(Token token) const
 	uint32_t idx = TOKEN_INDEX(token);
 
 	if (tokenKind == mf::TOKEN_METHODDEF)
-		return methods[idx];
+		return methods[idx].get();
 	if (tokenKind == mf::TOKEN_METHODREF)
 		return methodRefs[idx];
 	if (tokenKind == mf::TOKEN_FUNCTIONDEF)
-		return functions[idx];
+		return functions[idx].get();
 	if (tokenKind == mf::TOKEN_FUNCTIONREF)
 		return functionRefs[idx];
 
@@ -211,7 +202,7 @@ Field *Module::FindField(Token token) const
 	);
 
 	if (tokenKind == mf::TOKEN_FIELDDEF)
-		return fields[TOKEN_INDEX(token)];
+		return fields[TOKEN_INDEX(token)].get();
 	if (tokenKind == mf::TOKEN_FIELDREF)
 		return fieldRefs[TOKEN_INDEX(token)];
 

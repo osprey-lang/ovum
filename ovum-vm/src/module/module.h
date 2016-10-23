@@ -90,18 +90,29 @@ private:
 	VM *vm; // The VM instance that the module belongs to
 	ModulePool *pool; // The module pool that the module belongs to
 
-	MemberTable<Type  *> types;     // Types defined in the module
-	MemberTable<Method*> functions; // Global functions defined in the module
-	MemberTable<Field *> fields;    // Fields, both instance and static
-	MemberTable<Method*> methods;   // Class methods defined in the module
-	MemberTable<String*> strings;   // String table
-	StringHash<ModuleMember> members; // All global members defined in the module, indexed by name.
+	// Types defined in the module
+	MemberTable<Box<Type>> types;
+	// Global functions defined in the module
+	MemberTable<Box<Method>> functions;
+	// Fields, both instance and static
+	MemberTable<Box<Field>> fields;
+	// Class methods defined in the module
+	MemberTable<Box<Method>> methods;
+	// String table
+	MemberTable<String*> strings;
+	// All global members defined in the module, indexed by name.
+	StringHash<ModuleMember> members;
 
-	MemberTable<Module*> moduleRefs;   // Module references
-	MemberTable<Type  *> typeRefs;     // Type references
-	MemberTable<Method*> functionRefs; // Global function references
-	MemberTable<Field *> fieldRefs;    // Field references
-	MemberTable<Method*> methodRefs;   // Class method references
+	// Module references
+	MemberTable<Module*> moduleRefs;
+	// Type references
+	MemberTable<Type*> typeRefs;
+	// Global function references
+	MemberTable<Method*> functionRefs;
+	// Field references
+	MemberTable<Field*> fieldRefs;
+	// Class method references
+	MemberTable<Method*> methodRefs;
 
 public:
 	inline String *GetName() const
