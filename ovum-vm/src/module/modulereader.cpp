@@ -454,7 +454,7 @@ Type *ModuleReader::GetSharedType(Module *module, Token sharedTypeToken)
 	if (sharedTypeToken == 0)
 		return nullptr;
 
-	if ((sharedTypeToken & IDMASK_MEMBERKIND) != IDMASK_TYPEDEF)
+	if ((sharedTypeToken & mf::TOKEN_KIND_MASK) != mf::TOKEN_TYPEDEF)
 		ModuleLoadError("The sharedType of a TypeDef must be a TypeDef token.");
 
 	Type *result = module->FindType(sharedTypeToken);
@@ -494,7 +494,7 @@ void ModuleReader::ReadFieldDefs(Module *module, Type *type, uint32_t fieldsBase
 
 	MemberTable<Field*> &fields = module->fields;
 
-	uint32_t tokenIndex = (firstField & IDMASK_MEMBERINDEX) - 1;
+	uint32_t tokenIndex = (firstField & mf::TOKEN_INDEX_MASK) - 1;
 	const mf::FieldDef *defs = file.Read<mf::FieldDef>(
 		fieldsBase + sizeof(mf::FieldDef) * tokenIndex
 	);
@@ -563,7 +563,7 @@ void ModuleReader::ReadMethodDefs(Module *module, Type *type, uint32_t methodsBa
 
 	MemberTable<Method*> &methods = module->methods;
 
-	uint32_t tokenIndex = (firstMethod & IDMASK_MEMBERINDEX) - 1;
+	uint32_t tokenIndex = (firstMethod & mf::TOKEN_INDEX_MASK) - 1;
 	const mf::MethodDef *defs = file.Read<mf::MethodDef>(
 		methodsBase + sizeof(mf::FieldDef) * tokenIndex
 	);
@@ -684,7 +684,7 @@ Method *ModuleReader::ReadPropertyAccessor(Module *module, Type *type, Token tok
 	if (token == 0)
 		return nullptr;
 
-	if ((token & IDMASK_MEMBERKIND) != IDMASK_METHODDEF)
+	if ((token & mf::TOKEN_KIND_MASK) != mf::TOKEN_METHODDEF)
 		ModuleLoadError("Property accessor must be a MethodDef token.");
 
 	Method *accessor = module->FindMethod(token);
@@ -718,7 +718,7 @@ void ModuleReader::ReadOperatorDefs(Module *module, Type *type, int32_t count, m
 	{
 		const mf::OperatorDef *def = defs + i;
 
-		if ((def->method & IDMASK_MEMBERKIND) != IDMASK_METHODDEF)
+		if ((def->method & mf::TOKEN_KIND_MASK) != mf::TOKEN_METHODDEF)
 			ModuleLoadError("Operator method must be a MethodDef token.");
 
 		Method *method = module->FindMethod(def->method);
