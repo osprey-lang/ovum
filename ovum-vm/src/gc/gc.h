@@ -25,6 +25,53 @@ struct MutableString
 
 class GC
 {
+public:
+	// Creates a garbage collector instance.
+	OVUM_NOINLINE static Box<GC> New(VM *owner);
+
+	~GC();
+
+	inline uint32_t GetCollectCount() const
+	{
+		return collectCount;
+	}
+
+	inline VM *GetVM() const
+	{
+		return vm;
+	}
+
+	int Alloc(Thread *const thread, Type *type, size_t size, GCObject **output);
+	int Alloc(Thread *const thread, Type *type, size_t size, Value *output);
+
+	int AllocArray(Thread *const thread, uint32_t length, uint32_t itemSize, void **output);
+
+	int AllocValueArray(Thread *const thread, uint32_t length, Value **output);
+
+	String *ConstructString(Thread *const thread, int32_t length, const ovchar_t value[]);
+
+	String *ConvertString(Thread *const thread, const char *string);
+
+	String *ConstructModuleString(Thread *const thread, int32_t length, const ovchar_t value[]);
+
+	String *GetInternedString(Thread *const thread, String *value);
+
+	bool HasInternedString(Thread *const thread, String *value);
+
+	String *InternString(Thread *const thread, String *value);
+
+	int Construct(Thread *const thread, Type *type, ovlocals_t argc, Value *output);
+
+	int ConstructLL(Thread *const thread, Type *type, ovlocals_t argc, Value *args, Value *output);
+
+	void AddMemoryPressure(Thread *const thread, size_t size);
+
+	void RemoveMemoryPressure(Thread *const thread, size_t size);
+
+	StaticRef *AddStaticReference(Thread *const thread, Value *value);
+
+	void Collect(Thread *const thread, bool collectGen1);
+
 private:
 	static const size_t LARGE_OBJECT_SIZE = 87040;
 	static const intptr_t GC_VALUE_ARRAY = (intptr_t)1;
@@ -46,6 +93,12 @@ private:
 			// include objects from the large object heap.
 			size_t gen1SurvivorSize;
 		} survivors;
+	};
+
+	struct FieldProcessState
+	{
+		GC *gc;
+		bool *hasGen0Refs;
 	};
 
 	// The current bit pattern used for marking an object as "collect",
@@ -84,12 +137,17 @@ private:
 	// The VM instance that owns the GC.
 	VM *vm;
 
-	GCObject *AllocRaw(size_t size);
-	GCObject *AllocRawGen1(size_t size);
-	void ReleaseRaw(GCObject *gco);
+	GC(VM *owner);
 
 	bool InitializeHeaps();
+
 	void DestroyHeaps();
+
+	GCObject *AllocRaw(size_t size);
+
+	GCObject *AllocRawGen1(size_t size);
+
+	void ReleaseRaw(GCObject *gco);
 
 	// Acquires exclusive access to the allocation lock.
 	// If this lock cannot be acquired immediately, the thread spins
@@ -102,72 +160,21 @@ private:
 	// turn is waiting for the GC cycle thread to release the allocation
 	// lock, which won't happen until the cycle has ended.
 	void BeginAlloc(Thread *const thread);
+
 	// Releases the allocation lock, allowing any waiting threads to
 	// jump in and start allocating memory.
 	void EndAlloc();
 
-public:
-	// Creates a garbage collector instance.
-	OVUM_NOINLINE static Box<GC> New(VM *owner);
-
-	GC(VM *owner);
-	~GC();
-
-	inline uint32_t GetCollectCount() const
-	{
-		return collectCount;
-	}
-
-	int Alloc(Thread *const thread, Type *type, size_t size, GCObject **output);
-	int Alloc(Thread *const thread, Type *type, size_t size, Value *output);
-
-	int AllocArray(Thread *const thread, uint32_t length, uint32_t itemSize, void **output);
-
-	int AllocValueArray(Thread *const thread, uint32_t length, Value **output);
-
-	String *ConstructString(Thread *const thread, int32_t length, const ovchar_t value[]);
-
-	String *ConvertString(Thread *const thread, const char *string);
-
-	String *ConstructModuleString(Thread *const thread, int32_t length, const ovchar_t value[]);
-
-	String *GetInternedString(Thread *const thread, String *value);
-
-	bool HasInternedString(Thread *const thread, String *value);
-
-	String *InternString(Thread *const thread, String *value);
-
-	int Construct(Thread *const thread, Type *type, ovlocals_t argc, Value *output);
-
-	int ConstructLL(Thread *const thread, Type *type, ovlocals_t argc, Value *args, Value *output);
-
-	void AddMemoryPressure(Thread *const thread, size_t size);
-
-	void RemoveMemoryPressure(Thread *const thread, size_t size);
-
-	StaticRef *AddStaticReference(Thread *const thread, Value *value);
-
-	void Collect(Thread *const thread, bool collectGen1);
-
-	inline VM *GetVM() const
-	{
-		return vm;
-	}
-
-private:
 	void RunCycle(Thread *const thread, bool collectGen1);
+
 	void BeginCycle(Thread *const thread);
+
 	void EndCycle(Thread *const thread);
 
 	void Release(GCObject *gco);
 
-	struct FieldProcessState
-	{
-		GC *gc;
-		bool *hasGen0Refs;
-	};
-
 	void MarkForProcessing(GCObject *gco);
+
 	void AddSurvivor(GCObject *gco);
 
 	void MarkRootSet();
