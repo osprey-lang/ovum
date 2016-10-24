@@ -813,7 +813,9 @@ void GC::AddSurvivor(GCObject *gco)
 {
 	GCObject **list;
 	if ((gco->flags & GCOFlags::GENERATION) == GCOFlags::GEN_0)
+	{
 		list = &gcoLists->survivors.gen0;
+	}
 	else
 	{
 		if (gco->HasGen0Refs())
@@ -918,7 +920,6 @@ int GC::ProcessFieldsCallback(void *state, unsigned int count, Value *values)
 void GC::MoveGen0Survivors()
 {
 	GCObject **list = &gcoLists->survivors.gen0;
-	size_t *gen1SurvivorSize = &gcoLists->survivors.gen1SurvivorSize;
 
 	GCObject *obj = *list;
 	while (obj)
@@ -928,29 +929,8 @@ void GC::MoveGen0Survivors()
 		obj->RemoveFromList(list);
 		if (!obj->IsPinned())
 		{
-			// If the object is not pinned, then allocate gen1 space for it.
-			GCObject *newAddress = AllocRawGen1(obj->size);
-			if (newAddress == nullptr)
-				// Not enough available memory to move to generation 1;
-				// cannot recover from this.
-				abort();
-
-			memcpy(newAddress, obj, obj->size);
-			newAddress->flags = (newAddress->flags & ~GCOFlags::GENERATION) | GCOFlags::GEN_1;
-			newAddress->InsertIntoList(newAddress->HasGen0Refs() ? &gcoLists->survivors.withGen0Refs : &gcoLists->keep);
-			gen1Size += newAddress->size;
-			*gen1SurvivorSize += newAddress->size;
-
-			obj->flags |= GCOFlags::MOVED;
-			obj->newAddress = newAddress;
-
-			if (newAddress->type == vm->types.String ||
-				(newAddress->flags & GCOFlags::EARLY_STRING) == GCOFlags::EARLY_STRING)
-			{
-				String *str = reinterpret_cast<String*>(newAddress->InstanceBase());
-				if ((str->flags & StringFlags::INTERN) == StringFlags::INTERN)
-					strings.UpdateIntern(str);
-			}
+			// If the object is not pinned, then move it to gen1.
+			MoveSurvivorToGen1(obj);
 		}
 		else
 		{
@@ -964,6 +944,43 @@ void GC::MoveGen0Survivors()
 	{
 		GCObject *lastPinned; // ignored
 		pinnedList = FlattenPinnedTree(pinnedList, &lastPinned);
+	}
+}
+
+void GC::MoveSurvivorToGen1(GCObject *gco)
+{
+	// We can only move to generation 1 from generation 0.
+	OVUM_ASSERT((gco->flags & GCOFlags::GENERATION) == GCOFlags::GEN_0);
+
+	size_t objectSize = gco->size;
+
+	GCObject *newAddress = AllocRawGen1(objectSize);
+	if (newAddress == nullptr)
+		// Not enough available memory to move to generation 1;
+		// cannot recover from this.
+		abort();
+
+	memcpy(newAddress, gco, objectSize);
+
+	newAddress->flags = (newAddress->flags & ~GCOFlags::GENERATION) | GCOFlags::GEN_1;
+	newAddress->InsertIntoList(
+		newAddress->HasGen0Refs()
+			? &gcoLists->survivors.withGen0Refs
+			: &gcoLists->keep
+	);
+
+	gen1Size += objectSize;
+	gcoLists->survivors.gen1SurvivorSize += objectSize;
+
+	gco->flags |= GCOFlags::MOVED;
+	gco->newAddress = newAddress;
+
+	if (newAddress->type == vm->types.String ||
+		newAddress->IsEarlyString())
+	{
+		String *str = reinterpret_cast<String*>(newAddress->InstanceBase());
+		if ((str->flags & StringFlags::INTERN) == StringFlags::INTERN)
+			strings.UpdateIntern(str);
 	}
 }
 

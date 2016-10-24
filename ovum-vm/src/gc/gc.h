@@ -204,6 +204,8 @@ private:
 
 	void MoveGen0Survivors();
 
+	void MoveSurvivorToGen1(GCObject *gco);
+
 	void AddPinnedObject(GCObject *gco);
 
 	static GCObject *FlattenPinnedTree(GCObject *root, GCObject **lastItem);
