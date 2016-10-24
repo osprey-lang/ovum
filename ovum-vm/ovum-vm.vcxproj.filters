@@ -418,5 +418,8 @@
     <ClCompile Include="src\module\globalmember.cpp">
       <Filter>Source Files\module</Filter>
     </ClCompile>
+    <ClCompile Include="src\gc\staticref.cpp">
+      <Filter>Source Files\gc</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

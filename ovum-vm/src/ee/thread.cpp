@@ -888,7 +888,9 @@ int Thread::StoreStaticField(Field *field)
 		int r = field->declType->RunStaticCtor(this);
 		if (r != OVUM_SUCCESS) return r; // Something went wrong!
 	}
-	field->staticValue->Write(currentFrame->Pop());
+
+	Value value = currentFrame->Pop();
+	field->staticValue->Write(&value);
 	currentFrame->stackCount--;
 	RETURN_SUCCESS;
 }

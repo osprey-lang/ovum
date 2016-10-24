@@ -98,7 +98,7 @@ OVUM_API void GC_AddMemoryPressure(ThreadHandle thread, size_t size);
 // pressure as they add, or the GC will experience performance problems.
 OVUM_API void GC_RemoveMemoryPressure(ThreadHandle thread, size_t size);
 
-OVUM_API Value *GC_AddStaticReference(ThreadHandle thread, Value initialValue);
+OVUM_API Value *GC_AddStaticReference(ThreadHandle thread, Value *initialValue);
 
 // Forces an immediate garbage collection.
 OVUM_API void GC_Collect(ThreadHandle thread);

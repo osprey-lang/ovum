@@ -74,7 +74,7 @@ private:
 	uint32_t collectCount;
 
 	StringTable strings;
-	StaticRefBlock *staticRefs;
+	Box<StaticRefBlock> staticRefs;
 
 	// Critical section that must be entered any time a function modifies
 	// or accesses GC data that could interfere with a GC cycle, such as
@@ -145,7 +145,7 @@ public:
 
 	void RemoveMemoryPressure(Thread *const thread, size_t size);
 
-	StaticRef *AddStaticReference(Thread *const thread, Value value);
+	StaticRef *AddStaticReference(Thread *const thread, Value *value);
 
 	void Collect(Thread *const thread, bool collectGen1);
 

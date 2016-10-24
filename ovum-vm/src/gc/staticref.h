@@ -8,29 +8,18 @@ namespace ovum
 
 class StaticRef
 {
-private:
-	SpinLock accessLock;
-	Value value;
-
 public:
 	// Note: no constructor. The type needs to be usable in an array.
 
 	// Initializes the static reference to the specified value.
 	// This should only be called ONCE per static reference.
-	inline void Init(Value value)
+	inline void Init(Value *value)
 	{
 		accessLock.SpinLock::SpinLock();
-		this->value = value;
+		this->value = *value;
 	}
 
 	// Atomically reads the value of the static reference.
-	inline Value Read()
-	{
-		accessLock.Enter();
-		Value result = value;
-		accessLock.Leave();
-		return result;
-	}
 	inline void Read(Value *target)
 	{
 		accessLock.Enter();
@@ -39,12 +28,6 @@ public:
 	}
 
 	// Atomically updates the value of the static reference.
-	inline void Write(Value value)
-	{
-		accessLock.Enter();
-		this->value = value;
-		accessLock.Leave();
-	}
 	inline void Write(Value *value)
 	{
 		accessLock.Enter();
@@ -57,27 +40,46 @@ public:
 		return &value;
 	}
 
+private:
+	SpinLock accessLock;
+	Value value;
+
 	friend class GC;
 };
 
 class StaticRefBlock
 {
 public:
+	static bool Extend(Box<StaticRefBlock> &other);
+
+	inline bool IsFull() const
+	{
+		return count == BLOCK_SIZE;
+	}
+
+	StaticRef *Add(Value *value);
+
+private:
+	OVUM_DISABLE_COPY_AND_ASSIGN(StaticRefBlock);
+
 	static const size_t BLOCK_SIZE = 64;
 
-	StaticRefBlock *next;
-	unsigned int count;
+	Box<StaticRefBlock> next;
 	// Only used during collection. Set to true if the block
 	// contains any references to gen0 objects.
 	bool hasGen0Refs;
+
+	// Number of used slots
+	uint32_t count;
 	StaticRef values[BLOCK_SIZE];
 
 	inline StaticRefBlock() :
-		next(nullptr), count(0), hasGen0Refs(false)
+		next(),
+		hasGen0Refs(false),
+		count(0)
 	{ }
-	inline StaticRefBlock(StaticRefBlock *next) :
-		next(next), count(0), hasGen0Refs(false)
-	{ }
+
+	friend class GC;
 };
 
 } // namespace ovum

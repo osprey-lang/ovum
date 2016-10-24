@@ -543,7 +543,7 @@ void ModuleReader::ReadFieldConstantValue(Module *module, Field *field, const mf
 		return;
 	}
 
-	field->staticValue = GetGC()->AddStaticReference(nullptr, fieldValue);
+	field->staticValue = GetGC()->AddStaticReference(nullptr, &fieldValue);
 	if (!field->staticValue)
 		ModuleLoadError("Unable to allocate memory for constant field.");
 }

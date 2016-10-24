@@ -83,17 +83,23 @@ int Type::GetTypeToken(Thread *const thread, Value *result)
 
 int Type::LoadTypeToken(Thread *const thread)
 {
+	Value nullValue;
+	nullValue.type = nullptr;
+
 	// Type tokens can never be destroyed, so let's create a static
 	// reference to it.
-	StaticRef *typeTkn = GetGC()->AddStaticReference(thread, NULL_VALUE);
+	StaticRef *typeTkn = GetGC()->AddStaticReference(thread, &nullValue);
 	if (typeTkn == nullptr)
 		return thread->ThrowMemoryError();
 
 	// Note: use GC::Alloc because the aves.Type type may not have
-	// a public constructor. GC::Construct would fail if it didn't.
-	int r = GetGC()->Alloc(thread, vm->types.Type,
+	// a public constructor. GC::Construct will fail if it doesn't.
+	int r = GetGC()->Alloc(
+		thread,
+		vm->types.Type,
 		vm->types.Type->GetTotalSize(),
-		typeTkn->GetValuePointer());
+		typeTkn->GetValuePointer()
+	);
 	if (r != OVUM_SUCCESS) return r;
 
 	// Call the type token initializer with this type and the brand
@@ -107,6 +113,9 @@ int Type::LoadTypeToken(Thread *const thread)
 
 bool Type::InitStaticFields(Thread *const thread)
 {
+	Value nullValue;
+	nullValue.type = nullptr;
+
 	for (int32_t i = 0; i < members.count; i++)
 	{
 		Member *m = members.entries[i].value;
@@ -115,7 +124,7 @@ bool Type::InitStaticFields(Thread *const thread)
 			static_cast<Field*>(m)->staticValue == nullptr)
 		{
 			Field *f = static_cast<Field*>(m);
-			f->staticValue = GetGC()->AddStaticReference(thread, NULL_VALUE);
+			f->staticValue = GetGC()->AddStaticReference(thread, &nullValue);
 			if (f->staticValue == nullptr)
 				return false;
 		}

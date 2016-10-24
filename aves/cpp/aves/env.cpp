@@ -12,7 +12,9 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Env_get_args)
 	{
 		const int argCount = VM_GetArgCount(thread);
 
-		CHECKED_MEM(EnvArgsField = GC_AddStaticReference(thread, NULL_VALUE));
+		Value nullValue = NULL_VALUE;
+		CHECKED_MEM(EnvArgsField = GC_AddStaticReference(thread, &nullValue));
+
 		VM_PushInt(thread, argCount); // list capacity
 		CHECKED(GC_Construct(thread, GetType_List(thread), 1, EnvArgsField));
 

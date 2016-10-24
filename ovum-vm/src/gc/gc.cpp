@@ -33,7 +33,7 @@ GC::GC(VM *owner) :
 	gen1Size(0),
 	collectCount(0),
 	strings(32),
-	staticRefs(nullptr),
+	staticRefs(),
 	mainHeap(nullptr),
 	largeObjectHeap(nullptr),
 	gen0Base(nullptr),
@@ -64,16 +64,6 @@ GC::~GC()
 		gco = next;
 	}
 	pinnedList = nullptr;
-
-	// And delete static reference blocks, too
-	StaticRefBlock *refs = staticRefs;
-	while (refs)
-	{
-		StaticRefBlock *next = refs->next;
-		delete refs;
-		refs = next;
-	}
-	staticRefs = nullptr;
 
 	DestroyHeaps();
 }
@@ -493,25 +483,19 @@ void GC::RemoveMemoryPressure(Thread *const thread, size_t size)
 	// Not implemented yet
 }
 
-StaticRef *GC::AddStaticReference(Thread *const thread, Value value)
+StaticRef *GC::AddStaticReference(Thread *const thread, Value *value)
 {
 	BeginAlloc(thread);
 
-	StaticRef *output;
-	if (staticRefs == nullptr ||
-		staticRefs->count == StaticRefBlock::BLOCK_SIZE)
+	StaticRef *output = nullptr;
+	if (!staticRefs || staticRefs->IsFull())
 	{
-		StaticRefBlock *newBlock = new(std::nothrow) StaticRefBlock(staticRefs);
-		if (!newBlock)
-		{
-			output = nullptr; // No moar memory
+		if (!StaticRefBlock::Extend(staticRefs))
+			// No more memory. Return null to signal failure.
 			goto done;
-		}
-		staticRefs = newBlock;
 	}
 
-	output = staticRefs->values + staticRefs->count++;
-	output->Init(value);
+	output = staticRefs->Add(value);
 
 done:
 	EndAlloc();
@@ -716,12 +700,12 @@ void GC::MarkRootSet()
 	}
 
 	// And then we have all the beautiful, lovely static references.
-	StaticRefBlock *staticRefs = this->staticRefs;
+	StaticRefBlock *staticRefs = this->staticRefs.get();
 	while (staticRefs)
 	{
 		for (unsigned int i = 0; i < staticRefs->count; i++)
 			TryMarkForProcessing(&staticRefs->values[i].value, &staticRefs->hasGen0Refs);
-		staticRefs = staticRefs->next;
+		staticRefs = staticRefs->next.get();
 	}
 }
 
@@ -1084,7 +1068,7 @@ void GC::UpdateRootSet()
 	// Module strings do not have any gen0 references
 
 	// Static references
-	StaticRefBlock *staticRefs = this->staticRefs;
+	StaticRefBlock *staticRefs = this->staticRefs.get();
 	while (staticRefs)
 	{
 		if (staticRefs->hasGen0Refs)
@@ -1093,7 +1077,7 @@ void GC::UpdateRootSet()
 				TryUpdateRef(&staticRefs->values[i].value);
 			staticRefs->hasGen0Refs = false;
 		}
-		staticRefs = staticRefs->next;
+		staticRefs = staticRefs->next.get();
 	}
 }
 
@@ -1254,7 +1238,7 @@ OVUM_API void GC_RemoveMemoryPressure(ThreadHandle thread, size_t size)
 	thread->GetGC()->RemoveMemoryPressure(thread, size);
 }
 
-OVUM_API Value *GC_AddStaticReference(ThreadHandle thread, Value initialValue)
+OVUM_API Value *GC_AddStaticReference(ThreadHandle thread, Value *initialValue)
 {
 	ovum::StaticRef *ref = thread->GetGC()->AddStaticReference(thread, initialValue);
 	if (ref == nullptr)
