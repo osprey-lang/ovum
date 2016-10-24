@@ -62,7 +62,7 @@ public:
 private:
 	OVUM_DISABLE_COPY_AND_ASSIGN(StaticRefBlock);
 
-	static const size_t BLOCK_SIZE = 64;
+	static const size_t BLOCK_SIZE = 128;
 
 	Box<StaticRefBlock> next;
 	// Only used during collection. Set to true if the block
