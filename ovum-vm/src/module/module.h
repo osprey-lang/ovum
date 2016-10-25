@@ -183,6 +183,7 @@ private:
 	friend class ModulePool;
 	friend class ModuleReader;
 	friend class GC;
+	friend class RootSetWalker;
 	friend class debug::ModuleDebugData;
 	friend class debug::DebugSymbolsReader;
 };

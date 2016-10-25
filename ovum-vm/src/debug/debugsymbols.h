@@ -120,6 +120,7 @@ namespace debug
 		Box<Box<MethodSymbols>[]> methodSymbols;
 		
 		friend class GC;
+		friend class RootSetWalker;
 		friend class DebugSymbolsReader;
 	};
 

@@ -80,6 +80,7 @@ private:
 	{ }
 
 	friend class GC;
+	friend class RootSetWalker;
 };
 
 } // namespace ovum

@@ -98,6 +98,8 @@
     <ClInclude Include="src\ee\stackframe.h" />
     <ClInclude Include="src\ee\stacktraceformatter.h" />
     <ClInclude Include="src\gc\gcobject.h" />
+    <ClInclude Include="src\gc\objectgraphwalker.h" />
+    <ClInclude Include="src\gc\rootsetwalker.h" />
     <ClInclude Include="src\gc\staticref.h" />
     <ClInclude Include="src\module\globalmember.h" />
     <ClInclude Include="src\module\modulefacts.h" />
@@ -188,6 +190,8 @@
     <ClCompile Include="src\ee\refsignature.cpp" />
     <ClCompile Include="src\ee\stacktraceformatter.cpp" />
     <ClCompile Include="src\gc\gcobject.cpp" />
+    <ClCompile Include="src\gc\objectgraphwalker.cpp" />
+    <ClCompile Include="src\gc\rootsetwalker.cpp" />
     <ClCompile Include="src\gc\staticref.cpp" />
     <ClCompile Include="src\module\globalmember.cpp" />
     <ClCompile Include="src\module\modulefacts.cpp" />

@@ -134,6 +134,7 @@ public:
 
 	friend class GC;
 	friend class Module;
+	friend class RootSetWalker;
 
 	friend int ::VM_Start(VMStartParams *params);
 };

@@ -230,6 +230,8 @@ private:
 
 	void UpdateLocals(unsigned int count, Value values[]);
 
+	friend class ObjectGraphWalker;
+	friend class RootSetWalker;
 	friend class VM;
 };
 

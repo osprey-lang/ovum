@@ -351,6 +351,7 @@ private:
 	friend class VM;
 	friend class Type;
 	friend class MethodInitializer;
+	friend class RootSetWalker;
 	friend String *::VM_GetStackTrace(ThreadHandle);
 };
 

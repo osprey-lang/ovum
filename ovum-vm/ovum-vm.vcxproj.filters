@@ -302,6 +302,12 @@
     <ClInclude Include="src\module\globalmember.h">
       <Filter>Header Files\src\module</Filter>
     </ClInclude>
+    <ClInclude Include="src\gc\objectgraphwalker.h">
+      <Filter>Header Files\src\gc</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gc\rootsetwalker.h">
+      <Filter>Header Files\src\gc</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\os\windows\dllmain.cpp">
@@ -419,6 +425,12 @@
       <Filter>Source Files\module</Filter>
     </ClCompile>
     <ClCompile Include="src\gc\staticref.cpp">
+      <Filter>Source Files\gc</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gc\objectgraphwalker.cpp">
+      <Filter>Source Files\gc</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gc\rootsetwalker.cpp">
       <Filter>Source Files\gc</Filter>
     </ClCompile>
   </ItemGroup>
