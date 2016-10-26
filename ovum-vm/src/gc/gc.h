@@ -101,12 +101,12 @@ private:
 		bool *hasGen0Refs;
 	};
 
-	// The current bit pattern used for marking an object as "collect",
-	// and "keep", respectively. These start out as 1 and 3, respectively,
-	// and are swapped after each GC cycle.
-	// The value GCOFlags::PROCESS is also used, and does not change.
-	GCOFlags currentCollectMark;
-	GCOFlags currentKeepMark;
+	// The current bit pattern used for coloring an object white and black,
+	// respectively. These start out as 1 and 3, respectively, and are swapped
+	// after each GC cycle.
+	// The value GCOFlags::GRAY is also used, and does not change.
+	GCOFlags currentWhite;
+	GCOFlags currentBlack;
 
 	char *gen0Current;
 	void *gen0Base;

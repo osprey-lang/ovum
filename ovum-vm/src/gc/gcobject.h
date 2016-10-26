@@ -9,13 +9,16 @@ namespace ovum
 enum class GCOFlags : uint32_t
 {
 	NONE          = 0x0000,
-	// The mark occupies the lowest two bits.
-	// Objects are marked according to what list they belong to:
-	// the Collect list uses GC::currentCollectMark, Process
-	// uses GCOFlags::PROCESS (invariant), and the Keep list uses
-	// GC::currentKeepMark.
-	PROCESS       = 0x0002, // The object is in the Process list.
-	MARK          = 0x0003, // Mask for extracting the mark.
+	// The color occupies the lowest two bits. The values for white
+	// and black are swapped each cycle, starting out at 1 = white
+	// and 3 = black. That way we don't have to walk through any
+	// black objects to make them white when the cycle is complete.
+	// The gray mark is invariant.
+
+	// Mask for extracting the color.
+	COLOR         = 0x0003,
+	// The GCObject is gray.
+	GRAY          = 0x0002,
 
 	// The GCObject represents a string allocated before the
 	// standard String type was loaded.
@@ -84,16 +87,40 @@ public:
 	// The first field of the Value immediately follows the type;
 	// this is the base of the Value's instance pointer.
 
-	inline void Mark(GCOFlags mark)
+	inline GCOFlags GetColor() const
 	{
-		flags = flags & ~GCOFlags::MARK | mark;
+		return flags & GCOFlags::COLOR;
 	}
 
-	inline bool IsEarlyString() const { return (flags & GCOFlags::EARLY_STRING) == GCOFlags::EARLY_STRING; }
-	inline bool IsArray()       const { return (flags & GCOFlags::ARRAY) == GCOFlags::ARRAY; }
-	inline bool IsPinned()      const { return (flags & GCOFlags::PINNED) == GCOFlags::PINNED; }
-	inline bool HasGen0Refs()   const { return (flags & GCOFlags::HAS_GEN0_REFS) == GCOFlags::HAS_GEN0_REFS; }
-	inline bool IsMoved()       const { return (flags & GCOFlags::MOVED) == GCOFlags::MOVED; }
+	inline void SetColor(GCOFlags color)
+	{
+		flags = flags & ~GCOFlags::COLOR | color;
+	}
+
+	inline bool IsEarlyString() const
+	{
+		return (flags & GCOFlags::EARLY_STRING) == GCOFlags::EARLY_STRING;
+	}
+
+	inline bool IsArray() const
+	{
+		return (flags & GCOFlags::ARRAY) == GCOFlags::ARRAY;
+	}
+
+	inline bool IsPinned() const
+	{
+		return (flags & GCOFlags::PINNED) == GCOFlags::PINNED;
+	}
+
+	inline bool HasGen0Refs() const
+	{
+		return (flags & GCOFlags::HAS_GEN0_REFS) == GCOFlags::HAS_GEN0_REFS;
+	}
+
+	inline bool IsMoved() const
+	{
+		return (flags & GCOFlags::MOVED) == GCOFlags::MOVED;
+	}
 
 	uint8_t *InstanceBase();
 	uint8_t *InstanceBase(Type *type);
@@ -118,6 +145,7 @@ public:
 			(*list)->prev = this;
 		*list = this;       // And then we update the base of the list!
 	}
+
 	// Removes the GCObject from its associated linked list, which is passed
 	// as a parameter (not stored with the GCObject).
 	//
@@ -151,6 +179,7 @@ public:
 		if (prev) prev->next = next;
 		if (next) next->prev = prev;
 	}
+
 	inline void ClearLinks()
 	{
 		prev = nullptr;

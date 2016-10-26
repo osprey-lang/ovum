@@ -28,8 +28,8 @@ Box<GC> GC::New(VM *owner)
 GC::GC(VM *owner) :
 	collectList(nullptr),
 	pinnedList(nullptr),
-	currentCollectMark((GCOFlags)1),
-	currentKeepMark((GCOFlags)3),
+	currentWhite((GCOFlags)1),
+	currentBlack((GCOFlags)3),
 	gen1Size(0),
 	collectCount(0),
 	strings(32),
@@ -214,7 +214,7 @@ int GC::Alloc(Thread *const thread, Type *type, size_t size, GCObject **output)
 	// AllocRaw zeroes the memory, so DO NOT do that here.
 	gco->size = size;
 	gco->type = type;
-	gco->flags |= currentCollectMark;
+	gco->flags |= currentWhite;
 	gco->InsertIntoList(&collectList);
 
 	*output = gco;
@@ -413,7 +413,7 @@ String *GC::ConstructModuleString(Thread *const thread, int32_t length, const ov
 	// the GC to compact gen1
 	gco->size = size;
 	gco->type = vm->types.String;
-	gco->flags |= currentCollectMark | GCOFlags::PINNED;
+	gco->flags |= currentWhite | GCOFlags::PINNED;
 	if (gco->type == nullptr)
 		gco->flags |= GCOFlags::EARLY_STRING;
 	gco->pinCount++;
@@ -608,8 +608,8 @@ void GC::RunCycle(Thread *const thread, bool collectGen1)
 			{
 				// Uncollectible gen1 object, will be collected in the future
 				item->InsertIntoList(&gcoLists.keep);
-				// Make sure it's marked GCO_COLLECT next cycle
-				item->Mark(currentKeepMark);
+				// Make sure it's black for the next iteration
+				item->SetColor(currentBlack);
 			}
 
 			item = next;
@@ -624,9 +624,9 @@ void GC::RunCycle(Thread *const thread, bool collectGen1)
 	OVUM_ASSERT(gcoLists.process == nullptr);
 	OVUM_ASSERT(collectList == nullptr);
 
-	// Step 6: Swap currentCollectMark and currentKeepMark for
-	// next cycle and set current Keep list to Collect.
-	std::swap(currentCollectMark, currentKeepMark);
+	// Step 6: Swap white and black for the next cycle and set current
+	// Keep list to Collect.
+	std::swap(currentWhite, currentBlack);
 	collectList = gcoLists.keep;
 	gen0Current = (char*)gen0Base;
 	// And reset this to null
@@ -724,7 +724,7 @@ bool GC::ShouldProcess(Value *val, bool *hasGen0Refs)
 		(flags & GCOFlags::PINNED) == GCOFlags::NONE)
 		*hasGen0Refs = true;
 
-	return (flags & GCOFlags::MARK) == currentCollectMark;
+	return (flags & GCOFlags::COLOR) == currentWhite;
 }
 
 void GC::TryMarkForProcessing(Value *value, bool *hasGen0Refs)
@@ -740,7 +740,7 @@ void GC::TryMarkStringForProcessing(String *str, bool *hasGen0Refs)
 		GCObject *gco = GCObject::FromInst(str);
 		if ((gco->flags & GCOFlags::GEN_0) == GCOFlags::GEN_0)
 			*hasGen0Refs = true;
-		if ((gco->flags & GCOFlags::MARK) == currentCollectMark)
+		if (gco->GetColor() == currentWhite)
 			MarkForProcessing(gco);
 	}
 }
@@ -771,7 +771,7 @@ void GC::ProcessLocalValues(unsigned int count, Value values[])
 				(uintptr_t)v->type != STATIC_REFERENCE)
 			{
 				GCObject *gco = reinterpret_cast<GCObject*>((char*)v->v.reference - ~(uintptr_t)v->type);
-				if ((gco->flags & GCOFlags::MARK) == currentCollectMark)
+				if (gco->GetColor() == currentWhite)
 					MarkForProcessing(gco);
 			}
 		}
@@ -799,13 +799,13 @@ void GC::MarkForProcessing(GCObject *gco)
 	if (couldHaveFields)
 	{
 		gco->InsertIntoList(&gcoLists->process);
-		gco->Mark(GCOFlags::PROCESS);
+		gco->SetColor(GCOFlags::GRAY);
 	}
 	else
 	{
 		// No chance of instance fields, so nothing to process
 		AddSurvivor(gco);
-		gco->Mark(currentKeepMark);
+		gco->SetColor(currentBlack);
 	}
 }
 
@@ -837,7 +837,7 @@ void GC::ProcessObjectAndFields(GCObject *gco)
 
 	// Do this first, so that objects referencing this object will not
 	// attempt to re-mark it for processing
-	gco->Mark(currentKeepMark);
+	gco->SetColor(currentBlack);
 
 	bool hasGen0Refs = false;
 	Type *type = gco->type;
@@ -892,7 +892,7 @@ void GC::ProcessCustomFields(Type *type, void *instBase, bool *hasGen0Refs)
 				if ((flags & GCOFlags::GEN_0) == GCOFlags::GEN_0 &&
 					(flags & GCOFlags::PINNED) == GCOFlags::NONE)
 					*hasGen0Refs = true;
-				if ((flags & GCOFlags::MARK) == currentCollectMark)
+				if ((flags & GCOFlags::COLOR) == currentWhite)
 					MarkForProcessing(gco);
 			}
 			break;
