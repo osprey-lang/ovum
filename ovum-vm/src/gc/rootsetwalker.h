@@ -72,7 +72,7 @@ public:
 	//
 	// No more than one static reference block will be entered at any given time.
 	// That is, static reference blocks are never entered recursively.
-	virtual void LeaveStaticRefBlock() = 0;
+	virtual void LeaveStaticRefBlock(StaticRefBlock *const refs) = 0;
 };
 
 class RootSetWalker

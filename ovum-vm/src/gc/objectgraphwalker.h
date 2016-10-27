@@ -22,6 +22,10 @@
 // The visitor must manage any state it requires while processing the object
 // graph.
 //
+// The visited GCObject can safely be moved to another GCObject list as soon as
+// EnterObject() is called for that object, or any time thereafter. The walker
+// simply caches the next GCObject.
+//
 // A class can safely implement both ObjectGraphVisitor and RootSetVisitor. The
 // method names do not overlap.
 
@@ -46,7 +50,7 @@ public:
 	//
 	// No more than one object will be entered at any given time. That is,
 	// objects are never entered recursively.
-	virtual void LeaveObject() = 0;
+	virtual void LeaveObject(GCObject *gco) = 0;
 
 	// Visits a field containing a Value.
 	//

@@ -26,7 +26,7 @@ void ObjectGraphWalker::VisitObject(ObjectGraphVisitor &visitor, GCObject *gco)
 	if (visitor.EnterObject(gco))
 	{
 		VisitFields(visitor, gco);
-		visitor.LeaveObject();
+		visitor.LeaveObject(gco);
 	}
 }
 

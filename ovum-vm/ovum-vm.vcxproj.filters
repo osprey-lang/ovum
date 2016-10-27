@@ -308,6 +308,12 @@
     <ClInclude Include="src\gc\rootsetwalker.h">
       <Filter>Header Files\src\gc</Filter>
     </ClInclude>
+    <ClInclude Include="src\gc\liveobjectfinder.h">
+      <Filter>Header Files\src\gc</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gc\movedobjectupdater.h">
+      <Filter>Header Files\src\gc</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\os\windows\dllmain.cpp">
@@ -431,6 +437,12 @@
       <Filter>Source Files\gc</Filter>
     </ClCompile>
     <ClCompile Include="src\gc\rootsetwalker.cpp">
+      <Filter>Source Files\gc</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gc\liveobjectfinder.cpp">
+      <Filter>Source Files\gc</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gc\movedobjectupdater.cpp">
       <Filter>Source Files\gc</Filter>
     </ClCompile>
   </ItemGroup>

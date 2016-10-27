@@ -80,6 +80,8 @@ private:
 	{ }
 
 	friend class GC;
+	friend class LiveObjectFinder;
+	friend class MovedObjectUpdater;
 	friend class RootSetWalker;
 };
 

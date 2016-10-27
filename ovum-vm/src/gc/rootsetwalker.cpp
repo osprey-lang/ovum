@@ -102,7 +102,7 @@ void RootSetWalker::VisitStaticRefs(RootSetVisitor &visitor, StaticRefBlock *ref
 			uint32_t count = refs->count;
 			for (uint32_t i = 0; i < count; i++)
 				visitor.VisitRootValue(refs->values[i].GetValuePointer());
-			visitor.LeaveStaticRefBlock();
+			visitor.LeaveStaticRefBlock(refs);
 		}
 
 		refs = refs->next.get();
