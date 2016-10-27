@@ -76,31 +76,6 @@ private:
 	static const size_t LARGE_OBJECT_SIZE = 87040;
 	static const intptr_t GC_VALUE_ARRAY = (intptr_t)1;
 
-	struct TempLists
-	{
-		GCObject *process;
-		GCObject *keep;
-		struct
-		{
-			// All survivors from generation 0.
-			GCObject *gen0;
-			// All survivors with references to gen0 objects.
-			// Initially only contains survivors from gen1 and
-			// the large object heap, but is later updated to
-			// include gen0 survivors with gen0 refs.
-			GCObject *withGen0Refs;
-			// Total size of gen1 survivors. This does NOT
-			// include objects from the large object heap.
-			size_t gen1SurvivorSize;
-		} survivors;
-	};
-
-	struct FieldProcessState
-	{
-		GC *gc;
-		bool *hasGen0Refs;
-	};
-
 	// The current bit pattern used for coloring an object white and black,
 	// respectively. These start out as 1 and 3, respectively, and are swapped
 	// after each GC cycle.
@@ -116,10 +91,6 @@ private:
 	
 	GCObject *collectList;
 	GCObject *pinnedList;
-	// This field is only assigned during a GC cycle, and points to
-	// a location on the call stack. It should be set to null in all
-	// other situations.
-	TempLists *gcoLists;
 
 	// The total size of generation 1, not including unmanaged data.
 	size_t gen1Size;
@@ -173,64 +144,20 @@ private:
 
 	void Release(GCObject *gco);
 
-	void MarkForProcessing(GCObject *gco);
+	void MoveGen0Survivors(LiveObjectFinder &liveFinder);
 
-	void AddSurvivor(GCObject *gco);
+	void MoveSurvivorToGen1(LiveObjectFinder &liveFinder, GCObject *gco);
 
-	void MarkRootSet();
+	void UpdateGen0References(LiveObjectFinder &liveFinder);
 
-	// Determines whether a particular Value should be processed.
-	// A Value should be processed if:
-	//   1. Its type is not null.
-	//   2. Its type is not PRIMITIVE.
-	//   3. It is not a string with the flag STATIC (no associated GCObject).
-	//   4. Its GCObject* is marked GCO_COLLECT.
-	// NOTE: This function is only called for /reachable/ Values.
-	bool ShouldProcess(Value *val, bool *hasGen0Refs);
-
-	void TryMarkForProcessing(Value *value, bool *hasGen0Refs);
-
-	void TryMarkStringForProcessing(String *str, bool *hasGen0Refs);
-
-	void ProcessObjectAndFields(GCObject *gco);
-
-	void ProcessCustomFields(Type *type, void *instBase, bool *hasGen0Refs);
-
-	void ProcessFields(unsigned int fieldCount, Value fields[], bool *hasGen0Refs);
-
-	void ProcessLocalValues(unsigned int count, Value values[]);
-
-	static int ProcessFieldsCallback(void *state, unsigned int count, Value *values);
-
-	void MoveGen0Survivors();
-
-	void MoveSurvivorToGen1(GCObject *gco);
+	void CollectGarbage(LiveObjectFinder &liveFinder, bool collectGen1);
 
 	void AddPinnedObject(GCObject *gco);
 
 	static GCObject *FlattenPinnedTree(GCObject *root, GCObject **lastItem);
 
-	void UpdateGen0References();
-
-	void UpdateRootSet();
-
-	void UpdateObjectFields(GCObject *gco);
-
-	void UpdateCustomFields(Type *type, void *instBase);
-
-	static int UpdateFieldsCallback(void *state, unsigned int count, Value *values);
-
-	bool ShouldUpdateRef(Value *val);
-
-	void TryUpdateRef(Value *value);
-
-	static void TryUpdateStringRef(String **str);
-
-	void UpdateFields(unsigned int fieldCount, Value fields[]);
-
-	void UpdateLocals(unsigned int count, Value values[]);
-
 	friend class LiveObjectFinder;
+	friend class MovedObjectUpdater;
 	friend class ObjectGraphWalker;
 	friend class RootSetWalker;
 	friend class VM;

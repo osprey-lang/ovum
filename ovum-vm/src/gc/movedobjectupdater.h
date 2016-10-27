@@ -27,12 +27,18 @@ class MovedObjectUpdater :
 	private ObjectGraphVisitor
 {
 public:
-	MovedObjectUpdater(GC *gc);
+	MovedObjectUpdater(GC *gc, GCObject **keepList);
 
 	void UpdateMovedObjects(GCObject *list);
 
 private:
 	GC *gc;
+
+	// The "keep" list, which receives all live, non-pinned objects.
+	// Objects are moved to this list as they are processed.
+	//
+	// This points to LiveObjectFinder::keepList.
+	GCObject **keepList;
 
 	// Cached for speediness.
 	Type *stringType;

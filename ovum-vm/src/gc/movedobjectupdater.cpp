@@ -9,8 +9,9 @@
 namespace ovum
 {
 
-MovedObjectUpdater::MovedObjectUpdater(GC *gc) :
-	gc(gc)
+MovedObjectUpdater::MovedObjectUpdater(GC *gc, GCObject **keepList) :
+	gc(gc),
+	keepList(keepList)
 {
 	stringType = gc->GetVM()->types.String;
 }
@@ -21,6 +22,9 @@ void MovedObjectUpdater::UpdateMovedObjects(GCObject *list)
 	rootWalker.VisitRootSet(*this);
 
 	ObjectGraphWalker::VisitObjectList(*this, list);
+
+	// We have to update the GC's pinnedList too
+	ObjectGraphWalker::VisitObjectList(*this, gc->pinnedList);
 }
 
 GCObject *MovedObjectUpdater::ValueToGco(Value *value)
@@ -39,7 +43,7 @@ GCObject *MovedObjectUpdater::ValueToGco(Value *value)
 void MovedObjectUpdater::TryUpdateValue(Value *value)
 {
 	GCObject *gco = ValueToGco(value);
-	if (gco->IsMoved())
+	if (gco != nullptr && gco->IsMoved())
 		value->v.instance = gco->newAddress->InstanceBase();
 }
 
@@ -117,6 +121,11 @@ void MovedObjectUpdater::LeaveStaticRefBlock(StaticRefBlock *const refs)
 
 bool MovedObjectUpdater::EnterObject(GCObject *gco)
 {
+	// If the object is NOT pinned, move it to the "keep" list. Otherwise
+	// leave it in GC::pinnedList, where it belongs.
+	if (!gco->IsPinned())
+		gco->InsertIntoList(keepList);
+
 	// We only need to examine the object's references if any of them
 	// are in generation 0.
 	return gco->HasGen0Refs();

@@ -1,6 +1,8 @@
 #include "gc.h"
 #include "gcobject.h"
 #include "staticref.h"
+#include "liveobjectfinder.h"
+#include "movedobjectupdater.h"
 #include "../ee/thread.h"
 #include "../module/module.h"
 #include "../module/modulepool.h"
@@ -39,7 +41,6 @@ GC::GC(VM *owner) :
 	gen0Base(nullptr),
 	gen0Current(nullptr),
 	gen0End(nullptr),
-	gcoLists(nullptr),
 	allocSection(5000),
 	vm(owner)
 { }
@@ -452,7 +453,7 @@ String *GC::InternString(Thread *const thread, String *value)
 
 void GC::Release(GCObject *gco)
 {
-	OVUM_ASSERT((gco->flags & GCOFlags::MARK) == currentCollectMark);
+	OVUM_ASSERT(gco->GetColor() == currentWhite);
 
 	if (gco->IsEarlyString() || gco->type == vm->types.String)	
 	{
@@ -540,97 +541,52 @@ void GC::RunCycle(Thread *const thread, bool collectGen1)
 		pinnedList = nullptr;
 	}
 
-	TempLists gcoLists = { }; // initialize everything to zero
-	this->gcoLists = &gcoLists;
-	// Step 1: Move all the root objects to the Process list.
-	MarkRootSet();
+	// Step 1: Find all live objects.
+	// During this step, we also separate survivors into one of three groups:
+	//
+	// * Survivors from generation 0.
+	// * Survivors with references to generation 0 objects.
+	// * All other survivors.
+	//
+	// See LiveObjectFinder for more details on each group.
+	LiveObjectFinder liveFinder(this);
+	liveFinder.FindLiveObjects();
 
-	// Step 2: Examine all objects in the Process list.
-	// Objects are grouped into one of the following:
-	// * Gen0 survivors (including pinned objects)
-	//     => gcoLists->survivors.gen0
-	// * Survivors (from gen1 or LOH) with refs to non-pinned gen0 objects;
-	//   that is, any non-gen0 object that needs updating later
-	//     => gcoLists->survivors.withGen0Refs
-	// * All other survivors
-	//     => gcoLists->keep
-	// During this step, we also update gcoLists->survivors.gen1SurvivorSize,
-	// which will later help us determine whether gen1 has enough dead
-	// objects to warrant cleaning it up this cycle.
-	while (gcoLists.process)
-	{
-		GCObject *item = gcoLists.process;
-		do
-		{
-			GCObject *next = item->next;
-			ProcessObjectAndFields(item);
-			item = next;
-		} while (item);
-	}
-	OVUM_ASSERT(gcoLists.process == nullptr);
-
-	// Step 3: Process gen0 survivors.
+	// Step 2: Process gen0 survivors.
 	// For each object:
 	// * If the object is pinned, add it to the list of pinned objects.
-	// * Otherwise, allocate gen1 space for the object, move the data, and
-	//   mark the original gen0 location with GCOFlags::MOVED.
+	// * Otherwise, allocate gen1 space for the object, move the data, and mark
+	//   the original gen0 location with GCOFlags::MOVED.
 	// * Then, if the object has gen0 refs, add it to the list of such objects;
-	//   otherwise, move it to the Keep list (nothing more to process).
-	MoveGen0Survivors();
-	OVUM_ASSERT(gcoLists.survivors.gen0 == nullptr);
+	//   otherwise, move it to the "keep" list (nothing more to process).
+	MoveGen0Survivors(liveFinder);
+	OVUM_ASSERT(liveFinder.survivorsFromGen0 == nullptr);
 
-	// Step 4: Update objects with gen0 references.
-	// An astute reader may have noticed that pinned objects with gen0 refs
-	// are not actually in gcoLists->survivors.withGen0Refs, but in pinnedList.
-	// For this reason, we walk through those here as well. The number of
-	// pinned objects is likely to be small.
-	// We must also not forget to update root references; unfortunately,
-	// this means we have to walk through the entire root set.
-	UpdateGen0References();
-	OVUM_ASSERT(gcoLists.survivors.withGen0Refs == nullptr);
+	// Step 3: Update objects with gen0 references.
+	// An astute reader may have noticed that pinned objects with gen0 refs are
+	// not actually in liveFinder.survivorsWithGen0Refs, but in pinnedList. For
+	// this reason, we walk through those here as well. The number of pinned
+	// objects is likely to be small, so the performance impact negligible.
+	UpdateGen0References(liveFinder);
+	OVUM_ASSERT(liveFinder.survivorsWithGen0Refs == nullptr);
 
-	// Step 5: Collect garbage.
+	// Step 4: Collect garbage.
 	// Finalize any collectible dead objects with finalizers, and release the
 	// memory. We only collect gen1 if collectGen1 is true, or if there are
 	// enough dead objects in it.
-	if (!collectGen1)
-		collectGen1 = gen1Size - gcoLists.survivors.gen1SurvivorSize >= config::Defaults::GEN1_DEAD_OBJECT_THRESHOLD;
+	CollectGarbage(liveFinder, collectGen1);
 
-	{
-		GCObject *item = collectList;
-		while (item)
-		{
-			GCObject *next = item->next;
-
-			if (collectGen1 || (item->flags & GCOFlags::GENERATION) != GCOFlags::GEN_1)
-				Release(item);
-			else
-			{
-				// Uncollectible gen1 object, will be collected in the future
-				item->InsertIntoList(&gcoLists.keep);
-				// Make sure it's black for the next iteration
-				item->SetColor(currentBlack);
-			}
-
-			item = next;
-		}
-		collectList = nullptr;
-	}
-
-	// The Keep and Pinned lists should contain all the live objects now,
+	// The "keep" and "pinned" lists should contain all the live objects now,
 	// and all other lists should be empty.
-	OVUM_ASSERT(gcoLists.survivors.gen0 == nullptr);
-	OVUM_ASSERT(gcoLists.survivors.withGen0Refs == nullptr);
-	OVUM_ASSERT(gcoLists.process == nullptr);
-	OVUM_ASSERT(collectList == nullptr);
+	OVUM_ASSERT(liveFinder.survivorsFromGen0 == nullptr);
+	OVUM_ASSERT(liveFinder.survivorsWithGen0Refs == nullptr);
+	OVUM_ASSERT(liveFinder.processList == nullptr);
 
-	// Step 6: Swap white and black for the next cycle and set current
-	// Keep list to Collect.
+	// Step 6: Swap white and black for the next cycle and point collectList to
+	// the "keep" list.
 	std::swap(currentWhite, currentBlack);
-	collectList = gcoLists.keep;
+	collectList = liveFinder.keepList;
 	gen0Current = (char*)gen0Base;
-	// And reset this to null
-	this->gcoLists = nullptr;
 
 	EndCycle(thread);
 }
@@ -645,281 +601,9 @@ void GC::EndCycle(Thread *const thread)
 	// Future change: resume every thread except the current
 }
 
-void GC::MarkRootSet()
+void GC::MoveGen0Survivors(LiveObjectFinder &liveFinder)
 {
-	Thread *const mainThread = vm->mainThread.get();
-
-	bool hasGen0Refs;
-	// Mark stack frames first.
-	StackFrame *frame = mainThread->currentFrame;
-	// Frames are marked top-to-bottom.
-	while (frame && frame->method)
-	{
-		MethodOverload *method = frame->method;
-		// Does the method have any parameters?
-		unsigned int paramCount = method->GetEffectiveParamCount();
-		if (paramCount)
-			ProcessLocalValues(paramCount, (Value*)frame - paramCount);
-		// By design, the locals and the eval stack are adjacent in memory.
-		// Hence, the following is safe:
-		if (method->locals || frame->stackCount)
-			ProcessLocalValues(method->locals + frame->stackCount, frame->Locals());
-
-		frame = frame->prevFrame;
-	}
-
-	// We need to do this because the GC may be triggered in
-	// a finally clause, and we wouldn't want to obliterate
-	// the error if we still need to catch it later, right?
-	TryMarkForProcessing(&mainThread->currentError, &hasGen0Refs);
-
-	// Examine module strings! We don't want to collect these, even
-	// if there is nothing referencing them anywhere else.
-	ModulePool *loadedModules = vm->GetModulePool();
-	for (int i = 0; i < loadedModules->GetLength(); i++)
-	{
-#if OVUM_DEBUG
-		hasGen0Refs = false;
-#endif
-
-		Module *m = loadedModules->Get(i);
-		TryMarkStringForProcessing(m->name, &hasGen0Refs);
-
-		for (int32_t s = 0; s < m->strings.GetLength(); s++)
-			TryMarkStringForProcessing(m->strings[s], &hasGen0Refs);
-
-		if (m->debugData)
-		{
-			debug::ModuleDebugData *debug = m->debugData.get();
-			for (int32_t f = 0; f < debug->fileCount; f++)
-				TryMarkStringForProcessing(debug->files[f].fileName, &hasGen0Refs);
-		}
-
-		// Module strings are supposed to be all in gen1
-		OVUM_ASSERT(!hasGen0Refs);
-	}
-
-	// And then we have all the beautiful, lovely static references.
-	StaticRefBlock *staticRefs = this->staticRefs.get();
-	while (staticRefs)
-	{
-		for (unsigned int i = 0; i < staticRefs->count; i++)
-			TryMarkForProcessing(&staticRefs->values[i].value, &staticRefs->hasGen0Refs);
-		staticRefs = staticRefs->next.get();
-	}
-}
-
-bool GC::ShouldProcess(Value *val, bool *hasGen0Refs)
-{
-	if (val->type == nullptr || val->type->IsPrimitive())
-		return false;
-
-	if (val->type == vm->types.String &&
-		(val->v.string->flags & StringFlags::STATIC) == StringFlags::STATIC)
-		return false;
-
-	// If gco is a non-pinned gen0 object, set *hasGen0Refs to true.
-	GCOFlags flags = GCObject::FromValue(val)->flags;
-	if ((flags & GCOFlags::GEN_0) == GCOFlags::GEN_0 &&
-		(flags & GCOFlags::PINNED) == GCOFlags::NONE)
-		*hasGen0Refs = true;
-
-	return (flags & GCOFlags::COLOR) == currentWhite;
-}
-
-void GC::TryMarkForProcessing(Value *value, bool *hasGen0Refs)
-{
-	if (ShouldProcess(value, hasGen0Refs))
-		MarkForProcessing(GCObject::FromValue(value));
-}
-
-void GC::TryMarkStringForProcessing(String *str, bool *hasGen0Refs)
-{
-	if (str && (str->flags & StringFlags::STATIC) == StringFlags::NONE)
-	{
-		GCObject *gco = GCObject::FromInst(str);
-		if ((gco->flags & GCOFlags::GEN_0) == GCOFlags::GEN_0)
-			*hasGen0Refs = true;
-		if (gco->GetColor() == currentWhite)
-			MarkForProcessing(gco);
-	}
-}
-
-void GC::ProcessFields(unsigned int fieldCount, Value fields[], bool *hasGen0Refs)
-{
-	for (unsigned int i = 0; i < fieldCount; i++)
-		// If the object is marked GCO_KEEP, we're done processing it.
-		// If it's marked GCO_PROCESS, it'll be processed eventually.
-		// Otherwise, mark it for processing!
-		TryMarkForProcessing(fields + i, hasGen0Refs);
-}
-
-void GC::ProcessLocalValues(unsigned int count, Value values[])
-{
-	bool _;
-	for (unsigned int i = 0; i < count; i++)
-	{
-		Value *v = values + i;
-		if ((uintptr_t)v->type & 1)
-		{
-			// There is no need to examine local or static field references;
-			// we'll get to the underlying storage locations when we examine
-			// the root set. Instance field references do need to be looked
-			// at, because the instance is still alive and we may have the
-			// only remaining reference to it.
-			if ((uintptr_t)v->type != LOCAL_REFERENCE &&
-				(uintptr_t)v->type != STATIC_REFERENCE)
-			{
-				GCObject *gco = reinterpret_cast<GCObject*>((char*)v->v.reference - ~(uintptr_t)v->type);
-				if (gco->GetColor() == currentWhite)
-					MarkForProcessing(gco);
-			}
-		}
-		else
-			TryMarkForProcessing(v, &_);
-	}
-}
-
-void GC::MarkForProcessing(GCObject *gco)
-{
-	// Must move from collect to process.
-	OVUM_ASSERT((gco->flags & GCOFlags::MARK) == currentCollectMark);
-
-	gco->RemoveFromList(gco == pinnedList ? &pinnedList : &collectList);
-	// If gco->type is null, then the gco must be an EARLY_STRING or an ARRAY;
-	// in both cases, we couldn't possibly have any instance fields. If the
-	// type is GC_VALUE_ARRAY or has a size greater than zero, we might find
-	// some fields after all.
-	OVUM_ASSERT(gco->IsEarlyString() ? gco->type == nullptr :
-		gco->IsArray() ? gco->type == nullptr || gco->type == (Type*)GC_VALUE_ARRAY :
-		gco->type != nullptr);
-	bool couldHaveFields = gco->type != nullptr &&
-		(gco->type == (Type*)GC_VALUE_ARRAY || gco->type->GetTotalSize() > 0);
-
-	if (couldHaveFields)
-	{
-		gco->InsertIntoList(&gcoLists->process);
-		gco->SetColor(GCOFlags::GRAY);
-	}
-	else
-	{
-		// No chance of instance fields, so nothing to process
-		AddSurvivor(gco);
-		gco->SetColor(currentBlack);
-	}
-}
-
-void GC::AddSurvivor(GCObject *gco)
-{
-	GCObject **list;
-	if ((gco->flags & GCOFlags::GENERATION) == GCOFlags::GEN_0)
-	{
-		list = &gcoLists->survivors.gen0;
-	}
-	else
-	{
-		if (gco->HasGen0Refs())
-			list = &gcoLists->survivors.withGen0Refs;
-		else
-			list = &gcoLists->keep;
-		if ((gco->flags & GCOFlags::GENERATION) == GCOFlags::GEN_1)
-			gcoLists->survivors.gen1SurvivorSize += gco->size;
-	}
-	gco->InsertIntoList(list);
-}
-
-void GC::ProcessObjectAndFields(GCObject *gco)
-{
-	// The object is not supposed to be anything but GCOFlags::PROCESS at this point.
-	OVUM_ASSERT((gco->flags & GCOFlags::MARK) == GCOFlags::PROCESS);
-	// It's also not supposed to be a value type, but could be a GC value array.
-	OVUM_ASSERT(!gco->type || gco->type == (Type*)GC_VALUE_ARRAY || !gco->type->IsPrimitive());
-
-	// Do this first, so that objects referencing this object will not
-	// attempt to re-mark it for processing
-	gco->SetColor(currentBlack);
-
-	bool hasGen0Refs = false;
-	Type *type = gco->type;
-	if (type == (Type*)GC_VALUE_ARRAY)
-	{
-		ProcessFields((gco->size - GCO_SIZE) / sizeof(Value), gco->FieldsBase(), &hasGen0Refs);
-	}
-	else
-	{
-		while (type)
-		{
-			if (type->IsCustomPtr())
-				ProcessCustomFields(type, gco->InstanceBase(), &hasGen0Refs);
-			else if (type->fieldCount)
-				ProcessFields(type->fieldCount, gco->FieldsBase(type), &hasGen0Refs);
-
-			type = type->baseType;
-		}
-	}
-
-	if (hasGen0Refs)
-		gco->flags |= GCOFlags::HAS_GEN0_REFS;
-
-	gco->RemoveFromList(&gcoLists->process);
-	// Insert into the appropriate survivor list
-	AddSurvivor(gco);
-}
-
-void GC::ProcessCustomFields(Type *type, void *instBase, bool *hasGen0Refs)
-{
-	// Process native fields first
-	for (int i = 0; i < type->fieldCount; i++)
-	{
-		Type::NativeField field = type->nativeFields[i];
-		void *fieldPtr = (char*)instBase + field.offset;
-		switch (field.type)
-		{
-		case NativeFieldType::VALUE:
-			TryMarkForProcessing(reinterpret_cast<Value*>(fieldPtr), hasGen0Refs);
-			break;
-		case NativeFieldType::VALUE_PTR:
-			TryMarkForProcessing(*reinterpret_cast<Value**>(fieldPtr), hasGen0Refs);
-			break;
-		case NativeFieldType::STRING:
-			TryMarkStringForProcessing(*reinterpret_cast<String**>(fieldPtr), hasGen0Refs);
-			break;
-		case NativeFieldType::GC_ARRAY:
-			if (*(void**)fieldPtr)
-			{
-				GCObject *gco = GCObject::FromInst(*(void**)fieldPtr);
-				GCOFlags flags = gco->flags;
-				if ((flags & GCOFlags::GEN_0) == GCOFlags::GEN_0 &&
-					(flags & GCOFlags::PINNED) == GCOFlags::NONE)
-					*hasGen0Refs = true;
-				if ((flags & GCOFlags::COLOR) == currentWhite)
-					MarkForProcessing(gco);
-			}
-			break;
-		}
-	}
-
-	// If the type has no reference getter, assume it has no managed references
-	if (type->getReferences)
-	{
-		FieldProcessState state;
-		state.gc = this;
-		state.hasGen0Refs = hasGen0Refs;
-		type->getReferences((char*)instBase + type->fieldsOffset,
-			ProcessFieldsCallback, &state);
-	}
-}
-
-int GC::ProcessFieldsCallback(void *state, unsigned int count, Value *values)
-{
-	FieldProcessState *fps = reinterpret_cast<FieldProcessState*>(state);
-	fps->gc->ProcessFields(count, values, fps->hasGen0Refs);
-	RETURN_SUCCESS;
-}
-
-void GC::MoveGen0Survivors()
-{
-	GCObject **list = &gcoLists->survivors.gen0;
+	GCObject **list = &liveFinder.survivorsFromGen0;
 
 	GCObject *obj = *list;
 	while (obj)
@@ -930,10 +614,11 @@ void GC::MoveGen0Survivors()
 		if (!obj->IsPinned())
 		{
 			// If the object is not pinned, then move it to gen1.
-			MoveSurvivorToGen1(obj);
+			MoveSurvivorToGen1(liveFinder, obj);
 		}
 		else
 		{
+			// Otherwise, add it to pinnedList.
 			AddPinnedObject(obj);
 		}
 
@@ -947,7 +632,7 @@ void GC::MoveGen0Survivors()
 	}
 }
 
-void GC::MoveSurvivorToGen1(GCObject *gco)
+void GC::MoveSurvivorToGen1(LiveObjectFinder &liveFinder, GCObject *gco)
 {
 	// We can only move to generation 1 from generation 0.
 	OVUM_ASSERT((gco->flags & GCOFlags::GENERATION) == GCOFlags::GEN_0);
@@ -965,12 +650,12 @@ void GC::MoveSurvivorToGen1(GCObject *gco)
 	newAddress->flags = (newAddress->flags & ~GCOFlags::GENERATION) | GCOFlags::GEN_1;
 	newAddress->InsertIntoList(
 		newAddress->HasGen0Refs()
-			? &gcoLists->survivors.withGen0Refs
-			: &gcoLists->keep
+			? &liveFinder.survivorsWithGen0Refs
+			: &liveFinder.keepList
 	);
 
 	gen1Size += objectSize;
-	gcoLists->survivors.gen1SurvivorSize += objectSize;
+	liveFinder.gen1SurvivorSize += objectSize;
 
 	gco->flags |= GCOFlags::MOVED;
 	gco->newAddress = newAddress;
@@ -982,6 +667,52 @@ void GC::MoveSurvivorToGen1(GCObject *gco)
 		if ((str->flags & StringFlags::INTERN) == StringFlags::INTERN)
 			strings.UpdateIntern(str);
 	}
+}
+
+void GC::UpdateGen0References(LiveObjectFinder &liveFinder)
+{
+	MovedObjectUpdater updater(this, &liveFinder.keepList);
+
+	// MovedObjectUpdater also visits GC::pinnedList.
+	updater.UpdateMovedObjects(liveFinder.survivorsWithGen0Refs);
+
+	// All done with this list!
+	liveFinder.survivorsWithGen0Refs = nullptr;
+}
+
+void GC::CollectGarbage(LiveObjectFinder &liveFinder, bool collectGen1)
+{
+	// If collectGen1 is false, we'll still collect generation 1 if there are
+	// enough dead objects in it.
+	if (!collectGen1)
+	{
+		size_t deadGen1Size = gen1Size - liveFinder.gen1SurvivorSize;
+		collectGen1 = deadGen1Size >= config::Defaults::GEN1_DEAD_OBJECT_THRESHOLD;
+	}
+
+	GCObject *item = collectList;
+	while (item)
+	{
+		GCObject *next = item->next;
+
+		if (collectGen1 || (item->flags & GCOFlags::GENERATION) != GCOFlags::GEN_1)
+		{
+			Release(item);
+		}
+		else
+		{
+			// Uncollectible gen1 object, will be collected in the future.
+			// Note: We don't have to examine gen0 references or anything like
+			// that, because the object is dead.
+			item->InsertIntoList(&liveFinder.keepList);
+			// Color the object black now, so that it will be white next cycle.
+			item->SetColor(currentBlack);
+		}
+
+		item = next;
+	}
+
+	collectList = nullptr;
 }
 
 void GC::AddPinnedObject(GCObject *gco)
@@ -1033,189 +764,6 @@ GCObject *GC::FlattenPinnedTree(GCObject *root, GCObject **lastItem)
 		root->next = FlattenPinnedTree(root->next, lastItem);
 	}
 	return first;
-}
-
-void GC::UpdateGen0References()
-{
-	UpdateRootSet();
-
-	GCObject *gco = gcoLists->survivors.withGen0Refs;
-	while (gco)
-	{
-		GCObject *next = gco->next;
-
-		gco->RemoveFromList(&gcoLists->survivors.withGen0Refs);
-		gco->InsertIntoList(&gcoLists->keep);
-		UpdateObjectFields(gco);
-
-		gco = next;
-	}
-
-	gco = pinnedList;
-	while (gco)
-	{
-		if (gco->HasGen0Refs())
-			UpdateObjectFields(gco);
-		gco = gco->next;
-	}
-}
-
-void GC::UpdateRootSet()
-{
-	Thread *const mainThread = vm->mainThread.get();
-
-	// Update stack frames first
-	StackFrame *frame = mainThread->currentFrame;
-	while (frame && frame->method)
-	{
-		MethodOverload *method = frame->method;
-		unsigned int paramCount = method->GetEffectiveParamCount();
-		if (paramCount)
-			UpdateLocals(paramCount, (Value*)frame - paramCount);
-
-		if (method->locals || frame->stackCount)
-			UpdateLocals(method->locals + frame->stackCount, frame->Locals());
-
-		frame = frame->prevFrame;
-	}
-
-	// Current error
-	TryUpdateRef(&mainThread->currentError);
-
-	// Module strings do not have any gen0 references
-
-	// Static references
-	StaticRefBlock *staticRefs = this->staticRefs.get();
-	while (staticRefs)
-	{
-		if (staticRefs->hasGen0Refs)
-		{
-			for (unsigned int i = 0; i < staticRefs->count; i++)
-				TryUpdateRef(&staticRefs->values[i].value);
-			staticRefs->hasGen0Refs = false;
-		}
-		staticRefs = staticRefs->next.get();
-	}
-}
-
-void GC::UpdateObjectFields(GCObject *gco)
-{
-	Type *type = gco->type;
-	if (type == (Type*)GC_VALUE_ARRAY)
-	{
-		UpdateFields((gco->size - GCO_SIZE) / sizeof(Value), gco->FieldsBase());
-	}
-	else
-	{
-		while (type)
-		{
-			if (type->IsCustomPtr())
-				UpdateCustomFields(type, gco->InstanceBase());
-			else if (type->fieldCount)
-				UpdateFields(type->fieldCount, gco->FieldsBase(type));
-
-			type = type->baseType;
-		}
-	}
-
-	gco->flags &= ~GCOFlags::HAS_GEN0_REFS;
-}
-
-void GC::UpdateCustomFields(Type *type, void *instBase)
-{
-	// Update native fields first
-	for (int i = 0; i < type->fieldCount; i++)
-	{
-		Type::NativeField field = type->nativeFields[i];
-		void *fieldPtr = (char*)instBase + field.offset;
-		switch (field.type)
-		{
-		case NativeFieldType::VALUE:
-			TryUpdateRef(reinterpret_cast<Value*>(fieldPtr));
-			break;
-		case NativeFieldType::VALUE_PTR:
-			TryUpdateRef(*reinterpret_cast<Value**>(fieldPtr));
-			break;
-		case NativeFieldType::STRING:
-			TryUpdateStringRef(reinterpret_cast<String**>(fieldPtr));
-			break;
-		case NativeFieldType::GC_ARRAY:
-			if (*(void**)fieldPtr)
-			{
-				GCObject *gco = GCObject::FromInst(*(void**)fieldPtr);
-				if (gco->IsMoved())
-					*(void**)fieldPtr = gco->newAddress->InstanceBase();
-			}
-			break;
-		}
-	}
-
-	// If the type has no reference getter, assume it has no managed references
-	if (type->getReferences)
-		type->getReferences((char*)instBase + type->fieldsOffset,
-			UpdateFieldsCallback, this);
-}
-
-int GC::UpdateFieldsCallback(void *state, unsigned int count, Value *values)
-{
-	reinterpret_cast<GC*>(state)->UpdateFields(count, values);
-	RETURN_SUCCESS;
-}
-
-bool GC::ShouldUpdateRef(Value *val)
-{
-	if (val->type == nullptr || val->type->IsPrimitive())
-		return false;
-
-	if (val->type == vm->types.String &&
-		(val->v.string->flags & StringFlags::STATIC) == StringFlags::STATIC)
-		return false;
-
-	return GCObject::FromValue(val)->IsMoved();
-}
-
-void GC::TryUpdateRef(Value *value)
-{
-	if (ShouldUpdateRef(value))
-		value->v.instance = GCObject::FromValue(value)->newAddress->InstanceBase();
-}
-
-void GC::TryUpdateStringRef(String **str)
-{
-	if (*str && ((*str)->flags & StringFlags::STATIC) == StringFlags::NONE)
-	{
-		GCObject *gco = GCObject::FromInst(*str);
-		if (gco->IsMoved())
-			*str = (String*)gco->newAddress->InstanceBase();
-	}
-}
-
-void GC::UpdateFields(unsigned int fieldCount, Value fields[])
-{
-	for (unsigned int i = 0; i < fieldCount; i++)
-		TryUpdateRef(fields + i);
-}
-
-void GC::UpdateLocals(unsigned int count, Value values[])
-{
-	for (unsigned int i = 0; i < count; i++)
-	{
-		Value *v = values + i;
-		if ((uintptr_t)v->type & 1)
-		{
-			// Local and static refs are immovable, but field refs are not.
-			if ((uintptr_t)v->type != LOCAL_REFERENCE &&
-				(uintptr_t)v->type != STATIC_REFERENCE)
-			{
-				uintptr_t offset = ~(uintptr_t)v->type;
-				GCObject *gco = reinterpret_cast<GCObject*>((char*)v->v.reference - offset);
-				if (gco->IsMoved())
-					v->v.reference = (char*)gco->newAddress + offset;
-			}
-		}
-		else
-			TryUpdateRef(v);
-	}
 }
 
 } // namespace ovum
