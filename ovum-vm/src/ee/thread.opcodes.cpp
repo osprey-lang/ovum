@@ -1317,6 +1317,9 @@ int Thread::Evaluate()
 				f->stackCount++;
 			}
 			NEXT_INSTR();
+
+		default:
+			OVUM_UNREACHABLE();
 		}
 	}
 

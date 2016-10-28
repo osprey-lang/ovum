@@ -143,6 +143,16 @@
 # endif
 #endif // OVUM_NOINLINE
 
+#ifndef OVUM_UNREACHABLE
+# if defined(_MSC_VER)
+#  define OVUM_UNREACHABLE() __assume(0)
+# elif defined(__GNUC__)
+#  define OVUM_UNREACHABLE() __builtin_unreachable()
+# else
+#  define OVUM_UNREACHABLE() ((void)0)
+# endif
+#endif // OVUM_UNREACHABLE
+
 #ifndef OVUM_DEBUG
 # if defined(DEBUG)
 #  define OVUM_DEBUG 1
