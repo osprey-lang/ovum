@@ -164,7 +164,7 @@ namespace instr
 		typedef std::vector<InstrDesc>::const_iterator const_iter;
 		if (index >= (int32_t)instructions.size())
 		{
-			Instruction *end = (instructions.end() - 1)->instr;
+			Instruction *end = instructions.back().instr;
 			return end->offset + end->GetSize();
 		}
 		return instructions[index].instr->offset;
@@ -176,11 +176,13 @@ namespace instr
 		int32_t offset;
 		if (index >= (int32_t)instructions.size())
 		{
-			Instruction *end = (instructions.end() - 1)->instr;
+			Instruction *end = instructions.back().instr;
 			offset = end->offset + end->GetSize();
 		}
 		else
+		{
 			offset = instructions[index].instr->offset;
+		}
 		return offset - relativeTo->offset - relativeTo->GetSize();
 	}
 

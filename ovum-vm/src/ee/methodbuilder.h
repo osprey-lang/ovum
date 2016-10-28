@@ -69,8 +69,8 @@ namespace instr
 		inline uint32_t GetOriginalOffset(int32_t index) const
 		{
 			if (index >= (int32_t)instructions.size())
-				return instructions.end()->originalOffset +
-					instructions.end()->originalSize;
+				return instructions.back().originalOffset +
+					instructions.back().originalSize;
 			return instructions[index].originalOffset;
 		}
 		inline uint32_t GetOriginalSize(int32_t index) const
