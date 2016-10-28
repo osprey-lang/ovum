@@ -138,30 +138,35 @@ private:
 		int32_t firstInstr;
 		ovlocals_t maxStack;
 		ovlocals_t stackHeight;
-		StackEntry *stack;
+		Box<StackEntry[]> stack;
 
-		inline Branch() : firstInstr(-1), maxStack(0), stackHeight(0), stack(nullptr)
+		inline Branch() :
+			firstInstr(-1),
+			maxStack(0),
+			stackHeight(0),
+			stack()
 		{ }
 		inline Branch(int32_t firstInstr, ovlocals_t maxStack) :
-			firstInstr(firstInstr), maxStack(maxStack),
-			stackHeight(0), stack(new StackEntry[maxStack])
+			firstInstr(firstInstr),
+			maxStack(maxStack),
+			stackHeight(0),
+			stack(new StackEntry[maxStack])
 		{ }
 		inline Branch(int32_t firstInstr, const Branch &other) :
-			firstInstr(firstInstr), maxStack(other.maxStack),
-			stackHeight(other.stackHeight), stack(new StackEntry[maxStack])
+			firstInstr(firstInstr),
+			maxStack(other.maxStack),
+			stackHeight(other.stackHeight),
+			stack(new StackEntry[maxStack])
 		{
-			CopyMemoryT(this->stack, other.stack, other.maxStack);
+			CopyMemoryT(this->stack.get(), other.stack.get(), other.maxStack);
 		}
 		inline Branch(const Branch &other) :
-			firstInstr(other.firstInstr), maxStack(other.maxStack),
-			stackHeight(other.stackHeight), stack(new StackEntry[other.maxStack])
+			firstInstr(other.firstInstr),
+			maxStack(other.maxStack),
+			stackHeight(other.stackHeight),
+			stack(new StackEntry[other.maxStack])
 		{
-			CopyMemoryT(this->stack, other.stack, other.maxStack);
-		}
-
-		inline ~Branch()
-		{
-			delete[] stack;
+			CopyMemoryT(this->stack.get(), other.stack.get(), other.maxStack);
 		}
 
 		inline friend void swap(Branch &one, Branch &two)
