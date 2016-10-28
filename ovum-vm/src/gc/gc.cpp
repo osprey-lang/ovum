@@ -303,7 +303,6 @@ int GC::Construct(Thread *const thread, Type *type, ovlocals_t argc, Value *outp
 
 int GC::ConstructLL(Thread *const thread, Type *type, ovlocals_t argc, Value *args, Value *output)
 {
-	int r;
 	// Reserve space for the instance on the evaluation stack.
 	// After this, realArgs will point to the instance.
 	Value *realArgs = args + argc;
@@ -318,6 +317,13 @@ int GC::ConstructLL(Thread *const thread, Type *type, ovlocals_t argc, Value *ar
 	thread->currentFrame->stackCount++;
 
 	MethodOverload *ctor = type->instanceCtor->ResolveOverload(argc);
+	if (ctor == nullptr)
+		// This should never happen in bytecode methods, since we can
+		// verify at initialization time whether the type has the right
+		// constructor, but we /can/ get here through GC::Construct(),
+		// which is called from native modules.
+		return thread->ThrowNoOverloadError(argc);
+
 	// If the constructor has been marked as an allocator, then it
 	// performs all the allocation of the instance itself.
 	if (type->ConstructorIsAllocator())
@@ -326,15 +332,15 @@ int GC::ConstructLL(Thread *const thread, Type *type, ovlocals_t argc, Value *ar
 		// The return value of the constructor call becomes the result
 		// of the call to the GC. Note that only native methods can
 		// return values from constructors.
-		r = thread->InvokeMethodOverload(ctor, argc, realArgs, output);
+		return thread->InvokeMethodOverload(ctor, argc, realArgs, output);
 	}
 	else
 	{
 		// Allocate the instance
 		GCObject *gco;
-		r = Alloc(thread, type, type->GetTotalSize(), &gco);
+		int r = Alloc(thread, type, type->GetTotalSize(), &gco);
 		if (r != OVUM_SUCCESS)
-			goto done;
+			return r;
 		// And put it in the reserved stack slot
 		realArgs->type = type;
 		realArgs->v.instance = gco->InstanceBase();
@@ -342,7 +348,7 @@ int GC::ConstructLL(Thread *const thread, Type *type, ovlocals_t argc, Value *ar
 		Value ignore; // Even the constructor returns a value
 		r = thread->InvokeMethodOverload(ctor, argc, realArgs, &ignore);
 		if (r != OVUM_SUCCESS)
-			goto done;
+			return r;
 
 		// If everything went okay, copy the result to the right place.
 		// At this point, we CANNOT rely on gco->InstanceBase(), because
@@ -352,10 +358,9 @@ int GC::ConstructLL(Thread *const thread, Type *type, ovlocals_t argc, Value *ar
 		// and so we use that.
 		output->type = realArgs->type;
 		output->v.instance = realArgs->v.instance;
-	}
 
-done:
-	return r;
+		RETURN_SUCCESS;
+	}
 }
 
 String *GC::ConstructString(Thread *const thread, int32_t length, const ovchar_t value[])
