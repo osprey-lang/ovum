@@ -1004,7 +1004,11 @@ void ModuleReader::ReadTryBlocks(Module *module, MethodOverload *overload, int32
 			}
 			break;
 		case mf::TRY_FAULT:
-			ModuleLoadError("Try-fault blocks are not yet supported.");
+			{
+				*tryBlock = TryBlock(TryKind::FAULT, def->tryStart, def->tryEnd);
+				tryBlock->finallyBlock.finallyStart = def->m.finallyClause.finallyStart;
+				tryBlock->finallyBlock.finallyEnd = def->m.finallyClause.finallyEnd;
+			}
 			break;
 		default:
 			ModuleLoadError("Invalid try block kind.");

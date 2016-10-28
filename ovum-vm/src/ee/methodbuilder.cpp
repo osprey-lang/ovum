@@ -139,6 +139,7 @@ namespace instr
 				}
 				break;
 			case TryKind::FINALLY:
+			case TryKind::FAULT: // uses finallyBlock
 				tryBlock->finallyBlock.finallyStart = newIndices[tryBlock->finallyBlock.finallyStart];
 				tryBlock->finallyBlock.finallyEnd = newIndices[tryBlock->finallyBlock.finallyEnd];
 				break;

@@ -383,6 +383,7 @@ void MethodInitializer::InitTryBlockOffsets(instr::MethodBuilder &builder)
 			}
 			break;
 		case TryKind::FINALLY:
+		case TryKind::FAULT: // uses finallyBlock
 			{
 				auto &finallyBlock = tryBlock.finallyBlock;
 				finallyBlock.finallyStart = builder.FindIndex(finallyBlock.finallyStart);
@@ -486,22 +487,26 @@ void MethodInitializer::EnqueueInitialBranches(instr::MethodBuilder &builder, St
 	stack.EnqueueBranch(0, 0);
 
 	// If the method has any try blocks, we must add the first instruction
-	// of each catch and finally as a branch, because they will never be
-	// reached by fallthrough or branching.
+	// of each catch, finally and fault as a branch, because they will never
+	// be reached by fallthrough or branching.
 	for (int32_t i = 0; i < method->tryBlockCount; i++)
 	{
 		TryBlock &tryBlock = method->tryBlocks[i];
-		if (tryBlock.kind == TryKind::CATCH)
+		switch (tryBlock.kind)
 		{
-			// The initial stack height of a catch block is 1, because the
-			// thrown error is on the stack.
-			CatchBlocks &catches = tryBlock.catches;
-			for (int32_t c = 0; c < catches.count; c++)
-				stack.EnqueueBranch(1, catches.blocks[c].catchStart);
-		}
-		else if (tryBlock.kind == TryKind::FINALLY)
-		{
+		case TryKind::CATCH:
+			{
+				// The initial stack height of a catch block is 1, because the
+				// thrown error is on the stack.
+				CatchBlocks &catches = tryBlock.catches;
+				for (int32_t c = 0; c < catches.count; c++)
+					stack.EnqueueBranch(1, catches.blocks[c].catchStart);
+			}
+			break;
+		case TryKind::FINALLY:
+		case TryKind::FAULT: // uses finallyBlock
 			stack.EnqueueBranch(0, tryBlock.finallyBlock.finallyStart);
+			break;
 		}
 	}
 }
@@ -776,6 +781,7 @@ void MethodInitializer::FinalizeTryBlockOffsets(instr::MethodBuilder &builder)
 			}
 			break;
 		case TryKind::FINALLY:
+		case TryKind::FAULT: // uses finallyBlock
 			{
 				FinallyBlock &finallyBlock = tryBlock.finallyBlock;
 				finallyBlock.finallyStart = builder.GetNewOffset(finallyBlock.finallyStart);

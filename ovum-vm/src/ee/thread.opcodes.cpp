@@ -1361,6 +1361,7 @@ int Thread::FindErrorHandler(int32_t maxIndex)
 				}
 				break;
 			case TryKind::FINALLY:
+			case TryKind::FAULT: // When dealing with an error, behaves the same as a finally
 				{
 					frame->stackCount = 0;
 					// We must save the current error, because if an error is thrown and

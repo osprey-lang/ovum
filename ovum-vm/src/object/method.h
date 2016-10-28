@@ -86,6 +86,7 @@ enum class TryKind
 {
 	CATCH = 0x01,
 	FINALLY = 0x02,
+	FAULT = 0x03,
 };
 
 class TryBlock
