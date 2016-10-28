@@ -5,10 +5,9 @@
 
 namespace ovum
 {
+
 namespace instr
 {
-	class Instruction;
-
 	class MethodBuilder
 	{
 	public:
@@ -16,7 +15,71 @@ namespace instr
 		// yet been visited by any branch of evaluation.
 		static const ovlocals_t UNVISITED = (ovlocals_t)-1;
 
+		MethodBuilder();
+		~MethodBuilder();
+
+		inline Instruction *operator[](int32_t index) const
+		{
+			return instructions[index].instr;
+		}
+
+		inline int32_t GetLength() const
+		{
+			return (int32_t)instructions.size();
+		}
+
+		inline int32_t GetByteSize() const
+		{
+			return lastOffset;
+		}
+
+		inline bool HasBranches() const
+		{
+			return hasBranches;
+		}
+
+		inline int32_t GetTypeCount() const
+		{
+			return (int32_t)typesToInitialize.size();
+		}
+
+		inline Type *GetType(int32_t index) const
+		{
+			return typesToInitialize[index];
+		}
+
+		uint32_t GetOriginalOffset(int32_t index) const;
+
+		uint32_t GetOriginalSize(int32_t index) const;
+
+		int32_t FindIndex(uint32_t originalOffset) const;
+
+		int32_t GetNewOffset(int32_t index) const;
+
+		int32_t GetNewOffset(int32_t index, const Instruction *relativeTo) const;
+
+		ovlocals_t GetStackHeight(int32_t index) const;
+
+		void SetStackHeight(int32_t index, ovlocals_t stackHeight);
+
+		uint32_t GetRefSignature(int32_t index) const;
+
+		void SetRefSignature(int32_t index, uint32_t refSignature);
+
+		bool IsMarkedForRemoval(int32_t index) const;
+
+		void MarkForRemoval(int32_t index);
+
+		void Append(uint32_t originalOffset, uint32_t originalSize, Instruction *instr);
+
+		void SetInstruction(int32_t index, Instruction *newInstr, bool deletePrev);
+
+		void PerformRemovals(MethodOverload *method);
+
+		void AddTypeToInitialize(Type *type);
+
 	private:
+		OVUM_DISABLE_COPY_AND_ASSIGN(MethodBuilder);
 
 		class InstrDesc
 		{
@@ -29,8 +92,12 @@ namespace instr
 			Instruction *instr;
 
 			inline InstrDesc(uint32_t originalOffset, uint32_t originalSize, Instruction *instr) :
-				originalOffset(originalOffset), originalSize(originalSize),
-				stackHeight(UNVISITED), refSignature(0), removed(false), instr(instr)
+				originalOffset(originalOffset),
+				originalSize(originalSize),
+				stackHeight(UNVISITED),
+				refSignature(0),
+				removed(false),
+				instr(instr)
 			{ }
 		};
 
@@ -42,101 +109,11 @@ namespace instr
 		std::vector<InstrDesc> instructions;
 		std::vector<Type*> typesToInitialize;
 
-		OVUM_DISABLE_COPY_AND_ASSIGN(MethodBuilder);
-
-	public:
-		inline MethodBuilder() : lastOffset(0), hasBranches(false) { }
-		~MethodBuilder();
-
-		inline int32_t GetLength() const
-		{
-			return (int32_t)instructions.size();
-		}
-		inline int32_t GetByteSize() const
-		{
-			return lastOffset;
-		}
-
-		inline bool HasBranches() const
-		{
-			return hasBranches;
-		}
-
-		void Append(uint32_t originalOffset, uint32_t originalSize, Instruction *instr);
-
-		int32_t FindIndex(uint32_t originalOffset) const;
-
-		inline uint32_t GetOriginalOffset(int32_t index) const
-		{
-			if (index >= (int32_t)instructions.size())
-				return instructions.back().originalOffset +
-					instructions.back().originalSize;
-			return instructions[index].originalOffset;
-		}
-		inline uint32_t GetOriginalSize(int32_t index) const
-		{
-			if (index >= (int32_t)instructions.size())
-				return 0;
-			return instructions[index].originalSize;
-		}
-		int32_t GetNewOffset(int32_t index) const;
-		int32_t GetNewOffset(int32_t index, const Instruction *relativeTo) const;
-
-		inline ovlocals_t GetStackHeight(int32_t index) const
-		{
-			return instructions[index].stackHeight;
-		}
-		inline void SetStackHeight(int32_t index, ovlocals_t stackHeight)
-		{
-			InstrDesc &instrDesc = instructions[index];
-			OVUM_ASSERT(!instrDesc.removed);
-			OVUM_ASSERT(instrDesc.stackHeight == UNVISITED);
-			instrDesc.stackHeight = stackHeight;
-		}
-
-		inline uint32_t GetRefSignature(int32_t index) const
-		{
-			return instructions[index].refSignature;
-		}
-		inline void SetRefSignature(int32_t index, uint32_t refSignature)
-		{
-			instructions[index].refSignature = refSignature;
-		}
-
-		void MarkForRemoval(int32_t index);
-		bool IsMarkedForRemoval(int32_t index) const;
-		void PerformRemovals(MethodOverload *method);
-
-		inline Instruction *operator[](int32_t index) const
-		{
-			return instructions[index].instr;
-		}
-		void SetInstruction(int32_t index, Instruction *newInstr, bool deletePrev);
-
-		inline int32_t GetTypeCount() const
-		{
-			return (int32_t)typesToInitialize.size();
-		}
-
-		void AddTypeToInitialize(Type *type);
-
-		inline Type *GetType(int32_t index) const
-		{
-			return typesToInitialize[index];
-		}
-
-	private:
 		void PerformRemovalsInternal(int32_t newIndices[], MethodOverload *method);
 	};
 
 	class MethodBuffer
 	{
-	private:
-		uint8_t *current;
-		Box<uint8_t[]> buffer;
-
-		OVUM_DISABLE_COPY_AND_ASSIGN(MethodBuffer);
-
 	public:
 		explicit MethodBuffer(int32_t size);
 
@@ -176,6 +153,12 @@ namespace instr
 			if (offset != 0)
 				current += alignment - offset;
 		}
+
+	private:
+		OVUM_DISABLE_COPY_AND_ASSIGN(MethodBuffer);
+
+		uint8_t *current;
+		Box<uint8_t[]> buffer;
 	};
 } // namespace instr
 
