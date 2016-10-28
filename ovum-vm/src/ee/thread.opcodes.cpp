@@ -1413,8 +1413,8 @@ int Thread::EvaluateLeave(StackFrame *frame, int32_t target)
 		opcode_args::BRANCH_SIZE;
 
 	MethodOverload *method = frame->method;
-	const uint32_t ipOffset = (uint32_t)(this->ip - method->entry);
-	const uint32_t tOffset = ipOffset + target + LEAVE_SIZE;
+	uint32_t ipOffset = (uint32_t)(this->ip - method->entry);
+	uint32_t targetOffset = ipOffset + target + LEAVE_SIZE;
 	for (int32_t t = 0; t < method->tryBlockCount; t++)
 	{
 		TryBlock &tryBlock = method->tryBlocks[t];
@@ -1426,7 +1426,7 @@ int Thread::EvaluateLeave(StackFrame *frame, int32_t target)
 		// to execute the finally.
 		if (tryBlock.kind != TryKind::FINALLY ||
 			!tryBlock.Contains(ipOffset) ||
-			tryBlock.Contains(tOffset))
+			tryBlock.Contains(targetOffset))
 			continue;
 
 		// Let's evaluate the finally!
