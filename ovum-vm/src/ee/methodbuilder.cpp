@@ -11,8 +11,8 @@ namespace instr
 {
 	MethodBuilder::~MethodBuilder()
 	{
-		for (instr_iter i = instructions.begin(); i != instructions.end(); i++)
-			delete i->instr;
+		for (auto &i : instructions)
+			delete i.instr;
 	}
 
 	void MethodBuilder::Append(uint32_t originalOffset, uint32_t originalSize, Instruction *instr)
@@ -108,19 +108,28 @@ namespace instr
 		// beyond the last instruction
 		newIndices[oldIndex] = newIndex;
 
+		// If there are any branching instructions in the method, we must
+		// update their targets, which we can only do AFTER performing all
+		// the removals, since branching instructions may reference any
+		// instruction in the method.
 		if (hasBranches)
-			for (instr_iter i = instructions.begin(); i != instructions.end(); i++)
-				if (i->instr->IsBranch())
+		{
+			for (auto &i : instructions)
+			{
+				Instruction *instr = i.instr;
+				if (instr->IsBranch())
 				{
-					Branch *br = static_cast<Branch*>(i->instr);
+					Branch *br = static_cast<Branch*>(instr);
 					br->target = newIndices[br->target];
 				}
-				else if (i->instr->IsSwitch())
+				else if (instr->IsSwitch())
 				{
-					Switch *sw = static_cast<Switch*>(i->instr);
+					Switch *sw = static_cast<Switch*>(instr);
 					for (uint32_t t = 0; t < sw->targetCount; t++)
 						sw->targets[t] = newIndices[sw->targets[t]];
 				}
+			}
+		}
 
 		for (int32_t t = 0; t < method->tryBlockCount; t++)
 		{
@@ -198,8 +207,8 @@ namespace instr
 		if (type->HasStaticCtorRun())
 			return;
 
-		for (type_iter i = typesToInitialize.begin(); i < typesToInitialize.end(); i++)
-			if (*i == type)
+		for (Type *t : typesToInitialize)
+			if (t == type)
 				return;
 
 		typesToInitialize.push_back(type);
