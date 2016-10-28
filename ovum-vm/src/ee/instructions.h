@@ -14,32 +14,40 @@ namespace instr
 	enum class InstrFlags : uint32_t
 	{
 		NONE           = 0x0000,
-		// The instruction has incoming branches
-		HAS_BRANCHES   = 0x0001,
+		// The instruction has incoming branches - that is, another instruction
+		// branches to this instruction.
+		HAS_INCOMING_BRANCHES = 0x0001,
 
-		// The instruction has a LocalOffset input
-		HAS_INPUT      = 0x0002,
-		// The instruction has a LocalOffset output
-		HAS_OUTPUT     = 0x0004,
-		HAS_INOUT      = HAS_INPUT | HAS_OUTPUT,
+		// The instruction has a LocalOffset input.
+		HAS_INPUT = 0x0002,
+		// The instruction has a LocalOffset output.
+		HAS_OUTPUT = 0x0004,
+		HAS_INOUT = HAS_INPUT | HAS_OUTPUT,
 
-		// The instruction requires the input to be on the stack
+		// The instruction requires the input to be on the stack.
+		// When the instruction lacks this flag, the LocalOffset it gets for its
+		// input may point to a local variable. That way, given a sequence of
+		// instructions like
+		//   ldloc.0
+		//   stsfld   <some field>
+		// can be rewritten so that stsfld reads directly from the local (and so
+		// ldloc.0 can be removed altogether).
 		INPUT_ON_STACK = 0x0008,
 
-		// The instruction inherits from Branch
+		// The instruction inherits from Branch.
 		BRANCH = 0x0010,
-		// The instruction inherits from Switch
+		// The instruction inherits from Switch.
 		SWITCH = 0x0020,
-		// The instruction is a LoadLocal
+		// The instruction is a LoadLocal.
 		LOAD_LOCAL = 0x0040,
-		// The instruction is a StoreLocal
+		// The instruction is a StoreLocal.
 		STORE_LOCAL = 0x0080,
-		// The instruction is a DupInstr
+		// The instruction is a DupInstr.
 		DUP = 0x0100,
 
-		// The instruction accepts references on the stack
+		// The instruction accepts references on the stack.
 		ACCEPTS_REFS = 0x0200,
-		// The instruction pushes a reference onto the stack
+		// The instruction pushes a reference onto the stack.
 		PUSHES_REF  = 0x0400,
 	};
 	OVUM_ENUM_OPS(InstrFlags, uint32_t);
@@ -51,7 +59,8 @@ namespace instr
 		uint16_t added;
 
 		inline StackChange(uint16_t removed, uint16_t added) :
-			removed(removed), added(added)
+			removed(removed),
+			added(added)
 		{ }
 
 		static const StackChange empty;
@@ -66,8 +75,10 @@ namespace instr
 		IntermediateOpcode opcode;
 
 		inline Instruction(InstrFlags flags, IntermediateOpcode opcode) :
-			flags(flags), opcode(opcode)
+			flags(flags),
+			opcode(opcode)
 		{ }
+
 		inline virtual ~Instruction() { }
 
 		inline uint32_t GetSize() const
@@ -79,27 +90,72 @@ namespace instr
 
 		virtual StackChange GetStackChange() const = 0;
 
-		inline bool HasInput()           const { return HasFlag(InstrFlags::HAS_INPUT);      }
-		inline bool HasOutput()          const { return HasFlag(InstrFlags::HAS_OUTPUT);     }
-		inline bool IsBranch()           const { return HasFlag(InstrFlags::BRANCH);         }
-		inline bool IsSwitch()           const { return HasFlag(InstrFlags::SWITCH);         }
-		inline bool IsLoadLocal()        const { return HasFlag(InstrFlags::LOAD_LOCAL);     }
-		inline bool IsStoreLocal()       const { return HasFlag(InstrFlags::STORE_LOCAL);    }
-		inline bool IsDup()              const { return HasFlag(InstrFlags::DUP);            }
-		inline bool HasBranches()        const { return HasFlag(InstrFlags::HAS_BRANCHES);   }
-		inline bool RequiresStackInput() const { return HasFlag(InstrFlags::INPUT_ON_STACK); }
-		inline bool AcceptsRefs()        const { return HasFlag(InstrFlags::ACCEPTS_REFS);   }
-		inline bool PushesRef()          const { return HasFlag(InstrFlags::PUSHES_REF);     }
-
-		inline void AddBranch()
+		inline bool HasInput() const
 		{
-			flags = flags | InstrFlags::HAS_BRANCHES;
+			return HasFlag(InstrFlags::HAS_INPUT);
+		}
+
+		inline bool HasOutput() const
+		{
+			return HasFlag(InstrFlags::HAS_OUTPUT);
+		}
+
+		inline bool IsBranch() const
+		{
+			return HasFlag(InstrFlags::BRANCH);
+		}
+
+		inline bool IsSwitch() const
+		{
+			return HasFlag(InstrFlags::SWITCH);
+		}
+
+		inline bool IsLoadLocal() const
+		{
+			return HasFlag(InstrFlags::LOAD_LOCAL);
+		}
+
+		inline bool IsStoreLocal() const
+		{
+			return HasFlag(InstrFlags::STORE_LOCAL);
+		}
+
+		inline bool IsDup() const
+		{
+			return HasFlag(InstrFlags::DUP);
+		}
+
+		inline bool HasIncomingBranches() const
+		{
+			return HasFlag(InstrFlags::HAS_INCOMING_BRANCHES);
+		}
+
+		inline bool RequiresStackInput() const
+		{
+			return HasFlag(InstrFlags::INPUT_ON_STACK);
+		}
+
+		inline bool AcceptsRefs() const
+		{
+			return HasFlag(InstrFlags::ACCEPTS_REFS);
+		}
+
+		inline bool PushesRef() const
+		{
+			return HasFlag(InstrFlags::PUSHES_REF);
+		}
+
+		inline void AddIncomingBranch()
+		{
+			flags = flags | InstrFlags::HAS_INCOMING_BRANCHES;
 		}
 
 		inline virtual void UpdateInput(LocalOffset offset, bool isOnStack) { }
+
 		inline virtual void UpdateOutput(LocalOffset offset, bool isOnStack) { }
 
 		inline virtual uint32_t GetReferenceSignature() const { return 0; }
+
 		inline virtual int SetReferenceSignature(const StackManager &stack) { return -1; }
 
 		void WriteBytes(MethodBuffer &buffer, MethodBuilder &builder) const;
@@ -122,10 +178,14 @@ namespace instr
 		StackChange stackChange;
 
 		inline SimpleInstruction(IntermediateOpcode opcode, StackChange stackChange) :
-			Instruction(InstrFlags::NONE, opcode), stackChange(stackChange)
+			Instruction(InstrFlags::NONE, opcode),
+			stackChange(stackChange)
 		{ }
 
-		inline virtual StackChange GetStackChange() const { return stackChange; }
+		inline virtual StackChange GetStackChange() const
+		{
+			return stackChange;
+		}
 	};
 
 	// An instruction that loads a local value (argument, local variable or stack value)
@@ -143,15 +203,18 @@ namespace instr
 
 		inline MoveLocal() :
 			Instruction(InstrFlags::HAS_INOUT, OPI_MVLOC_SS),
-			source(0), target(0)
+			source(0),
+			target(0)
 		{ }
 		inline MoveLocal(InstrFlags flags) :
 			Instruction(flags, OPI_MVLOC_SS),
-			source(0), target(0)
+			source(0),
+			target(0)
 		{ }
 		inline MoveLocal(InstrFlags flags, IntermediateOpcode opc) :
 			Instruction(flags, opc),
-			source(0), target(0)
+			source(0),
+			target(0)
 		{ }
 
 		inline virtual uint32_t GetArgsSize() const
@@ -172,6 +235,7 @@ namespace instr
 			// Set or clear lowest bit to indicate removal from stack (or lack thereof)
 			opcode = (IntermediateOpcode)(isOnStack ? opcode | 1 : opcode & ~1);
 		}
+
 		inline virtual void UpdateOutput(LocalOffset offset, bool isOnStack)
 		{
 			target = offset;
@@ -189,14 +253,19 @@ namespace instr
 		bool sourceIsRef;
 
 		inline LoadLocal(LocalOffset localSource, bool sourceIsRef) :
-			MoveLocal(sourceIsRef ? InstrFlags::HAS_OUTPUT : InstrFlags::HAS_OUTPUT | InstrFlags::LOAD_LOCAL,
-				sourceIsRef ? OPI_MVLOC_RS : OPI_MVLOC_LS),
+			MoveLocal(
+				sourceIsRef ? InstrFlags::HAS_OUTPUT : InstrFlags::HAS_OUTPUT | InstrFlags::LOAD_LOCAL,
+				sourceIsRef ? OPI_MVLOC_RS : OPI_MVLOC_LS
+			),
 			sourceIsRef(sourceIsRef)
 		{
 			source = localSource;
 		}
 
-		inline virtual StackChange GetStackChange() const { return StackChange(0, 1); }
+		inline virtual StackChange GetStackChange() const
+		{
+			return StackChange(0, 1);
+		}
 
 		inline virtual void UpdateOutput(LocalOffset offset, bool isOnStack)
 		{
@@ -216,14 +285,19 @@ namespace instr
 		bool targetIsRef;
 
 		inline StoreLocal(LocalOffset localTarget, bool targetIsRef) :
-			MoveLocal(targetIsRef ? InstrFlags::HAS_INPUT : InstrFlags::HAS_INPUT | InstrFlags::STORE_LOCAL,
-				targetIsRef ? OPI_MVLOC_SR : OPI_MVLOC_SL),
+			MoveLocal(
+				targetIsRef ? InstrFlags::HAS_INPUT : InstrFlags::HAS_INPUT | InstrFlags::STORE_LOCAL,
+				targetIsRef ? OPI_MVLOC_SR : OPI_MVLOC_SL
+			),
 			targetIsRef(targetIsRef)
 		{
 			target = localTarget;
 		}
 
-		inline virtual StackChange GetStackChange() const { return StackChange(1, 0); }
+		inline virtual StackChange GetStackChange() const
+		{
+			return StackChange(1, 0);
+		}
 
 		inline virtual void UpdateInput(LocalOffset offset, bool isOnStack)
 		{
@@ -245,7 +319,8 @@ namespace instr
 
 		inline DupInstr() :
 			Instruction(InstrFlags::HAS_INOUT | InstrFlags::INPUT_ON_STACK | InstrFlags::DUP, OPI_MVLOC_LS),
-			source(0), target(0)
+			source(0),
+			target(0)
 		{ }
 
 		inline virtual uint32_t GetArgsSize() const
@@ -263,6 +338,7 @@ namespace instr
 			OVUM_ASSERT(isOnStack);
 			source = offset;
 		}
+
 		inline virtual void UpdateOutput(LocalOffset offset, bool isOnStack)
 		{
 			if (isOnStack)
@@ -293,14 +369,19 @@ namespace instr
 		LocalOffset target;
 
 		inline LoadValue(IntermediateOpcode opcode) :
-			Instruction(InstrFlags::HAS_OUTPUT, opcode), target(0) { }
+			Instruction(InstrFlags::HAS_OUTPUT, opcode),
+			target(0)
+		{ }
 
 		inline virtual uint32_t GetArgsSize() const
 		{
 			return oa::ONE_LOCAL_SIZE;
 		}
 
-		inline virtual StackChange GetStackChange() const { return StackChange(0, opcode & 1); }
+		inline virtual StackChange GetStackChange() const
+		{
+			return StackChange(0, opcode & 1);
+		}
 
 		inline virtual void UpdateOutput(LocalOffset offset, bool isOnStack)
 		{
@@ -419,7 +500,8 @@ namespace instr
 
 		inline LoadEnumValue(Type *type, int64_t value) :
 			LoadValue(OPI_LDENUM_S),
-			type(type), value(value)
+			type(type),
+			value(value)
 		{ }
 
 		inline virtual uint32_t GetArgsSize() const
@@ -442,7 +524,11 @@ namespace instr
 
 		inline NewObject(Type *type, ovlocals_t argCount) :
 			Instruction(InstrFlags::HAS_INOUT | InstrFlags::INPUT_ON_STACK | InstrFlags::ACCEPTS_REFS, OPI_NEWOBJ_S),
-			type(type), argCount(argCount), args(0), target(0), refSignature(0)
+			type(type),
+			argCount(argCount),
+			args(0),
+			target(0),
+			refSignature(0)
 		{ }
 
 		inline virtual uint32_t GetArgsSize() const
@@ -450,20 +536,28 @@ namespace instr
 			return oa::NEW_OBJECT_SIZE;
 		}
 
-		inline virtual StackChange GetStackChange() const { return StackChange(argCount, opcode & 1); }
+		inline virtual StackChange GetStackChange() const
+		{
+			return StackChange(argCount, opcode & 1);
+		}
 
 		inline virtual void UpdateInput(LocalOffset offset, bool isOnStack)
 		{
 			OVUM_ASSERT(isOnStack);
 			this->args = offset;
 		}
+
 		inline virtual void UpdateOutput(LocalOffset offset, bool isOnStack)
 		{
 			this->target = offset;
 			opcode = (IntermediateOpcode)(isOnStack ? opcode | 1 : opcode & ~1);
 		}
 
-		inline virtual uint32_t GetReferenceSignature() const { return refSignature; }
+		inline virtual uint32_t GetReferenceSignature() const
+		{
+			return refSignature;
+		}
+
 		virtual int SetReferenceSignature(const StackManager &stack);
 
 	protected:
@@ -555,7 +649,9 @@ namespace instr
 
 		inline LoadMember(String *member) :
 			Instruction(InstrFlags::HAS_INOUT | InstrFlags::INPUT_ON_STACK, OPI_LDMEM_S),
-			instance(0), output(0), member(member)
+			instance(0),
+			output(0),
+			member(member)
 		{ }
 
 		inline virtual uint32_t GetArgsSize() const
@@ -563,13 +659,17 @@ namespace instr
 			return oa::TWO_LOCALS_AND_VALUE<String*>::SIZE;
 		}
 
-		inline virtual StackChange GetStackChange() const { return StackChange(1, opcode & 1); }
+		inline virtual StackChange GetStackChange() const
+		{
+			return StackChange(1, opcode & 1);
+		}
 
 		inline virtual void UpdateInput(LocalOffset offset, bool isOnStack)
 		{
 			OVUM_ASSERT(isOnStack);
 			instance = offset;
 		}
+
 		inline virtual void UpdateOutput(LocalOffset offset, bool isOnStack)
 		{
 			output = offset;
@@ -588,7 +688,8 @@ namespace instr
 
 		inline StoreMember(String *member) :
 			Instruction(InstrFlags::HAS_INPUT | InstrFlags::INPUT_ON_STACK, OPI_STMEM),
-			args(0), member(member)
+			args(0),
+			member(member)
 		{ }
 
 		inline virtual uint32_t GetArgsSize() const
@@ -617,7 +718,9 @@ namespace instr
 
 		inline LoadField(Field *field) :
 			Instruction(InstrFlags::HAS_INOUT | InstrFlags::INPUT_ON_STACK, OPI_LDFLD_S),
-			instance(0), output(0), field(field)
+			instance(0),
+			output(0),
+			field(field)
 		{ }
 
 		inline virtual uint32_t GetArgsSize() const
@@ -625,13 +728,17 @@ namespace instr
 			return oa::TWO_LOCALS_AND_VALUE<Field*>::SIZE;
 		}
 
-		inline virtual StackChange GetStackChange() const { return StackChange(1, opcode & 1); }
+		inline virtual StackChange GetStackChange() const
+		{
+			return StackChange(1, opcode & 1);
+		}
 
 		inline virtual void UpdateInput(LocalOffset offset, bool isOnStack)
 		{
 			OVUM_ASSERT(isOnStack);
 			this->instance = offset;
 		}
+
 		inline virtual void UpdateOutput(LocalOffset offset, bool isOnStack)
 		{
 			output = offset;
@@ -650,7 +757,8 @@ namespace instr
 
 		inline StoreField(Field *field) :
 			Instruction(InstrFlags::HAS_INPUT | InstrFlags::INPUT_ON_STACK, OPI_STFLD),
-			args(0), field(field)
+			args(0),
+			field(field)
 		{ }
 
 		inline virtual uint32_t GetArgsSize() const
@@ -658,7 +766,10 @@ namespace instr
 			return oa::LOCAL_AND_VALUE<Field*>::SIZE;
 		}
 
-		inline virtual StackChange GetStackChange() const { return StackChange(2, 0); }
+		inline virtual StackChange GetStackChange() const
+		{
+			return StackChange(2, 0);
+		}
 
 		inline virtual void UpdateInput(LocalOffset offset, bool isOnStack)
 		{
@@ -697,7 +808,8 @@ namespace instr
 
 		inline StoreStaticField(Field *field) :
 			Instruction(InstrFlags::HAS_INPUT, OPI_STSFLD_S),
-			value(0), field(field)
+			value(0),
+			field(field)
 		{ }
 
 		inline virtual uint32_t GetArgsSize() const
@@ -705,7 +817,10 @@ namespace instr
 			return oa::LOCAL_AND_VALUE<Field*>::SIZE;
 		}
 
-		inline virtual StackChange GetStackChange() const { return StackChange(opcode & 1, 0); }
+		inline virtual StackChange GetStackChange() const
+		{
+			return StackChange(opcode & 1, 0);
+		}
 
 		inline virtual void UpdateInput(LocalOffset offset, bool isOnStack)
 		{
@@ -725,7 +840,8 @@ namespace instr
 
 		inline LoadIterator() :
 			Instruction(InstrFlags::HAS_INOUT | InstrFlags::INPUT_ON_STACK, OPI_LDITER_S),
-			value(0), output(0)
+			value(0),
+			output(0)
 		{ }
 
 		inline virtual uint32_t GetArgsSize() const
@@ -733,13 +849,17 @@ namespace instr
 			return oa::TWO_LOCALS_SIZE;
 		}
 
-		inline virtual StackChange GetStackChange() const { return StackChange(1, opcode & 1); }
+		inline virtual StackChange GetStackChange() const
+		{
+			return StackChange(1, opcode & 1);
+		}
 
 		inline virtual void UpdateInput(LocalOffset offset, bool isOnStack)
 		{
 			OVUM_ASSERT(isOnStack);
 			value = offset;
 		}
+
 		inline virtual void UpdateOutput(LocalOffset offset, bool isOnStack)
 		{
 			output = offset;
@@ -758,7 +878,8 @@ namespace instr
 
 		inline LoadType() :
 			Instruction(InstrFlags::HAS_INOUT | InstrFlags::INPUT_ON_STACK, OPI_LDTYPE_S),
-			source(0), target(0)
+			source(0),
+			target(0)
 		{ }
 
 		inline virtual uint32_t GetArgsSize() const
@@ -766,13 +887,17 @@ namespace instr
 			return oa::TWO_LOCALS_SIZE;
 		}
 
-		inline virtual StackChange GetStackChange() const { return StackChange(1, opcode & 1); }
+		inline virtual StackChange GetStackChange() const
+		{
+			return StackChange(1, opcode & 1);
+		}
 
 		inline virtual void UpdateInput(LocalOffset offset, bool isOnStack)
 		{
 			OVUM_ASSERT(isOnStack);
 			source = offset;
 		}
+
 		inline virtual void UpdateOutput(LocalOffset offset, bool isOnStack)
 		{
 			target = offset;
@@ -792,7 +917,9 @@ namespace instr
 
 		inline LoadIndexer(ovlocals_t argCount) :
 			Instruction(InstrFlags::HAS_INOUT | InstrFlags::INPUT_ON_STACK, OPI_LDIDX_S),
-			args(0), output(0), argCount(argCount)
+			args(0),
+			output(0),
+			argCount(argCount)
 		{ }
 
 		inline virtual uint32_t GetArgsSize() const
@@ -800,13 +927,17 @@ namespace instr
 			return oa::TWO_LOCALS_AND_VALUE<uint32_t>::SIZE;
 		}
 
-		inline virtual StackChange GetStackChange() const { return StackChange(argCount + 1, opcode & 1); }
+		inline virtual StackChange GetStackChange() const
+		{
+			return StackChange(argCount + 1, opcode & 1);
+		}
 
 		inline virtual void UpdateInput(LocalOffset offset, bool isOnStack)
 		{
 			OVUM_ASSERT(isOnStack);
 			args = offset;
 		}
+
 		inline virtual void UpdateOutput(LocalOffset offset, bool isOnStack)
 		{
 			output = offset;
@@ -825,7 +956,8 @@ namespace instr
 
 		inline StoreIndexer(ovlocals_t argCount) :
 			Instruction(InstrFlags::HAS_INPUT | InstrFlags::INPUT_ON_STACK, OPI_STIDX),
-			args(0), argCount(argCount)
+			args(0),
+			argCount(argCount)
 		{ }
 
 		inline virtual uint32_t GetArgsSize() const
@@ -833,7 +965,10 @@ namespace instr
 			return oa::LOCAL_AND_VALUE<uint32_t>::SIZE;
 		}
 
-		inline virtual StackChange GetStackChange() const { return StackChange(argCount + 2, 0); }
+		inline virtual StackChange GetStackChange() const
+		{
+			return StackChange(argCount + 2, 0);
+		}
 
 		inline virtual void UpdateInput(LocalOffset offset, bool isOnStack)
 		{
@@ -855,7 +990,10 @@ namespace instr
 
 		inline Call(ovlocals_t argCount) :
 			Instruction(InstrFlags::HAS_INOUT | InstrFlags::INPUT_ON_STACK | InstrFlags::ACCEPTS_REFS, OPI_CALL_S),
-			args(0), output(0), argCount(argCount), refSignature(0)
+			args(0),
+			output(0),
+			argCount(argCount),
+			refSignature(0)
 		{ }
 
 		inline virtual uint32_t GetArgsSize() const
@@ -863,20 +1001,28 @@ namespace instr
 			return refSignature ? oa::CALL_REF_SIZE : oa::CALL_SIZE;
 		}
 
-		inline virtual StackChange GetStackChange() const { return StackChange(argCount + 1, opcode & 1); }
+		inline virtual StackChange GetStackChange() const
+		{
+			return StackChange(argCount + 1, opcode & 1);
+		}
 
 		inline virtual void UpdateInput(LocalOffset offset, bool isOnStack)
 		{
 			OVUM_ASSERT(isOnStack);
 			args = offset;
 		}
+
 		inline virtual void UpdateOutput(LocalOffset offset, bool isOnStack)
 		{
 			output = offset;
 			opcode = (IntermediateOpcode)(isOnStack ? opcode | 1 : opcode & ~1);
 		}
 
-		inline virtual uint32_t GetReferenceSignature() const { return refSignature; }
+		inline virtual uint32_t GetReferenceSignature() const
+		{
+			return refSignature;
+		}
+
 		virtual int SetReferenceSignature(const StackManager &stack);
 
 	protected:
@@ -894,7 +1040,11 @@ namespace instr
 
 		inline CallMember(String *member, ovlocals_t argCount) :
 			Instruction(InstrFlags::HAS_INOUT | InstrFlags::INPUT_ON_STACK | InstrFlags::ACCEPTS_REFS, OPI_CALLMEM_S),
-			args(0), output(0), member(member), argCount(argCount), refSignature(0)
+			args(0),
+			output(0),
+			member(member),
+			argCount(argCount),
+			refSignature(0)
 		{ }
 
 		inline virtual uint32_t GetArgsSize() const
@@ -902,20 +1052,28 @@ namespace instr
 			return refSignature ? oa::CALL_MEMBER_REF_SIZE : oa::CALL_MEMBER_SIZE;
 		}
 
-		inline virtual StackChange GetStackChange() const { return StackChange(argCount + 1, opcode & 1); }
+		inline virtual StackChange GetStackChange() const
+		{
+			return StackChange(argCount + 1, opcode & 1);
+		}
 
 		inline virtual void UpdateInput(LocalOffset offset, bool isOnStack)
 		{
 			OVUM_ASSERT(isOnStack);
 			args = offset;
 		}
+
 		inline virtual void UpdateOutput(LocalOffset offset, bool isOnStack)
 		{
 			output = offset;
 			opcode = (IntermediateOpcode)(isOnStack ? opcode | 1 : opcode & ~1);
 		}
 
-		inline virtual uint32_t GetReferenceSignature() const { return refSignature; }
+		inline virtual uint32_t GetReferenceSignature() const
+		{
+			return refSignature;
+		}
+
 		virtual int SetReferenceSignature(const StackManager &stack);
 
 	protected:
@@ -933,7 +1091,11 @@ namespace instr
 
 		inline StaticCall(ovlocals_t argCount, MethodOverload *method) :
 			Instruction(InstrFlags::HAS_INOUT | InstrFlags::INPUT_ON_STACK | InstrFlags::ACCEPTS_REFS, OPI_SCALL_S),
-			args(0), output(0), argCount(argCount), method(method), refSignature(0)
+			args(0),
+			output(0),
+			argCount(argCount),
+			method(method),
+			refSignature(0)
 		{ }
 
 		inline virtual uint32_t GetArgsSize() const
@@ -941,20 +1103,28 @@ namespace instr
 			return oa::STATIC_CALL_SIZE;
 		}
 
-		inline virtual StackChange GetStackChange() const { return StackChange(argCount + method->InstanceOffset(), opcode & 1); }
+		inline virtual StackChange GetStackChange() const
+		{
+			return StackChange(argCount + method->InstanceOffset(), opcode & 1);
+		}
 
 		inline virtual void UpdateInput(LocalOffset offset, bool isOnStack)
 		{
 			OVUM_ASSERT(isOnStack);
 			args = offset;
 		}
+
 		inline virtual void UpdateOutput(LocalOffset offset, bool isOnStack)
 		{
 			output = offset;
 			opcode = (IntermediateOpcode)(isOnStack ? opcode | 1 : opcode & ~1);
 		}
 
-		inline virtual uint32_t GetReferenceSignature() const { return refSignature; }
+		inline virtual uint32_t GetReferenceSignature() const
+		{
+			return refSignature;
+		}
+
 		virtual int SetReferenceSignature(const StackManager &stack);
 
 	protected:
@@ -969,7 +1139,8 @@ namespace instr
 
 		inline Apply() :
 			Instruction(InstrFlags::HAS_INOUT | InstrFlags::INPUT_ON_STACK, OPI_APPLY_S),
-			args(0), output(0)
+			args(0),
+			output(0)
 		{ }
 
 		inline virtual uint32_t GetArgsSize() const
@@ -977,13 +1148,17 @@ namespace instr
 			return oa::TWO_LOCALS_SIZE;
 		}
 
-		inline virtual StackChange GetStackChange() const { return StackChange(2, opcode & 1); }
+		inline virtual StackChange GetStackChange() const
+		{
+			return StackChange(2, opcode & 1);
+		}
 
 		inline virtual void UpdateInput(LocalOffset offset, bool isOnStack)
 		{
 			OVUM_ASSERT(isOnStack);
 			args = offset;
 		}
+
 		inline virtual void UpdateOutput(LocalOffset offset, bool isOnStack)
 		{
 			output = offset;
@@ -1003,7 +1178,9 @@ namespace instr
 
 		inline StaticApply(Method *method) :
 			Instruction(InstrFlags::HAS_INOUT | InstrFlags::INPUT_ON_STACK, OPI_SAPPLY_S),
-			args(0), output(0), method(method)
+			args(0),
+			output(0),
+			method(method)
 		{ }
 
 		inline virtual uint32_t GetArgsSize() const
@@ -1011,13 +1188,17 @@ namespace instr
 			return oa::TWO_LOCALS_AND_VALUE<Method*>::SIZE;
 		}
 
-		inline virtual StackChange GetStackChange() const { return StackChange(1, opcode & 1); }
+		inline virtual StackChange GetStackChange() const
+		{
+			return StackChange(1, opcode & 1);
+		}
 
 		inline virtual void UpdateInput(LocalOffset offset, bool isOnStack)
 		{
 			OVUM_ASSERT(isOnStack);
 			args = offset;
 		}
+
 		inline virtual void UpdateOutput(LocalOffset offset, bool isOnStack)
 		{
 			output = offset;
@@ -1043,9 +1224,15 @@ namespace instr
 			return oa::BRANCH_SIZE;
 		}
 
-		inline virtual StackChange GetStackChange() const { return StackChange::empty; }
+		inline virtual StackChange GetStackChange() const
+		{
+			return StackChange::empty;
+		}
 
-		inline virtual bool IsConditional() const { return false; }
+		inline virtual bool IsConditional() const
+		{
+			return false;
+		}
 
 	protected:
 		virtual void WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const;
@@ -1077,9 +1264,15 @@ namespace instr
 			return oa::CONDITIONAL_BRANCH_SIZE;
 		}
 
-		inline virtual StackChange GetStackChange() const { return StackChange(opcode & 1, 0); }
+		inline virtual StackChange GetStackChange() const
+		{
+			return StackChange(opcode & 1, 0);
+		}
 
-		inline virtual bool IsConditional() const { return true; }
+		inline virtual bool IsConditional() const
+		{
+			return true;
+		}
 
 		inline virtual void UpdateInput(LocalOffset offset, bool isOnStack)
 		{
@@ -1106,7 +1299,10 @@ namespace instr
 			return oa::BRANCH_IF_TYPE_SIZE;
 		}
 
-		inline virtual bool IsConditional() const { return true; }
+		inline virtual bool IsConditional() const
+		{
+			return true;
+		}
 
 	protected:
 		virtual void WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const;
@@ -1121,7 +1317,9 @@ namespace instr
 
 		inline Switch(uint32_t targetCount, int32_t *targets) :
 			Instruction(InstrFlags::HAS_INPUT | InstrFlags::SWITCH, OPI_SWITCH_S),
-			value(0), targetCount(targetCount), targets(targets)
+			value(0),
+			targetCount(targetCount),
+			targets(targets)
 		{ }
 
 		inline ~Switch()
@@ -1134,7 +1332,10 @@ namespace instr
 			return oa::SWITCH_SIZE(targetCount);
 		}
 
-		inline virtual StackChange GetStackChange() const { return StackChange(opcode & 1, 0); }
+		inline virtual StackChange GetStackChange() const
+		{
+			return StackChange(opcode & 1, 0);
+		}
 
 		inline virtual void UpdateInput(LocalOffset offset, bool isOnStack)
 		{
@@ -1161,9 +1362,15 @@ namespace instr
 			return oa::CONDITIONAL_BRANCH_SIZE;
 		}
 
-		inline virtual StackChange GetStackChange() const { return StackChange(2, 0); }
+		inline virtual StackChange GetStackChange() const
+		{
+			return StackChange(2, 0);
+		}
 
-		inline virtual bool IsConditional() const { return true; }
+		inline virtual bool IsConditional() const
+		{
+			return true;
+		}
 
 		inline virtual void UpdateInput(LocalOffset offset, bool isOnStack)
 		{
@@ -1190,9 +1397,15 @@ namespace instr
 			return oa::CONDITIONAL_BRANCH_SIZE;
 		}
 
-		inline virtual StackChange GetStackChange() const { return StackChange(2, 0); }
+		inline virtual StackChange GetStackChange() const
+		{
+			return StackChange(2, 0);
+		}
 
-		inline virtual bool IsConditional() const { return true; }
+		inline virtual bool IsConditional() const
+		{
+			return true;
+		}
 
 		inline virtual void UpdateInput(LocalOffset offset, bool isOnStack)
 		{
@@ -1222,14 +1435,19 @@ namespace instr
 		static const Operator SINGLE_INSTR_OP = (Operator)-1;
 
 		inline ExecOperator(Operator op) :
-			Instruction(InstrFlags::HAS_INOUT | InstrFlags::INPUT_ON_STACK,
-				GetOpcode(op)),
-			args(0), output(0), op(op)
+			Instruction(
+				InstrFlags::HAS_INOUT | InstrFlags::INPUT_ON_STACK,
+				GetOpcode(op)
+			),
+			args(0),
+			output(0),
+			op(op)
 		{ }
-
 		inline ExecOperator(IntermediateOpcode specialOp) :
 			Instruction(InstrFlags::HAS_INOUT | InstrFlags::INPUT_ON_STACK, specialOp),
-			args(0), output(0), op(SINGLE_INSTR_OP)
+			args(0),
+			output(0),
+			op(SINGLE_INSTR_OP)
 		{ }
 
 		inline bool IsUnary() const
@@ -1245,13 +1463,17 @@ namespace instr
 				return oa::TWO_LOCALS_AND_VALUE<Operator>::SIZE;
 		}
 
-		inline virtual StackChange GetStackChange() const { return StackChange(IsUnary() ? 1 : 2, opcode & 1); }
+		inline virtual StackChange GetStackChange() const
+		{
+			return StackChange(IsUnary() ? 1 : 2, opcode & 1);
+		}
 
 		inline virtual void UpdateInput(LocalOffset offset, bool isOnStack)
 		{
 			OVUM_ASSERT(isOnStack);
 			args = offset;
 		}
+
 		inline virtual void UpdateOutput(LocalOffset offset, bool isOnStack)
 		{
 			output = offset;
@@ -1285,7 +1507,10 @@ namespace instr
 			return oa::ONE_LOCAL_SIZE;
 		}
 
-		inline virtual StackChange GetStackChange() const { return StackChange(0, 1); }
+		inline virtual StackChange GetStackChange() const
+		{
+			return StackChange(0, 1);
+		}
 
 	protected:
 		virtual void WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const;
@@ -1299,7 +1524,8 @@ namespace instr
 
 		inline LoadMemberRef(String *member) :
 			Instruction(InstrFlags::HAS_INPUT | InstrFlags::PUSHES_REF, OPI_LDMEMREF_S),
-			instance(0), member(member)
+			instance(0),
+			member(member)
 		{ }
 
 		inline virtual uint32_t GetArgsSize() const
@@ -1307,7 +1533,10 @@ namespace instr
 			return oa::LOCAL_AND_VALUE<String*>::SIZE;
 		}
 
-		inline virtual StackChange GetStackChange() const { return StackChange(1, 1); }
+		inline virtual StackChange GetStackChange() const
+		{
+			return StackChange(1, 1);
+		}
 
 		inline virtual void UpdateInput(LocalOffset offset, bool isOnStack)
 		{
@@ -1327,7 +1556,8 @@ namespace instr
 
 		inline LoadFieldRef(Field *field) :
 			Instruction(InstrFlags::HAS_INPUT | InstrFlags::PUSHES_REF, OPI_LDFLDREF_S),
-			instance(0), field(field)
+			instance(0),
+			field(field)
 		{ }
 
 		inline virtual uint32_t GetArgsSize() const
@@ -1335,7 +1565,10 @@ namespace instr
 			return oa::LOCAL_AND_VALUE<Field*>::SIZE;
 		}
 
-		inline virtual StackChange GetStackChange() const { return StackChange(1, 1); }
+		inline virtual StackChange GetStackChange() const
+		{
+			return StackChange(1, 1);
+		}
 
 		inline virtual void UpdateInput(LocalOffset offset, bool isOnStack)
 		{
@@ -1362,7 +1595,10 @@ namespace instr
 			return oa::SINGLE_VALUE<Field*>::SIZE;
 		}
 
-		inline virtual StackChange GetStackChange() const { return StackChange(0, 1); }
+		inline virtual StackChange GetStackChange() const
+		{
+			return StackChange(0, 1);
+		}
 
 	protected:
 		virtual void WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const;

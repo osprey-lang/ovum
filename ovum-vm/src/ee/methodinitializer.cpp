@@ -344,7 +344,7 @@ void MethodInitializer::InitBranchOffsets(instr::MethodBuilder &builder)
 			if (br->target == -1)
 				throw MethodInitException("Invalid branch offset.", method, i,
 					MethodInitException::INVALID_BRANCH_OFFSET);
-			builder[br->target]->AddBranch();
+			builder[br->target]->AddIncomingBranch();
 		}
 		else if (instruction->IsSwitch())
 		{
@@ -356,7 +356,7 @@ void MethodInitializer::InitBranchOffsets(instr::MethodBuilder &builder)
 				if (*target == -1)
 					throw MethodInitException("Invalid branch offset.", method, i,
 						MethodInitException::INVALID_BRANCH_OFFSET);
-				builder[*target]->AddBranch();
+				builder[*target]->AddIncomingBranch();
 			}
 		}
 	}
@@ -436,7 +436,7 @@ void MethodInitializer::CalculateStackHeights(instr::MethodBuilder &builder, Sta
 			{
 				ovlocals_t stackHeight = stack.GetStackHeight();
 				builder.SetStackHeight(index, stackHeight);
-				if (instr->HasBranches())
+				if (instr->HasIncomingBranches())
 					// Only calculmacate this if necessary
 					builder.SetRefSignature(index, stack.GetRefSignature(stackHeight));
 			}
@@ -536,7 +536,7 @@ void MethodInitializer::TryUpdateInputOutput(instr::MethodBuilder &builder, Stac
 		//   2. the current instruction has no incoming branches.
 		// If either is not true, we cannot optimize any local offsets here,
 		// so we skip to the default input offset.
-		if (prev == nullptr || instr->HasBranches())
+		if (prev == nullptr || instr->HasIncomingBranches())
 			goto updateInputDefault;
 
 		// First, let's see if we can update the output of the previous instruction.
@@ -659,7 +659,7 @@ void MethodInitializer::TryUpdateConditionalBranch(instr::MethodBuilder &builder
 	// If there is no previous instruction, the current cannot possibly be preceded
 	// by an operator. If the current instruction has incoming branches, we cannot
 	// delete it.
-	if (!prev || branch->HasBranches())
+	if (!prev || branch->HasIncomingBranches())
 		return;
 
 	if (!IsBranchComparisonOperator(prev->opcode))
