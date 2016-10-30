@@ -1364,10 +1364,8 @@ int Thread::FindErrorHandler(int32_t maxIndex)
 			case TryKind::FAULT: // When dealing with an error, behaves the same as a finally
 				{
 					frame->stackCount = 0;
-					// We must save the current error, because if an error is thrown and
-					// caught inside the finally, currentError will be updated to contain
-					// that error. We will cause problems if we don't restore the old one.
-					Value prevError = this->currentError;
+					// See ErrorStack for more details on this
+					ErrorStack savedError(this);
 
 					this->ip = method->entry + tryBlock.finallyBlock.finallyStart;
 					enter:
@@ -1388,11 +1386,13 @@ int Thread::FindErrorHandler(int32_t maxIndex)
 								goto enter;
 							r = r2;
 						}
+						this->errorStack = savedError.prev;
 						return r;
 					}
 					this->ip = method->entry + offset;
 
-					this->currentError = prevError;
+					this->errorStack = savedError.prev;
+					this->currentError = savedError.error;
 				}
 				break;
 			}
@@ -1432,10 +1432,8 @@ int Thread::EvaluateLeave(StackFrame *frame, int32_t target)
 		// Let's evaluate the finally!
 
 		uint8_t *const prevIp = this->ip;
-		// We must save the current error, because if an error is thrown and
-		// caught inside the finally, currentError will be updated to contain
-		// that error. We will cause problems if we don't restore the old one.
-		Value prevError = this->currentError;
+		// See ErrorStack for more details on this
+		ErrorStack savedError(this);
 
 		this->ip = method->entry + tryBlock.finallyBlock.finallyStart;
 		enter:
@@ -1449,11 +1447,13 @@ int Thread::EvaluateLeave(StackFrame *frame, int32_t target)
 					goto enter;
 				r = r2;
 			}
+			this->errorStack = savedError.prev;
 			return r;
 		}
 		this->ip = prevIp;
 
-		this->currentError = prevError;
+		this->errorStack = savedError.prev;
+		this->currentError = savedError.error;
 	}
 
 	RETURN_SUCCESS;

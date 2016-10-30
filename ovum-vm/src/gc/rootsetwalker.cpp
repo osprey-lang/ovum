@@ -30,6 +30,16 @@ void RootSetWalker::VisitThread(RootSetVisitor &visitor, Thread *const thread)
 	VisitStackFrames(visitor, thread);
 
 	visitor.VisitRootValue(&thread->currentError);
+
+	if (thread->errorStack != nullptr)
+	{
+		auto *errorStack = thread->errorStack;
+		do
+		{
+			visitor.VisitRootValue(&errorStack->error);
+			errorStack = errorStack->prev;
+		} while (errorStack != nullptr);
+	}
 }
 
 void RootSetWalker::VisitStackFrames(RootSetVisitor &visitor, Thread *const thread)

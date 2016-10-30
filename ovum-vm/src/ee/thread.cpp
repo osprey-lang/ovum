@@ -48,6 +48,7 @@ Thread::Thread(VM *owner, int &status) :
 	vm(owner),
 	strings(owner->GetStrings()),
 	currentError(NULL_VALUE),
+	errorStack(nullptr),
 	gcCycleSection(4000)
 {
 	status = InitCallStack();

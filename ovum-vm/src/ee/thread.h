@@ -53,6 +53,8 @@ public:
 	int Start(ovlocals_t argCount, MethodOverload *mo, Value &result);
 
 private:
+	struct ErrorStack;
+
 	// The currently executing managed thread.
 	static TlsEntry<Thread> threadKey;
 
@@ -94,8 +96,14 @@ private:
 	// If successfully caught, this is set to NULL_VALUE *after* the catch clause
 	// has been exited. We need to do this after because the catch clause may be
 	// generic (hence, the error is not in a local or on the stack) and the catch
-	// clause may trigger a GC cycle or may want to rethrow the current error.
+	// clause may trigger a GC cycle and then later rethrow the current error.
 	Value currentError;
+	// The current stack of saved error values.
+	// See ErrorStack for a detailed explanation of how this is used and why it is
+	// necessary.
+	// NOTE: This field contains a pointer directly into the native call stack. It
+	// is absolutely vital that it is restored before exiting the owning method.
+	ErrorStack *errorStack;
 
 	// The critical section that the thread tries to enter when the GC is running
 	// on another thread. The GC enters this section first, and leaves it only when
@@ -346,6 +354,40 @@ private:
 
 	int InitializeMethod(MethodOverload *method);
 	int CallStaticConstructors(instr::MethodBuilder &builder);
+
+	// When looking for a catch clause for a thrown error, we may encounter one
+	// or more finally or fault clauses. A finally or fault clause can contain
+	// any code it likes, including nested try blocks. This means an error may
+	// be thrown and caught in a finally or fault clause. The currentError field
+	// contains the most recently thrown error, but upon exiting the finally or
+	// fault clause, we must make sure currentError contains the same value as
+	// when the clause was entered, so that we can continue handling that error.
+	//
+	// The obvious solution is to simply store the currentError value in a local
+	// variable inside the finally/fault handler, but then the GC cannot reach
+	// it. The error would be obliterated if a GC cycle was triggered inside the
+	// finally or fault clause. Until we have a GC that can scan the native call
+	// stack, we have to save the error in a location the GC can examine, hence
+	// Thread gets a pointer into the native call stack.
+	//
+	// This solution is somewhat convoluted.
+	//
+	// NOTE: Thread::errorStack points directly into the native call stack. You
+	// MUST restore it when exiting the scope containing the ErrorStack value.
+	struct ErrorStack
+	{
+		ErrorStack *prev;
+		Value error;
+
+		// Initializes a new ErrorStack value for the specified thread and pushes
+		// the new entry onto the stack. THIS CONSTRUCTOR MUTATES THE THREAD.
+		inline ErrorStack(Thread *const thread)
+		{
+			prev = thread->errorStack;
+			error = thread->currentError;
+			thread->errorStack = this;
+		}
+	};
 
 	friend class GC;
 	friend class VM;

@@ -14,6 +14,8 @@
 // * An assortment of string values, such as strings contained in modules, and
 //   the file names attached to debug symbols. These are managed by the GC, so
 //   the root set must include them.
+// * The current error being handled (if any), as well as any error saved by a
+//   finally or fault clause (see Thread::ErrorStack).
 //
 // Note that interned strings are NOT in the root set: they can be deallocated
 // like any other value (and subsequently removed from the intern table).
