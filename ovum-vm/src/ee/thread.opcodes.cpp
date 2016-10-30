@@ -61,9 +61,10 @@ int Thread::Evaluate()
 	while (true)
 	{
 		this->ip = ip;
+		IntermediateOpcode opc = static_cast<IntermediateOpcode>(*ip);
 		// Always skip the opcode
 		ip += OVUM_ALIGN_TO(sizeof(IntermediateOpcode), oa::ALIGNMENT);
-		switch (*this->ip)
+		switch (opc)
 		{
 		TARGET(OPI_RET)
 			{
