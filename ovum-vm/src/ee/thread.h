@@ -724,7 +724,7 @@ private:
 	// used inside Evaluate(), where the aforementioned requirements are certain
 	// to be met. A small number are called from friend classes, chiefly the GC.
 	//
-	// Note all public methods have LL equivalents. For example, LoadField() is
+	// Not all public methods have LL equivalents. For example, LoadField() is
 	// implemented in Evaluate() as a call directly to Field::ReadField(). All
 	// LL methods have non-LL versions, however; call those as much as possible.
 	//
