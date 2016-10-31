@@ -401,7 +401,23 @@ int Thread::Throw(bool rethrow)
 {
 	if (!rethrow)
 	{
-		currentError = currentFrame->Peek(0);
+		Value error = currentFrame->Peek();
+
+		// If the error is not an aves.Error, we must construct one and
+		// assign 'error' to the 'data' member.
+		if (!Type::ValueIsType(&error, vm->types.Error))
+		{
+			// Overwriting 'error' is fine, because we can just peek it
+			// from the evaluation stack again.
+			int r = GetGC()->Construct(this, vm->types.Error, 0, &error);
+			if (r != OVUM_SUCCESS)
+				return r;
+
+			error.v.error->data = currentFrame->Peek();
+		}
+		currentError = error;
+
+		// Try to initialize the stack trace.
 		if (!(currentError.v.error->stackTrace = GetStackTrace()))
 			return OVUM_ERROR_NO_MEMORY;
 	}
