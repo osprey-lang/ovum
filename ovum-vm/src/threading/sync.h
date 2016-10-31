@@ -129,20 +129,11 @@ public:
 	// until it becomes available.
 	inline void Enter()
 	{
-		int spinCountLeft = MAX_COUNT_BEFORE_YIELDING;
-		while (spinCountLeft != 0)
-		{
-			if (!flag.test_and_set(std::memory_order_acquire))
-				return;
-			spinCountLeft--;
-		}
-
-		while (true)
-		{
-			if (!flag.test_and_set(std::memory_order_acquire))
-				return;
-			os::Yield();
-		}
+		// This method is kept as minimal as possible to encourage inlining.
+		// It is optimised for the common case of an uncontested lock; only
+		// if the lock is busy do we bother spinning.
+		if (flag.test_and_set(std::memory_order_acquire))
+			SpinWait();
 	}
 
 	// Tries to enter the spinlock. This method returns immediately; if the
@@ -166,6 +157,8 @@ private:
 	static const int MAX_COUNT_BEFORE_YIELDING = 100;
 
 	std::atomic_flag flag;
+
+	OVUM_NOINLINE void SpinWait();
 };
 
 } // namespace ovum

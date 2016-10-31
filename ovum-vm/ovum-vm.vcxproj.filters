@@ -87,6 +87,9 @@
     <Filter Include="Source Files\config">
       <UniqueIdentifier>{435af01e-c648-4d89-8808-af07d2da4805}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\threading">
+      <UniqueIdentifier>{c4a1bc0c-b8c7-46ad-ae92-09e21e126299}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\os\windows.h">
@@ -444,6 +447,9 @@
     </ClCompile>
     <ClCompile Include="src\gc\movedobjectupdater.cpp">
       <Filter>Source Files\gc</Filter>
+    </ClCompile>
+    <ClCompile Include="src\threading\sync.cpp">
+      <Filter>Source Files\threading</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

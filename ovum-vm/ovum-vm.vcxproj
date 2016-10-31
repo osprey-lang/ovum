@@ -208,6 +208,7 @@
     <ClCompile Include="src\object\standardtypeinfo.cpp" />
     <ClCompile Include="src\object\standardtypeiniters.cpp" />
     <ClCompile Include="src\os\windows\windows.cpp" />
+    <ClCompile Include="src\threading\sync.cpp" />
     <ClCompile Include="src\unicode\utf8encoder.cpp" />
     <ClCompile Include="src\util\pathname.cpp" />
     <ClCompile Include="src\os\windows\dllmain.cpp">
