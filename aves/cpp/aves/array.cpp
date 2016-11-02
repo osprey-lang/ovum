@@ -56,7 +56,7 @@ size_t Array::GetSize(int64_t length)
 
 AVES_API int aves_Array_init(TypeHandle type)
 {
-	Type_SetReferenceGetter(type, aves_Array_getReferences);
+	Type_SetReferenceWalker(type, aves_Array_walkReferences);
 	Type_SetConstructorIsAllocator(type, true);
 	RETURN_SUCCESS;
 }
@@ -161,7 +161,7 @@ AVES_API NATIVE_FUNCTION(aves_Array_copyInternal)
 	RETURN_SUCCESS;
 }
 
-int OVUM_CDECL aves_Array_getReferences(void *basePtr, ReferenceVisitor callback, void *cbState)
+int OVUM_CDECL aves_Array_walkReferences(void *basePtr, ReferenceVisitor callback, void *cbState)
 {
 	Array *array = reinterpret_cast<Array*>(basePtr);
 

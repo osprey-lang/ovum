@@ -30,6 +30,6 @@ AVES_API NATIVE_FUNCTION(aves_Array_fillInternal);
 
 AVES_API NATIVE_FUNCTION(aves_Array_copyInternal);
 
-int OVUM_CDECL aves_Array_getReferences(void *basePtr, ReferenceVisitor callback, void *cbState);
+int OVUM_CDECL aves_Array_walkReferences(void *basePtr, ReferenceVisitor callback, void *cbState);
 
 #endif // AVES__ARRAY_H

@@ -118,7 +118,7 @@ retStatus__:
 AVES_API int OVUM_CDECL aves_Hash_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(aves::Hash));
-	Type_SetReferenceGetter(type, aves_Hash_getReferences);
+	Type_SetReferenceWalker(type, aves_Hash_walkReferences);
 
 	int status__;
 	CHECKED(Type_AddNativeField(type, offsetof(aves::Hash, buckets), NativeFieldType::GC_ARRAY));
@@ -444,7 +444,7 @@ AVES_API int OVUM_CDECL InitHashInstance(ThreadHandle thread, int32_t capacity, 
 	return GC_Construct(thread, GetType_Hash(thread), 1, result);
 }
 
-int OVUM_CDECL aves_Hash_getReferences(void *basePtr, ReferenceVisitor callback, void *cbState)
+int OVUM_CDECL aves_Hash_walkReferences(void *basePtr, ReferenceVisitor callback, void *cbState)
 {
 	aves::Hash *hash = reinterpret_cast<aves::Hash*>(basePtr);
 	for (int32_t i = 0; i < hash->count; i++)

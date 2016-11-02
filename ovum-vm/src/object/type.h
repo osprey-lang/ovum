@@ -110,7 +110,7 @@ public:
 	// The reference getter for the type. Is null unless the type has
 	// TypeFlags::CUSTOMPTR, in which case the GC uses this method to
 	// obtain a list of Value references from instance of the type.
-	ReferenceGetter getReferences;
+	ReferenceWalker walkReferences;
 	// The finalizer for the type. Only available to native-code types.
 	Finalizer finalizer;
 	// The number of native fields that can be defined before the array

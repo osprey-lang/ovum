@@ -18,7 +18,7 @@ Type::Type(Module *module, int32_t memberCount) :
 	typeToken(nullptr),
 	size(0),
 	fieldCount(0),
-	getReferences(nullptr),
+	walkReferences(nullptr),
 	finalizer(nullptr),
 	nativeFieldCapacity(0),
 	nativeFields(nullptr),
@@ -323,11 +323,11 @@ OVUM_API void Type_SetInstanceSize(TypeHandle type, size_t size)
 	}
 }
 
-OVUM_API void Type_SetReferenceGetter(TypeHandle type, ReferenceGetter getter)
+OVUM_API void Type_SetReferenceWalker(TypeHandle type, ReferenceWalker getter)
 {
 	if (!type->IsInited())
 	{
-		type->getReferences = getter;
+		type->walkReferences = getter;
 	}
 }
 

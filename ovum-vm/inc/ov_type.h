@@ -167,23 +167,23 @@ inline unsigned int Arity(Operator op)
 //     An array of zero or more managed references.
 typedef int (OVUM_CDECL *ReferenceVisitor)(void *cbState, unsigned int count, Value *values);
 
-// A ReferenceGetter produces an array of Values from a basePtr. This function
+// A ReferenceWalker produces an array of Values from a basePtr. This function
 // is called by the GC for two reasons:
 //   * To mark referenced objects as alive;
 //   * To update references to objects that may have moved.
 //
-// A method that implements ReferenceGetter must call the given ReferenceVisitor
+// A method that implements ReferenceWalker must call the given ReferenceVisitor
 // for each available set of managed references in the object, and MUST pass the
 // value of the 'cbState' as the first argument to 'callback'.
 //
 // If 'callback' returns any value other than OVUM_SUCCESS, it must be returned
-// from the ReferenceGetter, and the callback must not be called again. If the
-// ReferenceGetter call succeeds, it must return OVUM_SUCCESS.
+// from the ReferenceWalker, and the callback must not be called again. If the
+// ReferenceWalker call succeeds, it must return OVUM_SUCCESS.
 //
 // Parameters:
 //   basePtr:
 //     The base of the fields for a value of the type that implements
-//     the ReferenceGetter. This is the instance pointer plus the field
+//     the ReferenceWalker. This is the instance pointer plus the field
 //     offset of the type.
 //   callback:
 //     A function that is called for each set of managed references in
@@ -202,7 +202,7 @@ typedef int (OVUM_CDECL *ReferenceVisitor)(void *cbState, unsigned int count, Va
 //
 // NOTENOTENOTE: basePtr is NOT relative to where the instance begins
 // in memory, but is rather instancePtr + type->fieldsOffset.
-typedef int (OVUM_CDECL *ReferenceGetter)(void *basePtr, ReferenceVisitor callback, void *cbState);
+typedef int (OVUM_CDECL *ReferenceWalker)(void *basePtr, ReferenceVisitor callback, void *cbState);
 
 // A Finalizer is called when the object is about to be deleted.
 // If the type has the flag TYPE_CUSTOMPTR, it may have to supply
@@ -288,7 +288,7 @@ OVUM_API size_t Type_GetInstanceSize(TypeHandle type);
 OVUM_API size_t Type_GetTotalSize(TypeHandle type);
 OVUM_API void Type_SetFinalizer(TypeHandle type, Finalizer finalizer);
 OVUM_API void Type_SetInstanceSize(TypeHandle type, size_t size);
-OVUM_API void Type_SetReferenceGetter(TypeHandle type, ReferenceGetter getter);
+OVUM_API void Type_SetReferenceWalker(TypeHandle type, ReferenceWalker getter);
 OVUM_API void Type_SetConstructorIsAllocator(TypeHandle type, bool isAllocator);
 
 enum class NativeFieldType : int

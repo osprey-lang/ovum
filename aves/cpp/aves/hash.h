@@ -82,7 +82,7 @@ AVES_API int OVUM_CDECL InitHashInstance(ThreadHandle thread, int32_t capacity, 
 
 AVES_API int OVUM_CDECL ConcatenateHashes(ThreadHandle thread, Value *a, Value *b, Value *result);
 
-int OVUM_CDECL aves_Hash_getReferences(void *basePtr, ReferenceVisitor callback, void *cbState);
+int OVUM_CDECL aves_Hash_walkReferences(void *basePtr, ReferenceVisitor callback, void *cbState);
 
 AVES_API NATIVE_FUNCTION(aves_HashEntry_get_hashCode);
 AVES_API NATIVE_FUNCTION(aves_HashEntry_get_nextIndex);

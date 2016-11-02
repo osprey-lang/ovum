@@ -58,6 +58,6 @@ AVES_API NATIVE_FUNCTION(aves_Set_clear);
 AVES_API NATIVE_FUNCTION(aves_Set_hasEntryAt);
 AVES_API NATIVE_FUNCTION(aves_Set_getEntryAt);
 
-int OVUM_CDECL aves_Set_getReferences(void *basePtr, ReferenceVisitor callback, void *cbState);
+int OVUM_CDECL aves_Set_walkReferences(void *basePtr, ReferenceVisitor callback, void *cbState);
 
 #endif // AVES__SET_H

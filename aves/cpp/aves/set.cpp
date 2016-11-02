@@ -70,7 +70,7 @@ int Set::ItemEquals(ThreadHandle thread, Value *a, Value *b, bool &equals)
 AVES_API int OVUM_CDECL aves_Set_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(aves::Set));
-	Type_SetReferenceGetter(type, aves_Set_getReferences);
+	Type_SetReferenceWalker(type, aves_Set_walkReferences);
 
 	int status__;
 	CHECKED(Type_AddNativeField(type, offsetof(aves::Set, buckets), NativeFieldType::GC_ARRAY));
@@ -291,7 +291,7 @@ AVES_API NATIVE_FUNCTION(aves_Set_getEntryAt)
 	RETURN_SUCCESS;
 }
 
-int OVUM_CDECL aves_Set_getReferences(void *basePtr, ReferenceVisitor callback, void *cbState)
+int OVUM_CDECL aves_Set_walkReferences(void *basePtr, ReferenceVisitor callback, void *cbState)
 {
 	aves::Set *set = reinterpret_cast<aves::Set*>(basePtr);
 	for (int32_t i = 0; i < set->count; i++)

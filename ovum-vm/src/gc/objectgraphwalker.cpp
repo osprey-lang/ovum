@@ -64,9 +64,9 @@ void ObjectGraphWalker::VisitCustomFields(ObjectGraphVisitor &visitor, Type *typ
 	if (type->fieldCount != 0)
 		VisitNativeFields(visitor, type, instanceBase);
 
-	// If the type has a reference visitor, let's call it.
-	if (type->getReferences)
-		type->getReferences(
+	// If the type has a reference walker, let's call it.
+	if (type->walkReferences)
+		type->walkReferences(
 			instanceBase,
 			ReferenceVisitorCallback,
 			&visitor
