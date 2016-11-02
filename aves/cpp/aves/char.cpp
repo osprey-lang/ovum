@@ -1,8 +1,8 @@
 #include "char.h"
 #include "string.h"
 #include "../aves_state.h"
-#include <ov_string.h>
-#include <ov_stringbuffer.h>
+#include <ovum_string.h>
+#include <ovum_stringbuffer.h>
 
 using namespace aves;
 

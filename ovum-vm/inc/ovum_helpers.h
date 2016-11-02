@@ -3,7 +3,7 @@
 
 // Various helper functions
 
-#include "ov_vm.h"
+#include "ovum.h"
 
 inline void SetNull(Value &target)
 {

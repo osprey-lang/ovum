@@ -1,7 +1,7 @@
 #ifndef OVUM__THREAD_H
 #define OVUM__THREAD_H
 
-#include "ov_vm.h"
+#include "ovum.h"
 
 // Returns a successful status code. Semicolon intentionally missing.
 #define RETURN_SUCCESS             return OVUM_SUCCESS

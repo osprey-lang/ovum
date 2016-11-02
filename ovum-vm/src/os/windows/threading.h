@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../../inc/ov_vm.h"
+#include "../../../inc/ovum.h"
 #include "def.h"
 #include <limits.h>
 

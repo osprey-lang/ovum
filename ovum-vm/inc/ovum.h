@@ -97,7 +97,7 @@ typedef void *PropertyHandle;
 #define OVUM_HANDLES_DEFINED
 #endif // OVUM_HANDLES_DEFINED
 
-#include "ov_compat.h"
+#include "ovum_compat.h"
 
 // Forward declarations and typedefs of common/fundamental types
 
@@ -254,12 +254,12 @@ struct MethodInst_S
 
 // Include some general useful API functions, as well as
 // the required ov_pathchar.h.
-#include "ov_value.h"
-#include "ov_type.h"
-#include "ov_thread.h"
-#include "ov_gc.h"
-#include "ov_helpers.h"
-#include "ov_pathchar.h"
+#include "ovum_value.h"
+#include "ovum_type.h"
+#include "ovum_thread.h"
+#include "ovum_gc.h"
+#include "ovum_helpers.h"
+#include "ovum_pathchar.h"
 
 OVUM_API void VM_Print(String *str);
 OVUM_API void VM_PrintLn(String *str);

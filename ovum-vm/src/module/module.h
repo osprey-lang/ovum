@@ -2,8 +2,8 @@
 
 #include <exception>
 #include "../vm.h"
-#include "../../inc/ov_string.h"
-#include "../../inc/ov_module.h"
+#include "../../inc/ovum_string.h"
+#include "../../inc/ovum_module.h"
 #include "globalmember.h"
 #include "modulefile.h"
 #include "membertable.h"

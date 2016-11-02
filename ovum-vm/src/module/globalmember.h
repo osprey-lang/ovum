@@ -1,13 +1,13 @@
 #pragma once
 
 #include "../vm.h"
-#include "../../inc/ov_module.h"
+#include "../../inc/ovum_module.h"
 
 namespace ovum
 {
 
 // MAKE SURE TO SYNCHRONIZE WITH PUBLIC VALUES.
-// See inc/ov_module.h
+// See inc/ovum_module.h
 
 enum class GlobalMemberFlags : uint32_t
 {

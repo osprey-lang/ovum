@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../vm.h"
-#include "../../inc/ov_main.h"
+#include "../../inc/ovum_main.h"
 #include "../threading/tls.h"
 #include <cstdio>
 

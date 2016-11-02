@@ -1,7 +1,7 @@
 #ifndef OVUM__MODULE_H
 #define OVUM__MODULE_H
 
-#include "ov_vm.h"
+#include "ovum.h"
 
 typedef struct ModuleVersion_S
 {

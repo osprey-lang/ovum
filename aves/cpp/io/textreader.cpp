@@ -1,6 +1,6 @@
 #include "textreader.h"
 #include "../aves/buffer.h"
-#include <ov_stringbuffer.h>
+#include <ovum_stringbuffer.h>
 #include <stddef.h>
 
 namespace strings

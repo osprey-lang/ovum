@@ -1,7 +1,7 @@
 #ifndef OVUM__UNICODE_H
 #define OVUM__UNICODE_H
 
-#include "ov_vm.h"
+#include "ovum.h"
 
 // Each value is a Unicode general category. Categories are made up of two
 // values: one byte that defines the "top" category, such as Letter, Mark,

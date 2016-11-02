@@ -2,7 +2,7 @@
 #include "type.h"
 #include "../../aves_state.h"
 #include "../../tempbuffer.h"
-#include <ov_module.h>
+#include <ovum_module.h>
 #include <stddef.h>
 
 using namespace aves;

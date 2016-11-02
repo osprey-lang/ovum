@@ -2,7 +2,7 @@
 #define AVES__WINDOWS_H
 
 // Required by helper functions
-#include <ov_vm.h>
+#include <ovum.h>
 
 #include <WinSDKVer.h>
 #define _WIN32_WINNT _WIN32_WINNT_WIN7

@@ -1,7 +1,7 @@
 #ifndef OVUM__STRING_H
 #define OVUM__STRING_H
 
-#include "ov_vm.h"
+#include "ovum.h"
 
 OVUM_API int32_t String_GetHashCode(String *str);
 OVUM_API int32_t String_GetHashCodeSubstr(const String *str, int32_t index, int32_t count);

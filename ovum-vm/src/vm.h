@@ -87,7 +87,7 @@ typedef ovum::Property       *PropertyHandle;
 
 // Public Ovum header.
 
-#include "../inc/ov_vm.h"
+#include "../inc/ovum.h"
 
 // OS-specific code, which implements everything in ovum::os.
 

@@ -1,9 +1,9 @@
 #include "string.h"
 #include "char.h"
 #include "../aves_state.h"
-#include <ov_stringbuffer.h>
-#include <ov_string.h>
-#include <ov_unicode.h>
+#include <ovum_stringbuffer.h>
+#include <ovum_string.h>
+#include <ovum_unicode.h>
 
 using namespace aves;
 

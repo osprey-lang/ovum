@@ -3,7 +3,7 @@
 
 #include <memory>
 
-#include "ov_vm.h"
+#include "ovum.h"
 
 // This is basically the same as ov_stringbuffer.internal.h, except rewritten slightly to be
 //   1. Fully inlined;

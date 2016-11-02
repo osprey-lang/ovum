@@ -3,7 +3,7 @@
 #include "field.h"
 #include "method.h"
 #include "../module/module.h"
-#include "../../inc/ov_string.h"
+#include "../../inc/ovum_string.h"
 #include "../ee/thread.h"
 #include "../ee/refsignature.h"
 #include "../gc/gc.h"

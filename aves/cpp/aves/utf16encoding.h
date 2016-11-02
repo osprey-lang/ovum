@@ -3,7 +3,7 @@
 
 #include "../aves.h"
 #include "buffer.h"
-#include <ov_stringbuffer.h>
+#include <ovum_stringbuffer.h>
 
 struct Utf16Encoding
 {

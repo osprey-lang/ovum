@@ -1,6 +1,6 @@
 #include "enum.h"
 #include "../aves_state.h"
-#include <ov_stringbuffer.h>
+#include <ovum_stringbuffer.h>
 
 AVES_API NATIVE_FUNCTION(aves_Enum_getHashCode)
 {

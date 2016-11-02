@@ -1,7 +1,7 @@
 #ifndef OVUM__VALUE_H
 #define OVUM__VALUE_H
 
-#include "ov_vm.h"
+#include "ovum.h"
 
 // This aggregate template class allows a String to be represented "literally",
 // in an aggregate initializer. Remember that you have to repeat the length twice.

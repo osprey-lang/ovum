@@ -1,6 +1,6 @@
 #include "modulepool.h"
 #include "module.h"
-#include "../../inc/ov_string.h"
+#include "../../inc/ovum_string.h"
 
 namespace ovum
 {

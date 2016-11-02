@@ -88,8 +88,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="inc\ov_main.h" />
-    <ClInclude Include="inc\ov_pathchar.h" />
+    <ClInclude Include="inc\ovum_main.h" />
+    <ClInclude Include="inc\ovum_pathchar.h" />
     <ClInclude Include="src\config\defaults.h" />
     <ClInclude Include="src\debug\debugfile.h" />
     <ClInclude Include="src\ee\instructions.h" />
@@ -154,34 +154,34 @@
     <ClInclude Include="src\threading\sync.h" />
     <ClInclude Include="src\module\membertable.h" />
     <ClInclude Include="src\module\modulereader.h" />
-    <ClInclude Include="inc\ov_compat.h" />
+    <ClInclude Include="inc\ovum_compat.h" />
     <ClInclude Include="src\debug\debugsymbols.h" />
-    <ClInclude Include="inc\ov_gc.h" />
+    <ClInclude Include="inc\ovum_gc.h" />
     <ClInclude Include="src\gc\gc.h" />
-    <ClInclude Include="inc\ov_helpers.h" />
-    <ClInclude Include="inc\ov_module.h" />
+    <ClInclude Include="inc\ovum_helpers.h" />
+    <ClInclude Include="inc\ovum_module.h" />
     <ClInclude Include="src\module\module.h" />
     <ClInclude Include="src\res\staticstrings.h" />
-    <ClInclude Include="inc\ov_string.h" />
-    <ClInclude Include="inc\ov_stringbuffer.h" />
+    <ClInclude Include="inc\ovum_string.h" />
+    <ClInclude Include="inc\ovum_stringbuffer.h" />
     <ClInclude Include="src\unicode\utf8encoder.h" />
     <ClInclude Include="src\util\stringbuffer.h" />
     <ClInclude Include="src\util\pathname.h" />
     <ClInclude Include="src\ee\refsignature.h" />
     <ClInclude Include="src\gc\stringtable.h" />
-    <ClInclude Include="inc\ov_thread.h" />
+    <ClInclude Include="inc\ovum_thread.h" />
     <ClInclude Include="src\ee\thread.h" />
     <ClInclude Include="src\object\type.h" />
     <ClInclude Include="src\ee\thread.opcodes.h" />
     <ClInclude Include="src\util\stringformatters.h" />
     <ClInclude Include="src\util\stringhash.h" />
     <ClInclude Include="src\os\windows.h" />
-    <ClInclude Include="inc\ov_type.h" />
-    <ClInclude Include="inc\ov_unicode.h" />
+    <ClInclude Include="inc\ovum_type.h" />
+    <ClInclude Include="inc\ovum_unicode.h" />
     <ClInclude Include="src\unicode\unicode.h" />
-    <ClInclude Include="inc\ov_value.h" />
+    <ClInclude Include="inc\ovum_value.h" />
     <ClInclude Include="src\object\value.h" />
-    <ClInclude Include="inc\ov_vm.h" />
+    <ClInclude Include="inc\ovum.h" />
     <ClInclude Include="src\vm.h" />
     <ClInclude Include="src\ee\vm.h" />
   </ItemGroup>

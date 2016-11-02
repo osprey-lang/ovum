@@ -1,7 +1,7 @@
 #include "path.h"
 #include "io.h"
 #include "../aves_state.h"
-#include <ov_string.h>
+#include <ovum_string.h>
 #include <memory>
 
 using namespace aves;

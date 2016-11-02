@@ -1,7 +1,7 @@
 #pragma once
 
 #include "modulefile.h"
-#include "../../inc/ov_module.h" // for ModuleVersion
+#include "../../inc/ovum_module.h" // for ModuleVersion
 #include "../vm.h"
 #include "../ee/vm.h"
 #include "../util/pathname.h"

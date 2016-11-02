@@ -1,7 +1,7 @@
 #ifndef OVUM__GC_H
 #define OVUM__GC_H
 
-#include "ov_vm.h"
+#include "ovum.h"
 
 // Constructs an instance of the specified type. The type's constructor is called with the
 // specified number of arguments from the stack.

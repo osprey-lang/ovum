@@ -1,5 +1,5 @@
 #include "../vm.h"
-#include "../../inc/ov_string.h"
+#include "../../inc/ovum_string.h"
 #include "stringtable.h"
 
 namespace ovum

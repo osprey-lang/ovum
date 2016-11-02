@@ -1,5 +1,5 @@
 #include "utf8encoder.h"
-#include "../../inc/ov_unicode.h"
+#include "../../inc/ovum_unicode.h"
 
 namespace ovum
 {

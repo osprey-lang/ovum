@@ -1,5 +1,5 @@
 #include "object.h"
-#include <ov_stringbuffer.h>
+#include <ovum_stringbuffer.h>
 
 AVES_API NATIVE_FUNCTION(aves_Object_new)
 {

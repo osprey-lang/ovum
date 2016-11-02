@@ -1,5 +1,5 @@
 #include "../vm.h"
-#include "../../inc/ov_helpers.h"
+#include "../../inc/ovum_helpers.h"
 #include "../ee/thread.h"
 #include "../object/value.h"
 #include "../res/staticstrings.h"

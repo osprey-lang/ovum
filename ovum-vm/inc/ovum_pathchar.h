@@ -22,7 +22,7 @@
 // Note: OVUM_PATH_SEP[C][_ALT] and OVUM_PATHN[W]F are macros so that they can
 // be used to concatenate string literals, if it should ever be necessary.
 
-#include "ov_vm.h"
+#include "ovum.h"
 
 // First, select an appropriate size for pathchar_t, if one isn't
 // defined already.

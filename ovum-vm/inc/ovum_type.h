@@ -1,7 +1,7 @@
 #ifndef OVUM__TYPE_H
 #define OVUM__TYPE_H
 
-#include "ov_vm.h"
+#include "ovum.h"
 
 typedef int (OVUM_CDECL *NativeMethod)(ThreadHandle thread, ovlocals_t argc, Value args[]);
 // Adds the magic parameters 'ThreadHandle thread', 'int argc' and 'Value args[]' to a function definition.

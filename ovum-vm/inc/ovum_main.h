@@ -3,7 +3,7 @@
 
 // Defines types and API functions for starting the VM.
 
-#include "ov_vm.h"
+#include "ovum.h"
 
 typedef struct VMStartParams_S
 {

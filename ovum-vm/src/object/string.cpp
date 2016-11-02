@@ -1,6 +1,6 @@
 #include "../vm.h"
-#include "../../inc/ov_unicode.h"
-#include "../../inc/ov_string.h"
+#include "../../inc/ovum_unicode.h"
+#include "../../inc/ovum_string.h"
 #include "../gc/gc.h"
 #include "../ee/thread.h"
 #include "../res/staticstrings.h"

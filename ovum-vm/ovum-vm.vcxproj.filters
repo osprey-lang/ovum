@@ -119,42 +119,6 @@
     <ClInclude Include="src\os\windows\filesystem.h">
       <Filter>Header Files\src\os\windows</Filter>
     </ClInclude>
-    <ClInclude Include="inc\ov_unicode.h">
-      <Filter>Header Files\inc</Filter>
-    </ClInclude>
-    <ClInclude Include="inc\ov_compat.h">
-      <Filter>Header Files\inc</Filter>
-    </ClInclude>
-    <ClInclude Include="inc\ov_gc.h">
-      <Filter>Header Files\inc</Filter>
-    </ClInclude>
-    <ClInclude Include="inc\ov_helpers.h">
-      <Filter>Header Files\inc</Filter>
-    </ClInclude>
-    <ClInclude Include="inc\ov_module.h">
-      <Filter>Header Files\inc</Filter>
-    </ClInclude>
-    <ClInclude Include="inc\ov_pathchar.h">
-      <Filter>Header Files\inc</Filter>
-    </ClInclude>
-    <ClInclude Include="inc\ov_string.h">
-      <Filter>Header Files\inc</Filter>
-    </ClInclude>
-    <ClInclude Include="inc\ov_stringbuffer.h">
-      <Filter>Header Files\inc</Filter>
-    </ClInclude>
-    <ClInclude Include="inc\ov_thread.h">
-      <Filter>Header Files\inc</Filter>
-    </ClInclude>
-    <ClInclude Include="inc\ov_type.h">
-      <Filter>Header Files\inc</Filter>
-    </ClInclude>
-    <ClInclude Include="inc\ov_value.h">
-      <Filter>Header Files\inc</Filter>
-    </ClInclude>
-    <ClInclude Include="inc\ov_vm.h">
-      <Filter>Header Files\inc</Filter>
-    </ClInclude>
     <ClInclude Include="src\os\_template\mmf.h">
       <Filter>Header Files\src\os\_template</Filter>
     </ClInclude>
@@ -263,9 +227,6 @@
     <ClInclude Include="src\object\standardtypeinfo.h">
       <Filter>Header Files\src\object</Filter>
     </ClInclude>
-    <ClInclude Include="inc\ov_main.h">
-      <Filter>Header Files\inc</Filter>
-    </ClInclude>
     <ClInclude Include="src\ee\stackframe.h">
       <Filter>Header Files\src\ee</Filter>
     </ClInclude>
@@ -316,6 +277,45 @@
     </ClInclude>
     <ClInclude Include="src\gc\movedobjectupdater.h">
       <Filter>Header Files\src\gc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\ovum.h">
+      <Filter>Header Files\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\ovum_value.h">
+      <Filter>Header Files\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\ovum_unicode.h">
+      <Filter>Header Files\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\ovum_type.h">
+      <Filter>Header Files\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\ovum_thread.h">
+      <Filter>Header Files\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\ovum_stringbuffer.h">
+      <Filter>Header Files\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\ovum_string.h">
+      <Filter>Header Files\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\ovum_pathchar.h">
+      <Filter>Header Files\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\ovum_module.h">
+      <Filter>Header Files\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\ovum_main.h">
+      <Filter>Header Files\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\ovum_helpers.h">
+      <Filter>Header Files\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\ovum_gc.h">
+      <Filter>Header Files\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\ovum_compat.h">
+      <Filter>Header Files\inc</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

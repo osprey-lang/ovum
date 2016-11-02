@@ -2,7 +2,7 @@
 
 #include "../vm.h"
 #include "../util/pathname.h"
-#include "../../inc/ov_module.h"
+#include "../../inc/ovum_module.h"
 
 namespace ovum
 {

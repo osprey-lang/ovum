@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../vm.h"
-#include "../../inc/ov_unicode.h"
+#include "../../inc/ovum_unicode.h"
 
 namespace ovum
 {
