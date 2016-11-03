@@ -54,8 +54,6 @@ const StaticStringData staticStringData = {
 	{ 2, 0, StringFlags::STATIC, 42,42,0 },
 	{ 2, 0, StringFlags::STATIC, 60,60,0 },
 	{ 2, 0, StringFlags::STATIC, 62,62,0 },
-	{ 1, 0, StringFlags::STATIC, 35,0 },
-	{ 1, 0, StringFlags::STATIC, 36,0 },
 	{ 1, 0, StringFlags::STATIC, 43,0 },
 	{ 1, 0, StringFlags::STATIC, 45,0 },
 	{ 1, 0, StringFlags::STATIC, 126,0 },
@@ -165,8 +163,6 @@ void StaticStrings::InitStrings()
 	this->operators.power = reinterpret_cast<String*>(&data->operators_power);
 	this->operators.shiftLeft = reinterpret_cast<String*>(&data->operators_shiftLeft);
 	this->operators.shiftRight = reinterpret_cast<String*>(&data->operators_shiftRight);
-	this->operators.hash = reinterpret_cast<String*>(&data->operators_hash);
-	this->operators.dollar = reinterpret_cast<String*>(&data->operators_dollar);
 	this->operators.plus = reinterpret_cast<String*>(&data->operators_plus);
 	this->operators.negate = reinterpret_cast<String*>(&data->operators_negate);
 	this->operators.not = reinterpret_cast<String*>(&data->operators_not);

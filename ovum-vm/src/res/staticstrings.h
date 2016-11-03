@@ -57,8 +57,6 @@ struct StaticStringData
 	LitString<2> operators_power;
 	LitString<2> operators_shiftLeft;
 	LitString<2> operators_shiftRight;
-	LitString<1> operators_hash;
-	LitString<1> operators_dollar;
 	LitString<1> operators_plus;
 	LitString<1> operators_negate;
 	LitString<1> operators_not;
@@ -139,8 +137,6 @@ public:
 		::String *power;
 		::String *shiftLeft;
 		::String *shiftRight;
-		::String *hash;
-		::String *dollar;
 		::String *plus;
 		::String *negate;
 		::String *not;

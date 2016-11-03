@@ -48,8 +48,6 @@
 		"power": "**",
 		"shiftLeft": "<<",
 		"shiftRight": ">>",
-		"hash": "#",
-		"dollar": "$",
 		"plus": "+",
 		"negate": "-",
 		"not": "~",

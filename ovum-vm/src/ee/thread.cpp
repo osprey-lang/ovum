@@ -1191,12 +1191,10 @@ int Thread::ThrowMissingOperatorError(Operator op)
 		operators.power,      // Operator::POW
 		operators.shiftLeft,  // Operator::SHL
 		operators.shiftRight, // Operator::SHR
-		operators.hash,       // Operator::HASHOP
-		operators.dollar,     // Operator::DOLLAR
 		operators.plus,       // Operator::PLUS
 		operators.negate,     // Operator::NEG
 		operators.not,        // Operator::NOT
-		operators.or,         // Operator::EQ
+		operators.equal,      // Operator::EQ
 		operators.compare,    // Operator::CMP
 	};
 	static const char *const baseMessage = "The type does not support the specified operator. (Operator: ";
