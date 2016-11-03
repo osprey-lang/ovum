@@ -114,6 +114,8 @@ public:
 	);
 
 private:
+	OVUM_DISABLE_COPY_AND_ASSIGN(Module);
+
 	// The module's name.
 	String *name;
 	// The module's version.
