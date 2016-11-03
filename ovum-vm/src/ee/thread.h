@@ -42,7 +42,7 @@ OVUM_ENUM_OPS(ThreadFlags, int);
 class Thread
 {
 public:
-	OVUM_NOINLINE static int New(VM *owner, Box<Thread> &result);
+	OVUM_NOINLINE static Box<Thread> New(VM *owner);
 
 	// Gets the currently executing managed thread. If no managed thread is associated with
 	// the current native thread, returns null.
@@ -599,10 +599,13 @@ private:
 	// the cycle.
 	CriticalSection gcCycleSection;
 
-	Thread(VM *owner, int &status);
+	Thread(VM *owner);
 
-	// Initializes the managed call stack. Returns OVUM_SUCCESS on success.
-	int InitCallStack();
+	// Initializes the thread. Returns true on success.
+	bool Init();
+
+	// Initializes the managed call stack. Returns true on success.
+	bool InitCallStack();
 
 	// Destroys the managed call stack, called from the destructor.
 	void DisposeCallStack();

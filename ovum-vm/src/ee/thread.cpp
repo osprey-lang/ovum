@@ -19,21 +19,22 @@ namespace ovum
 
 TlsEntry<Thread> Thread::threadKey;
 
-int Thread::New(VM *owner, Box<Thread> &result)
+Box<Thread> Thread::New(VM *owner)
 {
 	// Try to allocate the TLS key first
 	if (!threadKey.IsValid() && !threadKey.Alloc())
-		return OVUM_ERROR_NO_MEMORY;
+		return nullptr;
 
 	// And now make the thread!
-	int status = OVUM_ERROR_NO_MEMORY;
-	Box<Thread> thread(new(std::nothrow) Thread(owner, status));
-	if (thread)
-		result = std::move(thread);
-	return status;
+	Box<Thread> thread(new(std::nothrow) Thread(owner));
+
+	if (!thread || !thread->Init())
+		return nullptr;
+
+	return std::move(thread);
 }
 
-Thread::Thread(VM *owner, int &status) :
+Thread::Thread(VM *owner) :
 	ip(nullptr),
 	currentFrame(nullptr),
 	pendingRequest(ThreadRequest::NONE),
@@ -46,15 +47,7 @@ Thread::Thread(VM *owner, int &status) :
 	errorStack(nullptr),
 	gcCycleSection(4000)
 {
-	status = InitCallStack();
-	if (status == OVUM_SUCCESS)
-	{
-		nativeId = os::GetCurrentThread();
-		// Associate the VM with the native thread
-		VM::vmKey.Set(owner);
-		// And this managed thread, too
-		threadKey.Set(this);
-	}
+	nativeId = os::GetCurrentThread();
 }
 
 Thread::~Thread()
@@ -62,15 +55,28 @@ Thread::~Thread()
 	DisposeCallStack();
 }
 
-int Thread::InitCallStack()
+bool Thread::Init()
+{
+	if (!InitCallStack())
+		return false;
+
+	// Associate the VM with the native thread
+	VM::vmKey.Set(vm);
+	// And this managed thread, too
+	threadKey.Set(this);
+
+	return true;
+}
+
+bool Thread::InitCallStack()
 {
 	callStack = (unsigned char*)os::VirtualAlloc(
 		nullptr,
 		config::Defaults::CALL_STACK_SIZE + 256,
 		os::VPROT_READ_WRITE
-		);
+	);
 	if (callStack == nullptr)
-		return OVUM_ERROR_NO_MEMORY;
+		return false;
 
 	// Make sure the page following the call stack will cause an instant segfault,
 	// as a very dirty way of signalling a stack overflow.
@@ -84,7 +90,7 @@ int Thread::InitCallStack()
 	// main method of the thread.
 	PushFirstStackFrame();
 
-	RETURN_SUCCESS;
+	return true;
 }
 
 void Thread::DisposeCallStack()

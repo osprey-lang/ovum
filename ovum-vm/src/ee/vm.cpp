@@ -107,7 +107,7 @@ int VM::New(VMStartParams &params, Box<VM> &result)
 		// Most things rely on static strings, so initialize them first.
 		CHECKED_MEM(vm->strings = StaticStrings::New());
 
-		CHECKED(Thread::New(vm.get(), vm->mainThread));
+		CHECKED_MEM(vm->mainThread = Thread::New(vm.get()));
 		CHECKED_MEM(vm->gc = GC::New(vm.get()));
 		CHECKED_MEM(vm->standardTypeCollection = StandardTypeCollection::New(vm.get()));
 		CHECKED_MEM(vm->modules = Box<ModulePool>(new(std::nothrow) ModulePool(10)));
