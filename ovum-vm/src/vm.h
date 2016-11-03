@@ -31,6 +31,7 @@ class ModulePool;
 class ModuleReader;
 class MovedObjectUpdater;
 class ObjectGraphWalker;
+class PartiallyOpenedModulesList;
 class PathName;
 class Property;
 class RefSignaturePool;

@@ -61,11 +61,13 @@ void ModuleFile::HandleFileOpenError(os::FileStatus error)
 	throw ModuleIOException(message);
 }
 
-ModuleReader::ModuleReader(VM *owner) :
+ModuleReader::ModuleReader(VM *owner, PartiallyOpenedModulesList &partiallyOpenedModules) :
 	file(),
 	vm(owner),
-	unresolvedConstants()
+	unresolvedConstants(),
+	partiallyOpenedModules(partiallyOpenedModules)
 { }
+
 ModuleReader::~ModuleReader()
 { }
 
@@ -92,8 +94,9 @@ Box<Module> ModuleReader::ReadModule()
 		header->constantCount;
 
 	Box<Module> output(new Module(vm, GetFileName(), params));
-	// We have to add the module to the pool, so that we can detect circular references.
-	vm->GetModulePool()->Add(output.get());
+	// We have to add the module to the list of partially opened modules, so that
+	// we can detect circular references.
+	partiallyOpenedModules.Add(output.get());
 
 	// Load the native library first, if there is one.
 	if (!header->nativeLib.IsNull())
@@ -125,6 +128,7 @@ Box<Module> ModuleReader::ReadModule()
 			nativeMain(output.get());
 	}
 
+	partiallyOpenedModules.Remove(output.get());
 	return std::move(output);
 }
 
@@ -219,9 +223,12 @@ void ModuleReader::ReadModuleRefs(Module *module, const mf::RefTableHeader *head
 		String *name = ResolveString(module, ref->name);
 		ModuleVersion version = ReadVersion(ref->version);
 
-		Module *importedModule = Module::OpenByName(vm, name, &version);
-		if (!importedModule->fullyOpened)
+		// If the module is partially opened, we must be dealing with a
+		// circular reference, whether direct or indirect.
+		if (partiallyOpenedModules.Contains(name, &version))
 			ModuleLoadError("Circular dependency detected.");
+
+		Module *importedModule = Module::OpenByName(vm, name, &version, partiallyOpenedModules);
 		if (importedModule->version != version)
 			ModuleLoadError("Dependent module has the wrong version.");
 

@@ -110,7 +110,7 @@ int VM::New(VMStartParams &params, Box<VM> &result)
 		CHECKED_MEM(vm->mainThread = Thread::New(vm.get()));
 		CHECKED_MEM(vm->gc = GC::New(vm.get()));
 		CHECKED_MEM(vm->standardTypeCollection = StandardTypeCollection::New(vm.get()));
-		CHECKED_MEM(vm->modules = Box<ModulePool>(new(std::nothrow) ModulePool(10)));
+		CHECKED_MEM(vm->modules = ModulePool::New(10));
 		CHECKED_MEM(vm->refSignatures = Box<RefSignaturePool>(new(std::nothrow) RefSignaturePool()));
 
 		CHECKED(vm->LoadModules(params));
@@ -142,7 +142,14 @@ int VM::LoadModules(VMStartParams &params)
 		PathName startupFile(params.startupFile, std::nothrow);
 		if (!startupFile.IsValid())
 			return OVUM_ERROR_NO_MEMORY;
-		this->startupModule = Module::Open(this, startupFile, nullptr);
+
+		PartiallyOpenedModulesList partiallyOpenedModules;
+		this->startupModule = Module::Open(
+			this,
+			startupFile,
+			nullptr,
+			partiallyOpenedModules
+		);
 	}
 	catch (ModuleLoadException &e)
 	{

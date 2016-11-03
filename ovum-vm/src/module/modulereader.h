@@ -84,7 +84,7 @@ private:
 class ModuleReader
 {
 public:
-	ModuleReader(VM *owner);
+	ModuleReader(VM *owner, PartiallyOpenedModulesList &partiallyOpenedModules);
 	~ModuleReader();
 
 	void Open(const pathchar_t *fileName);
@@ -117,6 +117,10 @@ private:
 
 	// Vector of fields with unresolved constant value types.
 	std::vector<UnresolvedConstant> unresolvedConstants;
+
+	// List of partially read modules, for detecting circular references.
+	// Note: This is a reference, owned by someone else!
+	PartiallyOpenedModulesList &partiallyOpenedModules;
 
 	String *ReadString(module_file::Rva<module_file::WideString> rva);
 

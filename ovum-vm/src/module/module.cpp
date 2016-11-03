@@ -24,7 +24,6 @@ Module::Module(VM *vm, const PathName &fileName, ModuleParams &params) :
 	name(params.name),
 	version(params.version),
 	fileName(fileName),
-	fullyOpened(false),
 	staticState(nullptr),
 	staticStateDeallocator(nullptr),
 	// defs - initialized later
@@ -55,11 +54,6 @@ Module::~Module()
 	if (staticStateDeallocator)
 		staticStateDeallocator(staticState);
 	FreeNativeLibrary();
-
-	// If the module is not fullyOpened, then the module is being deallocated from
-	// an exception in Module::Open, so we must remove it from the pool again.
-	if (!fullyOpened && pool)
-		pool->Remove(this);
 }
 
 Module *Module::FindModuleRef(String *name) const
@@ -214,27 +208,36 @@ void *Module::FindNativeFunction(const char *name)
 
 void Module::InitStaticState(void *state, StaticStateDeallocator deallocator)
 {
-	if (fullyOpened || deallocator == nullptr)
+	if (deallocator == nullptr)
 		return;
 
 	this->staticState = state;
 	this->staticStateDeallocator = deallocator;
 }
 
-Module *Module::Open(VM *vm, const PathName &fileName, ModuleVersion *requiredVersion)
+Module *Module::Open(
+	VM *vm,
+	const PathName &fileName,
+	ModuleVersion *requiredVersion,
+	PartiallyOpenedModulesList &partiallyOpenedModules
+)
 {
+	ModulePool *pool = vm->GetModulePool();
 	Module *outputModule = nullptr;
 
 	try
 	{
-		ModuleReader reader(vm);
+		ModuleReader reader(vm, partiallyOpenedModules);
 		reader.Open(fileName);
 
 		Box<Module> output = reader.ReadModule();
 
 		debug::ModuleDebugData::TryLoad(fileName, output.get());
 
-		outputModule = output.release();
+		outputModule = output.get();
+
+		// ModulePool takes ownership of the module now
+		pool->Add(std::move(output));
 	}
 	catch (ModuleIOException &ioError)
 	{
@@ -245,12 +248,15 @@ Module *Module::Open(VM *vm, const PathName &fileName, ModuleVersion *requiredVe
 		throw ModuleLoadException(fileName, "Out of memory");
 	}
 
-	outputModule->fullyOpened = true;
-
 	return outputModule;
 }
 
-Module *Module::OpenByName(VM *vm, String *name, ModuleVersion *requiredVersion)
+Module *Module::OpenByName(
+	VM *vm,
+	String *name,
+	ModuleVersion *requiredVersion,
+	PartiallyOpenedModulesList &partiallyOpenedModules
+)
 {
 	Module *output;
 	if (output = vm->GetModulePool()->Get(name, requiredVersion))
@@ -273,7 +279,12 @@ Module *Module::OpenByName(VM *vm, String *name, ModuleVersion *requiredVersion)
 		wprintf(L"from file '" OVUM_PATHNWF L"'\n", moduleFileName.GetDataPointer());
 	}
 
-	output = Open(vm, moduleFileName, requiredVersion);
+	output = Open(
+		vm,
+		moduleFileName,
+		requiredVersion,
+		partiallyOpenedModules
+	);
 
 	if (vm->verbose)
 		VM::Printf(L"Successfully loaded module '%ls'\n", name);

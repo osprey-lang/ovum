@@ -99,9 +99,19 @@ public:
 	void InitStaticState(void *state, StaticStateDeallocator deallocator);
 
 	// See ModuleFinder for details on how modules are located.
-	static Module *OpenByName(VM *vm, String *name, ModuleVersion *requiredVersion);
+	static Module *OpenByName(
+		VM *vm,
+		String *name,
+		ModuleVersion *requiredVersion,
+		PartiallyOpenedModulesList &partiallyOpenedModules
+	);
 
-	static Module *Open(VM *vm, const PathName &fileName, ModuleVersion *requiredVersion);
+	static Module *Open(
+		VM *vm,
+		const PathName &fileName,
+		ModuleVersion *requiredVersion,
+		PartiallyOpenedModulesList &partiallyOpenedModules
+	);
 
 private:
 	// The module's name.
@@ -110,11 +120,6 @@ private:
 	ModuleVersion version;
 	// The name of the file from which the module was loaded.
 	const PathName fileName;
-
-	// Set to true when the module file has been fully loaded
-	// If a module depends on another module with this set to false,
-	// then there's a circular dependency issue.
-	bool fullyOpened;
 
 	// The module's main method.
 	Method *mainMethod;
@@ -200,7 +205,6 @@ public:
 	inline ModuleLoadException(const PathName &fileName, const char *message)
 		: fileName(fileName), exception(message)
 	{ }
-
 	inline ModuleLoadException(const pathchar_t *fileName, const char *message) :
 		fileName(fileName), exception(message)
 	{ }
