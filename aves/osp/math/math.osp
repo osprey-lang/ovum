@@ -143,7 +143,7 @@ namespace math
 	///          requirement is that the type of {a} supports the `/` and `%` operators.
 	public function divRem(a, b)
 	{
-		return a / b, a % b;
+		return [a / b, a % b];
 	}
 
 	/// Summary: Returns e raised to the specified power.
