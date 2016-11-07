@@ -724,9 +724,13 @@ public class String is Collection
 	private getTrimStart(charSet)
 	{
 		var start = 0;
-		var ch;
-		while start < length and charSet.contains(ch = getCharacter(start)):
+		while start < length
+		{
+			var ch = getCharacter(start);
+			if not charSet.contains(ch):
+				break;
 			start += ch.length;
+		}
 		return start;
 	}
 
@@ -740,9 +744,13 @@ public class String is Collection
 	private getTrimEnd(charSet)
 	{
 		var end = length - 1;
-		var ch;
-		while end >= 0 and charSet.contains(ch = getCharacter(end)):
+		while end >= 0
+		{
+			var ch = getCharacter(end);
+			if not charSet.contains(ch):
+				break;
 			end -= ch.length;
+		}
 		return end;
 	}
 

@@ -47,7 +47,8 @@ internal class SkipIterator is Iterator
 				count -= 1;
 			}
 
-			return hasMore = inner.moveNext();
+			hasMore = inner.moveNext();
+			return hasMore;
 		}
 		return false;
 	}

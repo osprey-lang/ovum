@@ -50,7 +50,11 @@ public class Int __primitive
 			const digit0 = 0x30;
 			const digit9 = 0x39;
 
-			if i == strLength or (cp = str.getCodePoint(i)) < digit0 or cp > digit9:
+			if i == strLength:
+				break parse;
+
+			cp = str.getCodePoint(i);
+			if cp < digit0 or cp > digit9:
 				break parse; // next character must be a digit!
 
 			var result = 0;
@@ -58,19 +62,25 @@ public class Int __primitive
 			{
 				if neg
 				{
-					do
+					while i < strLength
 					{
-						result = 10*result - (cp - digit0);
+						cp = str.getCodePoint(i);
+						if cp < digit0 or cp > digit9:
+							break;
+						result = 10 * result - (cp - digit0);
 						i += 1;
-					} while i < strLength and (cp = str.getCodePoint(i)) >= digit0 and cp <= digit9;
+					}
 				}
 				else
 				{
-					do
+					while i < strLength
 					{
-						result = 10*result + (cp - digit0);
+						cp = str.getCodePoint(i);
+						if cp < digit0 or cp > digit9:
+							break;
+						result = 10 * result + (cp - digit0);
 						i += 1;
-					} while i < strLength and (cp = str.getCodePoint(i)) >= digit0 and cp <= digit9;
+					}
 				}
 			}
 			catch OverflowError

@@ -431,8 +431,11 @@ public abstract class Iterable
 			var value = valueFunc(item);
 
 			var groupValues;
-			if not result.tryGet(key, ref groupValues):
-				result.add(key, groupValues = new List(2));
+			if not result.tryGet(key, ref groupValues)
+			{
+				groupValues = new List(2);
+				result.add(key, groupValues);
+			}
 
 			groupValues.add(value);
 		}

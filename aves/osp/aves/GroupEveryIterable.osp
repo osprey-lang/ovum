@@ -31,10 +31,15 @@ internal class GroupEveryIterator is Iterator
 		{
 			var items = [];
 
-			while hasMore = inner.moveNext()
+			while true
 			{
-				items.add(inner.current);
+				if not inner.moveNext()
+				{
+					hasMore = false;
+					break;
+				}
 
+				items.add(inner.current);
 				if items.length == frequency:
 					break;
 			}
