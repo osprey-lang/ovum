@@ -77,14 +77,14 @@ public inheritable TextReader
 	private set _stream
 		__extern("io_TextReader_set_stream");
 	/// Summary: Gets a reference to the stream that is being read from.
-	public get stream = _stream;
+	public get stream => _stream;
 
 	private get _encoding
 		__extern("io_TextReader_get_encoding");
 	private set _encoding
 		__extern("io_TextReader_set_encoding");
 	/// Summary: Gets the character encoding that the text reader uses.
-	public get encoding = _encoding;
+	public get encoding => _encoding;
 
 	private get _keepOpen
 		__extern("io_TextReader_get_keepOpen");
@@ -93,7 +93,7 @@ public inheritable TextReader
 	/// Summary: Determines whether the text reader closes the stream
 	///          when the {close} method is called. If true, the stream
 	///          will be kept open.
-	public get keepOpen = _keepOpen;
+	public get keepOpen => _keepOpen;
 	/// Summary: Sets a value that determines whether the text reader
 	///          closes the stream when the {close} method is called. If
 	///          true, the stream will be kept open.
@@ -337,7 +337,7 @@ internal class TextReaderLinesIterator is Iterator
 	private textReader;
 	private cur = null;
 
-	override get current = cur;
+	override get current => cur;
 
 	override moveNext()
 	{

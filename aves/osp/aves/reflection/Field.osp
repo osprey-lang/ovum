@@ -10,7 +10,7 @@ public class Field is Member
 	private get handle
 		__extern("aves_reflection_Field_get_handle");
 
-	override get kind = MemberKind.field;
+	override get kind => MemberKind.field;
 
 	override get accessibility
 		__extern("aves_reflection_Field_get_accessibility");
@@ -41,15 +41,15 @@ public class Field is Member
 
 	/// Summary: Gets a value that indicates whether the field is public.
 	/// Returns: True if the field is public; otherwise, false.
-	public get isPublic = accessibility == Accessibility.\public;
+	public get isPublic => accessibility == Accessibility.\public;
 
 	/// Summary: Gets a value that indicates whether the field is protected.
 	/// Returns: True if the field is protected; otherwise, false.
-	public get isProtected = accessibility == Accessibility.\protected;
+	public get isProtected => accessibility == Accessibility.\protected;
 
 	/// Summary: Gets a value that indicates whether the field is private.
 	/// Returns: True if the field is private; otherwise, false.
-	public get isPrivate = accessibility == Accessibility.\private;
+	public get isPrivate => accessibility == Accessibility.\private;
 
 	/// Summary: Gets a value that indicates whether the field is static.
 	/// Returns: True if the field is static; otherwise, false.

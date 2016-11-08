@@ -12,7 +12,7 @@ public class Utf16Encoding is Encoding
 	public get bigEndian
 		__extern("aves_Utf16Encoding_get_bigEndian");
 
-	override get name = bigEndian ? "UTF-16BE" : "UTF-16";
+	override get name => bigEndian ? "UTF-16BE" : "UTF-16";
 
 	override getEncoder()
 	{

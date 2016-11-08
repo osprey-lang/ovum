@@ -887,7 +887,7 @@ public abstract class Iterable
 
 	/// Summary: Gets an {Iterable} that represents an empty sequence.
 	/// Returns: A new {Iterable} that represents an empty sequence.
-	public static get empty = new ReadOnlyIterable();
+	public static get empty => new ReadOnlyIterable();
 
 	/// Summary: Gets an {Iterable} that produces the specified number of consecutive integers,
 	///          starting at the specified value.

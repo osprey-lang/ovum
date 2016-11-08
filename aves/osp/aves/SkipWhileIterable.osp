@@ -22,7 +22,7 @@ internal class SkipWhileIterator is Iterator
 	private predicate;
 	private skipItems = true;
 
-	override get current = inner.current;
+	override get current => inner.current;
 
 	override moveNext()
 	{

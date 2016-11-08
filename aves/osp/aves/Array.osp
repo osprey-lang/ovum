@@ -409,7 +409,7 @@ internal class ArrayIterator is Iterator
 	private cur;
 	private index = 0;
 
-	override get current = cur;
+	override get current => cur;
 
 	override moveNext()
 	{

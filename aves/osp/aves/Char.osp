@@ -41,40 +41,40 @@ public class Char __primitive
 	/// Summary: Gets a value that indicates whether the Unicode character is
 	///          classified as a control character (category Cc).
 	/// Returns: True if the character is a control character; otherwise, false.
-	public get isControl = category == UnicodeCategory.control;
+	public get isControl => category == UnicodeCategory.control;
 	/// Summary: Gets a value that indicates whether the Unicode character is
 	///          classified as a decimal digit (category Nd).
 	/// Returns: True if the character is a decimal digit; otherwise, false.
-	public get isDigit = category == UnicodeCategory.decimalNumber;
+	public get isDigit => category == UnicodeCategory.decimalNumber;
 	/// Summary: Gets a value that indicates whether the Unicode character is
 	///          classified as a letter (categories Lu, Ll, Lt, Lm and Lo).
 	/// Returns: True if the character is a letter; otherwise, false.
-	public get isLetter = category & UnicodeCategory.letter != UnicodeCategory.none;
+	public get isLetter => category & UnicodeCategory.letter != UnicodeCategory.none;
 	/// Summary: Gets a value that indicates whether the Unicode character is
 	///          classified as a lowercase letter (category Ll).
 	/// Returns: True if the character is a lowercase letter; otherwise, false.
-	public get isLower = category == UnicodeCategory.lowercaseLetter;
+	public get isLower => category == UnicodeCategory.lowercaseLetter;
 	/// Summary: Gets a value that indicates whether the Unicode character is
 	///          classified as an uppercase letter (category Lu).
 	/// Returns: True if the character is an uppercase letter; otherwise, false.
-	public get isUpper = category == UnicodeCategory.uppercaseLetter;
+	public get isUpper => category == UnicodeCategory.uppercaseLetter;
 	/// Summary: Gets a value that indicates whether the Unicode character is
 	///          classified as a number (categories Nd, Nl and No).
 	/// Returns: True if the character is a number; otherwise, false.
-	public get isNumber = category & UnicodeCategory.number != UnicodeCategory.none;
+	public get isNumber => category & UnicodeCategory.number != UnicodeCategory.none;
 	/// Summary: Gets a value that indicates whether the Unicode character is
 	///          classified as a puntuation character (categories Pc, Pd, Ps,
 	///          Pe, Pi, Pf and Po).
 	/// Returns: True if the character is a punctuation character; otherwise, false.
-	public get isPunct = category & UnicodeCategory.punct != UnicodeCategory.none;
+	public get isPunct => category & UnicodeCategory.punct != UnicodeCategory.none;
 	/// Summary: Gets a value that indicates whether the Unicode character is
 	///          classified as a symbol (categories Sm, Sc, Sk and So).
 	/// Returns: True if the character is a symbol; otherwise, false.
-	public get isSymbol = category & UnicodeCategory.symbol != UnicodeCategory.none;
+	public get isSymbol => category & UnicodeCategory.symbol != UnicodeCategory.none;
 	/// Summary: Gets a value that indicates whether the Unicode character is
 	///          assigned.
 	/// Returns: True if the character is assigned; otherwise, false.
-	public get isAssigned = category != UnicodeCategory.unassigned;
+	public get isAssigned => category != UnicodeCategory.unassigned;
 	/// Summary: Gets a value that indicates whether the Unicode character is
 	///          classified as white space (see remarks).
 	/// Returns: True if the character is white space; otherwise, false.

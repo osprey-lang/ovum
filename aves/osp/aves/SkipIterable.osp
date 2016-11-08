@@ -31,7 +31,7 @@ internal class SkipIterator is Iterator
 	private count;
 	private hasMore = true;
 
-	override get current = inner.current;
+	override get current => inner.current;
 
 	override moveNext()
 	{

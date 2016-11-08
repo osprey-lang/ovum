@@ -51,7 +51,7 @@ public class String is Collection
 		__extern("aves_String_get_length");
 
 	/// Summary: Gets a value indicating whether the string is empty (its length is 0).
-	public get isEmpty = length == 0;
+	public get isEmpty => length == 0;
 
 	/// Summary: Gets a value indicating whether the string instance is
 	//           in the intern table.
@@ -1068,7 +1068,7 @@ internal class StringIterator is Iterator
 	private i = 0;
 	private cur = null;
 
-	override get current = cur;
+	override get current => cur;
 
 	override moveNext()
 	{

@@ -85,7 +85,7 @@ public inheritable Set is Collection
 
 	/// Summary: Determines whether the set is empty.
 	/// Returns: True if {length} is zero; otherwise, false.
-	public get isEmpty = length == 0;
+	public get isEmpty => length == 0;
 
 	internal get version
 		__extern("aves_Set_get_version");
@@ -330,7 +330,7 @@ internal class SetIterator is Iterator
 	private i = -1;
 	private cur = null;
 
-	override get current = cur;
+	override get current => cur;
 	override moveNext()
 	{
 		if set.version != version:

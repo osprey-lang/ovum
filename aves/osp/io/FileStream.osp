@@ -62,7 +62,7 @@ public class FileStream is Stream
 	override get length
 		__extern("io_FileStream_get_length");
 
-	override get position = seekInternal(0, SeekOrigin.current); // seekInternal always returns the new position in the stream
+	override get position => seekInternal(0, SeekOrigin.current); // seekInternal always returns the new position in the stream
 	override set position { seekInternal(value, SeekOrigin.start); }
 
 	public get fileName

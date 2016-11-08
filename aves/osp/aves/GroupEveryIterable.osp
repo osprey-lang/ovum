@@ -23,7 +23,7 @@ internal class GroupEveryIterator is Iterator
 	private cur;
 	private hasMore = true;
 
-	override get current = cur;
+	override get current => cur;
 
 	override moveNext()
 	{

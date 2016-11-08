@@ -48,7 +48,7 @@ public inheritable ArgumentError is Error
 
 	private _paramName;
 	/// Summary: Gets the name of the parameter (String) that caused the error, or null.
-	public get paramName = _paramName;
+	public get paramName => _paramName;
 
 	overridable override get message
 	{

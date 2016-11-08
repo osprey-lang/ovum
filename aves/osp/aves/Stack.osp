@@ -40,16 +40,16 @@ public inheritable Stack is Collection
 
 	/// Summary: Gets the total number of items on the stack.
 	/// Returns: The total number of items on the stack, as an Int.
-	override get length = _length;
+	override get length => _length;
 
 	/// Summary: Determines whether the stack is empty.
 	/// Returns: True if the stack is empty; otherwise, false.
-	public get isEmpty = _length == 0;
+	public get isEmpty => _length == 0;
 
 	/// Summary: Gets the capacity of the stack; that is, the number of items it
 	///          can contain without resizing its internal container.
 	/// Returns: The capacity of the stack, as an Int.
-	public get capacity = items.length;
+	public get capacity => items.length;
 	/// Summary: Sets the capacity of the stack; that is, the number of items it
 	///          can contain without resizing its internal container.
 	/// Throws TypeConversionError:

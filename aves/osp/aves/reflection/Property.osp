@@ -10,7 +10,7 @@ public class Property is Member
 	private get handle
 		__extern("aves_reflection_Property_get_handle");
 
-	override get kind = MemberKind.property;
+	override get kind => MemberKind.property;
 
 	override get accessibility
 		__extern("aves_reflection_Property_get_accessibility");
@@ -41,15 +41,15 @@ public class Property is Member
 
 	/// Summary: Gets a value that indicates whether the property is public.
 	/// Returns: True if the property is public; otherwise, false.
-	public get isPublic = accessibility == Accessibility.\public;
+	public get isPublic => accessibility == Accessibility.\public;
 
 	/// Summary: Gets a value that indicates whether the property is protected.
 	/// Returns: True if the property is protected; otherwise, false.
-	public get isProtected = accessibility == Accessibility.\protected;
+	public get isProtected => accessibility == Accessibility.\protected;
 
 	/// Summary: Gets a value that indicates whether the property is private.
 	/// Returns: True if the property is private; otherwise, false.
-	public get isPrivate = accessibility == Accessibility.\private;
+	public get isPrivate => accessibility == Accessibility.\private;
 
 	/// Summary: Gets a value that indicates whether the property is static.
 	/// Returns: True if the property is static; otherwise, false.

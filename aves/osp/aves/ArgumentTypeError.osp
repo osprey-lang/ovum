@@ -87,7 +87,7 @@ public inheritable ArgumentTypeError is ArgumentError
 	/// Summary: Gets an iterable containing the expected types for the parameter.
 	/// Returns: An {Iterable} containing the expected types for the parameter, or null if that
 	///          information is not available.
-	public get expectedTypes = _expectedTypes;
+	public get expectedTypes => _expectedTypes;
 
 	override get message
 	{

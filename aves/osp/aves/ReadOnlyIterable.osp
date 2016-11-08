@@ -35,7 +35,7 @@ public inheritable ReadOnlyIterable is Iterable
 
 	private _collection;
 	/// Summary: Gets a reference to the collection wrapped by the iterable.
-	protected get collection = _collection;
+	protected get collection => _collection;
 
 	// The wrapped collection may contain optimized versions of certain Iterable methods.
 	// Call through to the underlying methods whenever possible.

@@ -22,7 +22,7 @@ public class GlobalConstant is Member
 	private _name;
 	private _value;
 
-	override get kind = MemberKind.globalConstant;
+	override get kind => MemberKind.globalConstant;
 
 	override get accessibility
 	{
@@ -38,24 +38,24 @@ public class GlobalConstant is Member
 		return _name;
 	}
 
-	override get fullName = _fullName;
+	override get fullName => _fullName;
 
-	override get declaringType = null;
+	override get declaringType => null;
 
-	override get declaringModule = _module;
+	override get declaringModule => _module;
 
 	/// Summary: Gets a value that indicates whether the constant is public.
 	/// Returns: True if the constant is public; otherwise, false.
-	public get isPublic = not _isInternal;
+	public get isPublic => not _isInternal;
 
 	/// Summary: Gets a value that indicates whether the constant is private
 	///          (that is, internal to the module).
 	/// Returns: True if the constant is private; otherwise, false.
-	public get isPrivate = _isInternal;
+	public get isPrivate => _isInternal;
 
 	/// Summary: Gets the value associated of the constant.
 	/// Returns: The value of the constant.
-	public get value = _value;
+	public get value => _value;
 
 	override toString()
 	{

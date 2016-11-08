@@ -62,7 +62,7 @@ public inheritable List is Collection
 
 	/// Summary: Determines whether the list is empty.
 	/// Returns: True if the list has no items in it; otherwise, false.
-	public get isEmpty = length == 0;
+	public get isEmpty => length == 0;
 
 	/// Summary: Adds an item to the end of the list.
 	/// Param item: The item to add.
@@ -586,7 +586,7 @@ internal class ListIterator is Iterator
 	private i = 0;
 	private cur = null;
 
-	override get current = cur;
+	override get current => cur;
 
 	override moveNext()
 	{

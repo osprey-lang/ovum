@@ -25,7 +25,7 @@ internal class SkipFromEndIterator is Iterator
 	private itemBuffer;
 	private cur;
 
-	override get current = cur;
+	override get current => cur;
 
 	override moveNext()
 	{

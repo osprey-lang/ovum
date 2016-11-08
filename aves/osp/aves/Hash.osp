@@ -103,16 +103,16 @@ public inheritable Hash is Collection
 
 	/// Summary: Determines whether the hash table is empty.
 	/// Returns: True if {length} is zero; otherwise, false.
-	public get isEmpty = length == 0;
+	public get isEmpty => length == 0;
 
 	/// Summary: Gets a {Collection} that can be used to iterate over the keys in the hash table.
 	/// Returns: A new {Collection} instance that iterates over the keys in the hash
 	///          table.
-	public get keys = new KeyOrValueCollection(this, true);
+	public get keys => new KeyOrValueCollection(this, true);
 	/// Summary: Gets a {Collection} that can be used to iterate over the values in the hash
 	///          table.
 	/// Returns: A new {Collection} instance that iterates over the values in the hash table.
-	public get values = new KeyOrValueCollection(this, false);
+	public get values => new KeyOrValueCollection(this, false);
 
 	internal get version
 		__extern("aves_Hash_get_version");
@@ -583,7 +583,7 @@ internal class HashIterator is Iterator
 	private i = -1;
 	private cur = null;
 
-	override get current = cur;
+	override get current => cur;
 
 	override moveNext()
 	{
@@ -620,7 +620,7 @@ internal class KeyOrValueCollection is Collection
 	private hash;
 	private useKey;
 
-	override get length = hash.length;
+	override get length => hash.length;
 
 	iter
 	{
@@ -641,7 +641,7 @@ internal class KeyOrValueIterator is Iterator
 	private i = -1;
 	private cur = null;
 
-	override get current = cur;
+	override get current => cur;
 
 	override moveNext()
 	{

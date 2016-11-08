@@ -61,7 +61,7 @@ public abstract class Iterator
 		return output.toArray();
 	}
 
-	public static get empty = new EmptyIterator();
+	public static get empty => new EmptyIterator();
 
 	iter
 	{
@@ -71,7 +71,7 @@ public abstract class Iterator
 
 internal class EmptyIterator is Iterator
 {
-	override get current = null;
+	override get current => null;
 
 	override moveNext() { return false; }
 }

@@ -30,7 +30,7 @@ internal class TakeIterator is Iterator
 	private inner;
 	private count;
 
-	override get current = inner.current;
+	override get current => inner.current;
 
 	override moveNext()
 	{

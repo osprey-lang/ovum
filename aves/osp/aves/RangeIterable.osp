@@ -23,7 +23,7 @@ internal class RangeUpIterator is Iterator
 	public new(this.i, this.end, this.step);
 
 	private _current;
-	override get current = _current;
+	override get current => _current;
 
 	private i;
 	private end;
@@ -46,7 +46,7 @@ internal class RangeDownIterator is Iterator
 	public new(this.i, this.end, this.step);
 
 	private _current;
-	override get current = _current;
+	override get current => _current;
 
 	private i;
 	private end;

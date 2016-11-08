@@ -22,7 +22,7 @@ public inheritable FileNotFoundError is IOError
 
 	private _pathName;
 	/// Summary: Gets the path name that could not be found.
-	public get pathName = _pathName;
+	public get pathName => _pathName;
 
 	overridable override get message
 	{

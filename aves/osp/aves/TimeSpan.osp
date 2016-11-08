@@ -161,27 +161,27 @@ public class TimeSpan __primitive
 
 	/// Summary: Gets the days component of the time interval.
 	/// Returns: The days component of the time interval, as an Int.
-	public get days = rawValue / microsPerDay;
+	public get days => rawValue / microsPerDay;
 
 	/// Summary: Gets the hours component of the time interval.
 	/// Returns: The hours component of the time interval, as an Int. The return value ranges
 	///          from −23 to 23.
-	public get hours = (rawValue / microsPerHour) % 24;
+	public get hours => (rawValue / microsPerHour) % 24;
 
 	/// Summary: Gets the minutes component of the time interval.
 	/// Returns: The minutes component of the time interval, as an Int. The return value ranges
 	///          from −59 to 59.
-	public get minutes = (rawValue / microsPerMinute) % 60;
+	public get minutes => (rawValue / microsPerMinute) % 60;
 
 	/// Summary: Gets the seconds component of the time interval.
 	/// Returns: The seconds component of the time interval, as an Int. The return value ranges
 	///          from −59 to 59.
-	public get seconds = (rawValue / microsPerSecond) % 60;
+	public get seconds => (rawValue / microsPerSecond) % 60;
 
 	/// Summary: Gets the milliseconds component of the time interval.
 	/// Returns: The milliseconds component of the time interval, as an Int. The return value
 	///          ranges from −999 to 999.
-	public get milliseconds = (rawValue / microsPerMilli) % 1_000;
+	public get milliseconds => (rawValue / microsPerMilli) % 1_000;
 
 	/// Summary: Gets the microseconds component of the time interval.
 	/// Returns: The microseconds component of the time interval, as an Int. The return value
@@ -189,35 +189,35 @@ public class TimeSpan __primitive
 	/// Remarks: Be mindful of the range of values this property can return. Essentially, this
 	///          property does not produce thousands of a millisecond, but rather millionths of
 	///          a second.
-	public get microseconds = rawValue % 1_000_000;
+	public get microseconds => rawValue % 1_000_000;
 
 	/// Summary: Gets the time interval expressed as a whole and fractional number of days.
 	/// Returns: The total number of days represented by the time interval, as a Real.
-	public get totalDays = rawValue * daysPerMicro;
+	public get totalDays => rawValue * daysPerMicro;
 
 	/// Summary: Gets the time interval expressed as a whole and fractional number of hours.
 	/// Returns: The total number of hours represented by the time interval, as a Real.
-	public get totalHours = rawValue * hoursPerMicro;
+	public get totalHours => rawValue * hoursPerMicro;
 
 	/// Summary: Gets the time interval expressed as a whole and fractional number of minutes.
 	/// Returns: The total number of minutes represented by the time interval, as a Real.
-	public get totalMinutes = rawValue * minutesPerMicro;
+	public get totalMinutes => rawValue * minutesPerMicro;
 
 	/// Summary: Gets the time interval expressed as a whole and fractional number of seconds.
 	/// Returns: The total number of seconds represented by the time interval, as a Real.
-	public get totalSeconds = rawValue * secondsPerMicro;
+	public get totalSeconds => rawValue * secondsPerMicro;
 
 	/// Summary: Gets the time interval expressed as a whole and fractional number of
 	///          milliseconds.
 	/// Returns: The total number of milliseconds represented by the time interval, as a Real.
-	public get totalMilliseconds = rawValue * millisPerMicro;
+	public get totalMilliseconds => rawValue * millisPerMicro;
 
 	/// Summary: Gets the time interval expressed as a whole number of microseconds.
 	/// Returns: The total number of microseconds represented by the time interval, as an Int.
 	/// Remarks: Unlike the other `total*` properties, this returns an Int. This is because the
 	///          resolution of a {TimeSpan} is 1 µs, and the conversion to Real would lose some
 	///          precision for very large and very small time intervals.
-	public get totalMicroseconds = rawValue;
+	public get totalMicroseconds => rawValue;
 
 	/// Summary: Gets the duration of the time interval, as a positive time interval.
 	/// Returns: A {TimeSpan} representing the duration of the current time interval. The return
@@ -304,17 +304,17 @@ public class TimeSpan __primitive
 	private static _zero = new TimeSpan(0);
 	/// Summary: Gets a {TimeSpan} representing an interval of 0.
 	/// Returns: A {TimeSpan} representing an interval of 0.
-	public static get zero = _zero;
+	public static get zero => _zero;
 
 	private static _min = new TimeSpan(Int.min);
 	/// Summary: Gets the minimum time interval.
 	/// Returns: A {TimeSpan} representing the minimum time interval.
-	public static get min = _min;
+	public static get min => _min;
 
 	private static _max = new TimeSpan(Int.max);
 	/// Summary: Gets the maximum time interval.
 	/// Returns: A {TimeSpan} representing the maximum time interval.
-	public static get max = _max;
+	public static get max => _max;
 
 	/// Summary: Creates a time interval from the specified number of days, which may be
 	///          fractional.

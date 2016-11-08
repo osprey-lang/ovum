@@ -3,16 +3,16 @@ namespace aves;
 public class ConsoleKey
 {
 	private _char;
-	public get char = _char;
-	public get charString = _char.toString();
+	public get char => _char;
+	public get charString => _char.toString();
 
 	private _keyCode;
-	public get keyCode = _keyCode;
+	public get keyCode => _keyCode;
 
 	private _shift, _alt, _control;
-	public get shift   = _shift;
-	public get alt     = _alt;
-	public get control = _control;
+	public get shift   => _shift;
+	public get alt     => _alt;
+	public get control => _control;
 
 	public new(char, keyCode, shift, alt, control)
 	{

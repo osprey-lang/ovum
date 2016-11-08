@@ -2,7 +2,7 @@ namespace aves;
 
 public class Utf8Encoding is Encoding
 {
-	override get name = "UTF-8";
+	override get name => "UTF-8";
 
 	override getEncoder()
 	{

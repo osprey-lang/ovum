@@ -23,7 +23,7 @@ internal class MapIterator is Iterator
 	private cur;
 	private ended = false;
 
-	override get current = cur;
+	override get current => cur;
 
 	override moveNext()
 	{

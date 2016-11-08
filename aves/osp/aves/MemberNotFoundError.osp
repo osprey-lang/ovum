@@ -38,7 +38,7 @@ public inheritable MemberNotFoundError is TypeError
 	/// Summary: Gets the name of the member that could not be found.
 	/// Returns: A String containing the name of the member that could not be found, or null if
 	///          that information is not available.
-	public get member = _member;
+	public get member => _member;
 
 	overridable override get message
 	{

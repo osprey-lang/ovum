@@ -22,7 +22,7 @@ internal class FilterIterator is Iterator
 	private predicate;
 	private ended = false;
 
-	override get current = inner.current;
+	override get current => inner.current;
 
 	override moveNext()
 	{

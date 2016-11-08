@@ -22,7 +22,7 @@ internal class TakeWhileIterator is Iterator
 	private predicate;
 	private continue = true;
 
-	override get current = inner.current;
+	override get current => inner.current;
 
 	override moveNext()
 	{

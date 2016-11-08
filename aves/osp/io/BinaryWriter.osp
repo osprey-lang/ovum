@@ -93,30 +93,30 @@ public inheritable BinaryWriter
 
 	private _stream;
 	/// Summary: Gets a reference to the stream that is being written to.
-	public get stream = _stream;
+	public get stream => _stream;
 
 	private _encoding;
 	/// Summary: Gets the character encoding that the binary writer uses.
-	public get encoding = _encoding;
+	public get encoding => _encoding;
 
 	private _bigEndian;
 	/// Summary: Gets a value indicating whether the stream data is written
 	///          in the big-endian byte order. If false, the byte order is
 	///          little-endian.
-	public get bigEndian = _bigEndian;
+	public get bigEndian => _bigEndian;
 
 	private _keepOpen;
 	/// Summary: Determines whether the binary writer closes the stream
 	///          when the {close} method is called. If true, the stream
 	///          will be kept open.
-	public get keepOpen = _keepOpen;
+	public get keepOpen => _keepOpen;
 	/// Summary: Sets a value that determines whether the binary writer
 	///          closes the stream when the {close} method is called. If
 	///          true, the stream will be kept open.
 	public set keepOpen { _keepOpen = bool(value); }
 
 	/// Summary: Gets the current position of the the stream’s cursor.
-	public get position = _stream.position;
+	public get position => _stream.position;
 	/// Summary: Sets the position of the stream’s cursor.
 	public set position { _stream.position = value; }
 
@@ -126,7 +126,7 @@ public inheritable BinaryWriter
 	private const bufferSize = 512;
 	private _buffer = new Buffer(bufferSize);
 	/// Summary: Gets a reference to the internal buffer used by the writer.
-	protected get buffer = _buffer;
+	protected get buffer => _buffer;
 
 	/// Summary: If {keepOpen} is false, closes the underlying stream.
 	///          Otherwise, does nothing.

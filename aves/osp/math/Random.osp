@@ -92,7 +92,7 @@ public class Random
 	private const listSize = 624;
 
 	private static _instance = new Random();
-	internal static get instance = _instance;
+	internal static get instance => _instance;
 }
 
 public function randomInt()

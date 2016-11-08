@@ -28,17 +28,17 @@ public class Version
 	private _major;
 	/// Summary: Gets the major component of the version number.
 	/// Returns: The major component of the version number, as an Int.
-	public get major = _major;
+	public get major => _major;
 
 	private _minor;
 	/// Summary: Gets the minor component of the version number.
 	/// Returns: The minor component of the version number, as an Int.
-	public get minor = _minor;
+	public get minor => _minor;
 
 	private _patch;
 	/// Summary: Gets the patch component of the version number.
 	/// Returns: The patch component of the version number, as an Int
-	public get patch = _patch;
+	public get patch => _patch;
 
 	override getHashCode()
 	{

@@ -380,7 +380,7 @@ public abstract class Stream
 
 	/// Summary: Gets an instance of a stream that always returns end-of-file and discards any
 	///          data written to it.
-	public static get void = new VoidStream();
+	public static get void => new VoidStream();
 
 	/// Summary: Reads all the bytes from the specified source stream, up to the end, and writes
 	///          them to the specified destination stream.
@@ -458,13 +458,13 @@ public abstract class Stream
 
 internal class VoidStream is Stream
 {
-	override get canRead = true;
-	override get canWrite = true;
-	override get canSeek = true;
+	override get canRead => true;
+	override get canWrite => true;
+	override get canSeek => true;
 
-	override get length = 0;
+	override get length => 0;
 
-	override get position = 0;
+	override get position => 0;
 	override set position { }
 
 	override readByte() { return -1; }

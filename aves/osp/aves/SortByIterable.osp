@@ -18,7 +18,7 @@ internal abstract class SortByIterable is Iterable
 	///          meaningful values until sorting is finished.
 	protected indexTable;
 
-	private get isSorted = items is not null;
+	private get isSorted => items is not null;
 
 	/// Summary: Creates the sort key table in the derived class. This method is called when
 	///          sorting is about to start.
@@ -126,7 +126,7 @@ internal class SortByIterator is Iterator
 	private i = 0;
 	private cur = null;
 
-	override get current = cur;
+	override get current => cur;
 
 	override moveNext()
 	{

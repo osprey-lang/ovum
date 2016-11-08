@@ -7,17 +7,17 @@ public class Overload is Member
 	public new(handle, method, index)
 		__extern("aves_reflection_Overload_new");
 
-	override get kind = MemberKind.overload;
+	override get kind => MemberKind.overload;
 
-	override get accessibility = method.accessibility;
+	override get accessibility => method.accessibility;
 
-	override get name = method.name;
+	override get name => method.name;
 
-	override get fullName = method.fullName;
+	override get fullName => method.fullName;
 
-	override get declaringType = method.declaringType;
+	override get declaringType => method.declaringType;
 
-	override get declaringModule = method.delaringModule;
+	override get declaringModule => method.delaringModule;
 
 	private get handle
 		__extern("aves_reflection_Overload_get_handle");
@@ -32,33 +32,33 @@ public class Overload is Member
 
 	/// Summary: Gets a value that indicates whether the overload belongs to a public method.
 	/// Returns: True if the overload belongs to a public method; otherwise, false.
-	public get isPublic = method.isPublic;
+	public get isPublic => method.isPublic;
 
 	/// Summary: Gets a value that indicates whether the overload belongs to a protected method.
 	/// Returns: True if the overload belongs to a protected method; otherwise, false.
-	public get isProtected = method.isProtected;
+	public get isProtected => method.isProtected;
 
 	/// Summary: Gets a value that indicates whether the overload belongs to a private method.
 	/// Returns: True if the overload belongs to a private method; otherwise, false.
-	public get isPrivate = method.isPrivate;
+	public get isPrivate => method.isPrivate;
 
 	/// Summary: Gets a value that indicates whether the overload belongs to a global function.
 	/// Returns: True if the overload belongs to a global function; otherwise, false.
-	public get isGlobal = method.isGlobal;
+	public get isGlobal => method.isGlobal;
 
 	/// Summary: Gets a value that indicates whether the overload is static.
 	/// Returns: True if the overload is static; otherwise, false.
-	public get isStatic = method.isStatic;
+	public get isStatic => method.isStatic;
 
 	/// Summary: Gets a value that indicates whether the overload belongs to a constructor.
 	/// Returns: True if the overload belongs to a constructor; otherwise, false.
-	public get isConstructor = method.isConstructor;
+	public get isConstructor => method.isConstructor;
 
 	/// Summary: Gets a value that indicates whether the overload’s containing method has the
 	///          `impl` flag. A method with this flag is typically an internal implementation
 	///          detail, such as property accessor or an operator method.
 	/// Returns: True if the containing method has the `impl` flag; otherwise, false.
-	public get isImpl = method.isImpl;
+	public get isImpl => method.isImpl;
 
 	/// Summary: Gets a value that indicates whether the overload is overridable.
 	/// Returns: True if the overload is overridable; otherwise, false.

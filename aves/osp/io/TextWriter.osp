@@ -70,16 +70,16 @@ public inheritable TextWriter
 
 	private _stream;
 	/// Summary: Gets a reference to the stream that is being read from.
-	public get stream = _stream;
+	public get stream => _stream;
 
 	private _encoding;
 	/// Summary: Gets the character encoding that the text writer uses.
-	public get encoding = _encoding;
+	public get encoding => _encoding;
 
 	private _newline = Env.newline;
 	/// Summary: Gets a string containing the line separator used by
 	///          the text writer.
-	public get newline = _newline;
+	public get newline => _newline;
 	/// Summary: Sets the line separator string used by the text writer.
 	///          If set to null, the text writer will use the default
 	///          line separator string, which is equal to {Env.newline}.
@@ -96,7 +96,7 @@ public inheritable TextWriter
 	/// Summary: Determines whether the text writer closes the stream
 	///          when the {close} method is called. If true, the stream
 	///          will be kept open.
-	public get keepOpen = _keepOpen;
+	public get keepOpen => _keepOpen;
 	/// Summary: Sets a value that determines whether the text writer
 	///          closes the stream when the {close} method is called. If
 	///          true, the stream will be kept open.

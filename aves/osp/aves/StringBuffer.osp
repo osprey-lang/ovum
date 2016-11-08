@@ -71,7 +71,7 @@ public class StringBuffer
 		__extern("aves_StringBuffer_get_capacity");
 
 	/// Summary: Gets a value indicating whether the string buffer is empty (its length is 0).
-	public get isEmpty = length == 0;
+	public get isEmpty => length == 0;
 
 	/// Summary: Appends the specified value to the end of the string buffer.
 	/// Param value: The value to append.
