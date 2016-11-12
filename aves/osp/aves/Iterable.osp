@@ -195,21 +195,44 @@ public abstract class Iterable
 	/// Returns: The first element in the sequence, or null if the sequence is empty.
 	public overridable firstOrNull()
 	{
-		var iterator = this.iter;
-		if iterator.moveNext():
-			return iterator.current;
-		return null;
+		return firstOrDefault(null);
 	}
 	/// Summary: Returns the first element in the sequence that matches the given predicate, or
 	///          null if there is no match.
 	/// Param predicate: An invokable value that takes one argument (the current element) and
 	///          returns a truthy value if the element matches the predicate, or a falsy value
 	///          otherwise.
-	/// Throws ArgumentNullError:
-	///          {predicate} is null.
 	/// Returns: The first element in the sequence that matches the predicate, or null if the
 	///          sequence is empty or there was no match.
+	/// Throws ArgumentNullError:
+	///          {predicate} is null.
 	public overridable firstOrNull(predicate)
+	{
+		return firstOrDefault(null, predicate);
+	}
+
+	/// Summary: Returns the first element in the sequence, or the specified fallback value if
+	///          the sequence is empty.
+	/// Param default: The fallback value to be used if the sequence is empty.
+	/// Returns: The first element in the sequence, or {default} if the sequence is empty.
+	public overridable firstOrDefault(default)
+	{
+		var iterator = this.iter;
+		if iterator.moveNext():
+			return iterator.current;
+		return default;
+	}
+	/// Summary: Returns the first element in the sequence that matches the given predicate, or
+	///          the specified fallback value if there is no match.
+	/// Param default: The fallback value to be used if no item matches the predicate.
+	/// Param predicate: An invokable value that takes one argument (the current element) and
+	///          returns a truthy value if the element matches the predicate, or a falsy value
+	///          otherwise.
+	/// Returns: The first element in the sequence that matches the predicate, or {default} if
+	///          the sequence is empty or there was no match.
+	/// Throws ArgumentNullError:
+	///          {predicate} is null.
+	public overridable firstOrDefault(default, predicate)
 	{
 		if predicate is null:
 			throw new ArgumentNullError("predicate");
@@ -218,7 +241,7 @@ public abstract class Iterable
 			if predicate(item):
 				return item;
 
-		return null;
+		return default;
 	}
 
 	/// Summary: Applies an accumulator function over the sequence.
@@ -573,10 +596,7 @@ public abstract class Iterable
 	///          computer their last element in constant time.
 	public overridable lastOrNull()
 	{
-		var output = null;
-		for item in this:
-			output = item;
-		return output;
+		return lastOrDefault(null);
 	}
 	/// Summary: Returns the last element in the sequence that matches the specified predicate,
 	///          or null if there is no match.
@@ -596,10 +616,43 @@ public abstract class Iterable
 	///          traverse the sequence backwards.
 	public overridable lastOrNull(predicate)
 	{
+		return lastOrDefault(null, predicate);
+	}
+
+	/// Summary: Returns the last element in the sequence, or the specified fallback value if the
+	///          sequence is empty.
+	/// Param default: The fallback value to be used if the sequence is empty.
+	/// Returns: The last element in the sequence, or {default} if the sequence is empty.
+	public overridable lastOrDefault(default)
+	{
+		var output = default;
+		for item in this:
+			output = item;
+		return output;
+	}
+	/// Summary: Returns the last element in the sequence that matches the given predicate, or
+	///          the specified fallback value if there is no match.
+	/// Param default: The fallback value to be used if no item matches the predicate.
+	/// Param predicate: An invokable value that takes one argument (the current element) and
+	///          returns a truthy value if the element matches the predicate, or a falsy value
+	///          otherwise.
+	/// Returns: The last element in the sequence that matches the predicate, or {default} if
+	///          the sequence is empty or there was no match.
+	/// Throws ArgumentNullError:
+	///          {predicate} is null.
+	/// Remarks: This method will traverse the entire sequence. Hence, if the sequence is
+	///          infinite, this method will never return. If the sequence is especially large, it
+	///          will take a while to find the last element. {predicate} will be called at most
+	///          once for each element.
+	///
+	///          This method is strongly recommended to be overridden in derived classes that can
+	///          traverse the sequence backwards.
+	public overridable lastOrDefault(default, predicate)
+	{
 		if predicate is null:
 			throw new ArgumentNullError("predicate");
 
-		var output = null;
+		var output = default;
 		for item in this:
 			if predicate(item):
 				output = item;

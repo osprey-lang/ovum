@@ -399,6 +399,14 @@ public inheritable List is Collection
 		return this[0];
 	}
 
+	overridable override firstOrDefault(default)
+	{
+		if isEmpty:
+			return default;
+
+		return this[0];
+	}
+
 	overridable override fold(func)
 	{
 		if func is null:
@@ -543,6 +551,14 @@ public inheritable List is Collection
 	{
 		if isEmpty:
 			return null;
+
+		return this[length - 1];
+	}
+
+	overridable override lastOrDefault(default)
+	{
+		if isEmpty:
+			return default;
 
 		return this[length - 1];
 	}
