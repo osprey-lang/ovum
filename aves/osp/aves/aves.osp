@@ -54,6 +54,7 @@ use "SkipIterable.osp";
 use "SkipWhileIterable.osp";
 use "SortByIterable.osp";
 use "Stack.osp";
+use "Stopwatch.osp";
 use "String.osp";
 use "StringBuffer.osp";
 use "TakeIterable.osp";

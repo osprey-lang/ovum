@@ -1,0 +1,109 @@
+use aves;
+use testing.unit;
+
+namespace aves.test;
+
+// Tests for the class aves.Stopwatch
+
+public class StopwatchTests is TestFixture
+{
+	public new() { new base("aves.Stopwatch tests"); }
+
+	// We can't easily test timing values for the stopwatch. We can only
+	// wait a little and ensure the elapsed time is greater than zero.
+	// There is no ability to pause a thread for a small time, so instead
+	// we do an ugly little counter loop.
+
+	private smallDelay()
+	{
+		const loopCount = 1_000;
+		var i = 0;
+		while i < loopCount:
+			i += 1;
+	}
+
+	public test_InitialState()
+	{
+		var stopwatch = new Stopwatch();
+		Assert.areEqual(stopwatch.elapsed, TimeSpan.zero);
+		Assert.isFalse(stopwatch.isRunning);
+	}
+
+	public test_Start()
+	{
+		var stopwatch = new Stopwatch();
+
+		stopwatch.start();
+		smallDelay();
+
+		Assert.isTrue(stopwatch.isRunning);
+		Assert.isGreater(stopwatch.elapsed, TimeSpan.zero);
+	}
+
+	public test_Restart()
+	{
+		var stopwatch = new Stopwatch();
+
+		stopwatch.restart();
+		smallDelay();
+
+		Assert.isTrue(stopwatch.isRunning);
+		Assert.isGreater(stopwatch.elapsed, TimeSpan.zero);
+	}
+
+	public test_Reset()
+	{
+		var stopwatch = new Stopwatch();
+
+		stopwatch.start();
+		smallDelay();
+		stopwatch.reset();
+
+		Assert.isFalse(stopwatch.isRunning);
+		Assert.areEqual(stopwatch.elapsed, TimeSpan.zero);
+	}
+
+	public test_SingleRun()
+	{
+		var stopwatch = new Stopwatch();
+
+		stopwatch.start();
+		Assert.isTrue(stopwatch.isRunning);
+
+		smallDelay();
+
+		stopwatch.stop();
+
+		Assert.isFalse(stopwatch.isRunning);
+		Assert.isGreater(stopwatch.elapsed, TimeSpan.zero);
+	}
+
+	public test_TwoRuns()
+	{
+		// stop() does not reset the stopwatch, so time should accumulate
+		// on multiple runs.
+		var stopwatch = new Stopwatch();
+
+		// First run
+		stopwatch.start();
+		Assert.isTrue(stopwatch.isRunning);
+
+		smallDelay();
+
+		stopwatch.stop();
+		var firstRunTime = stopwatch.elapsed;
+
+		Assert.isFalse(stopwatch.isRunning);
+		Assert.isGreater(firstRunTime, TimeSpan.zero);
+
+		// Second run - elapsed time should be greater than firstRunTime
+		stopwatch.start();
+		Assert.isTrue(stopwatch.isRunning);
+
+		smallDelay();
+
+		stopwatch.stop();
+		Assert.isFalse(stopwatch.isRunning);
+		Assert.isGreater(stopwatch.elapsed, firstRunTime);
+	}
+}

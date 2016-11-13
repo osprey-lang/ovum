@@ -1,0 +1,65 @@
+namespace aves;
+
+/// Summary: Implements a high-precision timer. The exact precision of the timer is dependent
+///          on the host operating system. Regardless of OS, the maximum supported resolution
+///          is 1 µs (microsecond).
+public class Stopwatch
+{
+	__init_type("aves_Stopwatch_init");
+
+	// Most Stopwatch methods are implemented in native code to ensure minimum overhead from
+	// the VM. With methods that start and stop the stopwatch, avoiding overhead is paramount:
+	// we do want the timing values to be as accurate as possible.
+
+	/// Summary: Creates a new stopwatch. The new stopwatch is stopped and its elapsed time is
+	///          zero.
+	public new()
+		__extern("aves_Stopwatch_new");
+
+	/// Summary: Determines whether the stopwatch is currently running.
+	/// Returns: True if the stopwatch is currently running; otherwise, false.
+	public get isRunning
+		__extern("aves_Stopwatch_get_isRunning");
+
+	/// Summary: Gets the current elapsed time.
+	/// Returns: A {TimeSpan} that contains the elapsed time of the stopwatch. If the stopwatch
+	///          is running, the result is the time span between start time and now. Otherwise,
+	///          the result is the time span between start and stop time. Note that if the
+	///          stopwatch has not yet been started, the elapsed time is 0.
+	public get elapsed
+		__extern("aves_Stopwatch_get_elapsed");
+
+	/// Summary: Stops the stopwatch and resets it to zero.
+	/// Remarks: To stop the stopwatch without resetting the elapsed time, call {stop}.
+	public reset()
+		__extern("aves_Stopwatch_reset");
+
+	/// Summary: Starts the stopwatch.
+	/// Remarks: If the elapsed time is not zero, this method will cause the stopwatch to
+	///          continue adding to the elapsed time. To start a stopwatch from zero, call
+	///          {restart}, or call {reset} before this method.
+	public start()
+		__extern("aves_Stopwatch_start");
+
+	/// Summary: Stops the stopwatch and saves the current elapsed time.
+	/// Remarks: This method retains the elapsed time. Starting the stopwatch again will add to
+	///          the elapsed time. To stop the stopwatch and reset it to zero, call {reset}.
+	public stop()
+		__extern("aves_Stopwatch_stop");
+
+	/// Summary: Stops the stopwatch, resets it to zero, and starts it again.
+	/// Remarks: This method is equivalent to calling {reset} followed by {start}, but optimized
+	///          for minimal execution time.
+	public restart()
+		__extern("aves_Stopwatch_restart");
+
+	override toString()
+	{
+		return isRunning ? "<aves.Stopwatch: running>" : "<aves.Stopwatch: stopped>";
+	}
+
+	/// Summary: Creates and immediately starts a new stopwatch.
+	/// Returns: A new {Stopwatch} that is running.
+	public static startNew()
+		__extern("aves_Stopwatch_startNew");
+}

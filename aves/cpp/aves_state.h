@@ -37,6 +37,7 @@ public:
 		TypeHandle InvalidStateError;
 		TypeHandle NotSupportedError;
 		TypeHandle Real;
+		TypeHandle Stopwatch;
 		TypeHandle String;
 		TypeHandle TimeSpan;
 		TypeHandle UInt;
