@@ -276,9 +276,9 @@ public inheritable Set is Collection
 	/// Throws ArgumentNullError:
 	///          {collection} is null.
 	/// Remarks: The resulting set uses the default {EqualityComparer}.
-	public static fromCollection(collection)
+	public static from(collection)
 	{
-		return fromCollection(collection, null);
+		return from(collection, null);
 	}
 	/// Summary: Creates a new set containing the values from another collection.
 	/// Param collection: The collection to copy values from. This can be any
@@ -292,7 +292,7 @@ public inheritable Set is Collection
 	/// Throws ArgumentNullError:
 	///          {collection} is null.
 	/// Remarks: The resulting set uses the default {EqualityComparer}.
-	public static fromCollection(collection, itemComparer)
+	public static from(collection, itemComparer)
 	{
 		var output = new Set(0, itemComparer);
 

@@ -702,8 +702,10 @@ public class String is Collection
 	private static getTrimSet(chars)
 	{
 		var charSet;
-		if chars is String:
-			charSet = Set.fromCollection(chars);
+		if chars is String
+		{
+			charSet = Set.from(chars);
+		}
 		else
 		{
 			charSet = new Set();
