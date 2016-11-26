@@ -1,5 +1,12 @@
 namespace aves;
 
+/// Summary: Encapsulates the general category of a Unicode code point.
+/// Remarks: The general category of a Unicode code point is, as the name implies, general.
+///          That means it does not provide fine-grained details about every possible use of
+///          that code point. Rather, it encodes the primary characteristic of the character.
+///          For example, is it a letter, a mark, a number, punctuation, or a symbol – and if
+///          so, of what type? Uppercase or lowercase letter, combining or spacing mark, and
+///          so on.
 public enum set UnicodeCategory
 {
 	none = 0,
