@@ -66,7 +66,7 @@ public class Char __primitive
 	///          classified as a puntuation character (categories Pc, Pd, Ps,
 	///          Pe, Pi, Pf and Po).
 	/// Returns: True if the character is a punctuation character; otherwise, false.
-	public get isPunct => category & UnicodeCategory.punct != UnicodeCategory.none;
+	public get isPunctuation => category & UnicodeCategory.punctuation != UnicodeCategory.none;
 	/// Summary: Gets a value that indicates whether the Unicode character is
 	///          classified as a symbol (categories Sm, Sc, Sk and So).
 	/// Returns: True if the character is a symbol; otherwise, false.

@@ -964,9 +964,9 @@ public class String is Collection
 	{
 		return getCharacter(i).isNumber;
 	}
-	public isPunct(i)
+	public isPunctuation(i)
 	{
-		return getCharacter(i).isPunct;
+		return getCharacter(i).isPunctuation;
 	}
 	public isSymbol(i)
 	{
