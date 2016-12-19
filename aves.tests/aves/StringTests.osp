@@ -345,8 +345,8 @@ public class StringEqualityTests is TestFixture
 
 	public test_EqualsIgnoreCaseSurrogatePair()
 	{
-		var str1 = "\U0001040C"; // Deseret Capital Letter Ay
-		var str2 = "\U00010434"; // Deseret Small Letter Ay
+		var str1 = "\u{1040C}"; // Deseret Capital Letter Ay
+		var str2 = "\u{10434}"; // Deseret Small Letter Ay
 		Assert.isTrue(str1.equalsIgnoreCase(str2));
 	}
 
@@ -361,8 +361,8 @@ public class StringEqualityTests is TestFixture
 		// U+D800 = first surrogate lead
 		// U+1040C = Deseret Capital Letter Ay
 		// U+10434 = Deseret Small Letter Ay
-		var str1 = "\uD800\U0001040C";
-		var str2 = "\uD800\U00010434";
+		var str1 = "\u{D800}\u{1040C}";
+		var str2 = "\u{D800}\u{10434}";
 		Assert.isTrue(str1.equalsIgnoreCase(str2));
 	}
 
@@ -371,8 +371,8 @@ public class StringEqualityTests is TestFixture
 		// U+D800 = first surrogate lead
 		// U+1040C = Deseret Capital Letter Ay
 		// U+10434 = Deseret Small Letter Ay
-		var str1 = "\U0001040C\uD800";
-		var str2 = "\U00010434\uD800";
+		var str1 = "\u{1040C}\u{D800}";
+		var str2 = "\u{10434}\u{D800}";
 		Assert.isTrue(str1.equalsIgnoreCase(str2));
 	}
 
@@ -383,8 +383,8 @@ public class StringEqualityTests is TestFixture
 		// U+1041F = Deseret Capital Letter Esh
 		// U+10434 = Deseret Small Letter Ay
 		// U+10447 = Deseret Small Letter Esh
-		var str1 = "\U0001040C\uD800\U0001041F";
-		var str2 = "\U00010434\uD800\U00010447";
+		var str1 = "\u{1040C}\u{D800}\u{1041F}";
+		var str2 = "\u{10434}\u{D800}\u{10447}";
 		Assert.isTrue(str1.equalsIgnoreCase(str2));
 	}
 
@@ -393,8 +393,8 @@ public class StringEqualityTests is TestFixture
 		// U+DC00 = first surrogate trail
 		// U+1040C = Deseret Capital Letter Ay
 		// U+10434 = Deseret Small Letter Ay
-		var str1 = "\uDC00\U0001040C";
-		var str2 = "\uDC00\U00010434";
+		var str1 = "\u{DC00}\u{1040C}";
+		var str2 = "\u{DC00}\u{10434}";
 		Assert.isTrue(str1.equalsIgnoreCase(str2));
 	}
 
@@ -403,8 +403,8 @@ public class StringEqualityTests is TestFixture
 		// U+DC00 = first surrogate trail
 		// U+1040C = Deseret Capital Letter Ay
 		// U+10434 = Deseret Small Letter Ay
-		var str1 = "\U0001040C\uDC00";
-		var str2 = "\U00010434\uDC00";
+		var str1 = "\u{1040C}\u{DC00}";
+		var str2 = "\u{10434}\u{DC00}";
 		Assert.isTrue(str1.equalsIgnoreCase(str2));
 	}
 
@@ -415,8 +415,8 @@ public class StringEqualityTests is TestFixture
 		// U+1041F = Deseret Capital Letter Esh
 		// U+10434 = Deseret Small Letter Ay
 		// U+10447 = Deseret Small Letter Esh
-		var str1 = "\U0001040C\uDC00\U0001041F";
-		var str2 = "\U00010434\uDC00\U00010447";
+		var str1 = "\u{1040C}\u{DC00}\u{1041F}";
+		var str2 = "\u{10434}\u{DC00}\u{10447}";
 		Assert.isTrue(str1.equalsIgnoreCase(str2));
 	}
 
@@ -506,7 +506,7 @@ public class StringPadTests is TestFixture
 	{
 		var str = "aaa";
 		var minLength = 6;
-		var char = '\U0001D11E'; // Musical Symbol G Clef (two UTF-16 code units)
+		var char = '\u{1D11E}'; // Musical Symbol G Clef (two UTF-16 code units)
 
 		Assert.throws(typeof(ArgumentError), @=> str.padStart(minLength, char));
 		Assert.throws(typeof(ArgumentError), @=> str.pad(minLength, char, StringPad.start));
@@ -603,7 +603,7 @@ public class StringPadTests is TestFixture
 	{
 		var str = "aaa";
 		var minLength = 6;
-		var char = '\U0001D11E'; // Musical Symbol G Clef (two UTF-16 code units)
+		var char = '\u{1D11E}'; // Musical Symbol G Clef (two UTF-16 code units)
 
 		Assert.throws(typeof(ArgumentError), @=> str.padEnd(minLength, char));
 		Assert.throws(typeof(ArgumentError), @=> str.pad(minLength, char, StringPad.end));
@@ -694,7 +694,7 @@ public class StringPadTests is TestFixture
 	{
 		var str = "aaa";
 		var minLength = 6;
-		var char = '\U0001D11E'; // Musical Symbol G Clef (two UTF-16 code units)
+		var char = '\u{1D11E}'; // Musical Symbol G Clef (two UTF-16 code units)
 
 		Assert.throws(typeof(ArgumentError), @=> str.pad(minLength, char, StringPad.both));
 	}

@@ -134,7 +134,7 @@ public class BooleanTests is TestFixture
 		Assert.areEqual(Boolean.parse("FALSE"), false);
 		Assert.areEqual(Boolean.parse("FaLSe"), false);
 		// U+2028 = Line Separator
-		Assert.areEqual(Boolean.parse(" \u2028    false  "), false);
+		Assert.areEqual(Boolean.parse(" \u{2028}    false  "), false);
 	}
 
 	public test_ParseInvalid()

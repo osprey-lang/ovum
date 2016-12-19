@@ -15,7 +15,7 @@ public class CharTests is TestFixture
 		Assert.doesNotThrow(@{ char = new Char(0); });
 		Assert.areEqual(char, '\0');
 		Assert.doesNotThrow(@{ char = new Char(0x1D11E); });
-		Assert.areEqual(char, '\U0001D11E');
+		Assert.areEqual(char, '\u{1D11E}');
 	}
 
 	public test_ConstructInvalid()
@@ -30,7 +30,7 @@ public class CharTests is TestFixture
 	public test_Length()
 	{
 		var char1 = 'x';
-		var char2 = '\U0001D11E'; // Musical Symbol G Clef
+		var char2 = '\u{1D11E}'; // Musical Symbol G Clef
 
 		Assert.areEqual(char1.length, 1);
 		Assert.areEqual(char2.length, 2);
@@ -38,7 +38,7 @@ public class CharTests is TestFixture
 
 	public test_CodePoint()
 	{
-		var char = '\u014A';
+		var char = '\u{014A}';
 
 		Assert.areEqual(char.codePoint, 0x014A);
 	}
