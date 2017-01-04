@@ -28,19 +28,17 @@ public inheritable Object
 	///          {func} is null.
 	public apply(func, ...args)
 	{
-		if func is null:
+		if func is null {
 			throw new ArgumentNullError("func");
+		}
 
-		if args.length == 0
-		{
+		if args.length == 0 {
 			return func(this);
 		}
-		else if args.length == 1
-		{
+		else if args.length == 1 {
 			return func(this, args[0]);
 		}
-		else
-		{
+		else {
 			args.insert(0, this);
 			return func -> args;
 		}

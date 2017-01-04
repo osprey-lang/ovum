@@ -25,8 +25,9 @@ public class Field is Member
 
 	override get fullName
 	{
-		if _fullName is null:
+		if _fullName is null {
 			_fullName = declaringType.fullName :: "." :: name;
+		}
 		return _fullName;
 	}
 
@@ -70,10 +71,10 @@ public class Field is Member
 	///          a type derived from it.
 	public getValue(instance)
 	{
-		if not isStatic
-		{
-			if instance is null:
+		if not isStatic {
+			if instance is null {
 				throw new ArgumentNullError("instance");
+			}
 			// Note: getValueInternal checks the instance type
 			return getValueInternal(instance);
 		}
@@ -97,15 +98,16 @@ public class Field is Member
 	///          a type derived from it.
 	public setValue(instance, value)
 	{
-		if not isStatic
-		{
-			if instance is null:
+		if not isStatic {
+			if instance is null {
 				throw new ArgumentNullError("instance");
+			}
 			// Note: setValueInternal checks the instance type
 			setValueInternal(instance, value);
 		}
-		else
+		else {
 			setValueInternal(null, value);
+		}
 	}
 	private setValueInternal(instance, value)
 		__extern("aves_reflection_Field_setValue");

@@ -10,8 +10,9 @@ public static class Directory
 
 	public static exists(pathName)
 	{
-		if pathName is null:
+		if pathName is null {
 			throw new ArgumentNullError("pathName");
+		}
 
 		return existsInternal(string(pathName));
 	}

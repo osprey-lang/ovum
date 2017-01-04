@@ -28,29 +28,31 @@ public class Real __primitive
 	{
 		str = string(str);
 
-		verify: do
-		{
+		verify: do {
 			var strLength = str.length;
 			// Skip leading and trailing whitespace
 			var start = 0;
-			while start < strLength and str.isWhiteSpace(start):
+			while start < strLength and str.isWhiteSpace(start) {
 				start += 1;
+			}
 
 			var end = strLength - 1;
-			while end >= 0 and str.isWhiteSpace(end):
+			while end >= 0 and str.isWhiteSpace(end) {
 				end -= 1;
+			}
 
-			if start > end:
+			if start > end {
 				// Only whitespace in string :(
 				break;
+			}
 
 			// The string can only contain ASCII characters,
 			// because that's all dtoa's strtod accepts.
 			var i = start;
-			while i < strLength
-			{
-				if str.getCodePoint(i) > 255:
+			while i < strLength {
+				if str.getCodePoint(i) > 255 {
 					break verify;
+				}
 				i += 1;
 			}
 

@@ -26,11 +26,12 @@ internal class FilterIterator is Iterator
 
 	override moveNext()
 	{
-		if not ended
-		{
-			while inner.moveNext():
-				if predicate(inner.current):
+		if not ended {
+			while inner.moveNext() {
+				if predicate(inner.current) {
 					return true;
+				}
+			}
 
 			ended = true;
 		}

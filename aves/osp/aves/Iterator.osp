@@ -39,8 +39,9 @@ public abstract class Iterator
 	{
 		var output = [];
 
-		while moveNext():
+		while moveNext() {
 			output.add(current);
+		}
 
 		return output;
 	}
@@ -55,8 +56,9 @@ public abstract class Iterator
 		// List is good enough as an intermediate
 		var output = [];
 
-		while moveNext():
+		while moveNext() {
 			output.add(current);
+		}
 
 		return output.toArray();
 	}

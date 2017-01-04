@@ -96,16 +96,21 @@ public inheritable BinaryReader
 	///          {stream} is not readable.
 	public new(stream, encoding, bigEndian, keepOpen)
 	{
-		if stream is null:
+		if stream is null {
 			throw new ArgumentNullError("stream");
-		if stream is not Stream:
+		}
+		if stream is not Stream {
 			throw new ArgumentTypeError("stream", typeof(Stream));
-		if not stream.canRead:
+		}
+		if not stream.canRead {
 			throw new ArgumentError("The stream must be readable.", "stream");
-		if encoding is null:
+		}
+		if encoding is null {
 			throw new ArgumentNullError("encoding");
-		if encoding is not Encoding:
+		}
+		if encoding is not Encoding {
 			throw new ArgumentTypeError("encoding", typeof(Encoding));
+		}
 
 		_stream = stream;
 		_encoding = encoding;
@@ -154,13 +159,12 @@ public inheritable BinaryReader
 	///          Otherwise, does nothing.
 	public overridable close()
 	{
-		try
-		{
-			if not keepOpen:
+		try {
+			if not keepOpen {
 				_stream.close();
+			}
 		}
-		finally
-		{
+		finally {
 			_stream = null;
 		}
 	}
@@ -171,12 +175,14 @@ public inheritable BinaryReader
 	///          There are no more bytes to read from the stream.
 	public overridable readBoolean()
 	{
-		if _stream is null:
+		if _stream is null {
 			errorHelpers.readerClosed();
+		}
 
 		var b = _stream.readByte();
-		if b == -1:
+		if b == -1 {
 			errorHelpers.endOfFile();
+		}
 
 		return b > 0;
 	}
@@ -188,12 +194,14 @@ public inheritable BinaryReader
 	///          There are no more bytes to read from the stream.
 	public overridable readByte()
 	{
-		if _stream is null:
+		if _stream is null {
 			errorHelpers.readerClosed();
+		}
 
 		var b = _stream.readByte();
-		if b == -1:
+		if b == -1 {
 			errorHelpers.endOfFile();
+		}
 
 		return b;
 	}
@@ -204,15 +212,18 @@ public inheritable BinaryReader
 	///          There are no more bytes to read from the stream.
 	public overridable readSByte()
 	{
-		if _stream is null:
+		if _stream is null {
 			errorHelpers.readerClosed();
+		}
 
 		var b = _stream.readByte();
-		if b == -1:
+		if b == -1 {
 			errorHelpers.endOfFile();
+		}
 
-		if b > 127:
+		if b > 127 {
 			b = (b & 0x7f) - 128;
+		}
 
 		return b;
 	}
@@ -225,12 +236,14 @@ public inheritable BinaryReader
 	///          be read.
 	public overridable readInt16()
 	{
-		if _stream is null:
+		if _stream is null {
 			errorHelpers.readerClosed();
+		}
 
 		_stream.readInto(_buffer, 0, 2);
-		if _bigEndian != Env.bigEndian:
+		if _bigEndian != Env.bigEndian {
 			binHelpers.reverse2(_buffer);
+		}
 		return _buffer.readInt16(0);
 	}
 	/// Summary: Reads a signed 32-bit integer, and advances the stream by
@@ -241,12 +254,14 @@ public inheritable BinaryReader
 	///          be read.
 	public overridable readInt32()
 	{
-		if _stream is null:
+		if _stream is null {
 			errorHelpers.readerClosed();
+		}
 
 		_stream.readInto(_buffer, 0, 4);
-		if _bigEndian != Env.bigEndian:
+		if _bigEndian != Env.bigEndian {
 			binHelpers.reverse4(_buffer);
+		}
 		return _buffer.readInt32(0);
 	}
 	/// Summary: Reads a signed 64-bit integer, and advances the stream by
@@ -258,12 +273,14 @@ public inheritable BinaryReader
 	///          be read.
 	public overridable readInt64()
 	{
-		if _stream is null:
+		if _stream is null {
 			errorHelpers.readerClosed();
+		}
 
 		_stream.readInto(_buffer, 0, 8);
-		if _bigEndian != Env.bigEndian:
+		if _bigEndian != Env.bigEndian {
 			binHelpers.reverse8(_buffer);
+		}
 		return _buffer.readInt64(0);
 	}
 
@@ -276,17 +293,18 @@ public inheritable BinaryReader
 	///          {BinaryWriter.writePackedInt}.
 	public readPackedInt()
 	{
-		if _stream is null:
+		if _stream is null {
 			errorHelpers.readerClosed();
+		}
 
 		var output = 0, shift = 0;
 
 		var b;
-		do
-		{
+		do {
 			b = _stream.readByte();
-			if b == -1:
+			if b == -1 {
 				throw new EndOfFileError();
+			}
 
 			output |= (b & 0x7f) << shift;
 
@@ -304,12 +322,14 @@ public inheritable BinaryReader
 	///          be read.
 	public overridable readUInt16()
 	{
-		if _stream is null:
+		if _stream is null {
 			errorHelpers.readerClosed();
+		}
 
 		_stream.readInto(_buffer, 0, 2);
-		if _bigEndian != Env.bigEndian:
+		if _bigEndian != Env.bigEndian {
 			binHelpers.reverse2(_buffer);
+		}
 		return _buffer.readUInt16(0);
 	}
 	/// Summary: Reads an unsigned 32-bit integer, and advances the stream by
@@ -320,12 +340,14 @@ public inheritable BinaryReader
 	///          be read.
 	public overridable readUInt32()
 	{
-		if _stream is null:
+		if _stream is null {
 			errorHelpers.readerClosed();
+		}
 
 		_stream.readInto(_buffer, 0, 4);
-		if _bigEndian != Env.bigEndian:
+		if _bigEndian != Env.bigEndian {
 			binHelpers.reverse4(_buffer);
+		}
 		return _buffer.readUInt32(0);
 	}
 	/// Summary: Reads an unsigned 64-bit integer, and advances the stream by
@@ -336,12 +358,14 @@ public inheritable BinaryReader
 	///          be read.
 	public overridable readUInt64()
 	{
-		if _stream is null:
+		if _stream is null {
 			errorHelpers.readerClosed();
+		}
 
 		_stream.readInto(_buffer, 0, 8);
-		if _bigEndian != Env.bigEndian:
+		if _bigEndian != Env.bigEndian {
 			binHelpers.reverse8(_buffer);
+		}
 		return _buffer.readUInt64(0);
 	}
 
@@ -353,12 +377,14 @@ public inheritable BinaryReader
 	///          be read.
 	public overridable readFloat32()
 	{
-		if _stream is null:
+		if _stream is null {
 			errorHelpers.readerClosed();
+		}
 
 		_stream.readInto(_buffer, 0, 4);
-		if _bigEndian != Env.bigEndian:
+		if _bigEndian != Env.bigEndian {
 			binHelpers.reverse4(_buffer);
+		}
 		return _buffer.readFloat32(0);
 	}
 	/// Summary: Reads a double-precision (64-bit) floating-point number, and
@@ -369,12 +395,14 @@ public inheritable BinaryReader
 	///          be read.
 	public overridable readFloat64()
 	{
-		if _stream is null:
+		if _stream is null {
 			errorHelpers.readerClosed();
+		}
 
 		_stream.readInto(_buffer, 0, 8);
-		if _bigEndian != Env.bigEndian:
+		if _bigEndian != Env.bigEndian {
 			binHelpers.reverse8(_buffer);
+		}
 		return _buffer.readFloat64(0);
 	}
 
@@ -390,8 +418,9 @@ public inheritable BinaryReader
 	///          that is used by {readPackedInt}.
 	public overridable readString()
 	{
-		if _stream is null:
+		if _stream is null {
 			errorHelpers.readerClosed();
+		}
 
 		var byteCount = readPackedInt();
 		var buf = byteCount <= bufferSize ?

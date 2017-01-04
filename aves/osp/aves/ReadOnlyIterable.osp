@@ -25,10 +25,12 @@ public inheritable ReadOnlyIterable is Iterable
 	///          {collection} is of a type derived from {Iterator}.
 	public new(collection)
 	{
-		if collection is null:
+		if collection is null {
 			throw new ArgumentNullError("collection");
-		if collection is Iterator:
+		}
+		if collection is Iterator {
 			throw new ArgumentError("The collection cannot be of a type derived from Iterator.", "collection");
+		}
 
 		this._collection = collection;
 	}
@@ -42,32 +44,33 @@ public inheritable ReadOnlyIterable is Iterable
 
 	overridable override count()
 	{
-		if _collection is null:
+		if _collection is null {
 			return 0;
-
+		}
 		return _collection.count();
 	}
 
 	overridable override toList()
 	{
-		if _collection is null:
+		if _collection is null {
 			return [];
-
+		}
 		return _collection.toList();
 	}
 
 	overridable override toArray()
 	{
-		if _collection is null:
+		if _collection is null {
 			return new Array(0);
-
+		}
 		return _collection.toArray();
 	}
 
 	iter
 	{
-		if _collection is null:
+		if _collection is null {
 			return Iterator.empty;
+		}
 		return _collection.iter;
 	}
 }

@@ -36,10 +36,12 @@ public abstract class Decoder
 		// size of the buffer is > 16k; anything smaller than that and
 		// the string buffer will manage just fine.
 		var sb;
-		if buf.size > 16k:
+		if buf.size > 16k {
 			sb = new StringBuffer(getCharCount(buf, offset, count, flush));
-		else:
+		}
+		else {
 			sb = new StringBuffer();
+		}
 
 		getChars(buf, offset, count, sb, flush);
 

@@ -225,8 +225,9 @@ public class TimeSpan __primitive
 	///          absolute value of the time span.
 	public get duration
 	{
-		if rawValue < 0:
+		if rawValue < 0 {
 			return new TimeSpan(-rawValue);
+		}
 
 		return this;
 	}
@@ -245,8 +246,7 @@ public class TimeSpan __primitive
 		var sign = value < 0 ? "-" : "";
 		formatArgs.add(sign);
 
-		if days != 0
-		{
+		if days != 0 {
 			format = formatWithDays;
 			formatArgs.add(math.abs(value / microsPerDay));
 		}
@@ -260,8 +260,9 @@ public class TimeSpan __primitive
 
 	operator +(a, b)
 	{
-		if b is not TimeSpan:
+		if b is not TimeSpan {
 			throw new ArgumentTypeError();
+		}
 
 		return new TimeSpan(a.rawValue + b.rawValue);
 	}
@@ -273,8 +274,9 @@ public class TimeSpan __primitive
 
 	operator -(a, b)
 	{
-		if b is not TimeSpan:
+		if b is not TimeSpan {
 			throw new ArgumentTypeError();
+		}
 
 		return new TimeSpan(a.rawValue - b.rawValue);
 	}
@@ -282,8 +284,9 @@ public class TimeSpan __primitive
 	operator -(a)
 	{
 		var microseconds = a.rawValue;
-		if microseconds == Int.min:
+		if microseconds == Int.min {
 			throw new OverflowError();
+		}
 
 		return new TimeSpan(-microseconds);
 	}
@@ -295,8 +298,9 @@ public class TimeSpan __primitive
 
 	operator <=>(a, b)
 	{
-		if b is not TimeSpan:
+		if b is not TimeSpan {
 			throw new ArgumentTypeError();
+		}
 
 		return a.rawValue <=> b.rawValue;
 	}
@@ -374,8 +378,9 @@ public class TimeSpan __primitive
 	private static fromInterval(value, unitFactor)
 	{
 		value = real(value);
-		if value.isNaN or value.isInfinite:
+		if value.isNaN or value.isInfinite {
 			throw new ArgumentRangeError("value");
+		}
 		var microseconds = int(value * unitFactor);
 		return new TimeSpan(microseconds);
 	}

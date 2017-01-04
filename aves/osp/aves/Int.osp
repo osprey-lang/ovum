@@ -27,72 +27,71 @@ public class Int __primitive
 		var strLength = str.length;
 
 		var i = 0;
-		while i < strLength and str.isWhiteSpace(i):
+		while i < strLength and str.isWhiteSpace(i) {
 			i += 1;
+		}
 
 		var neg = false;
 
 		var cp;
-		if i < strLength
-		{
+		if i < strLength {
 			cp = str.getCodePoint(i);
-			if cp == 0x2D /*-*/ or cp == 0x2212 /*− (minus)*/
-			{
+			if cp == 0x2D /*-*/ or cp == 0x2212 /*− (minus)*/ {
 				neg = true;
 				i += 1;
 			}
-			else if cp == 0x2B /*+*/:
+			else if cp == 0x2B /*+*/ {
 				i += 1;
+			}
 		}
 
-		parse: do
-		{
+		parse: do {
 			const digit0 = 0x30;
 			const digit9 = 0x39;
 
-			if i == strLength:
+			if i == strLength {
 				break parse;
+			}
 
 			cp = str.getCodePoint(i);
-			if cp < digit0 or cp > digit9:
+			if cp < digit0 or cp > digit9 {
 				break parse; // next character must be a digit!
+			}
 
 			var result = 0;
-			try
-			{
-				if neg
-				{
-					while i < strLength
-					{
+			try {
+				if neg {
+					while i < strLength {
 						cp = str.getCodePoint(i);
-						if cp < digit0 or cp > digit9:
+						if cp < digit0 or cp > digit9 {
 							break;
+						}
 						result = 10 * result - (cp - digit0);
 						i += 1;
 					}
 				}
-				else
-				{
-					while i < strLength
-					{
+				else {
+					while i < strLength {
 						cp = str.getCodePoint(i);
-						if cp < digit0 or cp > digit9:
+						if cp < digit0 or cp > digit9 {
 							break;
+						}
 						result = 10 * result + (cp - digit0);
 						i += 1;
 					}
 				}
 			}
-			catch OverflowError
-			{
+			catch OverflowError {
 				break parse;
 			}
 
-			while i < strLength and str.isWhiteSpace(i):
+			while i < strLength and str.isWhiteSpace(i) {
 				i += 1;
+			}
 
-			if i != strLength:
+			if i != strLength {
 				break parse;
+			}
 
 			return result;
 		};

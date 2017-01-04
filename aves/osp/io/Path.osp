@@ -37,8 +37,9 @@ public static class Path
 
 	public static getFullPath(path)
 	{
-		if path is null:
+		if path is null {
 			throw new ArgumentNullError("path");
+		}
 		return getFullPathInternal(string(path));
 	}
 	private static getFullPathInternal(path)
@@ -46,8 +47,9 @@ public static class Path
 
 	public static getFileName(path)
 	{
-		if path is null:
+		if path is null {
 			throw new ArgumentNullError("path");
+		}
 		return getFileNameInternal(string(path));
 	}
 	private static getFileNameInternal(path)
@@ -55,8 +57,9 @@ public static class Path
 
 	public static getDirectory(path)
 	{
-		if path is null:
+		if path is null {
 			throw new ArgumentNullError("path");
+		}
 		return getDirectoryInternal(string(path));
 	}
 	private static getDirectoryInternal(path)
@@ -64,20 +67,23 @@ public static class Path
 
 	public static getExtension(path)
 	{
-		if path is null:
+		if path is null {
 			throw new ArgumentNullError("path");
+		}
 		return getExtensionInternal(string(path));
 	}
 	public static hasExtension(path)
 	{
-		if path is null:
+		if path is null {
 			throw new ArgumentNullError("path");
+		}
 		return hasExtensionInternal(string(path));
 	}
 	public static changeExtension(path, ext)
 	{
-		if path is null:
+		if path is null {
 			throw new ArgumentNullError("path");
+		}
 		return changeExtensionInternal(string(path), ext);
 	}
 

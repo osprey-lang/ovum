@@ -8,17 +8,20 @@ public class FileStream is Stream
 
 	public new(fileName)
 	{
-		if fileName is null:
+		if fileName is null {
 			throw new ArgumentNullError("fileName");
+		}
 		init(string(fileName), FileMode.open, FileAccess.readWrite, FileShare.none);
 	}
 
 	public new(fileName, mode)
 	{
-		if fileName is null:
+		if fileName is null {
 			throw new ArgumentNullError("fileName");
-		if mode is not FileMode:
+		}
+		if mode is not FileMode {
 			throw new ArgumentTypeError("mode", typeof(FileMode));
+		}
 
 		var access = mode == FileMode.truncate or mode == FileMode.append ?
 			FileAccess.write :
@@ -28,26 +31,33 @@ public class FileStream is Stream
 
 	public new(fileName, mode, access)
 	{
-		if fileName is null:
+		if fileName is null {
 			throw new ArgumentNullError("fileName");
-		if mode is not FileMode:
+		}
+		if mode is not FileMode {
 			throw new ArgumentTypeError("mode", typeof(FileMode));
-		if access is not FileAccess:
+		}
+		if access is not FileAccess {
 			throw new ArgumentTypeError("access", typeof(FileAccess));
+		}
 
 		init(string(fileName), mode, access, FileShare.none);
 	}
 
 	public new(fileName, mode, access, share)
 	{
-		if fileName is null:
+		if fileName is null {
 			throw new ArgumentNullError("fileName");
-		if mode is not FileMode:
+		}
+		if mode is not FileMode {
 			throw new ArgumentTypeError("mode", typeof(FileMode));
-		if access is not FileAccess:
+		}
+		if access is not FileAccess {
 			throw new ArgumentTypeError("access", typeof(FileAccess));
-		if share is not FileShare:
+		}
+		if share is not FileShare {
 			throw new ArgumentTypeError("share", typeof(FileShare));
+		}
 
 		init(string(fileName), mode, access, share);
 	}
@@ -107,8 +117,9 @@ public class FileStream is Stream
 	override seek(offset, origin)
 	{
 		offset = int(offset);
-		if origin is not SeekOrigin:
+		if origin is not SeekOrigin {
 			throw new ArgumentTypeError("origin", typeof(SeekOrigin));
+		}
 
 		return seekInternal(offset, origin);
 	}

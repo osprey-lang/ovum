@@ -52,8 +52,9 @@ public inheritable ArgumentError is Error
 
 	overridable override get message
 	{
-		if _paramName is not null:
+		if _paramName is not null {
 			return "{0} (paramName: {1})".format([base.message, _paramName]);
+		}
 		return base.message;
 	}
 

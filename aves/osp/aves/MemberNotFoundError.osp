@@ -42,8 +42,9 @@ public inheritable MemberNotFoundError is TypeError
 
 	overridable override get message
 	{
-		if _member is not null:
+		if _member is not null {
 			return "{0} (member: {1})".format([base.message, _member]);
+		}
 		return base.message;
 	}
 

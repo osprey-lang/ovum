@@ -208,11 +208,11 @@ public abstract class Stream
 		buf.verifyRange(offset, count);
 
 		var bytesRead = 0;
-		do
-		{
+		do {
 			var c = readMax(buf, offset, count - bytesRead);
-			if c == 0:
+			if c == 0 {
 				errorHelpers.endOfFile();
+			}
 			bytesRead += c;
 			offset += c;
 		} while bytesRead < count;
@@ -428,25 +428,30 @@ public abstract class Stream
 	public static copy(source, dest, bufferSize)
 	{
 		bufferSize = int(bufferSize);
-		if source is null or dest is null:
+		if source is null or dest is null {
 			throw new ArgumentNullError(source is null ? "source" : "dest");
-		if source is not Stream:
+		}
+		if source is not Stream {
 			throw new ArgumentTypeError("source", typeof(Stream));
-		if dest is not Stream:
+		}
+		if dest is not Stream {
 			throw new ArgumentTypeError("dest", typeof(Stream));
-		if not source.canRead:
+		}
+		if not source.canRead {
 			throw new ArgumentError("The source stream must be readable.", "source");
-		if not dest.canWrite:
+		}
+		if not dest.canWrite {
 			throw new ArgumentError("The destination stream must be writable.", "dest");
-		if bufferSize <= 0:
+		}
+		if bufferSize <= 0 {
 			throw new ArgumentRangeError("bufferSize");
+		}
 
 		var buf = new Buffer(bufferSize);
 		var totalBytes = 0;
 
 		var bytesRead;
-		do
-		{
+		do {
 			bytesRead = source.readMax(buf, 0, bufferSize);
 			dest.write(buf, 0, bytesRead);
 			totalBytes += bytesRead;

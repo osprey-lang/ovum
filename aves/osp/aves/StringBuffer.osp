@@ -80,8 +80,9 @@ public class StringBuffer
 	///          {value} could not be converted to a String.
 	public append(value)
 	{
-		if value is StringBuffer:
+		if value is StringBuffer {
 			return appendSubstringFromBuffer(value, 0, value.length);
+		}
 
 		value = string(value);
 		return appendInternal(value, 1);
@@ -101,8 +102,9 @@ public class StringBuffer
 	{
 		value = string(value);
 		times = int(times);
-		if times < 0:
+		if times < 0 {
 			throw new ArgumentRangeError("times");
+		}
 		return appendInternal(value, times);
 	}
 	private appendInternal(value, times)
@@ -138,8 +140,9 @@ public class StringBuffer
 	public appendCodePoint(codePoint)
 	{
 		codePoint = int(codePoint);
-		if codePoint < 0 or codePoint > 0x10FFFF:
+		if codePoint < 0 or codePoint > 0x10FFFF {
 			throw new ArgumentRangeError("codePoint");
+		}
 		return appendCodePointInternal(codePoint);
 	}
 	private appendCodePointInternal(codePoint)
@@ -164,20 +167,25 @@ public class StringBuffer
 	public appendSubstring(str, index, count)
 	{
 		var isStringBuf = str is StringBuffer;
-		if not isStringBuf:
+		if not isStringBuf {
 			str = string(str);
+		}
 
 		index = int(index);
 		count = int(count);
-		if index < 0 or count < 0:
+		if index < 0 or count < 0 {
 			throw new ArgumentRangeError(index < 0 ? "index" : "count");
-		if index + count > str.length:
+		}
+		if index + count > str.length {
 			throw new ArgumentError("The end of the range is outside of the string.");
+		}
 
-		if isStringBuf:
+		if isStringBuf {
 			return appendSubstringFromBuffer(str, index, count);
-		else:
+		}
+		else {
 			return appendSubstringFromString(str, index, count);
+		}
 	}
 	private appendSubstringFromString(str, index, count)
 		__extern("aves_StringBuffer_appendSubstringFromString");
@@ -198,8 +206,9 @@ public class StringBuffer
 	public insert(index, value)
 	{
 		index = int(index);
-		if index < 0 or index > length:
+		if index < 0 or index > length {
 			throw new ArgumentRangeError("index");
+		}
 		value = string(value);
 		return insertInternal(index, value);
 	}
@@ -224,12 +233,14 @@ public class StringBuffer
 	public substring(start)
 	{
 		start = int(start);
-		if start < 0 or start > length:
+		if start < 0 or start > length {
 			throw new ArgumentRangeError("start");
+		}
 
 		var sb = new StringBuffer(length - start);
-		if start < length:
+		if start < length {
 			sb.appendSubstringFromBuffer(this, start, length - start);
+		}
 		return sb;
 	}
 	/// Summary: Creates a new string buffer with the specified number of characters
@@ -250,10 +261,12 @@ public class StringBuffer
 	{
 		start = int(start);
 		count = int(count);
-		if start < 0 or count < 0:
+		if start < 0 or count < 0 {
 			throw new ArgumentRangeError(start < 0 ? "start" : "count");
-		if start + count > length:
+		}
+		if start + count > length {
 			throw new ArgumentError(endIsOutsideBuffer);
+		}
 
 		var sb = new StringBuffer(count);
 		sb.appendSubstringFromBuffer(this, start, count);
@@ -283,10 +296,12 @@ public class StringBuffer
 	{
 		start = int(start);
 		count = int(count);
-		if start < 0 or count < 0:
+		if start < 0 or count < 0 {
 			throw new ArgumentRangeError(start < 0 ? "start" : "count");
-		if start + count > length:
+		}
+		if start + count > length {
 			throw new ArgumentError(endIsOutsideBuffer);
+		}
 
 		return toStringSubstring(start, count);
 	}

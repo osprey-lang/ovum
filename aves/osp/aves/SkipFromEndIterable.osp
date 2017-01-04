@@ -29,12 +29,10 @@ internal class SkipFromEndIterator is Iterator
 
 	override moveNext()
 	{
-		while inner.moveNext()
-		{
+		while inner.moveNext() {
 			itemBuffer.enqueue(inner.current);
 			// We've got one more item than we need to remember
-			if itemBuffer.length > count
-			{
+			if itemBuffer.length > count {
 				cur = itemBuffer.dequeue();
 				return true;
 			}

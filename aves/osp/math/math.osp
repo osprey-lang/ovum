@@ -230,10 +230,12 @@ namespace math
 	///          This may or may not be desirable.
 	public function max(a, b)
 	{
-		if a is null:
+		if a is null {
 			return b;
-		if b is null:
+		}
+		if b is null {
 			return a;
+		}
 		return b > a ? b : a;
 	}
 
@@ -266,10 +268,12 @@ namespace math
 	///          This may or may not be desirable.
 	public function min(a, b)
 	{
-		if a is null:
+		if a is null {
 			return b;
-		if b is null:
+		}
+		if b is null {
 			return a;
+		}
 		return b < a ? b : a;
 	}
 

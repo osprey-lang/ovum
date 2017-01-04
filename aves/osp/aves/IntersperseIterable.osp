@@ -12,12 +12,10 @@ internal class IntersperseIterable is Iterable
 
 	private intersperseIter(inner, value)
 	{
-		if inner.moveNext()
-		{
+		if inner.moveNext() {
 			yield inner.current;
 
-			while inner.moveNext()
-			{
+			while inner.moveNext() {
 				yield value;
 				yield inner.current;
 			}
@@ -26,15 +24,14 @@ internal class IntersperseIterable is Iterable
 
 	private intersperseIter(inner, value, frequency)
 	{
-		if inner.moveNext()
-		{
+		if inner.moveNext() {
 			yield inner.current;
 
 			var i = 1;
-			while inner.moveNext()
-			{
-				if i == 0:
+			while inner.moveNext() {
+				if i == 0 {
 					yield value;
+				}
 				i = (i + 1) % frequency;
 				yield inner.current;
 			}
@@ -44,9 +41,11 @@ internal class IntersperseIterable is Iterable
 	iter
 	{
 		var i = inner.iter;
-		if frequency > 1:
+		if frequency > 1 {
 			return intersperseIter(i, value, frequency);
-		else
+		}
+		else {
 			return intersperseIter(i, value);
+		}
 	}
 }

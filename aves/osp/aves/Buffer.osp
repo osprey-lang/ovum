@@ -341,12 +341,15 @@ public class Buffer
 	///          that the caller have ensured they are both ints.
 	public verifyRange(offset, count)
 	{
-		if offset < 0:
+		if offset < 0 {
 			throw new ArgumentRangeError("offset");
-		if count < 0:
+		}
+		if count < 0 {
 			throw new ArgumentRangeError("count");
-		if offset + count > size:
+		}
+		if offset + count > size {
 			throw new ArgumentError("offset + count must be less than or equal to the buffer size.");
+		}
 	}
 
 	override toString()
@@ -364,12 +367,15 @@ public class Buffer
 	///          {buf} is not a {Buffer} or {BufferView}.
 	public static fromValue(buf)
 	{
-		if buf is null:
+		if buf is null {
 			throw new ArgumentNullError("buf");
-		if buf is BufferView:
+		}
+		if buf is BufferView {
 			buf = buf.buffer;
-		else if buf is not Buffer:
+		}
+		else if buf is not Buffer {
 			throw new ArgumentTypeError("buf", [typeof(Buffer), typeof(BufferView)]);
+		}
 		return buf;
 	}
 
@@ -397,17 +403,19 @@ public class Buffer
 	///          not accept a {BufferView} for the {buf} argument.
 	public static resize(ref buf, newSize)
 	{
-		if buf is not null and buf is not Buffer:
+		if buf is not null and buf is not Buffer {
 			throw new ArgumentTypeError("buf", typeof(Buffer));
+		}
 		newSize = int(newSize);
-		if newSize < 0:
+		if newSize < 0 {
 			throw new ArgumentRangeError("newSize");
+		}
 
-		if buf is null or newSize != buf.size
-		{
+		if buf is null or newSize != buf.size {
 			var newBuf = new Buffer(newSize);
-			if buf is not null:
+			if buf is not null {
 				copyInternal(buf, 0, newBuf, 0, math.min(buf.size, newSize));
+			}
 			buf = newBuf;
 		}
 	}
@@ -433,8 +441,9 @@ public class Buffer
 	{
 		source = fromValue(source);
 		destination = fromValue(destination);
-		if destination.size < source.size:
+		if destination.size < source.size {
 			throw new ArgumentError("The destination buffer is too small for the source buffer.");
+		}
 
 		copyInternal(source, 0, destination, 0, source.size);
 	}
@@ -460,8 +469,9 @@ public class Buffer
 		source = fromValue(source);
 		destination = fromValue(destination);
 		count = int(count);
-		if count < 0 or count > destination.size or count > source.size:
+		if count < 0 or count > destination.size or count > source.size {
 			throw new ArgumentRangeError("count");
+		}
 
 		copyInternal(source, 0, destination, 0, count);
 	}
@@ -497,12 +507,15 @@ public class Buffer
 		dest = fromValue(dest);
 		destIndex = int(destIndex);
 		count = int(count);
-		if sourceIndex < 0 or destIndex < 0:
+		if sourceIndex < 0 or destIndex < 0 {
 			throw new ArgumentRangeError(sourceIndex < 0 ? "sourceIndex" : "destIndex");
-		if sourceIndex + count > source.size:
+		}
+		if sourceIndex + count > source.size {
 			throw new ArgumentError("sourceIndex + count is outside of the source buffer.");
-		if destIndex + count > dest.size:
+		}
+		if destIndex + count > dest.size {
 			throw new ArgumentError("destIndex + count is outside of the destination buffer.");
+		}
 
 		copyInternal(source, sourceIndex, dest, destIndex, count);
 	}
@@ -512,8 +525,7 @@ public class Buffer
 	iter
 	{
 		var i = 0;
-		while i < size
-		{
+		while i < size {
 			yield readByte(i);
 			i += 1;
 		}
@@ -589,8 +601,7 @@ public class BufferView
 	iter
 	{
 		var i = 0;
-		while i < length
-		{
+		while i < length {
 			yield this[i];
 			i += 1;
 		}

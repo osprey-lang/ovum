@@ -45,20 +45,23 @@ public inheritable Hash is Collection
 	///          equality. Null can be passed to use the default key comparer.
 	/// Throws TypeConversionError:
 	///          {capacity} could not be converted to an Int.
-	/// Throws ArgumentError:
+	/// Throws ArgumentTypeError:
 	///          {keyComparer} is not null and not an {EqualityComparer}.
 	/// Throws ArgumentRangeError:
 	///          {capacity} is less than zero, or greater than {maxCapacity}.
 	public new(capacity, keyComparer)
 	{
 		capacity = int(capacity);
-		if capacity < 0 or capacity > maxCapacity:
+		if capacity < 0 or capacity > maxCapacity {
 			throw new ArgumentRangeError("capacity");
+		}
 
-		if keyComparer is null:
+		if keyComparer is null {
 			keyComparer = EqualityComparer.default;
-		else if keyComparer is not EqualityComparer:
-			throw new ArgumentError("keyComparer must be an instance of aves.EqualityComparer or null.", "keyComparer");
+		}
+		else if keyComparer is not EqualityComparer {
+			throw new ArgumentError("keyComparer", typeof(EqualityComparer));
+		}
 
 		initialize(capacity, keyComparer);
 	}
@@ -234,10 +237,12 @@ public inheritable Hash is Collection
 	///          any way.
 	public concat(other)
 	{
-		if other is null:
+		if other is null {
 			throw new ArgumentNullError("other");
-		if other is not Hash:
+		}
+		if other is not Hash {
 			throw new ArgumentTypeError("other", typeof(Hash));
+		}
 
 		return concatInternal(other);
 	}
@@ -267,28 +272,29 @@ public inheritable Hash is Collection
 	///          key–value pair in a List.
 	public allEntries(predicate)
 	{
-		if predicate is null:
+		if predicate is null {
 			throw new ArgumentNullError("predicate");
+		}
 
 		var startVersion = version;
 
-		try
-		{
+		try {
 			pinEntries();
 			var i = 0;
-			while i < entryCount
-			{
-				if startVersion != version:
+			while i < entryCount {
+				if startVersion != version {
 					throw new InvalidStateError(hashHasChanged);
+				}
 				var entry = getEntry(i);
 				if entry is not null and
-					not predicate(entry.key, entry.value):
+					not predicate(entry.key, entry.value)
+				{
 					return false;
+				}
 				i += 1;
 			}
 		}
-		finally
-		{
+		finally {
 			unpinEntries();
 		}
 
@@ -313,28 +319,29 @@ public inheritable Hash is Collection
 	///          key–value pair in a List.
 	public anyEntry(predicate)
 	{
-		if predicate is null:
+		if predicate is null {
 			throw new ArgumentNullError("predicate");
+		}
 
 		var startVersion = version;
 
-		try
-		{
+		try {
 			pinEntries();
 			var i = 0;
-			while i < entryCount
-			{
-				if startVersion != version:
+			while i < entryCount {
+				if startVersion != version {
 					throw new InvalidStateError(hashHasChanged);
+				}
 				var entry = getEntry(i);
 				if entry is not null and
-					predicate(entry.key, entry.value):
+					predicate(entry.key, entry.value)
+				{
 					return true;
+				}
 				i += 1;
 			}
 		}
-		finally
-		{
+		finally {
 			unpinEntries();
 		}
 
@@ -353,27 +360,27 @@ public inheritable Hash is Collection
 	///          pair in a List.
 	public eachEntry(func)
 	{
-		if func is null:
+		if func is null {
 			throw new ArgumentNullError("func");
+		}
 
 		var startVersion = version;
 
-		try
-		{
+		try {
 			pinEntries();
 			var i = 0;
-			while i < entryCount
-			{
-				if startVersion != version:
+			while i < entryCount {
+				if startVersion != version {
 					throw new InvalidStateError(hashHasChanged);
+				}
 				var entry =	getEntry(i);
-				if entry is not null:
+				if entry is not null {
 					func(entry.key, entry.value);
+				}
 				i += 1;
 			}
 		}
-		finally
-		{
+		finally {
 			unpinEntries();
 		}
 
@@ -396,28 +403,30 @@ public inheritable Hash is Collection
 	///          containing a key–value pair in a List.
 	public filterEntries(predicate)
 	{
-		if predicate is null:
+		if predicate is null {
 			throw new ArgumentNullError("predicate");
+		}
 
 		var output = new Hash(length, keyComparer);
 		var startVersion = version;
 
-		try
-		{
+		try {
 			pinEntries();
 			var i = 0;
-			while i < entryCount
-			{
-				if startVersion != version:
+			while i < entryCount {
+				if startVersion != version {
 					throw new InvalidStateError(hashHasChanged);
+				}
 				var entry = getEntry(i);
-				if entry is not null and predicate(entry.key, entry.value):
+				if entry is not null and
+					predicate(entry.key, entry.value)
+				{
 					output.add(entry.key, entry.value);
+				}
 				i += 1;
 			}
 		}
-		finally
-		{
+		finally {
 			unpinEntries();
 		}
 
@@ -442,22 +451,21 @@ public inheritable Hash is Collection
 		var output = new Hash(length, keyComparer);
 		var startVersion = version;
 
-		try
-		{
+		try {
 			pinEntries();
 			var i = 0;
-			while i < entryCount
-			{
-				if startVersion != version:
+			while i < entryCount {
+				if startVersion != version {
 					throw new InvalidStateError(hashHasChanged);
+				}
 				var entry = getEntry(i);
-				if entry is not null:
+				if entry is not null {
 					output.add(func(entry.key, entry.value), entry.value);
+				}
 				i += 1;
 			}
 		}
-		finally
-		{
+		finally {
 			unpinEntries();
 		}
 
@@ -482,22 +490,21 @@ public inheritable Hash is Collection
 		var output = new Hash(length, keyComparer);
 		var startVersion = version;
 
-		try
-		{
+		try {
 			pinEntries();
 			var i = 0;
-			while i < entryCount
-			{
-				if startVersion != version:
+			while i < entryCount {
+				if startVersion != version {
 					throw new InvalidStateError(hashHasChanged);
+				}
 				var entry = getEntry(i);
-				if entry is not null:
+				if entry is not null {
 					output.add(entry.key, func(entry.key, entry.value));
+				}
 				i += 1;
 			}
 		}
-		finally
-		{
+		finally {
 			unpinEntries();
 		}
 
@@ -513,13 +520,15 @@ public inheritable Hash is Collection
 
 	private getHash(key)
 	{
-		if key is null:
+		if key is null {
 			throw new ArgumentNullError("key");
+		}
 
 		var h = keyComparer.getHashCode(key);
 
-		if h is not Int and h is not UInt:
+		if h is not Int and h is not UInt {
 			throw new TypeConversionError("The hash code must be of type Int or UInt.");
+		}
 
 		return h;
 	}
@@ -587,24 +596,21 @@ internal class HashIterator is Iterator
 
 	override moveNext()
 	{
-		if hash.version != version:
+		if hash.version != version {
 			throw new InvalidStateError(Hash.hashHasChanged);
+		}
 
-		while i < hash.entryCount - 1
-		{
+		while i < hash.entryCount - 1 {
 			i += 1;
-			try
-			{
+			try {
 				hash.pinEntries();
 				var entry = hash.getEntry(i);
-				if entry is not null
-				{
+				if entry is not null {
 					cur = [entry.key, entry.value];
 					return true;
 				}
 			}
-			finally
-			{
+			finally {
 				hash.unpinEntries();
 			}
 		}
@@ -645,24 +651,21 @@ internal class KeyOrValueIterator is Iterator
 
 	override moveNext()
 	{
-		if hash.version != version:
+		if hash.version != version {
 			throw new InvalidStateError(Hash.hashHasChanged);
+		}
 
-		while i < hash.entryCount - 1
-		{
+		while i < hash.entryCount - 1 {
 			i += 1;
-			try
-			{
+			try {
 				hash.pinEntries();
 				var entry = hash.getEntry(i);
-				if entry is not null
-				{
+				if entry is not null {
 					cur = useKey ? entry.key : entry.value;
 					return true;
 				}
 			}
-			finally
-			{
+			finally {
 				hash.unpinEntries();
 			}
 		}

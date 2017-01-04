@@ -26,16 +26,15 @@ internal class SkipWhileIterator is Iterator
 
 	override moveNext()
 	{
-		if skipItems
-		{
-			while inner.moveNext():
-				if not predicate(inner.current)
-				{
+		if skipItems {
+			while inner.moveNext() {
+				if not predicate(inner.current) {
 					// When the predicate returns false, we stop skipping
 					// and yield the current item.
 					skipItems = false;
 					return true;
 				}
+			}
 
 			// If we fall through here, it means we got to the end before
 			// the predicate returned false. Don't try to skip again.

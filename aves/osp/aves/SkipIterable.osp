@@ -11,8 +11,9 @@ internal class SkipIterable is Iterable
 	override skip(count)
 	{
 		count = int(count);
-		if count < 0:
+		if count < 0 {
 			throw new ArgumentRangeError("count");
+		}
 
 		return new SkipIterable(inner, skipCount + count);
 	}
@@ -35,12 +36,9 @@ internal class SkipIterator is Iterator
 
 	override moveNext()
 	{
-		if hasMore
-		{
-			while count > 0
-			{
-				if not inner.moveNext()
-				{
+		if hasMore {
+			while count > 0 {
+				if not inner.moveNext() {
 					hasMore = false;
 					return false;
 				}

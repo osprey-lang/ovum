@@ -111,8 +111,9 @@ public inheritable List is Collection
 	public indexOf(item, startIndex)
 	{
 		startIndex = int(startIndex);
-		if startIndex < 0 or startIndex > length:
+		if startIndex < 0 or startIndex > length {
 			throw new ArgumentRangeError("startIndex");
+		}
 
 		return indexOfInternal(item, startIndex, length);
 	}
@@ -136,23 +137,26 @@ public inheritable List is Collection
 	public indexOf(item, startIndex, count)
 	{
 		startIndex = int(startIndex);
-		if startIndex < 0 or startIndex > length:
+		if startIndex < 0 or startIndex > length {
 			throw new ArgumentRangeError("startIndex");
+		}
 		count = int(count);
-		if count < 0:
+		if count < 0 {
 			throw new ArgumentRangeError("count");
-		if startIndex + count > length:
+		}
+		if startIndex + count > length {
 			throw new ArgumentError("startIndex + count is outside the list.");
+		}
 
 		return indexOfInternal(item, startIndex, startIndex + count);
 	}
 
 	private indexOfInternal(item, startIndex, endIndex)
 	{
-		while startIndex < endIndex
-		{
-			if item == this[startIndex]:
+		while startIndex < endIndex {
+			if item == this[startIndex] {
 				return startIndex;
+			}
 			startIndex += 1;
 		}
 
@@ -167,10 +171,10 @@ public inheritable List is Collection
 	public lastIndexOf(item)
 	{
 		var i = length - 1;
-		while i >= 0
-		{
-			if item == this[i]:
+		while i >= 0 {
+			if item == this[i] {
 				return i;
+			}
 			i -= 1;
 		}
 
@@ -183,8 +187,7 @@ public inheritable List is Collection
 	public remove(item)
 	{
 		var index = indexOf(item);
-		if index is not null
-		{
+		if index is not null {
 			removeAt(index);
 			return true;
 		}
@@ -216,10 +219,12 @@ public inheritable List is Collection
 	///          way.
 	public concat(other)
 	{
-		if other is null:
+		if other is null {
 			throw new ArgumentNullError("other");
-		if other is not List:
+		}
+		if other is not List {
 			throw new ArgumentTypeError("other", typeof(List));
+		}
 
 		return concatInternal(other);
 	}
@@ -282,10 +287,10 @@ public inheritable List is Collection
 	overridable override any()
 	{
 		var i = 0;
-		while i < length
-		{
-			if this[i]:
+		while i < length {
+			if this[i] {
 				return true;
+			}
 			i += 1;
 		}
 
@@ -293,18 +298,20 @@ public inheritable List is Collection
 	}
 	overridable override any(predicate)
 	{
-		if predicate is null:
+		if predicate is null {
 			throw new ArgumentNullError("predicate");
+		}
 
 		var startVersion = version;
 
 		var i = 0;
-		while i < length
-		{
-			if startVersion != version:
+		while i < length {
+			if startVersion != version {
 				throw new InvalidStateError(listHasChanged);
-			if predicate(this[i]):
+			}
+			if predicate(this[i]) {
 				return true;
+			}
 			i += 1;
 		}
 
@@ -314,10 +321,10 @@ public inheritable List is Collection
 	overridable override all()
 	{
 		var i = 0;
-		while i < length
-		{
-			if not this[i]:
+		while i < length {
+			if not this[i] {
 				return false;
+			}
 			i += 1;
 		}
 
@@ -325,18 +332,20 @@ public inheritable List is Collection
 	}
 	overridable override all(predicate)
 	{
-		if predicate is null:
+		if predicate is null {
 			throw new ArgumentNullError("predicate");
+		}
 
 		var startVersion = version;
 
 		var i = 0;
-		while i < length
-		{
-			if startVersion != version:
+		while i < length {
+			if startVersion != version {
 				throw new InvalidStateError(listHasChanged);
-			if not predicate(this[i]):
+			}
+			if not predicate(this[i]) {
 				return false;
+			}
 			i += 1;
 		}
 
@@ -345,16 +354,17 @@ public inheritable List is Collection
 
 	overridable override each(func)
 	{
-		if func is null:
+		if func is null {
 			throw new ArgumentNullError("func");
+		}
 
 		var startVersion = version;
 
 		var i = 0;
-		while i < length
-		{
-			if startVersion != version:
+		while i < length {
+			if startVersion != version {
 				throw new InvalidStateError(listHasChanged);
+			}
 			func(this[i]);
 			i += 1;
 		}
@@ -364,27 +374,30 @@ public inheritable List is Collection
 
 	overridable override first()
 	{
-		if isEmpty:
+		if isEmpty {
 			throw new InvalidStateError("The list is empty.");
+		}
 
 		return this[0];
 	}
 
 	overridable override first(predicate)
 	{
-		if predicate is null:
+		if predicate is null {
 			throw new ArgumentNullError("predicate");
+		}
 
 		var startVersion = version;
 
 		var i = 0;
-		while i < length
-		{
-			if startVersion != version:
+		while i < length {
+			if startVersion != version {
 				throw new InvalidStateError(listHasChanged);
+			}
 			var item = this[i];
-			if predicate(item):
+			if predicate(item) {
 				return item;
+			}
 			i += 1;
 		}
 
@@ -393,33 +406,38 @@ public inheritable List is Collection
 
 	overridable override firstOrNull()
 	{
-		if isEmpty:
+		if isEmpty {
 			return null;
+		}
 
 		return this[0];
 	}
 
 	overridable override firstOrDefault(default)
 	{
-		if isEmpty:
+		if isEmpty {
 			return default;
+		}
 
 		return this[0];
 	}
 
 	overridable override fold(func)
 	{
-		if func is null:
+		if func is null {
 			throw new ArgumentNullError("func");
-		if length == 0:
+		}
+		if length == 0 {
 			throw new InvalidStateError("Cannot fold an empty list without initial value.");
+		}
 
 		return foldInternal(this[0], func, 1);
 	}
 	overridable override fold(init, func)
 	{
-		if func is null:
+		if func is null {
 			throw new ArgumentNullError("func");
+		}
 
 		return foldInternal(init, func, 0);
 	}
@@ -428,10 +446,10 @@ public inheritable List is Collection
 		var startVersion = version;
 
 		var i = startIndex;
-		while i < length
-		{
-			if startVersion != version:
+		while i < length {
+			if startVersion != version {
 				throw new InvalidStateError(listHasChanged);
+			}
 			init = func(init, this[i]);
 			i += 1;
 		}
@@ -441,8 +459,9 @@ public inheritable List is Collection
 
 	public foldr(func)
 	{
-		if length == 0:
+		if length == 0 {
 			throw new InvalidStateError("Cannot fold an empty list without initial value.");
+		}
 
 		return foldrInternal(this[length - 1], func, length - 2);
 	}
@@ -454,10 +473,10 @@ public inheritable List is Collection
 	{
 		var startVersion = version;
 
-		while startIndex >= 0
-		{
-			if startVersion != version:
+		while startIndex >= 0 {
+			if startVersion != version {
 				throw new InvalidStateError(listHasChanged);
+			}
 			init = func(init, this[startIndex]);
 			startIndex -= 1;
 		}
@@ -475,18 +494,20 @@ public inheritable List is Collection
 	///          {predicate} is null.
 	public indexOfFirst(predicate)
 	{
-		if predicate is null:
+		if predicate is null {
 			throw new ArgumentNullError("predicate");
+		}
 
 		var startVersion = version;
 
 		var i = 0;
-		while i < length
-		{
-			if startVersion != version:
+		while i < length {
+			if startVersion != version {
 				throw new InvalidStateError(listHasChanged);
-			if predicate(this[i]):
+			}
+			if predicate(this[i]) {
 				return i;
+			}
 			i += 1;
 		}
 
@@ -503,18 +524,20 @@ public inheritable List is Collection
 	///          {predicate} is null.
 	public indexOfLast(predicate)
 	{
-		if predicate is null:
+		if predicate is null {
 			throw new ArgumentNullError("predicate");
+		}
 
 		var startVersion = version;
 
 		var i = length - 1;
-		while i >= 0
-		{
-			if startVersion != version:
+		while i >= 0 {
+			if startVersion != version {
 				throw new InvalidStateError(listHasChanged);
-			if predicate(this[i]):
+			}
+			if predicate(this[i]) {
 				return i;
+			}
 			i -= 1;
 		}
 
@@ -523,8 +546,9 @@ public inheritable List is Collection
 
 	overridable override last()
 	{
-		if isEmpty:
+		if isEmpty {
 			throw new InvalidStateError("The list is empty.");
+		}
 
 		return this[length - 1];
 	}
@@ -534,13 +558,14 @@ public inheritable List is Collection
 		var startVersion = version;
 
 		var i = length - 1;
-		while i >= 0
-		{
-			if startVersion != version:
+		while i >= 0 {
+			if startVersion != version {
 				throw new InvalidStateError(listHasChanged);
+			}
 			var item = this[i];
-			if predicate(item):
+			if predicate(item) {
 				return item;
+			}
 			i -= 1;
 		}
 
@@ -549,16 +574,18 @@ public inheritable List is Collection
 
 	overridable override lastOrNull()
 	{
-		if isEmpty:
+		if isEmpty {
 			return null;
+		}
 
 		return this[length - 1];
 	}
 
 	overridable override lastOrDefault(default)
 	{
-		if isEmpty:
+		if isEmpty {
 			return default;
+		}
 
 		return this[length - 1];
 	}
@@ -606,11 +633,11 @@ internal class ListIterator is Iterator
 
 	override moveNext()
 	{
-		if getVersion(list) != version:
+		if getVersion(list) != version {
 			throw new Error("The list has changed since the iteration started.");
+		}
 
-		if i < list.length
-		{
+		if i < list.length {
 			cur = list[i];
 			i += 1;
 			return true;

@@ -42,10 +42,10 @@ public abstract class MethodBase is Member
 
 	override get name
 	{
-		if isGlobal
-		{
-			if cachedName is null:
+		if isGlobal {
+			if cachedName is null {
 				cachedName = helpers.getLastComponent(internalName);
+			}
 			return cachedName;
 		}
 		return internalName;
@@ -53,10 +53,10 @@ public abstract class MethodBase is Member
 
 	override get fullName
 	{
-		if not isGlobal
-		{
-			if cachedName is null:
+		if not isGlobal {
+			if cachedName is null {
 				cachedName = declaringType.fullName :: "." :: internalName;
+			}
 			return cachedName;
 		}
 		return internalName;
@@ -120,8 +120,9 @@ public abstract class MethodBase is Member
 	///          {index} is less than zero, or is greater than or equal to {overloadCount}.
 	public getOverload(index)
 	{
-		if index < 0 or index >= overloadCount:
+		if index < 0 or index >= overloadCount {
 			throw new ArgumentRangeError("index");
+		}
 
 		return new Overload(getOverloadHandle(index), this, index);
 	}
@@ -131,8 +132,9 @@ public abstract class MethodBase is Member
 	public getOverloads()
 	{
 		var output = new List(overloadCount);
-		for i in Iterable.range(0, overloadCount):
+		for i in Iterable.range(0, overloadCount) {
 			output.add(new Overload(getOverloadHandle(i), this, i));
+		}
 
 		return output;
 	}
@@ -158,15 +160,17 @@ public abstract class MethodBase is Member
 	///          The method contains no overload that accepts the specified arguments.
 	public overridable invoke(instance, arguments)
 	{
-		if not isStatic
-		{
-			if instance is null:
+		if not isStatic {
+			if instance is null {
 				throw new ArgumentNullError("instance");
-			if not declaringType.isInstance(instance):
+			}
+			if not declaringType.isInstance(instance) {
 				throw new TypeError();
+			}
 		}
-		if arguments is not null and arguments is not List:
+		if arguments is not null and arguments is not List {
 			throw new ArgumentTypeError("arguments", typeof(List));
+		}
 		return invokeInternal(instance, arguments);
 	}
 	private invokeInternal(inst, args)

@@ -26,11 +26,11 @@ internal class TakeWhileIterator is Iterator
 
 	override moveNext()
 	{
-		if continue
-		{
+		if continue {
 			continue = inner.moveNext() and predicate(inner.current);
-			if continue:
+			if continue {
 				return true;
+			}
 		}
 
 		return false;

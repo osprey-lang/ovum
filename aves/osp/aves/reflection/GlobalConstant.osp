@@ -7,8 +7,9 @@ public class GlobalConstant is Member
 
 	private new(module, isInternal, fullName, value)
 	{
-		if module is not Module or fullName is not String:
+		if module is not Module or fullName is not String {
 			throw new ArgumentTypeError();
+		}
 
 		_module     = module;
 		_isInternal = bool(isInternal);
@@ -26,15 +27,17 @@ public class GlobalConstant is Member
 
 	override get accessibility
 	{
-		if isPrivate:
+		if isPrivate {
 			return Accessibility.\private;
+		}
 		return Accessibility.\public;
 	}
 
 	override get name
 	{
-		if _name is null:
+		if _name is null {
 			_name = helpers.getLastComponent(fullName);
+		}
 		return _name;
 	}
 

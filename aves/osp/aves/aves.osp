@@ -83,8 +83,9 @@ public function print(value)
 /// Param values: The values to pass into String.format().
 public function print(format, values)
 {
-	if format is not String:
+	if format is not String {
 		throw new ArgumentTypeError("format", typeof(String));
+	}
 	print(format.format(values));
 }
 

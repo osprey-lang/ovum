@@ -51,16 +51,21 @@ public inheritable TextWriter
 	///          {stream} is not writable.
 	public new(stream, encoding, keepOpen)
 	{
-		if stream is null:
+		if stream is null {
 			throw new ArgumentNullError("stream");
-		if stream is not Stream:
+		}
+		if stream is not Stream {
 			throw new ArgumentTypeError("stream", typeof(Stream));
-		if not stream.canRead:
+		}
+		if not stream.canRead {
 			throw new ArgumentError("The stream must be readable.", "stream");
-		if encoding is null:
+		}
+		if encoding is null {
 			throw new ArgumentNullError("encoding");
-		if encoding is not Encoding:
+		}
+		if encoding is not Encoding {
 			throw new ArgumentTypeError("encoding", typeof(Encoding));
+		}
 
 		_stream = stream;
 		_encoding = encoding;
@@ -85,10 +90,12 @@ public inheritable TextWriter
 	///          line separator string, which is equal to {Env.newline}.
 	public set newline
 	{
-		if value is null:
+		if value is null {
 			value = Env.newline;
-		else:
+		}
+		else {
 			value = string(value);
+		}
 		_newline = value;
 	}
 
@@ -110,20 +117,17 @@ public inheritable TextWriter
 
 	public overridable close()
 	{
-		try
-		{
+		try {
 			// Try to flush pending characters to the stream
 			flushInternal(true, true);
 		}
-		finally
-		{
-			try
-			{
-				if not _keepOpen:
+		finally {
+			try {
+				if not _keepOpen {
 					_stream.close();
+				}
 			}
-			finally
-			{
+			finally {
 				_stream = null;
 			}
 		}
@@ -131,8 +135,9 @@ public inheritable TextWriter
 
 	public overridable flush()
 	{
-		if _stream is null:
+		if _stream is null {
 			errorHelpers.writerClosed();
+		}
 
 		flushInternal(true, true);
 	}
@@ -140,22 +145,22 @@ public inheritable TextWriter
 	private flushInternal(flushStream, flushEncoder)
 	{
 		// Write any buffered bytes
-		if byteOffset > 0
-		{
+		if byteOffset > 0 {
 			_stream.write(byteBuffer, 0, byteOffset);
 			byteOffset = 0;
 		}
 
 		// Flush the encoder if necessary
-		if flushEncoder
-		{
+		if flushEncoder {
 			var count = encoder.getBytes("", byteBuffer, 0, true);
-			if count > 0:
+			if count > 0 {
 				_stream.write(byteBuffer, 0, count);
+			}
 		}
 
-		if flushStream:
+		if flushStream {
 			_stream.flush();
+		}
 	}
 
 	/// Summary: Writes the specified value to the stream, converted to
@@ -167,32 +172,33 @@ public inheritable TextWriter
 	///          The text writer is closed.
 	public overridable write(value)
 	{
-		if _stream is null:
+		if _stream is null {
 			errorHelpers.writerClosed();
+		}
 
 		value = string(value);
 
 		var byteCount = encoder.getByteCount(value, false);
 
-		if byteCount > byteBuffer.size
-		{
+		if byteCount > byteBuffer.size {
 			// Our buffer is not big enough, allocate a temporary one.
 
 			// Flush pending bytes
-			if byteOffset > 0:
+			if byteOffset > 0 {
 				flushInternal(false, false);
+			}
 
 			var buffer = new Buffer(byteCount);
 			encoder.getBytes(value, buffer, 0, false);
 			// Write the buffer straight to the stream
 			_stream.write(buffer, 0, byteCount);
 		}
-		else
-		{
-			if byteOffset + byteCount > byteBuffer.size:
+		else {
+			if byteOffset + byteCount > byteBuffer.size {
 				// Not enough space in our buffer; try to flush it
 				// (but don't flush the encoder!)
 				flushInternal(false, false);
+			}
 
 			// We can use our byteBuffer! Let's do so.
 			encoder.getBytes(value, byteBuffer, byteOffset, false);
@@ -263,8 +269,9 @@ public inheritable TextWriter
 	///          {fileName} could not be converted to a String.
 	public static open(fileName)
 	{
-		if fileName is null:
+		if fileName is null {
 			throw new ArgumentNullError("fileName");
+		}
 
 		return new TextWriter(File.create(fileName));
 	}
@@ -284,12 +291,15 @@ public inheritable TextWriter
 	///          {encoding} is not an {Encoding}.
 	public static open(fileName, encoding)
 	{
-		if fileName is null:
+		if fileName is null {
 			throw new ArgumentNullError("fileName");
-		if encoding is null:
+		}
+		if encoding is null {
 			throw new ArgumentNullError("encoding");
-		if encoding is not Encoding:
+		}
+		if encoding is not Encoding {
 			throw new ArgumentTypeError("encoding", typeof(Encoding));
+		}
 
 		return new TextWriter(File.create(fileName), encoding);
 	}

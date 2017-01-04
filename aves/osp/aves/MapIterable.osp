@@ -27,10 +27,8 @@ internal class MapIterator is Iterator
 
 	override moveNext()
 	{
-		if not ended
-		{
-			if inner.moveNext()
-			{
+		if not ended {
+			if inner.moveNext() {
 				cur = func(inner.current);
 				return true;
 			}

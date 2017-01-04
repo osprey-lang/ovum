@@ -26,8 +26,9 @@ public inheritable FileNotFoundError is IOError
 
 	overridable override get message
 	{
-		if _pathName is not null:
+		if _pathName is not null {
 			return "{0} (pathName: {1})".format([base.message, _pathName]);
+		}
 		return base.message;
 	}
 

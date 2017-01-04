@@ -91,38 +91,38 @@ public inheritable ArgumentTypeError is ArgumentError
 
 	override get message
 	{
-		if _expectedTypes is not null:
+		if _expectedTypes is not null {
 			return "{0} (expectedTypes: {1})".format([
 				base.message,
 				_expectedTypes.map(@.fullName).joinNatural(", ", " or ")
 			]);
+		}
 		return base.message;
 	}
 
 	private static getExpectedTypes(expectedTypes)
 	{
-		if expectedTypes is null:
+		if expectedTypes is null {
 			return null;
+		}
 
-		if expectedTypes is Type
-		{
+		if expectedTypes is Type {
 			// Make sure we can wrap expectedTypes in a ReadOnlyIterable.
 			expectedTypes = [expectedTypes];
 		}
-		else if expectedTypes is Iterable
-		{
+		else if expectedTypes is Iterable {
 			// This could go terribly wrong if expectedTypes is an infinite or gigantic collection,
 			// but the risk of that being passed into ArgumentTypeError is pretty minimal.
-			if expectedTypes.any(@type => type is not Type):
+			if expectedTypes.any(@type => type is not Type) {
 				// ArgumentTypeErrorception
 				throw new ArgumentTypeError(
 					"expectedTypes",
 					typeof(Type),
 					"All values in expectedTypes must be of type aves.reflection.Type."
 				);
+			}
 		}
-		else
-		{
+		else {
 			throw new ArgumentTypeError("expectedTypes", [typeof(Iterable), typeof(Type)]);
 		}
 

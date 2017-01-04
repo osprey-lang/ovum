@@ -39,8 +39,9 @@ public class SetTests is TestFixture
 	public test_Constructor1WithTooMuchCapacity()
 	{
 		// If Set.maxCapacity == Int.max, then we can't do anything
-		if Set.maxCapacity == Int.max:
+		if Set.maxCapacity == Int.max {
 			return;
+		}
 
 		var capacity = Set.maxCapacity + 1;
 		Assert.throws(typeof(ArgumentRangeError), @=> new Set(capacity));
@@ -76,8 +77,9 @@ public class SetTests is TestFixture
 	public test_Constructor2WithTooMuchCapacity()
 	{
 		// If Set.maxCapacity == Int.max, then we can't do anything
-		if Set.maxCapacity == Int.max:
+		if Set.maxCapacity == Int.max {
 			return;
+		}
 
 		var capacity = Set.maxCapacity + 1;
 		Assert.throws(typeof(ArgumentRangeError), @=> new Set(capacity, EqualityComparer.default));

@@ -18,8 +18,9 @@ public class StopwatchTests is TestFixture
 	{
 		const loopCount = 1_000;
 		var i = 0;
-		while i < loopCount:
+		while i < loopCount {
 			i += 1;
+		}
 	}
 
 	public test_InitialState()

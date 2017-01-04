@@ -6,8 +6,9 @@ public static class File
 {
 	public static exists(fileName)
 	{
-		if fileName is null:
+		if fileName is null {
 			throw new ArgumentNullError("fileName");
+		}
 
 		return existsInternal(string(fileName));
 	}
@@ -16,8 +17,9 @@ public static class File
 
 	public static getSize(fileName)
 	{
-		if fileName is null:
+		if fileName is null {
 			throw new ArgumentNullError("fileName");
+		}
 
 		return getSizeInternal(string(fileName));
 	}
@@ -26,8 +28,9 @@ public static class File
 
 	public static delete(fileName)
 	{
-		if fileName is null:
+		if fileName is null {
 			throw new ArgumentNullError("fileName");
+		}
 
 		return deleteInternal(string(fileName));
 	}
@@ -36,8 +39,9 @@ public static class File
 
 	public static move(srcName, destName)
 	{
-		if srcName is null or destName is null:
+		if srcName is null or destName is null {
 			throw new ArgumentNullError(srcName is null ? "srcName" : "destName");
+		}
 
 		return moveInternal(string(srcName), string(destName));
 	}
@@ -81,8 +85,7 @@ public static class File
 		// Can't simply call the other overload - we need to open the file
 		// to see how big it is before we even construct the buffer.
 		var buf;
-		with f = new FileStream(fileName, FileMode.open, FileAccess.read, FileShare.read)
-		{
+		with f = new FileStream(fileName, FileMode.open, FileAccess.read, FileShare.read) {
 			var length = f.length;
 			buf = new Buffer(length);
 			f.readInto(buf, 0, length);
@@ -97,12 +100,12 @@ public static class File
 		buf = Buffer.fromValue(buf);
 		offset = int(offset);
 
-		if offset < 0 or offset > buf.size:
+		if offset < 0 or offset > buf.size {
 			throw new ArgumentRangeError("offset");
+		}
 
 		var length;
-		with f = new FileStream(fileName, FileMode.open, FileAccess.read, FileShare.read)
-		{
+		with f = new FileStream(fileName, FileMode.open, FileAccess.read, FileShare.read) {
 			length = f.length;
 			f.readInto(buf, offset, length);
 		}
@@ -112,8 +115,9 @@ public static class File
 
 	public static readAllText(fileName)
 	{
-		if fileName is null:
+		if fileName is null {
 			throw new ArgumentNullError("fileName");
+		}
 		fileName = string(fileName);
 
 		// Without an explicit encoding, we try to read the first
@@ -126,30 +130,30 @@ public static class File
 		// of the stream, and use Encoding.utf8.
 
 		var result;
-		with stream = openRead(fileName)
-		{
+		with stream = openRead(fileName) {
 			var b1 = stream.readByte();
-			if b1 == -1:
+			if b1 == -1 {
 				// Empty file? Empty string.
 				result = "";
-			else
-			{
+			}
+			else {
 				var b2 = stream.readByte();
 				// Note: b2 may be -1. That's fine; the file may contain only one byte.
 				var encoding = null;
-				if b1 == 0xFE and b2 == 0xFF:
+				if b1 == 0xFE and b2 == 0xFF {
 					encoding = Encoding.utf16BigEndian;
-				else if b1 == 0xFF and b2 == 0xFE:
+				}
+				else if b1 == 0xFF and b2 == 0xFE {
 					encoding = Encoding.utf16;
-				else if b1 == 0xEF and b2 == 0xBB
-				{
+				}
+				else if b1 == 0xEF and b2 == 0xBB {
 					b2 = stream.readByte();
-					if b2 == 0xBF:
+					if b2 == 0xBF {
 						encoding = Encoding.utf8;
+					}
 				}
 
-				if encoding is null
-				{
+				if encoding is null {
 					encoding = Encoding.utf8;
 					stream.seek(0, SeekOrigin.start);
 				}
@@ -162,17 +166,19 @@ public static class File
 	}
 	public static readAllText(fileName, encoding)
 	{
-		if fileName is null:
+		if fileName is null {
 			throw new ArgumentNullError("fileName");
-		if encoding is null:
+		}
+		if encoding is null {
 			throw new ArgumentNullError("encoding");
-		if encoding is not Encoding:
+		}
+		if encoding is not Encoding {
 			throw new ArgumentTypeError("encoding", typeof(Encoding));
+		}
 		fileName = string(fileName);
 
 		var result;
-		with stream = openRead(fileName)
-		{
+		with stream = openRead(fileName) {
 			result = readAllTextHelper(stream, encoding);
 		}
 
@@ -187,8 +193,7 @@ public static class File
 		var sb = new StringBuffer(2k);
 
 		var bytesRead;
-		do
-		{
+		do {
 			bytesRead = stream.readMax(buf, 0, 4k);
 			decoder.getChars(buf, 0, bytesRead, sb, bytesRead == 0);
 		} while bytesRead > 0;
@@ -198,15 +203,17 @@ public static class File
 
 	public static writeAllBytes(fileName, buf)
 	{
-		if buf is null:
+		if buf is null {
 			throw new ArgumentNullError("buf");
-		else if buf is BufferView:
+		}
+		else if buf is BufferView {
 			buf = buf.buffer;
-		else if buf is not Buffer:
+		}
+		else if buf is not Buffer {
 			throw new ArgumentTypeError("buf", [typeof(Buffer), typeof(BufferView)]);
+		}
 
-		with f = new FileStream(fileName, FileMode.create, FileAccess.write, FileShare.none)
-		{
+		with f = new FileStream(fileName, FileMode.create, FileAccess.write, FileShare.none) {
 			f.write(buf, 0, buf.size);
 		}
 	}
@@ -217,29 +224,30 @@ public static class File
 	}
 	public static writeAllText(fileName, contents, encoding)
 	{
-		if fileName is null:
+		if fileName is null {
 			throw new ArgumentNullError("fileName");
-		if encoding is null:
+		}
+		if encoding is null {
 			throw new ArgumentNullError("encoding");
-		if encoding is not Encoding:
+		}
+		if encoding is not Encoding {
 			throw new ArgumentTypeError("encoding", typeof(Encoding));
+		}
 		contents = string(contents);
 		fileName = string(fileName);
 
-		with f = create(fileName)
-		{
-			if encoding is Utf16Encoding:
+		with f = create(fileName) {
+			if encoding is Utf16Encoding {
 				// Emit UTF-16 identifier specially for UTF-16, U+FEFF
-				if encoding.bigEndian
-				{
+				if encoding.bigEndian {
 					f.writeByte(0xFE);
 					f.writeByte(0xFF);
 				}
-				else
-				{
+				else {
 					f.writeByte(0xFF);
 					f.writeByte(0xFE);
 				}
+			}
 
 			var buf = encoding.getBytes(contents);
 			f.write(buf, 0, buf.size);

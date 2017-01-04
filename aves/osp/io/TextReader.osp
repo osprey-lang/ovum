@@ -53,16 +53,21 @@ public inheritable TextReader
 	///          {stream} is not readable.
 	public new(stream, encoding, keepOpen)
 	{
-		if stream is null:
+		if stream is null {
 			throw new ArgumentNullError("stream");
-		if stream is not Stream:
+		}
+		if stream is not Stream {
 			throw new ArgumentTypeError("stream", typeof(Stream));
-		if not stream.canRead:
+		}
+		if not stream.canRead {
 			throw new ArgumentError("The stream must be readable.", "stream");
-		if encoding is null:
+		}
+		if encoding is null {
 			throw new ArgumentNullError("encoding");
-		if encoding is not Encoding:
+		}
+		if encoding is not Encoding {
 			throw new ArgumentTypeError("encoding", typeof(Encoding));
+		}
 
 		_stream = stream;
 		_encoding = encoding;
@@ -119,8 +124,9 @@ public inheritable TextReader
 	///          stream, just like a call to {readLine} would.
 	public get lines
 	{
-		if _stream is null:
+		if _stream is null {
 			errorHelpers.readerClosed();
+		}
 		return new TextReaderLinesIterator(this);
 	}
 
@@ -153,13 +159,12 @@ public inheritable TextReader
 
 	public overridable close()
 	{
-		try
-		{
-			if not keepOpen:
+		try {
+			if not keepOpen {
 				_stream.close();
+			}
 		}
-		finally
-		{
+		finally {
 			_stream = null;
 		}
 	}
@@ -169,12 +174,14 @@ public inheritable TextReader
 	///          the stream was reached.
 	public overridable read()
 	{
-		if _stream is null:
+		if _stream is null {
 			errorHelpers.readerClosed();
+		}
 
-		if charOffset == charCount
-		{
-			if fillBuffer() == 0: return null;
+		if charOffset == charCount {
+			if fillBuffer() == 0 {
+				return null;
+			}
 		}
 
 		var ch = charBuffer[charOffset];
@@ -195,22 +202,25 @@ public inheritable TextReader
 	///          {count} is less than zero.
 	public overridable read(count)
 	{
-		if _stream is null:
+		if _stream is null {
 			errorHelpers.readerClosed();
+		}
 
 		count = int(count);
-		if count < 0:
+		if count < 0 {
 			throw new ArgumentRangeError("count");
-		if count == 0:
+		}
+		if count == 0 {
 			return "";
+		}
 
 		var sb = new StringBuffer(count);
 
-		while count > 0
-		{
-			if charOffset == charCount
-			{
-				if fillBuffer() == 0: break;
+		while count > 0 {
+			if charOffset == charCount {
+				if fillBuffer() == 0 {
+					break;
+				}
 			}
 
 			var n = math.min(count, charCount - charOffset);
@@ -228,13 +238,13 @@ public inheritable TextReader
 	///          stream.
 	public overridable readToEnd()
 	{
-		if _stream is null:
+		if _stream is null {
 			errorHelpers.readerClosed();
+		}
 
 		var sb = new StringBuffer(charCount - charOffset);
 
-		do
-		{
+		do {
 			sb.appendSubstring(charBuffer, charOffset, charCount - charOffset);
 			charOffset = charCount;
 			fillBuffer();
@@ -253,8 +263,9 @@ public inheritable TextReader
 	///          line separator.
 	public overridable readLine()
 	{
-		if _stream is null:
+		if _stream is null {
 			errorHelpers.readerClosed();
+		}
 
 		return readLineInternal();
 	}
@@ -267,11 +278,9 @@ public inheritable TextReader
 		charCount = 0;
 		charBuffer.clear();
 
-		do
-		{
+		do {
 			var byteCount = _stream.readMax(byteBuffer, 0, byteBuffer.size);
-			if byteCount == 0
-			{
+			if byteCount == 0 {
 				// EOF! Try to append any dangling characters that
 				// may be left in the decoder.
 				decoder.getChars(byteBuffer, 0, byteCount, charBuffer, true);
@@ -297,8 +306,9 @@ public inheritable TextReader
 	///          The specified file could not be found.
 	public static open(fileName)
 	{
-		if fileName is null:
+		if fileName is null {
 			throw new ArgumentNullError("fileName");
+		}
 
 		return new TextReader(File.openRead(fileName));
 	}
@@ -319,12 +329,15 @@ public inheritable TextReader
 	///          The specified file could not be found.
 	public static open(fileName, encoding)
 	{
-		if fileName is null:
+		if fileName is null {
 			throw new ArgumentNullError("fileName");
-		if encoding is null:
+		}
+		if encoding is null {
 			throw new ArgumentNullError("encoding");
-		if encoding is not Encoding:
+		}
+		if encoding is not Encoding {
 			throw new ArgumentTypeError("encoding", typeof(Encoding));
+		}
 
 		return new TextReader(File.openRead(fileName), encoding);
 	}

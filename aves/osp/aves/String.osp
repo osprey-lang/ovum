@@ -8,13 +8,14 @@ namespace aves;
 ///          The `toString` method of {value} did not return a String.
 public function string(value)
 {
-	if value is null:
+	if value is null {
 		return "";
-	if value is not String
-	{
+	}
+	if value is not String {
 		value = value.toString();
-		if value is not String:
+		if value is not String {
 			throw new TypeConversionError("String conversion failed: toString() did not return a string.");
+		}
 	}
 	return value;
 }
@@ -143,8 +144,9 @@ public class String is Collection
 	{
 		value = string(value);
 		startIndex = int(startIndex);
-		if startIndex < 0 or startIndex > length:
+		if startIndex < 0 or startIndex > length {
 			throw new ArgumentRangeError("startIndex");
+		}
 
 		return indexOfInternal(value, startIndex, length - startIndex);
 	}
@@ -171,13 +173,16 @@ public class String is Collection
 	{
 		value = string(value);
 		startIndex = int(startIndex);
-		if startIndex < 0 or startIndex > length:
+		if startIndex < 0 or startIndex > length {
 			throw new ArgumentRangeError("startIndex");
+		}
 		count = int(count);
-		if count < 0:
+		if count < 0 {
 			throw new ArgumentRangeError("count");
-		if startIndex + count > length:
+		}
+		if startIndex + count > length {
 			throw new ArgumentRangeError("startIndex + count is outside the string.");
+		}
 
 		return indexOfInternal(value, startIndex, count);
 	}
@@ -204,8 +209,9 @@ public class String is Collection
 	///          not modified in any way.
 	public prepend(value)
 	{
-		if value is null:
+		if value is null {
 			return this;
+		}
 		return string(value) :: this;
 	}
 
@@ -217,8 +223,9 @@ public class String is Collection
 	///          not modified in any way.
 	public append(value)
 	{
-		if value is null:
+		if value is null {
 			return this;
+		}
 		return this :: string(value);
 	}
 
@@ -244,8 +251,9 @@ public class String is Collection
 	///          not modified in any way.
 	public surroundWith(prefix, suffix)
 	{
-		if prefix is null and suffix is null:
+		if prefix is null and suffix is null {
 			return this;
+		}
 		prefix = string(prefix);
 		suffix = string(suffix);
 		return prefix :: this :: suffix;
@@ -269,8 +277,9 @@ public class String is Collection
 	public substring(startIndex)
 	{
 		startIndex = int(startIndex);
-		if startIndex < 0 or startIndex > length:
+		if startIndex < 0 or startIndex > length {
 			throw new ArgumentRangeError("startIndex");
+		}
 
 		return substringInternal(startIndex, length - startIndex);
 	}
@@ -291,13 +300,16 @@ public class String is Collection
 	public substring(startIndex, count)
 	{
 		startIndex = int(startIndex);
-		if startIndex < 0 or startIndex > length:
+		if startIndex < 0 or startIndex > length {
 			throw new ArgumentRangeError("startIndex");
+		}
 		count = int(count);
-		if count < 0:
+		if count < 0 {
 			throw new ArgumentRangeError("count");
-		if startIndex + count > length:
+		}
+		if startIndex + count > length {
 			throw new ArgumentError("startIndex + count is outside the string.");
+		}
 
 		return substringInternal(startIndex, count);
 	}
@@ -319,13 +331,16 @@ public class String is Collection
 	public substringTo(startIndex, endIndex)
 	{
 		startIndex = int(startIndex);
-		if startIndex < 0 or startIndex > length:
+		if startIndex < 0 or startIndex > length {
 			throw new ArgumentRangeError("startIndex");
+		}
 		endIndex = int(endIndex);
-		if endIndex < 0 or endIndex > length:
+		if endIndex < 0 or endIndex > length {
 			throw new ArgumentRangeError("endIndex");
-		if endIndex < startIndex:
+		}
+		if endIndex < startIndex {
 			throw new ArgumentRangeError("endIndex");
+		}
 
 		return substringInternal(startIndex, endIndex - startIndex);
 	}
@@ -397,8 +412,9 @@ public class String is Collection
 	public insert(index, value)
 	{
 		index = int(index);
-		if index < 0 or index > length:
+		if index < 0 or index > length {
 			throw new ArgumentRangeError("index");
+		}
 		value = string(value);
 
 		return splice(index, 0, value);
@@ -417,8 +433,9 @@ public class String is Collection
 	public remove(startIndex)
 	{
 		startIndex = int(startIndex);
-		if startIndex < 0 or startIndex > length:
+		if startIndex < 0 or startIndex > length {
 			throw new ArgumentRangeError("startIndex");
+		}
 
 		return splice(startIndex, length - startIndex, "");
 	}
@@ -441,13 +458,16 @@ public class String is Collection
 	public remove(startIndex, count)
 	{
 		startIndex = int(startIndex);
-		if startIndex < 0 or startIndex > length:
+		if startIndex < 0 or startIndex > length {
 			throw new ArgumentRangeError("startIndex");
+		}
 		count = int(count);
-		if count < 0:
+		if count < 0 {
 			throw new ArgumentRangeError("count");
-		if startIndex + count > length:
+		}
+		if startIndex + count > length {
 			throw new ArgumentError("startIndex + count is outside the string.");
+		}
 
 		return splice(startIndex, count, "");
 	}
@@ -479,8 +499,9 @@ public class String is Collection
 	///          {oldValue} is of length 0.
 	public replace(oldValue, newValue)
 	{
-		if oldValue is null:
+		if oldValue is null {
 			throw new ArgumentNullError("oldValue");
+		}
 		oldValue = string(oldValue);
 		newValue = string(newValue);
 		return replaceInner(oldValue, newValue, -1);
@@ -505,8 +526,9 @@ public class String is Collection
 	///          {oldValue} is of length 0.
 	public replace(oldValue, newValue, maxTimes)
 	{
-		if oldValue is null:
+		if oldValue is null {
 			throw new ArgumentNullError("oldValue");
+		}
 		oldValue = string(oldValue);
 		newValue = string(newValue);
 		maxTimes = int(maxTimes);
@@ -535,13 +557,16 @@ public class String is Collection
 	public replaceSubstring(startIndex, count, newValue)
 	{
 		startIndex = int(startIndex);
-		if startIndex < 0 or startIndex > length:
+		if startIndex < 0 or startIndex > length {
 			throw new ArgumentRangeError("startIndex");
+		}
 		count = int(count);
-		if count < 0:
+		if count < 0 {
 			throw new ArgumentRangeError("count");
-		if startIndex + count > length:
+		}
+		if startIndex + count > length {
 			throw new ArgumentError("startIndex + count is outside the string.");
+		}
 
 		return splice(startIndex, count, newValue);
 	}
@@ -593,8 +618,9 @@ public class String is Collection
 	{
 		var start = getTrimStart();
 		var end = getTrimEnd();
-		if start > end:
+		if start > end {
 			return "";
+		}
 		return substring(start, end - start + 1);
 	}
 	/// Summary: Removes all leading and trailing occurrences of a specific set
@@ -630,8 +656,9 @@ public class String is Collection
 		var start = getTrimStart(charSet);
 		var end = getTrimEnd(charSet);
 
-		if start > end:
+		if start > end {
 			return "";
+		}
 		return substring(start, end - start + 1);
 	}
 
@@ -643,8 +670,9 @@ public class String is Collection
 	public trimStart()
 	{
 		var start = getTrimStart();
-		if start == length:
+		if start == length {
 			return "";
+		}
 		return substring(start);
 	}
 	/// Summary: Removes all leading occurrences of a specific set of characters.
@@ -662,8 +690,9 @@ public class String is Collection
 		var charSet = getTrimSet(chars);
 		var start = getTrimStart(charSet);
 
-		if start == length:
+		if start == length {
 			return "";
+		}
 		return substring(start);
 	}
 
@@ -675,8 +704,9 @@ public class String is Collection
 	public trimEnd()
 	{
 		var end = getTrimEnd();
-		if end == -1:
+		if end == -1 {
 			return "";
+		}
 		return substring(0, end + 1);
 	}
 	/// Summary: Removes all trailing occurrences of a specific set of characters.
@@ -694,24 +724,25 @@ public class String is Collection
 		var charSet = getTrimSet(chars);
 		var end = getTrimEnd(charSet);
 
-		if end == -1:
+		if end == -1 {
 			return "";
+		}
 		return substring(0, end + 1);
 	}
 
 	private static getTrimSet(chars)
 	{
 		var charSet;
-		if chars is String
-		{
+		if chars is String {
 			charSet = Set.from(chars);
 		}
-		else
-		{
+		else {
 			charSet = new Set();
-			for ch in chars:
-				if ch is Char or ch is String:
+			for ch in chars {
+				if ch is Char or ch is String {
 					charSet.add(ch);
+				}
+			}
 		}
 		return charSet;
 	}
@@ -719,18 +750,19 @@ public class String is Collection
 	private getTrimStart()
 	{
 		var start = 0;
-		while start < length and isWhiteSpace(start):
+		while start < length and isWhiteSpace(start) {
 			start += 1;
+		}
 		return start;
 	}
 	private getTrimStart(charSet)
 	{
 		var start = 0;
-		while start < length
-		{
+		while start < length {
 			var ch = getCharacter(start);
-			if not charSet.contains(ch):
+			if not charSet.contains(ch) {
 				break;
+			}
 			start += ch.length;
 		}
 		return start;
@@ -739,18 +771,19 @@ public class String is Collection
 	private getTrimEnd()
 	{
 		var end = length - 1;
-		while end >= 0 and isWhiteSpace(end):
+		while end >= 0 and isWhiteSpace(end) {
 			end -= 1;
+		}
 		return end;
 	}
 	private getTrimEnd(charSet)
 	{
 		var end = length - 1;
-		while end >= 0
-		{
+		while end >= 0 {
 			var ch = getCharacter(end);
-			if not charSet.contains(ch):
+			if not charSet.contains(ch) {
 				break;
+			}
 			end -= ch.length;
 		}
 		return end;
@@ -774,10 +807,12 @@ public class String is Collection
 	public pad(minLength, side)
 	{
 		minLength = int(minLength);
-		if minLength < 0:
+		if minLength < 0 {
 			throw new ArgumentRangeError("minLength");
-		if side is not StringPad:
+		}
+		if side is not StringPad {
 			throw new ArgumentTypeError("side", typeof(StringPad));
+		}
 
 		return padInner(minLength, ' ', side);
 	}
@@ -806,11 +841,13 @@ public class String is Collection
 	public pad(minLength, char, side)
 	{
 		minLength = int(minLength);
-		if minLength < 0:
+		if minLength < 0 {
 			throw new ArgumentRangeError("minLength");
+		}
 		char = getPaddingChar(char);
-		if side is not StringPad:
+		if side is not StringPad {
 			throw new ArgumentTypeError("side", typeof(StringPad));
+		}
 
 		return padInner(minLength, char, side);
 	}
@@ -829,8 +866,9 @@ public class String is Collection
 	public padStart(minLength)
 	{
 		minLength = int(minLength);
-		if minLength < 0:
+		if minLength < 0 {
 			throw new ArgumentRangeError("minLength");
+		}
 
 		return padInner(minLength, ' ', StringPad.start);
 	}
@@ -855,8 +893,9 @@ public class String is Collection
 	public padStart(minLength, char)
 	{
 		minLength = int(minLength);
-		if minLength < 0:
+		if minLength < 0 {
 			throw new ArgumentRangeError("minLength");
+		}
 		char = getPaddingChar(char);
 
 		return padInner(minLength, char, StringPad.start);
@@ -876,8 +915,9 @@ public class String is Collection
 	public padEnd(minLength)
 	{
 		minLength = int(minLength);
-		if minLength < 0:
+		if minLength < 0 {
 			throw new ArgumentRangeError("minLength");
+		}
 
 		return padInner(minLength, ' ', StringPad.end);
 	}
@@ -902,8 +942,9 @@ public class String is Collection
 	public padEnd(minLength, char)
 	{
 		minLength = int(minLength);
-		if minLength < 0:
+		if minLength < 0 {
 			throw new ArgumentRangeError("minLength");
+		}
 		char = getPaddingChar(char);
 
 		return padInner(minLength, char, StringPad.end);
@@ -914,14 +955,17 @@ public class String is Collection
 
 	private static getPaddingChar(char)
 	{
-		if char is not String and char is not Char:
+		if char is not String and char is not Char {
 			throw new ArgumentTypeError("char", [typeof(Char), typeof(String)]);
+		}
 
-		if char.length != 1:
+		if char.length != 1 {
 			throw new ArgumentError("The padding character must be of length 1.");
-		if char is String:
+		}
+		if char is String {
 			// Get the first character
 			char = char[0];
+		}
 
 		return char;
 	}
@@ -1013,16 +1057,20 @@ public class String is Collection
 	public getHashCode(startIndex, count)
 	{
 		startIndex = int(startIndex);
-		if startIndex < 0 or startIndex > length:
+		if startIndex < 0 or startIndex > length {
 			throw new ArgumentRangeError("startIndex");
+		}
 		count = int(startIndex);
-		if count < 0:
+		if count < 0 {
 			throw new ArgumentRangeError("count");
-		if startIndex + count > length:
+		}
+		if startIndex + count > length {
 			throw new ArgumentError("startIndex + count is outside the string.");
+		}
 
-		if count == this.length:
+		if count == this.length {
 			return getHashCode();
+		}
 
 		return getHashCodeSubstring(startIndex, count);
 	}
@@ -1056,8 +1104,9 @@ public class String is Collection
 
 	iter
 	{
-		if isEmpty:
+		if isEmpty {
 			return Iterator.empty;
+		}
 		return new StringIterator(this);
 	}
 }
@@ -1074,8 +1123,7 @@ internal class StringIterator is Iterator
 
 	override moveNext()
 	{
-		if i < str.length
-		{
+		if i < str.length {
 			cur = str.getCharacter(i);
 			i += cur.length;
 			return true;

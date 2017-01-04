@@ -74,16 +74,21 @@ public inheritable BinaryWriter
 	///          {stream} is not writable.
 	public new(stream, encoding, bigEndian, keepOpen)
 	{
-		if stream is null:
+		if stream is null {
 			throw new ArgumentNullError("stream");
-		if stream is not Stream:
+		}
+		if stream is not Stream {
 			throw new ArgumentTypeError("stream", typeof(Stream));
-		if not stream.canWrite:
+		}
+		if not stream.canWrite {
 			throw new ArgumentError("The stream must be writable.", "stream");
-		if encoding is null:
+		}
+		if encoding is null {
 			throw new ArgumentNullError("encoding");
-		if encoding is not Encoding:
+		}
+		if encoding is not Encoding {
 			throw new ArgumentTypeError("encoding", typeof(Encoding));
+		}
 
 		_stream = stream;
 		_encoding = encoding;
@@ -132,13 +137,12 @@ public inheritable BinaryWriter
 	///          Otherwise, does nothing.
 	public overridable close()
 	{
-		try
-		{
-			if not keepOpen:
+		try {
+			if not keepOpen {
 				_stream.close();
+			}
 		}
-		finally
-		{
+		finally {
 			_stream = null;
 		}
 	}
@@ -149,8 +153,9 @@ public inheritable BinaryWriter
 	///          or 1 if it is true.
 	public overridable writeBoolean(value)
 	{
-		if _stream is null:
+		if _stream is null {
 			errorHelpers.writerClosed();
+		}
 
 		_stream.writeByte(value ? 1 : 0);
 	}
@@ -162,8 +167,9 @@ public inheritable BinaryWriter
 	///          {value} could not be converted to an Int.
 	public overridable writeByte(value)
 	{
-		if _stream is null:
+		if _stream is null {
 			errorHelpers.writerClosed();
+		}
 
 		value = int(value);
 		_buffer.writeByte(0, value);
@@ -176,8 +182,9 @@ public inheritable BinaryWriter
 	///          {value} could not be converted to an Int.
 	public overridable writeSByte(value)
 	{
-		if _stream is null:
+		if _stream is null {
 			errorHelpers.writerClosed();
+		}
 
 		value = int(value);
 		_buffer.writeSByte(0, value);
@@ -192,13 +199,15 @@ public inheritable BinaryWriter
 	///          {value} could not be converted to an Int.
 	public overridable writeInt16(value)
 	{
-		if _stream is null:
+		if _stream is null {
 			errorHelpers.writerClosed();
+		}
 
 		value = int(value);
 		_buffer.writeInt16(0, value);
-		if _bigEndian != Env.bigEndian:
+		if _bigEndian != Env.bigEndian {
 			binHelpers.reverse2(_buffer);
+		}
 		write(2);
 	}
 	/// Summary: Writes a signed 32-bit integer, and advances the stream
@@ -209,13 +218,15 @@ public inheritable BinaryWriter
 	///          {value} could not be converted to an Int.
 	public overridable writeInt32(value)
 	{
-		if _stream is null:
+		if _stream is null {
 			errorHelpers.writerClosed();
+		}
 
 		value = int(value);
 		_buffer.writeInt32(0, value);
-		if _bigEndian != Env.bigEndian:
+		if _bigEndian != Env.bigEndian {
 			binHelpers.reverse4(_buffer);
+		}
 		write(4);
 	}
 	/// Summary: Writes a signed 64-bit integer, and advances the stream
@@ -227,13 +238,15 @@ public inheritable BinaryWriter
 	///          {value} could not be converted to an Int.
 	public overridable writeInt64(value)
 	{
-		if _stream is null:
+		if _stream is null {
 			errorHelpers.writerClosed();
+		}
 
 		value = int(value);
 		_buffer.writeInt64(0, value);
-		if _bigEndian != Env.bigEndian:
+		if _bigEndian != Env.bigEndian {
 			binHelpers.reverse8(_buffer);
+		}
 		write(8);
 	}
 
@@ -259,15 +272,15 @@ public inheritable BinaryWriter
 	///          {value} could not be converted to an Int.
 	public writePackedInt(value)
 	{
-		if _stream is null:
+		if _stream is null {
 			errorHelpers.writerClosed();
+		}
 
 		// Use UInt so that shifting right will not
 		// perform sign extension
 		value = int(value).asUInt();
 
-		while value >= 0x80
-		{
+		while value >= 0x80 {
 			_stream.writeByte(value & 0x7f | 0x80);
 			value >>= 7;
 		}
@@ -282,13 +295,15 @@ public inheritable BinaryWriter
 	///          {value} could not be converted to a UInt.
 	public overridable writeUInt16(value)
 	{
-		if _stream is null:
+		if _stream is null {
 			errorHelpers.writerClosed();
+		}
 
 		value = int(value);
 		_buffer.writeUInt16(0, value);
-		if _bigEndian != Env.bigEndian:
+		if _bigEndian != Env.bigEndian {
 			binHelpers.reverse2(_buffer);
+		}
 		write(2);
 	}
 	/// Summary: Writes an unsigned 32-bit integer, and advances the stream
@@ -299,13 +314,15 @@ public inheritable BinaryWriter
 	///          {value} could not be converted to a UInt.
 	public overridable writeUInt32(value)
 	{
-		if _stream is null:
+		if _stream is null {
 			errorHelpers.writerClosed();
+		}
 
 		value = int(value);
 		_buffer.writeUInt32(0, value);
-		if _bigEndian != Env.bigEndian:
+		if _bigEndian != Env.bigEndian {
 			binHelpers.reverse4(_buffer);
+		}
 		write(4);
 	}
 	/// Summary: Writes an unsigned 64-bit integer, and advances the stream
@@ -316,13 +333,15 @@ public inheritable BinaryWriter
 	///          {value} could not be converted to a UInt.
 	public overridable writeUInt64(value)
 	{
-		if _stream is null:
+		if _stream is null {
 			errorHelpers.writerClosed();
+		}
 
 		value = int(value);
 		_buffer.writeUInt64(0, value);
-		if _bigEndian != Env.bigEndian:
+		if _bigEndian != Env.bigEndian {
 			binHelpers.reverse8(_buffer);
+		}
 		write(8);
 	}
 
@@ -338,13 +357,15 @@ public inheritable BinaryWriter
 	///          {value} could not be converted to a Real.
 	public overridable writeFloat32(value)
 	{
-		if _stream is null:
+		if _stream is null {
 			errorHelpers.writerClosed();
+		}
 
 		value = real(value);
 		_buffer.writeFloat32(0, value);
-		if _bigEndian != Env.bigEndian:
+		if _bigEndian != Env.bigEndian {
 			binHelpers.reverse4(_buffer);
+		}
 		write(4);
 	}
 	/// Summary: Writes a double-precision (64-bit) floating-point number,
@@ -354,13 +375,15 @@ public inheritable BinaryWriter
 	///          {value} could not be converted to a Real.
 	public overridable writeFloat64(value)
 	{
-		if _stream is null:
+		if _stream is null {
 			errorHelpers.writerClosed();
+		}
 
 		value = real(value);
 		_buffer.writeFloat64(0, value);
-		if _bigEndian != Env.bigEndian:
+		if _bigEndian != Env.bigEndian {
 			binHelpers.reverse8(_buffer);
+		}
 		write(8);
 	}
 
@@ -374,8 +397,9 @@ public inheritable BinaryWriter
 	///          {writePackedInt}.
 	public overridable writeString(str)
 	{
-		if _stream is null:
+		if _stream is null {
 			errorHelpers.writerClosed();
+		}
 
 		str = string(str);
 		var byteCount = _encoding.getByteCount(str);

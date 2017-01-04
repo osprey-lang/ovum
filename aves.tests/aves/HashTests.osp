@@ -76,8 +76,9 @@ public class HashTests is TestFixture
 	public test_Constructor2WithTooMuchCapacity()
 	{
 		// If Hash.maxCapacity == Int.max, then we can't do anything
-		if Hash.maxCapacity == Int.max:
+		if Hash.maxCapacity == Int.max {
 			return;
+		}
 
 		var capacity = Hash.maxCapacity + 1;
 		Assert.throws(typeof(ArgumentRangeError), @=> new Hash(capacity, EqualityComparer.default));

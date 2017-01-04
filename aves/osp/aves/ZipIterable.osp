@@ -31,10 +31,8 @@ internal class ZipIterator is Iterator
 
 	override moveNext()
 	{
-		if not ended
-		{
-			if one.moveNext() and two.moveNext()
-			{
+		if not ended {
+			if one.moveNext() and two.moveNext() {
 				cur = func(one.current, two.current);
 				return true;
 			}

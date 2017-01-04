@@ -6,8 +6,10 @@ internal function getLastComponent(fullName)
 	fullName = string(fullName);
 
 	var i = fullName.lastIndexOf(".");
-	if i is null:
+	if i is null {
 		return fullName;
-	else
+	}
+	else {
 		return fullName.substring(i + 1);
+	}
 }

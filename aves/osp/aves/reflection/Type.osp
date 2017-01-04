@@ -13,8 +13,9 @@ public class Type is Member
 
 	override get accessibility
 	{
-		if isPrivate:
+		if isPrivate {
 			return Accessibility.\private;
+		}
 		return Accessibility.\public;
 	}
 
@@ -30,8 +31,9 @@ public class Type is Member
 		// so the code below will only ever produce the same string value.
 		// Worst case, we allocate an extra string or two, but the type name
 		// is almost certainly a tiny string anyway.
-		if _name is null:
+		if _name is null {
 			_name = helpers.getLastComponent(fullName);
+		}
 		return _name;
 	}
 
@@ -141,10 +143,12 @@ public class Type is Member
 	///          the type has no public instance constructor.
 	public createInstance(arguments, nonPublic)
 	{
-		if isStatic or isAbstract or isPrimitive:
+		if isStatic or isAbstract or isPrimitive {
 			throw new InvalidStateError("Cannot create an instance of a static, abstract or primitive type.");
-		if arguments is not null and arguments is not List:
+		}
+		if arguments is not null and arguments is not List {
 			throw new ArgumentTypeError("arguments", typeof(List));
+		}
 
 		return createInstanceInternal(arguments, bool(nonPublic));
 	}
@@ -163,8 +167,9 @@ public class Type is Member
 	///          operator whenever possible.
 	public inheritsFrom(type)
 	{
-		if type is not Type:
+		if type is not Type {
 			throw new ArgumentTypeError("type", typeof(Type));
+		}
 		return inheritsFromInternal(type);
 	}
 	private inheritsFromInternal(type)

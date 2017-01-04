@@ -77,8 +77,7 @@ public class BufferViewTests is TestFixture
 
 		// All bytes should be FF now, and we should find view.length of them.
 		var count = 0;
-		for byte in view
-		{
+		for byte in view {
 			Assert.areEqual(byte, 0xFF);
 			count += 1;
 		}
@@ -140,8 +139,7 @@ public class BufferViewTests is TestFixture
 
 		// All sbytes should be -1 now, and we should find view.length of them
 		var count = 0;
-		for sbyte in view
-		{
+		for sbyte in view {
 			Assert.areEqual(sbyte, -1);
 			count += 1;
 		}
@@ -203,8 +201,7 @@ public class BufferViewTests is TestFixture
 
 		// All int16s should be -1 now, and we should find view.length of them
 		var count = 0;
-		for int16 in view
-		{
+		for int16 in view {
 			Assert.areEqual(int16, -1);
 			count += 1;
 		}
@@ -266,8 +263,7 @@ public class BufferViewTests is TestFixture
 
 		// All uint16s should be 0xFFFF now, and we should find view.length of them
 		var count = 0;
-		for uint16 in view
-		{
+		for uint16 in view {
 			Assert.areEqual(uint16, 0xFFFF);
 			count += 1;
 		}
@@ -329,8 +325,7 @@ public class BufferViewTests is TestFixture
 
 		// All int32s should be -1 now, and we should find view.length of them
 		var count = 0;
-		for int32 in view
-		{
+		for int32 in view {
 			Assert.areEqual(int32, -1);
 			count += 1;
 		}
@@ -392,8 +387,7 @@ public class BufferViewTests is TestFixture
 
 		// All uint32s should be 0xFFFFFFFF now, and we should find view.length of them
 		var count = 0;
-		for uint32 in view
-		{
+		for uint32 in view {
 			Assert.areEqual(uint32, 0xFFFFFFFF);
 			count += 1;
 		}
@@ -445,8 +439,7 @@ public class BufferViewTests is TestFixture
 
 		// All int64s should be -1 now, and we should find view.length of them
 		var count = 0;
-		for int64 in view
-		{
+		for int64 in view {
 			Assert.areEqual(int64, -1);
 			count += 1;
 		}
@@ -498,8 +491,7 @@ public class BufferViewTests is TestFixture
 
 		// All uint64s should be 0xFFFFFFFFFFFFFFFFu now, and we should find view.length of them
 		var count = 0;
-		for uint64 in view
-		{
+		for uint64 in view {
 			Assert.areEqual(uint64, 0xFFFFFFFFFFFFFFFFu);
 			count += 1;
 		}

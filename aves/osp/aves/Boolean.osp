@@ -36,10 +36,12 @@ public class Boolean __primitive
 	public static parse(str)
 	{
 		str = string(str).trim();
-		if str.equalsIgnoreCase(trueString):
+		if str.equalsIgnoreCase(trueString) {
 			return true;
-		if str.equalsIgnoreCase(falseString):
+		}
+		if str.equalsIgnoreCase(falseString) {
 			return false;
+		}
 		return null;
 	}
 

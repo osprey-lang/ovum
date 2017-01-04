@@ -48,20 +48,23 @@ public inheritable Set is Collection
 	///                     use the default comparer.
 	/// Throws TypeConversionError:
 	///          {capacity} could not be converted to an Int.
-	/// Throws ArgumentError:
+	/// Throws ArgumentTypeError:
 	///          {itemComparer} is not null and not an {EqualityComparer}.
 	/// Throws ArgumentRangeError:
 	///          {capacity} is less than zero, or greater than {maxCapacity}.
 	public new(capacity, itemComparer)
 	{
 		capacity = int(capacity);
-		if capacity < 0 or capacity > maxCapacity:
+		if capacity < 0 or capacity > maxCapacity {
 			throw new ArgumentRangeError("capacity");
+		}
 
-		if itemComparer is null:
+		if itemComparer is null {
 			itemComparer = EqualityComparer.default;
-		else if itemComparer is not EqualityComparer:
-			throw new ArgumentError("itemComparer must be an instance of aves.EqualityComparer or null.", "itemComparer");
+		}
+		else if itemComparer is not EqualityComparer {
+			throw new ArgumentTypeError("itemComparer", typeof(EqualityComparer));
+		}
 
 		initialize(capacity, itemComparer);
 	}
@@ -151,8 +154,9 @@ public inheritable Set is Collection
 	{
 		var output = new Set(this.length, this.itemComparer);
 
-		for value in this:
+		for value in this {
 			output.add(value);
+		}
 
 		return output;
 	}
@@ -161,24 +165,28 @@ public inheritable Set is Collection
 	/// Param other: The set to intersect with.
 	/// Returns: A new {Set} with all the values that are present in both the
 	///          current set and {other}.
-	/// Throws ArgumentError:
+	/// Throws ArgumentTypeError:
 	///          {other} is not a Set.
 	/// Remarks: The resulting set uses the {itemComparer} of the current set.
 	public intersect(other)
 	{
-		if other is not Set:
-			throw new ArgumentError("other must be an instance of aves.Set.", "other");
+		if other is not Set {
+			throw new ArgumentTypeError("other", typeof(Set));
+		}
 
 		var smallest = this;
-		if other.length < this.length:
+		if other.length < this.length {
 			// swap the two
 			smallest, other = other, this;
+		}
 
 		var output = new Set(smallest.length, this.itemComparer);
 
-		for item in smallest:
-			if other.contains(item):
+		for item in smallest {
+			if other.contains(item) {
 				output.add(item);
+			}
+		}
 
 		return output;
 	}
@@ -187,18 +195,20 @@ public inheritable Set is Collection
 	/// Param other: The set to union with.
 	/// Returns: A new {Set} with all the values that are present in either the
 	///          current set or {other}.
-	/// Throws ArgumentError:
+	/// Throws ArgumentTypeError:
 	///          {other} is not a Set.
 	/// Remarks: The resulting set uses the {itemComparer} of the current set.
 	public union(other)
 	{
-		if other is not Set:
-			throw new ArgumentError("other must be an instance of aves.Set.", "other");
+		if other is not Set {
+			throw new ArgumentTypeError("other", typeof(Set));
+		}
 
 		var output = this.clone();
 
-		for item in other:
+		for item in other {
 			output.add(item);
+		}
 
 		return output;
 	}
@@ -207,7 +217,7 @@ public inheritable Set is Collection
 	/// Param other: The set to subtract.
 	/// Returns: A new {Set} with all the values that are present in the current
 	///          set and not in {other}.
-	/// Throws ArgumentError:
+	/// Throws ArgumentTypeError:
 	///          {other} is not a Set.
 	/// Remarks: This is equivalent to subtracting the values of {other} from the
 	///          current set. The operation is not commutative; that is, `A.difference(B)`
@@ -217,14 +227,17 @@ public inheritable Set is Collection
 	///          The resulting set uses the {itemComparer} of the current set.
 	public difference(other)
 	{
-		if other is not Set:
-			throw new ArgumentError("other must be an instance of aves.Set.", "other");
+		if other is not Set {
+			throw new ArgumentTypeError("other", typeof(Set));
+		}
 
 		var output = new Set(this.length, this.itemComparer);
 
-		for item in this:
-			if not other.contains(item):
+		for item in this {
+			if not other.contains(item) {
 				output.add(item);
+			}
+		}
 
 		return output;
 	}
@@ -233,7 +246,7 @@ public inheritable Set is Collection
 	/// Param other: The set to compute symmetric difference against.
 	/// Returns: A new {Set} with all the values that are present in either the
 	///          current set or {other}, but not both.
-	/// Throws ArgumentError:
+	/// Throws ArgumentTypeError:
 	///          {other} is not a Set.
 	/// Remarks: This is effectively equivalent to computing the XOR of the two
 	///          sets. Unlike {difference}, this method is commutative; that is,
@@ -242,13 +255,15 @@ public inheritable Set is Collection
 	///          The resulting set uses the {itemComparer} of the current set.
 	public symmetricDifference(other)
 	{
-		if other is not Set:
-			throw new ArgumentError("other must be an instance of aves.Set.", "other");
+		if other is not Set {
+			throw new ArgumentTypeError("other", typeof(Set));
+		}
 
 		var output = this.clone();
 
-		for item in other:
+		for item in other {
 			output.toggle(item);
+		}
 
 		return output;
 	}
@@ -257,8 +272,9 @@ public inheritable Set is Collection
 	{
 		var h = itemComparer.getHashCode(item);
 
-		if h is not Int and h is not UInt:
+		if h is not Int and h is not UInt {
 			throw new TypeError("The hash code must be of type Int or UInt.");
+		}
 
 		return h;
 	}
@@ -296,8 +312,9 @@ public inheritable Set is Collection
 	{
 		var output = new Set(0, itemComparer);
 
-		for item in collection:
+		for item in collection {
 			output.add(item);
+		}
 
 		return output;
 	}
@@ -333,14 +350,13 @@ internal class SetIterator is Iterator
 	override get current => cur;
 	override moveNext()
 	{
-		if set.version != version:
+		if set.version != version {
 			throw new InvalidStateError("The set has changed since the iteration started.");
+		}
 
-		while i < set.entryCount - 1
-		{
+		while i < set.entryCount - 1 {
 			i += 1;
-			if set.hasEntryAt(i)
-			{
+			if set.hasEntryAt(i) {
 				cur = set.getEntryAt(i);
 				return true;
 			}

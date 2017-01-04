@@ -27,26 +27,23 @@ internal class GroupEveryIterator is Iterator
 
 	override moveNext()
 	{
-		if hasMore
-		{
+		if hasMore {
 			var items = [];
 
-			while true
-			{
-				if not inner.moveNext()
-				{
+			while true {
+				if not inner.moveNext() {
 					hasMore = false;
 					break;
 				}
 
 				items.add(inner.current);
-				if items.length == frequency:
+				if items.length == frequency {
 					break;
+				}
 			}
 
 			// Only return the list if we actually collected something
-			if items.length > 0
-			{
+			if items.length > 0 {
 				cur = items;
 				return true;
 			}

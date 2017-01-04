@@ -59,8 +59,9 @@ public class Version
 	private static getComponent(paramName, value)
 	{
 		value = int(value);
-		if value < 0:
+		if value < 0 {
 			throw new ArgumentRangeError(paramName);
+		}
 		return value;
 	}
 
@@ -74,15 +75,19 @@ public class Version
 
 	operator <=>(a, b)
 	{
-		if b is not Version:
-			throw new ArgumentTypeError();
+		if b is not Version {
+			throw new ArgumentTypeError("b", typeof(Version));
+		}
 
-		if a._major != b._major:
+		if a._major != b._major {
 			return a._major <=> b._major;
-		if a._minor != b._minor:
+		}
+		if a._minor != b._minor {
 			return a._minor <=> b._minor;
-		if a._patch != b._patch:
+		}
+		if a._patch != b._patch {
 			return a._patch <=> b._patch;
+		}
 
 		return 0;
 	}

@@ -30,8 +30,9 @@ public abstract class Collection is Iterable
 		// method by creating a list with the right initial capacity.
 		var list = new List(length);
 
-		for item in this:
+		for item in this {
 			list.add(item);
+		}
 
 		return list;
 	}
@@ -43,8 +44,7 @@ public abstract class Collection is Iterable
 		var array = new Array(length);
 
 		var i = 0;
-		for item in this
-		{
+		for item in this {
 			array[i] = item;
 			i += 1;
 		}

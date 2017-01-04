@@ -31,9 +31,11 @@ public abstract class Iterable
 		// This method could equivalently be written as:
 		//   return any(bool);
 		// but it's nice to avoid the function call for large sequences.
-		for item in this:
-			if item:
+		for item in this {
+			if item {
 				return true;
+			}
+		}
 		return false;
 	}
 	/// Summary: Determines whether all items in the sequence match the given predicate.
@@ -45,12 +47,15 @@ public abstract class Iterable
 	///          {predicate} is null.
 	public overridable any(predicate)
 	{
-		if predicate is null:
+		if predicate is null {
 			throw new ArgumentNullError("predicate");
+		}
 
-		for item in this:
-			if predicate(item):
+		for item in this {
+			if predicate(item) {
 				return true;
+			}
+		}
 		return false;
 	}
 
@@ -62,9 +67,11 @@ public abstract class Iterable
 		// This method could equivalently be written as:
 		//   return all(bool);
 		// but it's nice to avoid the function call for large sequences.
-		for item in this:
-			if not item:
+		for item in this {
+			if not item {
 				return false;
+			}
+		}
 		return true;
 	}
 	/// Summary: Determines whether any item in the sequence matches the given predicate.
@@ -76,12 +83,15 @@ public abstract class Iterable
 	///          {predicate} is null.
 	public overridable all(predicate)
 	{
-		if predicate is null:
+		if predicate is null {
 			throw new ArgumentNullError("predicate");
+		}
 
-		for item in this:
-			if not predicate(item):
+		for item in this {
+			if not predicate(item) {
 				return false;
+			}
+		}
 		return true;
 	}
 
@@ -90,8 +100,9 @@ public abstract class Iterable
 	public overridable count()
 	{
 		var length = 0;
-		for item in this:
+		for item in this {
 			length += 1;
+		}
 		return length;
 	}
 	/// Summary: Counts all the items in the sequence that match the the specified predicate.
@@ -103,13 +114,16 @@ public abstract class Iterable
 	///          {predicate} is null.
 	public overridable count(predicate)
 	{
-		if predicate is null:
+		if predicate is null {
 			throw new ArgumentNullError("predicate");
+		}
 
 		var length = 0;
-		for item in this:
-			if predicate(item):
+		for item in this {
+			if predicate(item) {
 				length += 1;
+			}
+		}
 		return length;
 	}
 
@@ -124,11 +138,13 @@ public abstract class Iterable
 	///          {map}.
 	public overridable each(func)
 	{
-		if func is null:
+		if func is null {
 			throw new ArgumentNullError("func");
+		}
 
-		for item in this:
+		for item in this {
 			func(item);
+		}
 	}
 
 	/// Summary: Returns a new {Iterable} which produces the items from this sequence that match
@@ -142,8 +158,9 @@ public abstract class Iterable
 	///          {predicate} is null.
 	public overridable filter(predicate)
 	{
-		if predicate is null:
+		if predicate is null {
 			throw new ArgumentNullError("predicate");
+		}
 
 		return new FilterIterable(this, predicate);
 	}
@@ -156,8 +173,9 @@ public abstract class Iterable
 	{
 		var iterator = this.iter;
 
-		if iterator.moveNext():
+		if iterator.moveNext() {
 			return iterator.current;
+		}
 
 		throw new InvalidStateError(emptySequence);
 	}
@@ -174,18 +192,20 @@ public abstract class Iterable
 	///          No item in the collection matches the predicate.
 	public overridable first(predicate)
 	{
-		if predicate is null:
+		if predicate is null {
 			throw new ArgumentNullError("predicate");
+		}
 
 		var iterator = this.iter;
-		if not iterator.moveNext():
+		if not iterator.moveNext() {
 			throw new InvalidStateError(emptySequence);
+		}
 
-		do
-		{
+		do {
 			var item = iterator.current;
-			if predicate(item):
+			if predicate(item) {
 				return item;
+			}
 		} while iterator.moveNext();
 
 		throw new InvalidStateError(noMatchFound);
@@ -218,8 +238,9 @@ public abstract class Iterable
 	public overridable firstOrDefault(default)
 	{
 		var iterator = this.iter;
-		if iterator.moveNext():
+		if iterator.moveNext() {
 			return iterator.current;
+		}
 		return default;
 	}
 	/// Summary: Returns the first element in the sequence that matches the given predicate, or
@@ -234,12 +255,15 @@ public abstract class Iterable
 	///          {predicate} is null.
 	public overridable firstOrDefault(default, predicate)
 	{
-		if predicate is null:
+		if predicate is null {
 			throw new ArgumentNullError("predicate");
+		}
 
-		for item in this:
-			if predicate(item):
+		for item in this {
+			if predicate(item) {
 				return item;
+			}
+		}
 
 		return default;
 	}
@@ -255,16 +279,19 @@ public abstract class Iterable
 	///          initial accumulator value.
 	public overridable fold(func)
 	{
-		if func is null:
+		if func is null {
 			throw new ArgumentNullError("func");
+		}
 
 		var iterator = this.iter;
-		if not iterator.moveNext():
+		if not iterator.moveNext() {
 			throw new InvalidStateError("Cannot fold an empty sequence without an initial value.");
+		}
 
 		var init = iterator.current;
-		while iterator.moveNext():
+		while iterator.moveNext() {
 			init = func(init, iterator.current);
+		}
 
 		return init;
 	}
@@ -279,11 +306,13 @@ public abstract class Iterable
 	///          {func} is null.
 	public overridable fold(init, func)
 	{
-		if func is null:
+		if func is null {
 			throw new ArgumentNullError("func");
+		}
 
-		for item in this:
+		for item in this {
 			init = func(init, item);
+		}
 
 		return init;
 	}
@@ -304,12 +333,13 @@ public abstract class Iterable
 		var output = new StringBuffer();
 
 		var first = true;
-		for item in this
-		{
-			if not first:
+		for item in this {
+			if not first {
 				output.append(separator);
-			else:
+			}
+			else {
 				first = false;
+			}
 
 			output.append(item);
 		}
@@ -346,24 +376,22 @@ public abstract class Iterable
 		lastSeparator = string(lastSeparator);
 
 		var iterator = this.iter;
-		if not iterator.moveNext():
+		if not iterator.moveNext() {
 			return "";
+		}
 
 		var output = new StringBuffer();
 		var first = true;
 		var prevItem = iterator.current;
-		while iterator.moveNext()
-		{
+		while iterator.moveNext() {
 			// If we get here, we know prevItem definitely isn't
 			// the last item in the sequence. So we can append it
 			// to the output buffer.
-			if not first
-			{
+			if not first {
 				output.append(separator);
 				output.append(prevItem);
 			}
-			else
-			{
+			else {
 				output.append(prevItem);
 				first = false;
 			}
@@ -372,8 +400,9 @@ public abstract class Iterable
 		// And once we get here, we know prevItem was definitely
 		// the last item. If it wasn't also the first, we can
 		// append the lastSeparator.
-		if not first:
+		if not first {
 			output.append(lastSeparator);
+		}
 		output.append(prevItem);
 
 		return output.toString();
@@ -391,8 +420,9 @@ public abstract class Iterable
 	///          {EqualityComparer.default}.
 	public overridable groupBy(keyFunc)
 	{
-		if keyFunc is null:
+		if keyFunc is null {
 			throw new ArgumentNullError("keyFunc");
+		}
 
 		return groupBy(keyFunc, @x => x, null);
 	}
@@ -411,10 +441,12 @@ public abstract class Iterable
 	///          {EqualityComparer.default}.
 	public overridable groupBy(keyFunc, valueFunc)
 	{
-		if keyFunc is null:
+		if keyFunc is null {
 			throw new ArgumentNullError("keyFunc");
-		if valueFunc is null:
+		}
+		if valueFunc is null {
 			throw new ArgumentNullError("valueFunc");
+		}
 
 		return groupBy(keyFunc, valueFunc, null);
 	}
@@ -437,25 +469,27 @@ public abstract class Iterable
 	///          {keyComparer} is not null and not an {EqualityComparer}.
 	public overridable groupBy(keyFunc, valueFunc, keyComparer)
 	{
-		if keyFunc is null:
+		if keyFunc is null {
 			throw new ArgumentNullError("keyFunc");
-		if valueFunc is null:
+		}
+		if valueFunc is null {
 			throw new ArgumentNullError("valueFunc");
-		if keyComparer is null:
+		}
+		if keyComparer is null {
 			keyComparer = EqualityComparer.default;
-		else if keyComparer is not EqualityComparer:
+		}
+		else if keyComparer is not EqualityComparer {
 			throw new ArgumentTypeError("keyComparer", typeof(EqualityComparer));
+		}
 
 		var result = new Hash(5, keyComparer);
 
-		for item in this
-		{
+		for item in this {
 			var key = keyFunc(item);
 			var value = valueFunc(item);
 
 			var groupValues;
-			if not result.tryGet(key, ref groupValues)
-			{
+			if not result.tryGet(key, ref groupValues) {
 				groupValues = new List(2);
 				result.add(key, groupValues);
 			}
@@ -477,8 +511,9 @@ public abstract class Iterable
 	public overridable groupEvery(frequency)
 	{
 		frequency = int(frequency);
-		if frequency <= 0:
+		if frequency <= 0 {
 			throw new ArgumentRangeError("frequency");
+		}
 
 		return new GroupEveryIterable(this, frequency);
 	}
@@ -510,8 +545,9 @@ public abstract class Iterable
 	public overridable intersperse(value, frequency)
 	{
 		frequency = int(frequency);
-		if frequency <= 0:
+		if frequency <= 0 {
 			throw new ArgumentRangeError("frequency");
+		}
 
 		return new IntersperseIterable(this, value, frequency);
 	}
@@ -529,12 +565,12 @@ public abstract class Iterable
 	public overridable last()
 	{
 		var iterator = this.iter;
-		if not iterator.moveNext():
+		if not iterator.moveNext() {
 			throw new InvalidStateError(emptySequence);
+		}
 
 		var output;
-		do
-		{
+		do {
 			output = iterator.current;
 		} while iterator.moveNext();
 
@@ -560,28 +596,29 @@ public abstract class Iterable
 	///          traverse the sequence backwards.
 	public overridable last(predicate)
 	{
-		if predicate is null:
+		if predicate is null {
 			throw new ArgumentNullError("predicate");
+		}
 
 		var iterator = this.iter;
-		if not iterator.moveNext():
+		if not iterator.moveNext() {
 			throw new InvalidStateError(emptySequence);
+		}
 
 		var hasMatch = false;
 		var output = null;
 
-		do
-		{
+		do {
 			var item = iterator.current;
-			if predicate(item)
-			{
+			if predicate(item) {
 				hasMatch = true;
 				output = item;
 			}
 		} while iterator.moveNext();
 
-		if not hasMatch:
+		if not hasMatch {
 			throw new InvalidStateError(noMatchFound);
+		}
 
 		return output;
 	}
@@ -626,8 +663,9 @@ public abstract class Iterable
 	public overridable lastOrDefault(default)
 	{
 		var output = default;
-		for item in this:
+		for item in this {
 			output = item;
+		}
 		return output;
 	}
 	/// Summary: Returns the last element in the sequence that matches the given predicate, or
@@ -649,13 +687,16 @@ public abstract class Iterable
 	///          traverse the sequence backwards.
 	public overridable lastOrDefault(default, predicate)
 	{
-		if predicate is null:
+		if predicate is null {
 			throw new ArgumentNullError("predicate");
+		}
 
 		var output = default;
-		for item in this:
-			if predicate(item):
+		for item in this {
+			if predicate(item) {
 				output = item;
+			}
+		}
 		return output;
 	}
 
@@ -667,8 +708,9 @@ public abstract class Iterable
 	///          {func} is null.
 	public overridable map(func)
 	{
-		if func is null:
+		if func is null {
 			throw new ArgumentNullError("func");
+		}
 
 		return new MapIterable(this, func);
 	}
@@ -682,8 +724,9 @@ public abstract class Iterable
 	///          {func} is null.
 	public overridable mapMany(func)
 	{
-		if func is null:
+		if func is null {
 			throw new ArgumentNullError("func");
+		}
 
 		return new MapManyIterable(this, func);
 	}
@@ -701,8 +744,9 @@ public abstract class Iterable
 	public overridable take(count)
 	{
 		count = int(count);
-		if count < 0:
+		if count < 0 {
 			throw new ArgumentRangeError("count");
+		}
 
 		return new TakeIterable(this, count);
 	}
@@ -719,8 +763,9 @@ public abstract class Iterable
 	///          {predicate} is null.
 	public overridable takeWhile(predicate)
 	{
-		if predicate is null:
+		if predicate is null {
 			throw new ArgumentNullError("predicate");
+		}
 
 		return new TakeWhileIterable(this, predicate);
 	}
@@ -738,8 +783,9 @@ public abstract class Iterable
 	public overridable skip(count)
 	{
 		count = int(count);
-		if count < 0:
+		if count < 0 {
 			throw new ArgumentRangeError("count");
+		}
 
 		return new SkipIterable(this, count);
 	}
@@ -754,8 +800,9 @@ public abstract class Iterable
 	///          sequence, if any.
 	public overridable skipWhile(predicate)
 	{
-		if predicate is null:
+		if predicate is null {
 			throw new ArgumentNullError("predicate");
+		}
 
 		return new SkipWhileIterable(this, predicate);
 	}
@@ -773,8 +820,9 @@ public abstract class Iterable
 	public overridable skipFromEnd(count)
 	{
 		count = int(count);
-		if count < 0:
+		if count < 0 {
 			throw new ArgumentRangeError("count");
+		}
 
 		return new SkipFromEndIterable(this, count);
 	}
@@ -860,15 +908,19 @@ public abstract class Iterable
 	///          `@x => x`, or {Order.default}.
 	public overridable sortBy(...keySelectors)
 	{
-		if keySelectors.isEmpty:
+		if keySelectors.isEmpty {
 			throw new ArgumentError("At least one key selector must be specified.", "keySelectors");
-		if keySelectors.any(@ks => ks is null):
+		}
+		if keySelectors.any(@ks => ks is null) {
 			throw new ArgumentNullError(null, "An item in keySelectors is null.");
+		}
 
-		if keySelectors.length == 1:
+		if keySelectors.length == 1 {
 			return new SortBySingleKeyIterable(this, keySelectors[0]);
-		else:
+		}
+		else {
 			return new SortByMultipleKeysIterable(this, keySelectors);
+		}
 	}
 
 	/// Summary: Combines the items from this sequence with those from another sequence.
@@ -884,8 +936,9 @@ public abstract class Iterable
 	///          values.
 	public overridable zip(other)
 	{
-		if other is null:
+		if other is null {
 			throw new ArgumentNullError("other");
+		}
 
 		return new ZipIterable(this, other, null);
 	}
@@ -905,10 +958,12 @@ public abstract class Iterable
 	///          values.
 	public overridable zip(other, func)
 	{
-		if other is null:
+		if other is null {
 			throw new ArgumentNullError("other");
-		if func is null:
+		}
+		if func is null {
 			throw new ArgumentNullError("func");
+		}
 
 		return new ZipIterable(this, other, func);
 	}
@@ -981,23 +1036,24 @@ public abstract class Iterable
 	{
 		start = int(start);
 		count = int(count);
-		if count < 0:
+		if count < 0 {
 			throw new ArgumentRangeError("count");
+		}
 		step = int(step);
-		if step <= 0:
+		if step <= 0 {
 			throw new ArgumentRangeError("step");
+		}
 
 		// Dirty way to avoid problems with calcuating the end
-		if count == 0:
+		if count == 0 {
 			return empty;
+		}
 
 		var end;
-		try
-		{
+		try {
 			end = start + step * count;
 		}
-		catch OverflowError
-		{
+		catch OverflowError {
 			throw new ArgumentError("start + step * count is greater than Int.max.");
 		}
 
@@ -1038,8 +1094,9 @@ public abstract class Iterable
 		start = int(start);
 		end = int(end);
 		step = int(step);
-		if step == 0:
+		if step == 0 {
 			throw new ArgumentRangeError("step");
+		}
 
 		return new RangeIterable(start, end, step);
 	}

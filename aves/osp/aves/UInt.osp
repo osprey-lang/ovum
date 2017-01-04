@@ -27,51 +27,53 @@ public class UInt __primitive
 		var strLength = str.length;
 
 		var i = 0;
-		while i < strLength and str.isWhiteSpace(i):
+		while i < strLength and str.isWhiteSpace(i) {
 			i += 1;
-
-		var cp;
-		if i < strLength
-		{
-			cp = str.getCodePoint(i);
-			if cp == 0x2B /*+*/:
-				i += 1;
 		}
 
-		parse: do
-		{
+		var cp;
+		if i < strLength {
+			cp = str.getCodePoint(i);
+			if cp == 0x2B /*+*/ {
+				i += 1;
+			}
+		}
+
+		parse: do {
 			const digit0 = 0x30;
 			const digit9 = 0x39;
 
-			if i == strLength:
+			if i == strLength {
 				break;
+			}
 
 			cp = str.getCodePoint(i);
-			if cp < digit0 or cp > digit9:
+			if cp < digit0 or cp > digit9 {
 				break; // next character must be a digit!
+			}
 
 			var result = 0u;
-			try
-			{
-				while i < strLength
-				{
+			try {
+				while i < strLength {
 					cp = str.getCodePoint(i);
-					if cp < digit0 or cp > digit9:
+					if cp < digit0 or cp > digit9 {
 						break;
+					}
 					result = 10u * result + (cp - digit0);
 					i += 1;
 				}
 			}
-			catch OverflowError
-			{
+			catch OverflowError {
 				break parse;
 			}
 
-			while i < strLength and str.isWhiteSpace(i):
+			while i < strLength and str.isWhiteSpace(i) {
 				i += 1;
+			}
 
-			if i != strLength:
+			if i != strLength {
 				break parse;
+			}
 
 			return result;
 		};

@@ -17,8 +17,9 @@ public static class Console
 
 	public static write(format, values)
 	{
-		if format is not String:
+		if format is not String {
 			throwFormatTypeError();
+		}
 		write(format.format(values));
 	}
 	public static writeLine()
@@ -27,14 +28,16 @@ public static class Console
 	}
 	public static writeLine(format, values)
 	{
-		if format is not String:
+		if format is not String {
 			throwFormatTypeError();
+		}
 		writeLine(format.format(values));
 	}
 	public static writeErr(format, values)
 	{
-		if format is not String:
+		if format is not String {
 			throwFormatTypeError();
+		}
 		writeErr(format.format(values));
 	}
 	public static writeLineErr()
@@ -43,8 +46,9 @@ public static class Console
 	}
 	public static writeLineErr(format, values)
 	{
-		if format is not String:
+		if format is not String {
 			throwFormatTypeError();
+		}
 		writeLineErr(format.format(values));
 	}
 

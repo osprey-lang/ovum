@@ -42,8 +42,9 @@ public abstract class EqualityComparer
 	{
 		// Race conditions don't really matter here: we only go from null
 		// to non-null, and DefaultEqualityComparer is perfectly stateless.
-		if _default is null:
+		if _default is null {
 			_default = new DefaultEqualityComparer();
+		}
 		return _default;
 	}
 }
@@ -52,8 +53,9 @@ internal class DefaultEqualityComparer is EqualityComparer
 {
 	override getHashCode(value)
 	{
-		if value is null:
+		if value is null {
 			return 0;
+		}
 		return value.getHashCode();
 	}
 

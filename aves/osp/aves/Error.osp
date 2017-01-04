@@ -43,7 +43,7 @@ public inheritable Error
 	/// Summary: Gets the error that caused this error, or null if there is none.
 	public get innerError
 		__extern("aves_Error_get_innerError");
-	/// Summary: Gets any additional data associated with this error. 
+	/// Summary: Gets any additional data associated with this error.
 	public get data
 		__extern("aves_Error_get_data");
 
@@ -54,9 +54,10 @@ public inheritable Error
 			.append(": ")
 			.append(message);
 
-		if stackTrace:
+		if stackTrace {
 			buf.append(Env.newline)
 				.append(stackTrace);
+		}
 
 		return buf.toString();
 	}

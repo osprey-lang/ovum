@@ -16,10 +16,12 @@ public class ConsoleKey
 
 	public new(char, keyCode, shift, alt, control)
 	{
-		if char is not Char:
+		if char is not Char {
 			throw new ArgumentTypeError("charCode", typeof(Char));
-		if keyCode is not ConsoleKeyCode:
+		}
+		if keyCode is not ConsoleKeyCode {
 			throw new ArgumentTypeError("keyCode", typeof(ConsoleKeyCode));
+		}
 
 		_char = char;
 		_keyCode = keyCode;

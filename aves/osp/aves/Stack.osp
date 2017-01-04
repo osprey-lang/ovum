@@ -28,8 +28,9 @@ public inheritable Stack is Collection
 	public new(capacity)
 	{
 		capacity = int(capacity);
-		if capacity < 0:
+		if capacity < 0 {
 			throw new ArgumentRangeError("capacity");
+		}
 
 		initialize(capacity);
 	}
@@ -59,11 +60,13 @@ public inheritable Stack is Collection
 	public set capacity
 	{
 		value = int(value);
-		if value < _length:
+		if value < _length {
 			throw new ArgumentRangeError("value");
+		}
 
-		if value != _length:
+		if value != _length {
 			setCapacity(value);
+		}
 	}
 
 	private initialize(capacity)
@@ -75,8 +78,9 @@ public inheritable Stack is Collection
 	/// Param value: The value to push onto the stack.
 	public push(value)
 	{
-		if _length == capacity:
+		if _length == capacity {
 			resize();
+		}
 
 		items[_length] = value;
 		_length += 1;
@@ -87,8 +91,9 @@ public inheritable Stack is Collection
 	/// Returns: The value that was removed from the top of the stack.
 	public pop()
 	{
-		if _length == 0:
+		if _length == 0 {
 			throw new InvalidStateError(emptyStack);
+		}
 
 		_length -= 1;
 
@@ -103,8 +108,9 @@ public inheritable Stack is Collection
 	/// Returns: The current top value on the stack.
 	public peek()
 	{
-		if _length == 0:
+		if _length == 0 {
 			throw new InvalidStateError(emptyStack);
+		}
 
 		return items[_length - 1];
 	}
@@ -138,10 +144,10 @@ public inheritable Stack is Collection
 	{
 		var startVersion = version;
 		var i = _length - 1;
-		while i >= 0
-		{
-			if startVersion != version:
+		while i >= 0 {
+			if startVersion != version {
 				throw new InvalidStateError("The stack has changed since the enumeration started.");
+			}
 			yield items[i];
 			i -= 1;
 		}

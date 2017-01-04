@@ -39,10 +39,12 @@ public class Method
 	///          {value} is not invokable.
 	public static fromValue(value)
 	{
-		if value is null:
+		if value is null {
 			throw new ArgumentNullError("value");
-		if value is not Method:
+		}
+		if value is not Method {
 			value = new Method(value);
+		}
 
 		return value;
 	}

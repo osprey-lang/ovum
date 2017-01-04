@@ -11,8 +11,9 @@ internal class TakeIterable is Iterable
 	override take(count)
 	{
 		count = int(count);
-		if count < 0:
+		if count < 0 {
 			throw new ArgumentRangeError("count");
+		}
 
 		return new TakeIterable(inner, math.min(count, takeCount));
 	}
@@ -34,10 +35,8 @@ internal class TakeIterator is Iterator
 
 	override moveNext()
 	{
-		if count > 0
-		{
-			if inner.moveNext()
-			{
+		if count > 0 {
+			if inner.moveNext() {
 				count -= 1;
 				return true;
 			}

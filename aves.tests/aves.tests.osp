@@ -7,13 +7,11 @@ namespace aves.tests;
 internal function main(args)
 {
 	var module = Module.getCurrentModule();
-	if args.isEmpty
-	{
+	if args.isEmpty {
 		// Run all tests
 		TestFixture.runAll(module);
 	}
-	else
-	{
+	else {
 		const classPrefix = "aves.tests.";
 
 		var testFixtureType = typeof(TestFixture);
@@ -21,17 +19,14 @@ internal function main(args)
 		var testTypes = new List(args.length);
 		// args contains a list of test fixture class names,
 		// without the "aves.tests." prefix.
-		for arg in args
-		{
+		for arg in args {
 			var className = classPrefix :: arg;
 			var type = module.getType(className);
-			if type is null
-			{
+			if type is null {
 				Console.writeLineErr("Test class not found: " :: className);
 				next;
 			}
-			if not type.inheritsFrom(testFixtureType)
-			{
+			if not type.inheritsFrom(testFixtureType) {
 				Console.writeLineErr("Class is not a testing.unit.TestFixture: " :: className);
 				next;
 			}

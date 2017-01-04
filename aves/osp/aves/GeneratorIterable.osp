@@ -34,8 +34,9 @@ public inheritable GeneratorIterable is Iterable
 	///          {method} is null.
 	public new(method)
 	{
-		if method is null:
+		if method is null {
 			throw new ArgumentNullError("method");
+		}
 
 		this.method = method;
 		this.args = [];
@@ -50,12 +51,15 @@ public inheritable GeneratorIterable is Iterable
 	///          {args} is not a List.
 	public new(method, args)
 	{
-		if method is null:
+		if method is null {
 			throw new ArgumentNullError("method");
-		if args is null:
+		}
+		if args is null {
 			throw new ArgumentNullError("args");
-		if args is not List:
+		}
+		if args is not List {
 			throw new ArgumentTypeError("args", typeof(List));
+		}
 
 		this.method = method;
 		this.args = args;

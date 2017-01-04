@@ -12,11 +12,11 @@ internal class MapManyIterable is Iterable
 		var inner = this.inner;
 		var func = this.func;
 
-		for item in inner
-		{
+		for item in inner {
 			var sequence = func(item);
-			for childItem in sequence:
+			for childItem in sequence {
 				yield childItem;
+			}
 		}
 	}
 }

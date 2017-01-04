@@ -95,8 +95,9 @@ public class Overload is Member
 	public getParameter(index)
 	{
 		index = int(index);
-		if index < 0 or index >= paramCount:
+		if index < 0 or index >= paramCount {
 			throw new ArgumentRangeError("index");
+		}
 
 		return new Parameter(this, index);
 	}
@@ -106,8 +107,9 @@ public class Overload is Member
 	public getParameters()
 	{
 		var output = new List(paramCount);
-		for i in Iterable.range(0, paramCount):
+		for i in Iterable.range(0, paramCount) {
 			output.add(new Parameter(this, i));
+		}
 
 		return output;
 	}

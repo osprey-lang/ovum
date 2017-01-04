@@ -31,8 +31,9 @@ public class Utf16Encoding is Encoding
 		buf = Buffer.fromValue(buf);
 		offset = int(offset);
 
-		if offset < 0 or offset >= buf.size:
+		if offset < 0 or offset >= buf.size {
 			throw new ArgumentRangeError("offset");
+		}
 
 		return getBytesInternal(str, buf, offset);
 	}
@@ -54,8 +55,9 @@ public class Utf16Encoding is Encoding
 		buf = Buffer.fromValue(buf);
 		offset = int(offset);
 		count = int(count);
-		if stringBuf is not StringBuffer:
+		if stringBuf is not StringBuffer {
 			throw new ArgumentTypeError("stringBuf", typeof(StringBuffer));
+		}
 
 		buf.verifyRange(offset, count);
 
@@ -85,8 +87,9 @@ internal class Utf16Encoder is Encoder
 		offset = int(offset);
 		flush = bool(flush);
 
-		if offset < 0 or offset >= buf.size:
+		if offset < 0 or offset >= buf.size {
 			throw new ArgumentRangeError("offset");
+		}
 
 		return getBytesInternal(str, buf, offset, flush);
 	}
@@ -124,8 +127,9 @@ internal class Utf16Decoder is Decoder
 		offset = int(offset);
 		count = int(count);
 
-		if strBuf is not StringBuffer:
+		if strBuf is not StringBuffer {
 			throw new ArgumentTypeError("strBuf", typeof(StringBuffer));
+		}
 
 		buf.verifyRange(offset, count);
 

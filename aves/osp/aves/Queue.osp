@@ -25,8 +25,9 @@ public inheritable Queue is Collection
 	public new(capacity)
 	{
 		capacity = int(capacity);
-		if capacity < 0:
+		if capacity < 0 {
 			throw new ArgumentRangeError("capacity");
+		}
 
 		initialize(capacity);
 	}
@@ -57,11 +58,13 @@ public inheritable Queue is Collection
 	public set capacity
 	{
 		value = int(value);
-		if value < length:
+		if value < length {
 			throw new ArgumentRangeError("value");
+		}
 
-		if value != _length:
+		if value != _length {
 			setCapacity(value);
+		}
 	}
 
 	private initialize(capacity)
@@ -73,8 +76,9 @@ public inheritable Queue is Collection
 	/// Param value: The value to enqueue.
 	public enqueue(value)
 	{
-		if _length == capacity:
+		if _length == capacity {
 			resize();
+		}
 
 		items[(startIndex + _length) % capacity] = value;
 		_length += 1;
@@ -88,8 +92,9 @@ public inheritable Queue is Collection
 	///          The queue is empty.
 	public dequeue()
 	{
-		if _length == 0:
+		if _length == 0 {
 			throw new InvalidStateError("There are no items in the queue.");
+		}
 
 		var value = items[startIndex];
 		items[startIndex] = null;
@@ -119,17 +124,14 @@ public inheritable Queue is Collection
 
 	private setCapacity(newCapacity)
 	{
-		if startIndex == 0
-		{
+		if startIndex == 0 {
 			Array.resize(ref items, newCapacity);
 		}
-		else
-		{
+		else {
 			var newItems = new Array(newCapacity);
 
 			var i = 0;
-			while i < _length
-			{
+			while i < _length {
 				newItems[i] = items[(startIndex + i) % capacity];
 				i += 1;
 			}
@@ -151,10 +153,10 @@ public inheritable Queue is Collection
 		var startVersion = version;
 
 		var i = 0;
-		while i < _length
-		{
-			if startVersion != version:
+		while i < _length {
+			if startVersion != version {
 				throw new InvalidStateError("The queue has changed since the enumeration started.");
+			}
 
 			yield items[(startIndex + i) % capacity];
 			i += 1;

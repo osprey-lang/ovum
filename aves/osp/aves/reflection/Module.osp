@@ -111,8 +111,9 @@ public class Module
 	///          {name} is null.
 	public static find(name)
 	{
-		if name is null:
+		if name is null {
 			throw new ArgumentNullError("name");
+		}
 		name = string(name);
 		return findInternal(name, null);
 	}
@@ -127,13 +128,16 @@ public class Module
 	///          {version} is not a {Version}.
 	public static find(name, version)
 	{
-		if name is null:
+		if name is null {
 			throw new ArgumentNullError("name");
+		}
 		name = string(name);
-		if version is null:
+		if version is null {
 			throw new ArgumentNullError("version");
-		if version is not Version:
+		}
+		if version is not Version {
 			throw new ArgumentTypeError("version", typeof(Version));
+		}
 		return findInternal(name, version);
 	}
 

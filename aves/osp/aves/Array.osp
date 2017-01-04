@@ -86,8 +86,9 @@ public class Array is Collection
 	public indexOf(item, startIndex)
 	{
 		startIndex = int(startIndex);
-		if startIndex < 0 or startIndex > length:
+		if startIndex < 0 or startIndex > length {
 			throw new ArgumentRangeError("startIndex");
+		}
 
 		return indexOfInternal(item, startIndex, length);
 	}
@@ -114,23 +115,26 @@ public class Array is Collection
 	public indexOf(item, startIndex, count)
 	{
 		startIndex = int(startIndex);
-		if startIndex < 0 or startIndex > length:
+		if startIndex < 0 or startIndex > length {
 			throw new ArgumentRangeError("startIndex");
+		}
 		count = int(count);
-		if count < 0:
+		if count < 0 {
 			throw new ArgumentRangeError("count");
-		if startIndex + count > length:
+		}
+		if startIndex + count > length {
 			throw new ArgumentError("startIndex + count is outside the array.");
+		}
 
 		return indexOfInternal(item, startIndex, startIndex + count);
 	}
 
 	private indexOfInternal(item, startIndex, endIndex)
 	{
-		while startIndex < endIndex
-		{
-			if item == this[startIndex]:
+		while startIndex < endIndex {
+			if item == this[startIndex] {
 				return startIndex;
+			}
 			startIndex += 1;
 		}
 
@@ -166,13 +170,16 @@ public class Array is Collection
 	public fill(value, startIndex, count)
 	{
 		startIndex = int(startIndex);
-		if startIndex < 0:
+		if startIndex < 0 {
 			throw new ArgumentRangeError("startIndex");
+		}
 		count = int(count);
-		if count < 0:
+		if count < 0 {
 			throw new ArgumentRangeError("count");
-		if startIndex + count > length:
+		}
+		if startIndex + count > length {
 			throw new ArgumentError("startIndex + count is outside the array.");
+		}
 
 		fillInternal(value, startIndex, count);
 	}
@@ -192,8 +199,9 @@ public class Array is Collection
 	public slice(startIndex)
 	{
 		startIndex = int(startIndex);
-		if startIndex < 0 or startIndex > length:
+		if startIndex < 0 or startIndex > length {
 			throw new ArgumentRangeError("startIndex");
+		}
 
 		return sliceInternal(startIndex, length - startIndex);
 	}
@@ -214,13 +222,16 @@ public class Array is Collection
 	public slice(startIndex, count)
 	{
 		startIndex = int(startIndex);
-		if startIndex < 0:
+		if startIndex < 0 {
 			throw new ArgumentRangeError("startIndex");
+		}
 		count = int(count);
-		if count < 0:
+		if count < 0 {
 			throw new ArgumentRangeError("count");
-		if startIndex + count > length:
+		}
+		if startIndex + count > length {
 			throw new ArgumentError("startIndex + count is outside the array");
+		}
 
 		return sliceInternal(startIndex, count);
 	}
@@ -242,13 +253,16 @@ public class Array is Collection
 	public sliceTo(startIndex, endIndex)
 	{
 		startIndex = int(startIndex);
-		if startIndex < 0 or startIndex > length:
+		if startIndex < 0 or startIndex > length {
 			throw new ArgumentRangeError("startIndex");
+		}
 		endIndex = int(endIndex);
-		if endIndex < 0 or endIndex > length:
+		if endIndex < 0 or endIndex > length {
 			throw new ArgumentRangeError("endIndex");
-		if endIndex < startIndex:
+		}
+		if endIndex < startIndex {
 			throw new ArgumentRangeError("endIndex is less than startIndex", "endIndex");
+		}
 
 		return sliceInternal(startIndex, endIndex - startIndex);
 	}
@@ -282,17 +296,19 @@ public class Array is Collection
 	///          array, the excess data will be cut off.
 	public static resize(ref array, newLength)
 	{
-		if array is not Array and array is not null:
+		if array is not Array and array is not null {
 			throw new ArgumentError("array must an aves.Array or null", "array");
+		}
 		newLength = int(newLength);
-		if newLength < 0:
+		if newLength < 0 {
 			throw new ArgumentRangeError("newLength");
+		}
 
-		if array is null or newLength != array.length
-		{
+		if array is null or newLength != array.length {
 			var newArray = new Array(newLength);
-			if array is not null:
+			if array is not null {
 				copyInternal(array, 0, newArray, 0, math.min(array.length, newLength));
+			}
 			array = newArray;
 		}
 	}
@@ -314,12 +330,15 @@ public class Array is Collection
 	///          doing nothing.
 	public static copy(source, destination)
 	{
-		if source is not Array:
+		if source is not Array {
 			throw new ArgumentError("source must be an aves.Array", "source");
-		if destination is not Array:
+		}
+		if destination is not Array {
 			throw new ArgumentError("destination must be an aves.Array", "destination");
-		if destination.length < source.length:
+		}
+		if destination.length < source.length {
 			throw new ArgumentError("The destination array is too small for the source array.");
+		}
 
 		copyInternal(source, 0, destination, 0, source.length);
 	}
@@ -330,7 +349,7 @@ public class Array is Collection
 	/// Param count:       The number of items to copy. (Int, UInt or Real)
 	/// Throws TypeConversionError:
 	///          {count} could not be converted to an Int.
-	/// Throws ArgumentError:
+	/// Throws ArgumentTypeError:
 	///          {source} or {destination} is not an {Array}.
 	/// Throws ArgumentRangeError:
 	///          {count} is less than zero, or {count} is greater than the length of
@@ -340,13 +359,16 @@ public class Array is Collection
 	///          copied as if an intermediate buffer had been used.
 	public static copy(source, destination, count)
 	{
-		if source is not Array:
-			throw new ArgumentError("source must be an aves.Array", "source");
-		if destination is not Array:
-			throw new ArgumentError("destination must be an aves.Array", "destination");
+		if source is not Array {
+			throw new ArgumentTypeError("source", typeof(Array));
+		}
+		if destination is not Array {
+			throw new ArgumentTypeError("destination", typeof(Array));
+		}
 		count = int(count);
-		if count < 0 or count > destination.length or count > source.length:
+		if count < 0 or count > destination.length or count > source.length {
 			throw new ArgumentRangeError("count");
+		}
 
 		copyInternal(source, 0, destination, 0, count);
 	}
@@ -362,11 +384,11 @@ public class Array is Collection
 	/// Throws TypeConversionError:
 	///          {sourceIndex}, {destIndex} or {count} could not be converted to an Int.
 	/// Throws ArgumentError:
-	///          {source} or {destination} is not an {Array}.
-	///
 	///          {sourceIndex} + {count} is greater than the length of {source}.
 	///
 	///          {destIndex} + {count} is greater than the length of {dest}.
+	/// Throws ArgumentTypeError:
+	///          {source} or {destination} is not an {Array}.
 	/// Throws ArgumentRangeError:
 	///          {startIndex}, {destIndex} or {count} is less than zero.
 	/// Remarks: It is safe to copy part of one array to another part of the same array,
@@ -374,21 +396,27 @@ public class Array is Collection
 	///          copied as if an intermediate buffer had been used.
 	public static copy(source, sourceIndex, dest, destIndex, count)
 	{
-		if source is not Array:
-			throw new ArgumentError("source must be an aves.Array", "source");
+		if source is not Array {
+			throw new ArgumentTypeError("source", typeof(Array));
+		}
 		sourceIndex = int(sourceIndex);
-		if dest is not Array:
-			throw new ArgumentError("dest must be an aves.Array", "dest");
+		if dest is not Array {
+			throw new ArgumentTypeError("dest", typeof(Array));
+		}
 		destIndex = int(destIndex);
-		if sourceIndex < 0 or destIndex < 0:
+		if sourceIndex < 0 or destIndex < 0 {
 			throw new ArgumentRangeError(sourceIndex < 0 ? "sourceIndex" : "destIndex");
+		}
 		count = int(count);
-		if count < 0:
+		if count < 0 {
 			throw new ArgumentRangeError("count");
-		if sourceIndex + count > source.length:
+		}
+		if sourceIndex + count > source.length {
 			throw new ArgumentError("sourceIndex + count is outside of the source array.");
-		if destIndex + count > dest.length:
+		}
+		if destIndex + count > dest.length {
 			throw new ArgumentError("destIndex + count is outside of the destination array.");
+		}
 
 		copyInternal(source, sourceIndex, dest, destIndex, count);
 	}
@@ -413,8 +441,7 @@ internal class ArrayIterator is Iterator
 
 	override moveNext()
 	{
-		if index < array.length
-		{
+		if index < array.length {
 			cur = array[index];
 			index += 1;
 			return true;

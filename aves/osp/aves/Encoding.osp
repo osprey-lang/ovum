@@ -197,19 +197,25 @@ public abstract class Encoding
 	private static _utf8;
 	public static get utf8
 	{
-		if _utf8 is null: _utf8 = new Utf8Encoding();
+		if _utf8 is null {
+			_utf8 = new Utf8Encoding();
+		}
 		return _utf8;
 	}
 
 	private static _utf16, _utf16BE;
 	public static get utf16
 	{
-		if _utf16 is null: _utf16 = new Utf16Encoding(false);
+		if _utf16 is null {
+			_utf16 = new Utf16Encoding(false);
+		}
 		return _utf16;
 	}
 	public static get utf16BigEndian
 	{
-		if _utf16BE is null: _utf16BE = new Utf16Encoding(true);
+		if _utf16BE is null {
+			_utf16BE = new Utf16Encoding(true);
+		}
 		return _utf16BE;
 	}
 }
