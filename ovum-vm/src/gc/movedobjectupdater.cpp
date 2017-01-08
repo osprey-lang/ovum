@@ -84,7 +84,7 @@ void MovedObjectUpdater::VisitRootLocalValue(Value *const value)
 			// pointer to the field, which can be read as a Value*.
 			uintptr_t gcoOffset = ~type;
 			GCObject *gco = reinterpret_cast<GCObject*>(
-				reinterpret_cast<char*>(value->v.reference) + gcoOffset
+				reinterpret_cast<char*>(value->v.reference) - gcoOffset
 			);
 			if (gco->IsMoved())
 				value->v.reference = reinterpret_cast<char*>(gco->newAddress) + gcoOffset;
