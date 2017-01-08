@@ -197,11 +197,8 @@ void LiveObjectFinder::VisitRootLocalValue(Value *const value)
 			// In an instance field reference, Value::type stores the
 			// bitwise inverse of the byte offset of the instance field
 			// from the base of the GCObject. Value::v::reference is a
-			// pointer to the field, which can be read as a Value*.
-			uintptr_t gcoOffset = ~type;
-			GCObject *gco = reinterpret_cast<GCObject*>(
-				reinterpret_cast<char*>(value->v.reference) - gcoOffset
-			);
+			// pointer to the GCObject. We only want the GCObject.
+			GCObject *gco = reinterpret_cast<GCObject*>(value->v.reference);
 			if (gco->GetColor() == currentWhite)
 				GrayObject(gco);
 		}

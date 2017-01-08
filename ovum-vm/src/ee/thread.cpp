@@ -1041,7 +1041,7 @@ int Thread::LoadFieldRefLL(Value *inst, Field *field)
 
 	Value fieldRef;
 	fieldRef.type = (Type*)~(field->offset + GCO_SIZE);
-	fieldRef.v.reference = inst->v.instance + field->offset;
+	fieldRef.v.reference = GCObject::FromInst(inst->v.instance);
 	Push(&fieldRef);
 
 	RETURN_SUCCESS;
@@ -1063,7 +1063,7 @@ int Thread::LoadMemberRefLL(Value *inst, String *member)
 	Field *field = static_cast<Field*>(m);
 	Value fieldRef;
 	fieldRef.type = (Type*)~(field->offset + GCO_SIZE);
-	fieldRef.v.reference = inst->v.instance + field->offset;
+	fieldRef.v.reference = GCObject::FromInst(inst->v.instance);
 	Push(&fieldRef);
 
 	RETURN_SUCCESS;
