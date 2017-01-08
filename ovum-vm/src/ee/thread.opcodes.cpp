@@ -1182,13 +1182,14 @@ int Thread::Evaluate()
 				OPC_ARGS(oa::TwoLocals);
 				Value *const source = args->Source(f);
 
-				if ((uintptr_t)source->type == LOCAL_REFERENCE)
+				uintptr_t sourceType = reinterpret_cast<uintptr_t>(source->type);
+				if (sourceType == LOCAL_REFERENCE)
 					*args->Dest(f) = *reinterpret_cast<Value*>(source->v.reference);
-				else if ((uintptr_t)source->type == STATIC_REFERENCE)
+				else if (sourceType == STATIC_REFERENCE)
 					reinterpret_cast<StaticRef*>(source->v.reference)->Read(args->Dest(f));
 				else
 				{
-					uintptr_t offset = ~(uintptr_t)source->type;
+					uintptr_t offset = ~sourceType;
 					GCObject *gco = reinterpret_cast<GCObject*>((char*)source->v.reference - offset);
 					gco->fieldAccessLock.Enter();
 					*args->Dest(f) = *reinterpret_cast<Value*>(source->v.reference);
@@ -1203,13 +1204,14 @@ int Thread::Evaluate()
 				OPC_ARGS(oa::TwoLocals);
 				Value *const source = args->Source(f);
 
-				if ((uintptr_t)source->type == LOCAL_REFERENCE)
+				uintptr_t sourceType = reinterpret_cast<uintptr_t>(source->type);
+				if (sourceType == LOCAL_REFERENCE)
 					*args->Dest(f) = *reinterpret_cast<Value*>(source->v.reference);
-				else if ((uintptr_t)source->type == STATIC_REFERENCE)
+				else if (sourceType == STATIC_REFERENCE)
 					reinterpret_cast<StaticRef*>(source->v.reference)->Read(args->Dest(f));
 				else
 				{
-					uintptr_t offset = ~(uintptr_t)source->type;
+					uintptr_t offset = ~sourceType;
 					GCObject *gco = reinterpret_cast<GCObject*>((char*)source->v.reference - offset);
 					gco->fieldAccessLock.Enter();
 					*args->Dest(f) = *reinterpret_cast<Value*>(source->v.reference);
@@ -1225,13 +1227,14 @@ int Thread::Evaluate()
 				OPC_ARGS(oa::TwoLocals);
 				Value *const dest = args->Dest(f);
 
-				if ((uintptr_t)dest->type == LOCAL_REFERENCE)
+				uintptr_t destType = reinterpret_cast<uintptr_t>(dest->type);
+				if (destType == LOCAL_REFERENCE)
 					*reinterpret_cast<Value*>(dest->v.reference) = *args->Source(f);
-				else if ((uintptr_t)dest->type == STATIC_REFERENCE)
+				else if (destType == STATIC_REFERENCE)
 					reinterpret_cast<StaticRef*>(dest->v.reference)->Write(args->Source(f));
 				else
 				{
-					uint32_t offset = ~(uint32_t)dest->type;
+					uint32_t offset = ~destType;
 					GCObject *gco = reinterpret_cast<GCObject*>((char*)dest->v.reference - offset);
 					gco->fieldAccessLock.Enter();
 					*reinterpret_cast<Value*>(dest->v.reference) = *args->Source(f);
@@ -1246,13 +1249,14 @@ int Thread::Evaluate()
 				OPC_ARGS(oa::TwoLocals);
 				Value *const dest = args->Dest(f);
 
-				if ((uintptr_t)dest->type == LOCAL_REFERENCE)
+				uintptr_t destType = reinterpret_cast<uintptr_t>(dest->type);
+				if (destType == LOCAL_REFERENCE)
 					*reinterpret_cast<Value*>(dest->v.reference) = *args->Source(f);
-				else if ((uintptr_t)dest->type == STATIC_REFERENCE)
+				else if (destType == STATIC_REFERENCE)
 					reinterpret_cast<StaticRef*>(dest->v.reference)->Write(args->Source(f));
 				else
 				{
-					uintptr_t offset = ~(uintptr_t)dest->type;
+					uintptr_t offset = ~destType;
 					GCObject *gco = reinterpret_cast<GCObject*>((char*)dest->v.reference - offset);
 					gco->fieldAccessLock.Enter();
 					*reinterpret_cast<Value*>(dest->v.reference) = *args->Source(f);
