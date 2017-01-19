@@ -174,4 +174,17 @@
 # endif
 #endif // OVUM_ASSERT
 
+// Handle types must be the correct size. Check it statically whenever possible.
+// TODO: Make checks work in C too.
+#if defined(__cplusplus) && defined(OVUM_HANDLES_DEFINED)
+static_assert(sizeof(ThreadHandle) == sizeof(void*), "ThreadHandle: Wrong size");
+static_assert(sizeof(TypeHandle) == sizeof(void*), "TypeHandle: Wrong size");
+static_assert(sizeof(ModuleHandle) == sizeof(void*), "ModuleHandle: Wrong size");
+static_assert(sizeof(MemberHandle) == sizeof(void*), "MemberHandle: Wrong size");
+static_assert(sizeof(MethodHandle) == sizeof(void*), "MethodHandle: Wrong size");
+static_assert(sizeof(OverloadHandle) == sizeof(void*), "OverloadHandle: Wrong size");
+static_assert(sizeof(FieldHandle) == sizeof(void*), "FieldHandle: Wrong size");
+static_assert(sizeof(PropertyHandle) == sizeof(void*), "PropertyHandle: Wrong size");
+#endif
+
 #endif // OVUM__COMPAT_H

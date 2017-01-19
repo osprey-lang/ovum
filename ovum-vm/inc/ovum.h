@@ -94,6 +94,9 @@ typedef void *FieldHandle;
 // Represents a handle to a property.
 typedef void *PropertyHandle;
 
+// NOTE: If you add more handle types, verify their sizes in ovum_compat.h.
+// See that file for details.
+
 #define OVUM_HANDLES_DEFINED
 #endif // OVUM_HANDLES_DEFINED
 
