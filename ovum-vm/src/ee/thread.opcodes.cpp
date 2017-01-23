@@ -305,10 +305,12 @@ int Thread::Evaluate()
 		TARGET(OPI_LIST_L)
 			{
 				OPC_ARGS(oa::LocalAndValue<int32_t>);
-				Value result; // Can't put it in dest until it's fully initialized
-				CHK(GetGC()->Alloc(this, vm->types.List, sizeof(ListInst), &result));
-				CHK(vm->functions.initListInstance(this, result.v.list, args->value));
-				*args->Local(f) = result;
+				// We unfortunately have to put the list in the destination local
+				// during initialization, otherwise the GC won't be able to reach
+				// it if initListInstance should happen to trigger a cycle.
+				Value *result = args->Local(f);
+				CHK(GetGC()->Alloc(this, vm->types.List, sizeof(ListInst), result));
+				CHK(vm->functions.initListInstance(this, result->v.list, args->value));
 
 				ip += oa::LOCAL_AND_VALUE<int32_t>::SIZE;
 			}
@@ -316,13 +318,15 @@ int Thread::Evaluate()
 		TARGET(OPI_LIST_S)
 			{
 				OPC_ARGS(oa::LocalAndValue<int32_t>);
-				Value result; // Can't put it in dest until it's fully initialized
-				CHK(GetGC()->Alloc(this, vm->types.List, sizeof(ListInst), &result));
-				CHK(vm->functions.initListInstance(this, result.v.list, args->value));
-				*args->Local(f) = result;
+				// We unfortunately have to put the list in the destination local
+				// during initialization, otherwise the GC won't be able to reach
+				// it if initListInstance should happen to trigger a cycle.
+				Value *result = args->Local(f);
+				CHK(GetGC()->Alloc(this, vm->types.List, sizeof(ListInst), result));
+				f->stackCount++; // make GC-reachable
+				CHK(vm->functions.initListInstance(this, result->v.list, args->value));
 
 				ip += oa::LOCAL_AND_VALUE<int32_t>::SIZE;
-				f->stackCount++;
 			}
 			NEXT_INSTR();
 
