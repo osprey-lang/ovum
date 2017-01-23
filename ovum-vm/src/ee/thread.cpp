@@ -1110,21 +1110,18 @@ int Thread::ConcatLL(Value *args, Value *result)
 {
 	// Note: result may overlap args, so we cannot assign to it
 	//       until we are absolutely 100% done.
-
 	int status__;
-	Value *a = args;
-	Value *b = args + 1;
 
 	// string concatenation
-	CHECKED(StringFromValue(this, a));
-	CHECKED(StringFromValue(this, b));
+	CHECKED(StringFromValue(this, args + 0));
+	CHECKED(StringFromValue(this, args + 1));
 
 	String *str;
-	CHECKED_MEM(str = String_Concat(this, a->v.string, b->v.string));
+	CHECKED_MEM(str = String_Concat(this, args[0].v.string, args[1].v.string));
 	SetString_(vm, result, str);
 
 	currentFrame->stackCount -= 2;
-	RETURN_SUCCESS;
+	status__ = OVUM_SUCCESS;
 
 retStatus__:
 	return status__;
