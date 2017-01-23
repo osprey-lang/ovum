@@ -103,7 +103,7 @@ void ObjectGraphWalker::VisitNativeFields(ObjectGraphVisitor &visitor, Type *typ
 			}
 			break;
 		case NativeFieldType::GC_ARRAY:
-			// The GC_ARRAY field contains a pointer to void*, which is the instance
+			// The GC_ARRAY field contains a pointer to void, which is the instance
 			// base of a GCObject. Since fieldPtr is void*, we can't dereference it
 			// to get a void*, so we cast it to void** first and dereference that.
 			// Remember that fieldPtr is a pointer to the field value, and not the
@@ -115,6 +115,8 @@ void ObjectGraphWalker::VisitNativeFields(ObjectGraphVisitor &visitor, Type *typ
 					visitor.VisitFieldArray(reinterpret_cast<void**>(fieldPtr));
 			}
 			break;
+		default:
+			OVUM_UNREACHABLE();
 		}
 	}
 }
