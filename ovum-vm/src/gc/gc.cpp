@@ -868,7 +868,6 @@ OVUM_API uint32_t GC_GetObjectHashCode(Value *value)
 
 OVUM_API void GC_Pin(Value *value)
 {
-	using namespace std;
 	if (value->type != nullptr && !value->type->IsPrimitive())
 	{
 		ovum::GCObject *gco = ovum::GCObject::FromValue(value);
@@ -883,7 +882,6 @@ OVUM_API void GC_Pin(Value *value)
 
 OVUM_API void GC_PinInst(void *value)
 {
-	using namespace std;
 	if (value)
 	{
 		ovum::GCObject *gco = ovum::GCObject::FromInst(value);
@@ -898,7 +896,6 @@ OVUM_API void GC_PinInst(void *value)
 
 OVUM_API void GC_Unpin(Value *value)
 {
-	using namespace std;
 	if (value->type != nullptr && !value->type->IsPrimitive())
 	{
 		ovum::GCObject *gco = ovum::GCObject::FromValue(value);
@@ -914,7 +911,6 @@ OVUM_API void GC_Unpin(Value *value)
 
 OVUM_API void GC_UnpinInst(void *value)
 {
-	using namespace std;
 	if (value)
 	{
 		ovum::GCObject *gco = ovum::GCObject::FromInst(value);
