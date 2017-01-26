@@ -93,7 +93,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// mvloc: LocalOffset source, LocalOffset destination
+		// mvloc
 		TARGET(OPI_MVLOC_LL) // local to local
 			{
 				OPC_ARGS(oa::TwoLocals);
@@ -125,7 +125,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// ldnull: LocalOffset dest
+		// ldnull
 		TARGET(OPI_LDNULL_L)
 			{
 				OPC_ARGS(oa::OneLocal);
@@ -142,7 +142,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// ldfalse: LocalOffset dest
+		// ldfalse
 		TARGET(OPI_LDFALSE_L)
 			{
 				OPC_ARGS(oa::OneLocal);
@@ -159,7 +159,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// ldtrue: LocalOffset dest
+		// ldtrue
 		TARGET(OPI_LDTRUE_L)
 			{
 				OPC_ARGS(oa::OneLocal);
@@ -176,7 +176,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// ldc.i: LocalOffset dest, int64_t value
+		// ldc.i
 		TARGET(OPI_LDC_I_L)
 			{
 				OPC_ARGS(oa::LocalAndValue<int64_t>);
@@ -193,7 +193,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// ldc.u: LocalOffset dest, uint64_t value
+		// ldc.u
 		TARGET(OPI_LDC_U_L)
 			{
 				OPC_ARGS(oa::LocalAndValue<uint64_t>);
@@ -210,7 +210,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// ldc.r: LocalOffset dest, double value
+		// ldc.r
 		TARGET(OPI_LDC_R_L)
 			{
 				OPC_ARGS(oa::LocalAndValue<double>);
@@ -227,7 +227,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// ldstr: LocalOffset dest, String *value
+		// ldstr
 		TARGET(OPI_LDSTR_L)
 			{
 				OPC_ARGS(oa::LocalAndValue<String*>);
@@ -244,7 +244,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// ldargc: LocalOffset dest
+		// ldargc
 		TARGET(OPI_LDARGC_L)
 			{
 				OPC_ARGS(oa::OneLocal);
@@ -261,7 +261,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// ldenum: LocalOffset dest, Type *type, int64_t value
+		// ldenum
 		TARGET(OPI_LDENUM_L)
 			{
 				OPC_ARGS(oa::LoadEnum);
@@ -282,7 +282,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// newobj: LocalOffset args, LocalOffset dest, ovlocals_t argc, Type *type
+		// newobj
 		TARGET(OPI_NEWOBJ_L)
 			{
 				OPC_ARGS(oa::NewObject);
@@ -301,7 +301,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// list: LocalOffset dest, int32_t capacity
+		// list
 		TARGET(OPI_LIST_L)
 			{
 				OPC_ARGS(oa::LocalAndValue<int32_t>);
@@ -330,7 +330,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// hash: LocalOffset dest, int32_t capacity
+		// hash
 		TARGET(OPI_HASH_L)
 			{
 				OPC_ARGS(oa::LocalAndValue<int32_t>);
@@ -349,7 +349,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// ldfld: LocalOffset instance, LocalOffset dest, Field *field
+		// ldfld
 		TARGET(OPI_LDFLD_L)
 			{
 				OPC_ARGS(oa::TwoLocalsAndValue<Field*>);
@@ -370,7 +370,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// ldsfld: LocalOffset dest, Field *field
+		// ldsfld
 		TARGET(OPI_LDSFLD_L)
 			{
 				OPC_ARGS(oa::LocalAndValue<Field*>);
@@ -387,7 +387,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// ldmem: LocalOffset instance, LocalOffset dest, String *name
+		// ldmem
 		TARGET(OPI_LDMEM_L)
 			{
 				OPC_ARGS(oa::TwoLocalsAndValue<String*>);
@@ -406,7 +406,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// lditer: LocalOffset instance, LocalOffest dest
+		// lditer
 		TARGET(OPI_LDITER_L)
 			{
 				OPC_ARGS(oa::TwoLocals);
@@ -425,7 +425,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// ldtype: LocalOffset instance, LocalOffset dest
+		// ldtype
 		TARGET(OPI_LDTYPE_L)
 			{
 				OPC_ARGS(oa::TwoLocals);
@@ -454,8 +454,8 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// ldidx: LocalOffset args, LocalOffset dest, ovlocals_t argc
-		// Note: argc does not include the instance
+		// ldidx
+		// Note: arg count does not include the instance
 		TARGET(OPI_LDIDX_L)
 			{
 				OPC_ARGS(oa::TwoLocalsAndValue<ovlocals_t>);
@@ -478,7 +478,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// ldsfn: LocalOffset dest, Method *method
+		// ldsfn
 		TARGET(OPI_LDSFN_L)
 			{
 				OPC_ARGS(oa::LocalAndValue<Method*>);
@@ -501,7 +501,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// ldtypetkn: LocalOffset dest, Type *type
+		// ldtypetkn
 		TARGET(OPI_LDTYPETKN_L)
 			{
 				OPC_ARGS(oa::LocalAndValue<Type*>);
@@ -518,7 +518,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// call: LocalOffset args, LocalOffset dest, ovlocals_t argc
+		// call
 		TARGET(OPI_CALL_L)
 			{
 				OPC_ARGS(oa::Call);
@@ -537,7 +537,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// scall: LocalOffset args, LocalOffset dest, ovlocals_t argc, MethodOverload *method
+		// scall
 		TARGET(OPI_SCALL_L)
 			{
 				OPC_ARGS(oa::StaticCall);
@@ -554,7 +554,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// apply: LocalOffset args, LocalOffset dest
+		// apply
 		TARGET(OPI_APPLY_L)
 			{
 				OPC_ARGS(oa::TwoLocals);
@@ -573,7 +573,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// sapply: LocalOffset args, LocalOffset dest, Method *method
+		// sapply
 		TARGET(OPI_SAPPLY_L)
 			{
 				OPC_ARGS(oa::TwoLocalsAndValue<Method*>);
@@ -592,7 +592,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// br: int32_t offset
+		// br
 		TARGET(OPI_BR)
 			{
 				OPC_ARGS(oa::Branch);
@@ -601,7 +601,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// leave: int32_t offset
+		// leave
 		TARGET(OPI_LEAVE)
 			{
 				OPC_ARGS(oa::Branch);
@@ -611,7 +611,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// brnull: LocalOffset value, int32_t offset
+		// brnull
 		TARGET(OPI_BRNULL_L)
 			{
 				OPC_ARGS(oa::ConditionalBranch);
@@ -630,7 +630,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// brinst: LocalOffset value, int32_t offset
+		// brinst
 		TARGET(OPI_BRINST_L)
 			{
 				OPC_ARGS(oa::ConditionalBranch);
@@ -649,7 +649,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// brfalse: LocalOffset value, int32_t offset
+		// brfalse
 		TARGET(OPI_BRFALSE_L)
 			{
 				OPC_ARGS(oa::ConditionalBranch);
@@ -668,7 +668,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// brtrue: LocalOffset value, int32_t offset
+		// brtrue
 		TARGET(OPI_BRTRUE_L)
 			{
 				OPC_ARGS(oa::ConditionalBranch);
@@ -687,7 +687,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// brtype: LocalOffset value, int32_t offset, Type *type
+		// brtype
 		TARGET(OPI_BRTYPE_L)
 			{
 				OPC_ARGS(oa::BranchIfType);
@@ -706,7 +706,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// switch: LocalOffset value, uint32_t count, int32_t offsets[count]
+		// switch
 		TARGET(OPI_SWITCH_L)
 			{
 				OPC_ARGS(oa::Switch);
@@ -735,7 +735,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// brref: LocalOffset (a, b), int32_t offset
+		// brref
 		TARGET(OPI_BRREF)
 			{
 				OPC_ARGS(oa::ConditionalBranch);
@@ -749,7 +749,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// brnref: LocalOffset (a, b), int32_t offset
+		// brnref
 		TARGET(OPI_BRNREF)
 			{
 				OPC_ARGS(oa::ConditionalBranch);
@@ -763,7 +763,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// operator: LocalOffset args, LocalOffset dest, Operator op
+		// operator
 		TARGET(OPI_OPERATOR_L)
 			{
 				OPC_ARGS(oa::TwoLocalsAndValue<Operator>);
@@ -782,7 +782,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// eq: LocalOffset args, LocalOffset dest
+		// eq
 		TARGET(OPI_EQ_L)
 			{
 				OPC_ARGS(oa::TwoLocals);
@@ -805,7 +805,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// cmp: LocalOffset args, LocalOffset dest
+		// cmp
 		TARGET(OPI_CMP_L)
 			{
 				OPC_ARGS(oa::TwoLocals);
@@ -824,7 +824,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// lt: LocalOffset args, LocalOffset dest
+		// lt
 		TARGET(OPI_LT_L)
 			{
 				OPC_ARGS(oa::TwoLocals);
@@ -847,7 +847,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// gt: LocalOffset args, LocalOffset dest
+		// gt
 		TARGET(OPI_GT_L)
 			{
 				OPC_ARGS(oa::TwoLocals);
@@ -870,7 +870,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// lte: LocalOffset args, LocalOffset dest
+		// lte
 		TARGET(OPI_LTE_L)
 			{
 				OPC_ARGS(oa::TwoLocals);
@@ -893,7 +893,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// gte: LocalOffset args, LocalOffset dest
+		// gte
 		TARGET(OPI_GTE_L)
 			{
 				OPC_ARGS(oa::TwoLocals);
@@ -916,7 +916,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// concat: LocalOffset args, LocalOffset dest
+		// concat
 		TARGET(OPI_CONCAT_L)
 			{
 				OPC_ARGS(oa::TwoLocals);
@@ -935,7 +935,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// callmem: LocalOffset args, LocalOffset dest, ovlocals_t argc, String *member
+		// callmem
 		TARGET(OPI_CALLMEM_L)
 			{
 				OPC_ARGS(oa::CallMember);
@@ -952,7 +952,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// stsfld: LocalOffset value, Field *field
+		// stsfld
 		TARGET(OPI_STSFLD_L)
 			{
 				OPC_ARGS(oa::LocalAndValue<Field*>);
@@ -969,7 +969,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// stfld: LocalOffset (instance, value), Field *field
+		// stfld
 		TARGET(OPI_STFLD)
 			{
 				OPC_ARGS(oa::LocalAndValue<Field*>);
@@ -979,7 +979,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// stmem: LocalOffset (instance, value), String *name
+		// stmem
 		TARGET(OPI_STMEM)
 			{
 				OPC_ARGS(oa::LocalAndValue<String*>);
@@ -990,8 +990,8 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// stidx: LocalOffset args, ovlocals_t argc
-		// Note: argCount does not include the instance, or the value being assigned
+		// stidx
+		// Note: arg count does not include the instance, or the value being assigned
 		TARGET(OPI_STIDX)
 			{
 				OPC_ARGS(oa::LocalAndValue<ovlocals_t>);
@@ -1021,7 +1021,7 @@ int Thread::Evaluate()
 			retCode = OVUM_SUCCESS;
 			goto exitMethod;
 
-		// ldfldfast: LocalOffset instance, LocalOffset dest, Field *field
+		// ldfldfast
 		// This is identical to ldfld except that it does not perform a type check.
 		TARGET(OPI_LDFLDFAST_L)
 			{
@@ -1039,7 +1039,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// stfldfast: LocalOffset (instance, value), Field *field
+		// stfldfast
 		// This is identical to stfld except that it does not perform a type check.
 		TARGET(OPI_STFLDFAST)
 			{
@@ -1050,7 +1050,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// breq: LocalOffset args, int32_t offset
+		// breq
 		TARGET(OPI_BREQ)
 			{
 				OPC_ARGS(oa::ConditionalBranch);
@@ -1062,7 +1062,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// brneq: LocalOffset args, int32_t offset
+		// brneq
 		TARGET(OPI_BRNEQ)
 			{
 				OPC_ARGS(oa::ConditionalBranch);
@@ -1074,7 +1074,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// brlt: LocalOffset args, int32_t offset
+		// brlt
 		TARGET(OPI_BRLT)
 			{
 				OPC_ARGS(oa::ConditionalBranch);
@@ -1086,7 +1086,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// brgt: LocalOffset args, int32_t offset
+		// brgt
 		TARGET(OPI_BRGT)
 			{
 				OPC_ARGS(oa::ConditionalBranch);
@@ -1098,7 +1098,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// brlte: LocalOffset args, int32_t offset
+		// brlte
 		TARGET(OPI_BRLTE)
 			{
 				OPC_ARGS(oa::ConditionalBranch);
@@ -1110,7 +1110,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// brgte: LocalOffset args, int32_t offset
+		// brgte
 		TARGET(OPI_BRGTE)
 			{
 				OPC_ARGS(oa::ConditionalBranch);
@@ -1122,7 +1122,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// ldlocref: LocalOffset local
+		// ldlocref
 		TARGET(OPI_LDLOCREF)
 			{
 				OPC_ARGS(oa::OneLocal);
@@ -1133,7 +1133,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// ldmemref: LocalOffset inst, String *member
+		// ldmemref
 		TARGET(OPI_LDMEMREF_L) // Instance in local
 			{
 				OPC_ARGS(oa::LocalAndValue<String*>);
@@ -1150,7 +1150,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// ldfldref: LocalOffset inst, Field *field
+		// ldfldref
 		TARGET(OPI_LDFLDREF_L) // Instance in local
 			{
 				OPC_ARGS(oa::LocalAndValue<Field*>);
@@ -1167,7 +1167,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// ldsfldref: Field *field
+		// ldsfldref
 		TARGET(OPI_LDSFLDREF)
 			{
 				OPC_ARGS(oa::SingleValue<Field*>);
@@ -1178,7 +1178,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// mvloc_rr: LocalOffset source, LocalOffset dest
+		// mvloc_rr
 		// Note: these are all subtly different in implementation. Do not attempt to abstract
 		// them into a single macro without making note of the differences.
 		TARGET(OPI_MVLOC_RL) // Reference -> local
@@ -1308,7 +1308,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// callr: LocalOffset args, LocalOffset output, ovlocals_t argc, uint32_t refSignature
+		// callr
 		TARGET(OPI_CALLR_L)
 			{
 				OPC_ARGS(oa::CallRef);
@@ -1327,7 +1327,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// callmemr: LocalOffset args, LocalOffset dest, ovlocals_t argc, uint32_t refSignature, String *member
+		// callmemr
 		TARGET(OPI_CALLMEMR_L)
 			{
 				OPC_ARGS(oa::CallMemberRef);
@@ -1344,7 +1344,7 @@ int Thread::Evaluate()
 			}
 			NEXT_INSTR();
 
-		// unaryop: LocalOffset args, LocalOffset dest, Operator op
+		// unaryop
 		TARGET(OPI_UNARYOP_L)
 			{
 				OPC_ARGS(oa::TwoLocalsAndValue<Operator>);
