@@ -21,6 +21,11 @@ struct MutableString
 	uint32_t hashCode;
 	StringFlags flags;
 	ovchar_t firstChar;
+
+	inline String *AsString()
+	{
+		return reinterpret_cast<String*>(this);
+	}
 };
 
 class GC

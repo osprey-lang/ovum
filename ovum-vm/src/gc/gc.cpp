@@ -381,7 +381,7 @@ String *GC::ConstructString(Thread *const thread, int32_t length, const ovchar_t
 		// Note: this does NOT include the terminating \0, which is fine.
 		CopyMemoryT(&str->firstChar, value, length);
 
-	return reinterpret_cast<String*>(str);
+	return str->AsString();
 }
 
 String *GC::ConvertString(Thread *const thread, const char *string)
@@ -429,7 +429,7 @@ String *GC::ConstructModuleString(Thread *const thread, int32_t length, const ov
 	str->length = length;
 	CopyMemoryT(&str->firstChar, value, length);
 
-	return reinterpret_cast<String*>(str);
+	return str->AsString();
 }
 
 String *GC::GetInternedString(Thread *const thread, String *value)
