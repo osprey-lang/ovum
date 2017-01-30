@@ -6,14 +6,25 @@
 namespace ovum
 {
 
-int32_t MethodOverload::GetLocalOffset(ovlocals_t local) const
+LocalOffset MethodOverload::GetArgumentOffset(ovlocals_t arg) const
 {
-	return (int32_t)(STACK_FRAME_SIZE + local * sizeof(Value));
+	return LocalOffset(static_cast<int32_t>(
+		(arg - GetEffectiveParamCount()) * sizeof(Value)
+	));
 }
 
-int32_t MethodOverload::GetStackOffset(ovlocals_t stackSlot) const
+LocalOffset MethodOverload::GetLocalOffset(ovlocals_t local) const
 {
-	return (int32_t)(STACK_FRAME_SIZE + (locals + stackSlot) * sizeof(Value));
+	return LocalOffset(static_cast<int32_t>(
+		STACK_FRAME_SIZE + local * sizeof(Value)
+	));
+}
+
+LocalOffset MethodOverload::GetStackOffset(ovlocals_t stackSlot) const
+{
+	return LocalOffset(static_cast<int32_t>(
+		STACK_FRAME_SIZE + (locals + stackSlot) * sizeof(Value)
+	));
 }
 
 RefSignaturePool *MethodOverload::GetRefSignaturePool() const
@@ -57,7 +68,7 @@ int MethodOverload::VerifyRefSignature(uint32_t signature, ovlocals_t argCount) 
 	}
 
 	// If the method is variadic, all remaining arguments will be packed into a list.
-	// These are not allowed to be passed by referenced.
+	// These are not allowed to be passed by reference.
 	if (this->IsVariadic())
 	{
 		while (argIndex <= argCount) // numbering from 1

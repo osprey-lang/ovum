@@ -2,6 +2,7 @@
 
 #include "../vm.h"
 #include "member.h"
+#include "../ee/thread.opcodes.h"
 
 namespace ovum
 {
@@ -258,7 +259,7 @@ public:
 				argc <= paramCount;
 	}
 
-	inline int InstanceOffset() const
+	inline ovlocals_t InstanceOffset() const
 	{
 		return instanceCount;
 	}
@@ -269,14 +270,11 @@ public:
 		return paramCount + instanceCount;
 	}
 
-	inline int32_t GetArgumentOffset(ovlocals_t arg) const
-	{
-		return (int32_t)(arg - GetEffectiveParamCount()) * sizeof(Value);
-	}
+	LocalOffset GetArgumentOffset(ovlocals_t arg) const;
 
-	int32_t GetLocalOffset(ovlocals_t local) const;
+	LocalOffset GetLocalOffset(ovlocals_t local) const;
 
-	int32_t GetStackOffset(ovlocals_t stackSlot) const;
+	LocalOffset GetStackOffset(ovlocals_t stackSlot) const;
 
 	RefSignaturePool *GetRefSignaturePool() const;
 

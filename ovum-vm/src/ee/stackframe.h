@@ -50,11 +50,13 @@ public:
 		OVUM_ASSERT(n <= stackCount);
 		return evalStack[stackCount - n - 1];
 	}
+
 	inline Type *PeekType(ovlocals_t n = 0) const
 	{
 		OVUM_ASSERT(n <= stackCount);
 		return evalStack[stackCount - n - 1].type;
 	}
+
 	inline String *PeekString(ovlocals_t n = 0) const
 	{
 		OVUM_ASSERT(n <= stackCount);
@@ -73,14 +75,24 @@ public:
 	}
 
 	// The base of the locals array
-	Value *Locals() const;
+	Value *const Locals();
+	const Value *const Locals() const;
 };
 
 static const size_t STACK_FRAME_SIZE = OVUM_ALIGN_TO(sizeof(::ovum::StackFrame), 8);
 
-inline Value *StackFrame::Locals() const
+inline Value *const StackFrame::Locals()
 {
-	return reinterpret_cast<Value*>((char*)this + STACK_FRAME_SIZE);
+	return reinterpret_cast<Value*>(
+		reinterpret_cast<uintptr_t>(this) + STACK_FRAME_SIZE
+	);
+}
+
+inline const Value *const StackFrame::Locals() const
+{
+	return reinterpret_cast<const Value*>(
+		reinterpret_cast<uintptr_t>(this) + STACK_FRAME_SIZE
+	);
 }
 
 } // namespace ovum

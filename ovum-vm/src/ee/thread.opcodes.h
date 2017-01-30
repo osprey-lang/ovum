@@ -378,29 +378,47 @@ enum IntermediateOpcode
 	OPI_UNARYOP_S   = 0x81, // Store result on stack
 };
 
-// Represents a local offset, that is, an offset that is relative
-// to the base of the stack frame. This is negative for arguments.
-// Use the overloaded + operator together with a StackFrame to get
-// the local that it actually refers to.
+// Represents a local offset, that is, an offset that is relative to
+// the base of a stack frame. The offset is negative for arguments,
+// which precede the stack frame.
+//
+// A LocalOffset always resolves to a Value*; there are no other kinds
+// of local values.
+//
+// Use the method Resolve() together with a StackFrame to obtain the
+// local value that it actually refers to.
 class LocalOffset
 {
-private:
-	int32_t offset;
-
 public:
-	// There is a variety of code that depends on this NOT being an explicit constructor.
-	// Don't mark it explicit unless you also change those bits of code.
-	inline LocalOffset(const int32_t offset) : offset(offset) { }
-
-	inline int32_t GetOffset() const { return offset; }
-
-	inline Value *const operator+(const StackFrame *const frame) const
+	inline explicit LocalOffset(int32_t offset) : offset(offset)
 	{
-		// The local offset is never supposed to point into
-		// the stack frame itself.
+		// The local offset is never supposed to point into the stack
+		// frame itself.
 		OVUM_ASSERT(offset < 0 || offset >= STACK_FRAME_SIZE);
-		return (Value*)((char*)frame + offset);
+		// The offset must also be divisible by the size of a Value.
+		OVUM_ASSERT(offset % sizeof(Value) == 0);
 	}
+
+	inline int32_t GetOffset() const
+	{
+		return offset;
+	}
+
+	inline Value *const Resolve(StackFrame *const frame) const
+	{
+		return reinterpret_cast<Value*>(
+			reinterpret_cast<uintptr_t>(frame) + offset
+		);
+	}
+
+private:
+	// Under most circumstances, a pointer offset should be stored as a
+	// ptrdiff_t. In this case we know it's impossible for a stack frame
+	// to have more than 65k arguments, locals or evaluation stack items,
+	// so an int32_t will never be able to overflow.
+	// Therefore, in the interest of keeping intermediate instructions
+	// relatively small, a local offset is permitted to be an int32_t.
+	int32_t offset;
 };
 
 namespace opcode_args
@@ -411,9 +429,9 @@ namespace opcode_args
 	{
 		LocalOffset local;
 
-		inline Value *const Local(const StackFrame *const frame) const
+		inline Value *const Local(StackFrame *const frame) const
 		{
-			return local + frame;
+			return local.Resolve(frame);
 		}
 	};
 	static const size_t ONE_LOCAL_SIZE = OVUM_ALIGN_TO(sizeof(OneLocal), ALIGNMENT);
@@ -425,13 +443,14 @@ namespace opcode_args
 		LocalOffset source;
 		LocalOffset dest;
 
-		inline Value *const Source(const StackFrame *const frame) const
+		inline Value *const Source(StackFrame *const frame) const
 		{
-			return source + frame;
+			return source.Resolve(frame);
 		}
-		inline Value *const Dest(const StackFrame *const frame) const
+
+		inline Value *const Dest(StackFrame *const frame) const
 		{
-			return dest + frame;
+			return dest.Resolve(frame);
 		}
 	};
 	static const size_t TWO_LOCALS_SIZE = OVUM_ALIGN_TO(sizeof(TwoLocals), ALIGNMENT);
@@ -442,9 +461,9 @@ namespace opcode_args
 		LocalOffset local;
 		T value;
 
-		inline Value *const Local(const StackFrame *const frame) const
+		inline Value *const Local(StackFrame *const frame) const
 		{
-			return local + frame;
+			return local.Resolve(frame);
 		}
 	};
 	template<typename T>
@@ -462,13 +481,14 @@ namespace opcode_args
 		LocalOffset dest;
 		T value;
 		
-		inline Value *const Source(const StackFrame *const frame) const
+		inline Value *const Source(StackFrame *const frame) const
 		{
-			return source + frame;
+			return source.Resolve(frame);
 		}
-		inline Value *const Dest(const StackFrame *const frame) const
+
+		inline Value *const Dest(StackFrame *const frame) const
 		{
-			return dest + frame;
+			return dest.Resolve(frame);
 		}
 	};
 	template<typename T>
@@ -483,9 +503,9 @@ namespace opcode_args
 		Type *type;
 		int64_t value;
 
-		inline Value *const Dest(const StackFrame *const frame) const
+		inline Value *const Dest(StackFrame *const frame) const
 		{
-			return dest + frame;
+			return dest.Resolve(frame);
 		}
 	};
 	static const size_t LOAD_ENUM_SIZE = OVUM_ALIGN_TO(sizeof(LoadEnum), ALIGNMENT);
@@ -497,13 +517,14 @@ namespace opcode_args
 		ovlocals_t argc;
 		Type *type;
 		
-		inline Value *const Args(const StackFrame *const frame) const
+		inline Value *const Args(StackFrame *const frame) const
 		{
-			return args + frame;
+			return args.Resolve(frame);
 		}
-		inline Value *const Dest(const StackFrame *const frame) const
+
+		inline Value *const Dest(StackFrame *const frame) const
 		{
-			return dest + frame;
+			return dest.Resolve(frame);
 		}
 	};
 	static const size_t NEW_OBJECT_SIZE = OVUM_ALIGN_TO(sizeof(NewObject), ALIGNMENT);
@@ -514,13 +535,14 @@ namespace opcode_args
 		LocalOffset dest;
 		ovlocals_t argc;
 
-		inline Value *const Args(const StackFrame *const frame) const
+		inline Value *const Args(StackFrame *const frame) const
 		{
-			return args + frame;
+			return args.Resolve(frame);
 		}
-		inline Value *const Dest(const StackFrame *const frame) const
+
+		inline Value *const Dest(StackFrame *const frame) const
 		{
-			return dest + frame;
+			return dest.Resolve(frame);
 		}
 	};
 	static const size_t CALL_SIZE = OVUM_ALIGN_TO(sizeof(Call), ALIGNMENT);
@@ -532,13 +554,14 @@ namespace opcode_args
 		ovlocals_t argc;
 		MethodOverload *method;
 		
-		inline Value *const Args(const StackFrame *const frame) const
+		inline Value *const Args(StackFrame *const frame) const
 		{
-			return args + frame;
+			return args.Resolve(frame);
 		}
-		inline Value *const Dest(const StackFrame *const frame) const
+
+		inline Value *const Dest(StackFrame *const frame) const
 		{
-			return dest + frame;
+			return dest.Resolve(frame);
 		}
 	};
 	static const size_t STATIC_CALL_SIZE = OVUM_ALIGN_TO(sizeof(StaticCall), ALIGNMENT);
@@ -550,13 +573,14 @@ namespace opcode_args
 		ovlocals_t argc;
 		String *member;
 
-		inline Value *const Args(const StackFrame *const frame) const
+		inline Value *const Args(StackFrame *const frame) const
 		{
-			return args + frame;
+			return args.Resolve(frame);
 		}
-		inline Value *const Dest(const StackFrame *const frame) const
+
+		inline Value *const Dest(StackFrame *const frame) const
 		{
-			return dest + frame;
+			return dest.Resolve(frame);
 		}
 	};
 	static const size_t CALL_MEMBER_SIZE = OVUM_ALIGN_TO(sizeof(CallMember), ALIGNMENT);
@@ -568,13 +592,14 @@ namespace opcode_args
 		ovlocals_t argc;
 		uint32_t refSignature;
 		
-		inline Value *const Args(const StackFrame *const frame) const
+		inline Value *const Args(StackFrame *const frame) const
 		{
-			return args + frame;
+			return args.Resolve(frame);
 		}
-		inline Value *const Dest(const StackFrame *const frame) const
+
+		inline Value *const Dest(StackFrame *const frame) const
 		{
-			return dest + frame;
+			return dest.Resolve(frame);
 		}
 	};
 	static const size_t CALL_REF_SIZE = OVUM_ALIGN_TO(sizeof(CallRef), ALIGNMENT);
@@ -587,13 +612,14 @@ namespace opcode_args
 		uint32_t refSignature;
 		String *member;
 		
-		inline Value *const Args(const StackFrame *const frame) const
+		inline Value *const Args(StackFrame *const frame) const
 		{
-			return args + frame;
+			return args.Resolve(frame);
 		}
-		inline Value *const Dest(const StackFrame *const frame) const
+
+		inline Value *const Dest(StackFrame *const frame) const
 		{
-			return dest + frame;
+			return dest.Resolve(frame);
 		}
 	};
 	static const size_t CALL_MEMBER_REF_SIZE = OVUM_ALIGN_TO(sizeof(CallMemberRef), ALIGNMENT);
@@ -609,9 +635,9 @@ namespace opcode_args
 		LocalOffset value;
 		int32_t offset;
 
-		inline Value *const Value(const StackFrame *const frame) const
+		inline Value *const Value(StackFrame *const frame) const
 		{
-			return value + frame;
+			return value.Resolve(frame);
 		}
 	};
 	static const size_t CONDITIONAL_BRANCH_SIZE = OVUM_ALIGN_TO(sizeof(ConditionalBranch), ALIGNMENT);
@@ -622,9 +648,9 @@ namespace opcode_args
 		int32_t offset;
 		Type *type;
 
-		inline Value *const Value(const StackFrame *const frame) const
+		inline Value *const Value(StackFrame *const frame) const
 		{
-			return value + frame;
+			return value.Resolve(frame);
 		}
 	};
 	static const size_t BRANCH_IF_TYPE_SIZE = OVUM_ALIGN_TO(sizeof(BranchIfType), ALIGNMENT);
@@ -635,9 +661,9 @@ namespace opcode_args
 		uint32_t count;
 		int32_t firstOffset;
 
-		inline Value *const Value(const StackFrame *const frame) const
+		inline Value *const Value(StackFrame *const frame) const
 		{
-			return value + frame;
+			return value.Resolve(frame);
 		}
 	};
 	inline static const size_t SWITCH_SIZE(const uint32_t count)
