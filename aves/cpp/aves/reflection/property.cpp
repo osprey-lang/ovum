@@ -8,8 +8,7 @@ AVES_API int OVUM_CDECL aves_reflection_Property_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(PropertyInst));
 
-	int r;
-	r = Type_AddNativeField(type, offsetof(PropertyInst,fullName), NativeFieldType::STRING);
+	int r = Type_AddNativeField(type, offsetof(PropertyInst,fullName), NativeFieldType::STRING);
 	if (r != OVUM_SUCCESS)
 		return r;
 	RETURN_SUCCESS;

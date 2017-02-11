@@ -10,7 +10,7 @@ inline const bool IsHashed(const String *const str)
 	return (str->flags & StringFlags::HASHED) != StringFlags::NONE;
 }
 
-inline int32_t String_GetHashCode(int32_t length, const ovchar_t *s)
+inline int32_t String_GetHashCode(size_t length, const ovchar_t *s)
 {
 	// FNV-1a
 	// Note that this operates on a BYTE basis, not character
@@ -41,7 +41,7 @@ OVUM_API int32_t String_GetHashCode(String *str)
 	return str->hashCode;
 }
 
-OVUM_API int32_t String_GetHashCodeSubstr(const String *str, int32_t index, int32_t count)
+OVUM_API int32_t String_GetHashCodeSubstr(const String *str, size_t index, size_t count)
 {
 	return String_GetHashCode(count, &str->firstChar + index);
 }
@@ -108,7 +108,7 @@ OVUM_API bool String_EqualsIgnoreCase(const String *a, const String *b)
 
 	// It doesn't matter which string we take the length of;
 	// they're guaranteed to be the same here anyway.
-	int32_t length = a->length;
+	size_t length = a->length;
 
 	const ovchar_t *ap = &a->firstChar;
 	const ovchar_t *bp = &b->firstChar;
@@ -154,7 +154,7 @@ OVUM_API bool String_EqualsIgnoreCase(const String *a, const String *b)
 	return length <= 0;
 }
 
-OVUM_API bool String_SubstringEquals(const String *str, int32_t startIndex, const String *part)
+OVUM_API bool String_SubstringEquals(const String *str, size_t startIndex, const String *part)
 {
 	OVUM_ASSERT(str != nullptr);
 	if (startIndex >= str->length)
@@ -166,7 +166,7 @@ OVUM_API bool String_SubstringEquals(const String *str, int32_t startIndex, cons
 
 	// (The rest is basically a slightly modified copy of String_Equals)
 
-	int32_t length = part->length;
+	size_t length = part->length;
 
 	const ovchar_t *ap = &str->firstChar + startIndex;
 	const ovchar_t *bp = &part->firstChar;
@@ -203,7 +203,7 @@ bool IsSurrogatePair(ovchar_t a, ovchar_t b)
 
 OVUM_API int String_Compare(const String *a, const String *b)
 {
-	int32_t alen = a->length, blen = b->length;
+	size_t alen = a->length, blen = b->length;
 
 	const ovchar_t *ap = &a->firstChar;
 	const ovchar_t *bp = &b->firstChar;
@@ -249,14 +249,14 @@ OVUM_API bool String_Contains(const String *str, const String *value)
 
 	const ovchar_t *strp = &str->firstChar;
 	const ovchar_t firstValChar = value->firstChar;
-	int32_t remaining = str->length - value->length + 1;
+	size_t remaining = str->length - value->length + 1;
 	while (remaining > 0)
 	{
 		if (*strp == firstValChar)
 		{
 			// The comparison algorithm below is basically lifted from String_SubstringEquals,
 			// and then slightly modified
-			int32_t length = value->length;
+			size_t length = value->length;
 
 			const ovchar_t *strpCopy = strp;
 			const ovchar_t *valp = &value->firstChar;
@@ -302,14 +302,14 @@ OVUM_API String *String_ToUpper(ThreadHandle thread, String *str)
 
 	const ovchar_t *a = &str->firstChar;
 	ovchar_t *b = const_cast<ovchar_t*>(&newStr->firstChar);
-	int32_t remaining = str->length;
+	size_t remaining = str->length;
 	while (remaining--)
 	{
 		ovchar_t ach = *a;
 		if (UC_IsSurrogateLead(ach) && UC_IsSurrogateTrail(*(a + 1)))
 		{
 			SurrogatePair surr = UC_ToSurrogatePair(UC_ToUpper(UC_ToWide(ach, *(a + 1))));
-			*(uint32_t*)b = *reinterpret_cast<int32_t*>(&surr);
+			*(ovwchar_t*)b = *reinterpret_cast<ovwchar_t*>(&surr);
 			a += 2;
 			b += 2;
 			remaining--; // we skipped two characters!
@@ -332,14 +332,14 @@ OVUM_API String *String_ToLower(ThreadHandle thread, String *str)
 
 	const ovchar_t *a = &str->firstChar;
 	ovchar_t *b = const_cast<ovchar_t*>(&newStr->firstChar);
-	int32_t remaining = str->length;
+	size_t remaining = str->length;
 	while (remaining--)
 	{
 		ovchar_t ach = *a;
 		if (UC_IsSurrogateLead(ach) && UC_IsSurrogateTrail(*(a + 1)))
 		{
 			SurrogatePair surr = UC_ToSurrogatePair(UC_ToLower(UC_ToWide(ach, *(a + 1))));
-			*(uint32_t*)b = *reinterpret_cast<int32_t*>(&surr);
+			*(ovwchar_t*)b = *reinterpret_cast<ovwchar_t*>(&surr);
 			a += 2;
 			b += 2;
 			remaining--; // we skipped two characters!
@@ -358,10 +358,10 @@ OVUM_API String *String_ToLower(ThreadHandle thread, String *str)
 OVUM_API String *String_Concat(ThreadHandle thread, const String *a, const String *b)
 {
 	// Make sure the target length is within range!
-	if (INT32_MAX - a->length < b->length)
+	if (SIZE_MAX - a->length < b->length)
 		return nullptr;
 
-	int32_t outLength = a->length + b->length;
+	size_t outLength = a->length + b->length;
 
 	String *output = thread->GetGC()->ConstructString(thread, outLength, nullptr);
 	if (output)
@@ -377,12 +377,12 @@ OVUM_API String *String_Concat(ThreadHandle thread, const String *a, const Strin
 
 OVUM_API String *String_Concat3(ThreadHandle thread, const String *a, const String *b, const String *c)
 {
-	if (INT32_MAX - a->length < b->length)
+	if (SIZE_MAX - a->length < b->length)
 		return nullptr;
 
-	int32_t outLength = a->length + b->length;
+	size_t outLength = a->length + b->length;
 
-	if (INT32_MAX - outLength < c->length)
+	if (SIZE_MAX - outLength < c->length)
 		return nullptr;
 
 	outLength += c->length;
@@ -401,18 +401,18 @@ OVUM_API String *String_Concat3(ThreadHandle thread, const String *a, const Stri
 	return output;
 }
 
-OVUM_API String *String_ConcatRange(ThreadHandle thread, int count, String *values[])
+OVUM_API String *String_ConcatRange(ThreadHandle thread, size_t count, String *values[])
 {
-	if (count <= 0)
+	if (count == 0)
 		return thread->GetStrings()->empty;
 	if (count == 1)
 		return values[0];
 
-	int32_t outLength = 0;
-	for (int i = 0; i < count; i++)
+	size_t outLength = 0;
+	for (size_t i = 0; i < count; i++)
 	{
-		int32_t strlen = values[i]->length;
-		if (INT32_MAX - outLength < strlen)
+		size_t strlen = values[i]->length;
+		if (SIZE_MAX - outLength < strlen)
 			return nullptr;
 
 		outLength += strlen;
@@ -423,7 +423,7 @@ OVUM_API String *String_ConcatRange(ThreadHandle thread, int count, String *valu
 	{
 		ovchar_t *outputChar = const_cast<ovchar_t*>(&output->firstChar);
 
-		for (int i = 0; i < count; i++)
+		for (size_t i = 0; i < count; i++)
 		{
 			String *str = values[i];
 			CopyMemoryT(outputChar, &str->firstChar, str->length);
@@ -433,12 +433,12 @@ OVUM_API String *String_ConcatRange(ThreadHandle thread, int count, String *valu
 	return output;
 }
 
-OVUM_API int32_t String_ToWString(wchar_t *dest, const String *source)
+OVUM_API size_t String_ToWString(wchar_t *dest, const String *source)
 {
 #if OVUM_WCHAR_SIZE == 2
 	// UTF-16 (or at least UCS-2, but hopefully surrogates won't break things too much)
 
-	int32_t outputLength = source->length + 1; // Include the \0
+	size_t outputLength = source->length + 1; // Include the \0
 
 	if (dest)
 		memcpy(dest, &source->firstChar, outputLength * sizeof(ovchar_t));
@@ -450,11 +450,11 @@ OVUM_API int32_t String_ToWString(wchar_t *dest, const String *source)
 	// First, iterate over the string to find out how many surrogate pairs there are,
 	// if any. These consume only one UTF-32 character.
 	// We use this to calculate the length of the output (including the \0).
-	int32_t outputLength = 0;
+	size_t outputLength = 0;
 
-	int32_t strLen = source->length + 1; // let's include the \0
+	size_t strLen = source->length + 1; // let's include the \0
 	const ovchar_t *strp = &source->firstChar;
-	for (int32_t i = 0; i < strLen; i++)
+	for (size_t i = 0; i < strLen; i++)
 	{
 		if (UC_IsSurrogateLead(*strp) && UC_IsSurrogateTrail(*(strp + 1)))
 		{
@@ -471,7 +471,7 @@ OVUM_API int32_t String_ToWString(wchar_t *dest, const String *source)
 		strp = &source->firstChar;
 
 		wchar_t *outp = dest;
-		for (int i = 0; i < outputLength; i++)
+		for (size_t i = 0; i < outputLength; i++)
 		{
 			if (UC_IsSurrogateLead(*strp) && UC_IsSurrogateTrail(*(strp + 1)))
 			{
@@ -510,7 +510,7 @@ OVUM_API String *String_FromWString(ThreadHandle thread, const wchar_t *source)
 #elif OVUM_WCHAR_SIZE == 4
 	// UTF-32
 
-	int32_t outLength = 0;
+	size_t outLength = 0;
 
 	const wchar_t *strp = source;
 	while (*strp)

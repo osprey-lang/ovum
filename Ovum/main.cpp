@@ -34,8 +34,7 @@ int wmain(int argc, wchar_t *argv[])
 	if (argc == 1)
 		PrintUsageAndExit();
 
-	OvumArgs args;
-	memset(&args, 0, sizeof(OvumArgs)); // initialize to zero
+	OvumArgs args = { 0 };
 	ParseCommandLine(argc - 1, argv + 1, args);
 
 	VMStartParams vm;

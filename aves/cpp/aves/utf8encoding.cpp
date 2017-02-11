@@ -10,22 +10,28 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Utf8Encoding_getByteCount)
 
 	Utf8Encoder enc;
 	enc.Reset();
-	int32_t byteCount = enc.GetByteCount(thread, args[1].v.string, true);
+	ssize_t byteCount = enc.GetByteCount(thread, args[1].v.string, true);
 
 	VM_PushInt(thread, byteCount);
 }
 END_NATIVE_FUNCTION
 AVES_API NATIVE_FUNCTION(aves_Utf8Encoding_getBytesInternal)
 {
-	// getBytesInternal(str is String, buf is Buffer, offset is Int)
+	// getBytesInternal(str: String, buf: Buffer, offset: Int)
 
 	Utf8Encoder enc;
 	enc.Reset();
 	Buffer *buf = args[2].Get<Buffer>();
-	int32_t offset = (int32_t)args[3].v.integer;
-	int32_t byteCount = enc.GetBytes(thread, args[1].v.string, buf, offset, true);
+	size_t offset = (size_t)args[3].v.integer;
+	ssize_t byteCount = enc.GetBytes(
+		thread,
+		args[1].v.string,
+		buf,
+		offset,
+		true
+	);
 	if (byteCount < 0)
-		return ~byteCount;
+		return (int)~byteCount;
 
 	VM_PushInt(thread, byteCount);
 	RETURN_SUCCESS;
@@ -33,35 +39,39 @@ AVES_API NATIVE_FUNCTION(aves_Utf8Encoding_getBytesInternal)
 
 AVES_API NATIVE_FUNCTION(aves_Utf8Encoding_getCharCountInternal)
 {
-	// getCharCountInternal(buf is Buffer, offset is Int, count is Int)
+	// getCharCountInternal(buf: Buffer, offset: Int, count: Int)
 
 	Utf8Decoder dec;
 	dec.Reset();
-	int32_t charCount = dec.GetCharCount(thread,
+	ssize_t charCount = dec.GetCharCount(
+		thread,
 		args[1].Get<Buffer>(),
-		(int32_t)args[2].v.integer,
-		(int32_t)args[3].v.integer,
-		true);
+		(size_t)args[2].v.integer,
+		(size_t)args[3].v.integer,
+		true
+	);
 
 	VM_PushInt(thread, charCount);
 	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_Utf8Encoding_getCharsInternal)
 {
-	// getCharsInternal(buf is Buffer, offset is Int, count is Int, sb is StringBuffer)
+	// getCharsInternal(buf: Buffer, offset: Int, count: Int, sb: StringBuffer)
 
 	StringBuffer *sb = args[4].Get<StringBuffer>();
 
 	Utf8Decoder dec;
 	dec.Reset();
-	int32_t charCount = dec.GetChars(thread,
+	ssize_t charCount = dec.GetChars(
+		thread,
 		args[1].Get<Buffer>(),
-		(int32_t)args[2].v.integer,
-		(int32_t)args[3].v.integer,
+		(size_t)args[2].v.integer,
+		(size_t)args[3].v.integer,
 		sb,
-		true);
+		true
+	);
 	if (charCount < 0)
-		return ~charCount;
+		return (int)~charCount;
 
 	VM_PushInt(thread, charCount);
 	RETURN_SUCCESS;
@@ -70,15 +80,15 @@ AVES_API NATIVE_FUNCTION(aves_Utf8Encoding_getCharsInternal)
 
 // Encoder
 
-int32_t Utf8Encoder::GetByteCount(ThreadHandle thread, String *str, bool flush)
+ssize_t Utf8Encoder::GetByteCount(ThreadHandle thread, String *str, bool flush)
 {
 	// Gotta take a copy, as we can't modify the state!
 	ovchar_t surrogateChar = this->surrogateChar;
 
-	int32_t count = 0;
+	ssize_t count = 0;
 	const ovchar_t *chp = &str->firstChar;
 
-	for (int32_t i = 0; i < str->length; i++)
+	for (size_t i = 0; i < str->length; i++)
 	{
 		ovchar_t ch = chp[i];
 		if (surrogateChar)
@@ -123,15 +133,15 @@ int32_t Utf8Encoder::GetByteCount(ThreadHandle thread, String *str, bool flush)
 	return count;
 }
 
-int32_t Utf8Encoder::GetBytes(ThreadHandle thread, String *str, Buffer *buf, int32_t offset, bool flush)
+ssize_t Utf8Encoder::GetBytes(ThreadHandle thread, String *str, Buffer *buf, size_t offset, bool flush)
 {
 	ovchar_t surrogateChar = this->surrogateChar;
 
-	int32_t count = 0;
+	ssize_t count = 0;
 	const ovchar_t *chp = &str->firstChar;
 	uint8_t *bp = buf->bytes + offset;
 
-	for (int32_t i = 0; i < str->length; i++)
+	for (size_t i = 0; i < str->length; i++)
 	{
 		ovchar_t ch = chp[i];
 		if (surrogateChar)
@@ -139,7 +149,7 @@ int32_t Utf8Encoder::GetBytes(ThreadHandle thread, String *str, Buffer *buf, int
 			if (!UC_IsSurrogateTrail(ch))
 			{
 				// Add U+FFFD, which is EF BF BD encoded.
-				if ((uint32_t)offset + 3 > buf->size)
+				if (offset + 3 > buf->size)
 					return ~BufferOverrunError(thread);
 
 				*bp++ = 0xEF;
@@ -151,7 +161,7 @@ int32_t Utf8Encoder::GetBytes(ThreadHandle thread, String *str, Buffer *buf, int
 				goto append;
 			}
 
-			if ((uint32_t)offset + 4 > buf->size)
+			if (offset + 4 > buf->size)
 				return ~BufferOverrunError(thread);
 
 			ovwchar_t wch = UC_ToWide(surrogateChar, ch);
@@ -170,7 +180,7 @@ int32_t Utf8Encoder::GetBytes(ThreadHandle thread, String *str, Buffer *buf, int
 		{
 			if (ch >= 0xDC00) // trail without lead becomes U+FFFD
 			{
-				if ((uint32_t)offset + 3 > buf->size)
+				if (offset + 3 > buf->size)
 					return ~BufferOverrunError(thread);
 
 				*bp++ = 0xEF;
@@ -186,7 +196,7 @@ int32_t Utf8Encoder::GetBytes(ThreadHandle thread, String *str, Buffer *buf, int
 
 		if (ch > 0x07FF)
 		{
-			if ((uint32_t)offset + 3 > buf->size)
+			if (offset + 3 > buf->size)
 				return ~BufferOverrunError(thread);
 			*bp++ = 0xE0 | (ch >> 12);
 			*bp++ = 0x80 | (ch >> 6) & 0x3F;
@@ -196,7 +206,7 @@ int32_t Utf8Encoder::GetBytes(ThreadHandle thread, String *str, Buffer *buf, int
 		}
 		else if (ch > 0x7F)
 		{
-			if ((uint32_t)offset + 2 > buf->size)
+			if (offset + 2 > buf->size)
 				return ~BufferOverrunError(thread);
 			*bp++ = 0xC0 | (ch >> 6) & 0x3F;
 			*bp++ = 0x80 | ch & 0x3F;
@@ -205,7 +215,7 @@ int32_t Utf8Encoder::GetBytes(ThreadHandle thread, String *str, Buffer *buf, int
 		}
 		else
 		{
-			if ((uint32_t)offset + 1 > buf->size)
+			if (offset + 1 > buf->size)
 				return ~BufferOverrunError(thread);
 			*bp++ = (uint8_t)ch;
 			offset++;
@@ -215,7 +225,7 @@ int32_t Utf8Encoder::GetBytes(ThreadHandle thread, String *str, Buffer *buf, int
 
 	if (flush && surrogateChar)
 	{
-		if ((uint32_t)offset + 3 > buf->size)
+		if (offset + 3 > buf->size)
 			return ~BufferOverrunError(thread);
 
 		*bp++ = 0xEF;
@@ -237,12 +247,12 @@ void Utf8Encoder::Reset()
 	this->surrogateChar = 0;
 }
 
-int Utf8Encoder::BufferOverrunError(ThreadHandle thread)
+ssize_t Utf8Encoder::BufferOverrunError(ThreadHandle thread)
 {
 	Aves *aves = Aves::Get(thread);
 
 	VM_PushString(thread, error_strings::EncodingBufferOverrun);
-	return VM_ThrowErrorOfType(thread, aves->aves.ArgumentError, 1);
+	return (ssize_t)VM_ThrowErrorOfType(thread, aves->aves.ArgumentError, 1);
 }
 
 AVES_API int aves_Utf8Encoder_init(TypeHandle type)
@@ -257,21 +267,28 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Utf8Encoder_getByteCount)
 	Utf8Encoder *enc = THISV.Get<Utf8Encoder>();
 	CHECKED(StringFromValue(thread, args + 1));
 
-	int32_t byteCount = enc->GetByteCount(thread, args[1].v.string, IsTrue(args + 2));
+	ssize_t byteCount = enc->GetByteCount(
+		thread,
+		args[1].v.string,
+		IsTrue(args + 2)
+	);
 	VM_PushInt(thread, byteCount);
 }
 END_NATIVE_FUNCTION
 AVES_API NATIVE_FUNCTION(aves_Utf8Encoder_getBytesInternal)
 {
-	// getBytesInternal(str is String, buf is Buffer, offset is Int, flush is Boolean)
+	// getBytesInternal(str: String, buf: Buffer, offset: Int, flush: Boolean)
 	Utf8Encoder *enc = THISV.Get<Utf8Encoder>();
 
-	int32_t byteCount = enc->GetBytes(thread, args[1].v.string,
+	ssize_t byteCount = enc->GetBytes(
+		thread,
+		args[1].v.string,
 		args[2].Get<Buffer>(),
-		(int32_t)args[3].v.integer,
-		!!args[4].v.integer);
+		(size_t)args[3].v.integer,
+		!!args[4].v.integer
+	);
 	if (byteCount < 0)
-		return ~byteCount;
+		return (int)~byteCount;
 
 	VM_PushInt(thread, byteCount);
 	RETURN_SUCCESS;
@@ -296,16 +313,16 @@ union BytesLeft
 	{ }
 };
 
-int32_t Utf8Decoder::GetCharCount(ThreadHandle thread, Buffer *buf, int32_t offset, int32_t count, bool flush)
+ssize_t Utf8Decoder::GetCharCount(ThreadHandle thread, Buffer *buf, size_t offset, size_t count, bool flush)
 {
 	// Copy to local; can't update the state in here
 	int32_t state = this->state;
 	BytesLeft left(this->bytesLeftAll);
 
-	int32_t charCount = 0;
+	ssize_t charCount = 0;
 	uint8_t *bp = buf->bytes + offset;
 
-	int32_t i = 0;
+	size_t i = 0;
 	if (state == 0)
 	{
 		while (i < count)
@@ -318,7 +335,7 @@ int32_t Utf8Decoder::GetCharCount(ThreadHandle thread, Buffer *buf, int32_t offs
 
 			charCount++;
 			// Don't increment i until here: if we enter the slow path,
-			// i remain on the non-ASCII character.
+			// i should remain on the non-ASCII character.
 			i++;
 		}
 	}
@@ -478,7 +495,7 @@ int32_t Utf8Decoder::GetCharCount(ThreadHandle thread, Buffer *buf, int32_t offs
 	return charCount;
 }
 
-int32_t Utf8Decoder::GetChars(ThreadHandle thread, Buffer *buf, int32_t offset, int32_t count, StringBuffer *sb, bool flush)
+ssize_t Utf8Decoder::GetChars(ThreadHandle thread, Buffer *buf, size_t offset, size_t count, StringBuffer *sb, bool flush)
 {
 	// This method uses the same overall structure as GetCharCount,
 	// hence comments will not be as plentiful. The only big difference,
@@ -487,10 +504,10 @@ int32_t Utf8Decoder::GetChars(ThreadHandle thread, Buffer *buf, int32_t offset, 
 	int32_t state = this->state;
 	BytesLeft left(this->bytesLeftAll);
 
-	int32_t charCount = 0;
+	ssize_t charCount = 0;
 	uint8_t *bp = buf->bytes + offset;
 
-	int32_t i = 0;
+	size_t i = 0;
 	if (state == 0)
 	{
 		while (i < count)
@@ -715,11 +732,13 @@ AVES_API NATIVE_FUNCTION(aves_Utf8Decoder_getCharCountInternal)
 	// getCharCountInternal(buf is Buffer, offset is Int, count is Int, flush is Boolean)
 	Utf8Decoder *dec = THISV.Get<Utf8Decoder>();
 
-	int32_t charCount = dec->GetCharCount(thread,
+	ssize_t charCount = dec->GetCharCount(
+		thread,
 		args[1].Get<Buffer>(),
-		(int32_t)args[2].v.integer,
-		(int32_t)args[3].v.integer,
-		!!args[4].v.integer);
+		(size_t)args[2].v.integer,
+		(size_t)args[3].v.integer,
+		!!args[4].v.integer
+	);
 
 	VM_PushInt(thread, charCount);
 	RETURN_SUCCESS;
@@ -729,14 +748,16 @@ AVES_API NATIVE_FUNCTION(aves_Utf8Decoder_getCharsInternal)
 	// getCharsInternal(buf is Buffer, offset is Int, count is Int, sb is StringBuffer, flush is Boolean)
 	Utf8Decoder *dec = THISV.Get<Utf8Decoder>();
 
-	int32_t charCount = dec->GetChars(thread,
+	ssize_t charCount = dec->GetChars(
+		thread,
 		args[1].Get<Buffer>(),
-		(int32_t)args[2].v.integer,
-		(int32_t)args[3].v.integer,
+		(size_t)args[2].v.integer,
+		(size_t)args[3].v.integer,
 		args[4].Get<StringBuffer>(),
-		!!args[5].v.integer);
+		!!args[5].v.integer
+	);
 	if (charCount < 0)
-		return ~charCount;
+		return (int)~charCount;
 
 	VM_PushInt(thread, charCount);
 	RETURN_SUCCESS;
@@ -748,13 +769,13 @@ AVES_API NATIVE_FUNCTION(aves_Utf8Decoder_reset)
 }
 
 // Native APIs
-AVES_API int32_t aves_GetUtf8ByteCount(ThreadHandle thread, String *str)
+AVES_API ssize_t aves_GetUtf8ByteCount(ThreadHandle thread, String *str)
 {
 	Utf8Encoder enc;
 	enc.Reset();
 	return enc.GetByteCount(thread, str, true);
 }
-AVES_API int32_t aves_GetUtf8Bytes(ThreadHandle thread, String *str, uint8_t *buffer, uint32_t bufSize, int32_t offset)
+AVES_API ssize_t aves_GetUtf8Bytes(ThreadHandle thread, String *str, uint8_t *buffer, size_t bufSize, size_t offset)
 {
 	Utf8Encoder enc;
 	enc.Reset();
@@ -764,7 +785,7 @@ AVES_API int32_t aves_GetUtf8Bytes(ThreadHandle thread, String *str, uint8_t *bu
 	return enc.GetBytes(thread, str, &buf, offset, true);
 }
 
-AVES_API int32_t aves_GetUtf8CharCount(ThreadHandle thread, uint8_t *buffer, uint32_t bufSize, int32_t offset, int32_t count)
+AVES_API ssize_t aves_GetUtf8CharCount(ThreadHandle thread, uint8_t *buffer, size_t bufSize, size_t offset, size_t count)
 {
 	Utf8Decoder dec;
 	dec.Reset();
@@ -773,7 +794,7 @@ AVES_API int32_t aves_GetUtf8CharCount(ThreadHandle thread, uint8_t *buffer, uin
 	buf.bytes = buffer;
 	return dec.GetCharCount(thread, &buf, offset, count, true);
 }
-AVES_API int32_t aves_GetUtf8Chars(ThreadHandle thread, uint8_t *buffer, uint32_t bufSize, int32_t offset, int32_t count, StringBuffer *sb)
+AVES_API ssize_t aves_GetUtf8Chars(ThreadHandle thread, uint8_t *buffer, size_t bufSize, size_t offset, size_t count, StringBuffer *sb)
 {
 	Utf8Decoder dec;
 	dec.Reset();

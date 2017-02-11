@@ -80,7 +80,7 @@ void Field::WriteFieldUnchecked(Value *instanceAndValue) const
 
 } // namespace ovum
 
-OVUM_API uint32_t Field_GetOffset(FieldHandle field)
+OVUM_API size_t Field_GetOffset(FieldHandle field)
 {
 	return field->offset;
 }

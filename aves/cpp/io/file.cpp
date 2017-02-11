@@ -102,8 +102,6 @@ END_NATIVE_FUNCTION
 
 // FileStream implementation
 
-#define _FS(v) reinterpret_cast<FileStream*>((v).instance)
-
 int FileStream::EnsureOpen(ThreadHandle thread)
 {
 	if (handle == NULL)
@@ -121,7 +119,7 @@ int FileStream::ErrorHandleClosed(ThreadHandle thread)
 
 AVES_API int io_FileStream_initType(TypeHandle type)
 {
-	Type_SetInstanceSize(type, (uint32_t)sizeof(FileStream));
+	Type_SetInstanceSize(type, sizeof(FileStream));
 	Type_SetFinalizer(type, io_FileStream_finalize);
 
 	int r;
@@ -133,7 +131,7 @@ AVES_API int io_FileStream_initType(TypeHandle type)
 
 AVES_API BEGIN_NATIVE_FUNCTION(io_FileStream_init)
 {
-	// init(fileName is String, mode is FileMode, access is FileAccess, share is FileShare)
+	// init(fileName: String, mode: FileMode, access: FileAccess, share: FileShare)
 	Aves *aves = Aves::Get(thread);
 
 	String *fileName = args[1].v.string;
@@ -145,13 +143,13 @@ AVES_API BEGIN_NATIVE_FUNCTION(io_FileStream_init)
 
 	switch (args[2].v.integer) // mode
 	{
-	case FileMode::OPEN:           mode = OPEN_EXISTING;     break;
-	case FileMode::OPEN_OR_CREATE: mode = OPEN_ALWAYS;       break;
-	case FileMode::CREATE:         mode = CREATE_ALWAYS;     break;
-	case FileMode::CREATE_NEW_:    mode = CREATE_NEW;        break;
-	case FileMode::TRUNCATE:       mode = TRUNCATE_EXISTING; break;
+	case (int64_t)FileMode::OPEN:           mode = OPEN_EXISTING;     break;
+	case (int64_t)FileMode::OPEN_OR_CREATE: mode = OPEN_ALWAYS;       break;
+	case (int64_t)FileMode::CREATE:         mode = CREATE_ALWAYS;     break;
+	case (int64_t)FileMode::CREATE_NEW_:    mode = CREATE_NEW;        break;
+	case (int64_t)FileMode::TRUNCATE:       mode = TRUNCATE_EXISTING; break;
 	// Additional processing is done later for append
-	case FileMode::APPEND:         mode = OPEN_ALWAYS;       break;
+	case (int64_t)FileMode::APPEND:         mode = OPEN_ALWAYS;       break;
 	default:
 		VM_PushString(thread, strings::mode);
 		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentRangeError, 1);
@@ -159,9 +157,9 @@ AVES_API BEGIN_NATIVE_FUNCTION(io_FileStream_init)
 
 	switch (args[3].v.integer) // access
 	{
-	case FileAccess::READ:       access = GENERIC_READ; break;
-	case FileAccess::WRITE:      access = GENERIC_WRITE; break;
-	case FileAccess::READ_WRITE: access = GENERIC_READ | GENERIC_WRITE; break;
+	case (int64_t)FileAccess::READ:       access = GENERIC_READ; break;
+	case (int64_t)FileAccess::WRITE:      access = GENERIC_WRITE; break;
+	case (int64_t)FileAccess::READ_WRITE: access = GENERIC_READ | GENERIC_WRITE; break;
 	default:
 		// io.FileAccess is an enum set, but only
 		// the three combinations above are valid.
@@ -307,7 +305,7 @@ END_NATIVE_FUNCTION
 
 AVES_API BEGIN_NATIVE_FUNCTION(io_FileStream_readMaxInternal)
 {
-	// Args: (buf is Buffer, offset is Int, count is Int)
+	// readMaxInternal(buf: Buffer, offset: Int, count: Int)
 	// FileStream.readMax verifies that offset and count are
 	// within the buffer, and that buf is actually a Buffer.
 	FileStream *stream = THISV.Get<FileStream>();
@@ -316,14 +314,14 @@ AVES_API BEGIN_NATIVE_FUNCTION(io_FileStream_readMaxInternal)
 	HANDLE handle = stream->handle;
 	// The GC will never move the Buffer::bytes pointer
 	uint8_t *buffer = reinterpret_cast<Buffer*>(args[1].v.instance)->bytes;
-	buffer += (int32_t)args[2].v.integer;
+	buffer += (size_t)args[2].v.integer;
 
-	int32_t count = (int32_t)args[3].v.integer;
+	size_t count = (size_t)args[3].v.integer;
 
 	VM_EnterUnmanagedRegion(thread);
 
 	DWORD bytesRead;
-	BOOL r = ReadFile(handle, buffer, count, &bytesRead, nullptr);
+	BOOL r = ReadFile(handle, buffer, (DWORD)count, &bytesRead, nullptr);
 
 	VM_LeaveUnmanagedRegion(thread);
 
@@ -358,7 +356,7 @@ END_NATIVE_FUNCTION
 
 AVES_API BEGIN_NATIVE_FUNCTION(io_FileStream_writeInternal)
 {
-	// Args: (buf is Buffer, offset is Int, count is Int)
+	// writeInternal(buf: Buffer, offset: Int, count: Int)
 	// FileStream.write verifies that offset and count are
 	// within the buffer, and that buf is actually a Buffer.
 	FileStream *stream = THISV.Get<FileStream>();
@@ -368,14 +366,14 @@ AVES_API BEGIN_NATIVE_FUNCTION(io_FileStream_writeInternal)
 	// The GC will never move the Buffer::bytes pointer,
 	// no need to pin it
 	uint8_t *buffer = reinterpret_cast<Buffer*>(args[1].v.instance)->bytes;
-	buffer += (int32_t)args[2].v.integer;
+	buffer += (size_t)args[2].v.integer;
 
-	int32_t count = (int32_t)args[3].v.integer;
+	size_t count = (size_t)args[3].v.integer;
 
 	VM_EnterUnmanagedRegion(thread);
 
 	DWORD bytesWritten;
-	BOOL r = WriteFile(handle, buffer, count, &bytesWritten, nullptr);
+	BOOL r = WriteFile(handle, buffer, (DWORD)count, &bytesWritten, nullptr);
 
 	VM_LeaveUnmanagedRegion(thread);
 
@@ -421,9 +419,9 @@ AVES_API BEGIN_NATIVE_FUNCTION(io_FileStream_seekInternal)
 	DWORD seekOrigin;
 	switch (args[2].v.integer)
 	{
-	case SeekOrigin::START:   seekOrigin = FILE_BEGIN;   break;
-	case SeekOrigin::CURRENT: seekOrigin = FILE_CURRENT; break;
-	case SeekOrigin::END:     seekOrigin = FILE_END;     break;
+	case (int64_t)SeekOrigin::START:   seekOrigin = FILE_BEGIN;   break;
+	case (int64_t)SeekOrigin::CURRENT: seekOrigin = FILE_CURRENT; break;
+	case (int64_t)SeekOrigin::END:     seekOrigin = FILE_END;     break;
 	default:
 		VM_PushString(thread, strings::origin);
 		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentRangeError, 1);

@@ -15,8 +15,8 @@ public:
 	Value byteBuffer;   // aves.Buffer
 	Value charBuffer;   // aves.StringBuffer
 	// Not these, however!
-	int32_t charCount;
-	int32_t charOffset;
+	size_t charCount;
+	size_t charOffset;
 	bool keepOpen;
 
 	static MethodHandle FillBuffer;

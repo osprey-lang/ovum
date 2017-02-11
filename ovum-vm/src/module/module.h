@@ -19,7 +19,7 @@ struct ModuleParams
 	String *name; // The name of the module
 	ModuleVersion version;
 	// Type count + function count + constant count
-	int32_t globalMemberCount;
+	size_t globalMemberCount;
 };
 
 // And then the actual Module class! Hurrah!
@@ -44,12 +44,12 @@ public:
 		return fileName;
 	}
 
-	inline int32_t GetMemberCount() const
+	inline size_t GetMemberCount() const
 	{
 		return members.GetCount();
 	}
 
-	inline bool GetMemberByIndex(int32_t index, GlobalMember &result) const
+	inline bool GetMemberByIndex(size_t index, GlobalMember &result) const
 	{
 		return members.GetByIndex(index, result);
 	}

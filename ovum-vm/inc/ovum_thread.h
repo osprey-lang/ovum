@@ -4,7 +4,7 @@
 #include "ovum.h"
 
 // Returns a successful status code. Semicolon intentionally missing.
-#define RETURN_SUCCESS             return OVUM_SUCCESS
+#define RETURN_SUCCESS  return OVUM_SUCCESS
 
 /*
 The macros BEGIN_NATIVE_FUNCTION, END_NATIVE_FUNCTION, CHECKED and CHECKED_MEM
@@ -81,6 +81,9 @@ expression context. They must enclose an expression, however.
 	}
 #define CHECKED(expr) do { if ((status__ = (expr)) != OVUM_SUCCESS) goto retStatus__; } while (0)
 #define CHECKED_MEM(expr) do { if (!(expr)) { status__ = OVUM_ERROR_NO_MEMORY; goto retStatus__; } } while (0)
+
+// As a return value, indicates that a function received an invalid stack frame index.
+#define OVUM_INVALID_STACK_FRAME ((size_t)-1)
 
 OVUM_API void VM_Push(ThreadHandle thread, Value *value);
 
@@ -306,7 +309,7 @@ OVUM_API String *VM_GetStackTrace(ThreadHandle thread);
 // of stack frames currently on the call stack.
 //
 // This function runs in O(n) time, where n is the stack depth.
-OVUM_API int VM_GetStackDepth(ThreadHandle thread);
+OVUM_API size_t VM_GetStackDepth(ThreadHandle thread);
 
 // Gets a handle to the currently executing method overload.
 OVUM_API OverloadHandle VM_GetCurrentOverload(ThreadHandle thread);
@@ -325,8 +328,8 @@ OVUM_API OverloadHandle VM_GetCurrentOverload(ThreadHandle thread);
 // do not read beyond the beginning or end of the evaluation stack; you may hit
 // garbage, and may corrupt the VM.
 //
-// If stackFrame refers to an invalid stack frame, returns -1.
-OVUM_API int VM_GetEvalStackHeight(ThreadHandle thread, int stackFrame, const Value **slots);
+// If stackFrame refers to an invalid stack frame, returns OVUM_INVALID_STACK_FRAME.
+OVUM_API ovlocals_t VM_GetEvalStackHeight(ThreadHandle thread, size_t stackFrame, const Value **slots);
 
 // Gets the number of locals in the specified stack frame, and optionally retrieves
 // a pointer to the first local variable.
@@ -337,8 +340,8 @@ OVUM_API int VM_GetEvalStackHeight(ThreadHandle thread, int stackFrame, const Va
 // the beginning or end of the local variable list; you may hit garbage, and may
 // corrupt the VM.
 //
-// If stackFrame refers to an invalid stack frame, returns -1.
-OVUM_API int VM_GetLocalCount(ThreadHandle thread, int stackFrame, const Value **slots);
+// If stackFrame refers to an invalid stack frame, returns OVUM_INVALID_STACK_FRAME.
+OVUM_API ovlocals_t VM_GetLocalCount(ThreadHandle thread, size_t stackFrame, const Value **slots);
 
 // Gets the number of method arguments in the specified stack frame, and optionally
 // retrieves a pointer to the first argument.
@@ -349,13 +352,13 @@ OVUM_API int VM_GetLocalCount(ThreadHandle thread, int stackFrame, const Value *
 // the beginning or end of the method argument list; you may hit garbage, and may
 // corrupt the VM.
 //
-// If stackFrame refers to an invalid stack frame, returns -1.
-OVUM_API int VM_GetMethodArgCount(ThreadHandle thread, int stackFrame, const Value **slots);
+// If stackFrame refers to an invalid stack frame, returns OVUM_INVALID_STACK_FRAME.
+OVUM_API ovlocals_t VM_GetMethodArgCount(ThreadHandle thread, size_t stackFrame, const Value **slots);
 
 // Gets a handle to the method overload executing in the specified stack frame.
 //
 // If stackFrame refers to an invalid stack frame, returns null.
-OVUM_API OverloadHandle VM_GetExecutingOverload(ThreadHandle thread, int stackFrame);
+OVUM_API OverloadHandle VM_GetExecutingOverload(ThreadHandle thread, size_t stackFrame);
 
 // Gets the instruction pointer of the specified stack frame.
 // Warning: for native methods, the instruction pointer is not useful.
@@ -363,17 +366,17 @@ OVUM_API OverloadHandle VM_GetExecutingOverload(ThreadHandle thread, int stackFr
 // a guarantee.
 //
 // If stackFrame refers to an invalid stack frame, returns null.
-OVUM_API const void *VM_GetInstructionPointer(ThreadHandle thread, int stackFrame);
+OVUM_API const void *VM_GetInstructionPointer(ThreadHandle thread, size_t stackFrame);
 
 typedef struct StackFrameInfo_S
 {
-	int stackHeight;
+	ovlocals_t stackHeight;
 	const Value *stackPointer;
 
-	int localCount;
+	ovlocals_t localCount;
 	const Value *localPointer;
 
-	int argumentCount;
+	ovlocals_t argumentCount;
 	const Value *argumentPointer;
 
 	OverloadHandle overload;
@@ -385,6 +388,6 @@ typedef struct StackFrameInfo_S
 // to understand the various caveats of accessing this information.
 //
 // If stackFrame refers to an invalid stack frame, returns false.
-OVUM_API bool VM_GetStackFrameInfo(ThreadHandle thread, int stackFrame, StackFrameInfo *dest);
+OVUM_API bool VM_GetStackFrameInfo(ThreadHandle thread, size_t stackFrame, StackFrameInfo *dest);
 
 #endif // OVUM__THREAD_H

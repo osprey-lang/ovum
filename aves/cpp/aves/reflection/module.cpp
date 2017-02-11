@@ -66,7 +66,13 @@ int GetMemberSearchFlags(ThreadHandle thread, Value *arg, uint32_t *result)
 	RETURN_SUCCESS;
 }
 
-bool GetSingleMember(ModuleHandle module, String *name, uint32_t access, uint32_t kind, GlobalMember *result)
+bool GetSingleMember(
+	ModuleHandle module,
+	String *name,
+	uint32_t access,
+	uint32_t kind,
+	GlobalMember *result
+)
 {
 	if (Module_GetGlobalMember(module, name, true, result))
 		return (result->flags & access) != 0 &&
@@ -115,8 +121,13 @@ int ResultToMember(ThreadHandle thread, Value *module, GlobalMember *member)
 	return r;
 }
 
-int GetAllMembers(ThreadHandle thread, ModuleHandle module, Value *moduleValue,
-                  uint32_t access, uint32_t kind)
+int GetAllMembers(
+	ThreadHandle thread,
+	ModuleHandle module,
+	Value *moduleValue,
+	uint32_t access,
+	uint32_t kind
+)
 {
 	int status__;
 	{
@@ -386,7 +397,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Module_getSearchDirectories)
 {
 	TempBuffer<String*, 16> searchDirs;
 
-	int dirCount = 0;
+	size_t dirCount = 0;
 	do
 	{
 		CHECKED_MEM(searchDirs.EnsureCapacity(dirCount));
@@ -402,7 +413,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Module_getSearchDirectories)
 	VM_PushInt(thread, dirCount); // list capacity
 	CHECKED(GC_Construct(thread, GetType_List(thread), 1, output));
 
-	for (int i = 0; i < dirCount; i++)
+	for (size_t i = 0; i < dirCount; i++)
 	{
 		Value ignore;
 		VM_Push(thread, output);

@@ -525,6 +525,8 @@ private:
 	// The currently executing managed thread.
 	static TlsEntry<Thread> threadKey;
 
+	static const size_t ALL_TRY_BLOCKS = (size_t)-1;
+
 	// The current instruction pointer. This should always be the first field in
 	// the class.
 	uint8_t *ip;
@@ -688,8 +690,8 @@ private:
 	// considered to be inside the try block. Hence, that block's catch clauses
 	// will not be found, nor will its finally block be executed.
 	//   maxIndex:
-	//     The maximum try block index to look at, exclusive. Pass -1 to examine
-	//     all try blocks in the method.
+	//     The maximum try block index to look at, exclusive. To examine all try
+	//     blocks in the method, pass ALL_TRY_BLOCKS.
 	//
 	//     Try blocks are stored inside out (most deeply nested try blocks first,
 	//     followed by their parents). When an error is thrown inside a finally
@@ -700,7 +702,7 @@ private:
 	//   Catch, finally and fault clauses can cause errors to be thrown. This
 	//   method returns OVUM_SUCCESS if an error handler was successfully found
 	//   and executed.
-	int FindErrorHandler(int32_t maxIndex);
+	int FindErrorHandler(size_t maxIndex);
 
 	// Attempts to evaluate a 'leave' instruction. This will execute any finally
 	// and fault clauses that lie between the 'leave' instruction and the specified

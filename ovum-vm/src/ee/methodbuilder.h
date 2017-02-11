@@ -18,17 +18,17 @@ namespace instr
 		MethodBuilder();
 		~MethodBuilder();
 
-		inline Instruction *operator[](int32_t index) const
+		inline Instruction *operator[](size_t index) const
 		{
 			return instructions[index].instr;
 		}
 
-		inline int32_t GetLength() const
+		inline size_t GetLength() const
 		{
-			return (int32_t)instructions.size();
+			return instructions.size();
 		}
 
-		inline int32_t GetByteSize() const
+		inline size_t GetByteSize() const
 		{
 			return lastOffset;
 		}
@@ -38,41 +38,41 @@ namespace instr
 			return hasBranches;
 		}
 
-		inline int32_t GetTypeCount() const
+		inline size_t GetTypeCount() const
 		{
 			return (int32_t)typesToInitialize.size();
 		}
 
-		inline Type *GetType(int32_t index) const
+		inline Type *GetType(size_t index) const
 		{
 			return typesToInitialize[index];
 		}
 
-		uint32_t GetOriginalOffset(int32_t index) const;
+		uint32_t GetOriginalOffset(size_t index) const;
 
-		uint32_t GetOriginalSize(int32_t index) const;
+		size_t GetOriginalSize(size_t index) const;
 
-		int32_t FindIndex(uint32_t originalOffset) const;
+		size_t FindIndex(uint32_t originalOffset) const;
 
-		int32_t GetNewOffset(int32_t index) const;
+		size_t GetNewOffset(size_t index) const;
 
-		int32_t GetNewOffset(int32_t index, const Instruction *relativeTo) const;
+		int32_t GetJumpOffset(size_t index, const Instruction *relativeTo) const;
 
-		ovlocals_t GetStackHeight(int32_t index) const;
+		ovlocals_t GetStackHeight(size_t index) const;
 
-		void SetStackHeight(int32_t index, ovlocals_t stackHeight);
+		void SetStackHeight(size_t index, ovlocals_t stackHeight);
 
-		uint32_t GetRefSignature(int32_t index) const;
+		uint32_t GetRefSignature(size_t index) const;
 
-		void SetRefSignature(int32_t index, uint32_t refSignature);
+		void SetRefSignature(size_t index, uint32_t refSignature);
 
-		bool IsMarkedForRemoval(int32_t index) const;
+		bool IsMarkedForRemoval(size_t index) const;
 
-		void MarkForRemoval(int32_t index);
+		void MarkForRemoval(size_t index);
 
-		void Append(uint32_t originalOffset, uint32_t originalSize, Instruction *instr);
+		void Append(uint32_t originalOffset, size_t originalSize, Instruction *instr);
 
-		void SetInstruction(int32_t index, Instruction *newInstr, bool deletePrev);
+		void SetInstruction(size_t index, Instruction *newInstr, bool deletePrev);
 
 		void PerformRemovals(MethodOverload *method);
 
@@ -85,13 +85,13 @@ namespace instr
 		{
 		public:
 			uint32_t originalOffset;
-			uint32_t originalSize;
+			size_t originalSize;
 			ovlocals_t stackHeight;
 			uint32_t refSignature;
 			bool removed;
 			Instruction *instr;
 
-			inline InstrDesc(uint32_t originalOffset, uint32_t originalSize, Instruction *instr) :
+			inline InstrDesc(uint32_t originalOffset, size_t originalSize, Instruction *instr) :
 				originalOffset(originalOffset),
 				originalSize(originalSize),
 				stackHeight(UNVISITED),
@@ -104,18 +104,18 @@ namespace instr
 		typedef std::vector<InstrDesc>::iterator instr_iter;
 		typedef std::vector<Type*>::iterator type_iter;
 
-		int32_t lastOffset;
+		size_t lastOffset;
 		bool hasBranches;
 		std::vector<InstrDesc> instructions;
 		std::vector<Type*> typesToInitialize;
 
-		void PerformRemovalsInternal(int32_t newIndices[], MethodOverload *method);
+		void PerformRemovalsInternal(size_t newIndices[], MethodOverload *method);
 	};
 
 	class MethodBuffer
 	{
 	public:
-		explicit MethodBuffer(int32_t size);
+		explicit MethodBuffer(size_t size);
 
 		~MethodBuffer();
 

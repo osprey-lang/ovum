@@ -42,9 +42,9 @@ OVUM_API PropertyHandle Member_ToProperty(MemberHandle member);
 
 
 OVUM_API bool Method_IsConstructor(MethodHandle method);
-OVUM_API int32_t Method_GetOverloadCount(MethodHandle method);
-OVUM_API OverloadHandle Method_GetOverload(MethodHandle method, int32_t index);
-OVUM_API int32_t Method_GetOverloads(MethodHandle method, int32_t destSize, OverloadHandle *dest);
+OVUM_API size_t Method_GetOverloadCount(MethodHandle method);
+OVUM_API OverloadHandle Method_GetOverload(MethodHandle method, size_t index);
+OVUM_API size_t Method_GetOverloads(MethodHandle method, size_t destSize, OverloadHandle *dest);
 OVUM_API MethodHandle Method_GetBaseMethod(MethodHandle method);
 
 // Determines whether any overload in the method accepts the given number of arguments.
@@ -72,7 +72,7 @@ typedef struct ParamInfo_S
 // Gets the total number of named parameters the overload has.
 // The count does not include the 'this' parameter if the overload
 // is in an instance method.
-OVUM_API int32_t Overload_GetParamCount(OverloadHandle overload);
+OVUM_API ovlocals_t Overload_GetParamCount(OverloadHandle overload);
 // Gets metadata about a specific parameter in the specified overload.
 //
 // Returns true if there is a parameter at the specified index; otherwise, false.
@@ -96,11 +96,11 @@ OVUM_API bool Overload_GetParameter(OverloadHandle overload, ovlocals_t index, P
 //     The size of the destination buffer, in number of ParamInfo items.
 //   dest:
 //     The destination buffer.
-OVUM_API int32_t Overload_GetAllParameters(OverloadHandle overload, ovlocals_t destSize, ParamInfo *dest);
+OVUM_API ovlocals_t Overload_GetAllParameters(OverloadHandle overload, ovlocals_t destSize, ParamInfo *dest);
 // Gets a handle to an overload's containing method.
 OVUM_API MethodHandle Overload_GetMethod(OverloadHandle overload);
 
-OVUM_API uint32_t Field_GetOffset(FieldHandle field);
+OVUM_API size_t Field_GetOffset(FieldHandle field);
 
 OVUM_API MethodHandle Property_GetGetter(PropertyHandle prop);
 OVUM_API MethodHandle Property_GetSetter(PropertyHandle prop);
@@ -165,7 +165,7 @@ inline unsigned int Arity(Operator op)
 //     The number of values contained in 'values'. May be zero.
 //   values:
 //     An array of zero or more managed references.
-typedef int (OVUM_CDECL *ReferenceVisitor)(void *cbState, unsigned int count, Value *values);
+typedef int (OVUM_CDECL *ReferenceVisitor)(void *cbState, size_t count, Value *values);
 
 // A ReferenceWalker produces an array of Values from a basePtr. This function
 // is called by the GC for two reasons:
@@ -245,7 +245,7 @@ typedef int (OVUM_CDECL *TypeInitializer)(TypeHandle type);
 // underlying implementation of the aves.List class, and is taken from
 // the main module's exported method "InitListInstance".
 // When called, 'list' is guaranteed to refer to a valid ListInst*.
-typedef int (OVUM_CDECL *ListInitializer)(ThreadHandle thread, ListInst *list, int32_t capacity);
+typedef int (OVUM_CDECL *ListInitializer)(ThreadHandle thread, ListInst *list, size_t capacity);
 
 // Initializes a Value* with an aves.Hash instance of the specified capacity.
 // This method is provided to avoid making any assumptions about the underlying
@@ -261,7 +261,7 @@ typedef int (OVUM_CDECL *ListInitializer)(ThreadHandle thread, ListInst *list, i
 //     to be greater than or equal to zero.
 //   result:
 //     A storage location that receives the initialized hash table.
-typedef int (OVUM_CDECL *HashInitializer)(ThreadHandle thread, int32_t capacity, Value *result);
+typedef int (OVUM_CDECL *HashInitializer)(ThreadHandle thread, size_t capacity, Value *result);
 
 // Initializes a value of the aves.reflection.Type class for a specific
 // underlying TypeHandle. The standard module must expose a method with
@@ -277,8 +277,8 @@ OVUM_API ModuleHandle Type_GetDeclModule(TypeHandle type);
 OVUM_API MemberHandle Type_GetMember(TypeHandle type, String *name);
 OVUM_API MemberHandle Type_FindMember(TypeHandle type, String *name, OverloadHandle fromMethod);
 
-OVUM_API int32_t Type_GetMemberCount(TypeHandle type);
-OVUM_API MemberHandle Type_GetMemberByIndex(TypeHandle type, int32_t index);
+OVUM_API size_t Type_GetMemberCount(TypeHandle type);
+OVUM_API MemberHandle Type_GetMemberByIndex(TypeHandle type, size_t index);
 
 OVUM_API MethodHandle Type_GetOperator(TypeHandle type, Operator op);
 OVUM_API int Type_GetTypeToken(ThreadHandle thread, TypeHandle type, Value *result);
@@ -390,24 +390,32 @@ OVUM_API TypeHandle GetType_TypeConversionError(ThreadHandle thread);
 class TypeMemberIterator
 {
 private:
-	TypeHandle type;
-	int32_t index;
 	bool includeInherited;
+	TypeHandle type;
+	size_t index;
+	MemberHandle current;
 
 public:
-	inline TypeMemberIterator(TypeHandle type)
-		: type(type), index(-1), includeInherited(false)
+	inline TypeMemberIterator(TypeHandle type) :
+		includeInherited(false),
+		type(type),
+		index(0),
+		current(nullptr)
 	{ }
-	inline TypeMemberIterator(TypeHandle type, bool includeInherited)
-		: type(type), index(-1), includeInherited(includeInherited)
+	inline TypeMemberIterator(TypeHandle type, bool includeInherited) :
+		includeInherited(includeInherited),
+		type(type),
+		index(0),
+		current(nullptr)
 	{ }
 
 	inline bool MoveNext()
 	{
 		while (type)
 		{
-			if (index < Type_GetMemberCount(type) - 1)
+			if (index < Type_GetMemberCount(type))
 			{
+				current = Type_GetMemberByIndex(type, index);
 				index++;
 				return true;
 			}
@@ -415,7 +423,7 @@ public:
 			// Try the base type, unless includeInherited is false,
 			// in which case we stop.
 			type = includeInherited ? Type_GetBaseType(type) : nullptr;
-			index = -1;
+			index = 0;
 		}
 
 		return false;
@@ -423,7 +431,7 @@ public:
 
 	inline MemberHandle Current()
 	{
-		return Type_GetMemberByIndex(type, index);
+		return current;
 	}
 };
 

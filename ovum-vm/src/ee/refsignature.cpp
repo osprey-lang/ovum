@@ -35,12 +35,12 @@ bool RefSignature::IsParamRef(ovlocals_t index) const
 
 LongRefSignature::LongRefSignature(ovlocals_t paramCount)
 {
-	uint32_t maskCount = (paramCount + ParamsPerMask - 1) / ParamsPerMask;
+	ovlocals_t maskCount = (paramCount + ParamsPerMask - 1) / ParamsPerMask;
 
 	this->paramCount = maskCount * ParamsPerMask;
 
 	maskValues = Box<uint32_t[]>(new uint32_t[maskCount]);
-	for (uint32_t i = 0; i < maskCount; i++)
+	for (ovlocals_t i = 0; i < maskCount; i++)
 		maskValues[i] = 0;
 }
 
@@ -82,8 +82,8 @@ bool LongRefSignature::Equals(const LongRefSignature &other) const
 
 uint32_t RefSignaturePool::Add(LongRefSignature *signature, bool &isNew)
 {
-	uint32_t i = 0;
-	while (i < (uint32_t)signatures.size())
+	size_t i = 0;
+	while (i < signatures.size())
 	{
 		auto &item = signatures[i];
 		if (item->Equals(*signature))

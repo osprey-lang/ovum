@@ -98,14 +98,29 @@ namespace unicode
 
 namespace string
 {
-	int32_t IndexOf(const String *str, const String *part, int32_t startIndex, int32_t count);
-	int32_t LastIndexOf(const String *str, const String *part);
+	const size_t NOT_FOUND = (size_t)-1;
+
+	size_t IndexOf(const String *str, const String *part, size_t startIndex, size_t count);
+
+	size_t LastIndexOf(const String *str, const String *part);
 
 	int Format(ThreadHandle thread, const String *format, ListInst *list, String *&result);
 	int Format(ThreadHandle thread, const String *format, Value *hash, String *&result);
 
-	String *Replace(ThreadHandle thread, String *input, const ovchar_t oldChar, const ovchar_t newChar, const int64_t maxTimes);
-	String *Replace(ThreadHandle thread, String *input, String *oldValue, String *newValue, const int64_t maxTimes);
+	String *Replace(
+		ThreadHandle thread,
+		String *input,
+		ovchar_t oldChar,
+		ovchar_t newChar,
+		int64_t maxTimes
+	);
+	String *Replace(
+		ThreadHandle thread,
+		String *input,
+		String *oldValue,
+		String *newValue,
+		int64_t maxTimes
+	);
 }
 
 #endif // AVES__STRING_H

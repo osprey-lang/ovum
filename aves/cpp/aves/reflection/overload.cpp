@@ -8,8 +8,7 @@ AVES_API int OVUM_CDECL aves_reflection_Overload_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(OverloadInst));
 
-	int r;
-	r = Type_AddNativeField(type, offsetof(OverloadInst,method), NativeFieldType::VALUE);
+	int r = Type_AddNativeField(type, offsetof(OverloadInst,method), NativeFieldType::VALUE);
 	if (r != OVUM_SUCCESS)
 		return r;
 	RETURN_SUCCESS;
@@ -31,7 +30,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Overload_new)
 
 	OverloadInst *inst = THISV.Get<OverloadInst>();
 	inst->overload = (OverloadHandle)args[1].v.instance;
-	inst->index = (int32_t)args[3].v.integer;
+	inst->index = (size_t)args[3].v.integer;
 	inst->method = args[2];
 }
 END_NATIVE_FUNCTION
@@ -60,7 +59,7 @@ AVES_API NATIVE_FUNCTION(aves_reflection_Overload_get_method)
 AVES_API NATIVE_FUNCTION(aves_reflection_Overload_get_index)
 {
 	OverloadInst *inst = THISV.Get<OverloadInst>();
-	VM_PushInt(thread, inst->index);
+	VM_PushInt(thread, (int64_t)inst->index);
 	RETURN_SUCCESS;
 }
 
@@ -138,12 +137,12 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Overload_getCurrentOverload)
 	CHECKED(GC_Construct(thread, type, 1, nullptr));
 
 	// And now find the index of the overload
-	int32_t index = 0;
-	for (int32_t count = Method_GetOverloadCount(method); index < count; index++)
+	size_t index = 0;
+	for (size_t count = Method_GetOverloadCount(method); index < count; index++)
 		if (Method_GetOverload(method, index) == overload)
 			break;
 	OVUM_ASSERT(index < Method_GetOverloadCount(method));
-	VM_PushInt(thread, index);
+	VM_PushInt(thread, (int64_t)index);
 
 	// Stack now contains:
 	//        handle: NativeHandle (overload)
@@ -160,8 +159,7 @@ AVES_API int OVUM_CDECL aves_reflection_Parameter_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(ParamInst));
 
-	int r;
-	r = Type_AddNativeField(type, offsetof(ParamInst,param) + offsetof(ParamInfo,name), NativeFieldType::STRING);
+	int r = Type_AddNativeField(type, offsetof(ParamInst,param.name), NativeFieldType::STRING);
 	if (r != OVUM_SUCCESS)
 		return r;
 	RETURN_SUCCESS;
@@ -184,15 +182,15 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Parameter_new)
 
 	CHECKED(IntFromValue(thread, args + 2));
 	bool found = false;
-	if (args[2].v.uinteger <= INT32_MAX)
-		found = Overload_GetParameter(ovl->overload, (int32_t)args[2].v.integer, &inst->param);
+	if (args[2].v.uinteger <= OVLOCALS_MAX)
+		found = Overload_GetParameter(ovl->overload, (ovlocals_t)args[2].v.integer, &inst->param);
 	if (!found)
 	{
 		VM_PushString(thread, strings::index);
 		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentRangeError, 1);
 	}
 
-	inst->index = (int32_t)args[2].v.integer;
+	inst->index = (ovlocals_t)args[2].v.integer;
 	inst->overload = args[1];
 }
 END_NATIVE_FUNCTION

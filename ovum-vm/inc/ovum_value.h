@@ -6,11 +6,11 @@
 // This aggregate template class allows a String to be represented "literally",
 // in an aggregate initializer. Remember that you have to repeat the length twice.
 // And then you can safely cast LitString* to String*!
-template<int Len>
+template<size_t Len>
 class LitString
 {
 public:
-	const int32_t length;
+	const size_t length;
 	int32_t hashCode;
 	StringFlags flags;
 	ovchar_t chars[Len + 1];
@@ -80,6 +80,7 @@ public:
 	{
 		return reinterpret_cast<T*>(value->v.instance);
 	}
+
 	inline T *operator*() const
 	{
 		return reinterpret_cast<T*>(value->v.instance);

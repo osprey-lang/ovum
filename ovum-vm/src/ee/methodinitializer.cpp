@@ -27,7 +27,7 @@ public:
 private:
 	struct Branch
 	{
-		int32_t firstInstr;
+		size_t firstInstr;
 		ovlocals_t stackHeight;
 		StackEntry stack[MaxStack];
 	};
@@ -48,7 +48,7 @@ public:
 		return branches.front().stackHeight;
 	}
 
-	virtual void EnqueueBranch(int32_t firstInstr)
+	virtual void EnqueueBranch(size_t firstInstr)
 	{
 		Branch &cur = branches.front();
 
@@ -58,7 +58,7 @@ public:
 
 		branches.push(br);
 	}
-	virtual void EnqueueBranch(ovlocals_t stackHeight, int32_t firstInstr)
+	virtual void EnqueueBranch(ovlocals_t stackHeight, size_t firstInstr)
 	{
 		Branch br = { firstInstr, stackHeight };
 		for (ovlocals_t i = 0; i < stackHeight; i++)
@@ -66,13 +66,13 @@ public:
 		branches.push(br);
 	}
 
-	virtual int32_t DequeueBranch()
+	virtual size_t DequeueBranch()
 	{
 		branches.pop();
 		if (branches.size() > 0)
 			return branches.front().firstInstr;
 		else
-			return -1;
+			return NO_BRANCH;
 	}
 
 	virtual bool ApplyStackChange(instr::StackChange change, bool pushRef)
@@ -135,7 +135,7 @@ private:
 	class Branch
 	{
 	public:
-		int32_t firstInstr;
+		size_t firstInstr;
 		ovlocals_t maxStack;
 		ovlocals_t stackHeight;
 		Box<StackEntry[]> stack;
@@ -146,13 +146,13 @@ private:
 			stackHeight(0),
 			stack()
 		{ }
-		inline Branch(int32_t firstInstr, ovlocals_t maxStack) :
+		inline Branch(size_t firstInstr, ovlocals_t maxStack) :
 			firstInstr(firstInstr),
 			maxStack(maxStack),
 			stackHeight(0),
 			stack(new StackEntry[maxStack])
 		{ }
-		inline Branch(int32_t firstInstr, const Branch &other) :
+		inline Branch(size_t firstInstr, const Branch &other) :
 			firstInstr(firstInstr),
 			maxStack(other.maxStack),
 			stackHeight(other.stackHeight),
@@ -190,7 +190,7 @@ private:
 	std::queue<Branch> branches;
 
 public:
-	LargeStackManager(uint32_t maxStack, RefSignaturePool *refSignatures)
+	LargeStackManager(ovlocals_t maxStack, RefSignaturePool *refSignatures)
 		: StackManager(refSignatures), maxStack(maxStack)
 	{
 		branches.push(Branch());
@@ -201,28 +201,28 @@ public:
 		return branches.front().stackHeight;
 	}
 
-	virtual void EnqueueBranch(int32_t firstInstr)
+	virtual void EnqueueBranch(size_t firstInstr)
 	{
 		Branch br(branches.front()); // Use the copy constructor! :D
 		br.firstInstr = firstInstr;
 		branches.push(br);
 	}
-	virtual void EnqueueBranch(ovlocals_t stackHeight, int32_t firstInstr)
+	virtual void EnqueueBranch(ovlocals_t stackHeight, size_t firstInstr)
 	{
 		Branch br = Branch(firstInstr, maxStack);
 		br.stackHeight = stackHeight;
-		for (uint32_t i = 0; i < stackHeight; i++)
+		for (ovlocals_t i = 0; i < stackHeight; i++)
 			br.stack[i].flags = StackEntry::IN_USE;
 		branches.push(br);
 	}
 
-	virtual int32_t DequeueBranch()
+	virtual size_t DequeueBranch()
 	{
 		branches.pop();
 		if (branches.size() > 0)
 			return branches.front().firstInstr;
 		else
-			return -1;
+			return NO_BRANCH;
 	}
 
 	virtual bool ApplyStackChange(instr::StackChange change, bool pushRef)
@@ -247,7 +247,7 @@ public:
 	{
 		const Branch &cur = branches.front();
 
-		for (uint32_t i = 1; i <= argCount; i++)
+		for (ovlocals_t i = 1; i <= argCount; i++)
 			if (cur.stack[cur.stackHeight - i].flags & StackEntry::IS_REF)
 				return true;
 
@@ -267,8 +267,8 @@ public:
 
 		RefSignatureBuilder refBuilder(argCount);
 
-		uint32_t origin = cur.stackHeight - argCount;
-		for (uint32_t i = 0; i < argCount; i++)
+		ovlocals_t origin = cur.stackHeight - argCount;
+		for (ovlocals_t i = 0; i < argCount; i++)
 			if (cur.stack[origin + i].flags & StackEntry::IS_REF)
 				refBuilder.SetParam(i, true);
 
@@ -339,29 +339,35 @@ void MethodInitializer::InitBranchOffsets(instr::MethodBuilder &builder)
 	if (!builder.HasBranches())
 		return;
 
-	for (int32_t i = 0; i < builder.GetLength(); i++)
+	for (size_t i = 0; i < builder.GetLength(); i++)
 	{
 		Instruction *instruction = builder[i];
 		if (instruction->IsBranch())
 		{
 			Branch *br = static_cast<Branch*>(instruction);
-			br->target = builder.FindIndex(builder.GetOriginalOffset(i) + builder.GetOriginalSize(i) + br->target);
-			if (br->target == -1)
-				throw MethodInitException("Invalid branch offset.", method, i,
-					MethodInitException::INVALID_BRANCH_OFFSET);
-			builder[br->target]->AddIncomingBranch();
+			br->target = JumpTarget::FromIndex(
+				builder.FindIndex(
+					builder.GetOriginalOffset(i) +
+					builder.GetOriginalSize(i) +
+					br->target.offset
+				)
+			);
+			builder[br->target.index]->AddIncomingBranch();
 		}
 		else if (instruction->IsSwitch())
 		{
 			Switch *sw = static_cast<Switch*>(instruction);
-			for (uint32_t t = 0; t < sw->targetCount; t++)
+			for (size_t t = 0; t < sw->targetCount; t++)
 			{
-				int32_t *target = sw->targets + t;
-				*target = builder.FindIndex(builder.GetOriginalOffset(i) + builder.GetOriginalSize(i) + *target);
-				if (*target == -1)
-					throw MethodInitException("Invalid branch offset.", method, i,
-						MethodInitException::INVALID_BRANCH_OFFSET);
-				builder[*target]->AddIncomingBranch();
+				auto &target = sw->targets[t];
+				target = JumpTarget::FromIndex(
+					builder.FindIndex(
+						builder.GetOriginalOffset(i) +
+						builder.GetOriginalSize(i) +
+						target.offset
+					)
+				);
+				builder[target.index]->AddIncomingBranch();
 			}
 		}
 	}
@@ -369,7 +375,7 @@ void MethodInitializer::InitBranchOffsets(instr::MethodBuilder &builder)
 
 void MethodInitializer::InitTryBlockOffsets(instr::MethodBuilder &builder)
 {
-	for (int32_t i = 0; i < method->tryBlockCount; i++)
+	for (size_t i = 0; i < method->tryBlockCount; i++)
 	{
 		TryBlock &tryBlock = method->tryBlocks[i];
 		tryBlock.tryStart = builder.FindIndex(tryBlock.tryStart);
@@ -378,7 +384,7 @@ void MethodInitializer::InitTryBlockOffsets(instr::MethodBuilder &builder)
 		switch (tryBlock.kind)
 		{
 		case TryKind::CATCH:
-			for (int32_t c = 0; c < tryBlock.catches.count; c++)
+			for (size_t c = 0; c < tryBlock.catches.count; c++)
 			{
 				CatchBlock &catchBlock = tryBlock.catches.blocks[c];
 				if (catchBlock.caughtType == nullptr)
@@ -405,8 +411,8 @@ void MethodInitializer::InitDebugSymbolOffsets(instr::MethodBuilder &builder)
 		return;
 
 	debug::OverloadSymbols *debug = method->debugSymbols;
-	int32_t debugSymbolCount = debug->GetSymbolCount();
-	for (int32_t i = 0; i < debugSymbolCount; i++)
+	size_t debugSymbolCount = debug->GetSymbolCount();
+	for (size_t i = 0; i < debugSymbolCount; i++)
 	{
 		debug::DebugSymbol &sym = debug->GetSymbol(i);
 		sym.startOffset = builder.FindIndex(sym.startOffset);
@@ -422,8 +428,8 @@ void MethodInitializer::CalculateStackHeights(instr::MethodBuilder &builder, Sta
 
 	EnqueueInitialBranches(builder, stack);
 
-	int32_t index;
-	while ((index = stack.DequeueBranch()) != -1)
+	size_t index;
+	while ((index = stack.DequeueBranch()) != StackManager::NO_BRANCH)
 	{
 		Instruction *prev = nullptr;
 		while (true)
@@ -453,21 +459,21 @@ void MethodInitializer::CalculateStackHeights(instr::MethodBuilder &builder, Sta
 				Branch *br = static_cast<Branch*>(instr);
 				if (br->IsConditional())
 				{
-					stack.EnqueueBranch(br->target); // Use the same stack
+					stack.EnqueueBranch(br->target.index); // Use the same stack
 					TryUpdateConditionalBranch(builder, prev, br, index);
 				}
 				else
 				{
 					prev = nullptr;
-					index = br->target; // Continue at the target instruction
+					index = br->target.index; // Continue at the target instruction
 					continue; // don't increment index
 				}
 			}
 			else if (instr->IsSwitch())
 			{
 				Switch *sw = static_cast<Switch*>(instr);
-				for (uint32_t i = 0; i < sw->targetCount; i++)
-					stack.EnqueueBranch(sw->targets[i]); // Use the same stack
+				for (size_t i = 0; i < sw->targetCount; i++)
+					stack.EnqueueBranch(sw->targets[i].index); // Use the same stack
 			}
 			else if (instr->opcode == OPI_RET || instr->opcode == OPI_RETNULL ||
 				instr->opcode == OPI_THROW || instr->opcode == OPI_RETHROW ||
@@ -494,7 +500,7 @@ void MethodInitializer::EnqueueInitialBranches(instr::MethodBuilder &builder, St
 	// If the method has any try blocks, we must add the first instruction
 	// of each catch, finally and fault as a branch, because they will never
 	// be reached by fallthrough or branching.
-	for (int32_t i = 0; i < method->tryBlockCount; i++)
+	for (size_t i = 0; i < method->tryBlockCount; i++)
 	{
 		TryBlock &tryBlock = method->tryBlocks[i];
 		switch (tryBlock.kind)
@@ -504,7 +510,7 @@ void MethodInitializer::EnqueueInitialBranches(instr::MethodBuilder &builder, St
 				// The initial stack height of a catch block is 1, because the
 				// thrown error is on the stack.
 				CatchBlocks &catches = tryBlock.catches;
-				for (int32_t c = 0; c < catches.count; c++)
+				for (size_t c = 0; c < catches.count; c++)
 					stack.EnqueueBranch(1, catches.blocks[c].catchStart);
 			}
 			break;
@@ -516,20 +522,36 @@ void MethodInitializer::EnqueueInitialBranches(instr::MethodBuilder &builder, St
 	}
 }
 
-void MethodInitializer::VerifyStackHeight(instr::MethodBuilder &builder, StackManager &stack, int32_t index)
+void MethodInitializer::VerifyStackHeight(
+	instr::MethodBuilder &builder,
+	StackManager &stack,
+	size_t index
+)
 {
 	ovlocals_t stackHeight = stack.GetStackHeight();
 
 	if (builder.GetStackHeight(index) != stackHeight)
-		throw MethodInitException("Instruction reached with different stack heights.",
-			method, index, MethodInitException::INCONSISTENT_STACK);
+		throw MethodInitException::InconsistentStack(
+			"Instruction reached with different stack heights.",
+			method,
+			index
+		);
 
 	if (builder.GetRefSignature(index) != stack.GetRefSignature(stackHeight))
-		throw MethodInitException("Instruction reached with different referencenesses of stack slots.",
-			method, index, MethodInitException::INCONSISTENT_STACK);
+		throw MethodInitException::InconsistentStack(
+			"Instruction reached with different referencenesses of stack slots.",
+			method,
+			index
+		);
 }
 
-void MethodInitializer::TryUpdateInputOutput(instr::MethodBuilder &builder, StackManager &stack, instr::Instruction *prev, instr::Instruction *instr, int32_t index)
+void MethodInitializer::TryUpdateInputOutput(
+	instr::MethodBuilder &builder,
+	StackManager &stack,
+	instr::Instruction *prev,
+	instr::Instruction *instr,
+	size_t index
+)
 {
 	using namespace instr;
 
@@ -627,22 +649,36 @@ void MethodInitializer::TryUpdateInputOutput(instr::MethodBuilder &builder, Stac
 		if (instr->AcceptsRefs())
 		{
 			if (instr->SetReferenceSignature(stack) != -1)
-				throw MethodInitException("Incorrect referenceness of stack arguments.",
-					method, index, MethodInitException::INCONSISTENT_STACK);
+				throw MethodInitException::InconsistentStack(
+					"Incorrect referenceness of stack arguments.",
+					method,
+					index
+				);
 		}
 		else if (stack.HasRefs(sc.removed))
 		{
-			throw MethodInitException("The instruction does not take references on the stack.",
-				method, index, MethodInitException::STACK_HAS_REFS);
+			throw MethodInitException::StackHasRefs(
+				"The instruction does not take references on the stack.",
+				method,
+				index
+			);
 		}
 	}
 
 	if (!stack.ApplyStackChange(sc, instr->PushesRef()))
-		throw MethodInitException("There are not enough values on the stack.",
-			method, index, MethodInitException::INSUFFICIENT_STACK_HEIGHT);
+		throw MethodInitException::InsufficientStackHeight(
+			"There are not enough values on the stack.",
+			method,
+			index
+		);
 }
 
-void MethodInitializer::TryUpdateConditionalBranch(instr::MethodBuilder &builder, instr::Instruction *prev, instr::Branch *branch, int32_t index)
+void MethodInitializer::TryUpdateConditionalBranch(
+	instr::MethodBuilder &builder,
+	instr::Instruction *prev,
+	instr::Branch *branch,
+	size_t index
+)
 {
 	// If the previous instruction is one of the operators ==, <, >, <= or >=,
 	// and the current instruction is a brtrue or brfalse, then we can transform
@@ -714,7 +750,10 @@ bool MethodInitializer::IsBranchComparisonOperator(IntermediateOpcode opc)
 	}
 }
 
-IntermediateOpcode MethodInitializer::GetBranchComparisonOpcode(IntermediateOpcode branchOpc, IntermediateOpcode comparisonOpc)
+IntermediateOpcode MethodInitializer::GetBranchComparisonOpcode(
+	IntermediateOpcode branchOpc,
+	IntermediateOpcode comparisonOpc
+)
 {
 	IntermediateOpcode result = OPI_NOP;
 	if (branchOpc == OPI_BRTRUE_L || branchOpc == OPI_BRTRUE_S)
@@ -751,7 +790,7 @@ void MethodInitializer::WriteInitializedBody(instr::MethodBuilder &builder)
 
 	// Let's allocate a buffer for the output, yay!
 	MethodBuffer buffer(builder.GetByteSize());
-	for (int32_t i = 0; i < builder.GetLength(); i++)
+	for (size_t i = 0; i < builder.GetLength(); i++)
 	{
 		Instruction *instr = builder[i];
 		instr->WriteBytes(buffer, builder);
@@ -768,7 +807,7 @@ void MethodInitializer::WriteInitializedBody(instr::MethodBuilder &builder)
 
 void MethodInitializer::FinalizeTryBlockOffsets(instr::MethodBuilder &builder)
 {
-	for (int32_t t = 0; t < method->tryBlockCount; t++)
+	for (size_t t = 0; t < method->tryBlockCount; t++)
 	{
 		TryBlock &tryBlock = method->tryBlocks[t];
 		
@@ -778,7 +817,7 @@ void MethodInitializer::FinalizeTryBlockOffsets(instr::MethodBuilder &builder)
 		switch (tryBlock.kind)
 		{
 		case TryKind::CATCH:
-			for (int32_t c = 0; c < tryBlock.catches.count; c++)
+			for (size_t c = 0; c < tryBlock.catches.count; c++)
 			{
 				CatchBlock &catchBlock = tryBlock.catches.blocks[c];
 				catchBlock.catchStart = builder.GetNewOffset(catchBlock.catchStart);
@@ -803,8 +842,8 @@ void MethodInitializer::FinalizeDebugSymbolOffsets(instr::MethodBuilder &builder
 		return;
 
 	debug::OverloadSymbols *debug = method->debugSymbols;
-	int32_t debugSymbolCount = debug->GetSymbolCount();
-	for (int32_t i = 0; i < debugSymbolCount; i++)
+	size_t debugSymbolCount = debug->GetSymbolCount();
+	for (size_t i = 0; i < debugSymbolCount; i++)
 	{
 		debug::DebugSymbol &sym = debug->GetSymbol(i);
 		sym.startOffset = builder.GetNewOffset(sym.startOffset);
@@ -818,12 +857,18 @@ Type *MethodInitializer::TypeFromToken(uint32_t token)
 {
 	Type *result = method->group->declModule->FindType(token);
 	if (!result)
-		throw MethodInitException("Unresolved TypeDef or TypeRef token ID.",
-			method, token, MethodInitException::UNRESOLVED_TOKEN_ID);
+		throw MethodInitException::UnresolvedToken(
+			"Unresolved TypeDef or TypeRef token.",
+			method,
+			token
+		);
 
 	if (result->IsInternal() && result->module != method->group->declModule)
-		throw MethodInitException("The type is not accessible from outside its declaring module.",
-			method, result, MethodInitException::INACCESSIBLE_TYPE);
+		throw MethodInitException::InaccessibleType(
+			"The type is not accessible from outside its declaring module.",
+			method,
+			result
+		);
 
 	return result;
 }
@@ -832,8 +877,11 @@ String *MethodInitializer::StringFromToken(uint32_t token)
 {
 	String *result = method->group->declModule->FindString(token);
 	if (!result)
-		throw MethodInitException("Unresolved String token ID.",
-			method, token, MethodInitException::UNRESOLVED_TOKEN_ID);
+		throw MethodInitException::UnresolvedToken(
+			"Unresolved String token.",
+			method,
+			token
+		);
 
 	return result;
 }
@@ -842,8 +890,11 @@ Method *MethodInitializer::MethodFromToken(uint32_t token)
 {
 	Method *result = method->group->declModule->FindMethod(token);
 	if (!result)
-		throw MethodInitException("Unresolved MethodDef, MethodRef, FunctionDef or FunctionRef token ID.",
-			method, token, MethodInitException::UNRESOLVED_TOKEN_ID);
+		throw MethodInitException::UnresolvedToken(
+			"Unresolved MethodDef, MethodRef, FunctionDef or FunctionRef token.",
+			method,
+			token
+		);
 
 	if (result->IsStatic())
 	{
@@ -858,8 +909,11 @@ Method *MethodInitializer::MethodFromToken(uint32_t token)
 			// or internal and declared in the same module as fromMethod
 			result->IsPublic() || result->declModule == method->group->declModule;
 		if (!accessible)
-			throw MethodInitException("The method is inaccessible from this location.",
-				method, result, MethodInitException::INACCESSIBLE_MEMBER);
+			throw MethodInitException::InaccessibleMember(
+				"The method is inaccessible from this location.",
+				method,
+				result
+			);
 	}
 
 	return result;
@@ -874,8 +928,12 @@ MethodOverload *MethodInitializer::MethodOverloadFromToken(uint32_t token, ovloc
 
 	MethodOverload *overload = method->ResolveOverload(argCount);
 	if (!overload)
-		throw MethodInitException("Could not find a overload that takes the specified number of arguments.",
-			this->method, method, argCount, MethodInitException::NO_MATCHING_OVERLOAD);
+		throw MethodInitException::NoMatchingOverload(
+			"Could not find a overload that takes the specified number of arguments.",
+			this->method,
+			method,
+			argCount
+		);
 
 	return overload;
 }
@@ -884,16 +942,25 @@ Field *MethodInitializer::FieldFromToken(uint32_t token, bool shouldBeStatic)
 {
 	Field *field = method->group->declModule->FindField(token);
 	if (!field)
-		throw MethodInitException("Unresolved FieldDef or FieldRef token ID.",
-			method, token, MethodInitException::UNRESOLVED_TOKEN_ID);
+		throw MethodInitException::UnresolvedToken(
+			"Unresolved FieldDef or FieldRef token.",
+			method,
+			token
+		);
 
 	if (field->IsStatic() && !field->IsAccessible(nullptr, method))
-		throw MethodInitException("The field is inaccessible from this location.",
-			method, field, MethodInitException::INACCESSIBLE_MEMBER);
+		throw MethodInitException::InaccessibleMember(
+			"The field is inaccessible from this location.",
+			method,
+			field
+		);
 
 	if (shouldBeStatic != field->IsStatic())
-		throw MethodInitException(shouldBeStatic ? "The field must be static." : "The field must be an instance field.",
-			method, field, MethodInitException::FIELD_STATIC_MISMATCH);
+		throw MethodInitException::FieldStaticMismatch(
+			shouldBeStatic ? "The field must be static." : "The field must be an instance field.",
+			method,
+			field
+		);
 
 	return field;
 }
@@ -901,20 +968,33 @@ Field *MethodInitializer::FieldFromToken(uint32_t token, bool shouldBeStatic)
 void MethodInitializer::EnsureConstructible(Type *type, ovlocals_t argCount)
 {
 	if (type->IsAbstract() || type->IsStatic())
-		throw MethodInitException("Abstract and static types cannot be used with the newobj instruction.",
-			method, type, MethodInitException::TYPE_NOT_CONSTRUCTIBLE);
+		throw MethodInitException::TypeNotConstructible(
+			"Abstract and static types cannot be used with the newobj instruction.",
+			method,
+			type
+		);
 
 	if (type->instanceCtor == nullptr)
-		throw MethodInitException("The type does not declare an instance constructor.",
-			method, type, MethodInitException::TYPE_NOT_CONSTRUCTIBLE);
+		throw MethodInitException::TypeNotConstructible(
+			"The type does not declare an instance constructor.",
+			method,
+			type
+		);
 
 	if (!type->instanceCtor->IsAccessible(type, method))
-		throw MethodInitException("The instance constructor is not accessible from this location.",
-			method, type, MethodInitException::TYPE_NOT_CONSTRUCTIBLE);
+		throw MethodInitException::TypeNotConstructible(
+			"The instance constructor is not accessible from this location.",
+			method,
+			type
+		);
 
 	if (!type->instanceCtor->ResolveOverload(argCount))
-		throw MethodInitException("The instance constructor does not take the specified number of arguments.",
-			method, type->instanceCtor, argCount, MethodInitException::NO_MATCHING_OVERLOAD);
+		throw MethodInitException::NoMatchingOverload(
+			"The instance constructor does not take the specified number of arguments.",
+			method,
+			type->instanceCtor,
+			argCount
+		);
 }
 
 /*** Step 1: Reading the instructions ***/
@@ -1170,62 +1250,81 @@ void MethodInitializer::ReadInstructions(instr::MethodBuilder &builder)
 			instr = new SimpleInstruction(OPI_RET, StackChange(1, 0));
 			break;
 		case OPC_BR_S: // sb:trg
-			instr = new Branch(*(int8_t*)ip++, /*isLeave:*/ false);
+			{
+				JumpTarget target = JumpTarget::FromOffset(*(int8_t*)ip++);
+				instr = new Branch(target, /*isLeave:*/ false);
+			}
 			break;
 		case OPC_BRNULL_S: // sb:trg
-			instr = new ConditionalBranch(*(int8_t*)ip++, ConditionalBranch::IF_NULL);
+			{
+				JumpTarget target = JumpTarget::FromOffset(*(int8_t*)ip++);
+				instr = new ConditionalBranch(target, ConditionalBranch::IF_NULL);
+			}
 			break;
 		case OPC_BRINST_S: // sb:trg
-			instr = new ConditionalBranch(*(int8_t*)ip++, ConditionalBranch::NOT_NULL);
+			{
+				JumpTarget target = JumpTarget::FromOffset(*(int8_t*)ip++);
+				instr = new ConditionalBranch(target, ConditionalBranch::NOT_NULL);
+			}
 			break;
 		case OPC_BRFALSE_S: // sb:trg
-			instr = new ConditionalBranch(*(int8_t*)ip++, ConditionalBranch::IF_FALSE);
+			{
+				JumpTarget target = JumpTarget::FromOffset(*(int8_t*)ip++);
+				instr = new ConditionalBranch(target, ConditionalBranch::IF_FALSE);
+			}
 			break;
 		case OPC_BRTRUE_S: // sb:trg
-			instr = new ConditionalBranch(*(int8_t*)ip++, ConditionalBranch::IF_TRUE);
+			{
+				JumpTarget target = JumpTarget::FromOffset(*(int8_t*)ip++);
+				instr = new ConditionalBranch(target, ConditionalBranch::IF_TRUE);
+			}
 			break;
 		case OPC_BRREF_S:  // sb:trg	(even)
 		case OPC_BRNREF_S: // sb:trg	(odd)
-			instr = new BranchIfReference(*(int8_t*)ip++, /*branchIfSame:*/ (*opc & 1) == 0);
+			{
+				JumpTarget target = JumpTarget::FromOffset(*(int8_t*)ip++);
+				instr = new BranchIfReference(target, /*branchIfSame:*/ (*opc & 1) == 0);
+			}
 			break;
 		case OPC_BRTYPE_S: // u4:type  sb:trg
 			{
 				Type *type = TypeFromToken(U32_ARG(ip));
 				ip += sizeof(uint32_t);
-				instr = new BranchIfType(*(int8_t*)ip++, type);
+				JumpTarget target = JumpTarget::FromOffset(*(int8_t*)ip++);
+				instr = new BranchIfType(target, type);
 			}
 			break;
 		case OPC_BR: // i4:trg
 			{
-				int32_t target = I32_ARG(ip);
+				JumpTarget target = JumpTarget::FromOffset(I32_ARG(ip));
 				ip += sizeof(int32_t);
 				instr = new Branch(target, /*isLeave:*/ false);
 			}
 			break;
 		case OPC_BRNULL: // i4:trg
 			{
-				int32_t target = I32_ARG(ip);
+				JumpTarget target = JumpTarget::FromOffset(I32_ARG(ip));
 				ip += sizeof(int32_t);
 				instr = new ConditionalBranch(target, ConditionalBranch::IF_NULL);
 			}
 			break;
 		case OPC_BRINST: // i4:trg
 			{
-				int32_t target = I32_ARG(ip);
+				JumpTarget target = JumpTarget::FromOffset(I32_ARG(ip));
 				ip += sizeof(int32_t);
 				instr = new ConditionalBranch(target, ConditionalBranch::NOT_NULL);
 			}
 			break;
 		case OPC_BRFALSE: // i4:trg
 			{
-				int32_t target = I32_ARG(ip);
+				JumpTarget target = JumpTarget::FromOffset(I32_ARG(ip));
 				ip += sizeof(int32_t);
 				instr = new ConditionalBranch(target, ConditionalBranch::IF_FALSE);
 			}
 			break;
 		case OPC_BRTRUE: // i4:trg
 			{
-				int32_t target = I32_ARG(ip);
+				JumpTarget target = JumpTarget::FromOffset(I32_ARG(ip));
 				ip += sizeof(int32_t);
 				instr = new ConditionalBranch(target, ConditionalBranch::IF_TRUE);
 			}
@@ -1233,7 +1332,7 @@ void MethodInitializer::ReadInstructions(instr::MethodBuilder &builder)
 		case OPC_BRREF: // i4:trg		(even)
 		case OPC_BRNREF: // i4:trg		(odd)
 			{
-				int32_t target = I32_ARG(ip);
+				JumpTarget target = JumpTarget::FromOffset(I32_ARG(ip));
 				ip += sizeof(int32_t);
 				instr = new BranchIfReference(target, /*branchIfSame:*/ (*opc & 1) == 0);
 			}
@@ -1242,29 +1341,32 @@ void MethodInitializer::ReadInstructions(instr::MethodBuilder &builder)
 			{
 				Type *type = TypeFromToken(U32_ARG(ip));
 				ip += sizeof(uint32_t);
-				int32_t target = I32_ARG(ip);
+				JumpTarget target = JumpTarget::FromOffset(I32_ARG(ip));
 				ip += sizeof(int32_t);
 				instr = new BranchIfType(target, type);
 			}
 			break;
 		case OPC_SWITCH_S: // u2:n  sb:targets...
 			{
-				uint32_t count = U16_ARG(ip);
+				size_t count = U16_ARG(ip);
 				ip += sizeof(uint16_t);
-				Box<int32_t[]> targets(new int32_t[count]);
-				for (uint32_t i = 0; i < count; i++)
-					targets[i] = *(int8_t*)ip++;
-				instr = new Switch(count, targets.release());
+				Box<JumpTarget[]> targets(new JumpTarget[count]);
+				for (size_t i = 0; i < count; i++)
+					targets[i] = JumpTarget::FromOffset(*(int8_t*)ip++);
+				instr = new Switch(count, std::move(targets));
 			}
 			break;
 		case OPC_SWITCH: // u2:n  i4:targets...
 			{
-				uint32_t count = U16_ARG(ip);
+				size_t count = U16_ARG(ip);
 				ip += sizeof(uint16_t);
-				Box<int32_t[]> targets(new int32_t[count]);
-				CopyMemoryT(targets.get(), (int32_t*)ip, count);
-				ip += count * sizeof(int32_t);
-				instr = new Switch(count, targets.release());
+				Box<JumpTarget[]> targets(new JumpTarget[count]);
+				for (size_t i = 0; i < count; i++)
+				{
+					targets[i] = JumpTarget::FromOffset(*(int32_t*)ip);
+					ip += sizeof(int32_t);
+				}
+				instr = new Switch(count, std::move(targets));
 			}
 			break;
 		// Operators
@@ -1427,12 +1529,14 @@ void MethodInitializer::ReadInstructions(instr::MethodBuilder &builder)
 			instr = new SimpleInstruction(OPI_RETHROW, StackChange::empty);
 			break;
 		case OPC_LEAVE_S: // sb:trg
-			instr = new Branch(*(int8_t*)ip, true);
-			ip++;
+			{
+				JumpTarget target = JumpTarget::FromOffset(*(int8_t*)ip++);
+				instr = new Branch(target, true);
+			}
 			break;
 		case OPC_LEAVE: // i4:trg
 			{
-				int32_t target = I32_ARG(ip);
+				JumpTarget target = JumpTarget::FromOffset(I32_ARG(ip));
 				ip += sizeof(int32_t);
 				instr = new Branch(target, true);
 			}
@@ -1520,9 +1624,13 @@ void MethodInitializer::ReadInstructions(instr::MethodBuilder &builder)
 			}
 			break;
 		default:
-			throw MethodInitException("Invalid opcode encountered.", method);
+			throw MethodInitException::General("Invalid opcode encountered.", method);
 		}
-		builder.Append((uint32_t)((char*)opc - (char*)method->entry), (uint32_t)((char*)ip - (char*)opc), instr);
+		builder.Append(
+			(uint32_t)(reinterpret_cast<uintptr_t>(opc) - reinterpret_cast<uintptr_t>(method->entry)),
+			(size_t)(reinterpret_cast<uintptr_t>(ip) - reinterpret_cast<uintptr_t>(opc)),
+			instr
+		);
 	}
 }
 

@@ -51,13 +51,19 @@ AVES_API NATIVE_FUNCTION(aves_Real_getHashCode)
 
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Real_toString)
 {
-	using namespace std;
 	static const int precision = 16;
 
 	int decimal = 0, sign = 0;
-	unique_ptr<char, dtoa_deleter> resultBuf(_aves_dtoa(THISV.v.real, FPM_MAX_SIGNIFICANT, precision, &decimal, &sign, nullptr));
+	std::unique_ptr<char, dtoa_deleter> resultBuf(_aves_dtoa(
+		THISV.v.real,
+		FPM_MAX_SIGNIFICANT,
+		precision,
+		&decimal,
+		&sign,
+		nullptr
+	));
 	char *result = resultBuf.get(); // for simplicity
-	int32_t length = (int32_t)strlen(result);
+	size_t length = strlen(result);
 
 	ovchar_t buf[32]; // The return value will NEVER be bigger than this
 	ovchar_t *bufp = buf;
@@ -84,7 +90,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Real_toString)
 			// followed by a decimal point and the rest,
 			// if there is a rest.
 			*bufp++ = '.';
-			for (int i = 1; i < length; i++)
+			for (size_t i = 1; i < length; i++)
 				*bufp++ = result[i];
 		}
 		*bufp++ = 'e';
@@ -102,25 +108,25 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Real_toString)
 		*bufp++ = '.';
 		for (int i = 0; i < -decimal; i++)
 			*bufp++ = '0';
-		for (int i = 0; i < length; i++)
+		for (size_t i = 0; i < length; i++)
 			*bufp++ = result[i];
 	}
-	else if (decimal >= length)
+	else if ((size_t)decimal >= length)
 	{
 		// Append the number, followed by enough zeroes
-		int i;
+		size_t i;
 		for (i = 0; i < length; i++)
 			*bufp++ = result[i];
 
 		if (decimal != 9999)
-			while (i++ < decimal)
+			while (i++ < (size_t)decimal)
 				*bufp++ = '0';
 	}
 	else
 	{
 		// The decimal point is somewhere within the returned number
-		int i;
-		for (i = 0; i < decimal; i++)
+		size_t i;
+		for (i = 0; i < (size_t)decimal; i++)
 			*bufp++ = result[i];
 		*bufp++ = '.';
 		while (i < length)
@@ -139,19 +145,19 @@ AVES_API NATIVE_FUNCTION(aves_Real_parseInternal)
 	// Arguments: (str is String, start is Int, end is Int)
 	// Real.parse ensures that the string only contains whitespace.
 	// Also, start and end are guaranteed to be within the range
-	// of int32_t. (End is inclusive.)
+	// of size_t. (End is inclusive.)
 
 	String *str = args[0].v.string;
-	int32_t start = (int32_t)args[1].v.integer;
-	int32_t end = (int32_t)args[2].v.integer;
+	size_t start = (size_t)args[1].v.integer;
+	size_t end = (size_t)args[2].v.integer;
 
 	double result;
 	{
 		// Create a temporary buffer of ASCII characters to pass into _aves_strtod
-		int32_t length = end - start + 1;
+		size_t length = end - start + 1;
 		// (One extra char for \0)
 		std::unique_ptr<char[]> ascii(new char[length + 1]);
-		for (int32_t i = 0; i < length; i++)
+		for (size_t i = 0; i < length; i++)
 			ascii[i] = (char)((&str->firstChar)[start + i]);
 		ascii[length] = '\0';
 

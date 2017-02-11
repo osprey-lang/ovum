@@ -5,7 +5,7 @@
 namespace ovum
 {
 
-GlobalMember &&GlobalMember::FromType(Type *type)
+GlobalMember GlobalMember::FromType(Type *type)
 {
 	GlobalMember result(
 		GlobalMemberFlags::TYPE,
@@ -16,7 +16,7 @@ GlobalMember &&GlobalMember::FromType(Type *type)
 	return std::move(result);
 }
 
-GlobalMember &&GlobalMember::FromFunction(Method *function)
+GlobalMember GlobalMember::FromFunction(Method *function)
 {
 	GlobalMember result(
 		GlobalMemberFlags::FUNCTION,
@@ -27,7 +27,7 @@ GlobalMember &&GlobalMember::FromFunction(Method *function)
 	return std::move(result);
 }
 
-GlobalMember &&GlobalMember::FromConstant(String *name, Value *value, bool isInternal)
+GlobalMember GlobalMember::FromConstant(String *name, Value *value, bool isInternal)
 {
 	GlobalMember result(
 		GlobalMemberFlags::CONSTANT,

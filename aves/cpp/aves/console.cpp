@@ -1,6 +1,7 @@
 #include "console.h"
 #include "aves.h"
 #include "../aves_state.h"
+#include "../tempbuffer.h"
 #include <ovum_string.h>
 #include <cstdio>
 #include <memory>
@@ -217,14 +218,8 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_readLine)
 
 	VM_EnterUnmanagedRegion(thread);
 
-	const int StackBufferSize = 256;
-	using namespace std;
-
-	int bufferSize = StackBufferSize;
-	int length = 0;
-	wchar_t *heapBuffer = nullptr; // Only allocated when needed
-	wchar_t buffer[StackBufferSize];
-	wchar_t *bufp = buffer;
+	TempBuffer<wchar_t, 256> buffer;
+	size_t length = 0;
 
 	// Note: this implementation does NOT append the newline to the result
 
@@ -239,43 +234,15 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_readLine)
 			break;
 		if (ch != '\r') // Ignore \r, because it only really occurs in \r\n
 		{
-			*bufp++ = ch;
+			buffer[length] = ch;
 			length++;
 		}
 
-		if (length == bufferSize)
-		{
-			// Oops - we've filled up the buffer!
-			// Time to allocate a bigger buffer.
-			bufferSize *= 2; // Double the buffer size
-			if (heapBuffer)
-			{
-				wchar_t *newHeapBuffer = (wchar_t*)realloc(heapBuffer, bufferSize * sizeof(wchar_t));
-				if (!newHeapBuffer)
-				{
-					free(heapBuffer);
-					VM_LeaveUnmanagedRegion(thread);
-					return VM_ThrowMemoryError(thread);
-				}
-				heapBuffer = newHeapBuffer;
-			}
-			else
-			{
-				// Move from the stack buffer to the heap buffer
-				heapBuffer = (wchar_t*)malloc(bufferSize * sizeof(wchar_t));
-				if (!heapBuffer)
-				{
-					VM_LeaveUnmanagedRegion(thread);
-					return VM_ThrowMemoryError(thread);
-				}
-				CopyMemoryT(heapBuffer, buffer, StackBufferSize);
-			}
-			bufp = heapBuffer + length;
-		}
+		// Make sure we can always add one more character. We'll either read one
+		// more from the console, or add \0
+		CHECKED_MEM(buffer.EnsureCapacity(length + 1, true));
 	}
-	// length < bufferSize here, so this does not
-	// overflow either of the buffers:
-	*bufp = 0; // Always terminate
+	buffer[length] = 0; // Always terminate
 
 	VM_LeaveUnmanagedRegion(thread);
 
@@ -290,9 +257,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_readLine)
 
 	// Convert input to a string, woohoo!
 	String *str;
-	CHECKED_MEM(str = String_FromWString(thread, heapBuffer ? heapBuffer : buffer));
-	if (heapBuffer)
-		free(heapBuffer);
+	CHECKED_MEM(str = String_FromWString(thread, buffer.GetPointer()));
 	VM_PushString(thread, str);
 }
 END_NATIVE_FUNCTION

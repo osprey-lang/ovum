@@ -88,10 +88,11 @@ Box<Module> ModuleReader::ReadModule()
 	ModuleParams params;
 	params.name = ReadString(header->name);
 	params.version = ReadVersion(header->version);
-	params.globalMemberCount =
+	params.globalMemberCount = static_cast<size_t>(
 		header->typeCount +
 		header->functionCount +
-		header->constantCount;
+		header->constantCount
+	);
 
 	Box<Module> output(new Module(vm, GetFileName(), params));
 	// We have to add the module to the list of partially opened modules, so that
@@ -138,7 +139,7 @@ String *ModuleReader::ReadString(mf::Rva<mf::WideString> rva)
 
 	String *string = GetGC()->ConstructModuleString(
 		nullptr,
-		str->length,
+		(size_t)str->length,
 		str->chars.Get()
 	);
 	// If a string with this value is already interned, we get that string instead.
@@ -179,11 +180,11 @@ Method *ModuleReader::GetMainMethod(Module *module, Token token)
 
 void ModuleReader::ReadStringTable(Module *module, const mf::StringTableHeader *header)
 {
-	int32_t count = header->length;
+	size_t count = (size_t)header->length;
 	module->strings.Init(count);
 
 	const mf::Rva<mf::WideString> *strings = header->strings.Get();
-	for (int32_t i = 0; i < count; i++)
+	for (size_t i = 0; i < count; i++)
 	{
 		String *str = ReadString(strings[i]);
 		module->strings.Add(str);
@@ -210,11 +211,11 @@ void ModuleReader::ReadModuleRefs(Module *module, const mf::RefTableHeader *head
 
 	MemberTable<Module*> &moduleRefs = module->moduleRefs;
 
-	int32_t count = header->moduleRefCount;
+	size_t count = (size_t)header->moduleRefCount;
 	moduleRefs.Init(count);
 
 	const mf::ModuleRef *refs = file.Deref(header->moduleRefs);
-	for (int32_t i = 0; i < count; i++)
+	for (size_t i = 0; i < count; i++)
 	{
 		const mf::ModuleRef *ref = refs + i;
 
@@ -243,11 +244,11 @@ void ModuleReader::ReadTypeRefs(Module *module, const mf::RefTableHeader *header
 
 	MemberTable<Type*> &typeRefs = module->typeRefs;
 
-	int32_t count = header->typeRefCount;
+	size_t count = (size_t)header->typeRefCount;
 	typeRefs.Init(count);
 
 	const mf::TypeRef *refs = file.Deref(header->typeRefs);
-	for (int32_t i = 0; i < count; i++)
+	for (size_t i = 0; i < count; i++)
 	{
 		const mf::TypeRef *ref = refs + i;
 
@@ -272,11 +273,11 @@ void ModuleReader::ReadFieldRefs(Module *module, const mf::RefTableHeader *heade
 
 	MemberTable<Field*> &fieldRefs = module->fieldRefs;
 
-	int32_t count = header->fieldRefCount;
+	size_t count = (size_t)header->fieldRefCount;
 	fieldRefs.Init(count);
 
 	const mf::FieldRef *refs = file.Deref(header->fieldRefs);
-	for (int32_t i = 0; i < count; i++)
+	for (size_t i = 0; i < count; i++)
 	{
 		const mf::FieldRef *ref = refs + i;
 
@@ -303,11 +304,11 @@ void ModuleReader::ReadMethodRefs(Module *module, const mf::RefTableHeader *head
 
 	MemberTable<Method*> &methodRefs = module->methodRefs;
 
-	int32_t count = header->methodRefCount;
+	size_t count = (size_t)header->methodRefCount;
 	methodRefs.Init(count);
 
 	const mf::MethodRef *refs = file.Deref(header->methodRefs);
-	for (int32_t i = 0; i < count; i++)
+	for (size_t i = 0; i < count; i++)
 	{
 		const mf::MethodRef *ref = refs + i;
 
@@ -334,11 +335,11 @@ void ModuleReader::ReadFunctionRefs(Module *module, const mf::RefTableHeader *he
 
 	MemberTable<Method*> &functionRefs = module->functionRefs;
 
-	int32_t count = header->functionRefCount;
+	size_t count = (size_t)header->functionRefCount;
 	functionRefs.Init(count);
 
 	const mf::FunctionRef *refs = file.Deref(header->functionRefs);
-	for (int32_t i = 0; i < count; i++)
+	for (size_t i = 0; i < count; i++)
 	{
 		const mf::FunctionRef *ref = refs + i;
 
@@ -377,13 +378,13 @@ void ModuleReader::ReadTypeDefs(Module *module, const mf::ModuleHeader *header)
 
 	auto &typeDefs = module->types;
 
-	int32_t count = header->typeCount;
+	size_t count = (size_t)header->typeCount;
 	typeDefs.Init(count);
 	module->fields.Init(header->fieldCount);
 	module->methods.Init(header->methodCount);
 
 	const mf::TypeDef *defs = file.Deref(header->types);
-	for (int32_t i = 0; i < count; i++)
+	for (size_t i = 0; i < count; i++)
 	{
 		const mf::TypeDef *def = defs + i;
 
@@ -407,10 +408,11 @@ Box<Type> ModuleReader::ReadSingleTypeDef(Module *module, const mf::ModuleHeader
 	Type *baseType = GetBaseType(module, def->baseType);
 	Type *sharedType = GetSharedType(module, def->sharedType);
 
-	int32_t memberCount =
+	size_t memberCount = static_cast<size_t>(
 		def->fieldCount +
 		def->methodCount +
-		def->propertyCount;
+		def->propertyCount
+	);
 	Box<Type> type(new Type(module, memberCount));
 	// TypeFlags is compatible with module_file::TypeFlags by design.
 	type->flags = static_cast<TypeFlags>(def->flags);
@@ -422,10 +424,32 @@ Box<Type> ModuleReader::ReadSingleTypeDef(Module *module, const mf::ModuleHeader
 	type->fieldsOffset = baseType != nullptr ? baseType->GetTotalSize() : 0;
 
 	// Type members
-	ReadFieldDefs(module, type.get(), header->fields.address, def->fieldCount, def->firstField);
-	ReadMethodDefs(module, type.get(), header->methods.address, def->methodCount, def->firstMethod);
-	ReadPropertyDefs(module, type.get(), def->propertyCount, def->properties);
-	ReadOperatorDefs(module, type.get(), def->operatorCount, def->operators);
+	ReadFieldDefs(
+		module,
+		type.get(),
+		header->fields.address,
+		(size_t)def->fieldCount,
+		def->firstField
+	);
+	ReadMethodDefs(
+		module,
+		type.get(),
+		header->methods.address,
+		(size_t)def->methodCount,
+		def->firstMethod
+	);
+	ReadPropertyDefs(
+		module,
+		type.get(),
+		(size_t)def->propertyCount,
+		def->properties
+	);
+	ReadOperatorDefs(
+		module,
+		type.get(),
+		(size_t)def->operatorCount,
+		def->operators
+	);
 
 	VerifyAnnotations(def->annotations);
 
@@ -494,7 +518,7 @@ void ModuleReader::RunTypeIniter(Module *module, Type *type, mf::Rva<mf::ByteStr
 		ModuleLoadError("An error occurred when executing a type initializer.");
 }
 
-void ModuleReader::ReadFieldDefs(Module *module, Type *type, uint32_t fieldsBase, int32_t count, Token firstField)
+void ModuleReader::ReadFieldDefs(Module *module, Type *type, uint32_t fieldsBase, size_t count, Token firstField)
 {
 	if (count == 0)
 		return;
@@ -505,7 +529,7 @@ void ModuleReader::ReadFieldDefs(Module *module, Type *type, uint32_t fieldsBase
 	const mf::FieldDef *defs = file.Read<mf::FieldDef>(
 		fieldsBase + sizeof(mf::FieldDef) * tokenIndex
 	);
-	for (int32_t i = 0; i < count; i++)
+	for (size_t i = 0; i < count; i++)
 	{
 		const mf::FieldDef *def = defs + i;
 
@@ -563,7 +587,7 @@ void ModuleReader::AddUnresolvedConstant(Module *module, Field *field, const mf:
 	unresolvedConstants.push_back(info);
 }
 
-void ModuleReader::ReadMethodDefs(Module *module, Type *type, uint32_t methodsBase, int32_t count, Token firstMethod)
+void ModuleReader::ReadMethodDefs(Module *module, Type *type, uint32_t methodsBase, size_t count, Token firstMethod)
 {
 	if (count == 0)
 		return;
@@ -574,7 +598,7 @@ void ModuleReader::ReadMethodDefs(Module *module, Type *type, uint32_t methodsBa
 	const mf::MethodDef *defs = file.Read<mf::MethodDef>(
 		methodsBase + sizeof(mf::FieldDef) * tokenIndex
 	);
-	for (int32_t i = 0; i < count; i++)
+	for (size_t i = 0; i < count; i++)
 	{
 		const mf::MethodDef *def = defs + i;
 
@@ -645,13 +669,13 @@ Method *ModuleReader::FindBaseMethod(Method *method, Type *declType)
 	return nullptr;
 }
 
-void ModuleReader::ReadPropertyDefs(Module *module, Type *type, int32_t count, mf::Rva<mf::PropertyDef[]> properties)
+void ModuleReader::ReadPropertyDefs(Module *module, Type *type, size_t count, mf::Rva<mf::PropertyDef[]> properties)
 {
 	if (count == 0)
 		return;
 
 	const mf::PropertyDef *defs = file.Deref(properties);
-	for (int32_t i = 0; i < count; i++)
+	for (size_t i = 0; i < count; i++)
 	{
 		const mf::PropertyDef *def = defs + i;
 
@@ -715,13 +739,13 @@ Method *ModuleReader::ReadPropertyAccessor(Module *module, Type *type, Token tok
 	return accessor;
 }
 
-void ModuleReader::ReadOperatorDefs(Module *module, Type *type, int32_t count, mf::Rva<mf::OperatorDef[]> operators)
+void ModuleReader::ReadOperatorDefs(Module *module, Type *type, size_t count, mf::Rva<mf::OperatorDef[]> operators)
 {
 	if (count == 0)
 		return;
 
 	const mf::OperatorDef *defs = file.Deref(operators);
-	for (int32_t i = 0; i < count; i++)
+	for (size_t i = 0; i < count; i++)
 	{
 		const mf::OperatorDef *def = defs + i;
 
@@ -763,11 +787,11 @@ void ModuleReader::ReadFunctionDefs(Module *module, const mf::ModuleHeader *head
 
 	auto &functions = module->functions;
 
-	int32_t count = header->functionCount;
+	size_t count = (size_t)header->functionCount;
 	functions.Init(count);
 
 	const mf::MethodDef *defs = file.Deref(header->functions);
-	for (int32_t i = 0; i < count; i++)
+	for (size_t i = 0; i < count; i++)
 	{
 		const mf::MethodDef *def = defs + i;
 
@@ -787,9 +811,9 @@ void ModuleReader::ReadConstantDefs(Module *module, const mf::ModuleHeader *head
 	if (header->constantCount == 0)
 		return;
 
-	int32_t count = header->constantCount;
+	size_t count = (size_t)header->constantCount;
 	const mf::ConstantDef *defs = file.Deref(header->constants);
-	for (int32_t i = 0; i < count; i++)
+	for (size_t i = 0; i < count; i++)
 	{
 		const mf::ConstantDef *def = defs + i;
 
@@ -848,7 +872,7 @@ Box<Method> ModuleReader::ReadSingleMethodDef(Module *module, const mf::MethodDe
 	String *name = ResolveString(module, def->name);
 	MemberFlags flags = GetMemberFlags(def->flags);
 
-	int32_t overloadCount = def->overloadCount;
+	size_t overloadCount = (size_t)def->overloadCount;
 	if (overloadCount == 0)
 		ModuleLoadError("Method must have at least one overload.");
 
@@ -858,7 +882,7 @@ Box<Method> ModuleReader::ReadSingleMethodDef(Module *module, const mf::MethodDe
 	Box<MethodOverload[]> overloads(new MethodOverload[overloadCount]);
 
 	const mf::OverloadDef *overloadDefs = file.Deref(def->overloads);
-	for (int32_t i = 0; i < overloadCount; i++)
+	for (size_t i = 0; i < overloadCount; i++)
 	{
 		const mf::OverloadDef *overloadDef = overloadDefs + i;
 
@@ -878,7 +902,7 @@ Box<Method> ModuleReader::ReadSingleMethodDef(Module *module, const mf::MethodDe
 		ReadParameters(
 			module,
 			overload,
-			overloadDef->paramCount,
+			(size_t)overloadDef->paramCount,
 			overloadDef->params
 		);
 
@@ -890,23 +914,23 @@ Box<Method> ModuleReader::ReadSingleMethodDef(Module *module, const mf::MethodDe
 			ReadMethodBody(module, overload, overloadDef);
 	}
 
-	method->overloadCount = def->overloadCount;
+	method->overloadCount = overloadCount;
 	method->overloads = overloads.release();
 
 	return std::move(method);
 }
 
-void ModuleReader::ReadParameters(Module *module, MethodOverload *overload, int32_t count, mf::Rva<mf::Parameter[]> rva)
+void ModuleReader::ReadParameters(Module *module, MethodOverload *overload, size_t count, mf::Rva<mf::Parameter[]> rva)
 {
 	if (count > 0)
 	{
 		Box<String*[]> paramNames(new String*[count]);
 		// Always reserve space for the instance, even if there isn't any.
-		RefSignatureBuilder refBuilder(count + 1);
+		RefSignatureBuilder refBuilder(static_cast<ovlocals_t>(count + 1));
 		ovlocals_t optionalCount = 0;
 
 		const mf::Parameter *defs = file.Deref(rva);
-		for (int32_t i = 0; i < count; i++)
+		for (size_t i = 0; i < count; i++)
 		{
 			const mf::Parameter *def = defs + i;
 
@@ -921,7 +945,7 @@ void ModuleReader::ReadParameters(Module *module, MethodOverload *overload, int3
 				ModuleLoadError("Required parameter cannot follow optional parameter.");
 		}
 
-		overload->paramCount = count;
+		overload->paramCount = (ovlocals_t)count;
 		overload->paramNames = paramNames.release();
 		overload->optionalParamCount = optionalCount;
 		overload->refSignature = refBuilder.Commit(vm->GetRefSignaturePool());
@@ -972,12 +996,12 @@ void ModuleReader::ReadLongMethodBody(Module *module, MethodOverload *overload, 
 	overload->maxStack = header->maxStack;
 	overload->locals = header->localCount;
 
-	ReadTryBlocks(module, overload, header->tryBlockCount, header->tryBlocks);
+	ReadTryBlocks(module, overload, (size_t)header->tryBlockCount, header->tryBlocks);
 
 	ReadBytecodeBody(module, overload, &header->body);
 }
 
-void ModuleReader::ReadTryBlocks(Module *module, MethodOverload *overload, int32_t count, mf::Rva<mf::TryBlock[]> rva)
+void ModuleReader::ReadTryBlocks(Module *module, MethodOverload *overload, size_t count, mf::Rva<mf::TryBlock[]> rva)
 {
 	if (count == 0)
 	{
@@ -989,7 +1013,7 @@ void ModuleReader::ReadTryBlocks(Module *module, MethodOverload *overload, int32
 	Box<TryBlock[]> tryBlocks(new TryBlock[count]);
 
 	const module_file::TryBlock *defs = file.Deref(rva);
-	for (int32_t i = 0; i < count; i++)
+	for (size_t i = 0; i < count; i++)
 	{
 		const module_file::TryBlock *def = defs + i;
 
@@ -1032,10 +1056,11 @@ void ModuleReader::ReadCatchClauses(Module *module, TryBlock *tryBlock, const mf
 	if (catchClauses.count == 0)
 		ModuleLoadError("A try-catch block must have at least one catch clause.");
 
-	Box<CatchBlock[]> catchBlocks(new CatchBlock[catchClauses.count]);
+	size_t count = (size_t)catchClauses.count;
+	Box<CatchBlock[]> catchBlocks(new CatchBlock[count]);
 
 	const mf::CatchClause *clauses = file.Deref(catchClauses.clauses);
-	for (int32_t i = 0; i < catchClauses.count; i++)
+	for (size_t i = 0; i < count; i++)
 	{
 		const mf::CatchClause *clause = clauses + i;
 
@@ -1049,7 +1074,7 @@ void ModuleReader::ReadCatchClauses(Module *module, TryBlock *tryBlock, const mf
 		block->catchEnd = clause->catchEnd;
 	}
 
-	tryBlock->catches.count = catchClauses.count;
+	tryBlock->catches.count = count;
 	tryBlock->catches.blocks = catchBlocks.release();
 }
 
@@ -1058,7 +1083,7 @@ void ModuleReader::ReadBytecodeBody(Module *module, MethodOverload *overload, co
 	Box<uint8_t[]> bodyBytes(new uint8_t[body->size]);
 	CopyMemoryT(bodyBytes.get(), body->data.Get(), static_cast<size_t>(body->size));
 
-	overload->length = body->size;
+	overload->length = (size_t)body->size;
 	overload->entry = bodyBytes.release();
 }
 

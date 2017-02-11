@@ -28,13 +28,13 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_StringBuffer_newCap)
 
 	CHECKED(IntFromValue(thread, args + 1));
 	int64_t capacity = args[1].v.integer;
-	if (capacity < 0 || capacity > INT32_MAX)
+	if (capacity < 0 || capacity > OVUM_ISIZE_MAX)
 	{
 		VM_PushString(thread, strings::capacity);
 		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentRangeError, 1);
 	}
 
-	if (!buf->Init((int32_t)capacity))
+	if (!buf->Init((size_t)capacity))
 		return VM_ThrowMemoryError(thread);
 	RETURN_SUCCESS;
 }
@@ -52,7 +52,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_StringBuffer_get_item)
 		VM_PushString(thread, strings::index); // paramName
 		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentRangeError, 1);
 	}
-	int32_t index = (int32_t)args[1].v.integer;
+	size_t index = (size_t)args[1].v.integer;
 
 	Value character;
 	character.type = aves->aves.Char;
@@ -83,20 +83,20 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_StringBuffer_set_item)
 		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentRangeError, 1);
 	}
 
-	int32_t index = (int32_t)args[1].v.integer;
+	size_t index = (size_t)args[1].v.integer;
 	buf->GetDataPointer()[index] = (ovchar_t)args[2].v.uinteger;
 }
 END_NATIVE_FUNCTION
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_get_length)
 {
 	StringBuffer *buf = THISV.Get<StringBuffer>();
-	VM_PushInt(thread, buf->GetLength());
+	VM_PushInt(thread, (int64_t)buf->GetLength());
 	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_get_capacity)
 {
 	StringBuffer *buf = THISV.Get<StringBuffer>();
-	VM_PushInt(thread, buf->GetCapacity());
+	VM_PushInt(thread, (int64_t)buf->GetCapacity());
 	RETURN_SUCCESS;
 }
 
@@ -107,7 +107,7 @@ AVES_API NATIVE_FUNCTION(aves_StringBuffer_append)
 	// append(value is String, times is Int)
 	int64_t times = args[2].v.integer;
 
-	if (times < 0 || times > INT32_MAX)
+	if (times < 0 || times > OVUM_ISIZE_MAX)
 	{
 		VM_PushString(thread, strings::times);
 		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentRangeError, 1);
@@ -116,7 +116,7 @@ AVES_API NATIVE_FUNCTION(aves_StringBuffer_append)
 	StringBuffer *buf = THISV.Get<StringBuffer>();
 	String *str = args[1].v.string;
 
-	for (int32_t i = 0; i < (int32_t)times; i++)
+	for (size_t i = 0; i < (size_t)times; i++)
 		if (!buf->Append(str))
 			return VM_ThrowMemoryError(thread);
 
@@ -136,7 +136,7 @@ AVES_API NATIVE_FUNCTION(aves_StringBuffer_appendLine)
 
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_appendCodePoint)
 {
-	// appendCodepoint(cp is Int)
+	// appendCodepoint(cp: Int)
 	// The public-facing method makes sure the type is right,
 	// and also range-checks the value
 
@@ -160,13 +160,13 @@ AVES_API NATIVE_FUNCTION(aves_StringBuffer_appendCodePoint)
 
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_appendSubstringFromString)
 {
-	// appendSubstrFromString(str is String, index is Int, count is Int)
+	// appendSubstrFromString(str: String, index: Int, count: Int)
 	// The public-facing method also range-checks the values
 
 	StringBuffer *buf = THISV.Get<StringBuffer>();
 	String *str = args[1].v.string;
-	int32_t index = (int32_t)args[2].v.integer;
-	int32_t count = (int32_t)args[3].v.integer;
+	size_t index = (size_t)args[2].v.integer;
+	size_t count = (size_t)args[3].v.integer;
 
 	if (!buf->Append(count, &str->firstChar + index))
 		return VM_ThrowMemoryError(thread);
@@ -177,13 +177,13 @@ AVES_API NATIVE_FUNCTION(aves_StringBuffer_appendSubstringFromString)
 
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_appendSubstringFromBuffer)
 {
-	// appendSubstrFromBuffer(sb is StringBuffer, index is Int, count is Int)
+	// appendSubstrFromBuffer(sb: StringBuffer, index: Int, count: Int)
 	// The public-facing method also range-checks the values
 
 	StringBuffer *dest = THISV.Get<StringBuffer>();
 	StringBuffer *src = args[1].Get<StringBuffer>();
-	int32_t index = (int32_t)args[2].v.integer;
-	int32_t count = (int32_t)args[3].v.integer;
+	size_t index = (size_t)args[2].v.integer;
+	size_t count = (size_t)args[3].v.integer;
 
 	if (!dest->Append(count, src->GetDataPointer() + index))
 		return VM_ThrowMemoryError(thread);
@@ -194,10 +194,10 @@ AVES_API NATIVE_FUNCTION(aves_StringBuffer_appendSubstringFromBuffer)
 
 AVES_API NATIVE_FUNCTION(aves_StringBuffer_insert)
 {
-	// insert(index is Int, value is String)
+	// insert(index: Int, value: String)
 	// The public-facing method also range-checks the values.
 	StringBuffer *buf = THISV.Get<StringBuffer>();
-	int32_t index = (int32_t)args[1].v.integer;
+	size_t index = (size_t)args[1].v.integer;
 
 	if (!buf->Insert(index, args[2].v.string))
 		return VM_ThrowMemoryError(thread);
@@ -229,8 +229,8 @@ AVES_API NATIVE_FUNCTION(aves_StringBuffer_toStringSubstring)
 	// The public-facing method range-checks the values.
 
 	StringBuffer *buf = THISV.Get<StringBuffer>();
-	int32_t start = (int32_t)args[1].v.integer;
-	int32_t count = (int32_t)args[2].v.integer;
+	size_t start = (size_t)args[1].v.integer;
+	size_t count = (size_t)args[2].v.integer;
 
 	String *result = GC_ConstructString(thread, count, buf->GetDataPointer() + start);
 	if (!result)

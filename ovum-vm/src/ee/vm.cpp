@@ -65,7 +65,7 @@ int VM::Run()
 	}
 	else
 	{
-		unsigned int argc;
+		ovlocals_t argc;
 		MethodOverload *mo;
 		r = GetMainMethodOverload(main, argc, mo);
 		if (r != OVUM_SUCCESS) return r;
@@ -165,8 +165,8 @@ int VM::LoadModules(VMStartParams &params)
 		return OVUM_ERROR_NO_MEMORY;
 	}
 
-	int32_t stdTypeCount = standardTypeCollection->GetCount();
-	for (int32_t i = 0; i < stdTypeCount; i++)
+	size_t stdTypeCount = standardTypeCollection->GetCount();
+	for (size_t i = 0; i < stdTypeCount; i++)
 	{
 		StandardTypeInfo type;
 		standardTypeCollection->GetByIndex(i, type);
@@ -180,23 +180,26 @@ int VM::LoadModules(VMStartParams &params)
 	RETURN_SUCCESS;
 }
 
-int VM::InitArgs(int argCount, const wchar_t *args[])
+int VM::InitArgs(size_t argCount, const wchar_t *args[])
 {
 	// Convert command-line arguments to String*s.
 	Box<Value*[]> argValues(new(std::nothrow) Value*[argCount]);
-	if (!argValues) return OVUM_ERROR_NO_MEMORY;
+	if (!argValues)
+		return OVUM_ERROR_NO_MEMORY;
 
-	for (int i = 0; i < argCount; i++)
+	for (size_t i = 0; i < argCount; i++)
 	{
 		String *argString = String_FromWString(mainThread.get(), args[i]);
-		if (!argString) return OVUM_ERROR_NO_MEMORY;
+		if (!argString)
+			return OVUM_ERROR_NO_MEMORY;
 
 		Value argValue;
 		argValue.type = types.String;
 		argValue.v.string = argString;
 
 		StaticRef *ref = gc->AddStaticReference(nullptr, &argValue);
-		if (!ref) return OVUM_ERROR_NO_MEMORY;
+		if (!ref)
+			return OVUM_ERROR_NO_MEMORY;
 
 		argValues[i] = ref->GetValuePointer();
 
@@ -220,11 +223,13 @@ int VM::GetMainMethodOverload(Method *method, ovlocals_t &argc, MethodOverload *
 		// and put the argument values in it.
 		GCObject *listGco;
 		int r = gc->Alloc(mainThread.get(), types.List, types.List->size, &listGco);
-		if (r != OVUM_SUCCESS) return r;
+		if (r != OVUM_SUCCESS)
+			return r;
 
 		ListInst *argsList = reinterpret_cast<ListInst*>(listGco->InstanceBase());
 		r = functions.initListInstance(mainThread.get(), argsList, this->argCount);
-		if (r != OVUM_SUCCESS) return r;
+		if (r != OVUM_SUCCESS)
+			return r;
 
 		OVUM_ASSERT(argsList->capacity >= this->argCount);
 
@@ -364,8 +369,8 @@ void VM::PrintMethodInitException(MethodInitException &e)
 			PrintInternal(err, L"%ls\n", member->name);
 		}
 		break;
-	case MethodInitException::UNRESOLVED_TOKEN_ID:
-		fwprintf(err, L"Token ID: %08X\n", e.GetTokenId());
+	case MethodInitException::UNRESOLVED_TOKEN:
+		fwprintf(err, L"Token: %08X\n", e.GetToken());
 		break;
 	case MethodInitException::NO_MATCHING_OVERLOAD:
 		fwprintf(err, L"Method: '");
@@ -386,20 +391,20 @@ void VM::PrintMethodInitException(MethodInitException &e)
 	}
 }
 
-int VM::GetArgs(int destLength, String *dest[])
+size_t VM::GetArgs(size_t destLength, String *dest[])
 {
-	const int maxIndex = min(destLength, argCount);
+	size_t maxIndex = min(destLength, argCount);
 
-	for (int i = 0; i < maxIndex; i++)
+	for (size_t i = 0; i < maxIndex; i++)
 		dest[i] = argValues[i]->v.string;
 
 	return maxIndex;
 }
-int VM::GetArgValues(int destLength, Value dest[])
+size_t VM::GetArgValues(size_t destLength, Value dest[])
 {
-	const int maxIndex = min(destLength, argCount);
+	size_t maxIndex = min(destLength, argCount);
 
-	for (int i = 0; i < maxIndex; i++)
+	for (size_t i = 0; i < maxIndex; i++)
 		dest[i] = *argValues[i];
 
 	return maxIndex;
@@ -459,15 +464,15 @@ OVUM_API void VM_PrintErrLn(String *str)
 	ovum::VM::PrintErrLn(str);
 }
 
-OVUM_API int VM_GetArgCount(ThreadHandle thread)
+OVUM_API size_t VM_GetArgCount(ThreadHandle thread)
 {
 	return thread->GetVM()->GetArgCount();
 }
-OVUM_API int VM_GetArgs(ThreadHandle thread, int destLength, String *dest[])
+OVUM_API size_t VM_GetArgs(ThreadHandle thread, size_t destLength, String *dest[])
 {
 	return thread->GetVM()->GetArgs(destLength, dest);
 }
-OVUM_API int VM_GetArgValues(ThreadHandle thread, int destLength, Value dest[])
+OVUM_API size_t VM_GetArgValues(ThreadHandle thread, size_t destLength, Value dest[])
 {
 	return thread->GetVM()->GetArgValues(destLength, dest);
 }

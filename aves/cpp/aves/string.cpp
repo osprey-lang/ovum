@@ -18,21 +18,20 @@ namespace error_strings
 	String *ReplaceEmptyString = _ReplaceEmptyString.AsString();
 }
 
-int GetIndex(ThreadHandle thread, String *str, Value *arg, int32_t &result)
+int GetIndex(ThreadHandle thread, String *str, Value *arg, size_t &result)
 {
-	Aves *aves = Aves::Get(thread);
-
 	int r = IntFromValue(thread, arg);
 	if (r != OVUM_SUCCESS) return r;
 	int64_t index = arg->v.integer;
 	if (index < 0 || index >= str->length)
 	{
+		Aves *aves = Aves::Get(thread);
 		VM_PushString(thread, strings::index); // paramName
 		VM_PushString(thread, error_strings::IndexOutOfRange); // message
 		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentRangeError, 2);
 	}
 
-	result = (int32_t)index;
+	result = (size_t)index;
 	RETURN_SUCCESS;
 }
 
@@ -42,7 +41,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_get_item)
 
 	String *str = THISV.v.string;
 
-	int32_t index;
+	size_t index;
 	CHECKED(GetIndex(thread, str, args + 1, index));
 
 	Value output;
@@ -54,7 +53,7 @@ END_NATIVE_FUNCTION
 
 AVES_API NATIVE_FUNCTION(aves_String_get_length)
 {
-	VM_PushInt(thread, THISV.v.string->length);
+	VM_PushInt(thread, (int64_t)THISV.v.string->length);
 	RETURN_SUCCESS;
 }
 
@@ -169,12 +168,12 @@ AVES_API NATIVE_FUNCTION(aves_String_indexOfInternal)
 
 	String *str = THISV.v.string;
 	String *part = args[1].v.string;
-	int32_t startIndex = (int32_t)args[2].v.integer;
-	int32_t count = (int32_t)args[3].v.integer;
+	size_t startIndex = (size_t)args[2].v.integer;
+	size_t count = (size_t)args[3].v.integer;
 
-	int32_t index = string::IndexOf(str, part, startIndex, count);
+	size_t index = string::IndexOf(str, part, startIndex, count);
 
-	if (index == -1)
+	if (index == string::NOT_FOUND)
 		VM_PushNull(thread);
 	else
 		VM_PushInt(thread, index);
@@ -187,7 +186,7 @@ AVES_API NATIVE_FUNCTION(aves_String_lastIndexOf)
 
 	String *str = THISV.v.string;
 
-	int32_t index;
+	size_t index;
 	if (args[1].type == aves->aves.String)
 	{
 		index = string::LastIndexOf(str, args[1].v.string);
@@ -203,7 +202,7 @@ AVES_API NATIVE_FUNCTION(aves_String_lastIndexOf)
 		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentTypeError, 1);
 	}
 
-	if (index == -1)
+	if (index == string::NOT_FOUND)
 		VM_PushNull(thread);
 	else
 		VM_PushInt(thread, index);
@@ -221,7 +220,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_reverse)
 	const ovchar_t *srcp = &THISV.v.string->firstChar;
 	ovchar_t *dstp = const_cast<ovchar_t*>(&outputString->firstChar + outputString->length - 1);
 
-	int32_t remaining = outputString->length;
+	size_t remaining = outputString->length;
 	while (remaining-- > 0)
 	{
 		if (UC_IsSurrogateLead(*srcp) && UC_IsSurrogateTrail(*(srcp + 1)))
@@ -246,8 +245,8 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_substringInternal)
 	Aves *aves = Aves::Get(thread);
 
 	String *str = THISV.v.string;
-	int32_t startIndex = (int32_t)args[1].v.integer;
-	int32_t count = (int32_t)args[2].v.integer;
+	size_t startIndex = (size_t)args[1].v.integer;
+	size_t count = (size_t)args[2].v.integer;
 
 	String *output;
 	if (count == 0)
@@ -316,19 +315,19 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_repeat)
 	}
 
 	String *str = THISV.v.string;
-	int64_t length;
-	if (Int_MultiplyChecked(times, str->length, length) != OVUM_SUCCESS)
+	uint64_t length;
+	if (UInt_MultiplyChecked((uint64_t)times, (uint64_t)str->length, length) != OVUM_SUCCESS)
 		return VM_ThrowOverflowError(thread);
-	if (length > INT32_MAX)
+	if (length > OVUM_ISIZE_MAX)
 	{
 		VM_PushString(thread, strings::times); // paramName
 		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentRangeError, 1);
 	}
 
 	StringBuffer buf;
-	CHECKED_MEM(buf.Init((int32_t)length));
+	CHECKED_MEM(buf.Init((size_t)length));
 
-	for (int32_t i = 0; i < (int32_t)times; i++)
+	for (size_t i = 0; i < (size_t)times; i++)
 		CHECKED_MEM(buf.Append(str));
 
 	String *result;
@@ -375,10 +374,10 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_splice)
 	// splice(startIndex is Int, removeCount is Int, newValue is String)
 	// Public-facing methods check the types and range-check the values.
 	PinnedAlias<String> str(THISP), newValue(args + 3);
-	int32_t startIndex = (int32_t)args[1].v.integer;
-	int32_t removeCount = (int32_t)args[2].v.integer;
+	size_t startIndex = (size_t)args[1].v.integer;
+	size_t removeCount = (size_t)args[2].v.integer;
 
-	int32_t resultLength = str->length - removeCount + newValue->length;
+	size_t resultLength = str->length - removeCount + newValue->length;
 	String *result;
 	CHECKED_MEM(result = GC_ConstructString(thread, resultLength, nullptr));
 
@@ -388,7 +387,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_splice)
 	// Copy the first part of the source string into the result.
 	if (startIndex > 0)
 	{
-		CopyMemoryT(destp, srcp, (int32_t)startIndex);
+		CopyMemoryT(destp, srcp, startIndex);
 		srcp += startIndex;
 		destp += startIndex;
 	}
@@ -396,7 +395,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_splice)
 	// Insert the new value.
 	if (newValue->length > 0)
 	{
-		CopyMemoryT(destp, &newValue->firstChar, (size_t)newValue->length);
+		CopyMemoryT(destp, &newValue->firstChar, newValue->length);
 		destp += newValue->length;
 	}
 
@@ -404,10 +403,10 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_splice)
 	srcp += removeCount;
 
 	// And finally insert the remainder of the source string.
-	int32_t remaining = str->length - startIndex - removeCount;
-	if (remaining > 0)
+	if (str->length > startIndex + removeCount)
 	{
-		CopyMemoryT(destp, srcp, (size_t)remaining);
+		size_t remaining = str->length - startIndex - removeCount;
+		CopyMemoryT(destp, srcp, remaining);
 	}
 
 	VM_PushString(thread, result);
@@ -433,7 +432,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_split)
 
 		// And then copy each individual character to the output
 		const ovchar_t *chp = &str->firstChar;
-		int32_t remaining = str->length;
+		size_t remaining = str->length;
 		while (remaining-- > 0)
 		{
 			VM_Push(thread, output);
@@ -449,7 +448,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_split)
 
 		const ovchar_t *chp = &str->firstChar;
 		const ovchar_t *chStart = chp;
-		int32_t index = 0;
+		size_t index = 0;
 		while (index < str->length)
 		{
 			if (*chp == sep->firstChar)
@@ -505,7 +504,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_padInner)
 	Aves *aves = Aves::Get(thread);
 
 	int64_t minLength64 = args[1].v.integer;
-	if (minLength64 < 0 || minLength64 > INT32_MAX)
+	if (minLength64 < 0 || minLength64 > OVUM_ISIZE_MAX)
 	{
 		VM_PushString(thread, strings::minLength); // paramName
 		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentRangeError, 1);
@@ -519,12 +518,13 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_padInner)
 	}
 
 	String *str = THISV.v.string;
-	int32_t padLength = (int32_t)minLength64 - str->length;
-	if (padLength <= 0)
+	if (str->length >= (size_t)minLength64)
 	{
 		VM_PushString(thread, str);
 		RETURN_SUCCESS;
 	}
+
+	size_t padLength = (size_t)minLength64 - str->length;
 
 	String *result;
 	{ Pinned s(THISP);
@@ -549,7 +549,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_padInner)
 			break;
 		case PAD_BOTH:
 			{
-				int32_t padBefore = padLength / 2;
+				size_t padBefore = padLength / 2;
 				padLength -= padBefore;
 				while (padBefore-- > 0)
 					*resultp++ = ch;
@@ -589,7 +589,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_getCharacter)
 	Aves *aves = Aves::Get(thread);
 
 	String *str = THISV.v.string;
-	int32_t index;
+	size_t index;
 	CHECKED(GetIndex(thread, str, args + 1, index));
 
 	const ovchar_t *chp = &str->firstChar + index;
@@ -610,7 +610,7 @@ END_NATIVE_FUNCTION
 AVES_API BEGIN_NATIVE_FUNCTION(aves_String_getCodePoint)
 {
 	String *str = THISV.v.string;
-	int32_t index;
+	size_t index;
 	CHECKED(GetIndex(thread, str, args + 1, index));
 
 	const ovchar_t *chp = &str->firstChar + index;
@@ -630,10 +630,10 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_String_getCategory)
 	Aves *aves = Aves::Get(thread);
 
 	String *str = THISV.v.string;
-	int32_t index;
+	size_t index;
 	CHECKED(GetIndex(thread, str, args + 1, index));
 
-	UnicodeCategory cat = UC_GetCategory(&str->firstChar, (unsigned int)index);
+	UnicodeCategory cat = UC_GetCategory(&str->firstChar, index);
 
 	// The values of native type UnicodeCategory are not the same as
 	// the values of the Osprey type, so we need to convert!
@@ -648,7 +648,7 @@ END_NATIVE_FUNCTION
 AVES_API BEGIN_NATIVE_FUNCTION(aves_String_isSurrogatePair)
 {
 	String *str = THISV.v.string;
-	int32_t index;
+	size_t index;
 	CHECKED(GetIndex(thread, str, args + 1, index));
 
 	VM_PushBool(thread, UC_IsSurrogateLead((&str->firstChar)[index]) &&
@@ -686,8 +686,8 @@ AVES_API NATIVE_FUNCTION(aves_String_getHashCodeSubstring)
 {
 	// getHashCodeSubstring(index is Int, count is Int)
 	// index and count are range-checked in the wrapper function.
-	int32_t index = (int32_t)args[1].v.integer;
-	int32_t count = (int32_t)args[2].v.integer;
+	size_t index = (size_t)args[1].v.integer;
+	size_t count = (size_t)args[2].v.integer;
 	int32_t hashCode = String_GetHashCodeSubstr(THISV.v.string, index, count);
 
 	VM_PushInt(thread, hashCode);
@@ -764,7 +764,7 @@ AVES_API NATIVE_FUNCTION(aves_String_opCompare)
 	RETURN_SUCCESS;
 }
 
-int32_t string::IndexOf(const String *str, const String *part, int32_t startIndex, int32_t count)
+size_t string::IndexOf(const String *str, const String *part, size_t startIndex, size_t count)
 {
 	if (part->length == 0)
 		return startIndex;
@@ -772,29 +772,29 @@ int32_t string::IndexOf(const String *str, const String *part, int32_t startInde
 	const ovchar_t *strp = &str->firstChar;
 	ovchar_t firstPartChar = part->firstChar;
 
-	int32_t endIndex = startIndex + count - part->length + 1;
-	for (int32_t i = startIndex; i < endIndex; i++)
+	size_t endIndex = startIndex + count - part->length + 1;
+	for (size_t i = startIndex; i < endIndex; i++)
 	{
 		if (strp[i] == firstPartChar &&
 			String_SubstringEquals(str, i, part))
 			return i;
 	}
 
-	return -1;
+	return NOT_FOUND;
 }
 
-int32_t string::LastIndexOf(const String *str, const String *part)
+size_t string::LastIndexOf(const String *str, const String *part)
 {
 	const ovchar_t *strp = &str->firstChar;
 
-	for (int32_t i = str->length - part->length; i >= 0; i--)
+	for (size_t i = str->length - part->length; i >= 0; i--)
 	{
 		if (strp[i] == part->firstChar &&
 			String_SubstringEquals(str, i, part))
 			return i;
 	}
 
-	return -1;
+	return NOT_FOUND;
 }
 
 #define CHECKED_F(expr)      if ((r = (expr)) != OVUM_SUCCESS) goto failure;
@@ -807,10 +807,14 @@ enum class FormatAlignment
 	RIGHT  = 2,
 };
 
-inline int AppendAlignedFormatString(StringBuffer &buf, String *value,
-	FormatAlignment alignment, uint32_t alignmentWidth)
+inline int AppendAlignedFormatString(
+	StringBuffer &buf,
+	String *value,
+	FormatAlignment alignment,
+	size_t alignmentWidth
+)
 {
-	uint32_t valueLength = (uint32_t)value->length;
+	size_t valueLength = value->length;
 	switch (alignment)
 	{
 	case FormatAlignment::LEFT:
@@ -841,18 +845,23 @@ failure:
 	return OVUM_ERROR_NO_MEMORY;
 }
 
-int ScanDecimalNumber(ThreadHandle thread, const ovchar_t * &chp, unsigned int &index, uint32_t &number)
+int ScanDecimalNumber(
+	ThreadHandle thread,
+	const ovchar_t * &chp,
+	size_t &index,
+	size_t &number
+)
 {
-	uint32_t result = 0;
+	size_t result = 0;
 
 	do
 	{
-		uint32_t num = *chp - '0';
+		size_t num = *chp - '0';
 
 		uint64_t temp = (uint64_t)result * 10ULL + num;
 		if (temp > UINT32_MAX)
 			return VM_ThrowOverflowError(thread);
-		result = (uint32_t)temp;
+		result = (size_t)temp;
 
 		chp++;
 		index++;
@@ -862,15 +871,20 @@ int ScanDecimalNumber(ThreadHandle thread, const ovchar_t * &chp, unsigned int &
 	RETURN_SUCCESS;
 }
 
-int string::Format(ThreadHandle thread, const String *format, ListInst *list, String *&result)
+int string::Format(
+	ThreadHandle thread,
+	const String *format,
+	ListInst *list,
+	String *&result
+)
 {
 	int r;
 	StringBuffer buf;
 	if (!buf.Init(format->length)) { r = OVUM_ERROR_NO_MEMORY; goto failure; }
 
-	const uint32_t length = format->length;
-	unsigned int start = 0;
-	unsigned int index = 0;
+	const size_t length = format->length;
+	size_t start = 0;
+	size_t index = 0;
 
 	const ovchar_t *chBase = &format->firstChar;
 	const ovchar_t *chp = chBase;
@@ -902,11 +916,11 @@ int string::Format(ThreadHandle thread, const String *format, ListInst *list, St
 			// idx and align are always decimal digits, '0'..'9'
 			{
 				index++;
-				uint32_t placeholderIndex;
+				size_t placeholderIndex;
 				CHECKED_F(ScanDecimalNumber(thread, chp, index, placeholderIndex));
 				// chp is now after the last digit in the placeholder index
 
-				uint32_t alignmentWidth = 0;
+				size_t alignmentWidth = 0;
 				FormatAlignment alignment = FormatAlignment::LEFT;
 				if (*chp == '<' || *chp == '>' || *chp == '=') // alignment follows here, whee
 				{
@@ -919,7 +933,7 @@ int string::Format(ThreadHandle thread, const String *format, ListInst *list, St
 					CHECKED_F(ScanDecimalNumber(thread, chp, index, alignmentWidth));
 				}
 
-				if (*chp != '}' || placeholderIndex >= (uint32_t)list->length)
+				if (*chp != '}' || placeholderIndex >= list->length)
 					goto formatError;
 
 				Value *value = VM_Local(thread, 0);
@@ -968,9 +982,14 @@ formatError:
 	return VM_ThrowErrorOfType(thread, aves->aves.ArgumentError, 2);
 }
 
-template<int BufLen>
-int ScanFormatIdentifier(ThreadHandle thread, LitString<BufLen> &buffer,
-	unsigned int &index, const ovchar_t * &chp, Value &result)
+template<size_t BufLen>
+int ScanFormatIdentifier(
+	ThreadHandle thread,
+	LitString<BufLen> &buffer,
+	size_t &index,
+	const ovchar_t * &chp,
+	Value &result
+)
 {
 	const ovchar_t *chStart = chp;
 	// Identifiers follow the following format:
@@ -984,10 +1003,10 @@ int ScanFormatIdentifier(ThreadHandle thread, LitString<BufLen> &buffer,
 		cat != UC_NUMBER_LETTER && *chp != '_')
 		goto formatError;
 
-	int32_t length = 0;
+	size_t length = 0;
 	while (true)
 	{
-		int skip = 1 + surrogate;
+		size_t skip = 1 + surrogate;
 		if (length + skip < buffer.length)
 		{
 			buffer.chars[length] = *chp;
@@ -1009,7 +1028,7 @@ int ScanFormatIdentifier(ThreadHandle thread, LitString<BufLen> &buffer,
 	if (length < buffer.length) // all of the everything is contained within the buffer
 	{
 		buffer.chars[length] = 0; // trailing 0, always!
-		*const_cast<int32_t*>(&buffer.length) = length;
+		*const_cast<size_t*>(&buffer.length) = length;
 		SetString(thread, result, buffer.AsString());
 	}
 	else
@@ -1028,15 +1047,20 @@ formatError:
 	return VM_ThrowErrorOfType(thread, aves->aves.ArgumentError, 2);
 }
 
-int string::Format(ThreadHandle thread, const String *format, Value *hash, String *&result)
+int string::Format(
+	ThreadHandle thread,
+	const String *format,
+	Value *hash,
+	String *&result
+)
 {
 	int r;
 	StringBuffer buf;
 	if (!buf.Init(format->length)) { r = OVUM_ERROR_NO_MEMORY; goto failure; }
 
-	const uint32_t length = format->length;
-	unsigned int start = 0;
-	unsigned int index = 0;
+	const size_t length = format->length;
+	size_t start = 0;
+	size_t index = 0;
 
 	const ovchar_t *chBase = &format->firstChar;
 	const ovchar_t *chp = chBase;
@@ -1079,7 +1103,7 @@ int string::Format(ThreadHandle thread, const String *format, Value *hash, Strin
 				CHECKED_F(ScanFormatIdentifier(thread, buffer, index, chp, phKey));
 				// chp is now after the last character in the placeholder name
 
-				uint32_t alignmentWidth = 0;
+				size_t alignmentWidth = 0;
 				FormatAlignment alignment = FormatAlignment::LEFT;
 				if (*chp == '<' || *chp == '>' || *chp == '=') // alignment follows here, whee
 				{
@@ -1146,14 +1170,20 @@ formatError:
 	return VM_ThrowErrorOfType(thread, aves->aves.ArgumentError, 2);
 }
 
-String *string::Replace(ThreadHandle thread, String *input, const ovchar_t oldChar, const ovchar_t newChar, const int64_t maxTimes)
+String *string::Replace(
+	ThreadHandle thread,
+	String *input,
+	ovchar_t oldChar,
+	ovchar_t newChar,
+	int64_t maxTimes
+)
 {
 	String *output = GC_ConstructString(thread, input->length, &input->firstChar);
 	if (output)
 	{
 		ovchar_t *outp = const_cast<ovchar_t*>(&output->firstChar);
 		int64_t remaining = maxTimes;
-		int32_t length = input->length;
+		size_t length = input->length;
 		while (length-- && (maxTimes < 0 || remaining))
 		{
 			if (*outp == oldChar)
@@ -1168,19 +1198,25 @@ String *string::Replace(ThreadHandle thread, String *input, const ovchar_t oldCh
 	return output;
 }
 
-String *string::Replace(ThreadHandle thread, String *input, String *oldValue, String *newValue, const int64_t maxTimes)
+String *string::Replace(
+	ThreadHandle thread,
+	String *input,
+	String *oldValue,
+	String *newValue,
+	int64_t maxTimes
+)
 {
 	StringBuffer buf;
 	if (!buf.Init(input->length)) goto failure;
 
 	const ovchar_t *inp = &input->firstChar;
-	int32_t imax = input->length - oldValue->length + 1;
+	size_t imax = input->length - oldValue->length + 1;
 
-	int32_t start = 0;
-	int32_t lengthCollected = 0;
+	size_t start = 0;
+	size_t lengthCollected = 0;
 	int64_t remaining = maxTimes;
 
-	int32_t i = 0;
+	size_t i = 0;
 	while (i < input->length)
 	{
 		if (i < imax &&

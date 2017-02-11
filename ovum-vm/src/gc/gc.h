@@ -17,7 +17,7 @@ namespace ovum
 // IF STRING CHANGES, MUTABLESTRING MUST BE UPDATED TO REFLECT THAT.
 struct MutableString
 {
-	uint32_t length;
+	size_t length;
 	uint32_t hashCode;
 	StringFlags flags;
 	ovchar_t firstChar;
@@ -49,15 +49,15 @@ public:
 	int Alloc(Thread *const thread, Type *type, size_t size, GCObject **output);
 	int Alloc(Thread *const thread, Type *type, size_t size, Value *output);
 
-	int AllocArray(Thread *const thread, uint32_t length, uint32_t itemSize, void **output);
+	int AllocArray(Thread *const thread, size_t length, size_t itemSize, void **output);
 
-	int AllocValueArray(Thread *const thread, uint32_t length, Value **output);
+	int AllocValueArray(Thread *const thread, size_t length, Value **output);
 
-	String *ConstructString(Thread *const thread, int32_t length, const ovchar_t value[]);
+	String *ConstructString(Thread *const thread, size_t length, const ovchar_t value[]);
 
 	String *ConvertString(Thread *const thread, const char *string);
 
-	String *ConstructModuleString(Thread *const thread, int32_t length, const ovchar_t value[]);
+	String *ConstructModuleString(Thread *const thread, size_t length, const ovchar_t value[]);
 
 	String *GetInternedString(Thread *const thread, String *value);
 

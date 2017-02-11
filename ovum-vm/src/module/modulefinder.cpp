@@ -22,11 +22,11 @@ void ModuleFinder::InitSearchDirectories()
 	*searchDirs++ = vm->GetModulePath();
 }
 
-int ModuleFinder::GetSearchDirectories(int resultSize, const PathName **result) const
+size_t ModuleFinder::GetSearchDirectories(size_t resultSize, const PathName **result) const
 {
-	int count = min(resultSize, SEARCH_DIR_COUNT);
+	size_t count = min(resultSize, SEARCH_DIR_COUNT);
 
-	CopyMemoryT(result, searchDirs, (size_t)resultSize);
+	CopyMemoryT(result, searchDirs, resultSize);
 
 	return SEARCH_DIR_COUNT;
 }
@@ -40,7 +40,7 @@ bool ModuleFinder::FindModulePath(String *module, ModuleVersion *version, PathNa
 	PathName modulePath(MODULE_PATH_CAPACITY);
 
 	bool found = false;
-	for (int i = 0; i < SEARCH_DIR_COUNT; i++)
+	for (size_t i = 0; i < SEARCH_DIR_COUNT; i++)
 	{
 		found = SearchDirectory(searchDirs[i], module, versionNumber, modulePath);
 		if (found)
@@ -55,7 +55,7 @@ bool ModuleFinder::FindModulePath(String *module, ModuleVersion *version, PathNa
 bool ModuleFinder::SearchDirectory(const PathName *dir, String *module, const PathName &version, PathName &result) const
 {
 	result.ReplaceWith(*dir);
-	uint32_t simpleName = result.Join(module);
+	size_t simpleName = result.Join(module);
 	// Versioned names first:
 	//    dir/$name-$version/$name.ovm
 	//    dir/$name-$version.ovm
@@ -63,7 +63,7 @@ bool ModuleFinder::SearchDirectory(const PathName *dir, String *module, const Pa
 	{
 		result.Append(VERSION_SEPARATOR);
 		// The length for dir/$name-$version
-		uint32_t versionedName = result.Append(version);
+		size_t versionedName = result.Append(version);
 
 		// dir/$name-version/$name.ovm
 		result.Join(module);
@@ -101,9 +101,9 @@ bool ModuleFinder::SearchDirectory(const PathName *dir, String *module, const Pa
 
 void ModuleFinder::AppendVersionString(PathName &dest, ModuleVersion *version) const
 {
-	static const int32_t BUFFER_SIZE = 16;
+	static const size_t BUFFER_SIZE = 16;
 	ovchar_t buffer[BUFFER_SIZE];
-	int32_t length;
+	size_t length;
 
 	length = IntFormatter::ToDec(version->major, buffer, BUFFER_SIZE);
 	dest.Append(length, buffer);

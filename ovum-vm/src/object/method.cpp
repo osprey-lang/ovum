@@ -88,7 +88,7 @@ inline bool Method::Accepts(ovlocals_t argCount) const
 	const Method *m = this;
 	do
 	{
-		for (int i = 0; i < m->overloadCount; i++)
+		for (size_t i = 0; i < m->overloadCount; i++)
 			if (m->overloads[i].Accepts(argCount))
 				return true;
 	} while (m = m->baseMethod);
@@ -100,7 +100,7 @@ MethodOverload *Method::ResolveOverload(ovlocals_t argCount) const
 	const Method *method = this;
 	do
 	{
-		for (int i = 0; i < method->overloadCount; i++)
+		for (size_t i = 0; i < method->overloadCount; i++)
 		{
 			MethodOverload *mo = method->overloads + i;
 			if (mo->Accepts(argCount))
@@ -113,7 +113,7 @@ MethodOverload *Method::ResolveOverload(ovlocals_t argCount) const
 void Method::SetDeclType(Type *type)
 {
 	this->declType = type;
-	for (int i = 0; i < overloadCount; i++)
+	for (size_t i = 0; i < overloadCount; i++)
 		this->overloads[i].declType = type;
 }
 
@@ -124,24 +124,24 @@ OVUM_API bool Method_IsConstructor(MethodHandle method)
 {
 	return method->IsCtor();
 }
-OVUM_API int32_t Method_GetOverloadCount(MethodHandle method)
+OVUM_API size_t Method_GetOverloadCount(MethodHandle method)
 {
 	return method->overloadCount;
 }
-OVUM_API OverloadHandle Method_GetOverload(MethodHandle method, int32_t index)
+OVUM_API OverloadHandle Method_GetOverload(MethodHandle method, size_t index)
 {
-	if (index < 0 || index >= method->overloadCount)
+	if (index >= method->overloadCount)
 		return nullptr;
 
 	return method->overloads + index;
 }
-OVUM_API int32_t Method_GetOverloads(MethodHandle method, int32_t destSize, OverloadHandle *dest)
+OVUM_API size_t Method_GetOverloads(MethodHandle method, size_t destSize, OverloadHandle *dest)
 {
-	int32_t count = method->overloadCount;
+	size_t count = method->overloadCount;
 	if (count > destSize)
 		count = destSize;
 
-	for (int32_t i = 0; i < count; i++)
+	for (size_t i = 0; i < count; i++)
 		dest[i] = method->overloads + i;
 
 	return count;
@@ -157,8 +157,6 @@ OVUM_API bool Method_Accepts(MethodHandle method, ovlocals_t argc)
 }
 OVUM_API OverloadHandle Method_FindOverload(MethodHandle method, ovlocals_t argc)
 {
-	if (argc < 0 || argc > UINT16_MAX)
-		return nullptr;
 	return method->ResolveOverload(argc);
 }
 
@@ -167,7 +165,7 @@ OVUM_API uint32_t Overload_GetFlags(OverloadHandle overload)
 {
 	return static_cast<uint32_t>(overload->flags & ovum::OverloadFlags::VISIBLE_MASK);
 }
-OVUM_API int32_t Overload_GetParamCount(OverloadHandle overload)
+OVUM_API ovlocals_t Overload_GetParamCount(OverloadHandle overload)
 {
 	return overload->paramCount;
 }
@@ -191,7 +189,7 @@ OVUM_API bool Overload_GetParameter(OverloadHandle overload, ovlocals_t index, P
 
 	return true;
 }
-OVUM_API int32_t Overload_GetAllParameters(OverloadHandle overload, ovlocals_t destSize, ParamInfo *dest)
+OVUM_API ovlocals_t Overload_GetAllParameters(OverloadHandle overload, ovlocals_t destSize, ParamInfo *dest)
 {
 	ovlocals_t count = overload->paramCount;
 	if (count > destSize)

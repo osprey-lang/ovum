@@ -19,6 +19,33 @@ namespace ovum
 // than four bytes of space.
 class Utf8Encoder
 {
+public:
+	Utf8Encoder(char *buffer, size_t bufferLength);
+	Utf8Encoder(char *buffer, size_t bufferLength, String *str);
+	Utf8Encoder(char *buffer, size_t bufferLength, const ovchar_t *str, size_t strLength);
+
+	inline const char *GetBuffer()
+	{
+		return buffer;
+	}
+
+	inline size_t GetBufferLength()
+	{
+		return bufferEnd - buffer;
+	}
+
+	inline void SetString(String *str)
+	{
+		SetString(&str->firstChar, str->length);
+	}
+	void SetString(const ovchar_t *str, size_t strLength);
+
+	// Encodes the current string data into the buffer. This method will
+	// attempt to encode the entire string or fill up the buffer, whichever
+	// comes first. The value returned is the number of UTF-8 bytes written.
+	// When this method returns 0, the end of the string has been reached.
+	size_t GetNextBytes();
+
 private:
 	// The first byte of the destination buffer.
 	char *const buffer;
@@ -28,42 +55,14 @@ private:
 	// The string data. Note that these are current values; the pointer and
 	// the (remaining) length are updated by GetNextBytes().
 	const ovchar_t *str;
-	int32_t strLength;
+	size_t strLength;
 
 	// Currently pending surrogate lead. If a character other than a
 	// surrogate trail is encountered when this field is nonzero, the
 	// UTF-16 is invalid and we must output the replacement character.
 	ovchar_t unmatchedSurrogateLead;
 
-public:
-	Utf8Encoder(char *buffer, int32_t bufferLength);
-	Utf8Encoder(char *buffer, int32_t bufferLength, String *str);
-	Utf8Encoder(char *buffer, int32_t bufferLength, const ovchar_t *str, int32_t strLength);
-
-	inline const char *GetBuffer()
-	{
-		return buffer;
-	}
-
-	inline int32_t GetBufferLength()
-	{
-		return bufferEnd - buffer;
-	}
-
-	inline void SetString(String *str)
-	{
-		SetString(&str->firstChar, str->length);
-	}
-	void SetString(const ovchar_t *str, int32_t strLength);
-
-	// Encodes the current string data into the buffer. This method will
-	// attempt to encode the entire string or fill up the buffer, whichever
-	// comes first. The value returned is the number of UTF-8 bytes written.
-	// When this method returns 0, the end of the string has been reached.
-	int32_t GetNextBytes();
-
-private:
-	inline bool CanAppend(char *buffer, int32_t count) const
+	inline bool CanAppend(char *buffer, size_t count) const
 	{
 		return buffer + count <= bufferEnd;
 	}

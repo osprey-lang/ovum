@@ -12,15 +12,16 @@
 class StringBuffer
 {
 private:
-	int32_t capacity;
-	int32_t length;
+	size_t capacity;
+	size_t length;
 	ovchar_t *data;
 
 	static const size_t DefaultCapacity = 128;
 
 public:
-	inline StringBuffer()
-		 : length(0), data(nullptr)
+	inline StringBuffer() :
+		length(0),
+		data(nullptr)
 	{ }
 	inline ~StringBuffer()
 	{
@@ -29,16 +30,24 @@ public:
 		data = nullptr;
 	}
 
-	inline bool Init(int32_t capacity = DefaultCapacity)
+	inline bool Init(size_t capacity = DefaultCapacity)
 	{
 		return SetCapacity(capacity);
 	}
 
-	inline int32_t GetLength() const   { return this->length; }
-	inline int32_t GetCapacity() const { return this->capacity; }
-	inline bool SetCapacity(int32_t newCapacity)
+	inline size_t GetLength() const
 	{
-		int32_t newCap = newCapacity;
+		return this->length;
+	}
+
+	inline size_t GetCapacity() const
+	{
+		return this->capacity;
+	}
+
+	inline bool SetCapacity(size_t newCapacity)
+	{
+		size_t newCap = newCapacity;
 		if (newCap < this->length)
 			newCap = this->length;
 
@@ -54,18 +63,22 @@ public:
 		return true;
 	}
 
-	inline ovchar_t *GetDataPointer() const { return this->data; }
+	inline ovchar_t *GetDataPointer() const
+	{
+		return this->data;
+	}
 
-	inline bool Append(const ovchar_t ch)
+	inline bool Append(ovchar_t ch)
 	{
 		return Append(1, &ch);
 	}
-	inline bool Append(const int32_t count, const ovchar_t ch)
+	inline bool Append(size_t count, const ovchar_t ch)
 	{
-		if (!EnsureMinCapacity(count)) return false;
+		if (!EnsureMinCapacity(count))
+			return false;
 
 		ovchar_t *chp = this->data + this->length;
-		for (int32_t i = 0; i < count; i++)
+		for (size_t i = 0; i < count; i++)
 		{
 			*chp = ch;
 			chp++;
@@ -73,7 +86,7 @@ public:
 		this->length += count;
 		return true;
 	}
-	inline bool Append(const int32_t length, const ovchar_t data[])
+	inline bool Append(size_t length, const ovchar_t data[])
 	{
 		if (!EnsureMinCapacity(length)) return false;
 
@@ -86,12 +99,12 @@ public:
 		return Append(str->length, &str->firstChar);
 	}
 
-	inline bool Append(const int32_t length, const char data[])
+	inline bool Append(size_t length, const char data[])
 	{
 		if (!EnsureMinCapacity(length)) return false;
 
 		ovchar_t *chp = this->data + this->length;
-		for (int32_t i = 0; i < length; i++)
+		for (size_t i = 0; i < length; i++)
 		{
 			*chp = data[i];
 			chp++;
@@ -100,7 +113,7 @@ public:
 		return true;
 	}
 
-	inline bool Insert(const int32_t index, const int32_t length, const ovchar_t data[])
+	inline bool Insert(size_t index, size_t length, const ovchar_t data[])
 	{
 		if (length > 0)
 		{
@@ -109,7 +122,7 @@ public:
 			ovchar_t *destp = this->data + this->length + length - 1;
 			const ovchar_t *srcp = this->data + this->length - 1;
 
-			int32_t remaining = this->length - index;
+			size_t remaining = this->length - index;
 			while (remaining--)
 				*destp-- = *srcp--;
 
@@ -117,11 +130,11 @@ public:
 		}
 		return true;
 	}
-	inline bool Insert(const int32_t index, const ovchar_t data)
+	inline bool Insert(size_t index, ovchar_t data)
 	{
 		return Insert(index, 1, &data);
 	}
-	inline bool Insert(const int32_t index, String *str)
+	inline bool Insert(size_t index, String *str)
 	{
 		return Insert(index, str->length, &str->firstChar);
 	}
@@ -132,11 +145,11 @@ public:
 		this->length = 0;
 	}
 
-	inline bool StartsWith(const ovchar_t ch) const
+	inline bool StartsWith(ovchar_t ch) const
 	{
 		return this->length > 0 && this->data[0] == ch;
 	}
-	inline bool EndsWith(const ovchar_t ch) const
+	inline bool EndsWith(ovchar_t ch) const
 	{
 		return this->length > 0 && this->data[this->length - 1] == ch;
 	}
@@ -148,13 +161,13 @@ public:
 
 	// If buf is null, returns only the size of the resulting string,
 	// including the terminating \0.
-	inline int ToWString(wchar_t *buf)
+	inline size_t ToWString(wchar_t *buf)
 	{
 		// This is basically copied straight from String_ToWString, but optimized for StringBuffer.
 #if OVUM_WCHAR_SIZE == 2
 		// UTF-16 (or at least UCS-2, but hopefully surrogates won't break things too much)
 
-		int outputLength = this->length; // Do NOT include the \0
+		size_t outputLength = this->length; // Do NOT include the \0
 
 		if (buf)
 		{
@@ -169,11 +182,11 @@ public:
 		// First, iterate over the string to find out how many surrogate pairs there are,
 		// if any. These consume only one UTF-32 character.
 		// We use this to calculate the length of the output (including the \0).
-		int outputLength = 0;
+		size_t outputLength = 0;
 
-		int32_t strLen = this->length; // let's NOT include the \0
+		size_t strLen = this->length; // let's NOT include the \0
 		const ovchar_t *strp = this->data;
-		for (int32_t i = 0; i < strLen; i++)
+		for (size_t i = 0; i < strLen; i++)
 		{
 			if (UC_IsSurrogateLead(*strp) && UC_IsSurrogateTrail(*(strp + 1)))
 			{
@@ -190,7 +203,7 @@ public:
 			strp = this->data;
 
 			wchar_t *outp = buf;
-			for (int i = 0; i < outputLength; i++)
+			for (size_t i = 0; i < outputLength; i++)
 			{
 				if (UC_IsSurrogateLead(*strp) && UC_IsSurrogateTrail(*(strp + 1)))
 				{
@@ -215,7 +228,7 @@ public:
 	}
 
 private:
-	inline bool EnsureMinCapacity(int32_t newAmount)
+	inline bool EnsureMinCapacity(size_t newAmount)
 	{
 		if (INT32_MAX - newAmount < this->length)
 			return false;
@@ -223,7 +236,7 @@ private:
 		if (this->length + newAmount > this->capacity)
 		{
 			// Double the capacity, but make sure newAmount will actually fit too
-			int32_t newLength = this->length << 1;
+			size_t newLength = this->length << 1;
 			if (newLength < this->length + newAmount)
 				newLength += newAmount;
 			return SetCapacity(newLength);

@@ -11,8 +11,6 @@ namespace strings
 MethodHandle TextReaderInst::FillBuffer;
 String *TextReaderInst::FillBufferName = strings::_FillBufferName.AsString();
 
-#define _TR(val)     reinterpret_cast<TextReaderInst*>((val).instance)
-
 AVES_API int OVUM_CDECL io_TextReader_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(TextReaderInst));
@@ -112,28 +110,28 @@ AVES_API NATIVE_FUNCTION(io_TextReader_set_charBuffer)
 AVES_API NATIVE_FUNCTION(io_TextReader_get_charCount)
 {
 	TextReaderInst *tr = THISV.Get<TextReaderInst>();
-	VM_PushInt(thread, tr->charCount);
+	VM_PushInt(thread, (int64_t)tr->charCount);
 	RETURN_SUCCESS;
 }
 AVES_API BEGIN_NATIVE_FUNCTION(io_TextReader_set_charCount)
 {
 	CHECKED(IntFromValue(thread, args + 1));
 	TextReaderInst *tr = THISV.Get<TextReaderInst>();
-	tr->charCount = (int32_t)args[1].v.integer;
+	tr->charCount = (size_t)args[1].v.integer;
 }
 END_NATIVE_FUNCTION
 
 AVES_API NATIVE_FUNCTION(io_TextReader_get_charOffset)
 {
 	TextReaderInst *tr = THISV.Get<TextReaderInst>();
-	VM_PushInt(thread, tr->charOffset);
+	VM_PushInt(thread, (int64_t)tr->charOffset);
 	RETURN_SUCCESS;
 }
 AVES_API BEGIN_NATIVE_FUNCTION(io_TextReader_set_charOffset)
 {
 	CHECKED(IntFromValue(thread, args + 1));
 	TextReaderInst *tr = THISV.Get<TextReaderInst>();
-	tr->charOffset = (int32_t)args[1].v.integer;
+	tr->charOffset = (size_t)args[1].v.integer;
 }
 END_NATIVE_FUNCTION
 
@@ -163,7 +161,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(io_TextReader_readLine)
 	StringBuffer sb; // Initialize on demand only
 	do
 	{
-		int32_t i = tr->charOffset;
+		size_t i = tr->charOffset;
 		do
 		{
 			ovchar_t ch = cb->GetDataPointer()[i];
@@ -171,7 +169,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(io_TextReader_readLine)
 			{
 				// We found a line ending! Make sure a string is
 				// stored in sb.
-				int32_t length = i - tr->charOffset;
+				size_t length = i - tr->charOffset;
 				if (sb.GetDataPointer() == nullptr)
 					CHECKED_MEM(sb.Init(length));
 

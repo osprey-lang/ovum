@@ -8,36 +8,59 @@ namespace aves
 
 struct HashEntry
 {
-	int32_t hashCode; // Lower 31 bits of hash code; -1 = unused
-	int32_t next;     // Index of next entry in bucket; -1 = last
+	// Lower 31 bits of hash code. If the bucket used to contain a value that
+	// has since been removed, contains REMOVED.
+	int32_t hashCode;
+	// Index of next entry in bucket. If this is the last entry in the bucket,
+	// has the value Hash::LAST.
+	size_t next;
 	Value key;
 	Value value;
+
+	inline bool IsRemoved() const
+	{
+		return hashCode == REMOVED;
+	}
+
+	// When the hash code of an entry is set to this value, indicates that
+	// it used to contain a value that has since been removed.
+	static const int32_t REMOVED = -1;
 };
 
 class Hash
 {
 public:
-	int32_t capacity;   // the number of "slots" in buckets and entries
-	int32_t count;      // the number of entries (not buckets) that have been used
-	int32_t freeCount;  // the number of entries that were previously used, and have now been freed (and can thus be reused)
-	int32_t freeList;   // the index of the first freed entry
-	int32_t version;    // the "version" of the hash, incremented whenever changes are made
+	static const size_t LAST = (size_t)-1;
 
-	int32_t *buckets;
+	// The number of "slots" in buckets and entries.
+	size_t capacity;
+	// The number of entries (not buckets) that have been used.
+	size_t count;
+	// The number of entries that were previously used, and have now been freed
+	// (and can thus be reused).
+	size_t freeCount;
+	// The index of the first freed entry. If there is non, has the value LAST.
+	size_t freeList;
+	// The "version" of the hash, incremented whenever changes are made.
+	int32_t version;
+
+	// Indexes into entries.
+	size_t *buckets;
+	// The actual values stored in the hash.
 	HashEntry *entries;
 
 	Value keyComparer;
 
-	inline int32_t GetLength()
+	inline size_t GetLength()
 	{
 		return count - freeCount;
 	}
 
-	int InitializeBuckets(ThreadHandle thread, int32_t capacity);
+	int InitializeBuckets(ThreadHandle thread, size_t capacity);
 
 	int Resize(ThreadHandle thread);
 
-	int FindEntry(ThreadHandle thread, Value *key, int32_t hashCode, int32_t &index);
+	int FindEntry(ThreadHandle thread, Value *key, int32_t hashCode, size_t &index);
 
 	int KeyEquals(ThreadHandle thread, Value *a, Value *b, bool &equals);
 
@@ -78,7 +101,7 @@ AVES_API NATIVE_FUNCTION(aves_Hash_concatInternal);
 AVES_API NATIVE_FUNCTION(aves_Hash_pinEntries);
 AVES_API NATIVE_FUNCTION(aves_Hash_unpinEntries);
 
-AVES_API int OVUM_CDECL InitHashInstance(ThreadHandle thread, int32_t capacity, Value *result);
+AVES_API int OVUM_CDECL InitHashInstance(ThreadHandle thread, size_t capacity, Value *result);
 
 AVES_API int OVUM_CDECL ConcatenateHashes(ThreadHandle thread, Value *a, Value *b, Value *result);
 

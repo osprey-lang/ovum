@@ -52,7 +52,8 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_UInt_toStringf)
 	}
 	else if (IsString(thread, format))
 	{
-		int radix, minWidth;
+		int radix;
+		size_t minWidth;
 		bool upper;
 		CHECKED(integer::ParseFormatString(thread, format->v.string, &radix, &minWidth, &upper));
 
@@ -339,19 +340,21 @@ AVES_API NATIVE_FUNCTION(aves_UInt_opNot)
 
 // Internal methods
 
-String *uinteger::ToString(ThreadHandle thread, const uint64_t value,
-	const int radix, const int minWidth,
-	const bool upper)
+String *uinteger::ToString(
+	ThreadHandle thread,
+	uint64_t value,
+	int radix,
+	size_t minWidth,
+	bool upper
+)
 {
-	using namespace std;
-
-	static const int smallBufferSize = 128;
+	static const size_t smallBufferSize = 128;
 
 	String *str;
 	if (minWidth < smallBufferSize)
 	{
 		ovchar_t buf[smallBufferSize];
-		int32_t length;
+		size_t length;
 		if (radix == 10)
 			length = ToStringDecimal(thread, value, minWidth, smallBufferSize, buf);
 		else if (radix == 16)
@@ -362,9 +365,9 @@ String *uinteger::ToString(ThreadHandle thread, const uint64_t value,
 	}
 	else
 	{
-		int bufSize = minWidth + 1;
-		unique_ptr<ovchar_t[]> buf(new ovchar_t[bufSize]);
-		int32_t length;
+		size_t bufSize = minWidth + 1;
+		std::unique_ptr<ovchar_t[]> buf(new ovchar_t[bufSize]);
+		size_t length;
 		if (radix == 10)
 			length = ToStringDecimal(thread, value, minWidth, bufSize, buf.get());
 		else if (radix == 16)
@@ -377,13 +380,18 @@ String *uinteger::ToString(ThreadHandle thread, const uint64_t value,
 	return str;
 }
 
-int32_t uinteger::ToStringDecimal(ThreadHandle thread, const uint64_t value,
-	const int minWidth, const int bufferSize, ovchar_t *buf)
+size_t uinteger::ToStringDecimal(
+	ThreadHandle thread,
+	uint64_t value,
+	size_t minWidth,
+	size_t bufferSize,
+	ovchar_t *buf
+)
 {
 	ovchar_t *chp = buf + bufferSize;
 
 	uint64_t temp = value;
-	int length = 0;
+	size_t length = 0;
 	do
 	{
 		*--chp = (ovchar_t)'0' + (int)(temp % 10);
@@ -399,16 +407,21 @@ int32_t uinteger::ToStringDecimal(ThreadHandle thread, const uint64_t value,
 	return length;
 }
 
-int32_t uinteger::ToStringHex(ThreadHandle thread, const uint64_t value,
-	const bool upper, const int minWidth,
-	const int bufferSize, ovchar_t *buf)
+size_t uinteger::ToStringHex(
+	ThreadHandle thread,
+	uint64_t value,
+	bool upper,
+	size_t minWidth,
+	size_t bufferSize,
+	ovchar_t *buf
+)
 {
 	ovchar_t *chp = buf + bufferSize;
 
 	const ovchar_t letterBase = upper ? 'A' : 'a';
 
 	uint64_t temp = value;
-	int length = 0;
+	size_t length = 0;
 	do
 	{
 		int rem = temp % 16;
@@ -425,9 +438,15 @@ int32_t uinteger::ToStringHex(ThreadHandle thread, const uint64_t value,
 	return length;
 }
 
-int32_t uinteger::ToStringRadix(ThreadHandle thread, const uint64_t value,
-	const int radix, const bool upper, const int minWidth,
-	const int bufferSize, ovchar_t *buf)
+size_t uinteger::ToStringRadix(
+	ThreadHandle thread,
+	uint64_t value,
+	int radix,
+	bool upper,
+	size_t minWidth,
+	size_t bufferSize,
+	ovchar_t *buf
+)
 {
 	// The radix is supposed to be range checked outside of this method.
 	// Also, use ToStringDecimal and ToStringHex for base 10 and 16, respectively.
@@ -438,7 +457,7 @@ int32_t uinteger::ToStringRadix(ThreadHandle thread, const uint64_t value,
 	const ovchar_t letterBase = upper ? 'A' : 'a';
 	
 	uint64_t temp = value;
-	int length = 0;
+	size_t length = 0;
 	do {
 		int rem = temp % radix; // radix is clamped to [2, 36], so this is fine
 		*--chp = rem >= 10 ? letterBase + rem - 10 : (ovchar_t)'0' + rem;

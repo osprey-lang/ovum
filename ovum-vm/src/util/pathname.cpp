@@ -10,26 +10,34 @@ namespace ovum
 
 const PathName::noinit_t PathName::noinit = { };
 
-PathName::PathName(noinit_t)
-	: data(nullptr), length(0), capacity(0)
+PathName::PathName(noinit_t) :
+	data(nullptr),
+	length(0),
+	capacity(0)
 { }
 
-PathName::PathName(const pathchar_t *const path)
-	: data(nullptr), length(0), capacity(0)
+PathName::PathName(const pathchar_t *const path) :
+	data(nullptr),
+	length(0),
+	capacity(0)
 {
-	uint32_t pathLength = StringLength(path);
+	size_t pathLength = StringLength(path);
 	Init(pathLength);
 	this->length = pathLength;
 	CopyMemoryT(this->data, path, pathLength + 1); // +1 for \0
 }
-PathName::PathName(uint32_t capacity)
-	: data(nullptr), length(0), capacity(0)
+PathName::PathName(size_t capacity) :
+	data(nullptr),
+	length(0),
+	capacity(0)
 {
 	Init(capacity);
 	data[0] = ZERO;
 }
-PathName::PathName(String *path)
-	: data(nullptr), length(0), capacity(0)
+PathName::PathName(String *path) :
+	data(nullptr),
+	length(0),
+	capacity(0)
 {
 #if OVUM_WIDE_PATHCHAR
 	Init(path->length);
@@ -39,18 +47,22 @@ PathName::PathName(String *path)
 #error Not implemented
 #endif
 }
-PathName::PathName(const PathName &other)
-	: data(nullptr), length(0), capacity(0)
+PathName::PathName(const PathName &other) :
+	data(nullptr),
+	length(0),
+	capacity(0)
 {
 	Init(other.length);
 	this->length = other.length;
 	CopyMemoryT(this->data, other.data, other.length + 1); // +1 for \0
 }
 
-PathName::PathName(const pathchar_t *const path, std::nothrow_t)
-	: data(nullptr), length(0), capacity(0)
+PathName::PathName(const pathchar_t *const path, std::nothrow_t) :
+	data(nullptr),
+	length(0),
+	capacity(0)
 {
-	uint32_t pathLength = StringLength(path);
+	size_t pathLength = StringLength(path);
 	Init(pathLength, std::nothrow);
 	if (IsValid())
 	{
@@ -58,15 +70,19 @@ PathName::PathName(const pathchar_t *const path, std::nothrow_t)
 		CopyMemoryT(this->data, path, pathLength + 1); // +1 for \0
 	}
 }
-PathName::PathName(uint32_t capacity, std::nothrow_t)
-	: data(nullptr), length(0), capacity(0)
+PathName::PathName(size_t capacity, std::nothrow_t) :
+	data(nullptr),
+	length(0),
+	capacity(0)
 {
 	Init(capacity, std::nothrow);
 	if (IsValid())
 		data[0] = ZERO;
 }
-PathName::PathName(String *path, std::nothrow_t)
-	: data(nullptr), length(0), capacity(0)
+PathName::PathName(String *path, std::nothrow_t) :
+	data(nullptr),
+	length(0),
+	capacity(0)
 {
 #if OVUM_WIDE_PATHCHAR
 	Init(path->length, std::nothrow);
@@ -79,8 +95,10 @@ PathName::PathName(String *path, std::nothrow_t)
 #error Not implemented
 #endif
 }
-PathName::PathName(const PathName &other, std::nothrow_t)
-	: data(nullptr), length(0), capacity(0)
+PathName::PathName(const PathName &other, std::nothrow_t) :
+	data(nullptr),
+	length(0),
+	capacity(0)
 {
 	Init(other.length, std::nothrow);
 	if (IsValid())
@@ -104,25 +122,25 @@ String *PathName::ToManagedString(ThreadHandle thread) const
 #endif
 }
 
-void PathName::Init(uint32_t capacity)
+void PathName::Init(size_t capacity)
 {
 	this->data = new pathchar_t[capacity + 1]; // +1 for \0
 	this->capacity = capacity;
 }
-void PathName::Init(uint32_t capacity, std::nothrow_t)
+void PathName::Init(size_t capacity, std::nothrow_t)
 {
 	this->data = new(std::nothrow) pathchar_t[capacity + 1]; // +1 for \0
 	if (IsValid())
 		this->capacity = capacity;
 }
 
-bool PathName::EnsureMinCapacity(uint32_t minCapacity)
+bool PathName::EnsureMinCapacity(size_t minCapacity)
 {
 	using namespace std;
 
 	if (this->capacity < minCapacity)
 	{
-		uint32_t newCap = max(minCapacity, this->capacity * 2);
+		size_t newCap = max(minCapacity, this->capacity * 2);
 		unique_ptr<pathchar_t[]> newValues(new(std::nothrow) pathchar_t[newCap]);
 		if (newValues.get() == nullptr)
 			return false;
@@ -136,10 +154,10 @@ bool PathName::EnsureMinCapacity(uint32_t minCapacity)
 	return true;
 }
 
-uint32_t PathName::RemoveFileName()
+size_t PathName::RemoveFileName()
 {
-	uint32_t root = GetRootLength(length, data);
-	uint32_t i = length;
+	size_t root = GetRootLength(length, data);
+	size_t i = length;
 	while (i > root && !IsPathSep(data[--i]))
 		;
 	// i is now at the path separator, or at the last
@@ -149,7 +167,7 @@ uint32_t PathName::RemoveFileName()
 	return i;
 }
 
-uint32_t PathName::ClipTo(uint32_t index, uint32_t length)
+size_t PathName::ClipTo(size_t index, size_t length)
 {
 	if (index >= this->length || length == 0)
 	{
@@ -165,7 +183,7 @@ uint32_t PathName::ClipTo(uint32_t index, uint32_t length)
 		length = min(this->length - index, length);
 		// Copy one character at a time instead of using CopyMemoryT,
 		// to avoid potential problems with overlapping characters.
-		for (uint32_t i = 0; i < length; i++)
+		for (size_t i = 0; i < length; i++)
 			data[i] = data[index + i];
 		data[length] = ZERO;
 		this->length = length;
@@ -173,7 +191,7 @@ uint32_t PathName::ClipTo(uint32_t index, uint32_t length)
 	return this->length;
 }
 
-uint32_t PathName::AppendInner(uint32_t length, const pathchar_t *path)
+size_t PathName::AppendInner(size_t length, const pathchar_t *path)
 {
 	if (length > 0)
 	{
@@ -188,25 +206,25 @@ uint32_t PathName::AppendInner(uint32_t length, const pathchar_t *path)
 	return this->length;
 }
 
-uint32_t PathName::AppendOvchar(uint32_t length, const ovchar_t *path)
+size_t PathName::AppendOvchar(size_t length, const ovchar_t *path)
 {
 #if OVUM_WIDE_PATHCHAR
 	return AppendInner(length, reinterpret_cast<const pathchar_t*>(path));
 #else
 	char buffer[UTF8_BUFFER_SIZE];
-	Utf8Encoder enc(buffer, UTF8_BUFFER_SIZE, path, (int32_t)length);
+	Utf8Encoder enc(buffer, UTF8_BUFFER_SIZE, path, length);
 
-	int32_t byteCount;
+	size_t byteCount;
 	while ((byteCount = enc.GetNextBytes()) != 0)
 	{
-		AppendInner((uint32_t)byteCount, reinterpret_cast<pathchar_t*>(buffer));
+		AppendInner(byteCount, reinterpret_cast<pathchar_t*>(buffer));
 	}
 
 	return this->length;
 #endif
 }
 
-uint32_t PathName::JoinInner(uint32_t length, const pathchar_t *path)
+size_t PathName::JoinInner(size_t length, const pathchar_t *path)
 {
 	if (IsRooted(length, path))
 	{
@@ -230,30 +248,30 @@ uint32_t PathName::JoinInner(uint32_t length, const pathchar_t *path)
 	return this->length;
 }
 
-uint32_t PathName::JoinOvchar(uint32_t length, const ovchar_t *path)
+size_t PathName::JoinOvchar(size_t length, const ovchar_t *path)
 {
 #if OVUM_WIDE_PATHCHAR
 	return JoinInner(length, reinterpret_cast<const pathchar_t*>(path));
 #else
 	char buffer[UTF8_BUFFER_SIZE];
-	Utf8Encoder enc(buffer, UTF8_BUFFER_SIZE, path, (int32_t)length);
+	Utf8Encoder enc(buffer, UTF8_BUFFER_SIZE, path, length);
 
-	int32_t byteCount;
+	size_t byteCount;
 	if ((byteCount = enc.GetNextBytes()) != 0)
 	{
 		// The first time we have to call JoinInner()
-		JoinInner((uint32_t)byteCount, reinterpret_cast<pathchar_t*>(buffer));
+		JoinInner(byteCount, reinterpret_cast<pathchar_t*>(buffer));
 
 		// And each following call must be to AppendInner()
 		while ((byteCount = enc.GetNextBytes()) != 0)
 		{
-			AppendInner((uint32_t)byteCount, reinterpret_cast<pathchar_t*>(buffer));
+			AppendInner(byteCount, reinterpret_cast<pathchar_t*>(buffer));
 		}
 	}
 #endif
 }
 
-void PathName::ReplaceWithInner(uint32_t length, const pathchar_t *path)
+void PathName::ReplaceWithInner(size_t length, const pathchar_t *path)
 {
 	if (!EnsureMinCapacity(length))
 		throw std::bad_alloc();
@@ -263,31 +281,31 @@ void PathName::ReplaceWithInner(uint32_t length, const pathchar_t *path)
 	this->data[length] = ZERO;
 }
 
-void PathName::ReplaceWithOvchar(uint32_t length, const ovchar_t *path)
+void PathName::ReplaceWithOvchar(size_t length, const ovchar_t *path)
 {
 #if OVUM_WIDE_PATHCHAR
 	ReplaceWithInner(length, reinterpret_cast<const pathchar_t*>(path));
 #else
 	// Re-encode the path to UTF-8
 	char buffer[UTF8_BUFFER_SIZE];
-	Utf8Encoder enc(buffer, UTF8_BUFFER_SIZE, path, (int32_t)length);
+	Utf8Encoder enc(buffer, UTF8_BUFFER_SIZE, path, length);
 
-	int32_t byteCount;
+	size_t byteCount;
 	if ((byteCount = enc.GetNextBytes()) != 0)
 	{
 		// The first time we have to call ReplaceWithInner()
-		ReplaceWithInner((uint32_t)byteCount, reinterpret_cast<pathchar_t*>(buffer));
+		ReplaceWithInner(byteCount, reinterpret_cast<pathchar_t*>(buffer));
 
 		// And each following call must be to AppendInner()
 		while ((byteCount = enc.GetNextBytes()) != 0)
 		{
-			AppendInner((uint32_t)byteCount, reinterpret_cast<pathchar_t*>(buffer));
+			AppendInner(byteCount, reinterpret_cast<pathchar_t*>(buffer));
 		}
 	}
 #endif
 }
 
-bool PathName::IsRooted(uint32_t length, const pathchar_t *path)
+bool PathName::IsRooted(size_t length, const pathchar_t *path)
 {
 	// Starts with path separator, e.g. /hello/nope
 	if (length >= 1 && IsPathSep(path[0]))
@@ -302,9 +320,9 @@ bool PathName::IsRooted(uint32_t length, const pathchar_t *path)
 	return false;
 }
 
-uint32_t PathName::GetRootLength(uint32_t length, const pathchar_t *path)
+size_t PathName::GetRootLength(size_t length, const pathchar_t *path)
 {
-	uint32_t index = 0;
+	size_t index = 0;
 
 	if (length >= 1 && IsPathSep(path[0]))
 	{
@@ -324,12 +342,12 @@ uint32_t PathName::GetRootLength(uint32_t length, const pathchar_t *path)
 	return index;
 }
 
-uint32_t PathName::StringLength(const pathchar_t *const str)
+size_t PathName::StringLength(const pathchar_t *const str)
 {
 #if OVUM_WIDE_PATHCHAR
-	return (uint32_t)wcslen(str);
+	return wcslen(str);
 #else
-	return (uint32_t)strlen(str);
+	return strlen(str);
 #endif
 }
 

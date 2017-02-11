@@ -88,8 +88,8 @@ void RootSetWalker::VisitModule(RootSetVisitor &visitor, Module *module)
 {
 	visitor.VisitRootString(module->GetName());
 
-	int32_t stringCount = module->strings.GetLength();
-	for (int32_t i = 0; i < stringCount; i++)
+	size_t stringCount = module->strings.GetLength();
+	for (size_t i = 0; i < stringCount; i++)
 		visitor.VisitRootString(module->strings[i]);
 
 	if (module->debugData)
@@ -98,8 +98,8 @@ void RootSetWalker::VisitModule(RootSetVisitor &visitor, Module *module)
 
 void RootSetWalker::VisitDebugData(RootSetVisitor &visitor, debug::ModuleDebugData *debug)
 {
-	int32_t fileCount = debug->fileCount;
-	for (int32_t i = 0; i < fileCount; i++)
+	size_t fileCount = debug->fileCount;
+	for (size_t i = 0; i < fileCount; i++)
 		visitor.VisitRootString(debug->files[i].fileName);
 }
 
@@ -109,8 +109,8 @@ void RootSetWalker::VisitStaticRefs(RootSetVisitor &visitor, StaticRefBlock *ref
 	{
 		if (visitor.EnterStaticRefBlock(refs))
 		{
-			uint32_t count = refs->count;
-			for (uint32_t i = 0; i < count; i++)
+			size_t count = refs->count;
+			for (size_t i = 0; i < count; i++)
 				visitor.VisitRootValue(refs->values[i].GetValuePointer());
 			visitor.LeaveStaticRefBlock(refs);
 		}

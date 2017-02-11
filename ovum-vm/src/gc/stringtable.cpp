@@ -5,32 +5,30 @@
 namespace ovum
 {
 
-StringTable::StringTable(const int capacity) :
-	count(0), freeCount(0), freeList(-1)
+StringTable::StringTable(size_t capacity) :
+	count(0),
+	freeCount(0),
+	freeList(LAST),
+	buckets(),
+	entries()
 {
 	this->capacity = HashHelper_GetPrime(capacity);
 
-	this->buckets = new int32_t[this->capacity];
-	memset(this->buckets, -1, this->capacity * sizeof(int32_t));
+	this->buckets.reset(new size_t[this->capacity]);
+	memset(this->buckets.get(), -1, this->capacity * sizeof(size_t));
 
-	this->entries = new Entry[this->capacity];
-	memset(this->entries, 0, this->capacity * sizeof(Entry));
+	this->entries.reset(new Entry[this->capacity]);
+	memset(this->entries.get(), 0, this->capacity * sizeof(Entry));
 }
 
-StringTable::~StringTable()
-{
-	delete[] this->buckets;
-	delete[] this->entries;
-}
-
-String *StringTable::GetValue(String *value, const bool add)
+String *StringTable::GetValue(String *value, bool add)
 {
 	int32_t hashCode = String_GetHashCode(value) & INT32_MAX;
 
-	int32_t bucket = hashCode % capacity;
-	for (int32_t i = buckets[bucket]; i >= 0; i = entries[i].next)
+	size_t bucket = hashCode % capacity;
+	for (size_t i = buckets[bucket]; i != LAST; i = entries[i].next)
 	{
-		Entry *e = entries + i;
+		Entry *e = entries.get() + i;
 		if (e->hashCode == hashCode && String_Equals(e->value, value))
 			return e->value;
 	}
@@ -38,7 +36,7 @@ String *StringTable::GetValue(String *value, const bool add)
 	// The bucket did not contain the specified value.
 	if (add)
 	{
-		int32_t index;
+		size_t index;
 		if (freeCount > 0)
 		{
 			index = freeList;
@@ -55,10 +53,10 @@ String *StringTable::GetValue(String *value, const bool add)
 			index = count++;
 		}
 
-		Entry *e = entries + index;
-		e->next     = buckets[bucket];
+		Entry *e = entries.get() + index;
+		e->next = buckets[bucket];
 		e->hashCode = hashCode;
-		e->value    = value;
+		e->value = value;
 		buckets[bucket] = index;
 		value->flags |= StringFlags::INTERN;
 		return value; // We just interned it! yay!
@@ -69,28 +67,25 @@ String *StringTable::GetValue(String *value, const bool add)
 
 void StringTable::Resize()
 {
-	int32_t newSize = HashHelper_GetPrime(capacity * 2);
+	size_t newSize = HashHelper_GetPrime(capacity * 2);
 
-	int32_t *newBuckets = new int32_t[newSize];
-	memset(newBuckets, -1, newSize * sizeof(int32_t));
+	Box<size_t[]> newBuckets(new size_t[newSize]);
+	memset(newBuckets.get(), -1, newSize * sizeof(size_t));
 
-	Entry *newEntries = new Entry[newSize];
-	CopyMemoryT(newEntries, entries, count);
+	Box<Entry[]> newEntries(new Entry[newSize]);
+	CopyMemoryT(newEntries.get(), entries.get(), count);
 
-	Entry *e = newEntries;
-	for (int32_t i = 0; i < count; i++, e++)	
+	Entry *e = newEntries.get();
+	for (size_t i = 0; i < count; i++, e++)
 	{
-		int32_t bucket = e->hashCode % newSize;
+		size_t bucket = e->hashCode % newSize;
 		e->next = newBuckets[bucket];
 		newBuckets[bucket] = i;
 	}
 
-	delete[] this->buckets;
-	delete[] this->entries;
-
 	capacity = newSize;
-	this->buckets = newBuckets;
-	this->entries = newEntries;
+	this->buckets = std::move(newBuckets);
+	this->entries = std::move(newEntries);
 }
 
 String *StringTable::GetInterned(String *value)
@@ -111,11 +106,11 @@ bool StringTable::RemoveIntern(String *value)
 	// without hashing it, but let's check it anyway.
 	OVUM_ASSERT((value->flags & StringFlags::HASHED) == StringFlags::HASHED);
 
-	int32_t bucket = (value->hashCode & INT32_MAX) % capacity;
+	size_t bucket = (value->hashCode & INT32_MAX) % capacity;
 	Entry *lastEntry = nullptr;
-	for (int32_t i = buckets[bucket]; i >= 0; i = lastEntry->next)
+	for (size_t i = buckets[bucket]; i != LAST; i = lastEntry->next)
 	{
-		Entry *e = entries + i;
+		Entry *e = entries.get() + i;
 		if (e->value == value) // Compare pointers for great speed
 		{
 			// We found it!
@@ -149,9 +144,9 @@ void StringTable::UpdateIntern(String *value)
 
 	int32_t hashCode = value->hashCode & INT32_MAX;
 	Entry *entry;
-	for (int32_t i = buckets[hashCode % capacity]; i >= 0; i = entry->next)
+	for (size_t i = buckets[hashCode % capacity]; i != LAST; i = entry->next)
 	{
-		entry = entries + i;
+		entry = entries.get() + i;
 		if (entry->hashCode == hashCode && String_Equals(value, entry->value))
 		{
 			entry->value = value;

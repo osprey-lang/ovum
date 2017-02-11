@@ -51,7 +51,8 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Int_toStringf)
 	}
 	else if (IsString(thread, format))
 	{
-		int radix, minWidth;
+		int radix;
+		size_t minWidth;
 		bool upper;
 		CHECKED(integer::ParseFormatString(thread, format->v.string, &radix, &minWidth, &upper));
 
@@ -355,18 +356,21 @@ AVES_API NATIVE_FUNCTION(aves_Int_opNot)
 
 // Internal methods
 
-String *integer::ToString(ThreadHandle thread, const int64_t value,
-	const int radix, const int minWidth, const bool upper)
+String *integer::ToString(
+	ThreadHandle thread,
+	int64_t value,
+	int radix,
+	size_t minWidth,
+	bool upper
+)
 {
-	using namespace std;
-
-	static const int smallBufferSize = 128;
+	static const size_t smallBufferSize = 128;
 
 	String *str;
 	if (minWidth < smallBufferSize)
 	{
 		ovchar_t buf[smallBufferSize];
-		int32_t length;
+		size_t length;
 		if (radix == 10)
 			length = ToStringDecimal(thread, value, minWidth, smallBufferSize, buf);
 		else if (radix == 16)
@@ -378,8 +382,8 @@ String *integer::ToString(ThreadHandle thread, const int64_t value,
 	else
 	{
 		int bufSize = minWidth + 1;
-		unique_ptr<ovchar_t[]> buf(new ovchar_t[bufSize]);
-		int32_t length;
+		std::unique_ptr<ovchar_t[]> buf(new ovchar_t[bufSize]);
+		size_t length;
 		if (radix == 10)
 			length = ToStringDecimal(thread, value, minWidth, bufSize, buf.get());
 		else if (radix == 16)
@@ -392,8 +396,13 @@ String *integer::ToString(ThreadHandle thread, const int64_t value,
 	return str;
 }
 
-int32_t integer::ToStringDecimal(ThreadHandle thread, const int64_t value,
-	const int minWidth, const int bufferSize, ovchar_t *buf)
+size_t integer::ToStringDecimal(
+	ThreadHandle thread,
+	int64_t value,
+	size_t minWidth,
+	size_t bufferSize,
+	ovchar_t *buf
+)
 {
 	// INT64_MIN is the only weird value: it's the only one that cannot
 	// be represented as a positive integer. This value will probably
@@ -409,7 +418,7 @@ int32_t integer::ToStringDecimal(ThreadHandle thread, const int64_t value,
 	if (neg)
 		temp = -temp;
 	
-	int32_t length = 0;
+	size_t length = 0;
 	do
 	{
 		*--chp = (ovchar_t)'0' + temp % 10;
@@ -431,9 +440,14 @@ int32_t integer::ToStringDecimal(ThreadHandle thread, const int64_t value,
 	return length;
 }
 
-int32_t integer::ToStringHex(ThreadHandle thread, const int64_t value,
-	const bool upper, const int minWidth,
-	const int bufferSize, ovchar_t *buf)
+size_t integer::ToStringHex(
+	ThreadHandle thread,
+	int64_t value,
+	bool upper,
+	size_t minWidth,
+	size_t bufferSize,
+	ovchar_t *buf
+)
 {
 	// As with ToStringDecimal, we treat INT64_MIN specially here too.
 	if (value == INT64_MIN)
@@ -448,7 +462,7 @@ int32_t integer::ToStringHex(ThreadHandle thread, const int64_t value,
 
 	const ovchar_t letterBase = upper ? 'A' : 'a';
 	
-	int32_t length = 0;
+	size_t length = 0;
 	do
 	{
 		int rem = temp % 16;
@@ -471,9 +485,15 @@ int32_t integer::ToStringHex(ThreadHandle thread, const int64_t value,
 	return length;
 }
 
-int32_t integer::ToStringRadix(ThreadHandle thread, const int64_t value,
-	const int radix, const bool upper, const int minWidth,
-	const int bufferSize, ovchar_t *buf)
+size_t integer::ToStringRadix(
+	ThreadHandle thread,
+	int64_t value,
+	int radix,
+	bool upper,
+	size_t minWidth,
+	size_t bufferSize,
+	ovchar_t *buf
+)
 {
 	// The radix is supposed to be range checked outside of this method.
 	// Also, use ToStringDecimal and ToStringHex for base 10 and 16, respectively.
@@ -486,7 +506,7 @@ int32_t integer::ToStringRadix(ThreadHandle thread, const int64_t value,
 
 	const ovchar_t letterBase = upper ? 'A' : 'a';
 
-	int32_t length = 0;
+	size_t length = 0;
 
 	do {
 		int rem = sign * (temp % radix);
@@ -509,16 +529,22 @@ int32_t integer::ToStringRadix(ThreadHandle thread, const int64_t value,
 	return length;
 }
 
-int integer::ParseFormatString(ThreadHandle thread, String *str, int *radix, int *minWidth, bool *upper)
+int integer::ParseFormatString(
+	ThreadHandle thread,
+	String *str,
+	int *radix,
+	size_t *minWidth,
+	bool *upper
+)
 {
 	*radix = 10;
 	*minWidth = 0;
 	*upper = false;
 
-	static const unsigned int MaxWidth = 2048;
+	static const size_t MaxWidth = 2048;
 
 	const ovchar_t *ch = &str->firstChar;
-	int32_t i = 0;
+	size_t i = 0;
 	switch (*ch)
 	{
 	case '0': // '0'+ (specifies width of number)

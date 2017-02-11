@@ -23,7 +23,7 @@ private:
 	Box<Thread> mainThread;
 
 	// Number of command-line arguments.
-	int argCount;
+	size_t argCount;
 	// Command-line argument values. Each Value* is a pointer into
 	// a StaticRef.
 	Box<Value*[]> argValues;
@@ -58,7 +58,9 @@ private:
 	Box<StaticStrings> strings;
 
 	int LoadModules(VMStartParams &params);
-	int InitArgs(int argCount, const wchar_t *args[]);
+
+	int InitArgs(size_t argCount, const wchar_t *args[]);
+
 	int GetMainMethodOverload(Method *method, ovlocals_t &argc, MethodOverload *&overload);
 
 	static void PrintInternal(FILE *file, const wchar_t *format, String *str);
@@ -115,18 +117,28 @@ public:
 	}
 
 	static void Print(String *str);
+
 	static void Printf(const wchar_t *format, String *str);
+
 	static void PrintLn(String *str);
 
 	static void PrintErr(String *str);
+
 	static void PrintfErr(const wchar_t *format, String *str);
+
 	static void PrintErrLn(String *str);
 
-	inline int GetArgCount() { return argCount; }
-	int GetArgs(int destLength, String *dest[]);
-	int GetArgValues(int destLength, Value dest[]);
+	inline size_t GetArgCount()
+	{
+		return argCount;
+	}
+
+	size_t GetArgs(size_t destLength, String *dest[]);
+
+	size_t GetArgValues(size_t destLength, Value dest[]);
 
 	void PrintUnhandledError(Thread *const thread);
+
 	void PrintMethodInitException(MethodInitException &e);
 
 	// Contains the VM running on the current thread.

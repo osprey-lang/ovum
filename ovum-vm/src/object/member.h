@@ -131,6 +131,7 @@ private:
 	Type *GetOriginatingType() const;
 
 	bool IsAccessibleProtected(const Type *instType, const Type *fromType) const;
+
 	bool IsAccessibleProtectedWithSharedType(const Type *instType, const Type *fromType) const;
 };
 

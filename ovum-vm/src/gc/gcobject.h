@@ -124,6 +124,7 @@ public:
 
 	uint8_t *InstanceBase();
 	uint8_t *InstanceBase(Type *type);
+
 	Value *FieldsBase();
 	Value *FieldsBase(Type *type);
 
@@ -187,6 +188,7 @@ public:
 	}
 
 	static GCObject *FromInst(void *inst);
+
 	static GCObject *FromValue(Value *value);
 };
 

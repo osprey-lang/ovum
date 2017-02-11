@@ -19,7 +19,12 @@ namespace debug_file
 
 namespace debug
 {
-	OverloadSymbols::OverloadSymbols(MethodSymbols *parent, MethodOverload *overload, int32_t symbolCount, Box<DebugSymbol[]> symbols) :
+	OverloadSymbols::OverloadSymbols(
+		MethodSymbols *parent,
+		MethodOverload *overload,
+		size_t symbolCount,
+		Box<DebugSymbol[]> symbols
+	) :
 		parent(parent),
 		overload(overload),
 		symbolCount(symbolCount),
@@ -30,10 +35,12 @@ namespace debug
 	{
 		DebugSymbol *symbols = this->symbols.get();
 
-		int32_t imin = 0, imax = symbolCount - 1;
+		// We have to use a signed type here. Otherwise, if offset is before the
+		// first debug symbol, i - 1 will overflow when i = 0.
+		ssize_t imin = 0, imax = (ssize_t)symbolCount - 1;
 		while (imax >= imin)
 		{
-			int32_t i = imin + (imax - imin) / 2;
+			ssize_t i = imin + (imax - imin) / 2;
 			DebugSymbol *loc = symbols + i;
 			if (offset < loc->startOffset)
 				imax = i - 1;
@@ -52,7 +59,7 @@ namespace debug
 		overloads()
 	{ }
 
-	void MethodSymbols::SetOverloads(int32_t count, Box<Box<OverloadSymbols>[]> overloads)
+	void MethodSymbols::SetOverloads(size_t count, Box<Box<OverloadSymbols>[]> overloads)
 	{
 		this->overloadCount = count;
 		this->overloads = std::move(overloads);
@@ -128,7 +135,7 @@ namespace debug
 
 	void DebugSymbolsReader::ReadSourceFiles(ModuleDebugData *data, const df::SourceFileList *list)
 	{
-		int32_t count = list->fileCount;
+		size_t count = (size_t)list->fileCount;
 
 		// Give the debug data the file list immediately, so the GC can find
 		// the file name strings if it has to.
@@ -137,7 +144,7 @@ namespace debug
 		memset(data->files.get(), 0, sizeof(SourceFile) * count);
 
 		const mf::Rva<df::SourceFile> *defRvas = list->files.Get();
-		for (int32_t i = 0; i < count; i++)
+		for (size_t i = 0; i < count; i++)
 		{
 			mf::Rva<df::SourceFile> defRva = defRvas[i];
 			const df::SourceFile *def = file.Deref(defRva);
@@ -149,14 +156,18 @@ namespace debug
 		}
 	}
 
-	void DebugSymbolsReader::ReadMethodSymbols(Module *module, ModuleDebugData *data, const df::DebugSymbolsHeader *header)
+	void DebugSymbolsReader::ReadMethodSymbols(
+		Module *module,
+		ModuleDebugData *data,
+		const df::DebugSymbolsHeader *header
+	)
 	{
-		int32_t count = header->methodSymbolCount;
+		size_t count = (size_t)header->methodSymbolCount;
 
 		Box<Box<MethodSymbols>[]> methodSymbols(new Box<MethodSymbols>[count]);
 
 		const mf::Rva<df::MethodSymbols> *defRvas = header->methodSymbols.Get();
-		for (int32_t i = 0; i < count; i++)
+		for (size_t i = 0; i < count; i++)
 		{
 			mf::Rva<df::MethodSymbols> defRva = defRvas[i];
 			const df::MethodSymbols *def = file.Deref(defRva);
@@ -182,11 +193,11 @@ namespace debug
 
 		Box<MethodSymbols> methodSymbols(new MethodSymbols(method));
 
-		int32_t count = symbols->overloadCount;
+		size_t count = (size_t)symbols->overloadCount;
 		Box<Box<OverloadSymbols>[]> overloads(new Box<OverloadSymbols>[count]);
 
 		const mf::Rva<df::OverloadSymbols> *defRvas = symbols->overloads.Get();
-		for (int32_t i = 0; i < count; i++)
+		for (size_t i = 0; i < count; i++)
 		{
 			mf::Rva<df::OverloadSymbols> defRva = defRvas[i];
 			// If the overload is abstract or native, or just doesn't have any
@@ -220,11 +231,11 @@ namespace debug
 		const debug_file::OverloadSymbols *symbols
 	)
 	{
-		int32_t count = symbols->symbolCount;
+		size_t count = (size_t)symbols->symbolCount;
 		Box<DebugSymbol[]> debugSymbols(new DebugSymbol[count]);
 
 		const df::DebugSymbol *defs = symbols->symbols.Get();
-		for (int32_t i = 0; i < count; i++)
+		for (size_t i = 0; i < count; i++)
 		{
 			const df::DebugSymbol *def = defs + i;
 
@@ -270,13 +281,13 @@ namespace debug
 
 	void DebugSymbolsReader::AttachSymbols(ModuleDebugData *data)
 	{
-		int32_t methodSymbolCount = data->methodSymbolCount;
-		for (int32_t m = 0; m < methodSymbolCount; m++)
+		size_t methodSymbolCount = data->methodSymbolCount;
+		for (size_t m = 0; m < methodSymbolCount; m++)
 		{
 			MethodSymbols *method = data->methodSymbols[m].get();
-			int32_t overloadCount = method->overloadCount;
+			size_t overloadCount = method->overloadCount;
 
-			for (int32_t i = 0; i < overloadCount; i++)
+			for (size_t i = 0; i < overloadCount; i++)
 			{
 				OverloadSymbols *overload = method->overloads[i].get();
 				overload->overload->debugSymbols = overload;

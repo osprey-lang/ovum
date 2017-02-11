@@ -12,9 +12,9 @@ class MemberTableBase
 {
 public:
 	// The total number of slots
-	int32_t capacity;
+	size_t capacity;
 	// The total number of entries (that is, number of used slots).
-	int32_t length;
+	size_t length;
 	Box<T[]> entries;
 
 	inline MemberTableBase() :
@@ -23,7 +23,7 @@ public:
 		entries(nullptr)
 	{ }
 
-	inline void Init(int32_t capacity)
+	inline void Init(size_t capacity)
 	{
 		// Init should only be called with a non-zero capacity once
 		OVUM_ASSERT(this->capacity == 0);
@@ -35,7 +35,7 @@ public:
 			this->entries = nullptr;
 	}
 
-	inline bool HasItem(int32_t index) const
+	inline bool HasItem(size_t index) const
 	{
 		return index >= 0 && index < length;
 	}
@@ -45,7 +45,7 @@ template<class T>
 class MemberTable : private MemberTableBase<T>
 {
 public:
-	inline MemberTable(int32_t capacity) :
+	inline explicit MemberTable(size_t capacity) :
 		MemberTableBase()
 	{
 		Init(capacity);
@@ -54,23 +54,23 @@ public:
 		MemberTableBase()
 	{ }
 
-	inline T &operator[](int32_t index) const
+	inline T &operator[](size_t index) const
 	{
 		return entries[index];
 	}
 
-	inline int32_t GetLength() const
+	inline size_t GetLength() const
 	{
 		return length;
 	}
 
-	inline int32_t GetCapacity() const
+	inline size_t GetCapacity() const
 	{
 		return capacity;
 	}
 
 private:
-	inline void Init(int32_t capacity)
+	inline void Init(size_t capacity)
 	{
 		this->MemberTableBase::Init(capacity);
 	}
@@ -89,7 +89,7 @@ template<class T>
 class MemberTable<T*> : private MemberTableBase<T*>
 {
 public:
-	inline MemberTable(int32_t capacity) :
+	inline explicit MemberTable(size_t capacity) :
 		MemberTableBase()
 	{
 		Init(capacity);
@@ -98,25 +98,25 @@ public:
 		MemberTableBase()
 	{ }
 
-	inline T *operator[](int32_t index) const
+	inline T *operator[](size_t index) const
 	{
 		if (!HasItem(index))
 			return nullptr;
 		return entries[index];
 	}
 
-	inline int32_t GetLength() const
+	inline size_t GetLength() const
 	{
 		return length;
 	}
 
-	inline int32_t GetCapacity() const
+	inline size_t GetCapacity() const
 	{
 		return capacity;
 	}
 
 private:
-	inline void Init(int32_t capacity)
+	inline void Init(size_t capacity)
 	{
 		this->MemberTableBase::Init(capacity);
 	}

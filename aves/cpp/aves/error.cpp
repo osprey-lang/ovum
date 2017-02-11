@@ -1,7 +1,6 @@
 #include "error.h"
 #include <ovum_string.h>
 #include <ovum_stringbuffer.h>
-#include <cstddef>
 
 LitString<30> _DefaultErrorMessage = LitString<30>::FromCString("An unspecified error occurred.");
 String *DefaultErrorMessage = _DefaultErrorMessage.AsString();

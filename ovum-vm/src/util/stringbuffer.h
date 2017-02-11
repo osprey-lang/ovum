@@ -7,37 +7,41 @@ namespace ovum
 
 class StringBuffer
 {
-private:
-	int32_t capacity;
-	int32_t length;
-	ovchar_t *data;
-
 public:
-	StringBuffer(const int32_t capacity = StringBuffer::DefaultCapacity);
+	explicit StringBuffer(size_t capacity = StringBuffer::DefaultCapacity);
 	~StringBuffer();
 
-	inline int32_t GetLength()   { return this->length; }
-	inline int32_t GetCapacity() { return this->capacity; }
-	int32_t SetCapacity(const int32_t newCapacity);
+	inline size_t GetLength()
+	{
+		return this->length;
+	}
 
-	void Append(const ovchar_t ch);
-	void Append(const int32_t count, const ovchar_t ch);
-	void Append(const int32_t length, const ovchar_t data[]);
+	inline size_t GetCapacity()
+	{
+		return this->capacity;
+	}
+
+	size_t SetCapacity(size_t newCapacity);
+
+	void Append(ovchar_t ch);
+	void Append(size_t count, const ovchar_t ch);
+	void Append(size_t length, const ovchar_t data[]);
 	void Append(String *str);
 
-	void Append(const int32_t length, const char data[]);
+	void Append(size_t length, const char data[]);
 #if OVUM_WCHAR_SIZE != 2
-	void Append(const int32_t length, const wchar_t data[]);
+	void Append(size_t length, const wchar_t data[]);
 #endif
 
 	// Clears the buffer's contents without changing the capacity.
 	void Clear();
 
-	inline bool StartsWith(const ovchar_t ch)
+	inline bool StartsWith(ovchar_t ch)
 	{
 		return this->length > 0 && this->data[0] == ch;
 	}
-	inline bool EndsWith(const ovchar_t ch)
+
+	inline bool EndsWith(ovchar_t ch)
 	{
 		return this->length > 0 && this->data[this->length - 1] == ch;
 	}
@@ -46,10 +50,14 @@ public:
 
 	// If buf is null, returns only the size of the resulting string,
 	// including the terminating \0.
-	int ToWString(wchar_t *buf);
+	size_t ToWString(wchar_t *buf);
 
 private:
-	void EnsureMinCapacity(int32_t newAmount);
+	size_t capacity;
+	size_t length;
+	ovchar_t *data;
+
+	void EnsureMinCapacity(size_t newAmount);
 
 	static const size_t DefaultCapacity = 128;
 };

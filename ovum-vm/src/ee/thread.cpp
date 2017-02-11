@@ -602,8 +602,8 @@ void Thread::PushStackFrame(ovlocals_t argCount, Value *args, MethodOverload *me
 	OVUM_ASSERT(currentFrame->stackCount >= argCount);
 	currentFrame->stackCount -= argCount; // pop the arguments (including the instance) off the current frame
 
-	uint32_t paramCount = method->GetEffectiveParamCount();
-	uint32_t localCount = method->locals;
+	ovlocals_t paramCount = method->GetEffectiveParamCount();
+	ovlocals_t localCount = method->locals;
 	StackFrame *newFrame = reinterpret_cast<StackFrame*>(args + paramCount);
 
 	newFrame->stackCount = 0;
@@ -634,7 +634,7 @@ void Thread::PushStackFrame(ovlocals_t argCount, Value *args, MethodOverload *me
 
 int Thread::PrepareVariadicArgs(ovlocals_t argCount, ovlocals_t paramCount, StackFrame *frame)
 {
-	int32_t count = argCount >= paramCount - 1 ? argCount - paramCount + 1 : 0;
+	ovlocals_t count = argCount >= paramCount - 1 ? argCount - paramCount + 1 : 0;
 
 	Value listValue;
 	// Construct the list!
@@ -1269,7 +1269,7 @@ OVUM_API Value VM_Pop(ThreadHandle thread)
 	return thread->Pop();
 }
 
-OVUM_API void VM_PopN(ThreadHandle thread, uint32_t n)
+OVUM_API void VM_PopN(ThreadHandle thread, ovlocals_t n)
 {
 	thread->Pop(n);
 }
@@ -1279,7 +1279,7 @@ OVUM_API void VM_Dup(ThreadHandle thread)
 	thread->Dup();
 }
 
-OVUM_API Value *VM_Local(ThreadHandle thread, uint32_t n)
+OVUM_API Value *VM_Local(ThreadHandle thread, ovlocals_t n)
 {
 	return thread->Local(n);
 }
@@ -1436,9 +1436,9 @@ OVUM_API String *VM_GetStackTrace(ThreadHandle thread)
 	return thread->GetStackTrace();
 }
 
-OVUM_API int VM_GetStackDepth(ThreadHandle thread)
+OVUM_API size_t VM_GetStackDepth(ThreadHandle thread)
 {
-	int depth = 0;
+	size_t depth = 0;
 
 	const ovum::StackFrame *frame = thread->GetCurrentFrame();
 	while (frame && frame->method)
@@ -1456,7 +1456,7 @@ OVUM_API OverloadHandle VM_GetCurrentOverload(ThreadHandle thread)
 	return frame ? frame->method : nullptr;
 }
 
-const ovum::StackFrame *VM_FindStackFrame(ThreadHandle thread, int stackFrame)
+const ovum::StackFrame *VM_FindStackFrame(ThreadHandle thread, size_t stackFrame)
 {
 	if (stackFrame >= 0)
 	{
@@ -1471,31 +1471,31 @@ const ovum::StackFrame *VM_FindStackFrame(ThreadHandle thread, int stackFrame)
 	return nullptr;
 }
 
-OVUM_API int VM_GetEvalStackHeight(ThreadHandle thread, int stackFrame, const Value **slots)
+OVUM_API ovlocals_t VM_GetEvalStackHeight(ThreadHandle thread, size_t stackFrame, const Value **slots)
 {
 	const ovum::StackFrame *frame = VM_FindStackFrame(thread, stackFrame);
 	if (frame)
 	{
 		if (slots)
 			*slots = frame->evalStack;
-		return (int)frame->stackCount;
+		return frame->stackCount;
 	}
-	return -1;
+	return OVUM_INVALID_STACK_FRAME;
 }
 
-OVUM_API int VM_GetLocalCount(ThreadHandle thread, int stackFrame, const Value **slots)
+OVUM_API ovlocals_t VM_GetLocalCount(ThreadHandle thread, size_t stackFrame, const Value **slots)
 {
 	const ovum::StackFrame *frame = VM_FindStackFrame(thread, stackFrame);
 	if (frame)
 	{
 		if (slots)
 			*slots = frame->Locals();
-		return (int)frame->method->locals;
+		return frame->method->locals;
 	}
-	return -1;
+	return OVUM_INVALID_STACK_FRAME;
 }
 
-OVUM_API int VM_GetMethodArgCount(ThreadHandle thread, int stackFrame, const Value **slots)
+OVUM_API ovlocals_t VM_GetMethodArgCount(ThreadHandle thread, size_t stackFrame, const Value **slots)
 {
 	const ovum::StackFrame *frame = VM_FindStackFrame(thread, stackFrame);
 	if (frame)
@@ -1505,10 +1505,10 @@ OVUM_API int VM_GetMethodArgCount(ThreadHandle thread, int stackFrame, const Val
 			*slots = reinterpret_cast<const Value*>(frame) - argCount;
 		return argCount;
 	}
-	return -1;
+	return OVUM_INVALID_STACK_FRAME;
 }
 
-OVUM_API OverloadHandle VM_GetExecutingOverload(ThreadHandle thread, int stackFrame)
+OVUM_API OverloadHandle VM_GetExecutingOverload(ThreadHandle thread, size_t stackFrame)
 {
 	const ovum::StackFrame *frame = VM_FindStackFrame(thread, stackFrame);
 	if (frame)
@@ -1516,7 +1516,7 @@ OVUM_API OverloadHandle VM_GetExecutingOverload(ThreadHandle thread, int stackFr
 	return nullptr;
 }
 
-OVUM_API const void *VM_GetInstructionPointer(ThreadHandle thread, int stackFrame)
+OVUM_API const void *VM_GetInstructionPointer(ThreadHandle thread, size_t stackFrame)
 {
 	if (stackFrame >= 0)
 	{
@@ -1536,7 +1536,7 @@ OVUM_API const void *VM_GetInstructionPointer(ThreadHandle thread, int stackFram
 	return nullptr;
 }
 
-OVUM_API bool VM_GetStackFrameInfo(ThreadHandle thread, int stackFrame, StackFrameInfo *dest)
+OVUM_API bool VM_GetStackFrameInfo(ThreadHandle thread, size_t stackFrame, StackFrameInfo *dest)
 {
 	if (stackFrame >= 0)
 	{

@@ -237,7 +237,7 @@ int GC::Alloc(Thread *const thread, Type *type, size_t size, Value *output)
 	return r;
 }
 
-int GC::AllocArray(Thread *const thread, uint32_t length, size_t itemSize, void **output)
+int GC::AllocArray(Thread *const thread, size_t length, size_t itemSize, void **output)
 {
 	if (itemSize > 0 && length > SIZE_MAX / itemSize)
 		return thread->ThrowOverflowError();
@@ -252,7 +252,7 @@ int GC::AllocArray(Thread *const thread, uint32_t length, size_t itemSize, void 
 	RETURN_SUCCESS;
 }
 
-int GC::AllocValueArray(Thread *const thread, uint32_t length, Value **output)
+int GC::AllocValueArray(Thread *const thread, size_t length, Value **output)
 {
 	if (length > SIZE_MAX / sizeof(Value))
 		return thread->ThrowOverflowError();
@@ -363,7 +363,7 @@ int GC::ConstructLL(Thread *const thread, Type *type, ovlocals_t argc, Value *ar
 	}
 }
 
-String *GC::ConstructString(Thread *const thread, int32_t length, const ovchar_t value[])
+String *GC::ConstructString(Thread *const thread, size_t length, const ovchar_t value[])
 {
 	GCObject *gco;
 	// Note: sizeof(String) includes firstChar, but we need an extra character
@@ -391,7 +391,7 @@ String *GC::ConvertString(Thread *const thread, const char *string)
 	if (length > INT32_MAX)
 		return nullptr;
 
-	String *output = ConstructString(thread, (int32_t)length, nullptr);
+	String *output = ConstructString(thread, length, nullptr);
 
 	if (output && length > 0)
 	{
@@ -403,7 +403,7 @@ String *GC::ConvertString(Thread *const thread, const char *string)
 	return output;
 }
 
-String *GC::ConstructModuleString(Thread *const thread, int32_t length, const ovchar_t value[])
+String *GC::ConstructModuleString(Thread *const thread, size_t length, const ovchar_t value[])
 {
 	// Replicate some functionality of Alloc here
 	size_t size = sizeof(String) + length*sizeof(ovchar_t) + GCO_SIZE;
@@ -778,7 +778,7 @@ OVUM_API int GC_Construct(ThreadHandle thread, TypeHandle type, ovlocals_t argc,
 	return thread->GetGC()->Construct(thread, type, argc, output);
 }
 
-OVUM_API String *GC_ConstructString(ThreadHandle thread, int32_t length, const ovchar_t *values)
+OVUM_API String *GC_ConstructString(ThreadHandle thread, size_t length, const ovchar_t *values)
 {
 	return thread->GetGC()->ConstructString(thread, length, values);
 }
@@ -788,12 +788,12 @@ OVUM_API int GC_Alloc(ThreadHandle thread, TypeHandle type, size_t size, Value *
 	return thread->GetGC()->Alloc(thread, type, size, output);
 }
 
-OVUM_API int GC_AllocArray(ThreadHandle thread, uint32_t length, size_t itemSize, void **output)
+OVUM_API int GC_AllocArray(ThreadHandle thread, size_t length, size_t itemSize, void **output)
 {
 	return thread->GetGC()->AllocArray(thread, length, itemSize, output);
 }
 
-OVUM_API int GC_AllocValueArray(ThreadHandle thread, uint32_t length, Value **output)
+OVUM_API int GC_AllocValueArray(ThreadHandle thread, size_t length, Value **output)
 {
 	return thread->GetGC()->AllocValueArray(thread, length, output);
 }

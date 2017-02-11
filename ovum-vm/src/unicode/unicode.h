@@ -15,18 +15,19 @@ namespace unicode
 		int32_t lower;
 	};
 
-	inline CaseMap operator+(const CaseOffsets &map, const int32_t codepoint)
+	inline CaseMap operator+(const CaseOffsets &map, int32_t codepoint)
 	{
 		const CaseMap output = { map.upper + codepoint, map.lower + codepoint };
 		return output;
 	}
 
-	inline CaseMap operator+(const int32_t codepoint, const CaseOffsets &map)
+	inline CaseMap operator+(int32_t codepoint, const CaseOffsets &map)
 	{
 		return map + codepoint;
 	}
 
 	UnicodeCategory GetCategory(int32_t codepoint);
+
 	CaseMap GetCaseMap(int32_t codepoint);
 
 	namespace categories
