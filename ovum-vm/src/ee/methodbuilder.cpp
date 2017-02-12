@@ -20,28 +20,28 @@ namespace instr
 			delete i.instr;
 	}
 
-	uint32_t MethodBuilder::GetOriginalOffset(int32_t index) const
+	uint32_t MethodBuilder::GetOriginalOffset(size_t index) const
 	{
-		if (index >= (int32_t)instructions.size())
+		if (index >= instructions.size())
 			return instructions.back().originalOffset +
-				instructions.back().originalSize;
+				(uint32_t)instructions.back().originalSize;
 		return instructions[index].originalOffset;
 	}
 
-	uint32_t MethodBuilder::GetOriginalSize(int32_t index) const
+	size_t MethodBuilder::GetOriginalSize(size_t index) const
 	{
-		if (index >= (int32_t)instructions.size())
+		if (index >= instructions.size())
 			return 0;
 		return instructions[index].originalSize;
 	}
 
-	int32_t MethodBuilder::FindIndex(uint32_t originalOffset) const
+	size_t MethodBuilder::FindIndex(uint32_t originalOffset) const
 	{
-		int32_t iMin = 0; // inclusive
-		int32_t iMax = (int32_t)instructions.size() - 1; // inclusive
+		size_t iMin = 0; // inclusive
+		size_t iMax = instructions.size() - 1; // inclusive
 		while (iMax >= iMin)
 		{
-			int32_t iMid = (iMin + iMax) / 2;
+			size_t iMid = (iMin + iMax) / 2;
 			uint32_t midOffset = instructions[iMid].originalOffset;
 			if (originalOffset < midOffset)
 				// Search lower half
@@ -54,13 +54,13 @@ namespace instr
 
 		// try, catch and finally blocks may reference an offset
 		// beyond the last instruction.
-		return (int32_t)instructions.size(); // aw
+		return instructions.size();
 	}
 
-	int32_t MethodBuilder::GetNewOffset(int32_t index) const
+	size_t MethodBuilder::GetNewOffset(size_t index) const
 	{
 		typedef std::vector<InstrDesc>::const_iterator const_iter;
-		if (index >= (int32_t)instructions.size())
+		if (index >= instructions.size())
 		{
 			Instruction *end = instructions.back().instr;
 			return end->offset + end->GetSize();
@@ -68,11 +68,10 @@ namespace instr
 		return instructions[index].instr->offset;
 	}
 
-	int32_t MethodBuilder::GetNewOffset(int32_t index, const Instruction *relativeTo) const
+	int32_t MethodBuilder::GetJumpOffset(size_t index, const Instruction *relativeTo) const
 	{
-		typedef std::vector<InstrDesc>::const_iterator const_iter;
-		int32_t offset;
-		if (index >= (int32_t)instructions.size())
+		size_t offset;
+		if (index >= instructions.size())
 		{
 			Instruction *end = instructions.back().instr;
 			offset = end->offset + end->GetSize();
@@ -81,15 +80,17 @@ namespace instr
 		{
 			offset = instructions[index].instr->offset;
 		}
-		return offset - relativeTo->offset - relativeTo->GetSize();
+		return static_cast<int32_t>(
+			offset - relativeTo->offset - relativeTo->GetSize()
+		);
 	}
 
-	ovlocals_t MethodBuilder::GetStackHeight(int32_t index) const
+	ovlocals_t MethodBuilder::GetStackHeight(size_t index) const
 	{
 		return instructions[index].stackHeight;
 	}
 
-	void MethodBuilder::SetStackHeight(int32_t index, ovlocals_t stackHeight)
+	void MethodBuilder::SetStackHeight(size_t index, ovlocals_t stackHeight)
 	{
 		InstrDesc &instrDesc = instructions[index];
 		OVUM_ASSERT(!instrDesc.removed);
@@ -97,32 +98,32 @@ namespace instr
 		instrDesc.stackHeight = stackHeight;
 	}
 
-	uint32_t MethodBuilder::GetRefSignature(int32_t index) const
+	uint32_t MethodBuilder::GetRefSignature(size_t index) const
 	{
 		return instructions[index].refSignature;
 	}
 
-	void MethodBuilder::SetRefSignature(int32_t index, uint32_t refSignature)
+	void MethodBuilder::SetRefSignature(size_t index, uint32_t refSignature)
 	{
 		instructions[index].refSignature = refSignature;
 	}
 
-	void MethodBuilder::Append(uint32_t originalOffset, uint32_t originalSize, Instruction *instr)
+	void MethodBuilder::Append(uint32_t originalOffset, size_t originalSize, Instruction *instr)
 	{
 		instructions.push_back(InstrDesc(originalOffset, originalSize, instr));
 		instr->offset = lastOffset;
-		lastOffset += (int32_t)instr->GetSize();
+		lastOffset += instr->GetSize();
 		hasBranches = hasBranches || instr->IsBranch() || instr->IsSwitch();
 	}
 
-	void MethodBuilder::SetInstruction(int32_t index, Instruction *newInstr, bool deletePrev)
+	void MethodBuilder::SetInstruction(size_t index, Instruction *newInstr, bool deletePrev)
 	{
 		if (deletePrev)
 			delete instructions[index].instr;
 		instructions[index].instr = newInstr;
 	}
 
-	void MethodBuilder::MarkForRemoval(int32_t index)
+	void MethodBuilder::MarkForRemoval(size_t index)
 	{
 		// Note: it is okay to remove instructions that have incoming branches;
 		// the branch is simply forwarded to the next instruction.
@@ -133,7 +134,7 @@ namespace instr
 		instructions[index].removed = true;
 	}
 
-	bool MethodBuilder::IsMarkedForRemoval(int32_t index) const
+	bool MethodBuilder::IsMarkedForRemoval(size_t index) const
 	{
 		return instructions[index].removed;
 	}
@@ -141,25 +142,25 @@ namespace instr
 	void MethodBuilder::PerformRemovals(MethodOverload *method)
 	{
 		using namespace std;
-		const int SmallBufferSize = 64;
+		const size_t SmallBufferSize = 64;
 
 		if (instructions.size() < SmallBufferSize)
 		{
-			int32_t newIncides[SmallBufferSize];
+			size_t newIncides[SmallBufferSize];
 			PerformRemovalsInternal(newIncides, method);
 		}
 		else
 		{
-			unique_ptr<int32_t[]> newIndices(new int32_t[instructions.size() + 1]);
+			Box<size_t[]> newIndices(new size_t[instructions.size() + 1]);
 			PerformRemovalsInternal(newIndices.get(), method);
 		}
 	}
 
-	void MethodBuilder::PerformRemovalsInternal(int32_t newIndices[], MethodOverload *method)
+	void MethodBuilder::PerformRemovalsInternal(size_t newIndices[], MethodOverload *method)
 	{
 		this->lastOffset = 0; // Must recalculate byte offsets as well
 
-		int32_t oldIndex = 0, newIndex = 0;
+		size_t oldIndex = 0, newIndex = 0;
 		for (instr_iter i = instructions.begin(); i != instructions.end(); oldIndex++)
 		{
 			if (i->stackHeight == UNVISITED || i->removed)
@@ -175,7 +176,7 @@ namespace instr
 			else
 			{
 				i->instr->offset = lastOffset;
-				lastOffset += (int32_t)i->instr->GetSize();
+				lastOffset += i->instr->GetSize();
 				newIndices[oldIndex] = newIndex;
 				newIndex++;
 				i++;
@@ -197,18 +198,18 @@ namespace instr
 				if (instr->IsBranch())
 				{
 					Branch *br = static_cast<Branch*>(instr);
-					br->target = newIndices[br->target];
+					br->target = JumpTarget::FromIndex(newIndices[br->target.index]);
 				}
 				else if (instr->IsSwitch())
 				{
 					Switch *sw = static_cast<Switch*>(instr);
-					for (uint32_t t = 0; t < sw->targetCount; t++)
-						sw->targets[t] = newIndices[sw->targets[t]];
+					for (size_t t = 0; t < sw->targetCount; t++)
+						sw->targets[t] = JumpTarget::FromIndex(newIndices[sw->targets[t].index]);
 				}
 			}
 		}
 
-		for (int32_t t = 0; t < method->tryBlockCount; t++)
+		for (size_t t = 0; t < method->tryBlockCount; t++)
 		{
 			TryBlock *tryBlock = method->tryBlocks + t;
 			tryBlock->tryStart = newIndices[tryBlock->tryStart];
@@ -217,7 +218,7 @@ namespace instr
 			switch (tryBlock->kind)
 			{
 			case TryKind::CATCH:
-				for (int32_t c = 0; c < tryBlock->catches.count; c++)
+				for (size_t c = 0; c < tryBlock->catches.count; c++)
 				{
 					CatchBlock *catchBlock = tryBlock->catches.blocks + c;
 					catchBlock->catchStart = newIndices[catchBlock->catchStart];
@@ -235,8 +236,8 @@ namespace instr
 		if (method->debugSymbols)
 		{
 			debug::OverloadSymbols *debug = method->debugSymbols;
-			int32_t debugSymbolCount = debug->GetSymbolCount();
-			for (int32_t i = 0; i < debugSymbolCount; i++)
+			size_t debugSymbolCount = debug->GetSymbolCount();
+			for (size_t i = 0; i < debugSymbolCount; i++)
 			{
 				debug::DebugSymbol &sym = debug->GetSymbol(i);
 				sym.startOffset = newIndices[sym.startOffset];
@@ -257,7 +258,7 @@ namespace instr
 		typesToInitialize.push_back(type);
 	}
 
-	MethodBuffer::MethodBuffer(int32_t size) :
+	MethodBuffer::MethodBuffer(size_t size) :
 		current(nullptr),
 		buffer()
 	{

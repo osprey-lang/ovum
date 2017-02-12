@@ -158,21 +158,21 @@ private:
 
 	void RunTypeIniter(Module *module, Type *type, module_file::Rva<module_file::ByteString> initerRva);
 
-	void ReadFieldDefs(Module *module, Type *type, uint32_t fieldsBase, int32_t count, Token firstField);
+	void ReadFieldDefs(Module *module, Type *type, uint32_t fieldsBase, size_t count, Token firstField);
 
 	void ReadFieldConstantValue(Module *module, Field *field, const module_file::ConstantValue *value, bool allowUnresolvedType);
 
 	void AddUnresolvedConstant(Module *module, Field *field, const module_file::ConstantValue *value);
 
-	void ReadMethodDefs(Module *module, Type *type, uint32_t methodsBase, int32_t count, Token firstMethod);
+	void ReadMethodDefs(Module *module, Type *type, uint32_t methodsBase, size_t count, Token firstMethod);
 
 	Method *FindBaseMethod(Method *method, Type *declType);
 
-	void ReadPropertyDefs(Module *module, Type *type, int32_t count, module_file::Rva<module_file::PropertyDef[]> properties);
+	void ReadPropertyDefs(Module *module, Type *type, size_t count, module_file::Rva<module_file::PropertyDef[]> properties);
 
 	Method *ReadPropertyAccessor(Module *module, Type *type, Token token, MemberFlags &flags);
 
-	void ReadOperatorDefs(Module *module, Type *type, int32_t count, module_file::Rva<module_file::OperatorDef[]> operators);
+	void ReadOperatorDefs(Module *module, Type *type, size_t count, module_file::Rva<module_file::OperatorDef[]> operators);
 
 	void ResolveRemainingConstants(Module *module);
 
@@ -184,7 +184,7 @@ private:
 
 	Box<Method> ReadSingleMethodDef(Module *module, const module_file::MethodDef *def);
 
-	void ReadParameters(Module *module, MethodOverload *overload, int32_t count, module_file::Rva<module_file::Parameter[]> rva);
+	void ReadParameters(Module *module, MethodOverload *overload, size_t count, module_file::Rva<module_file::Parameter[]> rva);
 
 	void ReadMethodBody(Module *module, MethodOverload *overload, const module_file::OverloadDef *def);
 
@@ -194,7 +194,7 @@ private:
 
 	void ReadLongMethodBody(Module *module, MethodOverload *overload, const module_file::MethodHeader *header);
 
-	void ReadTryBlocks(Module *module, MethodOverload *overload, int32_t count, module_file::Rva<module_file::TryBlock[]> rva);
+	void ReadTryBlocks(Module *module, MethodOverload *overload, size_t count, module_file::Rva<module_file::TryBlock[]> rva);
 
 	void ReadCatchClauses(Module *module, TryBlock *tryBlock, const module_file::CatchClauses &catchClauses);
 

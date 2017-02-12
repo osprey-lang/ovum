@@ -7,13 +7,13 @@ using namespace aves;
 namespace aves
 {
 
-int Set::InitializeBuckets(ThreadHandle thread, int32_t capacity)
+int Set::InitializeBuckets(ThreadHandle thread, size_t capacity)
 {
-	int32_t size = HashHelper_GetPrime(capacity);
+	size_t size = HashHelper_GetPrime(capacity);
 
 	int r = GC_AllocArrayT(thread, size, &this->buckets);
 	if (r != OVUM_SUCCESS) return r;
-	memset(this->buckets, -1, size * sizeof(int32_t));
+	memset(this->buckets, -1, size * sizeof(size_t));
 
 	r = GC_AllocArrayT(thread, size, &this->entries);
 	if (r != OVUM_SUCCESS) return r;
@@ -25,12 +25,12 @@ int Set::InitializeBuckets(ThreadHandle thread, int32_t capacity)
 
 int Set::Resize(ThreadHandle thread)
 {
-	int32_t newSize = HashHelper_GetPrime(this->count * 2);
+	size_t newSize = HashHelper_GetPrime(this->count * 2);
 
-	int32_t *newBuckets;
+	size_t *newBuckets;
 	int r = GC_AllocArrayT(thread, newSize, &newBuckets);
 	if (r != OVUM_SUCCESS) return r;
-	memset(newBuckets, -1, newSize * sizeof(int32_t));
+	memset(newBuckets, -1, newSize * sizeof(size_t));
 
 	SetEntry *newEntries;
 	r = GC_AllocArrayT(thread, newSize, &newEntries);
@@ -38,9 +38,9 @@ int Set::Resize(ThreadHandle thread)
 	CopyMemoryT(newEntries, this->entries, this->count);
 
 	SetEntry *e = newEntries;
-	for (int32_t i = 0; i < this->count; i++, e++)
+	for (size_t i = 0; i < this->count; i++, e++)
 	{
-		int32_t bucket = e->hashCode % newSize;
+		size_t bucket = e->hashCode % newSize;
 		e->next = newBuckets[bucket];
 		newBuckets[bucket] = i;
 	}
@@ -69,13 +69,13 @@ int Set::ItemEquals(ThreadHandle thread, Value *a, Value *b, bool &equals)
 
 AVES_API int OVUM_CDECL aves_Set_init(TypeHandle type)
 {
-	Type_SetInstanceSize(type, sizeof(aves::Set));
+	Type_SetInstanceSize(type, sizeof(Set));
 	Type_SetReferenceWalker(type, aves_Set_walkReferences);
 
 	int status__;
-	CHECKED(Type_AddNativeField(type, offsetof(aves::Set, buckets), NativeFieldType::GC_ARRAY));
-	CHECKED(Type_AddNativeField(type, offsetof(aves::Set, entries), NativeFieldType::GC_ARRAY));
-	CHECKED(Type_AddNativeField(type, offsetof(aves::Set, itemComparer), NativeFieldType::VALUE));
+	CHECKED(Type_AddNativeField(type, offsetof(Set, buckets), NativeFieldType::GC_ARRAY));
+	CHECKED(Type_AddNativeField(type, offsetof(Set, entries), NativeFieldType::GC_ARRAY));
+	CHECKED(Type_AddNativeField(type, offsetof(Set, itemComparer), NativeFieldType::VALUE));
 
 retStatus__:
 	return status__;
@@ -83,51 +83,51 @@ retStatus__:
 
 AVES_API NATIVE_FUNCTION(aves_Set_get_length)
 {
-	aves::Set *set = THISV.Get<aves::Set>();
+	Set *set = THISV.Get<Set>();
 	VM_PushInt(thread, set->count - set->freeCount);
 	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_Set_get_capacity)
 {
-	aves::Set *set = THISV.Get<aves::Set>();
+	Set *set = THISV.Get<Set>();
 	VM_PushInt(thread, set->capacity);
 	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_Set_get_itemComparer)
 {
-	aves::Set *set = THISV.Get<aves::Set>();
+	Set *set = THISV.Get<Set>();
 	VM_Push(thread, &set->itemComparer);
 	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_Set_get_version)
 {
-	aves::Set *set = THISV.Get<aves::Set>();
+	Set *set = THISV.Get<Set>();
 	VM_PushInt(thread, set->version);
 	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_Set_get_entryCount)
 {
-	aves::Set *set = THISV.Get<aves::Set>();
+	Set *set = THISV.Get<Set>();
 	VM_PushInt(thread, set->count);
 	RETURN_SUCCESS;
 }
 AVES_API NATIVE_FUNCTION(aves_Set_get_maxCapacity)
 {
-	VM_PushInt(thread, INT32_MAX);
+	VM_PushInt(thread, OVUM_ISIZE_MAX);
 	RETURN_SUCCESS;
 }
 
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Set_initialize)
 {
 	// initialize(capacity is Int, itemComparer is EqualityComparer)
-	Alias<aves::Set> set(THISP);
+	Alias<Set> set(THISP);
 
-	int32_t capacity = (int32_t)args[1].v.integer;
+	size_t capacity = (size_t)args[1].v.integer;
 
 	if (capacity > 0)
 	{
 		Pinned s(THISP);
-		CHECKED(set->InitializeBuckets(thread, (int32_t)capacity));
+		CHECKED(set->InitializeBuckets(thread, capacity));
 	}
 
 	set->itemComparer = args[2];
@@ -136,13 +136,13 @@ END_NATIVE_FUNCTION
 
 AVES_API NATIVE_FUNCTION(aves_Set_clear)
 {
-	aves::Set *set = THISV.Get<aves::Set>();
+	Set *set = THISV.Get<Set>();
 
-	memset(set->buckets, -1, set->capacity * sizeof(int32_t));
+	memset(set->buckets, -1, set->capacity * sizeof(size_t));
 	memset(set->entries, 0, set->count * sizeof(SetEntry));
 	set->count = 0;
 	set->freeCount = 0;
-	set->freeList = -1;
+	set->freeList = Set::LAST;
 	set->version++;
 	RETURN_SUCCESS;
 }
@@ -151,14 +151,14 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Set_containsInternal)
 {
 	// Arguments: (item, hash is Int|UInt)
 	Pinned s(THISP);
-	aves::Set *set = THISV.Get<aves::Set>();
+	Set *set = THISV.Get<Set>();
 
 	if (set->buckets != nullptr)
 	{
-		int32_t hash = aves::Set::GetHash(args[2].v.uinteger) & INT32_MAX;
-		int32_t bucket = hash % set->capacity;
+		int32_t hash = Set::GetHash(args[2].v.uinteger);
+		size_t bucket = hash % set->capacity;
 
-		for (int32_t i = set->buckets[bucket]; i >= 0; i = set->entries[i].next)
+		for (size_t i = set->buckets[bucket]; i != Set::LAST; i = set->entries[i].next)
 		{
 			if (set->entries[i].hashCode == hash)
 			{
@@ -181,14 +181,14 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Set_addInternal)
 {
 	// addInternal(item, hash is Int|UInt)
 	Pinned s(THISP);
-	aves::Set *set = THISV.Get<aves::Set>();
+	Set *set = THISV.Get<Set>();
 	if (set->buckets == nullptr)
 		CHECKED(set->InitializeBuckets(thread, 0));
 
-	int32_t hash = aves::Set::GetHash(args[2].v.uinteger);
-	int32_t bucket = hash % set->capacity;
+	int32_t hash = Set::GetHash(args[2].v.uinteger);
+	size_t bucket = hash % set->capacity;
 
-	for (int32_t i = set->buckets[bucket]; i >= 0; i = set->entries[i].next)
+	for (size_t i = set->buckets[bucket]; i != Set::LAST; i = set->entries[i].next)
 	{
 		if (set->entries[i].hashCode == hash)
 		{
@@ -202,7 +202,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Set_addInternal)
 		}
 	}
 
-	int32_t index;
+	size_t index;
 	if (set->freeCount > 0)
 	{
 		index = set->freeList;
@@ -233,16 +233,17 @@ END_NATIVE_FUNCTION
 AVES_API BEGIN_NATIVE_FUNCTION(aves_Set_removeInternal)
 {
 	// removeInternal(item, hash is Int|UInt)
-	Pinned s(THISP);
-	aves::Set *set = THISV.Get<aves::Set>();
+	Set *set = THISV.Get<Set>();
 
 	if (set->buckets != nullptr)
 	{
-		int32_t hash = aves::Set::GetHash(args[2].v.uinteger);
-		int32_t bucket = hash % set->capacity;
-		int32_t lastEntry = -1;
+		Pinned s(THISP);
 
-		for (int32_t i = set->buckets[bucket]; i >= 0; i = set->entries[i].next)
+		int32_t hash = Set::GetHash(args[2].v.uinteger);
+		size_t bucket = hash % set->capacity;
+		size_t lastEntry = Set::LAST;
+
+		for (size_t i = set->buckets[bucket]; i != Set::LAST; i = set->entries[i].next)
 		{
 			if (set->entries[i].hashCode == hash)
 			{
@@ -252,12 +253,12 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Set_removeInternal)
 				{
 					// Found it!
 					SetEntry *entry = set->entries + i;
-					if (lastEntry < 0)
+					if (lastEntry == Set::LAST)
 						set->buckets[bucket] = entry->next;
 					else
 						set->entries[lastEntry].next = entry->next;
 
-					entry->hashCode = -1;
+					entry->hashCode = SetEntry::REMOVED;
 					entry->next = set->freeList;
 					entry->value.type = nullptr;
 					set->freeList = i;
@@ -277,27 +278,27 @@ END_NATIVE_FUNCTION
 
 AVES_API NATIVE_FUNCTION(aves_Set_hasEntryAt)
 {
-	aves::Set *set = THISV.Get<aves::Set>();
-	int32_t index = (int32_t)args[1].v.integer;
-	VM_PushBool(thread, set->entries[index].hashCode >= 0);
+	Set *set = THISV.Get<Set>();
+	size_t index = (size_t)args[1].v.integer;
+	VM_PushBool(thread, !set->entries[index].IsRemoved());
 	RETURN_SUCCESS;
 }
 
 AVES_API NATIVE_FUNCTION(aves_Set_getEntryAt)
 {
-	aves::Set *set = THISV.Get<aves::Set>();
-	int32_t index = (int32_t)args[1].v.integer;
+	Set *set = THISV.Get<Set>();
+	size_t index = (size_t)args[1].v.integer;
 	VM_Push(thread, &set->entries[index].value);
 	RETURN_SUCCESS;
 }
 
 int OVUM_CDECL aves_Set_walkReferences(void *basePtr, ReferenceVisitor callback, void *cbState)
 {
-	aves::Set *set = reinterpret_cast<aves::Set*>(basePtr);
-	for (int32_t i = 0; i < set->count; i++)
+	Set *set = reinterpret_cast<Set*>(basePtr);
+	for (size_t i = 0; i < set->count; i++)
 	{
 		SetEntry *e = set->entries + i;
-		if (e->hashCode >= 0)
+		if (!e->IsRemoved())
 		{
 			int r = callback(cbState, 1, &e->value);
 			if (r != OVUM_SUCCESS) return r;

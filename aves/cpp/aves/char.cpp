@@ -6,7 +6,7 @@
 
 using namespace aves;
 
-LitString<2> Char::ToLitString(const ovwchar_t ch)
+LitString<2> Char::ToLitString(ovwchar_t ch)
 {
 	LitString<2> output = {
 		ch > 0xFFFF ? 2 : 1,
@@ -214,16 +214,16 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Char_opMultiply)
 	int64_t length;
 	if (Int_MultiplyChecked(times, str.length, length))
 		return VM_ThrowOverflowError(thread);
-	if (length > INT32_MAX)
+	if (length > OVUM_ISIZE_MAX)
 	{
 		VM_PushString(thread, strings::times);
 		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentRangeError, 1);
 	}
 
 	StringBuffer buf;
-	CHECKED_MEM(buf.Init((int32_t)length));
+	CHECKED_MEM(buf.Init((size_t)length));
 
-	for (int32_t i = 0; i < (int32_t)length; i++)
+	for (size_t i = 0; i < (size_t)length; i++)
 		CHECKED_MEM(buf.Append(str.AsString()));
 
 	String *result;

@@ -294,16 +294,16 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_Type_createInstance)
 		return VM_ThrowErrorOfType(thread, aves->aves.InvalidStateError, 0);
 
 	// Push arguments
-	uint32_t argCount = 0;
+	ovlocals_t argCount = 0;
 	if (!IS_NULL(args[1]))
 	{
 		ListInst *arguments = args[1].v.list;
-		argCount = (uint32_t)arguments->length;
-		for (int32_t i = 0; i < arguments->length; i++)
+		argCount = (ovlocals_t)arguments->length;
+		for (size_t i = 0; i < arguments->length; i++)
 			VM_Push(thread, arguments->values + i);
 	}
 
-	CHECKED(GC_Construct(thread, inst->type, (uint16_t)argCount, nullptr));
+	CHECKED(GC_Construct(thread, inst->type, argCount, nullptr));
 }
 END_NATIVE_FUNCTION
 

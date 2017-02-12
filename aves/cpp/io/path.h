@@ -19,24 +19,26 @@ public:
 
 	static LitString<1> DirSeparatorString;
 
-	static const int InvalidPathCharsCount;
+	static const size_t InvalidPathCharsCount;
 	static const ovchar_t InvalidPathChars[];
 
-	static const int InvalidFileNameCharsCount;
+	static const size_t InvalidFileNameCharsCount;
 	static const ovchar_t InvalidFileNameChars[];
+
+	static const size_t NOT_FOUND = (size_t)-1;
 
 	inline static bool IsPathSep(ovchar_t ch)
 	{
 		return ch == DirSeparator || ch == AltDirSeparator;
 	}
 
-	static int32_t GetExtensionIndex(String *path);
+	static size_t GetExtensionIndex(String *path);
 
 	static bool IsAbsolute(String *path);
 
 	static int GetFullPath(ThreadHandle thread, String *path, String **result);
 
-	static int32_t GetRootLength(String *path);
+	static size_t GetRootLength(String *path);
 
 	static int ValidatePath(ThreadHandle thread, String *path, bool checkWildcards);
 };

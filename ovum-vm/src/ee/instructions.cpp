@@ -137,14 +137,14 @@ namespace instr
 
 	void CreateList::WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const
 	{
-		oa::LocalAndValue<int32_t> args = { target, capacity };
-		buffer.Write(args, oa::LOCAL_AND_VALUE<int32_t>::SIZE);
+		oa::LocalAndValue<size_t> args = { target, capacity };
+		buffer.Write(args, oa::LOCAL_AND_VALUE<size_t>::SIZE);
 	}
 
 	void CreateHash::WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const
 	{
-		oa::LocalAndValue<int32_t> args = { target, capacity };
-		buffer.Write(args, oa::LOCAL_AND_VALUE<int32_t>::SIZE);
+		oa::LocalAndValue<size_t> args = { target, capacity };
+		buffer.Write(args, oa::LOCAL_AND_VALUE<size_t>::SIZE);
 	}
 
 	void LoadStaticFunction::WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const
@@ -275,19 +275,19 @@ namespace instr
 
 	void Branch::WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const
 	{
-		oa::Branch args = { builder.GetNewOffset(target, this) };
+		oa::Branch args = { builder.GetJumpOffset(target.index, this) };
 		buffer.Write(args, oa::BRANCH_SIZE);
 	}
 
 	void ConditionalBranch::WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const
 	{
-		oa::ConditionalBranch args = { value, builder.GetNewOffset(target, this) };
+		oa::ConditionalBranch args = { value, builder.GetJumpOffset(target.index, this) };
 		buffer.Write(args, oa::CONDITIONAL_BRANCH_SIZE);
 	}
 
 	void BranchIfType::WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const
 	{
-		oa::BranchIfType args = { value, builder.GetNewOffset(target, this), type };
+		oa::BranchIfType args = { value, builder.GetJumpOffset(target.index, this), type };
 		buffer.Write(args, oa::BRANCH_IF_TYPE_SIZE);
 	}
 
@@ -299,9 +299,9 @@ namespace instr
 
 		// The buffer pointer should now be properly aligned for the first target,
 		// so let's just write them all out, shall we?
-		for (uint16_t i = 0; i < targetCount; i++)
+		for (size_t i = 0; i < targetCount; i++)
 		{
-			buffer.Write(builder.GetNewOffset(targets[i], this), sizeof(int32_t));
+			buffer.Write(builder.GetJumpOffset(targets[i].index, this), sizeof(int32_t));
 		}
 
 		// Make sure the buffer is properly aligned afterwards as well
@@ -310,13 +310,13 @@ namespace instr
 
 	void BranchIfReference::WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const
 	{
-		oa::ConditionalBranch args = { this->args, builder.GetNewOffset(target, this) };
+		oa::ConditionalBranch args = { this->args, builder.GetJumpOffset(target.index, this) };
 		buffer.Write(args, oa::CONDITIONAL_BRANCH_SIZE);
 	}
 
 	void BranchComparison::WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const
 	{
-		oa::ConditionalBranch args = { this->args, builder.GetNewOffset(target, this) };
+		oa::ConditionalBranch args = { this->args, builder.GetJumpOffset(target.index, this) };
 		buffer.Write(args, oa::CONDITIONAL_BRANCH_SIZE);
 	}
 

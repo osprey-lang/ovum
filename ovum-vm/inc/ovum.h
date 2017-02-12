@@ -120,6 +120,8 @@ typedef uint16_t ovchar_t;
 // be used for argument counts.
 typedef uint32_t ovlocals_t;
 
+#define OVLOCALS_MAX UINT32_MAX
+
 typedef struct Value_S Value;
 typedef struct String_S String;
 typedef struct ListInst_S ListInst;
@@ -219,10 +221,10 @@ OVUM_ENUM_OPS(StringFlags, uint32_t);
 struct String_S
 {
 	// The length of the string, not including the terminating \0.
-	const int32_t length;
+	const size_t length;
 	// The string's hash code. If the string has had its hash code calculated (if the
 	// flag StringFlags::HASHED is set), then this field contains the hash code of the
-	// string. Otherwise, this value is nonsensical.
+	// string. Otherwise, this value is meaningless.
 	int32_t hashCode;
 	// If the flags contain StringFlags::STATIC, the String is never garbage collected,
 	// as it comes from a static resource.
@@ -235,8 +237,8 @@ struct String_S
 
 struct ListInst_S
 {
-	int32_t capacity; // the length of 'values'
-	int32_t length;   // the actual number of items contained in the list
+	size_t capacity; // the length of 'values'
+	size_t length;   // the actual number of items contained in the list
 	int32_t version;  // the "version" of the list, which is incremented each time the list changes
 	Value *values;    // the values contained in the list
 };
@@ -270,8 +272,8 @@ OVUM_API void VM_PrintLn(String *str);
 OVUM_API void VM_PrintErr(String *str);
 OVUM_API void VM_PrintErrLn(String *str);
 
-OVUM_API int VM_GetArgCount(ThreadHandle thread);
-OVUM_API int VM_GetArgs(ThreadHandle thread, int destLength, String *dest[]);
-OVUM_API int VM_GetArgValues(ThreadHandle thread, int destLength, Value dest[]);
+OVUM_API size_t VM_GetArgCount(ThreadHandle thread);
+OVUM_API size_t VM_GetArgs(ThreadHandle thread, size_t destLength, String *dest[]);
+OVUM_API size_t VM_GetArgValues(ThreadHandle thread, size_t destLength, Value dest[]);
 
 #endif // OVUM__VM_H

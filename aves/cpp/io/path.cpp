@@ -8,7 +8,7 @@ using namespace aves;
 
 LitString<1> Path::DirSeparatorString = { 1, 0, StringFlags::STATIC, Path::DirSeparator,0 };
 
-const int Path::InvalidPathCharsCount = 36;
+const size_t Path::InvalidPathCharsCount = 36;
 // This list is also duplicated in ValidatePath.
 const ovchar_t Path::InvalidPathChars[] = {
 	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
@@ -20,7 +20,7 @@ const ovchar_t Path::InvalidPathChars[] = {
 	'"', '<', '>', '|',
 };
 
-const int Path::InvalidFileNameCharsCount = 41;
+const size_t Path::InvalidFileNameCharsCount = 41;
 const ovchar_t Path::InvalidFileNameChars[] = {
 	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
 	0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
@@ -30,9 +30,9 @@ const ovchar_t Path::InvalidFileNameChars[] = {
 	'"', '<', '>', '|', '/', '\\', '?', '*', ':',
 };
 
-int32_t Path::GetExtensionIndex(String *path)
+size_t Path::GetExtensionIndex(String *path)
 {
-	for (int32_t i = path->length; --i >= 0; )
+	for (size_t i = path->length; --i >= 0;)
 	{
 		ovchar_t ch = (&path->firstChar)[i];
 
@@ -45,14 +45,14 @@ int32_t Path::GetExtensionIndex(String *path)
 			break;
 	}
 
-	return -1;
+	return NOT_FOUND;
 }
 
 bool Path::IsAbsolute(String *path)
 {
 	const ovchar_t *chp = &path->firstChar;
 
-	const int32_t length = path->length;
+	const size_t length = path->length;
 	// If the path begins with a directory separator, or (on Windows) volume name + ':',
 	// the path is considered absolute.
 	if (length >= 1 && IsPathSep(chp[0])
@@ -89,17 +89,17 @@ int Path::GetFullPath(ThreadHandle thread, String *path, String **result)
 		{
 			// If the buffer is big enough, r contains the actual length of the
 			// full path, NOT including the final \0
-			*result = GC_ConstructString(thread, (int32_t)r, (const ovchar_t*)buffer.get());
+			*result = GC_ConstructString(thread, (size_t)r, (const ovchar_t*)buffer.get());
 		}
 	} while (retry);
 
 	return *result ? OVUM_SUCCESS : OVUM_ERROR_NO_MEMORY;
 }
 
-int32_t Path::GetRootLength(String *path)
+size_t Path::GetRootLength(String *path)
 {
-	int32_t index = 0;
-	int32_t length = path->length;
+	size_t index = 0;
+	size_t length = path->length;
 	const ovchar_t *chp = &path->firstChar;
 
 	if (length >= 1 && IsPathSep(chp[0]))
@@ -126,7 +126,7 @@ int Path::ValidatePath(ThreadHandle thread, String *path, bool checkWildcards)
 	bool error = false;
 
 	const ovchar_t *chp = &path->firstChar;
-	for (int32_t i = 0; i < path->length; i++)
+	for (size_t i = 0; i < path->length; i++)
 	{
 		const ovchar_t ch = *chp++;
 
@@ -246,7 +246,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(io_Path_getFileName)
 	CHECKED(Path::ValidatePath(thread, path, false));
 
 	const ovchar_t *chp = &path->firstChar;
-	for (int32_t i = path->length; --i >= 0; )
+	for (size_t i = path->length; --i >= 0;)
 	{
 		ovchar_t ch = chp[i];
 		if (Path::IsPathSep(ch) || ch == Path::VolumeSeparator)
@@ -266,10 +266,10 @@ AVES_API BEGIN_NATIVE_FUNCTION(io_Path_getDirectory)
 	String *path = args[0].v.string;
 	CHECKED(Path::ValidatePath(thread, path, false));
 
-	int32_t root = Path::GetRootLength(path);
+	size_t root = Path::GetRootLength(path);
 	const ovchar_t *chp = &path->firstChar;
 
-	int32_t i = path->length;
+	size_t i = path->length;
 	if (i > root)
 	{
 		while (i > root && !Path::IsPathSep(chp[--i]))
@@ -289,9 +289,9 @@ AVES_API BEGIN_NATIVE_FUNCTION(io_Path_getExtension)
 	String *path = args[0].v.string;
 	CHECKED(Path::ValidatePath(thread, path, false));
 
-	int32_t extIdx = Path::GetExtensionIndex(path);
+	size_t extIdx = Path::GetExtensionIndex(path);
 	// Note: extIdx points to the dot, not the first character of the extension
-	if (extIdx == -1 || extIdx == path->length - 1)
+	if (extIdx == Path::NOT_FOUND || extIdx == path->length - 1)
 		VM_PushNull(thread);
 	else
 	{
@@ -307,7 +307,7 @@ AVES_API BEGIN_NATIVE_FUNCTION(io_Path_hasExtension)
 {
 	CHECKED(Path::ValidatePath(thread, args[0].v.string, false));
 
-	VM_PushBool(thread, Path::GetExtensionIndex(args[0].v.string) != -1);
+	VM_PushBool(thread, Path::GetExtensionIndex(args[0].v.string) != Path::NOT_FOUND);
 }
 END_NATIVE_FUNCTION
 
@@ -321,10 +321,10 @@ AVES_API BEGIN_NATIVE_FUNCTION(io_Path_changeExtension)
 	if (!IS_NULL(args[1]))
 		CHECKED(StringFromValue(thread, args + 1));
 
-	int32_t extIdx = Path::GetExtensionIndex(path);
+	size_t extIdx = Path::GetExtensionIndex(path);
 	Value *retval = VM_Local(thread, 0);
 
-	if (extIdx == -1)
+	if (extIdx == Path::NOT_FOUND)
 		SetString(thread, retval, path);
 	else
 	{

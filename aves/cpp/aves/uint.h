@@ -29,20 +29,42 @@ AVES_API NATIVE_FUNCTION(aves_UInt_opNot);
 // Internal methods
 namespace uinteger
 {
-	String *ToString(ThreadHandle thread, const uint64_t value,
-		const int radix, const int minWidth, const bool upper);
+	String *ToString(
+		ThreadHandle thread,
+		uint64_t value,
+		int radix,
+		size_t minWidth,
+		bool upper
+	);
 
-	int32_t ToStringDecimal(ThreadHandle thread, const uint64_t value,
-		const int minWidth,
-		const int bufferSize, ovchar_t *buf);
-	int32_t ToStringHex(ThreadHandle thread, const uint64_t value,
-		const bool upper, const int minWidth,
-		const int bufferSize, ovchar_t *buf);
-	int32_t ToStringRadix(ThreadHandle thread, const uint64_t value,
-		const int radix, const bool upper, const int minWidth,
-		const int bufferSize, ovchar_t *buf);
+	size_t ToStringDecimal(
+		ThreadHandle thread,
+		uint64_t value,
+		size_t minWidth,
+		size_t bufferSize,
+		ovchar_t *buf
+	);
 
-	inline int Power(const uint64_t base, const uint64_t exponent, uint64_t &output)
+	size_t ToStringHex(
+		ThreadHandle thread,
+		uint64_t value,
+		bool upper,
+		size_t minWidth,
+		size_t bufferSize,
+		ovchar_t *buf
+	);
+
+	size_t ToStringRadix(
+		ThreadHandle thread,
+		uint64_t value,
+		int radix,
+		bool upper,
+		size_t minWidth,
+		size_t bufferSize,
+		ovchar_t *buf
+	);
+
+	inline int Power(uint64_t base, uint64_t exponent, uint64_t &output)
 	{
 		uint64_t a = base;
 		uint64_t b = exponent;

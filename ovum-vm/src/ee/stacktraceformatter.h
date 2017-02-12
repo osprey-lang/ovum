@@ -45,7 +45,7 @@ private:
 
 	static void AppendLineNumber(Thread *const thread, StringBuffer &buf, int32_t line);
 
-	static const int32_t STRING_BUFFER_CAPACITY = 1024;
+	static const size_t STRING_BUFFER_CAPACITY = 1024;
 };
 
 } // namespace ovum

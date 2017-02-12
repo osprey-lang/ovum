@@ -15,6 +15,10 @@
 // Windows header files
 #include <windows.h>
 
+// The ssize_t type is POSIX-specific, but it's also quite useful.
+// Define it here.
+typedef SSIZE_T ssize_t;
+
 // Helper functions
 namespace win32_helpers
 {

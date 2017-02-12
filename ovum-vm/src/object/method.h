@@ -57,10 +57,10 @@ struct CatchBlock
 {
 	Type *caughtType;
 	uint32_t caughtTypeId;
-	uint32_t catchStart;
-	uint32_t catchEnd;
+	size_t catchStart;
+	size_t catchEnd;
 
-	inline bool Contains(uint32_t offset) const
+	inline bool Contains(size_t offset) const
 	{
 		return catchStart <= offset && offset < catchEnd;
 	}
@@ -68,16 +68,16 @@ struct CatchBlock
 
 struct CatchBlocks
 {
-	int32_t count;
+	size_t count;
 	CatchBlock *blocks;
 };
 
 struct FinallyBlock
 {
-	uint32_t finallyStart;
-	uint32_t finallyEnd;
+	size_t finallyStart;
+	size_t finallyEnd;
 
-	inline bool Contains(uint32_t offset) const
+	inline bool Contains(size_t offset) const
 	{
 		return finallyStart <= offset && offset < finallyEnd;
 	}
@@ -95,8 +95,8 @@ class TryBlock
 public:
 
 	TryKind kind;
-	uint32_t tryStart;
-	uint32_t tryEnd;
+	size_t tryStart;
+	size_t tryEnd;
 
 	union
 	{
@@ -104,11 +104,13 @@ public:
 		FinallyBlock finallyBlock;
 	};
 
-	inline TryBlock()
-		: kind((TryKind)0)
+	inline TryBlock() :
+		kind((TryKind)0)
 	{ }
-	inline TryBlock(TryKind kind, uint32_t tryStart, uint32_t tryEnd)
-		: kind(kind), tryStart(tryStart), tryEnd(tryEnd)
+	inline TryBlock(TryKind kind, size_t tryStart, size_t tryEnd) :
+		kind(kind),
+		tryStart(tryStart),
+		tryEnd(tryEnd)
 	{
 		if (kind == TryKind::CATCH)
 			catches.blocks = nullptr;
@@ -124,7 +126,7 @@ public:
 		}
 	}
 
-	inline bool Contains(uint32_t offset) const
+	inline bool Contains(size_t offset) const
 	{
 		return tryStart <= offset && offset < tryEnd;
 	}
@@ -151,7 +153,7 @@ public:
 	String **paramNames;
 	uint32_t refSignature;
 
-	int32_t tryBlockCount;
+	size_t tryBlockCount;
 	TryBlock *tryBlocks;
 
 	// The maximum number of stack slots the method uses. This value is
@@ -166,7 +168,7 @@ public:
 		struct
 		{
 			uint8_t *entry;
-			uint32_t length; // The length of the method body, in bytes.
+			size_t length; // The length of the method body, in bytes.
 		};
 		NativeMethod nativeEntry;
 	};
@@ -298,7 +300,7 @@ class Method : public Member
 {
 public:
 	// The number of overloads in the method.
-	int32_t overloadCount;
+	size_t overloadCount;
 	// The overloads of the method.
 	MethodOverload *overloads;
 	// If this method is not a global function and the base type declares

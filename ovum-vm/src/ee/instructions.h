@@ -66,12 +66,49 @@ namespace instr
 		static const StackChange empty;
 	};
 
+	// Represents the target of a branch instruction.
+	//
+	// During method initialization, jump targets are initially read as offsets
+	// relative to the instruction. Since it is possible to jump backwards, the
+	// offset is necessarily a signed integer. However, the jump target is then
+	// resolved to the absolute index of the target instruction in the method.
+	// When the intermediate bytecode is emitted, the target is once again made
+	// into a signed relative offset.
+	//
+	// We don't want double fields in each branch instruction, so we encapsulate
+	// the offset and the index in the same data type. Since size_t and int32_t
+	// may have different sizes, and definitely have different signedness, but
+	// an instruction can only contain one of the two at any given time, a union
+	// is acceptable.
+	//
+	// NOTE: Do not add constructors to this type. It needs to be a trivially
+	// copyable type.
+	union JumpTarget
+	{
+		int32_t offset;
+		size_t index;
+
+		inline static JumpTarget FromOffset(int32_t offset)
+		{
+			JumpTarget result;
+			result.offset = offset;
+			return result;
+		}
+
+		inline static JumpTarget FromIndex(size_t index)
+		{
+			JumpTarget result;
+			result.index = index;
+			return result;
+		}
+	};
+
 	// General abstract base class for all intermediate instructions.
 	class Instruction
 	{
 	public:
 		InstrFlags flags;
-		int32_t offset;
+		size_t offset;
 		IntermediateOpcode opcode;
 
 		inline Instruction(InstrFlags flags, IntermediateOpcode opcode) :
@@ -81,12 +118,12 @@ namespace instr
 
 		inline virtual ~Instruction() { }
 
-		inline uint32_t GetSize() const
+		inline size_t GetSize() const
 		{
 			return OVUM_ALIGN_TO(sizeof(IntermediateOpcode), oa::ALIGNMENT) + GetArgsSize();
 		}
 
-		inline virtual uint32_t GetArgsSize() const { return 0; }
+		inline virtual size_t GetArgsSize() const { return 0; }
 
 		virtual StackChange GetStackChange() const = 0;
 
@@ -203,21 +240,21 @@ namespace instr
 
 		inline MoveLocal() :
 			Instruction(InstrFlags::HAS_INOUT, OPI_MVLOC_SS),
-			source(0),
-			target(0)
+			source(),
+			target()
 		{ }
 		inline MoveLocal(InstrFlags flags) :
 			Instruction(flags, OPI_MVLOC_SS),
-			source(0),
-			target(0)
+			source(),
+			target()
 		{ }
 		inline MoveLocal(InstrFlags flags, IntermediateOpcode opc) :
 			Instruction(flags, opc),
-			source(0),
-			target(0)
+			source(),
+			target()
 		{ }
 
-		inline virtual uint32_t GetArgsSize() const
+		inline virtual size_t GetArgsSize() const
 		{
 			return oa::TWO_LOCALS_SIZE;
 		}
@@ -319,11 +356,11 @@ namespace instr
 
 		inline DupInstr() :
 			Instruction(InstrFlags::HAS_INOUT | InstrFlags::INPUT_ON_STACK | InstrFlags::DUP, OPI_MVLOC_LS),
-			source(0),
-			target(0)
+			source(),
+			target()
 		{ }
 
-		inline virtual uint32_t GetArgsSize() const
+		inline virtual size_t GetArgsSize() const
 		{
 			return oa::TWO_LOCALS_SIZE;
 		}
@@ -370,10 +407,10 @@ namespace instr
 
 		inline LoadValue(IntermediateOpcode opcode) :
 			Instruction(InstrFlags::HAS_OUTPUT, opcode),
-			target(0)
+			target()
 		{ }
 
-		inline virtual uint32_t GetArgsSize() const
+		inline virtual size_t GetArgsSize() const
 		{
 			return oa::ONE_LOCAL_SIZE;
 		}
@@ -420,7 +457,7 @@ namespace instr
 			value(value)
 		{ }
 
-		inline virtual uint32_t GetArgsSize() const
+		inline virtual size_t GetArgsSize() const
 		{
 			return oa::LOCAL_AND_VALUE<int64_t>::SIZE;
 		}
@@ -439,7 +476,7 @@ namespace instr
 			value(value)
 		{ }
 
-		inline virtual uint32_t GetArgsSize() const
+		inline virtual size_t GetArgsSize() const
 		{
 			return oa::LOCAL_AND_VALUE<uint64_t>::SIZE;
 		}
@@ -458,7 +495,7 @@ namespace instr
 			value(value)
 		{ }
 
-		inline virtual uint32_t GetArgsSize() const
+		inline virtual size_t GetArgsSize() const
 		{
 			return oa::LOCAL_AND_VALUE<double>::SIZE;
 		}
@@ -477,7 +514,7 @@ namespace instr
 			value(value)
 		{ }
 
-		inline virtual uint32_t GetArgsSize() const
+		inline virtual size_t GetArgsSize() const
 		{
 			return oa::LOCAL_AND_VALUE<String*>::SIZE;
 		}
@@ -504,7 +541,7 @@ namespace instr
 			value(value)
 		{ }
 
-		inline virtual uint32_t GetArgsSize() const
+		inline virtual size_t GetArgsSize() const
 		{
 			return oa::LOAD_ENUM_SIZE;
 		}
@@ -520,18 +557,18 @@ namespace instr
 		LocalOffset target;
 		Type *type;
 		ovlocals_t argCount;
-		uint32_t refSignature; // Not output
+		uint32_t refSignature; // Not written to the instruction
 
 		inline NewObject(Type *type, ovlocals_t argCount) :
 			Instruction(InstrFlags::HAS_INOUT | InstrFlags::INPUT_ON_STACK | InstrFlags::ACCEPTS_REFS, OPI_NEWOBJ_S),
 			type(type),
 			argCount(argCount),
-			args(0),
-			target(0),
+			args(),
+			target(),
 			refSignature(0)
 		{ }
 
-		inline virtual uint32_t GetArgsSize() const
+		inline virtual size_t GetArgsSize() const
 		{
 			return oa::NEW_OBJECT_SIZE;
 		}
@@ -567,16 +604,16 @@ namespace instr
 	class CreateList : public LoadValue
 	{
 	public:
-		int32_t capacity;
+		size_t capacity;
 
-		inline CreateList(int32_t capacity) :
+		inline CreateList(size_t capacity) :
 			LoadValue(OPI_LIST_S),
 			capacity(capacity)
 		{ }
 
-		inline virtual uint32_t GetArgsSize() const
+		inline virtual size_t GetArgsSize() const
 		{
-			return oa::LOCAL_AND_VALUE<int32_t>::SIZE;
+			return oa::LOCAL_AND_VALUE<size_t>::SIZE;
 		}
 
 	protected:
@@ -586,14 +623,14 @@ namespace instr
 	class CreateHash : public LoadValue
 	{
 	public:
-		int32_t capacity;
+		size_t capacity;
 
-		inline CreateHash(int32_t capacity) :
+		inline CreateHash(size_t capacity) :
 			LoadValue(OPI_HASH_S),
 			capacity(capacity)
 		{ }
 
-		inline virtual uint32_t GetArgsSize() const
+		inline virtual size_t GetArgsSize() const
 		{
 			return oa::LOCAL_AND_VALUE<int32_t>::SIZE;
 		}
@@ -612,7 +649,7 @@ namespace instr
 			method(method)
 		{ }
 
-		inline virtual uint32_t GetArgsSize() const
+		inline virtual size_t GetArgsSize() const
 		{
 			return oa::LOCAL_AND_VALUE<Method*>::SIZE;
 		}
@@ -631,7 +668,7 @@ namespace instr
 			type(type)
 		{ }
 
-		inline virtual uint32_t GetArgsSize() const
+		inline virtual size_t GetArgsSize() const
 		{
 			return oa::LOCAL_AND_VALUE<Type*>::SIZE;
 		}
@@ -649,12 +686,12 @@ namespace instr
 
 		inline LoadMember(String *member) :
 			Instruction(InstrFlags::HAS_INOUT | InstrFlags::INPUT_ON_STACK, OPI_LDMEM_S),
-			instance(0),
-			output(0),
+			instance(),
+			output(),
 			member(member)
 		{ }
 
-		inline virtual uint32_t GetArgsSize() const
+		inline virtual size_t GetArgsSize() const
 		{
 			return oa::TWO_LOCALS_AND_VALUE<String*>::SIZE;
 		}
@@ -688,11 +725,11 @@ namespace instr
 
 		inline StoreMember(String *member) :
 			Instruction(InstrFlags::HAS_INPUT | InstrFlags::INPUT_ON_STACK, OPI_STMEM),
-			args(0),
+			args(),
 			member(member)
 		{ }
 
-		inline virtual uint32_t GetArgsSize() const
+		inline virtual size_t GetArgsSize() const
 		{
 			return oa::LOCAL_AND_VALUE<String*>::SIZE;
 		}
@@ -718,12 +755,12 @@ namespace instr
 
 		inline LoadField(Field *field) :
 			Instruction(InstrFlags::HAS_INOUT | InstrFlags::INPUT_ON_STACK, OPI_LDFLD_S),
-			instance(0),
-			output(0),
+			instance(),
+			output(),
 			field(field)
 		{ }
 
-		inline virtual uint32_t GetArgsSize() const
+		inline virtual size_t GetArgsSize() const
 		{
 			return oa::TWO_LOCALS_AND_VALUE<Field*>::SIZE;
 		}
@@ -757,11 +794,11 @@ namespace instr
 
 		inline StoreField(Field *field) :
 			Instruction(InstrFlags::HAS_INPUT | InstrFlags::INPUT_ON_STACK, OPI_STFLD),
-			args(0),
+			args(),
 			field(field)
 		{ }
 
-		inline virtual uint32_t GetArgsSize() const
+		inline virtual size_t GetArgsSize() const
 		{
 			return oa::LOCAL_AND_VALUE<Field*>::SIZE;
 		}
@@ -791,7 +828,7 @@ namespace instr
 			field(field)
 		{ }
 
-		inline virtual uint32_t GetArgsSize() const
+		inline virtual size_t GetArgsSize() const
 		{
 			return oa::LOCAL_AND_VALUE<Field*>::SIZE;
 		}
@@ -808,11 +845,11 @@ namespace instr
 
 		inline StoreStaticField(Field *field) :
 			Instruction(InstrFlags::HAS_INPUT, OPI_STSFLD_S),
-			value(0),
+			value(),
 			field(field)
 		{ }
 
-		inline virtual uint32_t GetArgsSize() const
+		inline virtual size_t GetArgsSize() const
 		{
 			return oa::LOCAL_AND_VALUE<Field*>::SIZE;
 		}
@@ -840,11 +877,11 @@ namespace instr
 
 		inline LoadIterator() :
 			Instruction(InstrFlags::HAS_INOUT | InstrFlags::INPUT_ON_STACK, OPI_LDITER_S),
-			value(0),
-			output(0)
+			value(),
+			output()
 		{ }
 
-		inline virtual uint32_t GetArgsSize() const
+		inline virtual size_t GetArgsSize() const
 		{
 			return oa::TWO_LOCALS_SIZE;
 		}
@@ -878,11 +915,11 @@ namespace instr
 
 		inline LoadType() :
 			Instruction(InstrFlags::HAS_INOUT | InstrFlags::INPUT_ON_STACK, OPI_LDTYPE_S),
-			source(0),
-			target(0)
+			source(),
+			target()
 		{ }
 
-		inline virtual uint32_t GetArgsSize() const
+		inline virtual size_t GetArgsSize() const
 		{
 			return oa::TWO_LOCALS_SIZE;
 		}
@@ -917,12 +954,12 @@ namespace instr
 
 		inline LoadIndexer(ovlocals_t argCount) :
 			Instruction(InstrFlags::HAS_INOUT | InstrFlags::INPUT_ON_STACK, OPI_LDIDX_S),
-			args(0),
-			output(0),
+			args(),
+			output(),
 			argCount(argCount)
 		{ }
 
-		inline virtual uint32_t GetArgsSize() const
+		inline virtual size_t GetArgsSize() const
 		{
 			return oa::TWO_LOCALS_AND_VALUE<uint32_t>::SIZE;
 		}
@@ -956,11 +993,11 @@ namespace instr
 
 		inline StoreIndexer(ovlocals_t argCount) :
 			Instruction(InstrFlags::HAS_INPUT | InstrFlags::INPUT_ON_STACK, OPI_STIDX),
-			args(0),
+			args(),
 			argCount(argCount)
 		{ }
 
-		inline virtual uint32_t GetArgsSize() const
+		inline virtual size_t GetArgsSize() const
 		{
 			return oa::LOCAL_AND_VALUE<uint32_t>::SIZE;
 		}
@@ -990,13 +1027,13 @@ namespace instr
 
 		inline Call(ovlocals_t argCount) :
 			Instruction(InstrFlags::HAS_INOUT | InstrFlags::INPUT_ON_STACK | InstrFlags::ACCEPTS_REFS, OPI_CALL_S),
-			args(0),
-			output(0),
+			args(),
+			output(),
 			argCount(argCount),
 			refSignature(0)
 		{ }
 
-		inline virtual uint32_t GetArgsSize() const
+		inline virtual size_t GetArgsSize() const
 		{
 			return refSignature ? oa::CALL_REF_SIZE : oa::CALL_SIZE;
 		}
@@ -1040,14 +1077,14 @@ namespace instr
 
 		inline CallMember(String *member, ovlocals_t argCount) :
 			Instruction(InstrFlags::HAS_INOUT | InstrFlags::INPUT_ON_STACK | InstrFlags::ACCEPTS_REFS, OPI_CALLMEM_S),
-			args(0),
-			output(0),
+			args(),
+			output(),
 			member(member),
 			argCount(argCount),
 			refSignature(0)
 		{ }
 
-		inline virtual uint32_t GetArgsSize() const
+		inline virtual size_t GetArgsSize() const
 		{
 			return refSignature ? oa::CALL_MEMBER_REF_SIZE : oa::CALL_MEMBER_SIZE;
 		}
@@ -1091,14 +1128,14 @@ namespace instr
 
 		inline StaticCall(ovlocals_t argCount, MethodOverload *method) :
 			Instruction(InstrFlags::HAS_INOUT | InstrFlags::INPUT_ON_STACK | InstrFlags::ACCEPTS_REFS, OPI_SCALL_S),
-			args(0),
-			output(0),
+			args(),
+			output(),
 			argCount(argCount),
 			method(method),
 			refSignature(0)
 		{ }
 
-		inline virtual uint32_t GetArgsSize() const
+		inline virtual size_t GetArgsSize() const
 		{
 			return oa::STATIC_CALL_SIZE;
 		}
@@ -1139,11 +1176,11 @@ namespace instr
 
 		inline Apply() :
 			Instruction(InstrFlags::HAS_INOUT | InstrFlags::INPUT_ON_STACK, OPI_APPLY_S),
-			args(0),
-			output(0)
+			args(),
+			output()
 		{ }
 
-		inline virtual uint32_t GetArgsSize() const
+		inline virtual size_t GetArgsSize() const
 		{
 			return oa::TWO_LOCALS_SIZE;
 		}
@@ -1172,18 +1209,18 @@ namespace instr
 	class StaticApply : public Instruction
 	{
 	public:
-		LocalOffset args; // includes chirps
+		LocalOffset args; // includes the instance, if there is one
 		LocalOffset output;
 		Method *method;
 
 		inline StaticApply(Method *method) :
 			Instruction(InstrFlags::HAS_INOUT | InstrFlags::INPUT_ON_STACK, OPI_SAPPLY_S),
-			args(0),
-			output(0),
+			args(),
+			output(),
 			method(method)
 		{ }
 
-		inline virtual uint32_t GetArgsSize() const
+		inline virtual size_t GetArgsSize() const
 		{
 			return oa::TWO_LOCALS_AND_VALUE<Method*>::SIZE;
 		}
@@ -1212,14 +1249,14 @@ namespace instr
 	class Branch : public Instruction
 	{
 	public:
-		int32_t target;
+		JumpTarget target;
 
-		inline Branch(int32_t target, bool isLeave) :
+		inline Branch(JumpTarget target, bool isLeave) :
 			Instruction(InstrFlags::BRANCH, isLeave ? OPI_LEAVE : OPI_BR),
 			target(target)
 		{ }
 
-		inline virtual uint32_t GetArgsSize() const
+		inline virtual size_t GetArgsSize() const
 		{
 			return oa::BRANCH_SIZE;
 		}
@@ -1237,7 +1274,7 @@ namespace instr
 	protected:
 		virtual void WriteArguments(MethodBuffer &buffer, MethodBuilder &builder) const;
 
-		inline Branch(int32_t target, InstrFlags flags, IntermediateOpcode opcode) :
+		inline Branch(JumpTarget target, InstrFlags flags, IntermediateOpcode opcode) :
 			Instruction(InstrFlags::BRANCH | flags, opcode),
 			target(target)
 		{ }
@@ -1254,12 +1291,12 @@ namespace instr
 		static const int IF_TRUE  = 6;
 		static const int IF_TYPE  = 8;
 
-		inline ConditionalBranch(int32_t target, int condition) :
+		inline ConditionalBranch(JumpTarget target, int condition) :
 			Branch(target, InstrFlags::HAS_INPUT, (IntermediateOpcode)(OPI_BRNULL_S + condition)),
-			value(0)
+			value()
 		{ }
 
-		inline virtual uint32_t GetArgsSize() const
+		inline virtual size_t GetArgsSize() const
 		{
 			return oa::CONDITIONAL_BRANCH_SIZE;
 		}
@@ -1289,12 +1326,12 @@ namespace instr
 	public:
 		Type *type;
 
-		inline BranchIfType(int32_t target, Type *type) :
+		inline BranchIfType(JumpTarget target, Type *type) :
 			ConditionalBranch(target, IF_TYPE),
 			type(type)
 		{ }
 
-		inline virtual uint32_t GetArgsSize() const
+		inline virtual size_t GetArgsSize() const
 		{
 			return oa::BRANCH_IF_TYPE_SIZE;
 		}
@@ -1312,22 +1349,17 @@ namespace instr
 	{
 	public:
 		LocalOffset value;
-		uint32_t targetCount;
-		int32_t *targets;
+		size_t targetCount;
+		Box<JumpTarget[]> targets;
 
-		inline Switch(uint32_t targetCount, int32_t *targets) :
+		inline Switch(size_t targetCount, Box<JumpTarget[]> targets) :
 			Instruction(InstrFlags::HAS_INPUT | InstrFlags::SWITCH, OPI_SWITCH_S),
-			value(0),
+			value(),
 			targetCount(targetCount),
-			targets(targets)
+			targets(std::move(targets))
 		{ }
 
-		inline ~Switch()
-		{
-			delete[] targets;
-		}
-
-		inline virtual uint32_t GetArgsSize() const
+		inline virtual size_t GetArgsSize() const
 		{
 			return oa::SWITCH_SIZE(targetCount);
 		}
@@ -1352,12 +1384,12 @@ namespace instr
 	public:
 		LocalOffset args; // on stack
 
-		inline BranchIfReference(int32_t target, bool branchIfSame) :
+		inline BranchIfReference(JumpTarget target, bool branchIfSame) :
 			Branch(target, InstrFlags::HAS_INPUT | InstrFlags::INPUT_ON_STACK, branchIfSame ? OPI_BRREF : OPI_BRNREF),
-			args(0)
+			args()
 		{ }
 
-		inline virtual uint32_t GetArgsSize() const
+		inline virtual size_t GetArgsSize() const
 		{
 			return oa::CONDITIONAL_BRANCH_SIZE;
 		}
@@ -1387,12 +1419,12 @@ namespace instr
 	public:
 		LocalOffset args;
 
-		inline BranchComparison(LocalOffset args, int32_t target, IntermediateOpcode opcode) :
+		inline BranchComparison(LocalOffset args, JumpTarget target, IntermediateOpcode opcode) :
 			Branch(target, InstrFlags::HAS_INPUT | InstrFlags::INPUT_ON_STACK, opcode),
 			args(args)
 		{ }
 
-		inline virtual uint32_t GetArgsSize() const
+		inline virtual size_t GetArgsSize() const
 		{
 			return oa::CONDITIONAL_BRANCH_SIZE;
 		}
@@ -1439,14 +1471,14 @@ namespace instr
 				InstrFlags::HAS_INOUT | InstrFlags::INPUT_ON_STACK,
 				GetOpcode(op)
 			),
-			args(0),
-			output(0),
+			args(),
+			output(),
 			op(op)
 		{ }
 		inline ExecOperator(IntermediateOpcode specialOp) :
 			Instruction(InstrFlags::HAS_INOUT | InstrFlags::INPUT_ON_STACK, specialOp),
-			args(0),
-			output(0),
+			args(),
+			output(),
 			op(SINGLE_INSTR_OP)
 		{ }
 
@@ -1455,7 +1487,7 @@ namespace instr
 			return op == Operator::PLUS || op == Operator::NEG || op == Operator::NOT;
 		}
 
-		inline virtual uint32_t GetArgsSize() const
+		inline virtual size_t GetArgsSize() const
 		{
 			if (op == SINGLE_INSTR_OP)
 				return oa::TWO_LOCALS_SIZE;
@@ -1502,7 +1534,7 @@ namespace instr
 			local(local)
 		{ }
 
-		inline virtual uint32_t GetArgsSize() const
+		inline virtual size_t GetArgsSize() const
 		{
 			return oa::ONE_LOCAL_SIZE;
 		}
@@ -1524,11 +1556,11 @@ namespace instr
 
 		inline LoadMemberRef(String *member) :
 			Instruction(InstrFlags::HAS_INPUT | InstrFlags::PUSHES_REF, OPI_LDMEMREF_S),
-			instance(0),
+			instance(),
 			member(member)
 		{ }
 
-		inline virtual uint32_t GetArgsSize() const
+		inline virtual size_t GetArgsSize() const
 		{
 			return oa::LOCAL_AND_VALUE<String*>::SIZE;
 		}
@@ -1556,11 +1588,11 @@ namespace instr
 
 		inline LoadFieldRef(Field *field) :
 			Instruction(InstrFlags::HAS_INPUT | InstrFlags::PUSHES_REF, OPI_LDFLDREF_S),
-			instance(0),
+			instance(),
 			field(field)
 		{ }
 
-		inline virtual uint32_t GetArgsSize() const
+		inline virtual size_t GetArgsSize() const
 		{
 			return oa::LOCAL_AND_VALUE<Field*>::SIZE;
 		}
@@ -1590,7 +1622,7 @@ namespace instr
 			field(field)
 		{ }
 
-		inline virtual uint32_t GetArgsSize() const
+		inline virtual size_t GetArgsSize() const
 		{
 			return oa::SINGLE_VALUE<Field*>::SIZE;
 		}

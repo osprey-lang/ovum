@@ -5,7 +5,7 @@
  * This file contains various compatibility and utility macros.
  */
 
-// All parts of Ovum require standard integer types
+// All parts of Ovum require standard, fixed-size integer types
 #include <stdint.h>
 
 // OVUM_64BIT is true if Ovum is compiled as a 64-bit application
@@ -23,7 +23,7 @@
 #  if __x86_64__ || __ppc64__
 #   define OVUM_64BIT 1
 #  else
-#   define OVUM_64BIT
+#   define OVUM_64BIT 0
 #  endif
 
 # else
@@ -31,6 +31,27 @@
 # endif
 
 #endif // OVUM_64BIT
+
+// Ovum uses size_t to count most things, but Osprey APIs typically use
+// 64-bit signed integers. The OVUM_ISIZE_MAX constant represents a kind
+// of compromise: if SIZE_MAX is less than INT64_MAX (as is the case on
+// 32-bit), it is set to SIZE_MAX; otherwise (as happens on 64-bit, where
+// SIZE_MAX == UINT64_MAX), it expands to INT64_MAX.
+//
+// The purpose of this constant, therefore, is to give you something to
+// range check against when you need compatibility with both size_t and
+// aves.Int.
+//
+// In practice, INT64_MAX should be enough memory under all conceivable
+// circumstances, being equal to about 9223 petabytes.
+
+#ifndef OVUM_ISIZE_MAX
+# if SIZE_MAX > INT64_MAX
+#  define OVUM_ISIZE_MAX INT64_MAX
+# else
+#  define OVUM_ISIZE_MAX SIZE_MAX
+# endif
+#endif // OVUM_ISIZE_MAX
 
 // The OVUM_WCHAR_SIZE macro is used in various text functions
 

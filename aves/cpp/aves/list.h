@@ -28,12 +28,12 @@ AVES_API NATIVE_FUNCTION(aves_List_slice2);
 AVES_API NATIVE_FUNCTION(aves_List_sliceTo);
 AVES_API NATIVE_FUNCTION(aves_List_reverse);
 
-AVES_API int OVUM_CDECL InitListInstance(ThreadHandle thread, ListInst *list, const int32_t capacity);
+AVES_API int OVUM_CDECL InitListInstance(ThreadHandle thread, ListInst *list, size_t capacity);
 
-int EnsureMinCapacity(ThreadHandle thread, ListInst *list, const int32_t capacity);
+int EnsureMinCapacity(ThreadHandle thread, ListInst *list, size_t capacity);
 
-int SetListCapacity(ThreadHandle thread, ListInst *list, const int32_t capacity);
+int SetListCapacity(ThreadHandle thread, ListInst *list, size_t capacity);
 
-int SliceList(ThreadHandle thread, ListInst *list, int32_t startIndex, int32_t endIndex, Value *output);
+int SliceList(ThreadHandle thread, ListInst *list, size_t startIndex, size_t endIndex, Value *output);
 
 #endif // AVES__LIST_H

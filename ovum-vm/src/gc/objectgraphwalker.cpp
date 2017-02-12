@@ -33,9 +33,9 @@ void ObjectGraphWalker::VisitObject(ObjectGraphVisitor &visitor, GCObject *gco)
 void ObjectGraphWalker::VisitFields(ObjectGraphVisitor &visitor, GCObject *gco)
 {
 	Type *type = gco->type;
-	if (type == (Type*)GC::GC_VALUE_ARRAY)
+	if (reinterpret_cast<uintptr_t>(type) == GC::GC_VALUE_ARRAY)
 	{
-		uint32_t length = static_cast<uint32_t>((gco->size - GCO_SIZE) / sizeof(Value));
+		size_t length = (gco->size - GCO_SIZE) / sizeof(Value);
 		VisitValueArray(visitor, length, gco->FieldsBase());
 	}
 	else
@@ -45,16 +45,16 @@ void ObjectGraphWalker::VisitFields(ObjectGraphVisitor &visitor, GCObject *gco)
 			if (type->IsCustomPtr())
 				VisitCustomFields(visitor, type, gco->InstanceBase(type));
 			else if (type->fieldCount)
-				VisitValueArray(visitor, static_cast<uint32_t>(type->fieldCount), gco->FieldsBase(type));
+				VisitValueArray(visitor, type->fieldCount, gco->FieldsBase(type));
 
 			type = type->baseType;
 		}
 	}
 }
 
-void ObjectGraphWalker::VisitValueArray(ObjectGraphVisitor &visitor, uint32_t count, Value *values)
+void ObjectGraphWalker::VisitValueArray(ObjectGraphVisitor &visitor, size_t count, Value *values)
 {
-	for (uint32_t i = 0; i < count; i++)
+	for (size_t i = 0; i < count; i++)
 		visitor.VisitFieldValue(values + i);
 }
 
@@ -75,7 +75,7 @@ void ObjectGraphWalker::VisitCustomFields(ObjectGraphVisitor &visitor, Type *typ
 
 void ObjectGraphWalker::VisitNativeFields(ObjectGraphVisitor &visitor, Type *type, void *instanceBase)
 {
-	for (int i = 0; i < type->fieldCount; i++)
+	for (size_t i = 0; i < type->fieldCount; i++)
 	{
 		Type::NativeField field = type->nativeFields[i];
 		void *fieldPtr = (char*)instanceBase + field.offset;
@@ -121,10 +121,10 @@ void ObjectGraphWalker::VisitNativeFields(ObjectGraphVisitor &visitor, Type *typ
 	}
 }
 
-int OVUM_CDECL ObjectGraphWalker::ReferenceVisitorCallback(void *state, unsigned int count, Value *values)
+int OVUM_CDECL ObjectGraphWalker::ReferenceVisitorCallback(void *state, size_t count, Value *values)
 {
 	ObjectGraphVisitor *visitor = reinterpret_cast<ObjectGraphVisitor*>(state);
-	VisitValueArray(*visitor, static_cast<uint32_t>(count), values);
+	VisitValueArray(*visitor, count, values);
 	RETURN_SUCCESS;
 }
 

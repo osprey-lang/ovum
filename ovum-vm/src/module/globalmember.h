@@ -93,11 +93,11 @@ public:
 
 	void ToPublicGlobalMember(::GlobalMember *result) const;
 
-	static GlobalMember &&FromType(Type *type);
+	static GlobalMember FromType(Type *type);
 
-	static GlobalMember &&FromFunction(Method *function);
+	static GlobalMember FromFunction(Method *function);
 
-	static GlobalMember &&FromConstant(String *name, Value *value, bool isInternal);
+	static GlobalMember FromConstant(String *name, Value *value, bool isInternal);
 
 private:
 	GlobalMemberFlags flags;

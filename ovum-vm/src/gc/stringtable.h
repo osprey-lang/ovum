@@ -12,28 +12,8 @@ namespace ovum
 // Strings can also be explicitly interned.
 class StringTable
 {
-private:
-	struct Entry
-	{
-		int32_t next;     // index of the next entry in the bucket; -1 if unused
-		int32_t hashCode; // The lower 31 bits of the hash code
-		String *value;    // the actual string!
-	};
-
-	int32_t capacity;   // size of buckets and entries
-	int32_t count;      // total number of entries used
-	int32_t freeCount;  // total number of freed entries
-	int32_t freeList;   // index of first freed entry
-	int32_t *buckets;   // indexes into entries
-	Entry *entries; // the actual entries
-
-	String *GetValue(String *value, const bool add);
-
-	void Resize();
-
 public:
-	StringTable(const int32_t capacity);
-	~StringTable();
+	StringTable(size_t capacity);
 
 	String *GetInterned(String *value);
 
@@ -47,6 +27,37 @@ public:
 	bool RemoveIntern(String *value);
 
 	void UpdateIntern(String *value);
+
+private:
+	static const size_t LAST = (size_t)-1;
+
+	struct Entry
+	{
+		// Index of the next entry in the bucket. If there is no next
+		// entry, the value is LAST.
+		size_t next;
+		// The lower 31 bits of the hash code.
+		int32_t hashCode;
+		// The actual string!
+		String *value;
+	};
+
+	// Size of buckets and entries.
+	size_t capacity;
+	// Total number of entries used.
+	size_t count;
+	// Total number of entries that were freed after being used.
+	size_t freeCount;
+	// Index of first freed entry.
+	size_t freeList;
+	// Indexes into entries.
+	Box<size_t[]> buckets;
+	// The actual entries.
+	Box<Entry[]> entries;
+
+	String *GetValue(String *value, bool add);
+
+	void Resize();
 
 	friend class GC;
 };

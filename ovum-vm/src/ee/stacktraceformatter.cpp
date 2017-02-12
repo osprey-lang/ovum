@@ -214,7 +214,7 @@ void StackTraceFormatter::AppendSourceLocation(Thread *const thread, StringBuffe
 void StackTraceFormatter::AppendLineNumber(Thread *const thread, StringBuffer &buf, int32_t line)
 {
 	// 32 digits ought to be enough for anybody
-	const ovchar_t BUFFER_SIZE = 32;
+	const size_t BUFFER_SIZE = 32;
 
 	ovchar_t lineNumberStr[BUFFER_SIZE];
 	ovchar_t *chp = lineNumberStr + BUFFER_SIZE;

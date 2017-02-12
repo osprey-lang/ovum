@@ -70,7 +70,7 @@ private:
 	bool hasGen0Refs;
 
 	// Number of used slots
-	uint32_t count;
+	size_t count;
 	StaticRef values[BLOCK_SIZE];
 
 	inline StaticRefBlock() :

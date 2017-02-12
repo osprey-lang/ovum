@@ -114,7 +114,7 @@ private:
 	ovlocals_t paramCount;
 	Box<uint32_t[]> maskValues;
 
-	static const uint32_t ParamsPerMask = 32;
+	static const ovlocals_t ParamsPerMask = 32;
 
 	friend class RefSignature;
 };

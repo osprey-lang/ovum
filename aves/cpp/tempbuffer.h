@@ -33,7 +33,7 @@ namespace aves
 			return stackItems[index];
 		}
 
-		inline T *GetPointer() const
+		inline T *GetPointer()
 		{
 			if (heapItems != nullptr)
 				return heapItems;

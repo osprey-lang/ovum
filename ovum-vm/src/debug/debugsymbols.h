@@ -46,12 +46,12 @@ namespace debug
 			return parent;
 		}
 
-		inline int32_t GetSymbolCount() const
+		inline size_t GetSymbolCount() const
 		{
 			return symbolCount;
 		}
 
-		inline DebugSymbol &GetSymbol(int32_t index) const
+		inline DebugSymbol &GetSymbol(size_t index) const
 		{
 			return symbols[index];
 		}
@@ -61,11 +61,16 @@ namespace debug
 	private:
 		OVUM_DISABLE_COPY_AND_ASSIGN(OverloadSymbols);
 
-		OverloadSymbols(MethodSymbols *parent, MethodOverload *overload, int32_t symbolCount, Box<DebugSymbol[]> symbols);
+		OverloadSymbols(
+			MethodSymbols *parent,
+			MethodOverload *overload,
+			size_t symbolCount,
+			Box<DebugSymbol[]> symbols
+		);
 
 		MethodSymbols *parent;
 		MethodOverload *overload;
-		int32_t symbolCount;
+		size_t symbolCount;
 		Box<DebugSymbol[]> symbols;
 
 		friend class DebugSymbolsReader;
@@ -79,7 +84,7 @@ namespace debug
 			return method;
 		}
 
-		OverloadSymbols *GetOverload(int32_t index) const;
+		OverloadSymbols *GetOverload(size_t index) const;
 
 	private:
 		OVUM_DISABLE_COPY_AND_ASSIGN(MethodSymbols);
@@ -88,10 +93,10 @@ namespace debug
 
 		Method *method;
 
-		int32_t overloadCount;
+		size_t overloadCount;
 		Box<Box<OverloadSymbols>[]> overloads;
 
-		void SetOverloads(int32_t count, Box<Box<OverloadSymbols>[]> overloads);
+		void SetOverloads(size_t count, Box<Box<OverloadSymbols>[]> overloads);
 
 		friend class DebugSymbolsReader;
 	};
@@ -101,9 +106,9 @@ namespace debug
 	public:
 		static void TryLoad(const PathName &moduleFile, Module *module);
 
-		inline SourceFile *GetSourceFile(int32_t index) const
+		inline SourceFile *GetSourceFile(size_t index) const
 		{
-			if (index < 0 || index >= fileCount)
+			if (index >= fileCount)
 				return nullptr;
 			return files.get() + index;
 		}
@@ -113,10 +118,10 @@ namespace debug
 
 		ModuleDebugData();
 
-		int32_t fileCount;
+		size_t fileCount;
 		Box<SourceFile[]> files;
 
-		int32_t methodSymbolCount;
+		size_t methodSymbolCount;
 		Box<Box<MethodSymbols>[]> methodSymbols;
 		
 		friend class GC;
@@ -157,7 +162,11 @@ namespace debug
 
 		void ReadSourceFiles(ModuleDebugData *data, const debug_file::SourceFileList *list);
 
-		void ReadMethodSymbols(Module *module, ModuleDebugData *data, const debug_file::DebugSymbolsHeader *header);
+		void ReadMethodSymbols(
+			Module *module,
+			ModuleDebugData *data,
+			const debug_file::DebugSymbolsHeader *header
+		);
 
 		Box<MethodSymbols> ReadSingleMethodSymbols(
 			ModuleDebugData *data,

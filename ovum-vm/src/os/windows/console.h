@@ -22,7 +22,7 @@ namespace os
 		UINT previousCodePage;
 	};
 
-	bool ConsoleWrite_(HANDLE handle, const ovchar_t *str, int32_t strLength);
+	bool ConsoleWrite_(HANDLE handle, const ovchar_t *str, size_t strLength);
 
 	// Initializes a ConsoleInfo with information about the current console.
 	//   console:
@@ -56,7 +56,7 @@ namespace os
 	// Returns:
 	//   True if the string was fully written; false if an error occurred.
 	//   There is no extended error information for this call.
-	inline bool ConsoleWrite(ConsoleInfo *console, const ovchar_t *str, int32_t length)
+	inline bool ConsoleWrite(ConsoleInfo *console, const ovchar_t *str, size_t length)
 	{
 		return ConsoleWrite_(console->stdOut, str, length);
 	}
@@ -84,7 +84,7 @@ namespace os
 	// Returns:
 	//   True if the string was fully written; false if an error occurred.
 	//   There is no extended error information for this call.
-	inline bool ConsoleWriteError(ConsoleInfo *console, const ovchar_t *str, int32_t length)
+	inline bool ConsoleWriteError(ConsoleInfo *console, const ovchar_t *str, size_t length)
 	{
 		return ConsoleWrite_(console->stdErr, str, length);
 	}

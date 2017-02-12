@@ -13,7 +13,7 @@ namespace ovum
 class CriticalSection
 {
 public:
-	inline CriticalSection(int spinCount)
+	inline explicit CriticalSection(int spinCount)
 	{
 		os::CriticalSectionInit(&cs, spinCount);
 	}
@@ -61,7 +61,7 @@ private:
 class Semaphore
 {
 public:
-	inline Semaphore(int value)
+	inline explicit Semaphore(int value)
 	{
 		os::SemaphoreInit(&semaphore, value);
 	}

@@ -17,7 +17,7 @@ int Thread::InitializeMethod(MethodOverload *method)
 
 int Thread::CallStaticConstructors(instr::MethodBuilder &builder)
 {
-	for (int32_t i = 0; i < builder.GetTypeCount(); i++)
+	for (size_t i = 0; i < builder.GetTypeCount(); i++)
 	{
 		Type *type = builder.GetType(i);
 		// The static constructor may have been triggered by a previous type initialization,

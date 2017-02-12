@@ -68,17 +68,19 @@ public:
 		NativeFieldType type;
 	};
 
-	Type(Module *module, int32_t memberCount);
+	Type(Module *module, size_t memberCount);
+
 	~Type();
 
 	Member *GetMember(String *name) const;
+
 	Member *FindMember(String *name, MethodOverload *fromMethod) const;
 
 	// Flags associated with the type.
 	TypeFlags flags;
 
 	// The offset (in bytes) of the first field in instances of this type.
-	uint32_t fieldsOffset;
+	size_t fieldsOffset;
 	// The total size (in bytes) of instances of this type, not including
 	// the size consumed by the base type.
 	// Note: this is 0 for Object and String, the latter of which is variable-size.
@@ -86,7 +88,7 @@ public:
 	// The total number of instance fields in the type. If the flag CUSTOMPTR
 	// is set, this contains the number of native fields; otherwise, this is
 	// the number of Value fields.
-	int fieldCount;
+	size_t fieldCount;
 
 	// Members! These allow us to look up members by name.
 	StringHash<Member*> members;
@@ -115,7 +117,7 @@ public:
 	Finalizer finalizer;
 	// The number of native fields that can be defined before the array
 	// must be resized.
-	uint32_t nativeFieldCapacity;
+	size_t nativeFieldCapacity;
 	// Native fields defined on the type
 	NativeField *nativeFields;
 
@@ -127,7 +129,7 @@ public:
 	// The number of overloadable operators.
 	// If you change Operator and/or Opcode without changing this,
 	// you have no one to blame but yourself.
-	static const int OPERATOR_COUNT = 16;
+	static const size_t OPERATOR_COUNT = 16;
 	// Operator implementations. If an operator implementation is null,
 	// then the type does not implement that operator.
 	MethodOverload *operators[OPERATOR_COUNT];
@@ -224,7 +226,9 @@ public:
 	}
 
 	void InitOperators();
+
 	bool InitStaticFields(Thread *const thread);
+
 	int RunStaticCtor(Thread *const thread);
 
 	int AddNativeField(size_t offset, NativeFieldType fieldType);

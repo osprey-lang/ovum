@@ -5,7 +5,7 @@
 
 typedef struct Buffer_S
 {
-	uint32_t size; // The total number of bytes in the buffer
+	size_t size; // The total number of bytes in the buffer
 	union
 	{
 		uint8_t *bytes;
@@ -54,7 +54,7 @@ AVES_API NATIVE_FUNCTION(aves_Buffer_copyInternal);
 void aves_Buffer_finalize(void *basePtr);
 
 // For other native modules that want a byte pointer from a Buffer
-AVES_API uint8_t *aves_Buffer_getDataPointer(Value *buffer, uint32_t *bufferSize);
+AVES_API uint8_t *aves_Buffer_getDataPointer(Value *buffer, size_t *bufferSize);
 
 
 typedef struct BufferView_S

@@ -4,12 +4,12 @@
 #include "ovum.h"
 
 OVUM_API int32_t String_GetHashCode(String *str);
-OVUM_API int32_t String_GetHashCodeSubstr(const String *str, int32_t index, int32_t count);
+OVUM_API int32_t String_GetHashCodeSubstr(const String *str, size_t index, size_t count);
 
 OVUM_API bool String_Equals(const String *a, const String *b);
 OVUM_API bool String_EqualsIgnoreCase(const String *a, const String *b);
 
-OVUM_API bool String_SubstringEquals(const String *str, int32_t startIndex, const String *part);
+OVUM_API bool String_SubstringEquals(const String *str, size_t startIndex, const String *part);
 
 OVUM_API int String_Compare(const String *a, const String *b);
 
@@ -24,7 +24,7 @@ inline bool String_EndsWith(const String *a, ovchar_t ch)
 
 inline bool String_ContainsChar(const String *str, ovchar_t ch)
 {
-	for (int32_t i = 0; i < str->length; i++)
+	for (size_t i = 0; i < str->length; i++)
 		if ((&str->firstChar)[i] == ch)
 			return true;
 	return false;
@@ -37,7 +37,7 @@ OVUM_API String *String_ToLower(ThreadHandle thread, String *str);
 
 OVUM_API String *String_Concat(ThreadHandle thread, const String *a, const String *b);
 OVUM_API String *String_Concat3(ThreadHandle thread, const String *a, const String *b, const String *c);
-OVUM_API String *String_ConcatRange(ThreadHandle thread, int count, String *values[]);
+OVUM_API String *String_ConcatRange(ThreadHandle thread, size_t count, String *values[]);
 
 // Converts a String* to a zero-terminated wchar_t* string.
 //   dest:
@@ -51,7 +51,7 @@ OVUM_API String *String_ConcatRange(ThreadHandle thread, int count, String *valu
 //     including the terminating \0.
 //
 // NOTE: the source string may contain \0 characters. These are NOT stripped!
-OVUM_API int32_t String_ToWString(wchar_t *dest, const String *source);
+OVUM_API size_t String_ToWString(wchar_t *dest, const String *source);
 
 // Converts a zero-terminated char* string to a String*.
 //   thread:

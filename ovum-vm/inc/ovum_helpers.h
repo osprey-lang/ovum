@@ -383,6 +383,6 @@ inline int Int_ModuloChecked(int64_t left, int64_t right, int64_t &result)
 
 // Gets the next prime number greater than or equal to the given value.
 // The prime number is suitable for use as the size of a hash table.
-OVUM_API int32_t HashHelper_GetPrime(int32_t min);
+OVUM_API size_t HashHelper_GetPrime(size_t min);
 
 #endif // OVUM__HELPERS_H

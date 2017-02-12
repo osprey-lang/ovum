@@ -131,14 +131,14 @@ OVUM_API void Module_InitStaticState(ModuleHandle module, void *state, StaticSta
 OVUM_API bool Module_GetGlobalMember(ModuleHandle module, String *name, bool includeInternal, GlobalMember *result);
 
 // Gets the total number of members in the module.
-OVUM_API int32_t Module_GetGlobalMemberCount(ModuleHandle module);
+OVUM_API size_t Module_GetGlobalMemberCount(ModuleHandle module);
 
 // Gets the global member at the specified index. The index must be between zero (inclusive)
 // and the global member count (exclusive). Module_GetGlobalMemberCount returns the latter.
 //
 // If the index is valid, 'result' is updated with the result, and the function returns true.
 // Otherwise, the function returns false and 'result' is not written to.
-OVUM_API bool Module_GetGlobalMemberByIndex(ModuleHandle module, int32_t index, GlobalMember *result);
+OVUM_API bool Module_GetGlobalMemberByIndex(ModuleHandle module, size_t index, GlobalMember *result);
 
 // Searches a module for a type with the specified name.
 // If the type could not be found, or if the type is private and includeInternal is false,
@@ -187,7 +187,7 @@ OVUM_API ModuleHandle Module_FindDependency(ModuleHandle module, String *name);
 //     the buffer, it must be resized before all directories can be obtained.
 // Returns:
 //   An Ovum status code. This function can fail with an out-of-memory error.
-OVUM_API int Module_GetSearchDirectories(ThreadHandle thread, int resultSize, String **result, int *count);
+OVUM_API int Module_GetSearchDirectories(ThreadHandle thread, size_t resultSize, String **result, size_t *count);
 
 #ifdef __cplusplus
 
@@ -195,7 +195,7 @@ class ModuleMemberIterator
 {
 private:
 	ModuleHandle module;
-	int32_t index;
+	size_t index;
 	GlobalMember current;
 
 public:

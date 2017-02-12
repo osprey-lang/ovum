@@ -39,8 +39,9 @@ public class HashTests is TestFixture
 	public test_Constructor1WithTooMuchCapacity()
 	{
 		// If Hash.maxCapacity == Int.max, then we can't do anything
-		if Hash.maxCapacity == Int.max:
+		if Hash.maxCapacity == Int.max {
 			return;
+		}
 
 		var capacity = Hash.maxCapacity + 1;
 		Assert.throws(typeof(ArgumentRangeError), @=> new Hash(capacity));
@@ -247,7 +248,40 @@ public class HashTests is TestFixture
 		Assert.throws(typeof(ArgumentNullError), @=> h.get(null, 0));
 	}
 
-	// Concat tests
+	// tryGet tests
+
+	public test_TryGetExisting()
+	{
+		var h = new Hash(1);
+		h[42] = "value";
+
+		var value;
+		Assert.isTrue(h.tryGet(42, ref value));
+		Assert.areEqual(value, "value");
+	}
+
+	public test_TryGetMissing()
+	{
+		var h = new Hash(1);
+		h[42] = "value";
+
+		var value;
+		Assert.isFalse(h.tryGet(47, ref value));
+		Assert.isNull(value);
+	}
+
+	public test_TryGetInvalid()
+	{
+		var h = new Hash(1);
+		h[42] = "value";
+
+		Assert.throws(typeof(ArgumentNullError), @{
+			var value;
+			h.tryGet(null, ref value);
+		});
+	}
+
+	// concat tests
 
 	public test_ConcatWithUniqueKeys()
 	{

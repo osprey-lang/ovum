@@ -5,13 +5,13 @@
 namespace ovum
 {
 
-Box<ModulePool> ModulePool::New(int capacity)
+Box<ModulePool> ModulePool::New(size_t capacity)
 {
 	Box<ModulePool> pool(new ModulePool(capacity));
 	return std::move(pool);
 }
 
-ModulePool::ModulePool(int capacity) :
+ModulePool::ModulePool(size_t capacity) :
 	capacity(0),
 	length(0),
 	data(nullptr)
@@ -19,7 +19,7 @@ ModulePool::ModulePool(int capacity) :
 	Init(capacity);
 }
 
-void ModulePool::Init(int capacity)
+void ModulePool::Init(size_t capacity)
 {
 	capacity = max(capacity, 4);
 
@@ -30,14 +30,14 @@ void ModulePool::Init(int capacity)
 
 Module *ModulePool::Get(String *name) const
 {
-	for (int i = 0; i < length; i++)
+	for (size_t i = 0; i < length; i++)
 		if (String_Equals(data[i]->name, name))
 			return data[i].get();
 	return nullptr;
 }
 Module *ModulePool::Get(String *name, ModuleVersion *version) const
 {
-	for (int i = 0; i < length; i++)
+	for (size_t i = 0; i < length; i++)
 	{
 		Module *module = data[i].get();
 		if (String_Equals(module->name, name) && module->version == *version)
@@ -46,12 +46,12 @@ Module *ModulePool::Get(String *name, ModuleVersion *version) const
 	return nullptr;
 }
 
-int ModulePool::Add(Box<Module> value)
+size_t ModulePool::Add(Box<Module> value)
 {
 	if (length == capacity)
 		Resize();
 
-	int index = length++;
+	size_t index = length++;
 	data[index] = std::move(value);
 	return index;
 }
@@ -59,7 +59,7 @@ int ModulePool::Add(Box<Module> value)
 Box<Module> ModulePool::Remove(Module *value)
 {
 	Box<Module> foundModule;
-	for (int i = 0; i < length; i++)
+	for (size_t i = 0; i < length; i++)
 	{
 		if (foundModule)
 			data[i - 1] = std::move(data[i]);
@@ -73,10 +73,10 @@ Box<Module> ModulePool::Remove(Module *value)
 
 void ModulePool::Resize()
 {
-	int newCap = capacity * 2;
+	size_t newCap = capacity * 2;
 
 	Box<Box<Module>[]> newData = Box<Box<Module>[]>(new Box<Module>[newCap]);
-	for (int i = 0; i < length; i++)
+	for (size_t i = 0; i < length; i++)
 		newData[i] = std::move(data[i]);
 
 	capacity = newCap;

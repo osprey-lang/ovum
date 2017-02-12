@@ -7,7 +7,7 @@
 class Char
 {
 public:
-	static LitString<2> ToLitString(const ovwchar_t ch);
+	static LitString<2> ToLitString(ovwchar_t ch);
 
 	static ovwchar_t FromValue(Value *value);
 

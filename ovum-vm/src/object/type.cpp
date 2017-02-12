@@ -13,7 +13,7 @@
 namespace ovum
 {
 
-Type::Type(Module *module, int32_t memberCount) :
+Type::Type(Module *module, size_t memberCount) :
 	members(memberCount),
 	typeToken(nullptr),
 	size(0),
@@ -43,7 +43,7 @@ void Type::InitOperators()
 		return;
 
 	OVUM_ASSERT(baseType->AreOpsInited());
-	for (int op = 0; op < OPERATOR_COUNT; op++)
+	for (size_t op = 0; op < OPERATOR_COUNT; op++)
 	{
 		if (!this->operators[op])
 			this->operators[op] = baseType->operators[op];
@@ -116,7 +116,7 @@ bool Type::InitStaticFields(Thread *const thread)
 	Value nullValue;
 	nullValue.type = nullptr;
 
-	for (int32_t i = 0; i < members.count; i++)
+	for (size_t i = 0; i < members.count; i++)
 	{
 		Member *m = members.entries[i].value;
 		if (m->IsField() &&
@@ -172,9 +172,12 @@ int Type::RunStaticCtor(Thread *const thread)
 			}
 
 			Value ignore;
-			r = thread->InvokeMethodOverload(mo, 0,
+			r = thread->InvokeMethodOverload(
+				mo,
+				0,
 				thread->currentFrame->evalStack + thread->currentFrame->stackCount,
-				&ignore);
+				&ignore
+			);
 			if (r != OVUM_SUCCESS)
 			{
 				flags &= ~TypeFlags::STATIC_CTOR_RUNNING;
@@ -194,7 +197,7 @@ int Type::AddNativeField(size_t offset, NativeFieldType fieldType)
 {
 	if (fieldCount == nativeFieldCapacity)
 	{
-		uint32_t newCap = nativeFieldCapacity ? 2 * nativeFieldCapacity : 4;
+		size_t newCap = nativeFieldCapacity ? 2 * nativeFieldCapacity : 4;
 		NativeField *newFields = reinterpret_cast<NativeField*>(realloc(nativeFields, sizeof(NativeField) * newCap));
 		if (newFields == nullptr)
 			return OVUM_ERROR_NO_MEMORY;
@@ -265,11 +268,11 @@ OVUM_API MemberHandle Type_FindMember(TypeHandle type, String *name, OverloadHan
 	return type->FindMember(name, fromMethod);
 }
 
-OVUM_API int32_t Type_GetMemberCount(TypeHandle type)
+OVUM_API size_t Type_GetMemberCount(TypeHandle type)
 {
 	return type->members.GetCount();
 }
-OVUM_API MemberHandle Type_GetMemberByIndex(TypeHandle type, const int32_t index)
+OVUM_API MemberHandle Type_GetMemberByIndex(TypeHandle type, size_t index)
 {
 	ovum::Member *result;
 	if (type->members.GetByIndex(index, result))
@@ -286,7 +289,7 @@ OVUM_API int Type_GetTypeToken(ThreadHandle thread, TypeHandle type, Value *resu
 	return type->GetTypeToken(thread, result);
 }
 
-OVUM_API uint32_t Type_GetFieldOffset(TypeHandle type)
+OVUM_API size_t Type_GetFieldOffset(TypeHandle type)
 {
 	return type->fieldsOffset;
 }

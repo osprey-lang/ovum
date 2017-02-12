@@ -86,13 +86,13 @@ public:
 private:
 	static void VisitFields(ObjectGraphVisitor &visitor, GCObject *gco);
 
-	static void VisitValueArray(ObjectGraphVisitor &visitor, uint32_t count, Value *values);
+	static void VisitValueArray(ObjectGraphVisitor &visitor, size_t count, Value *values);
 
 	static void VisitCustomFields(ObjectGraphVisitor &visitor, Type *type, void *instanceBase);
 
 	static void VisitNativeFields(ObjectGraphVisitor &visitor, Type *type, void *instanceBase);
 
-	static int OVUM_CDECL ReferenceVisitorCallback(void *state, unsigned int count, Value *values);
+	static int OVUM_CDECL ReferenceVisitorCallback(void *state, size_t count, Value *values);
 };
 
 } // namespace ovum

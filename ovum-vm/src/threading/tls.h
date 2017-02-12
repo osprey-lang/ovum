@@ -7,20 +7,16 @@
 
 namespace ovum
 {
+
 // Implements a thread-local storage entry. The thread-local storage slot
 // contains a pointer to T. The constructor for TlsEntry does not attempt
 // to allocate a TLS slot; that is done by the Alloc method.
 template<typename T>
 class TlsEntry
 {
-private:
-	bool inited;
-	os::TlsKey key;
-
-	OVUM_DISABLE_COPY_AND_ASSIGN(TlsEntry);
-
 public:
-	inline TlsEntry() : inited(false)
+	inline TlsEntry() :
+		inited(false)
 	{ }
 
 	// Determines whether the TLS key is valid, that is,
@@ -69,6 +65,12 @@ public:
 		if (IsValid())
 			os::TlsSet(&key, value);
 	}
+
+private:
+	bool inited;
+	os::TlsKey key;
+
+	OVUM_DISABLE_COPY_AND_ASSIGN(TlsEntry);
 };
 
 } // namespace ovum

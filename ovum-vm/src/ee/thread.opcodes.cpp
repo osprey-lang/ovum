@@ -304,7 +304,7 @@ int Thread::Evaluate()
 		// list
 		TARGET(OPI_LIST_L)
 			{
-				OPC_ARGS(oa::LocalAndValue<int32_t>);
+				OPC_ARGS(oa::LocalAndValue<size_t>);
 				// We unfortunately have to put the list in the destination local
 				// during initialization, otherwise the GC won't be able to reach
 				// it if initListInstance should happen to trigger a cycle.
@@ -312,12 +312,12 @@ int Thread::Evaluate()
 				CHK(GetGC()->Alloc(this, vm->types.List, sizeof(ListInst), result));
 				CHK(vm->functions.initListInstance(this, result->v.list, args->value));
 
-				ip += oa::LOCAL_AND_VALUE<int32_t>::SIZE;
+				ip += oa::LOCAL_AND_VALUE<size_t>::SIZE;
 			}
 			NEXT_INSTR();
 		TARGET(OPI_LIST_S)
 			{
-				OPC_ARGS(oa::LocalAndValue<int32_t>);
+				OPC_ARGS(oa::LocalAndValue<size_t>);
 				// We unfortunately have to put the list in the destination local
 				// during initialization, otherwise the GC won't be able to reach
 				// it if initListInstance should happen to trigger a cycle.
@@ -326,25 +326,25 @@ int Thread::Evaluate()
 				f->stackCount++; // make GC-reachable
 				CHK(vm->functions.initListInstance(this, result->v.list, args->value));
 
-				ip += oa::LOCAL_AND_VALUE<int32_t>::SIZE;
+				ip += oa::LOCAL_AND_VALUE<size_t>::SIZE;
 			}
 			NEXT_INSTR();
 
 		// hash
 		TARGET(OPI_HASH_L)
 			{
-				OPC_ARGS(oa::LocalAndValue<int32_t>);
+				OPC_ARGS(oa::LocalAndValue<size_t>);
 				CHK(vm->functions.initHashInstance(this, args->value, args->Local(f)));
 
-				ip += oa::LOCAL_AND_VALUE<int32_t>::SIZE;
+				ip += oa::LOCAL_AND_VALUE<size_t>::SIZE;
 			}
 			NEXT_INSTR();
 		TARGET(OPI_HASH_S)
 			{
-				OPC_ARGS(oa::LocalAndValue<int32_t>);
+				OPC_ARGS(oa::LocalAndValue<size_t>);
 				CHK(vm->functions.initHashInstance(this, args->value, args->Local(f)));
 
-				ip += oa::LOCAL_AND_VALUE<int32_t>::SIZE;
+				ip += oa::LOCAL_AND_VALUE<size_t>::SIZE;
 				f->stackCount++;
 			}
 			NEXT_INSTR();
@@ -715,7 +715,7 @@ int Thread::Evaluate()
 					return ThrowTypeError();
 
 				if (value->v.integer >= 0 && value->v.integer < args->count)
-					ip += (&args->firstOffset)[(int32_t)value->v.integer];
+					ip += (&args->firstOffset)[(size_t)value->v.integer];
 
 				ip += oa::SWITCH_SIZE(args->count);
 			}
@@ -728,7 +728,7 @@ int Thread::Evaluate()
 					return ThrowTypeError();
 
 				if (value->v.integer >= 0 && value->v.integer < args->count)
-					ip += (&args->firstOffset)[(int32_t)value->v.integer];
+					ip += (&args->firstOffset)[(size_t)value->v.integer];
 
 				ip += oa::SWITCH_SIZE(args->count);
 				f->stackCount--;
@@ -1375,16 +1375,16 @@ exitMethod:
 	return retCode;
 }
 
-int Thread::FindErrorHandler(int32_t maxIndex)
+int Thread::FindErrorHandler(size_t maxIndex)
 {
 	StackFrame *frame = currentFrame;
 	MethodOverload *method = frame->method;
-	uint32_t offset = (uint32_t)(this->ip - method->entry);
+	size_t offset = (size_t)(this->ip - method->entry);
 
-	if (maxIndex == -1)
+	if (maxIndex == ALL_TRY_BLOCKS)
 		maxIndex = method->tryBlockCount;
 
-	for (int32_t t = 0; t < maxIndex; t++)
+	for (size_t t = 0; t < maxIndex; t++)
 	{
 		TryBlock &tryBlock = method->tryBlocks[t];
 		if (tryBlock.Contains(offset))
@@ -1393,7 +1393,7 @@ int Thread::FindErrorHandler(int32_t maxIndex)
 			switch (tryBlock.kind)
 			{
 			case TryKind::CATCH:
-				for (int32_t c = 0; c < tryBlock.catches.count; c++)
+				for (size_t c = 0; c < tryBlock.catches.count; c++)
 				{
 					CatchBlock &catchBlock = tryBlock.catches.blocks[c];
 					if (Type::ValueIsType(&currentError, catchBlock.caughtType))
@@ -1458,9 +1458,9 @@ int Thread::EvaluateLeave(StackFrame *frame, int32_t target)
 		opcode_args::BRANCH_SIZE;
 
 	MethodOverload *method = frame->method;
-	uint32_t ipOffset = (uint32_t)(this->ip - method->entry);
-	uint32_t targetOffset = ipOffset + target + LEAVE_SIZE;
-	for (int32_t t = 0; t < method->tryBlockCount; t++)
+	size_t ipOffset = (size_t)(this->ip - method->entry);
+	size_t targetOffset = ipOffset + target + LEAVE_SIZE;
+	for (size_t t = 0; t < method->tryBlockCount; t++)
 	{
 		TryBlock &tryBlock = method->tryBlocks[t];
 		// We can evaluate a finally clause here if all of the following are true:

@@ -22,4 +22,7 @@
 #undef FILE_SHARE_WRITE
 #undef FILE_SHARE_DELETE
 
+// The type ssize_t is POSIX-specific, but it's quite useful, so define it here.
+typedef SSIZE_T ssize_t;
+
 #include "windows/def.h"

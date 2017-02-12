@@ -8,8 +8,7 @@ AVES_API int OVUM_CDECL aves_reflection_MethodBase_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(MethodBaseInst));
 
-	int r;
-	r = Type_AddNativeField(type, offsetof(MethodBaseInst,cachedName), NativeFieldType::STRING);
+	int r = Type_AddNativeField(type, offsetof(MethodBaseInst,cachedName), NativeFieldType::STRING);
 	if (r != OVUM_SUCCESS)
 		return r;
 	RETURN_SUCCESS;
@@ -139,9 +138,9 @@ AVES_API NATIVE_FUNCTION(aves_reflection_MethodBase_getOverloadHandle)
 {
 	Aves *aves = Aves::Get(thread);
 
-	// getOverloadHandle(index is Int)
+	// getOverloadHandle(index: Int)
 	MethodBaseInst *inst = THISV.Get<MethodBaseInst>();
-	int32_t index = (int32_t)args[1].v.integer;
+	size_t index = (size_t)args[1].v.integer;
 
 	Value handle;
 	handle.type = aves->aves.reflection.NativeHandle;
@@ -153,19 +152,19 @@ AVES_API NATIVE_FUNCTION(aves_reflection_MethodBase_getOverloadHandle)
 
 AVES_API BEGIN_NATIVE_FUNCTION(aves_reflection_MethodBase_invoke)
 {
-	// invoke(instance, arguments is List|null)
+	// invoke(instance, arguments: List|null)
 
 	MethodBaseInst *inst = THISV.Get<MethodBaseInst>();
 
 	// Push instance
 	VM_Push(thread, args + 1);
 	// Push arguments
-	uint32_t argCount = 0;
+	ovlocals_t argCount = 0;
 	if (!IS_NULL(args[2]))
 	{
 		ListInst *arguments = args[2].v.list;
-		argCount = (uint32_t)arguments->length;
-		for (int32_t i = 0; i < arguments->length; i++)
+		argCount = (ovlocals_t)arguments->length;
+		for (size_t i = 0; i < arguments->length; i++)
 			VM_Push(thread, arguments->values + i);
 	}
 

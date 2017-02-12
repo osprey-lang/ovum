@@ -4,7 +4,7 @@
 namespace ovum
 {
 
-int32_t IntFormatter::ToDec(int64_t number, StringBuffer &dest, int32_t minLength)
+size_t IntFormatter::ToDec(int64_t number, StringBuffer &dest, size_t minLength)
 {
 	bool isNeg = number < 0;
 	if (isNeg)
@@ -14,11 +14,11 @@ int32_t IntFormatter::ToDec(int64_t number, StringBuffer &dest, int32_t minLengt
 
 	ovchar_t buffer[BUFFER_SIZE];
 	ovchar_t *bufferEnd = buffer + BUFFER_SIZE;
-	int32_t numberLength = BuildDecString((uint64_t)number, bufferEnd);
+	size_t numberLength = BuildDecString((uint64_t)number, bufferEnd);
 	// Move the pointer to the first character
 	bufferEnd -= numberLength;
 
-	int32_t length = numberLength;
+	size_t length = numberLength;
 	if (isNeg)
 	{
 		dest.Append(MINUS);
@@ -36,15 +36,15 @@ int32_t IntFormatter::ToDec(int64_t number, StringBuffer &dest, int32_t minLengt
 	return length;
 }
 
-int32_t IntFormatter::ToDec(uint64_t number, StringBuffer &dest, int32_t minLength)
+size_t IntFormatter::ToDec(uint64_t number, StringBuffer &dest, size_t minLength)
 {
 	ovchar_t buffer[BUFFER_SIZE];
 	ovchar_t *bufferEnd = buffer + BUFFER_SIZE;
-	int32_t numberLength = BuildDecString(number, bufferEnd);
+	size_t numberLength = BuildDecString(number, bufferEnd);
 	// Move the pointer to the first character
 	bufferEnd -= numberLength;
 
-	int32_t length = numberLength;
+	size_t length = numberLength;
 
 	if (minLength >= length)
 	{
@@ -57,7 +57,7 @@ int32_t IntFormatter::ToDec(uint64_t number, StringBuffer &dest, int32_t minLeng
 	return length;
 }
 
-int32_t IntFormatter::ToDec(int64_t number, ovchar_t *dest, int32_t destSize)
+size_t IntFormatter::ToDec(int64_t number, ovchar_t *dest, size_t destSize)
 {
 	bool isNeg = number < 0;
 	if (isNeg)
@@ -67,11 +67,11 @@ int32_t IntFormatter::ToDec(int64_t number, ovchar_t *dest, int32_t destSize)
 
 	ovchar_t buffer[BUFFER_SIZE];
 	ovchar_t *bufferEnd = buffer + BUFFER_SIZE;
-	int32_t numberLength = BuildDecString((uint64_t)number, bufferEnd);
+	size_t numberLength = BuildDecString((uint64_t)number, bufferEnd);
 	// Move the pointer to the first character
 	bufferEnd -= numberLength;
 
-	int32_t length = numberLength + isNeg;
+	size_t length = numberLength + isNeg;
 	if (destSize < length)
 		// Destination buffer too small. Don't write anything to it; just
 		// return the required length.
@@ -85,11 +85,11 @@ int32_t IntFormatter::ToDec(int64_t number, ovchar_t *dest, int32_t destSize)
 	return length;
 }
 
-int32_t IntFormatter::ToDec(uint64_t number, ovchar_t *dest, int32_t destSize)
+size_t IntFormatter::ToDec(uint64_t number, ovchar_t *dest, size_t destSize)
 {
 	ovchar_t buffer[BUFFER_SIZE];
 	ovchar_t *bufferEnd = buffer + BUFFER_SIZE;
-	int32_t length = BuildDecString((uint64_t)number, bufferEnd);
+	size_t length = BuildDecString((uint64_t)number, bufferEnd);
 	// Move the pointer to the first character
 	bufferEnd -= length;
 
@@ -103,15 +103,15 @@ int32_t IntFormatter::ToDec(uint64_t number, ovchar_t *dest, int32_t destSize)
 	return length;
 }
 
-int32_t IntFormatter::ToHex(uint64_t number, StringBuffer &dest, bool upper, int32_t minLength)
+size_t IntFormatter::ToHex(uint64_t number, StringBuffer &dest, bool upper, size_t minLength)
 {
 	ovchar_t buffer[BUFFER_SIZE];
 	ovchar_t *bufferEnd = buffer + BUFFER_SIZE;
-	int32_t numberLength = BuildHexString(number, bufferEnd, upper);
+	size_t numberLength = BuildHexString(number, bufferEnd, upper);
 	// Move the pointer to the first character
 	bufferEnd -= numberLength;
 
-	int32_t length = numberLength;
+	size_t length = numberLength;
 
 	if (minLength > length)
 	{
@@ -124,11 +124,11 @@ int32_t IntFormatter::ToHex(uint64_t number, StringBuffer &dest, bool upper, int
 	return length;
 }
 
-int32_t IntFormatter::ToHex(uint64_t number, ovchar_t *dest, int32_t destSize, bool upper)
+size_t IntFormatter::ToHex(uint64_t number, ovchar_t *dest, size_t destSize, bool upper)
 {
 	ovchar_t buffer[BUFFER_SIZE];
 	ovchar_t *bufferEnd = buffer + BUFFER_SIZE;
-	int32_t length = BuildHexString(number, bufferEnd, upper);
+	size_t length = BuildHexString(number, bufferEnd, upper);
 	// Move the pointer to the first character
 	bufferEnd -= length;
 
@@ -142,7 +142,7 @@ int32_t IntFormatter::ToHex(uint64_t number, ovchar_t *dest, int32_t destSize, b
 	return length;
 }
 
-int32_t IntFormatter::BuildDecString(uint64_t number, ovchar_t *destEnd)
+size_t IntFormatter::BuildDecString(uint64_t number, ovchar_t *destEnd)
 {
 	ovchar_t *destp = destEnd;
 	do
@@ -155,7 +155,7 @@ int32_t IntFormatter::BuildDecString(uint64_t number, ovchar_t *destEnd)
 	return destEnd - destp;
 }
 
-int32_t IntFormatter::BuildHexString(uint64_t number, ovchar_t *destEnd, bool upper)
+size_t IntFormatter::BuildHexString(uint64_t number, ovchar_t *destEnd, bool upper)
 {
 	ovchar_t hexBase = upper ? HEX_UPPER_BASE : HEX_LOWER_BASE;
 

@@ -55,13 +55,10 @@ struct StandardTypeInfo
 // must be exported by the native module declaring the type.
 class StandardTypeCollection
 {
-private:
-	StringHash<StandardTypeInfo> types;
-
 public:
 	OVUM_NOINLINE static Box<StandardTypeCollection> New(VM *vm);
 
-	inline int32_t GetCount() const
+	inline size_t GetCount() const
 	{
 		return types.GetCount();
 	}
@@ -71,12 +68,14 @@ public:
 		return types.Get(name, result);
 	}
 
-	inline bool GetByIndex(int32_t index, StandardTypeInfo &result) const
+	inline bool GetByIndex(size_t index, StandardTypeInfo &result) const
 	{
 		return types.GetByIndex(index, result);
 	}
 
 private:
+	StringHash<StandardTypeInfo> types;
+
 	StandardTypeCollection();
 
 	bool Init(VM *vm);

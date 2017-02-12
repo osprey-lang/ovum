@@ -58,7 +58,7 @@ Module::~Module()
 
 Module *Module::FindModuleRef(String *name) const
 {
-	for (int32_t i = 0; i < moduleRefs.GetLength(); i++)
+	for (size_t i = 0; i < moduleRefs.GetLength(); i++)
 		if (String_Equals(moduleRefs[i]->name, name))
 			return moduleRefs[i];
 
@@ -402,12 +402,12 @@ OVUM_API bool Module_GetGlobalMember(ModuleHandle module, String *name, bool inc
 	return false;
 }
 
-OVUM_API int32_t Module_GetGlobalMemberCount(ModuleHandle module)
+OVUM_API size_t Module_GetGlobalMemberCount(ModuleHandle module)
 {
 	return module->GetMemberCount();
 }
 
-OVUM_API bool Module_GetGlobalMemberByIndex(ModuleHandle module, int32_t index, GlobalMember *result)
+OVUM_API bool Module_GetGlobalMemberByIndex(ModuleHandle module, size_t index, GlobalMember *result)
 {
 	ovum::GlobalMember member;
 	if (module->GetMemberByIndex(index, member))
@@ -443,9 +443,9 @@ OVUM_API ModuleHandle Module_FindDependency(ModuleHandle module, String *name)
 	return module->FindModuleRef(name);
 }
 
-OVUM_API int Module_GetSearchDirectories(ThreadHandle thread, int resultSize, String **result, int *count)
+OVUM_API int Module_GetSearchDirectories(ThreadHandle thread, size_t resultSize, String **result, size_t *count)
 {
-	const int BUFFER_SIZE = 16;
+	const size_t BUFFER_SIZE = 16;
 
 	ovum::VM *vm = thread->GetVM();
 	ovum::ModuleFinder finder(vm);
@@ -454,10 +454,10 @@ OVUM_API int Module_GetSearchDirectories(ThreadHandle thread, int resultSize, St
 	// need to fetch them into an intermediate container in order
 	// to convert them to String*s.
 	const ovum::PathName *paths[BUFFER_SIZE];
-	int dirCount = finder.GetSearchDirectories(BUFFER_SIZE, paths);
+	size_t dirCount = finder.GetSearchDirectories(BUFFER_SIZE, paths);
 
 	resultSize = min(resultSize, dirCount);
-	for (int i = 0; i < resultSize; i++)
+	for (size_t i = 0; i < resultSize; i++)
 	{
 		String *name = paths[i]->ToManagedString(thread);
 		if (name == nullptr)

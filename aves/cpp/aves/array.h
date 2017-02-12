@@ -9,10 +9,10 @@ namespace aves
 class Array
 {
 public:
-	int64_t length;
+	size_t length;
 	Value firstValue;
 
-	int GetIndex(ThreadHandle thread, Value *arg, int64_t &result);
+	int GetIndex(ThreadHandle thread, Value *arg, size_t &result);
 	static size_t GetSize(int64_t length);
 };
 

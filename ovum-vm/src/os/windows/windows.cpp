@@ -87,10 +87,10 @@ namespace os
 		}
 	}
 
-	bool ConsoleWriteFile(HANDLE handle, const ovchar_t *str, int32_t length)
+	bool ConsoleWriteFile(HANDLE handle, const ovchar_t *str, size_t length)
 	{
 		// Assume the console can handle UTF-8
-		const int32_t BUFFER_SIZE = 2048;
+		const size_t BUFFER_SIZE = 2048;
 		char buffer[BUFFER_SIZE];
 		Utf8Encoder encoder(buffer, BUFFER_SIZE, str, length);
 
@@ -114,7 +114,7 @@ namespace os
 		return true;
 	}
 
-	bool ConsoleWrite_(HANDLE handle, const ovchar_t *str, int32_t length)
+	bool ConsoleWrite_(HANDLE handle, const ovchar_t *str, size_t length)
 	{
 		DWORD remaining = (DWORD)length;
 		do

@@ -9,48 +9,66 @@ namespace ovum
 
 class MethodInitializer
 {
-private:
-	VM *vm;
-	MethodOverload *method;
-
-	OVUM_DISABLE_COPY_AND_ASSIGN(MethodInitializer);
-
 public:
-	inline MethodInitializer(VM *vm) : vm(vm), method(nullptr)
+	inline MethodInitializer(VM *vm) :
+		vm(vm),
+		method(nullptr)
 	{ }
 
 	int Initialize(MethodOverload *method, Thread *const thread);
 
 private:
+	OVUM_DISABLE_COPY_AND_ASSIGN(MethodInitializer);
+
+	VM *vm;
+	MethodOverload *method;
+
 	void ReadInstructions(instr::MethodBuilder &builder);
 
 	void InitBranchOffsets(instr::MethodBuilder &builder);
+
 	void InitTryBlockOffsets(instr::MethodBuilder &builder);
+
 	void InitDebugSymbolOffsets(instr::MethodBuilder &builder);
 
 	void CalculateStackHeights(instr::MethodBuilder &builder, StackManager &stack);
+
 	void EnqueueInitialBranches(instr::MethodBuilder &builder, StackManager &stack);
-	void VerifyStackHeight(instr::MethodBuilder &builder, StackManager &stack, int32_t index);
-	void TryUpdateInputOutput(instr::MethodBuilder &builder, StackManager &stack, instr::Instruction *prev, instr::Instruction *instr, int32_t index);
-	void TryUpdateConditionalBranch(instr::MethodBuilder &builder, instr::Instruction *prev, instr::Branch *branch, int32_t index);
+
+	void VerifyStackHeight(instr::MethodBuilder &builder, StackManager &stack, size_t index);
+
+	void TryUpdateInputOutput(instr::MethodBuilder &builder, StackManager &stack, instr::Instruction *prev, instr::Instruction *instr, size_t index);
+
+	void TryUpdateConditionalBranch(instr::MethodBuilder &builder, instr::Instruction *prev, instr::Branch *branch, size_t index);
+
 	static bool IsBranchComparisonOperator(IntermediateOpcode opc);
+
 	static IntermediateOpcode GetBranchComparisonOpcode(IntermediateOpcode branchOpc, IntermediateOpcode comparisonOpc);
 
 	void WriteInitializedBody(instr::MethodBuilder &builder);
+
 	void FinalizeTryBlockOffsets(instr::MethodBuilder &builder);
+
 	void FinalizeDebugSymbolOffsets(instr::MethodBuilder &builder);
 
 	Type *TypeFromToken(uint32_t token);
+
 	String *StringFromToken(uint32_t token);
+
 	Method *MethodFromToken(uint32_t token);
+
 	MethodOverload *MethodOverloadFromToken(uint32_t token, ovlocals_t argCount);
+
 	Field *FieldFromToken(uint32_t token, bool shouldBeStatic);
+
 	void EnsureConstructible(Type *type, ovlocals_t argCount);
 };
 
 class StackManager
 {
 public:
+	static const size_t NO_BRANCH = (size_t)-1;
+
 	struct StackEntry
 	{
 		enum StackEntryFlags : uint8_t
@@ -61,8 +79,8 @@ public:
 		} flags;
 	};
 
-	inline StackManager(RefSignaturePool *refSignatures)
-		: refSignatures(refSignatures)
+	inline StackManager(RefSignaturePool *refSignatures) :
+		refSignatures(refSignatures)
 	{ }
 
 	inline virtual ~StackManager() { }
@@ -71,14 +89,14 @@ public:
 
 	// Adds a branch to the end of the queue, with stack slots copied from the current branch.
 	// All stack slots retain their flags.
-	virtual void EnqueueBranch(int32_t firstInstr) = 0;
+	virtual void EnqueueBranch(size_t firstInstr) = 0;
 	// Adds a branch to the end of the queue, with the specified initial stack height.
 	// The stack slots in the new branch have no special flags.
-	virtual void EnqueueBranch(ovlocals_t stackHeight, int32_t firstInstr) = 0;
+	virtual void EnqueueBranch(ovlocals_t stackHeight, size_t firstInstr) = 0;
 
 	// Moves to the next branch in the queue, and returns
 	// the index of the first instruction in the branch.
-	virtual int32_t DequeueBranch() = 0;
+	virtual size_t DequeueBranch() = 0;
 
 	virtual bool ApplyStackChange(instr::StackChange change, bool pushRef) = 0;
 

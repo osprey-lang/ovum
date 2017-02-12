@@ -179,7 +179,7 @@ inline SurrogatePair UC_ToSurrogatePair(ovwchar_t ch)
 
 // UTF-16 array functions
 
-inline UnicodeCategory UC_GetCategory(const ovchar_t chars[], unsigned int index, bool *wasSurrogatePair)
+inline UnicodeCategory UC_GetCategory(const ovchar_t chars[], size_t index, bool *wasSurrogatePair)
 {
 	const ovchar_t first = chars[index];
 	*wasSurrogatePair = UC_IsSurrogateLead(first) && UC_IsSurrogateTrail(chars[index + 1]);
@@ -188,13 +188,13 @@ inline UnicodeCategory UC_GetCategory(const ovchar_t chars[], unsigned int index
 	else
 		return UC_GetCategory(first);
 }
-inline UnicodeCategory UC_GetCategory(const ovchar_t chars[], unsigned int index)
+inline UnicodeCategory UC_GetCategory(const ovchar_t chars[], size_t index)
 {
 	bool ignore;
 	return UC_GetCategory(chars, index, &ignore);
 }
 
-inline bool UC_IsCategory(const ovchar_t chars[], unsigned int index, UnicodeCategory cat, bool *wasSurrogatePair)
+inline bool UC_IsCategory(const ovchar_t chars[], size_t index, UnicodeCategory cat, bool *wasSurrogatePair)
 {
 	UnicodeCategory charCat = UC_GetCategory(chars, index, wasSurrogatePair);
 	if ((cat & UC_SUB_CATEGORY_MASK) == 0)
@@ -202,27 +202,27 @@ inline bool UC_IsCategory(const ovchar_t chars[], unsigned int index, UnicodeCat
 	else
 		return charCat == cat;
 }
-inline bool UC_IsCategory(const ovchar_t chars[], unsigned int index, UnicodeCategory cat)
+inline bool UC_IsCategory(const ovchar_t chars[], size_t index, UnicodeCategory cat)
 {
 	bool ignore;
 	return UC_IsCategory(chars, index, cat, &ignore);
 }
 
-inline bool UC_IsUpper(const ovchar_t chars[], unsigned int index, bool *wasSurrogatePair)
+inline bool UC_IsUpper(const ovchar_t chars[], size_t index, bool *wasSurrogatePair)
 {
 	return UC_IsCategory(chars, index, UC_LETTER_UPPERCASE, wasSurrogatePair);
 }
-inline bool UC_IsUpper(const ovchar_t chars[], unsigned int index)
+inline bool UC_IsUpper(const ovchar_t chars[], size_t index)
 {
 	bool ignore;
 	return UC_IsUpper(chars, index, &ignore);
 }
 
-inline bool UC_IsLower(const ovchar_t chars[], unsigned int index, bool *wasSurrogatePair)
+inline bool UC_IsLower(const ovchar_t chars[], size_t index, bool *wasSurrogatePair)
 {
 	return UC_IsCategory(chars, index, UC_LETTER_LOWERCASE, wasSurrogatePair);
 }
-inline bool UC_IsLower(const ovchar_t chars[], unsigned int index)
+inline bool UC_IsLower(const ovchar_t chars[], size_t index)
 {
 	bool ignore;
 	return UC_IsLower(chars, index, &ignore);

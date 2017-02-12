@@ -10,9 +10,9 @@ namespace ovum
 class ModulePool
 {
 public:
-	static Box<ModulePool> New(int capacity);
+	static Box<ModulePool> New(size_t capacity);
 
-	inline int GetLength() const
+	inline size_t GetLength() const
 	{
 		return length;
 	}
@@ -24,25 +24,25 @@ public:
 	Module *Get(String *name) const;
 	Module *Get(String *name, ModuleVersion *version) const;
 
-	inline void Set(int index, Box<Module> value)
+	inline void Set(size_t index, Box<Module> value)
 	{
 		data[index] = std::move(value);
 	}
 
-	int Add(Box<Module> value);
+	size_t Add(Box<Module> value);
 
 	Box<Module> Remove(Module *value);
 
 private:
 	OVUM_DISABLE_COPY_AND_ASSIGN(ModulePool);
 
-	int capacity;
-	int length;
+	size_t capacity;
+	size_t length;
 	Box<Box<Module>[]> data;
 
-	ModulePool(int capacity);
+	explicit ModulePool(size_t capacity);
 
-	void Init(int capacity);
+	void Init(size_t capacity);
 
 	void Resize();
 };

@@ -8,26 +8,50 @@ namespace aves
 
 struct SetEntry
 {
+	// Lower 31 bits of hash code. If the bucket used to contain a value that
+	// has since been removed, contains REMOVED.
 	int32_t hashCode;
-	int32_t next;
+	// Index of next entry in bucket. If this is the last entry in the bucket,
+	// has the value Set::LAST.
+	size_t next;
 	Value value;
+
+	inline bool IsRemoved() const
+	{
+		return hashCode == REMOVED;
+	}
+
+	// When the hash code of an entry is set to this value, indicates that
+	// it used to contain a value that has since been removed.
+	static const int32_t REMOVED = -1;
 };
 
 class Set
 {
 public:
-	int32_t capacity;   // the number of "slots" in buckets, entries and values
-	int32_t count;      // the number of entries (not buckets) that have been used
-	int32_t freeCount;  // the number of entries that were previously used, and have now been freed (and can thus be reused)
-	int32_t freeList;   // the index of the first freed entry
-	int32_t version;    // the "version" of the hash, incremented whenever changes are made
+	static const size_t LAST = (size_t)-1;
 
-	int32_t *buckets;   // indexes into entries
-	SetEntry *entries;  // entries!
+	// The number of "slots" in buckets and entries.
+	size_t capacity;
+	// The number of entries (not buckets) that have been used.
+	size_t count;
+	// The number of entries that were previously used, and have now been freed
+	// (and can thus be reused).
+	size_t freeCount;
+	// The index of the first freed entry. If the free list is empty, has the
+	// value LAST.
+	size_t freeList;
+	// The "version" of the set, incremented whenever changes are made.
+	int32_t version;
+
+	// Indexes into entries.
+	size_t *buckets;
+	// The actual values stored in the set.
+	SetEntry *entries;
 
 	Value itemComparer;
 
-	int InitializeBuckets(ThreadHandle thread, int32_t capacity);
+	int InitializeBuckets(ThreadHandle thread, size_t capacity);
 
 	int Resize(ThreadHandle thread);
 

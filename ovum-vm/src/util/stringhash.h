@@ -16,28 +16,34 @@ template<class T> class StringHashEntry;
 template<class T>
 class StringHash
 {
-private:
-	int32_t capacity;
-	int32_t count;
-	int32_t *buckets;
-	StringHashEntry<T> *entries;
-
-	bool Insert(String *key, T value, bool add);
-
 public:
-	StringHash(int32_t capacity);
-	~StringHash();
+	explicit StringHash(size_t capacity);
 
 	bool Get(String *key, T &value) const;
+
 	bool Add(String *key, T value);
+
 	bool Set(String *key, T value);
 
-	int32_t GetCount() const;
-	bool GetByIndex(int32_t index, T &result) const;
+	size_t GetCount() const;
+
+	bool GetByIndex(size_t index, T &result) const;
 
 	void FreeValues();
+
 	void DeleteValues();
+
 	void DeleteArrayValues();
+
+private:
+	typedef StringHashEntry<T> Entry;
+
+	size_t capacity;
+	size_t count;
+	Box<size_t[]> buckets;
+	Box<Entry[]> entries;
+
+	bool Insert(String *key, T value, bool add);
 
 	friend class Type;
 };
@@ -46,45 +52,35 @@ template<class T>
 class StringHashEntry
 {
 public:
+	static const size_t LAST = (size_t)-1;
+
 	int32_t hashCode;
-	int32_t next;
+	size_t next;
 	String *key;
 	T value;
 };
 
 
 template<class T>
-StringHash<T>::StringHash(int32_t capacity)
+StringHash<T>::StringHash(size_t capacity) :
+	capacity(0),
+	count(0),
+	buckets(),
+	entries()
 {
-	if (capacity <= 0)
+	if (capacity == 0)
 	{
-		count = this->capacity = 0;
-		buckets = nullptr;
+		this->capacity = 0;
 	}
 	else
 	{
-		count = 0;
 		this->capacity = HashHelper_GetPrime(capacity);
 
-		buckets = new int32_t[this->capacity];
-		memset(buckets, -1, sizeof(int32_t*) * this->capacity);
+		buckets.reset(new size_t[this->capacity]);
+		memset(buckets.get(), -1, sizeof(size_t) * this->capacity);
 
-		entries = new StringHashEntry<T>[this->capacity];
-		memset(entries, 0, sizeof(StringHashEntry<T>) * this->capacity);
-	}
-}
-
-template<class T>
-StringHash<T>::~StringHash()
-{
-	if (buckets)
-	{
-		capacity = 0;
-		count = 0;
-		delete[] buckets;
-		delete[] entries;
-		buckets = nullptr;
-		entries = nullptr;
+		entries.reset(new Entry[this->capacity]);
+		memset(entries.get(), 0, sizeof(Entry) * this->capacity);
 	}
 }
 
@@ -98,9 +94,9 @@ bool StringHash<T>::Insert(String *key, T value, bool add)
 
 	int32_t hashCode = String_GetHashCode(key) & INT32_MAX;
 
-	int32_t bucket = hashCode % capacity;
+	size_t bucket = hashCode % capacity;
 
-	for (int32_t i = buckets[bucket]; i >= 0; i = entries[i].next)
+	for (size_t i = buckets[bucket]; i != Entry::LAST; i = entries[i].next)
 		if (hashCode == entries[i].hashCode &&
 			String_Equals(key, entries[i].key))
 		{
@@ -115,9 +111,9 @@ bool StringHash<T>::Insert(String *key, T value, bool add)
 	if (count == capacity)
 		return false; // already full, sorry!
 
-	int32_t index = count++;
+	size_t index = count++;
 
-	StringHashEntry<T> *e = entries + index;
+	Entry *e = entries.get() + index;
 	e->hashCode = hashCode;
 	e->next = buckets[bucket];
 	e->key = key;
@@ -132,9 +128,9 @@ bool StringHash<T>::Get(String *key, T &value) const
 	if (buckets)
 	{
 		int32_t hashCode = String_GetHashCode(key) & INT32_MAX;
-		int32_t bucket = hashCode % capacity;
+		size_t bucket = hashCode % capacity;
 
-		for (int32_t i = buckets[bucket]; i >= 0; i = entries[i].next)
+		for (size_t i = buckets[bucket]; i != Entry::LAST; i = entries[i].next)
 			if (hashCode == entries[i].hashCode &&
 				String_Equals(key, entries[i].key))
 			{
@@ -158,15 +154,15 @@ bool StringHash<T>::Set(String *key, T value)
 }
 
 template<class T>
-int32_t StringHash<T>::GetCount() const
+size_t StringHash<T>::GetCount() const
 {
 	return count;
 }
 
 template<class T>
-bool StringHash<T>::GetByIndex(int32_t index, T &result) const
+bool StringHash<T>::GetByIndex(size_t index, T &result) const
 {
-	if (index < 0 || index >= count)
+	if (index >= count)
 		return false;
 	result = entries[index].value;
 	return true;
@@ -175,7 +171,7 @@ bool StringHash<T>::GetByIndex(int32_t index, T &result) const
 template<class T>
 void StringHash<T>::FreeValues()
 {
-	for (int32_t i = 0; i < count; i++)
+	for (size_t i = 0; i < count; i++)
 	{
 		free(entries[i].value);
 		entries[i].value = nullptr;
@@ -185,7 +181,7 @@ void StringHash<T>::FreeValues()
 template<class T>
 void StringHash<T>::DeleteValues()
 {
-	for (int32_t i = 0; i < count; i++)
+	for (size_t i = 0; i < count; i++)
 	{
 		delete entries[i].value;
 		entries[i].value = nullptr;
@@ -195,7 +191,7 @@ void StringHash<T>::DeleteValues()
 template<class T>
 void StringHash<T>::DeleteArrayValues()
 {
-	for (int32_t i = 0; i < count; i++)
+	for (size_t i = 0; i < count; i++)
 	{
 		delete[] entries[i].value;
 		entries[i].value = nullptr;

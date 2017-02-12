@@ -390,13 +390,22 @@ enum IntermediateOpcode
 class LocalOffset
 {
 public:
-	inline explicit LocalOffset(int32_t offset) : offset(offset)
+	static const size_t ALIGNMENT = 8;
+
+	inline LocalOffset() :
+		// An offset of 0 is acceptable when you use the default constructor,
+		// as we need some way of representing an empty local offset, and using
+		// zero allows for some fun compiler optimizations.
+		offset(0)
+	{ }
+	inline explicit LocalOffset(int32_t offset) :
+		offset(offset)
 	{
 		// The local offset is never supposed to point into the stack
 		// frame itself.
 		OVUM_ASSERT(offset < 0 || offset >= STACK_FRAME_SIZE);
-		// The offset must also be divisible by the size of a Value.
-		OVUM_ASSERT(offset % sizeof(Value) == 0);
+		// The offset must also be properly aligned.
+		OVUM_ASSERT(offset % ALIGNMENT == 0);
 	}
 
 	inline int32_t GetOffset() const
@@ -658,7 +667,7 @@ namespace opcode_args
 	struct Switch
 	{
 		LocalOffset value;
-		uint32_t count;
+		size_t count;
 		int32_t firstOffset;
 
 		inline Value *const Value(StackFrame *const frame) const
@@ -666,7 +675,7 @@ namespace opcode_args
 			return value.Resolve(frame);
 		}
 	};
-	inline static const size_t SWITCH_SIZE(const uint32_t count)
+	inline static const size_t SWITCH_SIZE(size_t count)
 	{
 		// Don't be tempted to do this: sizeof(Switch) + (count - 1) * sizeof(int32_t)
 		// The expression sizeof(Switch) - sizeof(int32_t) can be calculated at compile time,

@@ -4,30 +4,33 @@
 namespace ovum
 {
 
-Utf8Encoder::Utf8Encoder(char *buffer, int32_t bufferLength) :
-	buffer(buffer), bufferEnd(buffer + bufferLength)
+Utf8Encoder::Utf8Encoder(char *buffer, size_t bufferLength) :
+	buffer(buffer),
+	bufferEnd(buffer + bufferLength)
 {
 	SetString(nullptr, 0);
 }
-Utf8Encoder::Utf8Encoder(char *buffer, int32_t bufferLength, String *str) :
-	buffer(buffer), bufferEnd(buffer + bufferLength)
+Utf8Encoder::Utf8Encoder(char *buffer, size_t bufferLength, String *str) :
+	buffer(buffer),
+	bufferEnd(buffer + bufferLength)
 {
 	SetString(str);
 }
-Utf8Encoder::Utf8Encoder(char *buffer, int32_t bufferLength, const ovchar_t *str, int32_t strLength) :
-	buffer(buffer), bufferEnd(buffer + bufferLength)
+Utf8Encoder::Utf8Encoder(char *buffer, size_t bufferLength, const ovchar_t *str, size_t strLength) :
+	buffer(buffer),
+	bufferEnd(buffer + bufferLength)
 {
 	SetString(str, strLength);
 }
 
-void Utf8Encoder::SetString(const ovchar_t *str, int32_t strLength)
+void Utf8Encoder::SetString(const ovchar_t *str, size_t strLength)
 {
 	this->str = str;
 	this->strLength = strLength;
 	this->unmatchedSurrogateLead = 0;
 }
 
-int32_t Utf8Encoder::GetNextBytes()
+size_t Utf8Encoder::GetNextBytes()
 {
 	// Current byte in the buffer
 	char *bufp = this->buffer;

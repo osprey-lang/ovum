@@ -7,7 +7,7 @@ class OverloadInst
 {
 public:
 	OverloadHandle overload;
-	int32_t index;
+	size_t index;
 	Value method;
 };
 
@@ -30,7 +30,7 @@ class ParamInst
 {
 public:
 	ParamInfo param;
-	int32_t index;
+	ovlocals_t index;
 	Value overload;
 };
 

@@ -44,7 +44,7 @@ namespace os
 	// Returns:
 	//   True if the string was fully written; false if an error occurred.
 	//   There is no extended error information for this call.
-	bool ConsoleWrite(ConsoleInfo *console, const ovchar_t *str, int32_t length);
+	bool ConsoleWrite(ConsoleInfo *console, const ovchar_t *str, size_t length);
 
 	// Writes an Ovum string to the console, to stdout.
 	//   console:
@@ -71,7 +71,7 @@ namespace os
 	// Returns:
 	//   True if the string was fully written; false if an error occurred.
 	//   There is no extended error information for this call.
-	bool ConsoleWriteError(ConsoleInfo *console, const ovchar_t *str, int32_t length);
+	bool ConsoleWriteError(ConsoleInfo *console, const ovchar_t *str, size_t length);
 
 	// Writes an Ovum string to the console, to stderr.
 	//   console:

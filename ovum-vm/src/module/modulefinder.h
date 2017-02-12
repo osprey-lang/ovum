@@ -35,7 +35,7 @@ namespace ovum
 class ModuleFinder
 {
 private:
-	static const int SEARCH_DIR_COUNT = 3;
+	static const size_t SEARCH_DIR_COUNT = 3;
 
 	VM *vm;
 	const PathName *searchDirs[SEARCH_DIR_COUNT];
@@ -46,7 +46,7 @@ public:
 	// Gets the total number of directories that will be searched for modules.
 	// The module finder tries several paths within each directory; see the
 	// class documentation.
-	inline int GetSearchDirectoryCount() const
+	inline size_t GetSearchDirectoryCount() const
 	{
 		return SEARCH_DIR_COUNT;
 	}
@@ -67,7 +67,7 @@ public:
 	// Returns:
 	//   The total number of search directories. If the buffer is too small, the
 	//   return value will be larger than resultSize.
-	int GetSearchDirectories(int resultSize, const PathName **result) const;
+	size_t GetSearchDirectories(size_t resultSize, const PathName **result) const;
 
 	bool FindModulePath(String *module, ModuleVersion *version, PathName &result) const;
 
@@ -78,8 +78,8 @@ private:
 
 	void AppendVersionString(PathName &dest, ModuleVersion *version) const;
 
-	static const uint32_t MODULE_PATH_CAPACITY = 256;
-	static const uint32_t VERSION_NUMBER_CAPACITY = 32;
+	static const size_t MODULE_PATH_CAPACITY = 256;
+	static const size_t VERSION_NUMBER_CAPACITY = 32;
 	// File extension for module files; currently ".ovm"
 	static const pathchar_t *const EXTENSION;
 	// Separator between module name and version number; currently "-"

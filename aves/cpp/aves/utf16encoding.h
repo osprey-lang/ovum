@@ -35,8 +35,9 @@ public:
 	// All strings are already UTF-16, so we can just write the UTF-16
 	// code units straight to the buffer.
 
-	int32_t GetByteCount(ThreadHandle thread, String *str, bool flush);
-	int32_t GetBytes(ThreadHandle thread, String *str, Buffer *buf, int32_t offset, bool flush);
+	ssize_t GetByteCount(ThreadHandle thread, String *str, bool flush);
+
+	ssize_t GetBytes(ThreadHandle thread, String *str, Buffer *buf, size_t offset, bool flush);
 
 	inline void Reset() { }
 };
@@ -66,8 +67,9 @@ public:
 	bool hasPrevByte;
 	uint8_t prevByte;
 
-	int32_t GetCharCount(ThreadHandle thread, Buffer *buf, int32_t offset, int32_t count, bool flush);
-	int32_t GetChars(ThreadHandle thread, Buffer *buf, int32_t offset, int32_t count, StringBuffer *sb, bool flush);
+	ssize_t GetCharCount(ThreadHandle thread, Buffer *buf, size_t offset, size_t count, bool flush);
+
+	ssize_t GetChars(ThreadHandle thread, Buffer *buf, size_t offset, size_t count, StringBuffer *sb, bool flush);
 
 	void Reset();
 

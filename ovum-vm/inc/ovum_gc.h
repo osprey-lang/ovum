@@ -23,7 +23,7 @@ OVUM_API int GC_Construct(ThreadHandle thread, TypeHandle type, ovlocals_t argc,
 // Returns null if the string could not be constructed.
 //
 // NOTE: 'length' does NOT include the terminating '\0'.
-OVUM_API String *GC_ConstructString(ThreadHandle thread, int32_t length, const ovchar_t *values);
+OVUM_API String *GC_ConstructString(ThreadHandle thread, size_t length, const ovchar_t *values);
 
 // Allocates a managed value of the specified type and size. Unlike GC_Construct, this
 // function does NOT call the constructor on the allocated value. Moreover, the size of
@@ -66,10 +66,10 @@ OVUM_API int GC_Alloc(ThreadHandle thread, TypeHandle type, size_t size, Value *
 //     The size, in bytes, of each item.
 //   output:
 //     A pointer that receives the resulting array.
-OVUM_API int GC_AllocArray(ThreadHandle thread, uint32_t length, size_t itemSize, void **output);
+OVUM_API int GC_AllocArray(ThreadHandle thread, size_t length, size_t itemSize, void **output);
 
 template<typename T>
-int GC_AllocArrayT(ThreadHandle thread, uint32_t length, T **output)
+int GC_AllocArrayT(ThreadHandle thread, size_t length, T **output)
 {
 	return GC_AllocArray(thread, length, sizeof(T), reinterpret_cast<void**>(output));
 }
@@ -84,7 +84,7 @@ int GC_AllocArrayT(ThreadHandle thread, uint32_t length, T **output)
 //     The number of items the array will contain.
 //   output:
 //     A pointer that receives the resulting array.
-OVUM_API int GC_AllocValueArray(ThreadHandle thread, uint32_t length, Value **output);
+OVUM_API int GC_AllocValueArray(ThreadHandle thread, size_t length, Value **output);
 
 // Informs the GC that a certain amount of unmanaged memory has been allocated,
 // which helps the GC better schedule garbage collection.

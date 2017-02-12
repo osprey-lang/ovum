@@ -47,12 +47,13 @@ public:
 	// something.
 	ovchar_t surrogateChar;
 
-	int32_t GetByteCount(ThreadHandle thread, String *str, bool flush);
-	int32_t GetBytes(ThreadHandle thread, String *str, Buffer *buf, int32_t offset, bool flush);
+	ssize_t GetByteCount(ThreadHandle thread, String *str, bool flush);
+
+	ssize_t GetBytes(ThreadHandle thread, String *str, Buffer *buf, size_t offset, bool flush);
 
 	void Reset();
 
-	static int BufferOverrunError(ThreadHandle thread);
+	static ssize_t BufferOverrunError(ThreadHandle thread);
 };
 
 AVES_API int aves_Utf8Encoder_init(TypeHandle type);
@@ -103,8 +104,9 @@ public:
 		uint32_t bytesLeftAll;
 	};
 
-	int32_t GetCharCount(ThreadHandle thread, Buffer *buf, int32_t offset, int32_t count, bool flush);
-	int32_t GetChars(ThreadHandle thread, Buffer *buf, int32_t offset, int32_t count, StringBuffer *sb, bool flush);
+	ssize_t GetCharCount(ThreadHandle thread, Buffer *buf, size_t offset, size_t count, bool flush);
+
+	ssize_t GetChars(ThreadHandle thread, Buffer *buf, size_t offset, size_t count, StringBuffer *sb, bool flush);
 
 	void Reset();
 
@@ -118,10 +120,10 @@ AVES_API NATIVE_FUNCTION(aves_Utf8Decoder_getCharsInternal);
 AVES_API NATIVE_FUNCTION(aves_Utf8Decoder_reset);
 
 // Some native APIs!
-AVES_API int32_t aves_GetUtf8ByteCount(ThreadHandle thread, String *str);
-AVES_API int32_t aves_GetUtf8Bytes(ThreadHandle thread, String *str, uint8_t *buffer, uint32_t bufSize, int32_t offset);
+AVES_API ssize_t aves_GetUtf8ByteCount(ThreadHandle thread, String *str);
+AVES_API ssize_t aves_GetUtf8Bytes(ThreadHandle thread, String *str, uint8_t *buffer, size_t bufSize, size_t offset);
 
-AVES_API int32_t aves_GetUtf8CharCount(ThreadHandle thread, uint8_t *buffer, uint32_t bufSize, int32_t offset, int32_t count);
-AVES_API int32_t aves_GetUtf8Chars(ThreadHandle thread, uint8_t *buffer, uint32_t bufSize, int32_t offset, int32_t count, StringBuffer *sb);
+AVES_API ssize_t aves_GetUtf8CharCount(ThreadHandle thread, uint8_t *buffer, size_t bufSize, size_t offset, size_t count);
+AVES_API ssize_t aves_GetUtf8Chars(ThreadHandle thread, uint8_t *buffer, size_t bufSize, size_t offset, size_t count, StringBuffer *sb);
 
 #endif // AVES__UTF8ENCODING

@@ -1,4 +1,5 @@
 #include "env.h"
+#include "../tempbuffer.h"
 #include <memory>
 #if OVUM_UNIX
 #include <time.h>
@@ -10,12 +11,12 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Env_get_args)
 {
 	if (EnvArgsField == nullptr)
 	{
-		const int argCount = VM_GetArgCount(thread);
+		size_t argCount = VM_GetArgCount(thread);
 
 		Value nullValue = NULL_VALUE;
 		CHECKED_MEM(EnvArgsField = GC_AddStaticReference(thread, &nullValue));
 
-		VM_PushInt(thread, argCount); // list capacity
+		VM_PushInt(thread, (int64_t)argCount); // list capacity
 		CHECKED(GC_Construct(thread, GetType_List(thread), 1, EnvArgsField));
 
 		VM_GetArgValues(thread, argCount, EnvArgsField->v.list->values);
@@ -42,37 +43,48 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Env_get_currentDirectory)
 {
 #if OVUM_WINDOWS
 	String *result = nullptr;
-	do
+
+	aves::TempBuffer<WCHAR, MAX_PATH> buf;
+	// We need to keep trying to read the current directory until we
+	// succeed, because the current directory may change between calls
+	// to GetCurrentDirectory.
+	// Under the overwhelming majority of conceivable circumstances,
+	// a single iteration should be enough. But in particularly aberrant
+	// cases, we may need to run this two or three times...
+	while (true)
 	{
-		DWORD pathLength = GetCurrentDirectoryW(0, nullptr);
-		if (pathLength <= MAX_PATH)
-		{
-			WCHAR buf[MAX_PATH];
-			pathLength = GetCurrentDirectoryW(MAX_PATH, buf);
-			if (pathLength < MAX_PATH)
-			{
-				result = GC_ConstructString(thread, (int32_t)pathLength, (const ovchar_t*)buf);
-				break;
-			}
-		}
-		else
-		{
-			std::unique_ptr<WCHAR[]> buf(new(std::nothrow) WCHAR[pathLength]);
-			if (buf.get() == nullptr)
-				return VM_ThrowMemoryError(thread);
+		// MSDN is silent on whether the first argument to GetCurrentDirectory
+		// (the buffer length) includes space for the terminating \0 or not.
+		// Some quick testing and googling seems to indicate that it does NOT
+		// include space for \0, meaning if you pass 100 and the buffer is 100
+		// characters in size (excluding \0), Windows will attempt to write to
+		// offset 100... and (probably) break something.
+		// For that reason, we have to subtract 1 from the buffer capacity.
+		size_t pathLength = (size_t)GetCurrentDirectoryW(
+			(DWORD)buf.GetCapacity() - 1,
+			buf.GetPointer()
+		);
+		// If the specified buffer capacity was sufficient, pathLength will now
+		// contain the length of the path EXCLUDING \0. If the buffer was too
+		// small, it'll instead be the required buffer size INCLUDING \0.
+		//
+		// Why do you do this, Microsoft. Ugh.
 
-			DWORD charsWritten = GetCurrentDirectoryW(pathLength, buf.get());
-			if (pathLength < charsWritten)
-			{
-				result = GC_ConstructString(thread, (int32_t)charsWritten, (const ovchar_t*)buf.get());
-				break;
-			}
+		if (pathLength < buf.GetCapacity())
+		{
+			// The buffer was big enough! Turn it into a String* so we can
+			// escape from this madness.
+			CHECKED_MEM(result = GC_ConstructString(
+				thread,
+				pathLength,
+				reinterpret_cast<ovchar_t*>(buf.GetPointer())
+			));
+			break;
 		}
-	} while (true);
-
-	// If we reach this point and result is null, it can only mean that
-	// GC_ConstructString failed, so let's throw a party or something!
-	CHECKED_MEM(result);
+		// Insufficient buffer, try to grow it.
+		// Remember: pathLength INCLUDES the \0, so no need to +1.
+		CHECKED_MEM(buf.EnsureCapacity((size_t)pathLength, false));
+	}
 
 	VM_PushString(thread, result);
 #else

@@ -14,7 +14,9 @@ namespace buffer_errors
 	String *MemoryError = _MemoryError.AsString();
 }
 
-StringBuffer::StringBuffer(const int32_t capacity) : length(0), data(nullptr)
+StringBuffer::StringBuffer(size_t capacity) :
+	length(0),
+	data(nullptr)
 {
 	SetCapacity(capacity);
 }
@@ -28,9 +30,9 @@ StringBuffer::~StringBuffer()
 	}
 }
 
-int32_t StringBuffer::SetCapacity(const int32_t newCapacity)
+size_t StringBuffer::SetCapacity(size_t newCapacity)
 {
-	int32_t newCap = newCapacity;
+	size_t newCap = newCapacity;
 	if (newCap < this->length)
 		newCap = this->length;
 
@@ -46,22 +48,22 @@ int32_t StringBuffer::SetCapacity(const int32_t newCapacity)
 	return newCap;
 }
 
-void StringBuffer::EnsureMinCapacity(int32_t newAmount)
+void StringBuffer::EnsureMinCapacity(size_t newAmount)
 {
-	if (INT32_MAX - newAmount < this->length)
+	if (SIZE_MAX - newAmount < this->length)
 		throw std::exception("Could not resize string buffer: an overflow occurred.");
 
 	if (this->length + newAmount > this->capacity)
 	{
 		// Double the capacity, but make sure newAmount will actually fit too
-		int32_t newLength = this->length << 1;
+		size_t newLength = this->length << 1;
 		if (newLength < this->length + newAmount)
 			newLength += newAmount;
 		SetCapacity(newLength);
 	}
 }
 
-void StringBuffer::Append(const int32_t length, const ovchar_t data[])
+void StringBuffer::Append(size_t length, const ovchar_t data[])
 {
 	EnsureMinCapacity(length);
 
@@ -69,12 +71,12 @@ void StringBuffer::Append(const int32_t length, const ovchar_t data[])
 	this->length += length;
 }
 
-void StringBuffer::Append(const int32_t count, const ovchar_t ch)
+void StringBuffer::Append(size_t count, ovchar_t ch)
 {
 	EnsureMinCapacity(count);
 
 	ovchar_t *chp = this->data + this->length;
-	for (int32_t i = 0; i < count; i++)
+	for (size_t i = 0; i < count; i++)
 	{
 		*chp = ch;
 		chp++;
@@ -88,18 +90,18 @@ void StringBuffer::Append(String *str)
 	Append(str->length, &str->firstChar);
 }
 
-void StringBuffer::Append(const ovchar_t ch)
+void StringBuffer::Append(ovchar_t ch)
 {
 	// And this too! Whee!
 	Append(1, &ch);
 }
 
-void StringBuffer::Append(const int32_t length, const char data[])
+void StringBuffer::Append(size_t length, const char data[])
 {
 	EnsureMinCapacity(length);
 
 	ovchar_t *chp = this->data + this->length;
-	for (int32_t i = 0; i < length; i++)
+	for (size_t i = 0; i < length; i++)
 	{
 		*chp = data[i];
 		chp++;
@@ -108,14 +110,14 @@ void StringBuffer::Append(const int32_t length, const char data[])
 }
 
 #if OVUM_WCHAR_SIZE != 2
-void StringBuffer::Append(const int32_t length, const wchar_t data[])
+void StringBuffer::Append(size_t length, const wchar_t data[])
 {
 #if OVUM_WCHAR_SIZE == 4
 	// UTF-32
 
 	EnsureMinCapacity(length);
 
-	for (int32_t i = 0; i < length; i++)
+	for (size_t i = 0; i < length; i++)
 	{
 		const ovwchar_t ch = (ovwchar_t)data[i];
 		if (UC_NeedsSurrogatePair(ch))
@@ -142,13 +144,13 @@ String *StringBuffer::ToString(Thread *const thread)
 	return thread->GetGC()->ConstructString(thread, this->length, this->data);
 }
 
-int StringBuffer::ToWString(wchar_t *buf)
+size_t StringBuffer::ToWString(wchar_t *buf)
 {
 	// This is basically copied straight from String_ToWString, but optimized for StringBuffer.
 #if OVUM_WCHAR_SIZE == 2
 	// UTF-16 (or at least UCS-2, but hopefully surrogates won't break things too much)
 
-	int outputLength = this->length; // Do NOT include the \0
+	size_t outputLength = this->length; // Do NOT include the \0
 
 	if (buf)
 	{
@@ -163,11 +165,11 @@ int StringBuffer::ToWString(wchar_t *buf)
 	// First, iterate over the string to find out how many surrogate pairs there are,
 	// if any. These consume only one UTF-32 character.
 	// We use this to calculate the length of the output (including the \0).
-	int outputLength = 0;
+	size_t outputLength = 0;
 
-	int32_t strLen = this->length; // let's NOT include the \0
+	size_t strLen = this->length; // let's NOT include the \0
 	const ovchar_t *strp = this->data;
-	for (int32_t i = 0; i < strLen; i++)
+	for (size_t i = 0; i < strLen; i++)
 	{
 		if (UC_IsSurrogateLead(*strp) && UC_IsSurrogateTrail(*(strp + 1)))
 		{
@@ -184,7 +186,7 @@ int StringBuffer::ToWString(wchar_t *buf)
 		strp = this->data;
 
 		wchar_t *outp = buf;
-		for (int i = 0; i < outputLength; i++)
+		for (size_t i = 0; i < outputLength; i++)
 		{
 			if (UC_IsSurrogateLead(*strp) && UC_IsSurrogateTrail(*(strp + 1)))
 			{

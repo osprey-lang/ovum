@@ -9,8 +9,7 @@ AVES_API int OVUM_CDECL aves_Method_init(TypeHandle type)
 {
 	Type_SetInstanceSize(type, sizeof(MethodInst));
 
-	int r;
-	r = Type_AddNativeField(type, offsetof(MethodInst, instance), NativeFieldType::VALUE);
+	int r = Type_AddNativeField(type, offsetof(MethodInst, instance), NativeFieldType::VALUE);
 	if (r != OVUM_SUCCESS)
 		return r;
 	RETURN_SUCCESS;
@@ -57,10 +56,10 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Method_accepts)
 	CHECKED(IntFromValue(thread, args + 1));
 	int64_t argCount = args[1].v.integer;
 
-	if (argCount < 0 || argCount > INT_MAX)
+	if (argCount < 0 || argCount > OVLOCALS_MAX)
 		VM_PushBool(thread, false);
 	else
-		VM_PushBool(thread, Method_Accepts(method->method, (int)argCount));
+		VM_PushBool(thread, Method_Accepts(method->method, (ovlocals_t)argCount));
 }
 END_NATIVE_FUNCTION
 

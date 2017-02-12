@@ -32,23 +32,50 @@ AVES_API NATIVE_FUNCTION(aves_Int_opNot);
 // Internal methods
 namespace integer
 {
-	String *ToString(ThreadHandle thread, const int64_t value,
-		const int radix, const int minWidth,
-		const bool upper);
+	String *ToString(
+		ThreadHandle thread,
+		int64_t value,
+		int radix,
+		size_t minWidth,
+		bool upper
+	);
 
-	int32_t ToStringDecimal(ThreadHandle thread, const int64_t value,
-		const int minWidth,
-		const int bufferSize, ovchar_t *buf);
-	int32_t ToStringHex(ThreadHandle thread, const int64_t value,
-		const bool upper, const int minWidth,
-		const int bufferSize, ovchar_t *buf);
-	int32_t ToStringRadix(ThreadHandle thread, const int64_t value,
-		const int radix, const bool upper, const int minWidth,
-		const int bufferSize, ovchar_t *buf);
+	size_t ToStringDecimal(
+		ThreadHandle thread,
+		int64_t value,
+		size_t minWidth,
+		size_t bufferSize,
+		ovchar_t *buf
+	);
 
-	int ParseFormatString(ThreadHandle thread, String *str, int *radix, int *minWidth, bool *upper);
+	size_t ToStringHex(
+		ThreadHandle thread,
+		int64_t value,
+		bool upper,
+		size_t minWidth,
+		size_t bufferSize,
+		ovchar_t *buf
+	);
 
-	inline int Power(const int64_t base, const int64_t exponent, int64_t &output)
+	size_t ToStringRadix(
+		ThreadHandle thread,
+		int64_t value,
+		int radix,
+		bool upper,
+		size_t minWidth,
+		size_t bufferSize,
+		ovchar_t *buf
+	);
+
+	int ParseFormatString(
+		ThreadHandle thread,
+		String *str,
+		int *radix,
+		size_t *minWidth,
+		bool *upper
+	);
+
+	inline int Power(int64_t base, int64_t exponent, int64_t &output)
 	{
 		int64_t a = base;
 		int64_t b = exponent;
