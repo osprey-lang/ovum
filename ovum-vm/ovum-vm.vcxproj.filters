@@ -317,6 +317,9 @@
     <ClInclude Include="inc\ovum_compat.h">
       <Filter>Header Files\inc</Filter>
     </ClInclude>
+    <ClInclude Include="src\ee\methodparser.h">
+      <Filter>Header Files\src\ee</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\os\windows\dllmain.cpp">
@@ -450,6 +453,9 @@
     </ClCompile>
     <ClCompile Include="src\threading\sync.cpp">
       <Filter>Source Files\threading</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ee\methodparser.cpp">
+      <Filter>Source Files\ee</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

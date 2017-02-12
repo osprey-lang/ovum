@@ -25,43 +25,39 @@ private:
 
 	void ReadInstructions(instr::MethodBuilder &builder);
 
-	void InitBranchOffsets(instr::MethodBuilder &builder);
-
-	void InitTryBlockOffsets(instr::MethodBuilder &builder);
-
-	void InitDebugSymbolOffsets(instr::MethodBuilder &builder);
-
 	void CalculateStackHeights(instr::MethodBuilder &builder, StackManager &stack);
 
 	void EnqueueInitialBranches(instr::MethodBuilder &builder, StackManager &stack);
 
 	void VerifyStackHeight(instr::MethodBuilder &builder, StackManager &stack, size_t index);
 
-	void TryUpdateInputOutput(instr::MethodBuilder &builder, StackManager &stack, instr::Instruction *prev, instr::Instruction *instr, size_t index);
+	void TryUpdateInputOutput(
+		instr::MethodBuilder &builder,
+		StackManager &stack,
+		instr::Instruction *prev,
+		instr::Instruction *instr,
+		size_t index
+	);
 
-	void TryUpdateConditionalBranch(instr::MethodBuilder &builder, instr::Instruction *prev, instr::Branch *branch, size_t index);
+	void TryUpdateConditionalBranch(
+		instr::MethodBuilder &builder,
+		instr::Instruction *prev,
+		instr::Branch *branch,
+		size_t index
+	);
 
 	static bool IsBranchComparisonOperator(IntermediateOpcode opc);
 
-	static IntermediateOpcode GetBranchComparisonOpcode(IntermediateOpcode branchOpc, IntermediateOpcode comparisonOpc);
+	static IntermediateOpcode GetBranchComparisonOpcode(
+		IntermediateOpcode branchOpc,
+		IntermediateOpcode comparisonOpc
+	);
 
 	void WriteInitializedBody(instr::MethodBuilder &builder);
 
 	void FinalizeTryBlockOffsets(instr::MethodBuilder &builder);
 
 	void FinalizeDebugSymbolOffsets(instr::MethodBuilder &builder);
-
-	Type *TypeFromToken(uint32_t token);
-
-	String *StringFromToken(uint32_t token);
-
-	Method *MethodFromToken(uint32_t token);
-
-	MethodOverload *MethodOverloadFromToken(uint32_t token, ovlocals_t argCount);
-
-	Field *FieldFromToken(uint32_t token, bool shouldBeStatic);
-
-	void EnsureConstructible(Type *type, ovlocals_t argCount);
 };
 
 class StackManager
