@@ -361,6 +361,9 @@ void MethodInitializer::CalculateStackHeights(instr::MethodBuilder &builder, Sta
 				if (br->IsConditional())
 				{
 					stack.EnqueueBranch(br->target.index); // Use the same stack
+					// Note: If TryUpdateConditionalBranch actually updates anything,
+					// 'prev' will be deleted. Do not attempt to use 'prev' after this
+					// call.
 					TryUpdateConditionalBranch(builder, prev, br, index);
 				}
 				else
@@ -620,12 +623,11 @@ void MethodInitializer::TryUpdateConditionalBranch(
 	// This also deletes the old Instruction.
 	builder.SetInstruction(
 		index - 1,
-		new instr::BranchComparison(
+		Box<instr::Instruction>(new instr::BranchComparison(
 			static_cast<instr::ExecOperator*>(prev)->args,
 			branch->target,
 			newOpcode
-		),
-		/*deletePrev:*/ true
+		))
 	);
 	// Mark the current instruction for removal
 	builder.MarkForRemoval(index);

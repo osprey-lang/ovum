@@ -20,7 +20,7 @@ namespace instr
 
 		inline Instruction *operator[](size_t index) const
 		{
-			return instructions[index].instr;
+			return instructions[index].instr.get();
 		}
 
 		inline size_t GetLength() const
@@ -70,9 +70,9 @@ namespace instr
 
 		void MarkForRemoval(size_t index);
 
-		void Append(uint32_t originalOffset, size_t originalSize, Instruction *instr);
+		void Append(uint32_t originalOffset, size_t originalSize, Box<Instruction> instr);
 
-		void SetInstruction(size_t index, Instruction *newInstr, bool deletePrev);
+		Box<Instruction> SetInstruction(size_t index, Box<Instruction> newInstr);
 
 		void PerformRemovals(MethodOverload *method);
 
@@ -89,20 +89,42 @@ namespace instr
 			ovlocals_t stackHeight;
 			uint32_t refSignature;
 			bool removed;
-			Instruction *instr;
+			Box<Instruction> instr;
 
-			inline InstrDesc(uint32_t originalOffset, size_t originalSize, Instruction *instr) :
+			inline InstrDesc(uint32_t originalOffset, size_t originalSize, Box<Instruction> instr) :
 				originalOffset(originalOffset),
 				originalSize(originalSize),
 				stackHeight(UNVISITED),
 				refSignature(0),
 				removed(false),
-				instr(instr)
+				instr(std::move(instr))
 			{ }
+
+			inline InstrDesc(InstrDesc &&other) throw() :
+				originalOffset(other.originalOffset),
+				originalSize(other.originalSize),
+				stackHeight(other.stackHeight),
+				refSignature(other.refSignature),
+				removed(other.removed),
+				instr(std::move(other.instr))
+			{ }
+
+			inline InstrDesc &operator=(InstrDesc &&other) throw()
+			{
+				this->originalOffset = other.originalOffset;
+				this->originalSize = other.originalSize;
+				this->stackHeight = other.stackHeight;
+				this->refSignature = other.refSignature;
+				this->removed = other.removed;
+				this->instr = std::move(other.instr);
+				return *this;
+			}
+
+		private:
+			OVUM_DISABLE_COPY_AND_ASSIGN(InstrDesc);
 		};
 
 		typedef std::vector<InstrDesc>::iterator instr_iter;
-		typedef std::vector<Type*>::iterator type_iter;
 
 		size_t lastOffset;
 		bool hasBranches;

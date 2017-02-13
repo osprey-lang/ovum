@@ -48,7 +48,7 @@ namespace instr
 		builder.Append(
 			originalOffset,
 			originalSize,
-			instruction.release()
+			std::move(instruction)
 		);
 	}
 

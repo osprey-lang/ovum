@@ -15,10 +15,7 @@ namespace instr
 	{ }
 
 	MethodBuilder::~MethodBuilder()
-	{
-		for (auto &i : instructions)
-			delete i.instr;
-	}
+	{ }
 
 	uint32_t MethodBuilder::GetOriginalOffset(size_t index) const
 	{
@@ -62,7 +59,7 @@ namespace instr
 		typedef std::vector<InstrDesc>::const_iterator const_iter;
 		if (index >= instructions.size())
 		{
-			Instruction *end = instructions.back().instr;
+			Instruction *end = instructions.back().instr.get();
 			return end->offset + end->GetSize();
 		}
 		return instructions[index].instr->offset;
@@ -73,7 +70,7 @@ namespace instr
 		size_t offset;
 		if (index >= instructions.size())
 		{
-			Instruction *end = instructions.back().instr;
+			Instruction *end = instructions.back().instr.get();
 			offset = end->offset + end->GetSize();
 		}
 		else
@@ -108,19 +105,25 @@ namespace instr
 		instructions[index].refSignature = refSignature;
 	}
 
-	void MethodBuilder::Append(uint32_t originalOffset, size_t originalSize, Instruction *instr)
+	void MethodBuilder::Append(uint32_t originalOffset, size_t originalSize, Box<Instruction> instr)
 	{
-		instructions.push_back(InstrDesc(originalOffset, originalSize, instr));
 		instr->offset = lastOffset;
 		lastOffset += instr->GetSize();
 		hasBranches = hasBranches || instr->IsBranch() || instr->IsSwitch();
+		instructions.push_back(InstrDesc(
+			originalOffset,
+			originalSize,
+			std::move(instr)
+		));
 	}
 
-	void MethodBuilder::SetInstruction(size_t index, Instruction *newInstr, bool deletePrev)
+	Box<Instruction> MethodBuilder::SetInstruction(size_t index, Box<Instruction> newInstr)
 	{
-		if (deletePrev)
-			delete instructions[index].instr;
-		instructions[index].instr = newInstr;
+		// We need somewhere to store the old instruction so we can return it.
+		// The easiest thing to do is just swap the old instruction with the
+		// new, and return newInstr.
+		instructions[index].instr.swap(newInstr);
+		return newInstr;
 	}
 
 	void MethodBuilder::MarkForRemoval(size_t index)
@@ -170,7 +173,6 @@ namespace instr
 				// becomes the first in that block, or the target of the branch.
 				// Hence:
 				newIndices[oldIndex] = newIndex;
-				delete i->instr;
 				i = instructions.erase(i);
 			}
 			else
@@ -194,7 +196,7 @@ namespace instr
 		{
 			for (auto &i : instructions)
 			{
-				Instruction *instr = i.instr;
+				Instruction *instr = i.instr.get();
 				if (instr->IsBranch())
 				{
 					Branch *br = static_cast<Branch*>(instr);
