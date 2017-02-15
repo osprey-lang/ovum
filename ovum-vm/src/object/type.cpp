@@ -14,6 +14,8 @@ namespace ovum
 {
 
 Type::Type(Module *module, size_t memberCount) :
+	flags(TypeFlags::NONE),
+	specialType(SpecialTypeId::NONE),
 	members(memberCount),
 	typeToken(nullptr),
 	size(0),

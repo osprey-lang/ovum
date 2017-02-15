@@ -56,6 +56,32 @@ enum class TypeFlags : uint32_t
 };
 OVUM_ENUM_OPS(TypeFlags, uint32_t);
 
+// Some types have special meaning in Ovum, and this enum lists them. These
+// exist pretty much exclusively for performance reasons; we could just as
+// easily check against the VM's StandardTypes values. But storing these in
+// the Type itself lets us avoid having to access the VM instance's memory.
+//
+// For instance, the value BOOLEAN is used by IsTrue() and IsFalse(), which
+// require as high performance as possible.
+//
+// These are for internal use only. Do not expose them outside Ovum.
+enum class SpecialTypeId : uint32_t
+{
+	NONE,
+	// aves.Object
+	OBJECT,
+	// aves.Boolean
+	BOOLEAN,
+	// aves.Int
+	INT,
+	// aves.UInt
+	UINT,
+	// aves.Real
+	REAL,
+	// aves.String
+	STRING,
+};
+
 // Types, once initialized, are supposed to be (more or less) immutable.
 // If you assign to any of the members in a Type, you have no one to blame but yourself.
 // That said, the VM occasionally updates the flags.
@@ -78,6 +104,8 @@ public:
 
 	// Flags associated with the type.
 	TypeFlags flags;
+	// The special type that this instance represents. See SpecialTypeId for details.
+	SpecialTypeId specialType;
 
 	// The offset (in bytes) of the first field in instances of this type.
 	size_t fieldsOffset;

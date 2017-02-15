@@ -77,29 +77,21 @@ inline void SetString_(VM *vm, Value *target, String *value)
 
 // Similarly, these actually access the Type class directly.
 
-inline bool IsTrue_(Value value)
-{
-	return value.type != nullptr &&
-		(!value.type->IsPrimitive() ||
-		value.v.integer != 0);
-}
 inline bool IsTrue_(Value *value)
 {
-	return value->type != nullptr &&
-		(!value->type->IsPrimitive() ||
-		value->v.integer != 0);
+	Type *type = value->type;
+	if (type == nullptr)
+		return false;
+	return type->specialType != SpecialTypeId::BOOLEAN ||
+		value->v.integer != 0;
 }
 
-inline bool IsFalse_(Value value)
-{
-	return value.type == nullptr ||
-		value.type->IsPrimitive() &&
-		value.v.integer == 0;
-}
 inline bool IsFalse_(Value *value)
 {
-	return value->type == nullptr ||
-		value->type->IsPrimitive() &&
+	Type *type = value->type;
+	if (type == nullptr)
+		return true;
+	return type->specialType == SpecialTypeId::BOOLEAN &&
 		value->v.integer == 0;
 }
 

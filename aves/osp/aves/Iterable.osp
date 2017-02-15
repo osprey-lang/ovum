@@ -389,12 +389,11 @@ public abstract class Iterable
 			// to the output buffer.
 			if not first {
 				output.append(separator);
-				output.append(prevItem);
 			}
 			else {
-				output.append(prevItem);
 				first = false;
 			}
+			output.append(prevItem);
 			prevItem = iterator.current;
 		}
 		// And once we get here, we know prevItem was definitely

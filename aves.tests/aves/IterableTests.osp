@@ -124,7 +124,7 @@ public class IterableTests is TestFixture
 	{
 		var item1 = new Object();
 		var item2 = new Object();
-		var sequence = wrap([0, item1, null, item2, false]);
+		var sequence = wrap([false, item1, null, item2, false]);
 		var filtered = sequence.filter(@x => x);
 		// The filtered iterator should contain item1 and item2,
 		// in that order. The other (falsy) items are filtered out.

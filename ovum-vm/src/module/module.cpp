@@ -337,6 +337,7 @@ void Module::TryRegisterStandardType(Type *type)
 	if (vm->types.*(stdType.member) == nullptr)
 	{
 		vm->types.*(stdType.member) = type;
+		type->specialType = stdType.specialType;
 
 		if (stdType.extendedIniter != nullptr)
 			stdType.extendedIniter(vm, this, type);

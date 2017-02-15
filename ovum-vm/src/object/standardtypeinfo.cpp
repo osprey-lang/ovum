@@ -27,36 +27,43 @@ StandardTypeCollection::StandardTypeCollection() :
 bool StandardTypeCollection::Init(VM *vm)
 {
 	using T = ::StandardTypes;
+	using Id = ovum::SpecialTypeId;
+	using Init = ovum::StandardTypeIniters;
 	
 	auto &t = vm->GetStrings()->types;
 
-	Add(t.aves.Object,              &T::Object,              StandardTypeIniters::InitObjectType);
-	Add(t.aves.Boolean,             &T::Boolean,             nullptr);
-	Add(t.aves.Int,                 &T::Int,                 nullptr);
-	Add(t.aves.UInt,                &T::UInt,                nullptr);
-	Add(t.aves.Real,                &T::Real,                nullptr);
-	Add(t.aves.String,              &T::String,              nullptr);
-	Add(t.aves.List,                &T::List,                StandardTypeIniters::InitListType);
-	Add(t.aves.Hash,                &T::Hash,                StandardTypeIniters::InitHashType);
-	Add(t.aves.Method,              &T::Method,              nullptr);
-	Add(t.aves.Iterator,            &T::Iterator,            nullptr);
-	Add(t.aves.Error,               &T::Error,               nullptr);
-	Add(t.aves.TypeError,           &T::TypeError,           nullptr);
-	Add(t.aves.MemoryError,         &T::MemoryError,         nullptr);
-	Add(t.aves.OverflowError,       &T::OverflowError,       nullptr);
-	Add(t.aves.NoOverloadError,     &T::NoOverloadError,     nullptr);
-	Add(t.aves.DivideByZeroError,   &T::DivideByZeroError,   nullptr);
-	Add(t.aves.NullReferenceError,  &T::NullReferenceError,  nullptr);
-	Add(t.aves.MemberNotFoundError, &T::MemberNotFoundError, nullptr);
-	Add(t.aves.TypeConversionError, &T::TypeConversionError, nullptr);
-	Add(t.aves.reflection.Type,     &T::Type,                StandardTypeIniters::InitTypeType);
+	Add(t.aves.Object,              &T::Object,              Id::OBJECT,  Init::InitObjectType);
+	Add(t.aves.Boolean,             &T::Boolean,             Id::BOOLEAN, nullptr);
+	Add(t.aves.Int,                 &T::Int,                 Id::INT,     nullptr);
+	Add(t.aves.UInt,                &T::UInt,                Id::UINT,    nullptr);
+	Add(t.aves.Real,                &T::Real,                Id::REAL,    nullptr);
+	Add(t.aves.String,              &T::String,              Id::STRING,  nullptr);
+	Add(t.aves.List,                &T::List,                Id::NONE,    Init::InitListType);
+	Add(t.aves.Hash,                &T::Hash,                Id::NONE,    Init::InitHashType);
+	Add(t.aves.Method,              &T::Method,              Id::NONE,    nullptr);
+	Add(t.aves.Iterator,            &T::Iterator,            Id::NONE,    nullptr);
+	Add(t.aves.Error,               &T::Error,               Id::NONE,    nullptr);
+	Add(t.aves.TypeError,           &T::TypeError,           Id::NONE,    nullptr);
+	Add(t.aves.MemoryError,         &T::MemoryError,         Id::NONE,    nullptr);
+	Add(t.aves.OverflowError,       &T::OverflowError,       Id::NONE,    nullptr);
+	Add(t.aves.NoOverloadError,     &T::NoOverloadError,     Id::NONE,    nullptr);
+	Add(t.aves.DivideByZeroError,   &T::DivideByZeroError,   Id::NONE,    nullptr);
+	Add(t.aves.NullReferenceError,  &T::NullReferenceError,  Id::NONE,    nullptr);
+	Add(t.aves.MemberNotFoundError, &T::MemberNotFoundError, Id::NONE,    nullptr);
+	Add(t.aves.TypeConversionError, &T::TypeConversionError, Id::NONE,    nullptr);
+	Add(t.aves.reflection.Type,     &T::Type,                Id::NONE,    Init::InitTypeType);
 
 	return true;
 }
 
-inline void StandardTypeCollection::Add(String *name, TypeHandle StandardTypes::*member, StandardTypeIniter extendedIniter)
+inline void StandardTypeCollection::Add(
+	String *name,
+	TypeHandle StandardTypes::*member,
+	SpecialTypeId specialType,
+	StandardTypeIniter extendedIniter
+)
 {
-	types.Add(name, StandardTypeInfo(name, member, extendedIniter));
+	types.Add(name, StandardTypeInfo(name, member, specialType, extendedIniter));
 }
 
 } // namespace ovum

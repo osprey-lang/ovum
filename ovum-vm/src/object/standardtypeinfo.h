@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../vm.h"
+#include "../object/type.h"
 #include "../util/stringhash.h"
 
 namespace ovum
@@ -26,6 +27,8 @@ struct StandardTypeInfo
 	String *name;
 	// The StandardTypes member that holds the instance of this type.
 	TypeHandle StandardTypes::*member;
+	// The special type ID of this type. See SpecialTypeId for details.
+	SpecialTypeId specialType;
 	// If not null, holds the address of an extended initializer function, which
 	// is used to perform additional initialization or verification of the type.
 	StandardTypeIniter extendedIniter;
@@ -37,11 +40,18 @@ struct StandardTypeInfo
 	inline StandardTypeInfo(const StandardTypeInfo &other) :
 		name(other.name),
 		member(other.member),
+		specialType(other.specialType),
 		extendedIniter(other.extendedIniter)
 	{ }
-	inline StandardTypeInfo(String *name, TypeHandle StandardTypes::*member, StandardTypeIniter extendedIniter) :
+	inline StandardTypeInfo(
+		String *name,
+		TypeHandle StandardTypes::*member,
+		SpecialTypeId specialType,
+		StandardTypeIniter extendedIniter
+	) :
 		name(name),
 		member(member),
+		specialType(specialType),
 		extendedIniter(extendedIniter)
 	{ }
 };
@@ -80,7 +90,12 @@ private:
 
 	bool Init(VM *vm);
 
-	void Add(String *name, TypeHandle StandardTypes::*member, StandardTypeIniter extendedIniter);
+	void Add(
+		String *name,
+		TypeHandle StandardTypes::*member,
+		SpecialTypeId specialType,
+		StandardTypeIniter extendedIniter
+	);
 
 	static const int STANDARD_TYPE_COUNT;
 };
