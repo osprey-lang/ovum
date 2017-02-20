@@ -1,6 +1,6 @@
-use aves;
-use aves.reflection; // for Module
-use testing.unit;
+use aves.*;
+use testing.unit.*;
+use aves.reflection.Module;
 
 namespace aves.tests;
 

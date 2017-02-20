@@ -1,4 +1,4 @@
-use Type = aves.reflection.Type;
+use aves.reflection.Type;
 
 namespace aves;
 
