@@ -10,7 +10,7 @@ namespace ovum
 namespace os
 {
 
-	FileStatus _FileStatusFromError(DWORD error)
+	FileStatus FileStatusFromError_(DWORD error)
 	{
 		switch (error)
 		{
@@ -67,7 +67,7 @@ namespace os
 		return FILE_OK;
 	}
 
-	LibraryStatus _LibraryStatusFromError(DWORD error)
+	LibraryStatus LibraryStatusFromError_(DWORD error)
 	{
 		switch (error)
 		{

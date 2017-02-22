@@ -91,7 +91,7 @@ namespace os
 	};
 
 	// Internal functions
-	FileStatus _FileStatusFromError(DWORD error);
+	FileStatus FileStatusFromError_(DWORD error);
 
 	// Determines whether the specified file exists on disk.
 	// This function only tests for files, not directories.
@@ -165,7 +165,7 @@ namespace os
 			nullptr
 		);
 		if (handle == INVALID_HANDLE_VALUE)
-			return _FileStatusFromError(GetLastError());
+			return FileStatusFromError_(GetLastError());
 		*output = handle;
 		return FILE_OK;
 	}
@@ -180,7 +180,7 @@ namespace os
 	{
 		BOOL r = ::CloseHandle(*file);
 		if (!r)
-			return _FileStatusFromError(GetLastError());
+			return FileStatusFromError_(GetLastError());
 		return FILE_OK;
 	}
 
@@ -219,7 +219,7 @@ namespace os
 #endif // _WIN64
 
 		if (!r)
-			return _FileStatusFromError(GetLastError());
+			return FileStatusFromError_(GetLastError());
 		return FILE_OK;
 	}
 
@@ -254,7 +254,7 @@ namespace os
 		r = ::WriteFile(*file, buffer, (DWORD)count, (DWORD*)bytesWritten, nullptr);
 #endif
 		if (!r)
-			return _FileStatusFromError(GetLastError());
+			return FileStatusFromError_(GetLastError());
 		return FILE_OK;
 	}
 
@@ -281,7 +281,7 @@ namespace os
 		largeIntOffset.QuadPart = offset;
 		BOOL r = ::SetFilePointerEx(*file, largeIntOffset, (PLARGE_INTEGER)newOffset, (DWORD)origin);
 		if (!r)
-			return _FileStatusFromError(GetLastError());
+			return FileStatusFromError_(GetLastError());
 		return FILE_OK;
 	}
 

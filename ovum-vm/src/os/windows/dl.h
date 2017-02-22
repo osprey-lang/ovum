@@ -36,7 +36,7 @@ namespace os
 	};
 
 	// Gets a LibraryStatus from a Win32 error code.
-	LibraryStatus _LibraryStatusFromError(DWORD error);
+	LibraryStatus LibraryStatusFromError_(DWORD error);
 
 	// Opens a shared library from the given path. The path name should be
 	// fully qualified, due to unfortunate differences between OSes. If the
@@ -67,7 +67,7 @@ namespace os
 			LOAD_LIBRARY_SEARCH_DEFAULT_DIRS
 		);
 		if (library == nullptr)
-			return _LibraryStatusFromError(::GetLastError());
+			return LibraryStatusFromError_(::GetLastError());
 		*output = library;
 		return LIBRARY_OK;
 	}
@@ -85,7 +85,7 @@ namespace os
 	{
 		BOOL r = ::FreeLibrary(*library);
 		if (!r)
-			return _LibraryStatusFromError(::GetLastError());
+			return LibraryStatusFromError_(::GetLastError());
 		return LIBRARY_OK;
 	}
 
