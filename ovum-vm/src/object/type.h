@@ -53,6 +53,21 @@ enum class TypeFlags : uint32_t
 	// The type or any of its base types has a finalizer,
 	// which must be run before the value is collected.
 	HAS_FINALIZER       = 0x00400000,
+	// The type may contain managed references. This flag is used by the GC.
+	// If set, the GC examines the types fields, native fields, and/or calls
+	// its ReferenceWalker, to mark the value's references as alive. Otherwise
+	// the value is moved directly to the black set.
+	//
+	// This flag is set if at least one of the following is true:
+	//
+	//   - The type's fieldCount is greater than zero (note that this covers
+	//     "regular" fields as well as native fields; a type cannot contain
+	//     both kinds).
+	//   - The type's ReferenceWalker is not null.
+	//   - The base type's HAS_MANAGED_REFS flag is set.
+	//
+	// In addition, the type cannot be primitive.
+	HAS_MANAGED_REFS    = 0x00800000,
 };
 OVUM_ENUM_OPS(TypeFlags, uint32_t);
 
@@ -251,6 +266,11 @@ public:
 	inline bool HasFinalizer() const
 	{
 		return (flags & TypeFlags::HAS_FINALIZER) == TypeFlags::HAS_FINALIZER;
+	}
+
+	inline bool HasManagedRefs() const
+	{
+		return (flags & TypeFlags::HAS_MANAGED_REFS) == TypeFlags::HAS_MANAGED_REFS;
 	}
 
 	void InitOperators();

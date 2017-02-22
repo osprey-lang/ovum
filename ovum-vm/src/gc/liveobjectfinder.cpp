@@ -130,9 +130,8 @@ void LiveObjectFinder::GrayObject(GCObject *gco)
 		(
 			// If it's a Value array, it almost certainly contains managed data;
 			(uintptr_t)type == GC::GC_VALUE_ARRAY ||
-			// Or if the total instance size is greater than zero, it may very well
-			// contain fields.
-			type->GetTotalSize() > 0
+			// Or if it's flagged as containing managed refs, it probably does.
+			type->HasManagedRefs()
 		);
 
 	if (couldContainFields)

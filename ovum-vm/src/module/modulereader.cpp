@@ -466,6 +466,15 @@ Box<Type> ModuleReader::ReadSingleTypeDef(Module *module, const mf::ModuleHeader
 	if (baseType && baseType->HasFinalizer())
 		type->flags |= TypeFlags::HAS_FINALIZER;
 
+	// Set the HAS_MANAGED_REFS flag as necessary.
+	if (!type->IsPrimitive())
+	{
+		if (baseType && baseType->HasManagedRefs() ||
+			type->fieldCount > 0 ||
+			type->walkReferences != nullptr)
+			type->flags |= TypeFlags::HAS_MANAGED_REFS;
+	}
+
 	return std::move(type);
 }
 
