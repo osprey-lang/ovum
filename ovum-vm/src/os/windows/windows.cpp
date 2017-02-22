@@ -55,7 +55,12 @@ namespace os
 		// Create the file mapping without a maximum size
 		HANDLE mapping = ::CreateFileMappingW(file, nullptr, (DWORD)access, 0, 0, nullptr);
 		if (mapping == nullptr)
+		{
+			// Gotta clean up after ourselves. Ignore the return value; we're about
+			// to return an error anyway.
+			CloseHandle(file);
 			return FILE_IO_ERROR; // Also nope.
+		}
 
 		output->file = file;
 		output->mapping = mapping;
