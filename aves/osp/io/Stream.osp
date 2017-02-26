@@ -21,8 +21,7 @@ namespace io;
 ///          ensure proper cleanup, consider using the `with` keyword, as in this example:
 ///
 ///          ```
-///          with stream = getStream(...)
-///          {
+///          with stream = getStream(...) {
 ///            // ... use stream ...
 ///          }
 ///          ```

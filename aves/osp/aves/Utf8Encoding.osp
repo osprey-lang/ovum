@@ -21,7 +21,7 @@ public class Utf8Encoding is Encoding
 		buf = Buffer.fromValue(buf);
 		offset = int(offset);
 
-		if offset < 0 or offset >= buf.size {
+		if offset < 0 or offset > buf.size {
 			throw new ArgumentRangeError("offset");
 		}
 
@@ -74,7 +74,7 @@ internal class Utf8Encoder is Encoder
 		offset = int(offset);
 		flush = bool(flush);
 
-		if offset < 0 or offset >= buf.size {
+		if offset < 0 or offset > buf.size {
 			throw new ArgumentRangeError("offset");
 		}
 
