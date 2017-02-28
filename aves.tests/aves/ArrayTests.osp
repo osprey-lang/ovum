@@ -13,17 +13,15 @@ public class ArrayTests is TestFixture
 
 	public test_ConstructorEmpty()
 	{
-		var array;
-		Assert.doesNotThrow(@{ array = new Array(0); });
+		var array = new Array(0);
 		Assert.areEqual(array.length, 0);
 	}
 
 	public test_ConstructorNonEmpty()
 	{
-		var array;
-		Assert.doesNotThrow(@{ array = new Array(1); });
+		var array = new Array(1);
 		Assert.areEqual(array.length, 1);
-		Assert.doesNotThrow(@{ array = new Array(256); });
+		array = new Array(256);
 		Assert.areEqual(array.length, 256);
 	}
 
@@ -241,7 +239,7 @@ public class ArrayTests is TestFixture
 		var array = new Array(3);
 		// This should not throw anything: assigning zero values
 		// at the end of the array is a no-op.
-		Assert.doesNotThrow(@{ array.fill("value", 3, 0); });
+		array.fill("value", 3, 0);
 		Assert.isNull(array[0]);
 		Assert.isNull(array[1]);
 		Assert.isNull(array[2]);
@@ -266,7 +264,7 @@ public class ArrayTests is TestFixture
 	public test_ResizeFromNull()
 	{
 		var array = null;
-		Assert.doesNotThrow(@{ Array.resize(ref array, 1); });
+		Array.resize(ref array, 1);
 		Assert.isNotNull(array);
 		Assert.areEqual(array.length, 1);
 	}
@@ -274,7 +272,7 @@ public class ArrayTests is TestFixture
 	public test_ResizeToSameLengthFromNull()
 	{
 		var array = null;
-		Assert.doesNotThrow(@{ Array.resize(ref array, 0); });
+		Array.resize(ref array, 0);
 		Assert.isNotNull(array);
 		Assert.areEqual(array.length, 0);
 	}
@@ -282,7 +280,7 @@ public class ArrayTests is TestFixture
 	public test_ResizeFromEmpty()
 	{
 		var array = new Array(0);
-		Assert.doesNotThrow(@{ Array.resize(ref array, 1); });
+		Array.resize(ref array, 1);
 		Assert.isNotNull(array);
 		Assert.areEqual(array.length, 1);
 	}
@@ -291,7 +289,7 @@ public class ArrayTests is TestFixture
 	{
 		var array = new Array(0);
 		var original = array;
-		Assert.doesNotThrow(@{ Array.resize(ref array, 0); });
+		Array.resize(ref array, 0);
 		Assert.isNotNull(array);
 		Assert.areSameRef(array, original);
 	}
@@ -299,7 +297,7 @@ public class ArrayTests is TestFixture
 	public test_ResizeFromNonEmpty()
 	{
 		var array = new Array(1);
-		Assert.doesNotThrow(@{ Array.resize(ref array, 2); });
+		Array.resize(ref array, 2);
 		Assert.isNotNull(array);
 		Assert.areEqual(array.length, 2);
 	}
@@ -308,7 +306,7 @@ public class ArrayTests is TestFixture
 	{
 		var array = new Array(1);
 		var original = array;
-		Assert.doesNotThrow(@{ Array.resize(ref array, 1); });
+		Array.resize(ref array, 1);
 		Assert.isNotNull(array);
 		Assert.areSameRef(array, original);
 	}
@@ -317,7 +315,7 @@ public class ArrayTests is TestFixture
 	{
 		var array = new Array(1);
 		array[0] = 1;
-		Assert.doesNotThrow(@{ Array.resize(ref array, 2); });
+		Array.resize(ref array, 2);
 		Assert.areEqual(array.length, 2);
 		Assert.areEqual(array[0], 1);
 		Assert.isNull(array[1]);
@@ -328,7 +326,7 @@ public class ArrayTests is TestFixture
 		var array = new Array(2);
 		array[0] = 1;
 		array[1] = 2;
-		Assert.doesNotThrow(@{ Array.resize(ref array, 1); });
+		Array.resize(ref array, 1);
 		Assert.areEqual(array.length, 1);
 		Assert.areEqual(array[0], 1);
 	}

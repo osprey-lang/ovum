@@ -29,8 +29,7 @@ public class BufferViewTests is TestFixture
 	public test_ConstructionByte()
 	{
 		var kind = BufferViewKind.byte;
-		var view;
-		Assert.doesNotThrow(@{ view = new BufferView(buffer, kind); });
+		var view = new BufferView(buffer, kind);
 		Assert.areEqual(view.kind, kind);
 		Assert.areSameRef(view.buffer, buffer);
 		Assert.areEqual(view.length, buffer.size);
@@ -91,8 +90,7 @@ public class BufferViewTests is TestFixture
 	public test_ConstructionSByte()
 	{
 		var kind = BufferViewKind.sbyte;
-		var view;
-		Assert.doesNotThrow(@{ view = new BufferView(buffer, kind); });
+		var view = new BufferView(buffer, kind);
 		Assert.areEqual(view.kind, kind);
 		Assert.areSameRef(view.buffer, buffer);
 		Assert.areEqual(view.length, buffer.size);
@@ -153,8 +151,7 @@ public class BufferViewTests is TestFixture
 	public test_ConstructionInt16()
 	{
 		var kind = BufferViewKind.int16;
-		var view;
-		Assert.doesNotThrow(@{ view = new BufferView(buffer, kind); });
+		var view = new BufferView(buffer, kind);
 		Assert.areEqual(view.kind, kind);
 		Assert.areSameRef(view.buffer, buffer);
 		Assert.areEqual(view.length, buffer.size / 2);
@@ -215,8 +212,7 @@ public class BufferViewTests is TestFixture
 	public test_ConstructionUInt16()
 	{
 		var kind = BufferViewKind.uint16;
-		var view;
-		Assert.doesNotThrow(@{ view = new BufferView(buffer, kind); });
+		var view = new BufferView(buffer, kind);
 		Assert.areEqual(view.kind, kind);
 		Assert.areSameRef(view.buffer, buffer);
 		Assert.areEqual(view.length, buffer.size / 2);
@@ -277,8 +273,7 @@ public class BufferViewTests is TestFixture
 	public test_ConstructionInt32()
 	{
 		var kind = BufferViewKind.int32;
-		var view;
-		Assert.doesNotThrow(@{ view = new BufferView(buffer, kind); });
+		var view = new BufferView(buffer, kind);
 		Assert.areEqual(view.kind, kind);
 		Assert.areSameRef(view.buffer, buffer);
 		Assert.areEqual(view.length, buffer.size / 4);
@@ -339,8 +334,7 @@ public class BufferViewTests is TestFixture
 	public test_ConstructionUInt32()
 	{
 		var kind = BufferViewKind.uint32;
-		var view;
-		Assert.doesNotThrow(@{ view = new BufferView(buffer, kind); });
+		var view = new BufferView(buffer, kind);
 		Assert.areEqual(view.kind, kind);
 		Assert.areSameRef(view.buffer, buffer);
 		Assert.areEqual(view.length, buffer.size / 4);
@@ -401,8 +395,7 @@ public class BufferViewTests is TestFixture
 	public test_ConstructionInt64()
 	{
 		var kind = BufferViewKind.int64;
-		var view;
-		Assert.doesNotThrow(@{ view = new BufferView(buffer, kind); });
+		var view = new BufferView(buffer, kind);
 		Assert.areEqual(view.kind, kind);
 		Assert.areSameRef(view.buffer, buffer);
 		Assert.areEqual(view.length, buffer.size / 8);
@@ -453,8 +446,7 @@ public class BufferViewTests is TestFixture
 	public test_ConstructionUInt64()
 	{
 		var kind = BufferViewKind.uint64;
-		var view;
-		Assert.doesNotThrow(@{ view = new BufferView(buffer, kind); });
+		var view = new BufferView(buffer, kind);
 		Assert.areEqual(view.kind, kind);
 		Assert.areSameRef(view.buffer, buffer);
 		Assert.areEqual(view.length, buffer.size / 8);

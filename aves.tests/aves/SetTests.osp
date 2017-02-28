@@ -13,25 +13,22 @@ public class SetTests is TestFixture
 
 	public test_Constructor0()
 	{
-		var s;
-		Assert.doesNotThrow(@{ s = new Set(); });
+		var s = new Set();
 		Assert.areEqual(s.length, 0);
 	}
 
 	public test_Constructor1WithZeroCapacity()
 	{
-		var s;
 		var capacity = 0;
-		Assert.doesNotThrow(@{ s = new Set(capacity); });
+		var s = new Set(capacity);
 		Assert.areEqual(s.length, 0);
 		Assert.isGreaterOrEqual(s.capacity, capacity);
 	}
 
 	public test_Constructor1WithPositiveCapacity()
 	{
-		var s;
 		var capacity = 42;
-		Assert.doesNotThrow(@{ s = new Set(capacity); });
+		var s = new Set(capacity);
 		Assert.areEqual(s.length, 0);
 		Assert.isGreaterOrEqual(s.capacity, capacity);
 	}
@@ -56,9 +53,8 @@ public class SetTests is TestFixture
 
 	public test_Constructor2WithZeroCapacity()
 	{
-		var s;
 		var capacity = 0;
-		Assert.doesNotThrow(@{ s = new Set(capacity, EqualityComparer.default); });
+		var s = new Set(capacity, EqualityComparer.default);
 		Assert.areEqual(s.length, 0);
 		Assert.isGreaterOrEqual(s.capacity, capacity);
 		Assert.areSameRef(s.itemComparer, EqualityComparer.default);
@@ -66,9 +62,8 @@ public class SetTests is TestFixture
 
 	public test_Constructor2WithPositiveCapacity()
 	{
-		var s;
 		var capacity = 42;
-		Assert.doesNotThrow(@{ s = new Set(capacity, EqualityComparer.default); });
+		var s = new Set(capacity, EqualityComparer.default);
 		Assert.areEqual(s.length, 0);
 		Assert.isGreaterOrEqual(s.capacity, capacity);
 		Assert.areSameRef(s.itemComparer, EqualityComparer.default);
@@ -97,19 +92,16 @@ public class SetTests is TestFixture
 		// When a Set is constructed with a null itemComparer, it uses
 		// the default EqualityComparer.
 
-		var s;
 		var capacity = 0;
-		Assert.doesNotThrow(@{ s = new Set(capacity, null); });
+		var s = new Set(capacity, null);
 		Assert.areSameRef(s.itemComparer, EqualityComparer.default);
 	}
 
 	public test_Constructor2WithCustomComparer()
 	{
-		var s;
 		var capacity = 0;
 		var comparer = new FailEqualityComparer();
-
-		Assert.doesNotThrow(@{ s = new Set(capacity, comparer); });
+		var s = new Set(capacity, comparer);
 		Assert.areSameRef(s.itemComparer, comparer);
 	}
 

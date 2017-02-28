@@ -13,24 +13,21 @@ public class StackTests is TestFixture
 
 	public test_Constructor0()
 	{
-		var stack;
-		Assert.doesNotThrow(@{ stack = new Stack(); });
+		var stack = new Stack();
 		Assert.areEqual(stack.length, 0);
 	}
 
 	public test_Constructor1WithZeroCapacity()
 	{
-		var stack;
-		Assert.doesNotThrow(@{ stack = new Stack(0); });
+		var stack = new Stack(0);
 		Assert.areEqual(stack.length, 0);
 		Assert.areEqual(stack.capacity, 0);
 	}
 
 	public test_Constructor1WithPositiveCapacity()
 	{
-		var stack;
 		var capacity = 5;
-		Assert.doesNotThrow(@{ stack = new Stack(capacity); });
+		var stack = new Stack(capacity);
 		Assert.areEqual(stack.length, 0);
 		Assert.areEqual(stack.capacity, capacity);
 	}

@@ -13,24 +13,21 @@ public class QueueTests is TestFixture
 
 	public test_Constructor0()
 	{
-		var queue;
-		Assert.doesNotThrow(@{ queue = new Queue(); });
+		var queue = new Queue();
 		Assert.areEqual(queue.length, 0);
 	}
 
 	public test_Constructor1WithZeroCapacity()
 	{
-		var queue;
-		Assert.doesNotThrow(@{ queue = new Queue(0); });
+		var queue = new Queue(0);
 		Assert.areEqual(queue.length, 0);
 		Assert.areEqual(queue.capacity, 0);
 	}
 
 	public test_Constructor1WithPositiveCapacity()
 	{
-		var queue;
 		var capacity = 5;
-		Assert.doesNotThrow(@{ queue = new Queue(capacity); });
+		var queue = new Queue(capacity);
 		Assert.areEqual(queue.length, 0);
 		Assert.areEqual(queue.capacity, capacity);
 	}

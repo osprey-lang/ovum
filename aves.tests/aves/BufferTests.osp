@@ -12,16 +12,14 @@ public class BufferTests is TestFixture
 	public test_ConstructionZeroBytes()
 	{
 		var size = 0;
-		var buffer;
-		Assert.doesNotThrow(@{ buffer = new Buffer(size); });
+		var buffer = new Buffer(size);
 		Assert.areEqual(buffer.size, size);
 	}
 
 	public test_ConstructionNonzeroSize()
 	{
 		var size = 8;
-		var buffer;
-		Assert.doesNotThrow(@{ buffer = new Buffer(size); });
+		var buffer = new Buffer(size);
 		Assert.areEqual(buffer.size, size);
 	}
 

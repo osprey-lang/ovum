@@ -13,25 +13,22 @@ public class HashTests is TestFixture
 
 	public test_Constructor0()
 	{
-		var h;
-		Assert.doesNotThrow(@{ h = new Hash(); });
+		var h = new Hash();
 		Assert.areEqual(h.length, 0);
 	}
 
 	public test_Constructor1WithZeroCapacity()
 	{
-		var h;
 		var capacity = 0;
-		Assert.doesNotThrow(@{ h = new Hash(capacity); });
+		var h = new Hash(capacity);
 		Assert.areEqual(h.length, 0);
 		Assert.isGreaterOrEqual(h.capacity, capacity);
 	}
 
 	public test_Constructor1WithPositiveCapacity()
 	{
-		var h;
 		var capacity = 42;
-		Assert.doesNotThrow(@{ h = new Hash(capacity); });
+		var h = new Hash(capacity);
 		Assert.areEqual(h.length, 0);
 		Assert.isGreaterOrEqual(h.capacity, capacity);
 	}
@@ -56,9 +53,8 @@ public class HashTests is TestFixture
 
 	public test_Constructor2WithZeroCapacity()
 	{
-		var h;
 		var capacity = 0;
-		Assert.doesNotThrow(@{ h = new Hash(capacity, EqualityComparer.default); });
+		var h = new Hash(capacity, EqualityComparer.default);
 		Assert.areEqual(h.length, 0);
 		Assert.isGreaterOrEqual(h.capacity, capacity);
 		Assert.areSameRef(h.keyComparer, EqualityComparer.default);
@@ -66,9 +62,8 @@ public class HashTests is TestFixture
 
 	public test_Constructor2WithPositiveCapacity()
 	{
-		var h;
 		var capacity = 42;
-		Assert.doesNotThrow(@{ h = new Hash(capacity, EqualityComparer.default); });
+		var h = new Hash(capacity, EqualityComparer.default);
 		Assert.areEqual(h.length, 0);
 		Assert.isGreaterOrEqual(h.capacity, capacity);
 		Assert.areSameRef(h.keyComparer, EqualityComparer.default);
@@ -97,19 +92,16 @@ public class HashTests is TestFixture
 		// When a Hash is constructed with a null keyComparer, it uses
 		// the default EqualityComparer.
 
-		var h;
 		var capacity = 0;
-		Assert.doesNotThrow(@{ h = new Hash(capacity, null); });
+		var h = new Hash(capacity, null);
 		Assert.areSameRef(h.keyComparer, EqualityComparer.default);
 	}
 
 	public test_Constructor2WithCustomComparer()
 	{
-		var h;
 		var capacity = 0;
 		var comparer = new FailEqualityComparer();
-
-		Assert.doesNotThrow(@{ h = new Hash(capacity, comparer); });
+		var h = new Hash(capacity, comparer);
 		Assert.areSameRef(h.keyComparer, comparer);
 	}
 

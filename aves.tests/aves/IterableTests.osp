@@ -57,8 +57,7 @@ public class IterableTests is TestFixture
 	public test_MapInvalidCallback()
 	{
 		var sequence = wrap([1, 2, 3]);
-		var mapped;
-		Assert.doesNotThrow(@{ mapped = sequence.map("not a callback"); });
+		var mapped = sequence.map("not a callback");
 		// The callback shouldn't be called until you try to advance the iterator.
 		Assert.throws(typeof(TypeError), mapped.toList);
 	}
@@ -140,8 +139,7 @@ public class IterableTests is TestFixture
 	public test_FilterInvalidCallback()
 	{
 		var sequence = wrap([1, 2, 3]);
-		var filtered;
-		Assert.doesNotThrow(@{ filtered = sequence.filter("not a callback"); });
+		var filtered = sequence.filter("not a callback");
 		// The callback shouldn't be called until you try to advance the iterator
 		Assert.throws(typeof(TypeError), filtered.toList);
 	}
@@ -730,18 +728,16 @@ public class IterableTests is TestFixture
 
 	public test_RangeEmpty()
 	{
-		var range;
-		Assert.doesNotThrow(@{ range = Iterable.range(0, 0); });
+		var range = Iterable.range(0, 0);
 		Assert.collectionsMatch(range, [], Assert.areEqual);
 	}
 
 	public test_RangeValid()
 	{
-		var range;
-		Assert.doesNotThrow(@{ range = Iterable.range(0, 5); });
+		var range = Iterable.range(0, 5);
 		Assert.collectionsMatch(range, [0, 1, 2, 3, 4], Assert.areEqual);
 
-		Assert.doesNotThrow(@{ range = Iterable.range(-20, 5); });
+		range = Iterable.range(-20, 5);
 		Assert.collectionsMatch(range, [-20, -19, -18, -17, -16], Assert.areEqual);
 	}
 
@@ -755,18 +751,16 @@ public class IterableTests is TestFixture
 
 	public test_RangeWithStepEmpty()
 	{
-		var range;
-		Assert.doesNotThrow(@{ range = Iterable.range(0, 0, 2); });
+		var range = Iterable.range(0, 0, 2);
 		Assert.collectionsMatch(range, [], Assert.areEqual);
 	}
 
 	public test_RangeWithStepValid()
 	{
-		var range;
-		Assert.doesNotThrow(@{ range = Iterable.range(0, 5, 2); });
+		var range = Iterable.range(0, 5, 2);
 		Assert.collectionsMatch(range, [0, 2, 4, 6, 8], Assert.areEqual);
 
-		Assert.doesNotThrow(@{ range = Iterable.range(-20, 5, 2); });
+		range = Iterable.range(-20, 5, 2);
 		Assert.collectionsMatch(range, [-20, -18, -16, -14, -12], Assert.areEqual);
 	}
 
@@ -788,24 +782,22 @@ public class IterableTests is TestFixture
 
 	public test_RangeToEmpty()
 	{
-		var range;
-		Assert.doesNotThrow(@{ range = Iterable.rangeTo(0, 0); });
+		var range = Iterable.rangeTo(0, 0);
 		Assert.collectionsMatch(range, [], Assert.areEqual);
 	}
 
 	public test_RangeToValid()
 	{
-		var range;
-		Assert.doesNotThrow(@{ range = Iterable.rangeTo(0, 5); });
+		var range = Iterable.rangeTo(0, 5);
 		Assert.collectionsMatch(range, [0, 1, 2, 3, 4], Assert.areEqual);
 
-		Assert.doesNotThrow(@{ range = Iterable.rangeTo(5, 0); });
+		range = Iterable.rangeTo(5, 0);
 		Assert.collectionsMatch(range, [5, 4, 3, 2, 1], Assert.areEqual);
 
-		Assert.doesNotThrow(@{ range = Iterable.rangeTo(-5, 0); });
+		range = Iterable.rangeTo(-5, 0);
 		Assert.collectionsMatch(range, [-5, -4, -3, -2, -1], Assert.areEqual);
 
-		Assert.doesNotThrow(@{ range = Iterable.rangeTo(0, -5); });
+		range = Iterable.rangeTo(0, -5);
 		Assert.collectionsMatch(range, [0, -1, -2, -3, -4], Assert.areEqual);
 	}
 
@@ -817,24 +809,22 @@ public class IterableTests is TestFixture
 
 	public test_RangeToWithStepEmpty()
 	{
-		var range;
-		Assert.doesNotThrow(@{ range = Iterable.range(0, 0, 2); });
+		var range = Iterable.range(0, 0, 2);
 		Assert.collectionsMatch(range, [], Assert.areEqual);
 	}
 
 	public test_RangeToWithStepValid()
 	{
-		var range;
-		Assert.doesNotThrow(@{ range = Iterable.rangeTo(0, 10, 2); });
+		var range = Iterable.rangeTo(0, 10, 2);
 		Assert.collectionsMatch(range, [0, 2, 4, 6, 8], Assert.areEqual);
 
-		Assert.doesNotThrow(@{ range = Iterable.rangeTo(10, 0, -2); });
+		range = Iterable.rangeTo(10, 0, -2);
 		Assert.collectionsMatch(range, [10, 8, 6, 4, 2], Assert.areEqual);
 
-		Assert.doesNotThrow(@{ range = Iterable.rangeTo(-10, 0, 2); });
+		range = Iterable.rangeTo(-10, 0, 2);
 		Assert.collectionsMatch(range, [-10, -8, -6, -4, -2], Assert.areEqual);
 
-		Assert.doesNotThrow(@{ range = Iterable.rangeTo(0, -10, -2); });
+		range = Iterable.rangeTo(0, -10, -2);
 		Assert.collectionsMatch(range, [0, -2, -4, -6, -8], Assert.areEqual);
 	}
 

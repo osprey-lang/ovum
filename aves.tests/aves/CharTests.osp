@@ -11,10 +11,9 @@ public class CharTests is TestFixture
 
 	public test_ConstructValid()
 	{
-		var char;
-		Assert.doesNotThrow(@{ char = new Char(0); });
+		var char = new Char(0);
 		Assert.areEqual(char, '\0');
-		Assert.doesNotThrow(@{ char = new Char(0x1D11E); });
+		char = new Char(0x1D11E);
 		Assert.areEqual(char, '\u{1D11E}');
 	}
 
