@@ -528,12 +528,12 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_Console_setBufferSize)
 	CONSOLE_SCREEN_BUFFER_INFO csbi;
 	CHECKED(Console::GetBufferInfo(thread, csbi));
 	// Make sure the new buffer is not smaller than the window
-	if (width < csbi.srWindow.Right + 1 || width >= SHRT_MAX)
+	if (width < csbi.srWindow.Right + 1 || width > SHRT_MAX)
 	{
 		VM_PushString(thread, strings::width);
 		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentRangeError, 1);
 	}
-	if (height < csbi.srWindow.Bottom + 1 || height >= SHRT_MAX)
+	if (height < csbi.srWindow.Bottom + 1 || height > SHRT_MAX)
 	{
 		VM_PushString(thread, strings::height);
 		return VM_ThrowErrorOfType(thread, aves->aves.ArgumentRangeError, 1);
