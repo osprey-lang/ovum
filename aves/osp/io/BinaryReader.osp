@@ -309,7 +309,7 @@ public inheritable BinaryReader
 			output |= (b & 0x7f) << shift;
 
 			shift += 7;
-		} while b & 0x80;
+		} while b > 0x7f;
 
 		return output;
 	}
