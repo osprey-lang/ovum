@@ -205,6 +205,9 @@ public abstract class Stream
 		count = int(count);
 
 		buf.verifyRange(offset, count);
+		if count == 0 {
+			return;
+		}
 
 		var bytesRead = 0;
 		do {
