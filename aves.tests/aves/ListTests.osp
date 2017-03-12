@@ -9,6 +9,25 @@ public class ListTests is TestFixture
 {
 	public new() { new base("aves.List tests"); }
 
+	// add tests
+
+	public test_AddOne()
+	{
+		var list = [];
+		// add returns the index of the value
+		Assert.areEqual(list.add("value"), 0);
+		Assert.collectionsMatch(list, ["value"], Assert.areEqual);
+	}
+
+	public test_AddSeveral()
+	{
+		var list = [];
+		Assert.areEqual(list.add("a"), 0);
+		Assert.areEqual(list.add("b"), 1);
+		Assert.areEqual(list.add("c"), 2);
+		Assert.collectionsMatch(list, ["a", "b", "c"], Assert.areEqual);
+	}
+
 	// first tests
 
 	private isZeroMod10 = @x => x % 10 == 0;

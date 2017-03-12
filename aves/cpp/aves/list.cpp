@@ -115,10 +115,14 @@ AVES_API BEGIN_NATIVE_FUNCTION(aves_List_add)
 {
 	PinnedAlias<ListInst> list(THISP);
 
+	size_t newIndex = list->length;
+
 	CHECKED(EnsureMinCapacity(thread, *list, list->length + 1));
-	list->values[list->length] = args[1];
+	list->values[newIndex] = args[1];
 	list->length++;
 	list->version++;
+
+	VM_PushInt(thread, (int64_t)newIndex);
 }
 END_NATIVE_FUNCTION
 
