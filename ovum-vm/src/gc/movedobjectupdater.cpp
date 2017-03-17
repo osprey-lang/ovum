@@ -1,5 +1,7 @@
 #include "movedobjectupdater.h"
 #include "liveobjectfinder.h"
+#include "rootsetwalker.h"
+#include "objectgraphwalker.h"
 #include "gc.h"
 #include "staticref.h"
 #include "../ee/vm.h"
@@ -18,13 +20,13 @@ MovedObjectUpdater::MovedObjectUpdater(GC *gc, GCObject **keepList) :
 
 void MovedObjectUpdater::UpdateMovedObjects(GCObject *list)
 {
-	RootSetWalker rootWalker(gc);
+	RootSetWalker<MovedObjectUpdater> rootWalker(gc);
 	rootWalker.VisitRootSet(*this);
 
-	ObjectGraphWalker::VisitObjectList(*this, list);
+	ObjectGraphWalker<MovedObjectUpdater>::VisitObjectList(*this, list);
 
 	// We have to update the GC's pinnedList too
-	ObjectGraphWalker::VisitObjectList(*this, gc->pinnedList);
+	ObjectGraphWalker<MovedObjectUpdater>::VisitObjectList(*this, gc->pinnedList);
 }
 
 GCObject *MovedObjectUpdater::ValueToGco(Value *value)

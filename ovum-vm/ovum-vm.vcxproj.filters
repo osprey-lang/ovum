@@ -439,12 +439,6 @@
     <ClCompile Include="src\gc\staticref.cpp">
       <Filter>Source Files\gc</Filter>
     </ClCompile>
-    <ClCompile Include="src\gc\objectgraphwalker.cpp">
-      <Filter>Source Files\gc</Filter>
-    </ClCompile>
-    <ClCompile Include="src\gc\rootsetwalker.cpp">
-      <Filter>Source Files\gc</Filter>
-    </ClCompile>
     <ClCompile Include="src\gc\liveobjectfinder.cpp">
       <Filter>Source Files\gc</Filter>
     </ClCompile>

@@ -30,11 +30,13 @@ class Module;
 class ModulePool;
 class ModuleReader;
 class MovedObjectUpdater;
+template<class Visitor>
 class ObjectGraphWalker;
 class PartiallyOpenedModulesList;
 class PathName;
 class Property;
 class RefSignaturePool;
+template<class Visitor>
 class RootSetWalker;
 class StackFrame;
 class StackManager;

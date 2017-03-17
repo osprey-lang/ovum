@@ -1,8 +1,6 @@
 #pragma once
 
 #include "../vm.h"
-#include "rootsetwalker.h"
-#include "objectgraphwalker.h"
 
 // As part of a GC cycle, objects in generation 0 are moved out into generation
 // 1, which entails actually physically moving the data in memory. This does of
@@ -22,14 +20,36 @@
 namespace ovum
 {
 
-class MovedObjectUpdater :
-	private RootSetVisitor,
-	private ObjectGraphVisitor
+class MovedObjectUpdater
 {
 public:
 	MovedObjectUpdater(GC *gc, GCObject **keepList);
 
 	void UpdateMovedObjects(GCObject *list);
+
+	// RootSetVisitor methods
+
+	void VisitRootValue(Value *value);
+
+	void VisitRootLocalValue(Value *const value);
+
+	void VisitRootString(String *str);
+
+	bool EnterStaticRefBlock(StaticRefBlock *const refs);
+
+	void LeaveStaticRefBlock(StaticRefBlock *const refs);
+
+	// ObjectGraphVisitor methods
+
+	bool EnterObject(GCObject *gco);
+
+	void LeaveObject(GCObject *gco);
+
+	void VisitFieldValue(Value *value);
+
+	void VisitFieldString(String **str);
+
+	void VisitFieldArray(void **arrayBase);
 
 private:
 	GC *gc;
@@ -50,30 +70,6 @@ private:
 	void TryUpdateValue(Value *value);
 
 	void TryUpdateString(String **str);
-
-	// RootSetVisitor methods
-
-	virtual void VisitRootValue(Value *value);
-
-	virtual void VisitRootLocalValue(Value *const value);
-
-	virtual void VisitRootString(String *str);
-
-	virtual bool EnterStaticRefBlock(StaticRefBlock *const refs);
-
-	virtual void LeaveStaticRefBlock(StaticRefBlock *const refs);
-
-	// ObjectGraphVisitor methods
-
-	virtual bool EnterObject(GCObject *gco);
-
-	virtual void LeaveObject(GCObject *gco);
-
-	virtual void VisitFieldValue(Value *value);
-
-	virtual void VisitFieldString(String **str);
-
-	virtual void VisitFieldArray(void **arrayBase);
 };
 
 } // namespace ovum

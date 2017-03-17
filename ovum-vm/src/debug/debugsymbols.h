@@ -125,6 +125,7 @@ namespace debug
 		Box<Box<MethodSymbols>[]> methodSymbols;
 		
 		friend class GC;
+		template<class Visitor>
 		friend class RootSetWalker;
 		friend class DebugSymbolsReader;
 	};

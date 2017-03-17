@@ -146,6 +146,7 @@ public:
 
 	friend class GC;
 	friend class Module;
+	template<class Visitor>
 	friend class RootSetWalker;
 
 	friend int ::VM_Start(VMStartParams *params);

@@ -1,6 +1,14 @@
 #pragma once
 
 #include "../vm.h"
+#include "gc.h"
+#include "staticref.h"
+#include "../ee/thread.h"
+#include "../ee/vm.h"
+#include "../object/method.h"
+#include "../module/module.h"
+#include "../module/modulepool.h"
+#include "../debug/debugsymbols.h"
 
 // The RootSetWalker class, as the name implies, walks the so-called root set.
 // The root set comprises values that are always guaranteed to be reachable;
@@ -20,10 +28,9 @@
 // Note that interned strings are NOT in the root set: they can be deallocated
 // like any other value (and subsequently removed from the intern table).
 //
-// In order to walk the root set, you must implement a RootSetVisitor, which is
-// a pure virtual (abstract) class with a variety of Visit* methods. See the
-// documentation of each visit method for more details. The visitor must manage
-// any state required while processing the root set.
+// In order to walk the root set, you must implement the methods of the prototype
+// RootSetVisitor. See the documentation of each visit method for more details.
+// The visitor must manage any state required while processing the root set.
 //
 // A class can safely implement both RootSetVisitor and ObjectGraphVisitor. The
 // method names do not overlap.
@@ -31,6 +38,9 @@
 namespace ovum
 {
 
+// NOTE: This class is a prototype class! Do not extend it; merely implement the
+// methods detailed below, and use the concrete implementation when you call methods
+// RootSetWalker.
 class RootSetVisitor
 {
 public:
@@ -38,7 +48,7 @@ public:
 	//
 	// The value is guaranteed NOT to be a local value (see VisitRootLocalValue()
 	// for details).
-	virtual void VisitRootValue(Value *value) = 0;
+	void VisitRootValue(Value *value);
 
 	// Visits a single local value in the root set. A local value is one of the
 	// following:
@@ -50,14 +60,14 @@ public:
 	// NOTE: This method is separate from VisitRootValue() because local values
 	// can be references. You must be prepared to handle references when you
 	// accept values through this method.
-	virtual void VisitRootLocalValue(Value *const value) = 0;
+	void VisitRootLocalValue(Value *const value);
 
-	// Visits a single string value in the root set. These strings are always
+	// Visits a single string value in the root set. Root set strings are always
 	// allocated directly into generation 1, so never need to be moved by the GC.
 	//
 	// These strings must nevertheless be visited in order to mark the underlying
 	// GCObject as alive.
-	virtual void VisitRootString(String *str) = 0;
+	void VisitRootString(String *str);
 
 	// Enters a static reference block. This is called before the values inside
 	// a StaticRefBlock are visited. If the method return false, no values in
@@ -65,7 +75,7 @@ public:
 	//
 	// No more than one static reference block will be entered at any given time.
 	// That is, static reference blocks are never entered recursively.
-	virtual bool EnterStaticRefBlock(StaticRefBlock *const refs) = 0;
+	bool EnterStaticRefBlock(StaticRefBlock *const refs);
 
 	// Leaves the current (last entered) static reference block.
 	//
@@ -74,33 +84,124 @@ public:
 	//
 	// No more than one static reference block will be entered at any given time.
 	// That is, static reference blocks are never entered recursively.
-	virtual void LeaveStaticRefBlock(StaticRefBlock *const refs) = 0;
+	void LeaveStaticRefBlock(StaticRefBlock *const refs);
 };
 
+template<class Visitor>
 class RootSetWalker
 {
 public:
-	RootSetWalker(GC *gc);
+	inline RootSetWalker(GC *gc) :
+		gc(gc),
+		vm(gc->GetVM())
+	{ }
 
-	void VisitRootSet(RootSetVisitor &visitor);
+	void VisitRootSet(Visitor &visitor)
+	{
+		VisitThread(visitor, vm->mainThread.get());
+
+		VisitModulePool(visitor, vm->GetModulePool());
+
+		VisitStaticRefs(visitor, gc->staticRefs.get());
+	}
 
 private:
 	GC *gc;
 	VM *vm;
 
-	void VisitThread(RootSetVisitor &visitor, Thread *const thread);
+	void VisitThread(Visitor &visitor, Thread *const thread)
+	{
+		VisitStackFrames(visitor, thread);
 
-	void VisitStackFrames(RootSetVisitor &visitor, Thread *const thread);
+		visitor.VisitRootValue(&thread->currentError);
 
-	void VisitLocalValues(RootSetVisitor &visitor, ovlocals_t count, Value *values);
+		if (thread->errorStack != nullptr)
+		{
+			auto *errorStack = thread->errorStack;
+			do
+			{
+				visitor.VisitRootValue(&errorStack->error);
+				errorStack = errorStack->prev;
+			} while (errorStack != nullptr);
+		}
+	}
 
-	void VisitModulePool(RootSetVisitor &visitor, ModulePool *pool);
+	void VisitStackFrames(Visitor &visitor, Thread *const thread)
+	{
+		StackFrame *frame = thread->currentFrame;
 
-	void VisitModule(RootSetVisitor &visitor, Module *module);
+		// The very first stack frame on the thread has a null method.
+		// It's essentially a "fake" stack frame, which receives only the
+		// arguments for the thread's startup method.
+		while (frame != nullptr && frame->method != nullptr)
+		{
+			MethodOverload *method = frame->method;
 
-	void VisitDebugData(RootSetVisitor &visitor, debug::ModuleDebugData *debug);
+			ovlocals_t paramCount = method->GetEffectiveParamCount();
+			if (paramCount != 0)
+				VisitLocalValues(visitor, paramCount, reinterpret_cast<Value*>(frame)-paramCount);
 
-	void VisitStaticRefs(RootSetVisitor &visitor, StaticRefBlock *refs);
+			// By design, local variables and evaluation stack values are adjacent
+			// in memory, so it's safe to read from them as if they were the same
+			// array of values.
+			ovlocals_t localCount = method->locals + frame->stackCount;
+			if (localCount != 0)
+				VisitLocalValues(visitor, localCount, frame->Locals());
+
+			frame = frame->prevFrame;
+		}
+	}
+
+	void VisitLocalValues(Visitor &visitor, ovlocals_t count, Value *values)
+	{
+		for (ovlocals_t i = 0; i < count; i++)
+			visitor.VisitRootLocalValue(values + i);
+	}
+
+	void VisitModulePool(Visitor &visitor, ModulePool *pool)
+	{
+		int moduleCount = pool->GetLength();
+		for (int i = 0; i < moduleCount; i++)
+		{
+			Module *module = pool->Get(i);
+			VisitModule(visitor, module);
+		}
+	}
+
+	void VisitModule(Visitor &visitor, Module *module)
+	{
+		visitor.VisitRootString(module->GetName());
+
+		size_t stringCount = module->strings.GetLength();
+		for (size_t i = 0; i < stringCount; i++)
+			visitor.VisitRootString(module->strings[i]);
+
+		if (module->debugData)
+			VisitDebugData(visitor, module->debugData.get());
+	}
+
+	void VisitDebugData(Visitor &visitor, debug::ModuleDebugData *debug)
+	{
+		size_t fileCount = debug->fileCount;
+		for (size_t i = 0; i < fileCount; i++)
+			visitor.VisitRootString(debug->files[i].fileName);
+	}
+
+	void VisitStaticRefs(Visitor &visitor, StaticRefBlock *refs)
+	{
+		while (refs != nullptr)
+		{
+			if (visitor.EnterStaticRefBlock(refs))
+			{
+				size_t count = refs->count;
+				for (size_t i = 0; i < count; i++)
+					visitor.VisitRootValue(refs->values[i].GetValuePointer());
+				visitor.LeaveStaticRefBlock(refs);
+			}
+
+			refs = refs->next.get();
+		}
+	}
 };
 
 } // namespace ovum

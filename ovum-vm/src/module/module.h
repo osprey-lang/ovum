@@ -190,6 +190,7 @@ private:
 	friend class ModulePool;
 	friend class ModuleReader;
 	friend class GC;
+	template<class Visitor>
 	friend class RootSetWalker;
 	friend class debug::ModuleDebugData;
 	friend class debug::DebugSymbolsReader;

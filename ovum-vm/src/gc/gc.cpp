@@ -1,6 +1,8 @@
 #include "gc.h"
 #include "gcobject.h"
 #include "staticref.h"
+#include "rootsetwalker.h"
+#include "objectgraphwalker.h"
 #include "liveobjectfinder.h"
 #include "movedobjectupdater.h"
 #include "../ee/thread.h"

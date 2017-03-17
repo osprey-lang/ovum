@@ -2,8 +2,6 @@
 
 #include "../vm.h"
 #include "gcobject.h"
-#include "rootsetwalker.h"
-#include "objectgraphwalker.h"
 
 // The primary purpose of the LiveObjectFinder is to find live objects, exactly
 // as you might expect from the name. The secondary purpose: to categorise live
@@ -60,16 +58,38 @@
 namespace ovum
 {
 
-class LiveObjectFinder :
-	// Implement these privately - we don't need the outside world to call
-	// into these methods.
-	private RootSetVisitor,
-	private ObjectGraphVisitor
+class LiveObjectFinder
 {
 public:
 	LiveObjectFinder(GC *gc);
 
 	void FindLiveObjects();
+
+	// RootSetVisitor methods
+	// These are only called during the initial marking phase, where we
+	// find all live objects in the root set.
+
+	void VisitRootValue(Value *value);
+
+	void VisitRootLocalValue(Value *const value);
+
+	void VisitRootString(String *str);
+
+	bool EnterStaticRefBlock(StaticRefBlock *const refs);
+
+	void LeaveStaticRefBlock(StaticRefBlock *const refs);
+
+	// ObjectGraphVisitor methods
+
+	bool EnterObject(GCObject *gco);
+
+	void LeaveObject(GCObject *gco);
+
+	void VisitFieldValue(Value *value);
+
+	void VisitFieldString(String **str);
+
+	void VisitFieldArray(void **arrayBase);
 
 private:
 	GC *gc;
@@ -133,32 +153,6 @@ private:
 
 	// Adds the object to an appropriate survivor list.
 	void AddSurvivor(GCObject *gco);
-
-	// RootSetVisitor methods
-	// These are only called during the initial marking phase, where we
-	// find all live objects in the root set.
-
-	virtual void VisitRootValue(Value *value);
-
-	virtual void VisitRootLocalValue(Value *const value);
-
-	virtual void VisitRootString(String *str);
-
-	virtual bool EnterStaticRefBlock(StaticRefBlock *const refs);
-
-	virtual void LeaveStaticRefBlock(StaticRefBlock *const refs);
-
-	// ObjectGraphVisitor methods
-
-	virtual bool EnterObject(GCObject *gco);
-
-	virtual void LeaveObject(GCObject *gco);
-
-	virtual void VisitFieldValue(Value *value);
-
-	virtual void VisitFieldString(String **str);
-
-	virtual void VisitFieldArray(void **arrayBase);
 
 	friend class GC;
 };

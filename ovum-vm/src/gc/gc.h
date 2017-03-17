@@ -163,7 +163,9 @@ private:
 
 	friend class LiveObjectFinder;
 	friend class MovedObjectUpdater;
+	template<class Visitor>
 	friend class ObjectGraphWalker;
+	template<class Visitor>
 	friend class RootSetWalker;
 	friend class VM;
 };

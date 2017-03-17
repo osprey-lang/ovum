@@ -197,8 +197,6 @@
     <ClCompile Include="src\gc\gcobject.cpp" />
     <ClCompile Include="src\gc\liveobjectfinder.cpp" />
     <ClCompile Include="src\gc\movedobjectupdater.cpp" />
-    <ClCompile Include="src\gc\objectgraphwalker.cpp" />
-    <ClCompile Include="src\gc\rootsetwalker.cpp" />
     <ClCompile Include="src\gc\staticref.cpp" />
     <ClCompile Include="src\module\globalmember.cpp" />
     <ClCompile Include="src\module\modulefacts.cpp" />

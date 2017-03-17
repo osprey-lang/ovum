@@ -1,4 +1,6 @@
 #include "liveobjectfinder.h"
+#include "rootsetwalker.h"
+#include "objectgraphwalker.h"
 #include "gc.h"
 #include "staticref.h"
 #include "../object/value.h"
@@ -27,7 +29,7 @@ void LiveObjectFinder::FindLiveObjects()
 	// Every object that can be reached from the root set is guaranteed
 	// to be alive. Let's start by graying all of those objects, and add
 	// all appropriate objects to the processList.
-	RootSetWalker walker(this->gc);
+	RootSetWalker<LiveObjectFinder> walker(this->gc);
 	walker.VisitRootSet(*this);
 
 	// Now we can start processing known survivors. We loop through each
@@ -35,7 +37,7 @@ void LiveObjectFinder::FindLiveObjects()
 	// that list, and repeat until processList is empty.
 	while (processList != nullptr)
 	{
-		ObjectGraphWalker::VisitObjectList(*this, processList);
+		ObjectGraphWalker<LiveObjectFinder>::VisitObjectList(*this, processList);
 	}
 	OVUM_ASSERT(processList == nullptr);
 

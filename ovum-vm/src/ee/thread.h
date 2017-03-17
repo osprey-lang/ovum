@@ -1063,6 +1063,7 @@ private:
 	friend class VM;
 	friend class Type;
 	friend class MethodInitializer;
+	template<class Visitor>
 	friend class RootSetWalker;
 };
 

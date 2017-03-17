@@ -82,6 +82,7 @@ private:
 	friend class GC;
 	friend class LiveObjectFinder;
 	friend class MovedObjectUpdater;
+	template<class Visitor>
 	friend class RootSetWalker;
 };
 
